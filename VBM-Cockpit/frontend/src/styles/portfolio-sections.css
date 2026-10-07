@@ -1,0 +1,163 @@
+/* ===== Section: collapsible card with sub-headline =====
+   Self-contained surface — does not rely on a base `.card` rule existing
+   elsewhere. If your stylesheet already defines `.card`, these values simply
+   restate it; adjust the tokens rather than deleting the block. */
+.card.js-collapse {
+  background: var(--panel, #fff);
+  border: 1px solid var(--line, #e0e3e7);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.sec-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sec-head {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+.sec-head .chev {
+  color: var(--gold2);
+  font-size: 12px;
+  transition: transform .2s ease;
+  flex: 0 0 auto;
+}
+.sec-note {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+.sec-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.js-collapse.collapsed .chev { transform: rotate(-90deg); }
+.js-collapse.collapsed .collapse-body,
+.js-collapse.collapsed .hint { display: none; }
+.js-collapse.collapsed { padding-bottom: 14px; }
+
+/* sub-headline */
+.card .hint {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 4px 0 12px;
+  max-width: 92ch;
+}
+
+/* ===== Stats: aggregate readouts above a chart ===== */
+.statrow {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.stat-l {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 600;
+}
+.stat-v {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+}
+.stat-v.tone-good { color: var(--on); }
+.stat-v.tone-warn { color: var(--risk); }
+.stat-v.tone-bad  { color: var(--off); }
+
+/* ===== Backing panel for grouped small charts ===== */
+.card .grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+/* nested panels sit flush inside the parent card — recessed one step so they
+   read as sub-cards rather than competing siblings */
+.card .grid3 > .card,
+.card .grid3 > .panel {
+  background: var(--panel2, #f4f5f6);
+  border: 1px solid var(--line, #e0e3e7);
+  border-radius: 11px;
+  padding: 14px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 1200px) { .card .grid3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 720px)  { .card .grid3 { grid-template-columns: 1fr; } }
+
+/* ===== Split picker ===== */
+.splitpicker { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.splitpicker-item { display: inline-flex; align-items: flex-end; gap: 2px; }
+.linkbtn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.linkbtn:hover { color: var(--gold2); background: var(--panel2); }
+
+/* ===== Theme tokens =====
+   Fallbacks only — if your app already declares these on :root they win, since
+   this block is scoped to :root too and should be loaded FIRST. Delete it if
+   the tokens are defined in your design system. */
+:root {
+  --panel:  #ffffff;
+  --panel2: #f4f5f6;
+  --line:   #e0e3e7;
+  --txt:    #2f3438;
+  --muted:  #747678;
+  --gold:   #3CB5E5;
+  --gold2:  #0F6E9E;
+  --on:     #1FA971;
+  --risk:   #E8A93C;
+  --off:    #E03E2D;
+}
+html[data-theme="dark"] {
+  --panel:  #141922;
+  --panel2: #1b2230;
+  --line:   #28303f;
+  --txt:    #e8edf5;
+  --muted:  #8b96a8;
+  --gold:   #e7b64b;
+  --gold2:  #f4d488;
+  --on:     #3fbf7f;
+  --risk:   #e79c3c;
+  --off:    #e5555b;
+}
+
+/* ===== BU x value lever stage matrix (Vale-branded) ===== */
+.vmx { position: relative; background: #fff; border-radius: 12px; padding: 26px 20px 16px; overflow-x: auto; }
+.vmx::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 14px; background: #0F6E9E; }
+.vmx::after { content: ""; position: absolute; top: 0; left: 0; width: 8px; height: 14px; background: #3CB5E5; }
+.vmx-grid { display: grid; gap: 12px; margin-top: 4px; }
+.vmx-h { background: #3CB5E5; color: #fff; border-radius: 6px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; letter-spacing: .5px; }
+.vmx-r { background: linear-gradient(180deg, #2c5f8a, #1f4d74); color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; font-size: 11.5px; padding: 8px 10px; line-height: 1.25; }
+.vmx-c { background: #d8dadd; border-radius: 6px; min-height: 74px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 7px; padding: 8px; transition: box-shadow .12s, transform .12s; }
+.vmx-c.has:hover { box-shadow: 0 0 0 2px #3CB5E5; transform: translateY(-1px); }
+.vmx-c.empty { background: #e4e6e8; }
+.vmx-zero { color: #9aa0a6; font-size: 13px; font-weight: 700; }
+.vmx-chip { min-width: 34px; height: 36px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; line-height: 1; padding: 0 8px; box-shadow: 0 1px 2px rgba(0,0,0,.14); }
+.vmx-chip small { font-size: 7.5px; font-weight: 700; letter-spacing: .3px; opacity: .75; margin-top: 2px; text-transform: uppercase; }

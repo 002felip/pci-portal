@@ -1,0 +1,173 @@
+# Databricks App — VBM Kaizen (front-end + API Aprovadores)
+# Conexão DIRETA ao Azure SQL Database (sem passar pelo Databricks SQL
+# Warehouse), no mesmo modelo do protótipo de teste (app.py / pymssql):
+# credenciais fixas via env vars, lidas pelo server.js com `mssql`.
+command:
+  - npm
+  - start
+
+env:
+  # Configs não sensíveis: pode deixar hardcoded aqui
+
+  - name: 'DATABRICKS_HOST'
+    value: 'https://adb-7405608945147182.2.azuredatabricks.net'
+  - name: 'AZURE_SQL_SERVER'
+    value: 'rdb-ibp-bmsa-prd.database.windows.net'
+  # Banco por aplicação (mesmo servidor e mesmo login; só o banco muda).
+  # Cada aplicação lê a SUA variável — prefixo = nome da pasta.
+  - name: 'KAIZEN_AZURE_SQL_DATABASE'    # VBM-Kaizen-App
+    value: 'BDIBPBMSA_DEV'
+  - name: 'QUARTELY_AZURE_SQL_DATABASE'  # VBM-Quartely
+    value: 'BDIBPBMSA_PRD'
+  - name: 'AZURE_SQL_PORT'
+    value: '1433'
+  - name: 'AZURE_SQL_SCHEMA'
+    value: 'ci'
+  - name: 'AZURE_SQL_TABLE'
+    value: 'kzn_aprovador'
+
+  # ROLLBACK DE EMERGÊNCIA (20/09/2026): voltou pra texto puro porque o
+  # deploy com "valueFrom" saiu ANTES de os resources 'azure-sql-user'/
+  # 'azure-sql-password' existirem no Databricks App — sem eles a env
+  # var fica vazia, checkConfig() derruba a conexão com o banco, e
+  # TODA a aplicação para (não só a exportação: login, Biblioteca,
+  # Aprovação, Administração — tudo depende de identificar o usuário
+  # contra o MDM). Incidente registrado, não é decisão nova.
+  #
+  # NUNCA em texto puro em produção — o valor abaixo já estava
+  # versionado em texto puro desde 02/09/2026 e é tratado como
+  # COMPROMETIDO independente deste rollback. Antes de voltar para
+  # "valueFrom":
+  #   1. Criar os resources 'azure-sql-user'/'azure-sql-password' em
+  #      App resources > + Add resource > Secret — e CONFIRMAR que
+  #      existem antes do próximo deploy, não durante.
+  #   2. Trocar a senha no Azure SQL para um valor NOVO, que nunca
+  #      tenha existido em texto puro no histórico do git.
+  #   3. Só então trocar as duas linhas abaixo para valueFrom de novo.
+  - name: 'AZURE_SQL_USER'
+    valueFrom: db-user
+  - name: 'AZURE_SQL_PASSWORD'
+    valueFrom: db-password
+
+  # ── Leitura das imagens ANTIGAS (Volumes do Databricks) ──
+  # As fotos passaram a ser gravadas no Azure Blob (bloco abaixo). O
+  # Volume continua sendo lido, e SÓ lido, para as fotos dos Kaizens
+  # cadastrados antes da troca: o caminho delas já está gravado em
+  # URL_IMG_ANTES/URL_IMG_DEPOIS e não foi migrado.
+  #
+  # NADA a configurar aqui: DATABRICKS_HOST, DATABRICKS_CLIENT_ID e
+  # DATABRICKS_CLIENT_SECRET são injetados automaticamente pelo runtime
+  # do Databricks Apps (credenciais do service principal do PRÓPRIO
+  # app) — ver databricks-fs.js para como são usadas.
+  #
+  # A permissão no volume agora precisa ser só de LEITURA (READ VOLUME)
+  # em franquia_bmsa_insight.ci.kaizen. Se um dia os arquivos antigos
+  # forem copiados para o Blob e as duas colunas atualizadas, o volume
+  # deixa de ser necessário.
+
+  # ── Upload de imagens (Novo Kaizen) para o Azure Blob Storage ──
+  # AZURE_STORAGE_ACCOUNT    URL da conta JÁ COM O CONTAINER.
+  # AZURE_STORAGE_CONTAINER  apesar do nome, é a PASTA dentro do
+  #                          container: nome de container no Azure não
+  #                          aceita espaço nem maiúscula, e este tem os
+  #                          dois. As fotos ficam nas pastas que o time
+  #                          JÁ usa no datalake:
+  #                            05 - Kaizen/01 - Imagens/01 - Antes
+  #                            05 - Kaizen/01 - Imagens/02 - Depois
+  # AZURE_STORAGE_SAS_TOKEN  SAS do container. Ver azure-blob.js.
+  #
+  # DUAS PENDÊNCIAS neste SAS, as duas do lado do Azure:
+  #
+  #   1. sp=racw NÃO tem 'd' (delete). É essa falta que deixa um arquivo
+  #      TEMP_ ao lado de cada foto salva num CADASTRO NOVO: o app copia
+  #      o provisório para "<ID_KAIZEN>.<ext>" e a remoção do provisório
+  #      volta 403. O cadastro funciona, o aviso fica no log, e o lixo se
+  #      acumula. Reemita com sp=racwd.
+  #
+  #   2. O valor abaixo ficou em TEXTO PURO, versionado desde 02/09/2026,
+  #      com escrita no container inteiro até 2030 — trate como
+  #      COMPROMETIDO. Fechar o download (server.js recusa servir
+  #      app.yaml, os .js da raiz, node_modules, database e docs — ver
+  #      ARQUIVOS_DO_SERVIDOR) não substitui revogar: o token esteve
+  #      exposto enquanto a trava não existia, e continua recuperável
+  #      pelo histórico do git mesmo depois de trocado aqui.
+  #
+  #      ROLLBACK DE EMERGÊNCIA (20/09/2026): voltou pra texto puro
+  #      porque o resource 'azure-storage-sas' não existia no Databricks
+  #      App quando o "valueFrom" foi para produção — env var vazia
+  #      derruba a conexão com o banco (é o USER/PASSWORD acima que faz
+  #      isso, não este SAS sozinho) e tira a aplicação inteira do ar.
+  #      Antes de voltar para valueFrom: revogar este SAS no Azure,
+  #      emitir outro já com sp=racwd (resolve a pendência 1 acima),
+  #      CRIAR o resource 'azure-storage-sas' e só então trocar a linha
+  #      abaixo — nessa ordem, confirmando cada passo antes do próximo.
+
+  - name: 'AZURE_STORAGE_ACCOUNT'
+    value: 'https://ibpdatalake.blob.core.windows.net/vbmdatalake'
+  - name: 'AZURE_STORAGE_CONTAINER'
+    value: '05 - Kaizen'
+  - name: 'AZURE_STORAGE_SAS_TOKEN'
+    value: 'sp=racw&st=2026-09-02T13:37:52Z&se=2030-01-18T21:52:52Z&spr=https&sv=2026-02-06&sr=c&sig=8gEPo1jtLiz1wbdSW7EVlOl0su8Tj5%2FqJDYe7I%2B%2BOHI%3D'
+
+
+  # ── Avisos por e-mail das decisões de aprovação ──
+  # NADA de credencial aqui. O e-mail é enviado pelo NAVEGADOR, com o
+  # token delegado do próprio aprovador (Microsoft Graph), e sai pela
+  # caixa compartilhada PCI.Base.Metals@Vale.com. Não há client secret
+  # em nenhum ponto do projeto.
+  #
+  # O que precisa ser preenchido fica em js/msal-config.js (clientId e
+  # authority do app registration). No mesmo app registration:
+  #   • Redirect URI do tipo SPA para index.html e aprovacao.html
+  #   • Permissões DELEGADAS do Microsoft Graph:
+  #       User.Read
+  #       Mail.Send.Shared
+  #   • A conta de quem aprova precisa de "Enviar Como" (ou "Enviar em
+  #     Nome De") na caixa PCI.Base.Metals@Vale.com.
+  #
+  # Opcionais — só declare para mudar o padrão do email-kaizen.js:
+  #   KAIZEN_EMAIL_REMETENTE  padrão 'PCI.Base.Metals@Vale.com'
+  #   KAIZEN_APP_URL          padrão o endereço deste app (usado nos
+  #                           links de aprovacao.html e biblioteca.html)
+  #
+  #   KAIZEN_EMAIL_DO_USUARIO  'true' faz o comunicado sair pela caixa
+  #                            de QUEM ESTÁ USANDO o sistema, em vez da
+  #                            compartilhada. Evita o "Enviar Como" em
+  #                            PCI.Base.Metals@Vale.com, que depende do
+  #                            time de Exchange: cada um envia pela
+  #                            própria caixa. Mesma permissão delegada
+  #                            dos dois jeitos.
+  #                            Para voltar ao normal, remova a variável.
+  #
+  #   - name: 'KAIZEN_EMAIL_DO_USUARIO'
+  #     value: 'true'
+  #
+  # ── O QUE TRAVA O ENVIO HOJE (verificado em 15/09/2026) ──
+  # Nenhum comunicado sai, nem pela caixa compartilhada nem pela própria.
+  # Ao clicar em autorizar, o Entra responde:
+  #
+  #     "Necessidade de aprovação de administrador — IBP precisa de
+  #      permissão para acesso aos recursos em sua organização que
+  #      apenas o administrador pode conceder."
+  #
+  # Ou seja: o LOCATÁRIO não permite que cada pessoa consinta por si,
+  # mesmo para enviar pela própria caixa. KAIZEN_EMAIL_DO_USUARIO='true'
+  # NÃO contorna isso — não adianta declará-la esperando destravar.
+  # (A observação "Admin consent required = No" em js/msal-config.js é
+  # sobre a permissão em si; a política do locatário vem por cima dela.)
+  #
+  # Não há nada a mudar neste arquivo nem no código: a saída é um
+  # administrador do Entra conceder o consentimento. Duas formas:
+  #
+  #   a) DELEGADA — consentimento de administrador para User.Read e
+  #      Mail.Send (ou Mail.Send.Shared) no app registration IBP. Vale
+  #      para todos os usuários, e o envio continua saindo do navegador,
+  #      só quando alguém está com a tela aberta.
+  #
+  #   b) DE APLICAÇÃO — o app envia sozinho, sem ninguém logado. Exige
+  #      um service principal com permissão de APLICAÇÃO Mail.Send
+  #      (consentida por administrador) e uma ApplicationAccessPolicy no
+  #      Exchange restringindo esse SP à caixa do programa. É o caminho
+  #      mais robusto, mas o código dele NÃO está mais neste projeto —
+  #      foi removido no rollback de 15/09/2026 e está no histórico do
+  #      git, na tag 'ponto-antes-do-rollback'.

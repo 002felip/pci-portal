@@ -1,0 +1,2252 @@
+/* ═══════════════════════════════════════════════════════
+   VBM KAIZEN — Application CSS
+   Extends Vale Base Metals Design System v1.0
+   Built on: Poppins (Google Fonts) · Font Awesome 6 · AOS
+═══════════════════════════════════════════════════════ */
+
+/* ── Fonte: Poppins carregada via <link> no <head> de cada página
+   (mesma referência do VBM Design System — ver Design_System_VBM.html) ── */
+
+/* ── Design Tokens ── */
+:root {
+  --vbm-blue:        #3cb5e5;
+  --vbm-blue-dark:   #1a8bbf;
+  --vbm-blue-deep:   #0d2640;
+  --vbm-blue-navy:   #041523;
+  --vbm-blue-light:  #7dd3f0;
+  --vbm-blue-pale:   #e8f7fd;
+  --vbm-white:       #ffffff;
+  --vbm-off-white:   #f6f6f6;
+  --vbm-mid:         #888888;
+  --vbm-dark:        #1a1a1a;
+  --vbm-text:        #333333;
+  --vbm-border:      rgba(60,181,229,0.25);
+  --ease-out:        cubic-bezier(0.2,1,0.2,1);
+  --ease-spring:     cubic-bezier(0.34,1.56,0.64,1);
+  --sidebar-w:       264px;
+  --topbar-h:        64px;
+  --status-draft:    #888;
+  --status-pending:  #c2770e;
+  --status-approved: #16a34a;
+  --status-rejected: #dc2626;
+  --status-review:   #3cb5e5;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family:'Poppins', system-ui, sans-serif;font-weight:400;
+  background: var(--vbm-off-white);
+  color: var(--vbm-text);
+  overflow-x: hidden;
+}
+a { text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════ */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+.app-main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════ */
+.app-sidebar {
+  width: var(--sidebar-w);
+  background: linear-gradient(180deg, #020e1c 0%, #041523 30%, #082d4f 70%, #0d3d6b 100%);
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s var(--ease-out);
+  overflow: hidden;
+}
+
+/* Sidebar BG texture */
+.app-sidebar::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(60,181,229,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60,181,229,.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+.app-sidebar::after {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(60,181,229,.12) 0%, transparent 70%);
+  bottom: -80px; right: -80px;
+  pointer-events: none;
+  animation: orb2 20s ease-in-out infinite;
+}
+
+/* Sidebar Logo */
+.sidebar-logo {
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  position: relative; z-index: 1;
+  flex-shrink: 0;
+}
+.sidebar-logo img { height: 22px; filter: brightness(10); }
+.sidebar-logo-text {
+  font-family:'Poppins', sans-serif;font-weight:700;font-style:italic;
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+.sidebar-logo-text small {
+  display: block;
+  font-family:'Poppins', sans-serif;font-weight:400;
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+  margin-top: 0.2rem;
+}
+
+/* Sidebar User */
+.sidebar-user {
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  position: relative; z-index: 1;
+  flex-shrink: 0;
+}
+.sidebar-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vbm-blue), var(--vbm-blue-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-family:'Poppins', sans-serif;font-weight:700;
+  color: #fff; font-size: 0.78rem;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.2);
+  position: relative;
+}
+.sidebar-avatar-dot {
+  position: absolute; bottom: 0; right: 0;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #16a34a;
+  border: 2px solid #041523;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+.sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-name {
+  font-family:'Poppins', sans-serif;font-weight:600;
+  font-size: 0.78rem; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-user-role {
+  font-size: 0.58rem;
+  color: rgba(255,255,255,.4);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin-top: 0.1rem;
+}
+.sidebar-user-chevron {
+  color: rgba(255,255,255,.25);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.sidebar-user-chevron:hover { color: rgba(255,255,255,.6); }
+
+/* Sidebar Nav */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0;
+  position: relative; z-index: 1;
+}
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 2px; }
+
+.sidebar-section {
+  padding: 0.6rem 1.5rem 0.3rem;
+  font-size: 0.56rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.25);
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 1.25rem;
+  color: rgba(255,255,255,.55);
+  font-size: 0.8rem;
+  font-family:'Poppins', sans-serif;font-weight:400;
+  transition: all 0.22s;
+  position: relative;
+  margin: 0.08rem 0.65rem;
+  border-radius: 0.55rem;
+}
+.sidebar-link:hover {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+}
+.sidebar-link.active {
+  color: #fff;
+  background: rgba(60,181,229,.15);
+}
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 25%; bottom: 25%;
+  width: 3px;
+  background: var(--vbm-blue);
+  border-radius: 0 3px 3px 0;
+  margin-left: -0.65rem;
+}
+.sidebar-link i {
+  width: 17px;
+  text-align: center;
+  font-size: 0.85rem;
+  transition: color 0.22s;
+}
+.sidebar-link.active i { color: var(--vbm-blue); }
+.sidebar-link:hover i { color: var(--vbm-blue-light); }
+
+.sidebar-badge {
+  margin-left: auto;
+  background: var(--vbm-blue);
+  color: #fff;
+  font-size: 0.58rem;
+  border-radius: 100px;
+  padding: 0.12rem 0.5rem;
+  font-family:'Poppins', sans-serif;font-weight:700;
+  min-width: 20px;
+  text-align: center;
+}
+.sidebar-badge-warn { background: #c2770e; }
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  position: relative; z-index: 1;
+  flex-shrink: 0;
+}
+.sidebar-footer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,.4);
+  transition: color 0.2s;
+  padding: 0.35rem 0;
+}
+.sidebar-footer-link:hover { color: rgba(255,255,255,.7); }
+.sidebar-footer-link i { font-size: 0.8rem; }
+
+/* Mobile sidebar overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  z-index: 199;
+}
+.sidebar-overlay.show { display: block; }
+
+/* ═══════════════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════════════ */
+.app-topbar {
+  height: var(--topbar-h);
+  background: #fff;
+  border-bottom: 1px solid #ebebeb;
+  display: flex;
+  align-items: center;
+  padding: 0 1.75rem;
+  gap: 1rem;
+  position: sticky;
+  top: 0; z-index: 100;
+  box-shadow: 0 1px 8px rgba(0,0,0,.04);
+}
+.topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+.sidebar-toggle {
+  width: 36px; height: 36px;
+  border: none; background: var(--vbm-off-white);
+  border-radius: 0.4rem;
+  display: none;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1rem; color: var(--vbm-dark);
+  transition: all 0.2s; flex-shrink: 0;
+}
+.sidebar-toggle:hover { background: var(--vbm-blue-pale); color: var(--vbm-blue); }
+.topbar-title {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 1rem; color: var(--vbm-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar-breadcrumb {
+  font-size: 0.68rem;
+  color: var(--vbm-mid);
+  display: flex; align-items: center; gap: 0.35rem;
+  flex-wrap: nowrap; overflow: hidden;
+}
+.topbar-breadcrumb span { white-space: nowrap; }
+.topbar-breadcrumb .sep { color: #ccc; }
+.topbar-actions {
+  display: flex; align-items: center; gap: 0.65rem; flex-shrink: 0;
+}
+.topbar-icon-btn {
+  width: 36px; height: 36px;
+  border: 1.5px solid #eaeaea;
+  border-radius: 50%;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--vbm-mid);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  position: relative;
+}
+.topbar-icon-btn:hover { border-color: var(--vbm-blue); color: var(--vbm-blue); }
+.topbar-icon-btn .notif-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px;
+  border-radius: 50%; background: var(--vbm-blue);
+  border: 1.5px solid #fff;
+  animation: glowPulse 2s infinite;
+}
+.topbar-user {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid #eaeaea;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+}
+.topbar-user:hover { border-color: var(--vbm-blue); }
+.topbar-user-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vbm-blue), var(--vbm-blue-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-family:'Poppins', sans-serif;font-weight:700; font-size: 0.65rem; color: #fff;
+}
+.topbar-user-name {
+  font-size: 0.78rem;
+  font-family:'Poppins', sans-serif;font-weight:600;
+  color: var(--vbm-dark);
+}
+
+/* ═══════════════════════════════════════════════════
+   PAGE CONTENT
+═══════════════════════════════════════════════════ */
+.page-content {
+  padding: 1.75rem;
+  flex: 1;
+}
+.page-header {
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.page-header-title {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 1.4rem;
+  color: var(--vbm-dark);
+  line-height: 1.2;
+  margin-bottom: 0.3rem;
+}
+.page-header-sub {
+  font-size: 0.82rem;
+  color: var(--vbm-mid);
+  line-height: 1.5;
+}
+.page-header-actions {
+  display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO BANNER (Dashboard)
+═══════════════════════════════════════════════════ */
+.dash-hero {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  margin-bottom: 1.75rem;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, #020e1c 0%, #041523 40%, #082d4f 70%, #0d3d6b 100%);
+}
+.dash-hero-bg-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0.12;
+  mix-blend-mode: luminosity;
+  animation: pulse 20s ease-in-out infinite;
+}
+.dash-hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(60,181,229,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60,181,229,.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+.dash-hero-orb-1 {
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(60,181,229,.22) 0%, transparent 65%);
+  top: -120px; right: -80px;
+  filter: blur(60px);
+  animation: orb1 22s ease-in-out infinite;
+  pointer-events: none;
+}
+.dash-hero-orb-2 {
+  position: absolute;
+  width: 350px; height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(60,181,229,.12) 0%, transparent 65%);
+  bottom: -60px; left: -60px;
+  filter: blur(50px);
+  animation: orb2 28s ease-in-out infinite;
+  pointer-events: none;
+}
+.dash-hero-orb-3 {
+  position: absolute;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(125,211,240,.1) 0%, transparent 65%);
+  top: 40%; left: 40%;
+  filter: blur(40px);
+  animation: glowPulse 10s ease-in-out infinite;
+  pointer-events: none;
+}
+.dash-hero-content {
+  position: relative; z-index: 2;
+  padding: 2.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.dash-hero-badges {
+  display: flex; gap: 0.6rem; flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  animation: fadeDown 0.9s 0.1s ease both;
+}
+.dash-hero-badge {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(8px);
+  border-radius: 100px;
+  padding: 0.3rem 0.9rem;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: #fff;
+}
+.dash-hero-badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--vbm-blue-light);
+  animation: glowPulse 2s infinite;
+}
+.dash-hero-wordmark {
+  line-height: 0.82; letter-spacing: -0.03em;
+  margin-bottom: 1.25rem;
+  animation: fadeUp 1s 0.3s ease both;
+}
+.dash-hero-wordmark .line1 {
+  display: block;
+  font-family:'Poppins', sans-serif;font-weight:700;font-style:italic;
+  font-size: clamp(3.5rem, 8vw, 7.5rem);
+  color: #fff;
+  mix-blend-mode: overlay;
+  line-height: 0.85;
+}
+.dash-hero-wordmark .line2 {
+  display: block;
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: clamp(1.8rem, 4vw, 3.8rem);
+  color: rgba(255,255,255,.8);
+  mix-blend-mode: overlay;
+  margin-left: clamp(0.5rem, 3vw, 3.5rem);
+}
+.dash-hero-wordmark .line3 {
+  display: block;
+  font-family:'Poppins', sans-serif;font-weight:400;
+  font-size: clamp(0.65rem, 1.5vw, 1rem);
+  color: var(--vbm-blue-light);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin-top: 0.6rem;
+  margin-left: 0.2rem;
+  mix-blend-mode: normal;
+}
+.dash-hero-desc {
+  animation: fadeUp 1s 0.55s ease both;
+  max-width: 520px;
+}
+.dash-hero-desc p {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,.6);
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+}
+.dash-hero-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.dash-hero-float-card {
+  position: absolute;
+  right: 2rem; top: 50%;
+  transform: translateY(-50%);
+  animation: fadeUp 1s 0.8s ease both;
+  min-width: 210px;
+}
+.dash-hero-float-card-inner {
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+.float-card-label {
+  font-size: 0.56rem;
+  text-transform: uppercase; letter-spacing: 0.25em;
+  color: rgba(255,255,255,.4);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding-bottom: 0.65rem; margin-bottom: 0.75rem;
+}
+.float-card-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.6rem;
+}
+.float-card-row:last-child { margin-bottom: 0; }
+.float-card-key { font-size: 0.68rem; color: rgba(255,255,255,.45); }
+.float-card-val {
+  font-size: 0.68rem; color: #fff;
+  font-family:'Poppins', sans-serif;font-weight:700;
+  display: flex; align-items: center; gap: 0.35rem;
+}
+.float-card-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+
+/* Ticker */
+.dash-hero-ticker {
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 0.75rem 0;
+  background: rgba(0,0,0,.15);
+  position: relative; z-index: 2;
+  overflow: hidden;
+}
+.ticker-wrap { overflow: hidden; white-space: nowrap; }
+.ticker-inner { display: inline-flex; gap: 3.5rem; animation: marquee 30s linear infinite; }
+.ticker-item {
+  font-size: 0.6rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: rgba(255,255,255,.3);
+}
+.ticker-sep { color: rgba(60,181,229,.4); }
+
+/* ═══════════════════════════════════════════════════
+   STATS CARDS
+═══════════════════════════════════════════════════ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 1.75rem;
+}
+.stat-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.35rem 1.25rem;
+  border: 1px solid #eaeaea;
+  display: flex; align-items: flex-start; gap: 1rem;
+  position: relative; overflow: hidden;
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s;
+}
+.stat-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--vbm-blue), var(--vbm-blue-light));
+  opacity: 0; transition: opacity 0.3s;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+.stat-card:hover::after { opacity: 1; }
+.stat-icon {
+  width: 46px; height: 46px;
+  border-radius: 0.65rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.stat-icon-blue   { background: var(--vbm-blue-pale); color: var(--vbm-blue); }
+.stat-icon-green  { background: #e8f8f0; color: #16a34a; }
+.stat-icon-orange { background: #fff4e5; color: #c2770e; }
+.stat-icon-red    { background: #fef2f2; color: #dc2626; }
+.stat-icon-purple { background: #f3f0ff; color: #7c3aed; }
+.stat-body { flex: 1; }
+.stat-num {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 1.9rem; color: var(--vbm-dark);
+  line-height: 1; margin-bottom: 0.2rem;
+}
+.stat-label { font-size: 0.75rem; color: var(--vbm-mid); }
+.stat-trend {
+  font-size: 0.65rem;
+  margin-top: 0.35rem;
+  display: flex; align-items: center; gap: 0.25rem;
+}
+.trend-up { color: #16a34a; }
+.trend-down { color: #dc2626; }
+
+/* ═══════════════════════════════════════════════════
+   SECTION CARD
+═══════════════════════════════════════════════════ */
+.section-card {
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #eaeaea;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  transition: box-shadow 0.3s;
+}
+.section-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.05); }
+.section-card-head {
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; gap: 0.65rem;
+}
+.section-card-title {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 0.9rem; color: var(--vbm-dark); flex: 1;
+}
+.section-card-icon {
+  width: 30px; height: 30px;
+  border-radius: 0.4rem;
+  background: var(--vbm-blue-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; color: var(--vbm-blue);
+}
+.section-card-body { padding: 1.25rem 1.5rem; }
+.section-card-footer {
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ═══════════════════════════════════════════════════
+   STATUS BADGES
+═══════════════════════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  border-radius: 100px; padding: 0.22rem 0.75rem;
+  font-size: 0.62rem;
+  font-family:'Poppins', sans-serif;font-weight:600;
+  letter-spacing: 0.07em; text-transform: uppercase;
+}
+.badge::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+}
+.badge-draft    { background: #f0f0f0; color: #666; }
+.badge-draft::before { background: #999; }
+.badge-rascunho { background: #f0f0f0; color: #666; }
+.badge-rascunho::before { background: #999; }
+.badge-pending  { background: #fff4e5; color: #c2770e; }
+.badge-pending::before { background: #c2770e; animation: glowPulse 1.5s infinite; }
+.badge-aguardando { background: #fff4e5; color: #c2770e; }
+.badge-aguardando::before { background: #c2770e; animation: glowPulse 1.5s infinite; }
+.badge-approved { background: #e8f8f0; color: #16a34a; }
+.badge-approved::before { background: #16a34a; }
+.badge-aprovado { background: #e8f8f0; color: #16a34a; }
+.badge-aprovado::before { background: #16a34a; }
+.badge-rejected { background: #fef2f2; color: #dc2626; }
+.badge-rejected::before { background: #dc2626; }
+.badge-reprovado { background: #fef2f2; color: #dc2626; }
+.badge-reprovado::before { background: #dc2626; }
+.badge-review   { background: var(--vbm-blue-pale); color: var(--vbm-blue-dark); }
+.badge-review::before { background: var(--vbm-blue); animation: glowPulse 1.5s infinite; }
+.badge-blue { background: var(--vbm-blue-pale); color: var(--vbm-blue-dark); border: 1px solid rgba(60,181,229,.2); }
+.badge-blue::before { display: none; }
+.badge-dark { background: var(--vbm-dark); color: #fff; }
+.badge-dark::before { display: none; }
+
+/* ═══════════════════════════════════════════════════
+   KAIZEN CARD
+═══════════════════════════════════════════════════ */
+.kaizen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.1rem;
+}
+.kaizen-card {
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #eaeaea;
+  overflow: hidden;
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s;
+  display: flex; flex-direction: column;
+}
+.kaizen-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.09);
+}
+.kaizen-card-accent {
+  height: 4px;
+  background: linear-gradient(90deg, var(--vbm-blue), var(--vbm-blue-light));
+}
+.kaizen-card-accent.accent-green { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.kaizen-card-accent.accent-orange { background: linear-gradient(90deg, #c2770e, #fb923c); }
+.kaizen-card-accent.accent-red { background: linear-gradient(90deg, #dc2626, #f87171); }
+.kaizen-card-body { padding: 1.1rem 1.25rem; flex: 1; }
+.kaizen-card-id {
+  font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.2em;
+  color: var(--vbm-blue); margin-bottom: 0.35rem;
+  font-family:'Poppins', sans-serif;font-weight:600;
+}
+.kaizen-card-title {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 0.9rem; color: var(--vbm-dark);
+  margin-bottom: 0.6rem; line-height: 1.35;
+}
+.kaizen-meta {
+  display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.kaizen-meta-item {
+  font-size: 0.7rem; color: var(--vbm-mid);
+  display: flex; align-items: center; gap: 0.25rem;
+}
+.kaizen-meta-item i { color: var(--vbm-blue); font-size: 0.68rem; }
+.kaizen-card-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.kaizen-tag {
+  background: var(--vbm-off-white);
+  border: 1px solid #e8e8e8;
+  border-radius: 100px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.6rem; color: var(--vbm-mid);
+  font-family:'Poppins', sans-serif;font-weight:400;
+}
+.kaizen-card-foot {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #f5f5f5;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.kaizen-card-actions { display: flex; gap: 0.4rem; }
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  border-radius: 100px;
+  font-family:'Poppins', sans-serif;font-weight:600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.28s var(--ease-out);
+  text-decoration: none;
+  position: relative; overflow: hidden;
+  white-space: nowrap;
+}
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%);
+  background-size: 200% 100%; opacity: 0; transition: opacity 0.3s;
+}
+.btn:hover::after { opacity: 1; animation: shimmer 0.6s ease forwards; }
+.btn:active { transform: scale(0.97) !important; }
+
+.btn-sm  { padding: 0.38rem 1rem; font-size: 0.72rem; }
+.btn-md  { padding: 0.6rem 1.6rem; }
+.btn-lg  { padding: 0.75rem 2.2rem; font-size: 0.9rem; }
+
+.btn-primary {
+  background: var(--vbm-blue); color: #fff;
+  border-color: var(--vbm-blue);
+  padding: 0.6rem 1.6rem;
+}
+.btn-primary:hover {
+  background: var(--vbm-blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(60,181,229,.4);
+}
+.btn-outline {
+  background: transparent; color: var(--vbm-blue);
+  border-color: var(--vbm-blue);
+  padding: 0.6rem 1.6rem;
+}
+.btn-outline:hover {
+  background: var(--vbm-blue); color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(60,181,229,.3);
+}
+.btn-white {
+  background: #fff; color: var(--vbm-blue-dark);
+  border-color: #fff;
+  padding: 0.6rem 1.6rem;
+}
+.btn-white:hover { background: var(--vbm-blue-pale); transform: translateY(-2px); }
+.btn-white-outline {
+  background: transparent; color: #fff;
+  border-color: rgba(255,255,255,.45);
+  padding: 0.6rem 1.6rem;
+}
+.btn-white-outline:hover {
+  background: rgba(255,255,255,.12); color: #fff;
+  transform: translateY(-2px);
+}
+.btn-ghost {
+  background: transparent; color: var(--vbm-dark);
+  border-color: #d0d0d0;
+  padding: 0.6rem 1.6rem;
+}
+.btn-ghost:hover { border-color: var(--vbm-blue); color: var(--vbm-blue); }
+.btn-danger {
+  background: #dc2626; color: #fff;
+  border-color: #dc2626;
+  padding: 0.6rem 1.6rem;
+}
+.btn-danger:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,.3); }
+.btn-success {
+  background: #16a34a; color: #fff;
+  border-color: #16a34a;
+  padding: 0.6rem 1.6rem;
+}
+.btn-success:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(22,163,74,.3); }
+
+.btn-icon {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.78rem; color: var(--vbm-mid);
+  transition: all 0.2s; flex-shrink: 0;
+}
+.btn-icon:hover { background: var(--vbm-blue); color: #fff; border-color: var(--vbm-blue); transform: scale(1.08); }
+.btn-icon-blue { background: var(--vbm-blue-pale); color: var(--vbm-blue); border-color: transparent; }
+.btn-icon-blue:hover { background: var(--vbm-blue); color: #fff; }
+.btn-icon-green { background: #e8f8f0; color: #16a34a; border-color: transparent; }
+.btn-icon-green:hover { background: #16a34a; color: #fff; }
+.btn-icon-red { background: #fef2f2; color: #dc2626; border-color: transparent; }
+.btn-icon-red:hover { background: #dc2626; color: #fff; }
+
+/* ═══════════════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════════════ */
+.form-group { margin-bottom: 1.2rem; }
+.form-label {
+  display: block;
+  font-size: 0.73rem;
+  font-family:'Poppins', sans-serif;font-weight:600;
+  color: var(--vbm-dark);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.02em;
+}
+.form-label .req { color: #dc2626; margin-left: 0.15rem; }
+.form-control {
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #d5d5d5;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+  font-family:'Poppins', sans-serif;font-weight:300;
+  color: var(--vbm-dark);
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  -webkit-appearance: none;
+}
+.form-control:focus {
+  border-color: var(--vbm-blue);
+  box-shadow: 0 0 0 3px rgba(60,181,229,.15);
+}
+.form-control::placeholder { color: #bbb; }
+.form-control-error { border-color: #dc2626 !important; }
+.form-control-error:focus { box-shadow: 0 0 0 3px rgba(220,38,38,.12) !important; }
+select.form-control { cursor: pointer; padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+}
+textarea.form-control { resize: vertical; min-height: 90px; }
+.form-helper { font-size: 0.7rem; color: var(--vbm-mid); margin-top: 0.3rem; }
+.form-error { font-size: 0.7rem; color: #dc2626; margin-top: 0.3rem; }
+
+.form-grid { display: grid; gap: 1.2rem; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+/* Multilingual field — two boxes stacked one below the other, each carrying
+   a small flag+language-code tag above the control. One unified presentation
+   for both single-line (input) and multi-line (textarea) content, so Nome
+   and Descrição read as the same component family. Type scale matches
+   kaizen-novo.html: label .72rem/500, control .76rem — content never
+   outsizes its label. */
+.lang-stack { display: flex; flex-direction: column; gap: 0.45rem; }
+/* Nome (single-line) reads better side by side, splitting the row width
+   evenly — Descrição (multi-line) stays stacked, one below the other. */
+.lang-stack.lang-stack-row { flex-direction: row; }
+.lang-stack.lang-stack-row .lang-slot { flex: 1 1 0; min-width: 0; }
+@media (max-width: 480px) { .lang-stack.lang-stack-row { flex-direction: column; } }
+
+.lang-slot {
+  display: flex; align-items: center; gap: 0.55rem;
+  border: 1.5px solid #d0d0d0; border-radius: 0.5rem;
+  background: var(--vbm-off-white);
+  padding: 0.3rem 0.5rem;
+  transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+.lang-slot.lang-slot-textarea { align-items: flex-start; }
+.lang-slot:focus-within {
+  border-color: var(--vbm-blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(60,181,229,.15);
+}
+/* Fixed width so the PT-BR/EN identifier column lines up across every row,
+   regardless of label length (matches the widest code, "PT-BR"). */
+.lang-slot-tag {
+  flex: 0 0 auto; width: 3.35rem;
+  display: inline-flex; align-items: center; gap: 0.26rem;
+  font-size: 0.56rem; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--vbm-blue-dark);
+  font-family: 'Poppins', sans-serif;
+}
+.lang-slot-textarea .lang-slot-tag { margin-top: 0.32rem; }
+.lang-slot-flag {
+  display: inline-block; flex: 0 0 auto;
+  width: 1rem; height: 0.72rem; border-radius: 0.15rem;
+  background-color: var(--vbm-blue-pale);
+  background-repeat: no-repeat; background-position: center; background-size: cover;
+}
+.lang-slot-divider {
+  flex: 0 0 auto; align-self: stretch;
+  width: 1px; background: #d8d8d8; margin: 0 0.05rem;
+}
+.lang-slot-textarea .lang-slot-divider { align-self: stretch; }
+
+/* Flag graphics — inline SVG (no dependency on the OS emoji font, which
+   often can't render 🇧🇷/🇬🇧 and falls back to plain "BR"/"GB" text). */
+.flag-br { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23009739'/%3E%3Cpolygon points='15,3 27,10 15,17 3,10' fill='%23FEDD00'/%3E%3Ccircle cx='15' cy='10' r='5' fill='%23012169'/%3E%3C/svg%3E"); }
+.flag-gb { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23012169'/%3E%3Cpath d='M0,0L30,20M30,0L0,20' stroke='%23FFFFFF' stroke-width='4'/%3E%3Cpath d='M0,0L30,20M30,0L0,20' stroke='%23C8102E' stroke-width='2'/%3E%3Cpath d='M15,0V20M0,10H30' stroke='%23FFFFFF' stroke-width='6'/%3E%3Cpath d='M15,0V20M0,10H30' stroke='%23C8102E' stroke-width='3.5'/%3E%3C/svg%3E"); }
+.lang-slot-input.form-control {
+  flex: 1; min-width: 0;
+  border: none !important; background: transparent !important;
+  padding: 0.32rem 0 !important; font-size: 0.7rem; font-weight: 400 !important; line-height: 1.4;
+  box-shadow: none !important;
+}
+textarea.lang-slot-input.form-control { min-height: 1.4rem; resize: vertical; }
+[data-bg="dark"] .lang-slot { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+[data-bg="dark"] .lang-slot:focus-within { background: rgba(255,255,255,.09); }
+[data-bg="dark"] .lang-slot-tag { color: #8fdcff; }
+[data-bg="dark"] .lang-slot-divider { background: rgba(255,255,255,.14); }
+[data-bg="dark"] .lang-slot-input.form-control { color: #fff; }
+
+/* ═══════════════════════════════════════════════════
+   CATEGORY MODAL — icon picker (type scale + component
+   language borrowed from kaizen-novo.html). Single row of
+   icon swatches, followed by name/description below it.
+═══════════════════════════════════════════════════ */
+.icon-swatch-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem; }
+/* Same size, radius and color language as .admin-item-icon in the Categorias
+   grid (36px, radius .6rem, icon .9rem) — the picker is literally that same
+   badge made clickable, not a smaller lookalike. Colors from the Design
+   System's "Primary — VBM Blue" family, tuned to this modal's tab tone
+   (Categorias = Dark #1a8bbf, same as its .modal-icon header badge and its
+   .admin-item-icon.green chips), with the identical hover-lift + glow +
+   dark-mode-blur effect via the shared --hue token. */
+.icon-swatch {
+  --hue: 26,139,191;
+  width: 36px; height: 36px; flex: 0 0 auto; border-radius: 0.6rem;
+  border: 1px solid rgba(var(--hue),.22);
+  background: linear-gradient(155deg,#eef6fb 0%,#d7ecf6 100%);
+  color: var(--vbm-blue-dark); display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; cursor: pointer;
+  transition: transform .35s var(--ease-spring), box-shadow .3s var(--ease-out), border-color .3s var(--ease-out), background .3s var(--ease-out), color .3s var(--ease-out);
+}
+.icon-swatch:hover {
+  transform: translateY(-2px) scale(1.06);
+  border-color: rgba(var(--hue),.42);
+  box-shadow: 0 6px 14px -4px rgba(var(--hue),.35);
+  color: var(--vbm-blue-dark);
+  background: linear-gradient(155deg,#eef6fb 0%,#d7ecf6 100%);
+}
+/* Estado selecionado — apenas um destaque sutil na borda (sem preencher o
+   fundo), para não competir visualmente com o hover/glow dos demais. */
+.icon-swatch.active {
+  background: linear-gradient(155deg,#eef6fb 0%,#d7ecf6 100%);
+  border-color: var(--vbm-blue-dark); border-width: 2px; color: var(--vbm-blue-dark);
+  box-shadow: 0 0 0 3px rgba(var(--hue),.18);
+}
+.icon-swatch.active:hover { box-shadow: 0 6px 14px -4px rgba(var(--hue),.35), 0 0 0 3px rgba(var(--hue),.18); }
+[data-bg="dark"] .icon-swatch {
+  background: rgba(var(--hue),.16); border-color: rgba(var(--hue),.26); color: var(--vbm-blue-light);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+[data-bg="dark"] .icon-swatch:hover { border-color: rgba(var(--hue),.55); box-shadow: 0 6px 18px -4px rgba(var(--hue),.5); color: #fff; }
+[data-bg="dark"] .icon-swatch.active {
+  background: rgba(var(--hue),.16); border-color: var(--vbm-blue-light); border-width: 2px; color: var(--vbm-blue-light);
+  box-shadow: 0 0 0 3px rgba(var(--hue),.22);
+}
+@media (prefers-reduced-motion: reduce) { .icon-swatch { transition-duration: .01ms !important; } }
+
+/* Tighter rhythm for these two modals specifically — labels/spacing scaled
+   down to match a compact reference (fields shouldn't dominate the card). */
+#modalAddCategoria .form-group, #modalEditCategoria .form-group { margin-bottom: 1.5rem; }
+#modalAddCategoria .form-label, #modalEditCategoria .form-label { font-size: 0.68rem; margin-bottom: 0.32rem; }
+#modalAddCategoria .modal-body, #modalEditCategoria .modal-body { padding: 1.6rem 1.75rem; }
+#modalAddCategoria .form-helper, #modalEditCategoria .form-helper { font-size: 0.64rem; margin-top: 0.2rem; }
+
+/* Dark mode — same layered background as the Categorias panel itself
+   (radial glow + navy gradient), instead of a flat solid fill, so the modal
+   feels like an extension of the page it opened from rather than a plain box. */
+[data-bg="dark"] #modalAddCategoria .modal,
+[data-bg="dark"] #modalEditCategoria .modal {
+  background:
+    radial-gradient(ellipse 90% 55% at 78% -8%, rgba(60,181,229,.18) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at -5% 105%, rgba(60,181,229,.08) 0%, transparent 60%),
+    linear-gradient(160deg, #10131a 0%, var(--vbm-blue-deep) 100%);
+  border: 1px solid rgba(255,255,255,.08);
+}
+[data-bg="dark"] #modalAddCategoria .modal-head,
+[data-bg="dark"] #modalEditCategoria .modal-head {
+  background: linear-gradient(180deg, rgba(255,255,255,.04) 0%, transparent 100%);
+  border-bottom-color: rgba(255,255,255,.08);
+}
+/* Icon picker + lang fields get a touch more glass so they read as cards
+   floating over the gradient, matching the .admin-item cards in the list. */
+[data-bg="dark"] #modalAddCategoria .icon-swatch:not(.active),
+[data-bg="dark"] #modalEditCategoria .icon-swatch:not(.active) {
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+[data-bg="dark"] #modalAddCategoria .lang-slot,
+[data-bg="dark"] #modalEditCategoria .lang-slot {
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+
+/* Input with prefix icon */
+.input-with-icon { position: relative; }
+.input-with-icon .form-control { padding-left: 2.4rem; }
+.input-icon {
+  position: absolute; left: 0.9rem; top: 50%;
+  transform: translateY(-50%);
+  color: #bbb; font-size: 0.85rem;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+.input-with-icon:focus-within .input-icon { color: var(--vbm-blue); }
+
+/* Toggle switch */
+.toggle-wrap {
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.toggle {
+  width: 42px; height: 22px;
+  background: #ddd;
+  border-radius: 100px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  border: none; flex-shrink: 0;
+}
+.toggle::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%; background: #fff;
+  transition: transform 0.3s var(--ease-spring);
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.toggle.on { background: var(--vbm-blue); }
+.toggle.on::after { transform: translateX(20px); }
+.toggle-label { font-size: 0.82rem; color: var(--vbm-dark); cursor: pointer; }
+
+/* Checkbox */
+.checkbox-wrap {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  cursor: pointer;
+}
+.checkbox-wrap input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--vbm-blue);
+  flex-shrink: 0; margin-top: 0.1rem;
+  cursor: pointer;
+}
+.checkbox-label { font-size: 0.82rem; color: var(--vbm-dark); }
+
+/* Photo upload */
+.photo-upload-zone {
+  border: 2px dashed #d5d5d5;
+  border-radius: 0.75rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: #fafafa;
+  position: relative;
+}
+.photo-upload-zone:hover { border-color: var(--vbm-blue); background: var(--vbm-blue-pale); }
+.photo-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.photo-upload-icon {
+  font-size: 2rem; color: #ccc; margin-bottom: 0.65rem;
+  transition: color 0.25s; display: block;
+}
+.photo-upload-zone:hover .photo-upload-icon { color: var(--vbm-blue); }
+.photo-upload-text { font-size: 0.8rem; color: var(--vbm-mid); }
+.photo-upload-text strong { color: var(--vbm-blue); }
+.photo-preview-img {
+  width: 100%; border-radius: 0.5rem; object-fit: cover; display: none;
+  max-height: 220px;
+}
+
+/* ═══════════════════════════════════════════════════
+   WIZARD / MULTI-STEP FORM
+═══════════════════════════════════════════════════ */
+.wizard-header {
+  position: relative;
+  padding: 2.5rem 2rem 0;
+  background: linear-gradient(135deg, #041523, #082d4f);
+  border-radius: 1.25rem 1.25rem 0 0;
+  overflow: hidden;
+}
+.wizard-header-bg {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(60,181,229,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60,181,229,.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+}
+.wizard-header-orb {
+  position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none;
+}
+.wizard-header-title {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 1.5rem; color: #fff;
+  margin-bottom: 0.35rem;
+  position: relative; z-index: 1;
+}
+.wizard-header-sub {
+  font-size: 0.82rem; color: rgba(255,255,255,.5);
+  margin-bottom: 2rem;
+  position: relative; z-index: 1;
+}
+
+/* Step indicators */
+.wizard-steps {
+  display: flex; position: relative; z-index: 1;
+  margin-bottom: 0;
+}
+.wizard-step-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  position: relative;
+}
+.wizard-step-item::before {
+  content: '';
+  position: absolute; top: 19px;
+  left: 50%; right: -50%;
+  height: 2px;
+  background: rgba(255,255,255,.12);
+  z-index: 0;
+}
+.wizard-step-item:last-child::before { display: none; }
+.wizard-step-item.completed::before { background: rgba(22,163,74,.5); }
+.wizard-step-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.05);
+  display: flex; align-items: center; justify-content: center;
+  font-family:'Poppins', sans-serif;font-weight:700; font-size: 0.78rem; color: rgba(255,255,255,.4);
+  position: relative; z-index: 1;
+  transition: all 0.35s var(--ease-out);
+}
+.wizard-step-item.active .wizard-step-circle {
+  border-color: var(--vbm-blue);
+  background: var(--vbm-blue);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(60,181,229,.25);
+  animation: glow 2.5s ease-in-out infinite;
+}
+.wizard-step-item.completed .wizard-step-circle {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #fff;
+}
+.wizard-step-lbl {
+  font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: rgba(255,255,255,.3);
+  margin-top: 0.45rem; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 80px;
+  transition: color 0.3s;
+}
+.wizard-step-item.active .wizard-step-lbl { color: var(--vbm-blue-light); }
+.wizard-step-item.completed .wizard-step-lbl { color: rgba(74,222,128,.7); }
+
+/* Wizard body */
+.wizard-body {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-top: none;
+  border-radius: 0 0 1.25rem 1.25rem;
+  padding: 2rem;
+}
+.wizard-panel { display: none; animation: fadeUp 0.45s var(--ease-out) both; }
+.wizard-panel.active { display: block; }
+.wizard-panel-title {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 1.05rem; color: var(--vbm-dark);
+  margin-bottom: 0.35rem;
+}
+.wizard-panel-sub {
+  font-size: 0.8rem; color: var(--vbm-mid);
+  margin-bottom: 1.5rem; line-height: 1.55;
+}
+.wizard-divider {
+  height: 1px; background: #f0f0f0; margin: 1.5rem 0;
+}
+.wizard-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+.wizard-footer-right { display: flex; gap: 0.65rem; align-items: center; }
+
+/* ═══════════════════════════════════════════════════
+   PNR28 TYPE SELECTOR
+═══════════════════════════════════════════════════ */
+.pnr-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.65rem;
+}
+.pnr-item {
+  border: 2px solid #eaeaea;
+  border-radius: 0.75rem;
+  padding: 1rem 0.65rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  position: relative; overflow: hidden;
+}
+.pnr-item::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--vbm-blue-pale); opacity: 0;
+  transition: opacity 0.25s;
+}
+.pnr-item:hover { border-color: var(--vbm-blue); transform: translateY(-2px); }
+.pnr-item:hover::before { opacity: 1; }
+.pnr-item.selected { border-color: var(--vbm-blue); background: var(--vbm-blue-pale); }
+.pnr-item.selected .pnr-check { opacity: 1; }
+.pnr-emoji { font-size: 1.6rem; margin-bottom: 0.4rem; position: relative; z-index: 1; }
+.pnr-label {
+  font-size: 0.65rem; color: var(--vbm-dark);
+  font-family:'Poppins', sans-serif;font-weight:600;
+  line-height: 1.3;
+  position: relative; z-index: 1;
+}
+.pnr-check {
+  position: absolute; top: 0.4rem; right: 0.4rem;
+  width: 18px; height: 18px;
+  border-radius: 50%; background: var(--vbm-blue);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+  z-index: 1;
+}
+.pnr-check i { font-size: 0.55rem; color: #fff; }
+
+/* ═══════════════════════════════════════════════════
+   DATA TABLE
+═══════════════════════════════════════════════════ */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left;
+  padding: 0.65rem 1rem;
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.15em;
+  color: var(--vbm-mid);
+  font-family:'Poppins', sans-serif;font-weight:600;
+  background: #fafafa;
+  border-bottom: 2px solid #eaeaea;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 0.82rem; color: var(--vbm-text);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #fafafa; }
+.table-actions { display: flex; gap: 0.35rem; }
+
+/* ═══════════════════════════════════════════════════
+   FILTER BAR
+═══════════════════════════════════════════════════ */
+.filter-bar {
+  display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;
+  padding: 1rem 1.5rem;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+.filter-search {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: #fff; border: 1.5px solid #e0e0e0; border-radius: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  min-width: 220px; flex: 1; max-width: 320px;
+  transition: border-color 0.2s;
+}
+.filter-search:focus-within { border-color: var(--vbm-blue); }
+.filter-search i { color: #bbb; font-size: 0.78rem; flex-shrink: 0; transition: color 0.2s; }
+.filter-search:focus-within i { color: var(--vbm-blue); }
+.filter-search input {
+  border: none; background: none; outline: none; flex: 1;
+  font-size: 0.7rem; font-family:'Poppins', sans-serif;font-weight:500; color: var(--vbm-dark);
+}
+.filter-search input::placeholder { color: #bbb; }
+.filter-select {
+  background: #fff; border: 1.5px solid #e0e0e0; border-radius: 0.4rem;
+  padding: 0.45rem 1.8rem 0.45rem 0.8rem; font-size: 0.78rem;
+  font-family:'Poppins', sans-serif;font-weight:400; color: var(--vbm-dark);
+  outline: none; cursor: pointer;
+  transition: border-color 0.2s; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.6rem center;
+}
+.filter-select:focus { border-color: var(--vbm-blue); }
+.filter-view-toggle { display: flex; gap: 0.3rem; margin-left: auto; }
+.filter-view-btn {
+  width: 32px; height: 32px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 0.35rem;
+  background: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; color: #bbb;
+  transition: all 0.2s;
+}
+.filter-view-btn.active, .filter-view-btn:hover {
+  border-color: var(--vbm-blue); color: var(--vbm-blue); background: var(--vbm-blue-pale);
+}
+
+/* ═══════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════ */
+.app-tabs {
+  display: flex; border-bottom: 2px solid #eaeaea;
+  overflow-x: auto; flex-shrink: 0;
+}
+.app-tabs::-webkit-scrollbar { height: 0; }
+.app-tab {
+  padding: 0.7rem 1.35rem;
+  border: none; background: none;
+  font-family:'Poppins', sans-serif;font-weight:600;
+  font-size: 0.8rem; color: var(--vbm-mid);
+  cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.22s;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.app-tab:hover { color: var(--vbm-blue); }
+.app-tab.active { color: var(--vbm-blue); border-bottom-color: var(--vbm-blue); }
+.tab-count {
+  background: var(--vbm-blue-pale);
+  color: var(--vbm-blue); border-radius: 100px;
+  padding: 0.05rem 0.45rem; font-size: 0.6rem;
+  font-family:'Poppins', sans-serif;font-weight:700;
+}
+.app-tab.active .tab-count { background: var(--vbm-blue); color: #fff; }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* ═══════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-backdrop.open { display: flex; animation: fadeIn 0.25s ease; }
+.modal {
+  background: #fff; border-radius: 1.25rem;
+  width: 100%; max-width: 560px;
+  animation: scaleIn 0.32s var(--ease-spring);
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,.22);
+  max-height: 90vh;
+  display: flex; flex-direction: column;
+}
+.modal-lg { max-width: 760px; }
+.modal-xl { max-width: 1000px; }
+.modal-head {
+  padding: 1.6rem 2rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; gap: 0.75rem;
+  flex-shrink: 0;
+}
+.modal-icon {
+  width: 40px; height: 40px; border-radius: 0.65rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  border: 1.5px solid transparent;
+}
+/* Dark mode: the badge's --hue (set inline per modal, same token used by
+   .admin-item-icon) drives a translucent tint instead of the hard-coded
+   light-mode hex, so every modal header badge adapts automatically —
+   same "chip" effect (soft fill + ring border) in both themes. */
+[data-bg="dark"] .modal-icon {
+  background: rgba(var(--hue,60,181,229),.16) !important;
+  border-color: rgba(var(--hue,60,181,229),.32) !important;
+}
+.modal-title {
+  font-family:'Poppins', sans-serif;font-weight:700; font-size: 1.05rem; color: var(--vbm-dark); flex: 1;
+}
+.modal-close {
+  width: 32px; height: 32px; border-radius: 100px;
+  background: #f5f5f5; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: var(--vbm-mid);
+  transition: all 0.2s; flex-shrink: 0;
+}
+.modal-close:hover { background: var(--vbm-blue); color: #fff; }
+
+/* ── O "X" no tema escuro ─────────────────────────────
+   Aqui mora um cruzamento que apagava o ícone: .modal-close pinta o
+   glifo com var(--vbm-mid), e no tema escuro o body REDEFINE esse token
+   para rgba(244,247,251,.55) — quase branco, porque lá ele é texto
+   secundário sobre fundo escuro. Só que o FUNDO da pílula continuava
+   sendo o #f5f5f5 do tema claro: branco sobre branco, contraste medido
+   de 1.01:1. O X não estava "meio apagado", estava invisível.
+
+   Três telas tinham conserto próprio no <style> da página e duas não —
+   por isso o defeito aparecia em umas e não em outras. A regra passa a
+   viver aqui, uma vez só, valendo para os modais fixos no HTML e para
+   os cartões criados em runtime (showToast/confirmarAcao), que usam o
+   mesmo .modal-close.
+
+   O glifo vem em #f4f7fb cheio, não em branco esmaecido: o alvo é o
+   mesmo peso visual do tema claro (#888 sobre #f5f5f5), e meia
+   transparência sobre a pílula translúcida devolvia justamente o
+   cinza apagado que o usuário apontou. */
+[data-bg="dark"] .modal-close,
+[data-bg="dark"] .settings-close {
+  background: rgba(255,255,255,.12);
+  color: #f4f7fb;
+}
+[data-bg="dark"] .modal-close:hover,
+[data-bg="dark"] .settings-close:hover { background: var(--vbm-blue); color: #fff; }
+/* O toast de canto não tem pílula — o glifo fica direto sobre o cartão
+   escuro, e var(--vbm-mid) a 55% o deixava rente ao fundo. */
+[data-bg="dark"] .toast-close { color: rgba(244,247,251,.85); }
+[data-bg="dark"] .toast-close:hover { color: #fff; }
+
+.modal-body { padding: 2rem; overflow-y: auto; flex: 1; }
+.modal-foot {
+  padding: 1.2rem 2rem; border-top: 1px solid #f0f0f0;
+  display: flex; gap: 0.65rem; justify-content: flex-end; flex-shrink: 0;
+}
+
+/* ── A CAIXA do modal no tema escuro ──────────────────
+   .modal nasce com background:#fff, e essa era a única peça do modal
+   sem contraparte escura AQUI. Duas telas (Administração e Biblioteca)
+   remendavam no <style> da própria página; Aprovação, Novo Kaizen e o
+   Painel não. Resultado: na Aprovação o "Kaizen ampliado" abria numa
+   caixa branca — e como TODO o conteúdo dentro dela já é correto (as
+   .kd-* são translúcidas e os textos usam os tokens do tema, que no
+   escuro são quase brancos), o efeito era texto branco sobre branco.
+   Medido antes da correção: 1 elemento claro (esta caixa) e 29 textos
+   entre 1,00:1 e 1,36:1. Não eram 29 defeitos — era um só, e a caixa
+   que os continha.
+
+   Escrita aqui, a regra vale para todo modal de toda tela, presente e
+   futuro. O conteúdo não precisa de nada: ele já herda o tema porque
+   vive dentro de body[data-bg="dark"], inclusive quando o modal recebe
+   um CLONE do painel, como o "Kaizen ampliado" faz.
+
+   Os cartões de runtime (.confirm-backdrop .modal — showToast e
+   confirmarAcao) mantêm o gradiente próprio: aquela regra é mais
+   específica e vem logo abaixo. */
+[data-bg="dark"] .modal {
+  background: var(--vbm-blue-deep);
+  box-shadow: 0 32px 80px rgba(0,0,0,.5);
+}
+[data-bg="dark"] .modal-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .modal-foot { border-top-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .modal-title { color: #fff; }
+
+/* ── Faixa de atenção dentro de um modal ──────────────
+   O aviso "como aprovador, você pode editar…" vinha com as cores no
+   atributo style (#fff4e5 / #92400e). Estilo inline vence qualquer
+   classe e não sabe que existe um tema: a faixa continuava âmbar-clara
+   dentro do modal escuro. Em vez de cobri-la com um !important, as
+   cores saem do HTML e vêm para cá, onde cada tema diz a sua — que é o
+   que o resto do sistema já faz.
+
+   Mesmo âmbar do .badge-pending/.stat-icon-orange, para o aviso não
+   inventar uma terceira cor de atenção. */
+.callout-atencao {
+  display: flex; align-items: flex-start; gap: .6rem;
+  padding: .85rem; margin-bottom: 1.25rem;
+  border-radius: .5rem;
+  background: #fff4e5; border: 1px solid rgba(194,119,14,.2);
+  font-size: .8rem; color: #92400e; line-height: 1.55;
+}
+.callout-atencao > i { color: #c2770e; margin-top: .05rem; flex-shrink: 0; }
+[data-bg="dark"] .callout-atencao {
+  background: rgba(194,119,14,.16); border-color: rgba(194,119,14,.4);
+  color: #f0c88a;
+}
+[data-bg="dark"] .callout-atencao > i { color: #f0a94a; }
+
+/* ═══════════════════════════════════════════════════
+   CARTÕES DE RUNTIME — confirmação (window.confirmarAcao) e
+   aviso (window.showToast)
+   ---------------------------------------------------
+   Os dois são criados em JavaScript, não ficam no HTML, e dividem a
+   mesma camada .confirm-backdrop (e não .modal-backdrop): os listeners
+   genéricos de Escape/clique-fora de initModals() varrem
+   ".modal-backdrop" pensando em modais fixos no HTML — estes cuidam do
+   próprio ciclo de vida (um resolve uma Promise, o outro tem relógio)
+   sem se misturar com aquele mecanismo.
+
+   A caixa vem de .modal/.modal-head/.modal-icon/.modal-title/
+   .modal-close/.modal-body/.modal-foot, os mesmos dos modais de
+   Add/Edit. O que muda aqui é o RITMO, e ele é um só para os dois:
+
+     · sem divisórias — em um cartão de 2 ou 3 linhas as linhas
+       fragmentavam mais do que organizavam; quem separa é o espaço;
+     · ícone e título centrados um pelo outro, inclusive quando o
+       título ocupa duas linhas;
+     · texto alinhado ao TÍTULO (recuo de 40px do ícone + .9rem do
+       gap), não ao ícone — a mensagem é o conteúdo, não uma legenda.
+
+   É o desenho do modal de validação do Novo Kaizen, promovido a padrão
+   da aplicação.
+═══════════════════════════════════════════════════ */
+.confirm-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.confirm-backdrop.open { display: flex; animation: fadeIn .2s ease; }
+.confirm-backdrop.closing { animation: fadeOut .2s ease forwards; }
+.confirm-backdrop.open .modal { animation: scaleIn .28s var(--ease-spring); }
+.confirm-backdrop.closing .modal { animation: scaleOut .2s ease forwards; }
+.confirm-backdrop .modal { max-width: 460px; }
+.confirm-backdrop .modal-head {
+  border-bottom: none;
+  /* Centro do ícone no centro do título (o .modal-head do Design
+     System já centra; fica explícito aqui porque é regra do padrão). */
+  align-items: center;
+  padding: 1.75rem 1.75rem .75rem;
+  gap: .9rem;
+}
+.confirm-backdrop .modal-title { line-height: 1.35; }
+.confirm-backdrop .modal-body { padding: 0 1.75rem 1.25rem; }
+/* Confirmação sem mensagem (só título + botões): sem isso o padding do
+   corpo vazio abriria um vão solto antes dos botões. */
+.confirm-backdrop .modal-body.is-vazio { padding-bottom: 0; }
+.confirm-backdrop .modal-foot {
+  border-top: none;
+  padding: .25rem 1.75rem 1.5rem;
+}
+/* O recuo que alinha o texto com o título: 40px do .modal-icon + .9rem
+   do gap do cabeçalho. */
+.confirm-backdrop .confirm-msg,
+.confirm-backdrop .aviso-conteudo { padding-left: calc(40px + .9rem); }
+.confirm-msg { font-size: .88rem; color: var(--vbm-text); line-height: 1.5; margin: 0; }
+[data-bg="dark"] .confirm-backdrop .modal {
+  background: linear-gradient(160deg, #10131a 0%, var(--vbm-blue-deep) 100%);
+  border: 1px solid rgba(255,255,255,.08);
+}
+[data-bg="dark"] .confirm-msg { color: rgba(244,247,251,.82); }
+
+/* ── Aviso (window.showToast) ── */
+.aviso-conteudo p { margin: 0; font-size: .88rem; color: var(--vbm-text); line-height: 1.5; }
+[data-bg="dark"] .aviso-conteudo p { color: rgba(244,247,251,.82); }
+
+@media (max-width: 600px) {
+  /* Em tela estreita o recuo do ícone comeria a largura do texto. */
+  .confirm-backdrop .confirm-msg,
+  .confirm-backdrop .aviso-conteudo { padding-left: 0; }
+  .confirm-backdrop .modal-head { padding: 1.35rem 1.35rem .6rem; }
+  .confirm-backdrop .modal-body { padding: 0 1.35rem 1.1rem; }
+  .confirm-backdrop .modal-foot { padding: .25rem 1.35rem 1.35rem; }
+}
+
+.btn-danger {
+  background: #dc2626; color: #fff;
+  border-color: #dc2626;
+  padding: 0.6rem 1.6rem;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(220,38,38,.35);
+}
+
+/* ═══════════════════════════════════════════════════
+   APPROVAL ITEMS
+═══════════════════════════════════════════════════ */
+.approval-item {
+  background: #fff; border: 1px solid #eaeaea;
+  border-radius: 0.75rem; padding: 1rem 1.25rem;
+  margin-bottom: 0.65rem; cursor: pointer;
+  transition: all 0.25s;
+  border-left: 3px solid transparent;
+  display: flex; align-items: flex-start; gap: 0.9rem;
+}
+.approval-item:hover { border-left-color: var(--vbm-blue); box-shadow: 0 4px 16px rgba(60,181,229,.1); }
+.approval-item.selected { border-left-color: var(--vbm-blue); background: var(--vbm-blue-pale); }
+.approval-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--vbm-blue-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; color: var(--vbm-blue); flex-shrink: 0;
+}
+.approval-info { flex: 1; min-width: 0; }
+.approval-title {
+  font-family:'Poppins', sans-serif;font-weight:600; font-size: 0.82rem; color: var(--vbm-dark);
+  margin-bottom: 0.2rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.approval-meta { font-size: 0.68rem; color: var(--vbm-mid); }
+.approval-actions { flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════
+   DETAIL VIEW (Print-ready Kaizen)
+═══════════════════════════════════════════════════ */
+.kaizen-detail-head {
+  background: linear-gradient(135deg, #041523, #082d4f);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  position: relative; overflow: hidden;
+}
+.kaizen-detail-head::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(60,181,229,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60,181,229,.04) 1px, transparent 1px);
+  background-size: 25px 25px;
+}
+.kd-id {
+  font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(255,255,255,.4); margin-bottom: 0.4rem; position: relative; z-index:1;
+}
+.kd-title {
+  font-family:'Poppins', sans-serif;font-weight:700; font-size: 1.2rem; color: #fff;
+  margin-bottom: 0.75rem; position: relative; z-index:1;
+}
+.kd-metas {
+  display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; position: relative; z-index:1;
+}
+.kd-meta {
+  font-size: 0.7rem; color: rgba(255,255,255,.5);
+  display: flex; align-items: center; gap: 0.3rem;
+}
+.kd-meta i { color: var(--vbm-blue); }
+
+.kd-section {
+  background: #fff; border: 1px solid #eaeaea;
+  border-radius: 0.75rem; overflow: hidden; margin-bottom: 1rem;
+}
+.kd-section-head {
+  padding: 0.75rem 1.1rem;
+  background: #fafafa; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.kd-section-icon {
+  width: 26px; height: 26px; border-radius: 0.35rem;
+  background: var(--vbm-blue-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: var(--vbm-blue);
+}
+.kd-section-title {
+  font-family:'Poppins', sans-serif;font-weight:600; font-size: 0.78rem; color: var(--vbm-dark);
+}
+.kd-section-body { padding: 1rem 1.1rem; }
+.kd-before-after {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+}
+.kd-photo-box {
+  border: 1px solid #eaeaea; border-radius: 0.5rem; overflow: hidden;
+}
+.kd-photo-box img { width: 100%; height: 140px; object-fit: cover; }
+/* Kaizen sem foto de "Antes"/"Depois", ou foto que não veio do volume.
+   Antes o <img> ficava com src="" — o navegador resolve isso para a
+   URL da PRÓPRIA PÁGINA, baixa o HTML, não consegue decodificar como
+   imagem e desenha o ícone de imagem quebrada com o texto alternativo
+   ao lado. Parecia defeito da tela quando era só ausência de foto.
+   Este bloco ocupa o mesmo espaço da imagem, então o cartão não muda
+   de altura conforme tenha ou não foto. */
+.kd-photo-vazia {
+  width: 100%; height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 1rem;
+  background: #f4f6f8; color: #5f6b74;
+  font-size: 0.78rem; line-height: 1.4;
+}
+/* #5f6b74 e não --vbm-mid (#888): sobre o #f4f6f8 da caixa, o cinza do
+   token dá 3,27:1 e fica abaixo do mínimo de leitura. Este dá 5,05:1
+   sem mudar o tom da interface. */
+/* O atributo hidden PRECISA destas duas linhas. A regra do navegador é
+   [hidden]{display:none}, e qualquer display declarado aqui — o flex
+   acima, o block que .kd-photo-box img recebe — vence por vir de folha
+   de autor. Sem isto, esconder pelo atributo não esconde nada: a foto
+   quebrada e o aviso apareciam os dois, empilhados. */
+.kd-photo-vazia[hidden],
+.kd-photo-box img[hidden] { display: none !important; }
+.kd-photo-box-body { padding: 0.65rem 0.75rem; }
+.kd-photo-label {
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em;
+  color: var(--vbm-mid); margin-bottom: 0.3rem;
+}
+.kd-photo-desc { font-size: 0.78rem; color: var(--vbm-text); line-height: 1.5; }
+
+/* Kaizen lido por inteiro — mesmo componente .modal/.modal-body dos demais
+   modais; só as medidas mudam, escopadas por id para não afetar o
+   .modal-xl usado em outros lugares. A rolagem continua no .modal-body.
+   Vale para os DOIS lugares onde o Kaizen é aberto inteiro: o ampliado da
+   Aprovação e o "Visualizar" da Biblioteca. O bloco é UM só de propósito —
+   duas cópias das mesmas medidas é o caminho curto para as duas telas
+   começarem iguais e terminarem diferentes. */
+#modalKaizenAmpliado .modal,
+#modalBibDetail .modal { width: 94vw; max-width: 1700px; max-height: 92vh; }
+#modalKaizenAmpliado .modal-body,
+#modalBibDetail .modal-body { padding: 1.5rem 2rem 2rem; }
+#modalKaizenAmpliado .kd-section-title,
+#modalBibDetail .kd-section-title { font-size: 0.88rem; }
+#modalKaizenAmpliado .kd-section-body,
+#modalBibDetail .kd-section-body { padding: 1.25rem 1.4rem; }
+#modalKaizenAmpliado .kd-before-after,
+#modalBibDetail .kd-before-after { gap: 1.5rem; }
+#modalKaizenAmpliado .kd-photo-label,
+#modalBibDetail .kd-photo-label { font-size: 0.66rem; }
+#modalKaizenAmpliado .kd-photo-desc,
+#modalBibDetail .kd-photo-desc { font-size: 0.86rem; }
+/* Foto grande sem corte: contain sobre fundo neutro preserva a proporção
+   original em vez de cortar a imagem como o cover do painel. */
+#modalKaizenAmpliado .kd-photo-box img,
+#modalBibDetail .kd-photo-box img {
+  height: clamp(240px, 38vh, 460px);
+  object-fit: contain;
+  background: #f4f6f8;
+}
+/* O vazio acompanha a MESMA altura da foto, senão o cartão sem imagem
+   encolhe e a dupla Antes/Depois fica desalinhada. */
+#modalKaizenAmpliado .kd-photo-vazia,
+#modalBibDetail .kd-photo-vazia { height: clamp(240px, 38vh, 460px); font-size: 0.86rem; }
+@media (max-width: 900px) {
+  #modalKaizenAmpliado .modal,
+  #modalBibDetail .modal { width: 100%; max-height: 92vh; }
+  #modalKaizenAmpliado .modal-body,
+  #modalBibDetail .modal-body { padding: 1.15rem; }
+  #modalKaizenAmpliado .kd-section-body,
+  #modalBibDetail .kd-section-body { padding: 1rem 1.1rem; }
+  #modalKaizenAmpliado .kd-photo-box img,
+  #modalBibDetail .kd-photo-box img,
+  #modalKaizenAmpliado .kd-photo-vazia,
+  #modalBibDetail .kd-photo-vazia { height: clamp(180px, 30vh, 300px); }
+}
+
+/* Tema escuro do Kaizen lido por inteiro.
+   As medidas acima já são únicas para as duas telas; a cor precisava ser
+   também. Os blocos .kd-* nascem claros por padrão (#fff no cartão,
+   #fafafa no cabeçalho) e os textos usam --vbm-dark / --vbm-text /
+   --vbm-mid — tokens que o tema escuro inverte para tons quase brancos.
+   Resultado: cartão branco com letra branca, ilegível. Aqui o cartão
+   vira translúcido sobre o fundo escuro e o texto reaparece, na mesma
+   linguagem das demais superfícies do tema (branco a 5%/6% com anel a
+   10%/12%). Vale para o modal da Biblioteca e para o ampliado da
+   Aprovação — um bloco só, para as duas telas não começarem iguais e
+   terminarem diferentes. */
+[data-bg="dark"] .kd-section { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .kd-section-head {
+  background: rgba(255,255,255,.05); border-bottom-color: rgba(255,255,255,.1);
+}
+[data-bg="dark"] .kd-section-icon { background: rgba(60,181,229,.16); color: var(--vbm-blue-light); }
+[data-bg="dark"] .kd-section-title { color: #fff; }
+[data-bg="dark"] .kd-photo-box { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
+/* A TARJA ao redor da foto ampliada, não a foto.
+   Com object-fit:contain a imagem não preenche a caixa, e o que sobra
+   nas bordas é o background do próprio <img> — #f4f6f8, claro, sem
+   contraparte escura. No modal escuro isso virava duas faixas brancas
+   emoldurando cada evidência. Trocar esse fundo não toca em um pixel da
+   imagem: nada de filter, opacity ou mix-blend-mode aqui. */
+[data-bg="dark"] #modalKaizenAmpliado .kd-photo-box img,
+[data-bg="dark"] #modalBibDetail .kd-photo-box img { background: rgba(255,255,255,.04); }
+/* No escuro o texto compõe sobre a caixa translúcida: 60% de branco dá
+   5,87:1; os 50% que o resto do tema usa ficariam no limite. */
+[data-bg="dark"] .kd-photo-vazia { background: rgba(255,255,255,.04); color: rgba(255,255,255,.6); }
+[data-bg="dark"] .kd-photo-desc { color: rgba(255,255,255,.6); }
+/* Os cartões de "Resultados Alcançados" são montados por script com
+   background:var(--vbm-off-white) no atributo style — inline vence
+   qualquer classe, então a regra tem de alcançar o atributo. */
+[data-bg="dark"] #modalBibDetail [style*="--vbm-off-white"],
+[data-bg="dark"] #modalKaizenAmpliado [style*="--vbm-off-white"] {
+  background: rgba(255,255,255,.06) !important; border-color: rgba(255,255,255,.12) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   ADMIN PANEL
+═══════════════════════════════════════════════════ */
+.admin-item {
+  display: flex; align-items: center;
+  padding: 0.8rem 1rem; border-bottom: 1px solid #f5f5f5;
+  gap: 0.75rem; transition: background 0.15s;
+}
+.admin-item:last-child { border-bottom: none; }
+.admin-item:hover { background: #fafafa; }
+.admin-item-icon {
+  width: 32px; height: 32px; border-radius: 0.4rem;
+  background: var(--vbm-blue-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; color: var(--vbm-blue); flex-shrink: 0;
+}
+.admin-item-info { flex: 1; min-width: 0; }
+.admin-item-name {
+  font-family:'Poppins', sans-serif;font-weight:600; font-size: 0.82rem; color: var(--vbm-dark);
+}
+.admin-item-sub { font-size: 0.68rem; color: var(--vbm-mid); margin-top: 0.1rem; }
+.admin-item-actions { display: flex; gap: 0.35rem; }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 3rem 1.5rem;
+}
+.empty-icon { font-size: 3rem; color: #ddd; margin-bottom: 1rem; }
+.empty-title {
+  font-family:'Poppins', sans-serif;font-weight:700; font-size: 1rem; color: var(--vbm-dark);
+  margin-bottom: 0.4rem;
+}
+.empty-text { font-size: 0.82rem; color: var(--vbm-mid); max-width: 320px; margin: 0 auto 1.25rem; line-height: 1.6; }
+
+/* ═══════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════════════ */
+.toast-container {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  z-index: 99999; display: flex; flex-direction: column; gap: 0.6rem;
+}
+.toast {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  background: #fff; border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.15);
+  border-left: 3px solid var(--vbm-blue);
+  min-width: 280px; max-width: 360px;
+  animation: slideRight 0.4s var(--ease-spring);
+}
+/* Saída animada (manual ou automática) — antes o toast era removido
+   do DOM na hora, sem transição, só a entrada tinha animação. */
+.toast.closing { animation: slideOutRight .28s var(--ease-out) forwards; }
+[data-bg="dark"] .toast { background: var(--vbm-blue-deep); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+.toast.toast-success { border-left-color: #16a34a; }
+.toast.toast-error { border-left-color: #dc2626; }
+.toast.toast-warning { border-left-color: #c2770e; }
+.toast.toast-info { border-left-color: var(--vbm-blue); }
+.toast-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+.toast-body { flex: 1; }
+.toast-title { font-family:'Poppins', sans-serif;font-weight:600; font-size: 0.82rem; color: var(--vbm-dark); margin-bottom: 0.15rem; }
+.toast-close {
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: var(--vbm-mid); font-size: .8rem; line-height: 1;
+  flex-shrink: 0; align-self: flex-start;
+  transition: color .2s var(--ease-out);
+}
+.toast-close:hover { color: var(--vbm-dark); }
+.toast-msg { font-size: 0.75rem; color: var(--vbm-mid); line-height: 1.45; }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════ */
+@keyframes fadeIn     { from{opacity:0}to{opacity:1} }
+@keyframes fadeUp     { from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none} }
+@keyframes fadeDown   { from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none} }
+@keyframes scaleIn    { from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)} }
+@keyframes fadeOut    { from{opacity:1}to{opacity:0} }
+@keyframes scaleOut   { from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.92)} }
+@keyframes slideOutRight { from{transform:none;opacity:1}to{transform:translateX(20px);opacity:0} }
+@keyframes shimmer    { from{background-position:-200% center}to{background-position:200% center} }
+@keyframes glowPulse  { 0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.1)} }
+@keyframes glow       { 0%,100%{box-shadow:0 0 16px rgba(60,181,229,.4)}50%{box-shadow:0 0 36px rgba(60,181,229,.8),0 0 60px rgba(60,181,229,.3)} }
+@keyframes float      { 0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)} }
+@keyframes orb1       { 0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(35px,-50px) scale(1.06)}66%{transform:translate(-25px,20px) scale(.94)} }
+@keyframes orb2       { 0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-40px,25px) scale(.93)}66%{transform:translate(30px,-35px) scale(1.05)} }
+@keyframes spinSlow   { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
+@keyframes marquee    { 0%{transform:translateX(0)}100%{transform:translateX(-50%)} }
+@keyframes pulse      { 0%,100%{opacity:1;transform:scale(1.02)}50%{opacity:.85;transform:scale(1)} }
+@keyframes slideRight { from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1} }
+
+/* Reveal on scroll */
+.reveal { opacity:0; transform:translateY(18px); transition:opacity .6s var(--ease-out),transform .6s var(--ease-out); }
+.reveal.visible { opacity:1; transform:none; }
+.reveal-left { opacity:0; transform:translateX(-18px); transition:opacity .6s var(--ease-out),transform .6s var(--ease-out); }
+.reveal-left.visible { opacity:1; transform:none; }
+.reveal-scale { opacity:0; transform:scale(.95); transition:opacity .6s var(--ease-out),transform .6s var(--ease-out); }
+.reveal-scale.visible { opacity:1; transform:scale(1); }
+
+/* ═══════════════════════════════════════════════════
+   PRINT STYLES
+═══════════════════════════════════════════════════ */
+@media print {
+  .app-sidebar, .app-topbar, .no-print,
+  .sidebar-overlay, .toast-container { display: none !important; }
+  .app-main { margin-left: 0 !important; }
+  .page-content { padding: 0 !important; }
+  body { background: #fff !important; }
+  .modal-backdrop { display: none !important; }
+  .print-card {
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+  @page { size: A4; margin: 12mm 14mm; }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .app-sidebar { transform: translateX(-100%); }
+  .app-sidebar.open { transform: translateX(0); }
+  .app-main { margin-left: 0; }
+  .sidebar-toggle { display: flex; }
+  .dash-hero-float-card { display: none; }
+}
+@media (max-width: 768px) {
+  .form-grid-2, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
+  .pnr-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .kd-before-after { grid-template-columns: 1fr; }
+  .page-content { padding: 1rem; }
+  .wizard-body { padding: 1.25rem; }
+  .dash-hero-content { padding: 1.5rem; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .kaizen-grid { grid-template-columns: 1fr; }
+  .wizard-step-lbl { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVIDADE — COMPLEMENTOS
+   Corrige apenas as lacunas identificadas na auditoria.
+   Nenhuma cor, fonte ou animação é alterada aqui: só
+   larguras, paddings e comportamento de overflow.
+   Regras usam "nav.topnav" (elemento+classe) para vencer,
+   por especificidade, o ".topnav" declarado em cada página.
+═══════════════════════════════════════════════════ */
+
+/* ── Tabelas: rolagem horizontal própria em vez de estourar a viewport.
+   A tabela de Usuários (7 colunas) não cabe abaixo de ~900px. ── */
+.data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Telas estreitas: a barra superior usa padding lateral de 2rem, que
+   consome 1/5 da largura em 320px. Reduz para liberar o conteúdo. ── */
+@media (max-width: 600px) {
+  nav.topnav { padding: 0 1rem; }
+  nav.topnav .topnav-logo { margin-right: .75rem; }
+}
+
+/* ── Modais em telas estreitas: o respiro de 2rem deixava ~256px úteis
+   em 320px. Compacta o preenchimento e deixa o rodapé quebrar linha
+   para os botões nunca saírem do cartão. ── */
+@media (max-width: 600px) {
+  .modal-head { padding: 1.15rem 1.15rem; }
+  .modal-body { padding: 1.15rem; }
+  .modal-foot { padding: .9rem 1.15rem; flex-wrap: wrap; }
+}
+
+/* ── Toasts: 280px fixos + 1,5rem de margem encostam na borda em telas de
+   320px. Em telas estreitas passam a ocupar a largura disponível. ── */
+@media (max-width: 600px) {
+  .toast-container { left: 1rem; right: 1rem; bottom: 1rem; }
+  .toast { min-width: 0; max-width: 100%; }
+}
+
+/* ── Telas muito largas (acima de Full HD): sem limite, cards e tabelas
+   esticam indefinidamente em ultrawide/4K/5K, prejudicando a leitura.
+   O teto só entra a partir de 1921px — nada muda até 1920px. ── */
+/* width:100% (06/10/2026): o .page-content é item de um flex em COLUNA
+   (.app-main), e margem lateral auto em item de coluna desliga o
+   "esticar" — ele encolhia até a largura do próprio conteúdo em vez de
+   ir até 1800px. Medido em 2560px: Novo Kaizen com 1135px, Biblioteca
+   1700, Administração 1674 e a tela inicial com 56px (a hero de ponta a
+   ponta se apoia na largura do pai e sumia). Com width:100% o teto de
+   1800px volta a ser só um teto, e a margem auto só centraliza. */
+@media (min-width: 1921px) {
+  .page-content { width: 100%; max-width: 1800px; margin-inline: auto; }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVIDADE — CAMADA 2
+   Correções apontadas por medição headless de 280px a
+   3840px nas 5 páginas. Cada bloco cita o defeito e a
+   largura em que ele aparece.
+
+   Regras aditivas: nenhuma cor, fonte, animação ou
+   posição de componente muda em desktop. Onde o seletor
+   precisa vencer o <style> da página (que carrega depois
+   deste arquivo), usa-se elemento+classe — mesma
+   convenção do bloco COMPLEMENTOS acima.
+═══════════════════════════════════════════════════ */
+
+/* ── 1. Recorte sem criar contêiner de rolagem.
+   overflow-x:hidden no body transforma a página num
+   contexto de rolagem e é o remendo clássico que
+   esconde vazamento em vez de corrigi-lo. clip recorta
+   sem esse efeito colateral. ── */
+html { overflow-x: clip; }
+body { overflow-x: clip; }
+@supports not (overflow-x: clip) {
+  html, body { overflow-x: hidden; }
+}
+
+/* ── 2. Altura real da janela em celular.
+   100vh ignora a barra de endereço do navegador móvel:
+   a coluna fica mais alta que a tela e o rodapé some.
+   svh é a altura garantida; dvh acompanha a barra. ── */
+div.app-layout, main.app-main { min-height: 100svh; }
+.app-sidebar { height: 100svh; }
+aside.settings-panel { height: 100svh; height: 100dvh; }
+@supports not (height: 100svh) {
+  div.app-layout, main.app-main { min-height: 100vh; }
+  .app-sidebar, aside.settings-panel { height: 100vh; }
+}
+
+/* ── 3. Áreas seguras (notch, ilha dinâmica, barra de
+   gestos). Sem viewport-fit=cover no <meta> o env()
+   devolve 0 — as duas metades andam juntas.
+   max() garante que, sem recorte de tela, o valor é
+   exatamente o de hoje: nada muda em desktop. ── */
+nav.topnav {
+  padding-left:  max(2rem, env(safe-area-inset-left));
+  padding-right: max(2rem, env(safe-area-inset-right));
+}
+div.topnav-drawer {
+  padding-left:  max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(.75rem, env(safe-area-inset-bottom));
+}
+.page-content {
+  padding-left:  max(1.75rem, env(safe-area-inset-left));
+  padding-right: max(1.75rem, env(safe-area-inset-right));
+}
+aside.settings-panel { padding-right: env(safe-area-inset-right); }
+.toast-container { bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+@media (max-width: 768px) {
+  .page-content {
+    padding-left:  max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+@media (max-width: 600px) {
+  nav.topnav {
+    padding-left:  max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  .toast-container {
+    left:  max(1rem, env(safe-area-inset-left));
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ── 4. Grids que estouram abaixo do próprio mínimo.
+   minmax(300px, 1fr) não encolhe além de 300px: em
+   280–320px a coluna fica maior que o contêiner e o
+   card é recortado (medido: 320px de conteúdo em caixa
+   de 246px na Biblioteca). min(…, 100%) deixa a trilha
+   ceder quando não há espaço. ── */
+.kaizen-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+.stats-grid  { grid-template-columns: repeat(auto-fit,  minmax(min(190px, 100%), 1fr)); }
+
+/* ── 5. Respiro lateral dos heros em telas estreitas.
+   O padding fixo de 2rem consome 64px dos 280px do
+   Galaxy Fold fechado, e o título "ADMINISTRAÇÃO" (piso
+   de 1.8rem no clamp) precisa de 245px numa caixa de
+   184px: 61px da palavra ficam fora do recorte.
+   O padding vira fluido e o piso do título desce; acima
+   de ~640px os valores são os mesmos de hoje. ── */
+/* Só o respiro LATERAL cede: as abas são ancoradas no rodapé do hero
+   por posicionamento absoluto, e encolher o padding de baixo faz a
+   descrição colidir com elas em telas estreitas. */
+div.admin-hero { padding: clamp(1.15rem, 5vw, 2rem) clamp(1.15rem, 5vw, 2rem) 3.5rem; }
+/* min() de duas curvas: a original — clamp(1.8rem,4vw,2.6rem) — e uma
+   que só morde abaixo de 411px. De 411px para cima as duas coincidem,
+   então o tamanho em tablet e desktop é exatamente o de hoje; abaixo
+   disso o título cede em vez de ser recortado. */
+div.admin-hero-title { font-size: min(clamp(1.8rem, 4vw, 2.6rem), max(1.35rem, 7vw)); }
+.admin-hero-title, .admin-hero-label, .admin-hero-sub, .admin-hero-desc {
+  overflow-wrap: anywhere;
+}
+
+/* ── 6. Tipografia dos campos em toque.
+   font-size abaixo de 16px faz o Safari do iPhone dar
+   zoom sozinho ao focar o campo — a página fica torta e
+   o usuário precisa pinçar de volta. Medido: 11,2px em
+   .form-control, 11,8px em .filter-select.
+   Só em ponteiro grosso: no mouse nada muda. ── */
+@media (pointer: coarse) {
+  input.form-control, select.form-control, textarea.form-control,
+  select.filter-select, div.filter-search input, input.admin-add-input,
+  select.settings-select,
+  /* .lang-slot-input.form-control (0,2,0) vence elemento+classe: os
+     campos bilíngues precisam de seletor de peso equivalente. */
+  input.lang-slot-input.form-control, textarea.lang-slot-input.form-control {
+    font-size: 16px;
+  }
+}
+
+/* ── 7. Alvos de toque de 44px (WCAG 2.5.5).
+   Medido a 390px: .btn-icon 34×34, .admin-tab 112×27,
+   .theme-toggle-btn 61×22, .settings-close 24×24.
+   O aumento é da área clicável, não do desenho: o ícone
+   e a fonte continuam do mesmo tamanho. ── */
+@media (pointer: coarse) {
+  button.btn-icon, button.btn-icon-sm, button.settings-close,
+  button.topnav-mobile-toggle, button.filter-view-btn, button.team-add-btn,
+  button.settings-btn {
+    min-width: 44px; min-height: 44px;
+  }
+  button.theme-toggle-btn, button.admin-tab, .btn,
+  select.filter-select, select.settings-select, select.form-control {
+    min-height: 44px;
+  }
+  .topnav-link, a.topnav-logo { min-height: 44px; }
+}
+
+/* ── Loading — padrão global reutilizável ──
+   Um componente só para a aplicação inteira (ver window.VBMLoading em
+   js/vbm-app.js), em três formas do mesmo giro (spinSlow, já existia):
+     .vbm-spinner            o giro em si — cor herdada (currentColor),
+                              cabe em botão, overlay ou sozinho.
+     .vbm-loading-overlay    cobre o CONTAINER mais próximo com
+                              position:relative (lista, card, modal) —
+                              conteúdo antigo continua por baixo.
+     .vbm-loading-fullpage   troca de tela: cobre a janela inteira,
+                              mesmo tom do .confirm-backdrop.
+   Botão usa spinner + swap de innerHTML (mesma técnica que o envio do
+   Novo Kaizen e a exportação da Biblioteca já faziam cada um por si —
+   aqui thread para as duas, e para o resto do sistema, sem duplicar). */
+.vbm-spinner {
+  display: inline-block; width: 1em; height: 1em;
+  border: .15em solid currentColor; border-right-color: transparent;
+  border-radius: 50%; animation: spinSlow .7s linear infinite;
+  opacity: .85; flex: none;
+}
+.vbm-spinner-lg { width: 1.8rem; height: 1.8rem; border-width: .18em; }
+
+.vbm-loading-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .6rem; background: rgba(255,255,255,.78);
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  z-index: 5; border-radius: inherit; animation: fadeIn .15s ease;
+}
+.vbm-loading-overlay .vbm-spinner { color: var(--vbm-blue); width: 1.6rem; height: 1.6rem; border-width: .16em; }
+.vbm-loading-overlay .vbm-loading-texto { font-size: .72rem; color: var(--vbm-mid); }
+[data-bg="dark"] .vbm-loading-overlay { background: rgba(10,14,20,.78); }
+[data-bg="dark"] .vbm-loading-overlay .vbm-spinner { color: var(--vbm-blue-light); }
+
+.vbm-loading-fullpage {
+  position: fixed; inset: 0; z-index: 10000;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+.vbm-loading-fullpage.open { display: flex; animation: fadeIn .15s ease; }
+.vbm-loading-fullpage .vbm-spinner { color: var(--vbm-blue); width: 2.2rem; height: 2.2rem; border-width: .18em; }
+[data-bg="dark"] .vbm-loading-fullpage { background: rgba(4,8,14,.72); }
+[data-bg="dark"] .vbm-loading-fullpage .vbm-spinner { color: var(--vbm-blue-light); }
+
+/* Skeleton: placeholder do card da Biblioteca enquanto a lista não
+   chega, no lugar do texto solto "Carregando…" — mesma varredura do
+   shimmer que já tingia o hover dos botões. */
+.vbm-skeleton {
+  background: linear-gradient(90deg, #e9e9e9 25%, #f2f2f2 37%, #e9e9e9 63%);
+  background-size: 400% 100%; animation: shimmer 1.4s ease infinite;
+  border-radius: .6rem;
+}
+[data-bg="dark"] .vbm-skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.11) 37%, rgba(255,255,255,.05) 63%);
+  background-size: 400% 100%;
+}
+
+/* Botão em carregamento: texto/ícone originais somem (guardados pelo
+   JS), o spinner ocupa o centro — a largura do botão não muda, então a
+   tela não "pula". */
+.btn.vbm-btn-loading, button.vbm-btn-loading {
+  position: relative; color: transparent !important; pointer-events: none;
+}
+.vbm-btn-loading .vbm-spinner {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  color: var(--vbm-blue);
+}
+/* Botões de fundo sólido (primário, sucesso, perigo — Aprovar/
+   Rejeitar/Solicitar alteração da Aprovação): spinner branco, senão o
+   azul padrão sobre verde/vermelho fica com contraste ruim. */
+.btn-primary.vbm-btn-loading .vbm-spinner,
+.btn-success.vbm-btn-loading .vbm-spinner,
+.btn-danger.vbm-btn-loading .vbm-spinner { color: #fff; }
+[data-bg="dark"] .vbm-btn-loading .vbm-spinner { color: var(--vbm-blue-light); }
+[data-bg="dark"] .btn-primary.vbm-btn-loading .vbm-spinner,
+[data-bg="dark"] .btn-success.vbm-btn-loading .vbm-spinner,
+[data-bg="dark"] .btn-danger.vbm-btn-loading .vbm-spinner { color: #fff; }
+
+/* ── 8. Preferência de movimento reduzido.
+   21 animações infinitas (orbes, brilho, zoom da hero)
+   rodavam mesmo para quem pediu ao sistema para parar —
+   é enjoo para quem tem sensibilidade vestibular e
+   bateria a menos em todo mundo.
+   !important aqui é intencional: precisa vencer regras
+   locais de página. ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

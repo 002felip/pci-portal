@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ═══════════════════════════════════════════════════════════════════
+  VBM KAIZEN · Dashboard (porta de entrada)
+  ═══════════════════════════════════════════════════════════════════
+  PAPEL DA PÁGINA
+    Tela inicial: hero em tela cheia + navegação para as demais telas.
+    Autenticação Microsoft (MSAL) fica aqui — ver bloco no fim do arquivo.
+
+  DEPENDÊNCIAS (carregadas no <head> / fim do <body>)
+    • Font Awesome 6  — ícones (fa-solid ...)
+    • css/vbm-app.css — Design System VBM: tokens (--vbm-*), reset,
+      componentes compartilhados (.btn, .form-control, .modal, .badge...)
+    • js/vbm-app.js  — comportamento compartilhado: modais, abas,
+      wizard, filtros, toasts, toggles. Auto-inicializa no DOMContentLoaded.
+    NÃO usa jQuery, Bootstrap nem AOS — foram removidos por não terem
+    uso real (economia de ~446 KB por página).
+
+  ORGANIZAÇÃO DESTE ARQUIVO
+    1. <style> local .... overrides desta tela apenas. O que for
+                          reutilizável deve ir para vbm-app.css.
+    2. <body> .......... topnav → painel de configurações → conteúdo
+    3. <script> ........ blocos IIFE independentes, um por recurso
+
+  TEMA CLARO/ESCURO
+    Alternado por body[data-bg="dark"] (persistido em localStorage
+    'vdt-theme'). Toda regra de cor precisa do par claro + escuro.
+
+  INTERNACIONALIZAÇÃO (i18n)
+    Marque o elemento com data-i18n / -title / -aria / -placeholder e
+    cadastre a chave nos DOIS dicionários (pt-BR e en) no fim do arquivo.
+    Idioma persistido em localStorage 'vdt-lang'.
+    Esta página tem dicionário enxuto: só as chaves do topnav e do
+    painel de configurações.
+  ═══════════════════════════════════════════════════════════════════
+-->
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>VBM Kaizen — Dashboard</title>
+<link href="css/fontawesome-subset.css?v=20260923-1" rel="stylesheet"/>
+<link href="css/vbm-app.css?v=20261006-1" rel="stylesheet"/>
+<!-- Poppins servida pelo próprio app (css/poppins.css + assets/fonts/poppins).
+     Vinha de fonts.googleapis.com: em rede sem saída para a internet o
+     pedido ficava pendente e o evento load da página nunca disparava. -->
+<link href="css/poppins.css?v=20260912-1" rel="stylesheet"/>
+<link href="assets/icons/a1922a98664cc516_favicon-32x32-1.png" rel="icon"/>
+<style>
+/* ═══════════════════════════════════════════════════
+   TOPNAV LAYOUT OVERRIDE
+   Removes sidebar dependency; uses full-width top bar
+═══════════════════════════════════════════════════ */
+
+/* Reset sidebar-based layout */
+.app-layout { display: block; }
+.app-main   { margin-left: 0; }
+
+/* Altura exata da tela, sem barra de rolagem.
+   O topnav (64px) é irmão do .app-layout e vem ANTES dele no fluxo, então
+   a página inteira mede 64px + altura do .app-layout. O vbm-app.css manda
+   `min-height: 100svh` nos dois (regra pensada para as telas com sidebar),
+   o que garantia 64px de sobra e a barra de rolagem aparecia em QUALQUER
+   tamanho de tela. Aqui o piso de altura desconta o topnav. A
+   especificidade é a mesma do vbm-app.css — vence por vir depois na ordem
+   das folhas, sem precisar de !important nem mexer no arquivo comum. */
+div.app-layout, main.app-main { min-height: calc(100vh - 64px); }
+
+/* Os outros 28px de sobra vinham do padding inferior do .page-content: a
+   margem negativa da hero anula só o padding de cima (mais o topnav), e a
+   hero já alcança a base da viewport por conta própria. Nesta tela o
+   .page-content não tem nada além da hero, então o respiro de baixo não
+   cumpre função — sem ele a conta fecha em 100% da altura visível. */
+.page-content { padding-bottom: 0; }
+
+/* Hero full-bleed — estoura o padding lateral/superior do .page-content
+   (1.75rem) para cobrir 100% da largura e altura da viewport, subindo
+   por trás do topnav (sticky, 64px) para que o vidro do menu mostre a
+   própria imagem da hero em vez do fundo da página. */
+/* Horizontal continua recortado (o zoom da arte estoura de propósito).
+   O vertical passa a ceder: com o celular deitado (390px de altura) o
+   conteúdo mede 454px e os últimos 64px ficavam inalcançáveis, porque
+   overflow:hidden travava a rolagem. Quando tudo cabe — o caso normal
+   em desktop — nada muda: não há o que rolar. */
+html, body { overflow-x: clip; overflow-y: auto; }
+@supports not (overflow-x: clip) { html, body { overflow-x: hidden; } }
+
+.dash-hero {
+  width: calc(100% + 3.5rem);
+  margin-top: calc(-1.75rem - 64px);
+  margin-left: -1.75rem;
+  margin-right: 0;
+  /* O vbm-app.css dá 1.75rem de margem embaixo da hero para separá-la dos
+     cards que vêm a seguir. Aqui a hero é o único conteúdo da tela e
+     termina na base da viewport — a margem só sobrava como rolagem. */
+  margin-bottom: 0;
+  border-radius: 0;
+  height: 100vh;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+/* Em telas ≤768px o .page-content passa a usar padding de 1rem (regra do
+   vbm-app.css). Sem reajustar estes cálculos, a hero ficava 1,5rem mais
+   larga que a área útil e deslocada para a direita. */
+@media (max-width: 768px) {
+  .dash-hero {
+    width: calc(100% + 2rem);
+    margin-top: calc(-1rem - 64px);
+    margin-left: -1rem;
+  }
+}
+/* Em celulares, 100vh ignora a barra do navegador e corta a arte;
+   100dvh acompanha a altura realmente visível. O piso do layout acompanha
+   a mesma unidade da hero: se um usasse dvh e o outro vh, a diferença
+   entre as duas medidas viraria sobra — e barra de rolagem de novo. */
+@supports (height: 100dvh) {
+  .dash-hero { height: 100dvh; min-height: 100dvh; }
+  div.app-layout, main.app-main { min-height: calc(100dvh - 64px); }
+}
+
+/* Arte da hero (sem o texto, que agora é DOM — ver o <svg> no corpo da
+   página). O zoom-in lento saiu da imagem e foi para o wrapper: assim
+   arte e texto crescem juntos, movidos pela MESMA animação, sem chance
+   de um começar antes do outro e o texto descolar do desenho. */
+.dash-hero-zoom {
+  position: absolute; inset: 0;
+  animation: heroZoomIn 20s linear infinite alternate;
+}
+.dash-hero-bg-img {
+  opacity: 1;
+  mix-blend-mode: normal;
+  object-fit: cover;
+  object-position: left bottom;
+  /* O vbm-app.css dá a esta classe um `animation: pulse` (respira entre
+     scale 1.02 e 1, com a opacidade indo a .85). Antes ele era anulado
+     porque a própria imagem carregava o heroZoomIn; agora que o zoom
+     mudou para o wrapper, é preciso desligar o pulse explicitamente —
+     senão a arte pulsa sozinha e sai do lugar em relação ao texto. */
+  animation: none;
+}
+@keyframes heroZoomIn {
+  from { transform: scale(1); }
+  to   { transform: scale(1.08); }
+}
+/* Quem pediu menos animação no sistema não recebe o zoom — a arte fica
+   parada, e parada ela continua correta. */
+@media (prefers-reduced-motion: reduce) {
+  .dash-hero-zoom { animation: none; }
+}
+
+/* ── Texto da hero ──────────────────────────────────────────────────
+   Fica por cima da arte, no mesmo recorte (ver preserveAspectRatio no
+   HTML). pointer-events:none para não roubar o clique de nada. */
+.dash-hero-texto {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+/* As duas fontes vinham embutidas DENTRO do SVG da hero (1,35 MB de
+   base64 em fonte variável completa). Como o texto saiu de lá, elas
+   passam a ser carregadas aqui — só com os caracteres realmente usados
+   nos dois idiomas, e já fixadas no peso em que eram desenhadas
+   (Manrope 800 e Inter 400). Resultado: 13 KB no lugar de 1,35 MB, com
+   o mesmo desenho de letra. O peso declarado no @font-face tem de bater
+   com o pedido na regra, senão o navegador "engorda" a letra por conta
+   própria (bold sintético) e o traço muda. */
+@font-face{font-family:'Manrope VBM';font-style:normal;font-weight:800;font-display:swap;src:url(data:font/woff2;base64,d09GMgABAAAAABrcAA4AAAAARlwAABp/AASBBgAAAAAAAAAAAAAAAAAAAAAAAAAAG6QiHId2BmA/U1RBVCoAgm4RCArQAL8+ATYCJAODZAuBdAAEIAWDWgcgGy08o6Kc1TagKEoWZXzy1wfcGKJ9QG/FSSZy1coZjazLzO8wiplNPVj7nmADsSDO753+zMfm88f5ERr7JNd/yrn/c2emlgpQUkSDt6gG9WLyWiRYKVbw1bcVX1dqO3fJD/w2e9/cGhUs9lHRiYkFihUgFmJhNRjYWA2e1SudaC8bN52uilXoqr3Qa1xcyyTlS+HB+BduZAwgF0ymp8dD/pL2pvzdu8MSX4VqRVaJsK15sCiEQhiC0CjikQTnb2dhbhO7GqLVEz0SaqJyiuG9RYKNZJ313idouET/oF4ncAQiEIHh8HKwb7ShHsurXS42/8+WwUoEhkidE5N0Z1ZiEfWppp1916vZB2L6fzbTdv+tQafgPhmrREEsGsbXp6ny/szu3Gh2jkBwIDsoKSCdTLSnEdwaWUFuU+lMfHaAsYWi4wpr12nqlO7KQFE3Ma1pmTGlphlvN4hXdO/bjXyfRPC6Dnw8RFIJkqZBREI65h9L7Koe4LYTy19AEECSrRJ/9MQ/FORXh/l8kD/PCrJBJgDQewigT2/ys8EMIAARGDNGqteRTQJQ4u3c85fBiohIiifxIZYeB/+eYNfkutNPITJRaioAY78DMTNpzObszJ15M5/hWEWmxSIz5Z/BgQXVj5QgDCcY2EWSxUuQLE26DJncPLLlyJUnX4Fy1VS16tRr0KhJqxGjxoybMGnKCT5+MzQLFi0LWLWFC4y0ObGtGcSicUyBgwDDsZ2D3KM8kA05kOvPH1MAhVDkLx5VIuoo6gEN0Cia82OPj/PNgh8rZxKGAoOYgLoRJAIAAIAOkeEX7huERyAbciAX8qEACqEoVMor4ODgiEg/bxaDOPb4IN8xw+9fmtyK5ArCB/D3xMzOpcAMaBQlZ2i8VlePPRn1jOod6cQgNtW/NSpUwwhJY5IeQpzPL/waCsINQIIBOAgwwDipesADHvCAByjF1ECp8Pij0zAjY71UGxqJKXAQYLBHxgljUwAfwQ8BWO3OH3omIxNEcg95ANmQA7n+/EEFUAhFQhWohTqohwZohCZopctZmXZ8QrSJkdbUHVML5yaSfbG0KaWryKDIzFGRyNjIUk7ebE63G4Ts8iEKFAqhSJYZBAKBA6k55jti+LFZduFHCmC7XeiCW6aC5I0dCfPy8BlBN4YmFYBgPX7y5BjIFzjV+3CIDto1wyVDBd8ppatSzyB02WkziwQ8QbMWMbVBeEFTIVt2QK1ZE9L1K66DtqpChS7Xx+km+UHAQFVFfVb1PpfLR1Hca70ezR9OAlHUZUX9xJUKnToEcWbwonkeUsT7BOwq4QiZMKBahvKgW5bRiUNGcw0GrapBqput36sbPVR2ebLiiBMzLYmyVu0/gLCDqbBoK8Yca9hMR7XRDG/llFN3AX0lyDYUfEw93tysF2rWMCfde91S0NVj1EcUN9Ko84EpZu1uzjLd6loXMFgvmZQb0fX++kZlvPrFqweKmaIxLTmW7rKJ/u7qnspAKXlM/TUMFKAo4gTlhJjSF6cuqaZFFFSmlVsbEWXj4pZvMZ/RGKlK8GQWUPMeb/Jf1P3KWwVeviI5fTC1IL0KfW/NNMOM5OcCN5Wb5yVPm2cnJ2tvcnSKFVs3RXVj1V6WkpU8+WK+9fa5yQHl+iAruA2vAUyFS7uHV003CbZeZ6jHiOJZATPLxvuqrBM6YdLJH/iBOnVLAdSkHNU8RjJfcTg0Y0VswvExbMJjdk5ypjfR4kRIUMmlWr9i4zh2h0UrOm0avUJGHxocwg2HMF8KgQJxQP5MTqltAAPapKeLIjEBRB9dYRHPYABWHzEeOkOMWOYEkMRsugZw/Cwyl2QEtstWBLs0GRBJkHh1FBkJVLhjl3gQcJ6QAWszwKRdTnsg4OTwhwlj74hiTAMNCCRkRBaHA9LFc048XAbXhtjS6ZJSI9kki/1IHH0Boi9EGkDRkVBEiwFHqUqCNiDlV6JLnqutjHYQe/WCLwDH5w+8RJABhAB6solzUpE5pqqGEwykEcwI3rlBgkMxVQdB4hQjiRdXqkY/ptQApsIgpgYRhjBtTfoOLt/SkdjGBECUOsQiY0ZA9Phed5i26TTnutPTvg0FikEn5ERZtMdUPIjf0sGKyT/52Y4DyB4WKjoBARgNcz43LANHGDJiI8cAOosA6xI14PoBkimvz1WCTJcxF4sDywOwuHVmyQqOHCH5MGYwyweTBACGFSC5BHBaX6dkpz4DQdtdc6uS1KWMFtIBGRhsG3aClKXJrLno1FYFdKYHB5Is7SxP3Lh7mAmAr7RaA4qLMb4A5mZkSJFZhVN8f/tHigfZXul1otftZ141CKO+GK/qBrtFu1yUqKz7qt2uG2X4sHGhGEjwJblQN8nuqqprP/CnTzaqm9ta8alr3p9ct8jaJNsU9o6iNrh/UzSDFCFqqtkV6X+xbtVrqoqCI836P7/JgmUr1qzbsImYzFi0JGBVUGigzUFkyq0U2cny2XCadT5Fvo4Y5/9qvnHRH5QuGMBwUQ4Dzq0fFuyP4vxkcLOTgFPrHHoW4AMPUi71EXo+BeYxZASAABB3VQxQNgpmA5CfBZCAfXmXJkAAAEMA0M4VQEunTcaH0kVMAkrFPpmyVB4FqtSoN2LSriOPeMLTnvOat73rE1/42nd+84//LvVrD6DIlKtQtXqNRs3a86AnPOU5rwzCh/CV/ovepQJAukw1oD/g+cotrWxs7e2CfnB0dnFzfRFIqUp1AAA1aHDMy0XiNOPvmrNlT2hLnf0CfLT8HjOxkNg5hAnnFEnmEiVavASJkiRTuOXJV6hIqTLlKlSpVvMreKxJs5bhg27TTmA4gxwe2XIRml4BkEMA8DPAg2DdgYgfgGsB5wAQZutiEMYqBrxpRPzG6fWUtJPFLxahM7NhCGSik+8jrEAIyil1aXUaYRKMRaIyZlF8nBfGBEji6ESIXZqO2mgx63Jm65KGQ9PkCjaTTcrsSwgRnSnZpfBaqHld11iMr1H5hKZ8UI7hG20WKb0X6RttTq4Nsx/2dR8kiAI1ZTynaYZmU9iSbcIqnKaaCGIKBdGUNU1yhUx1uFurbTOiMWW7TZKuor9k6zrXinSunZBvMHHZIET+D7tluG31Xf/uZ87ZZ83rtObhAoMcBI5PD1tNr8i22ETy6N5ReHtSGpYR2ncJEsJ8Yh1NmAce7uYWUAO0EI/0agIJCHwfBVLGnCGHg8uNHj6TbuVP4eQgDoamaGJCljCOABKmJXQpjLeGdol+mBDX/fG9Wouv1bTn4XpBffZn9hgzgKQfxAcgqti41UmvVY/mAHHFMyFTuVkO4J946TiRMxpNkCjqp9Ba6d7DM7srG5TG9eMQLP8GSb8S4+piUvNM1r6u8HGg9IawKj+r6hhrjzucnKwgsGqmmE4/7LPT+57bXmYdbd9OxFXSk5jYyY4tTHIWNS8yroxZXBFTVDYwZuH09J7M8DUuNqGrFRfmoEdmbP289PMmuPfSp/kBalW6soFXsF+I6Z7KfXlt344mAZ6S5SEkheRTB69vKXtk3xhiSsjz5K8mfdmn6/6azfKjZuMCS424RNGzGAEnXySJYcO8K8ddovR7GGbIOi0Nks76WPNZPdnlm1fF6z30oY5dVbPbWu+6gpnO7upZjTGONFyimk5nodp1+rvWiyAxw0K5GjKGvGuQnnBNHotKOJd122EJAJse/LgBeRu5PNBZRPNyojU7LzOlViAvPLVGmk2as5puepPP9KR30oI3cg501n42nwZoL5RJXQp2UyJTSuOTSQ3VFhgRHtrF+TSPt7WiWc5Y88vulMzh17lt/zVMKfxR53tBvJ2NKH0zVZMWRKlj30dmARipbEddZjRBF6Rv2A6iQd4bRXrmU8164AQ1NXkriK3dxVudw2tYgPyO82D2Ie8r7zszGVeZc8NpSE9lkukXnxOoiTYpmZxPOjY39VH/izlT9aSYo8rILlWzW/w0F3uSiOpe721tMhtuNDCt7rtDz53bgx5B9hMhv846O9IFboXs6KUJcS5HtsBLsfbhTLAgs1Ma1yx/a3QXnqN8JOMi8UTtVkAO14GOTiaS6iDe+qkDyVJ/VNwGBkqPNt2EyXFB5d3Lv2Y/p7JY9v5GBqt7ezhvZJBNmZK3qfn1qDqaIHESgDzHVUcXVJNrWOpp9KJ9EY1/XNo836ORLi4qNpQIN+ZGK3ir/LJIVa/P0XmkQhno8HScsQUfUSVimIBkn11w5mtZpoozIe/k7PwtwaFmRIpXKuyDYOd/t7xQ11NfsuyhYtesRTyd4x6eYqQrLH6t9n2Bryus0i/1C+GtP6vFqzpXEpPcE40m2tMPf7s5JColQHGC69Tkb7aUjff/O/7aGTmnfcvA6JU7qHdR6m2DfKvSWDf+vIi5cQYur9MBrXdvdnBQ26EhLaG/X5iBAVmpXIqU6pQGppEZttFiXEBhHh/Ij6Z4CDWmB45ff0365wn5Xe6b9dLMLzm14polYfYTQPJ2+dWfyyuDAEEmgVlSqD8gHkBe4jHp8velVReeYI/cAblrvJL/ZKt50UmFdWgYz5ME2PTwCg78NFIcu2U4mOy9bq6931G2ece4Mtd9h/Bh4gf+kgehGc3bIOpJtTYhZoQXifv1O6+pKVyhaBqsbDaV/SUD68u218dF1x0mJf8kqTTY6vgsLsF/+o51SydM2P4ZINaC46LrEtC3WAQDbLA1/w6uVxCsT/QvoDZkW0WYse3pZihB3ePiFKGOc7zq4zet4SGd0qkNP+HwIVvAh6EVFMVuO6fLws/El/KH4rStG/ANsyW1cXOz2T3pqyy7MLJlqIONcWAo2ZUlMyJ76xh7UD2CIllGsIw+oZ2bClpcVLTb9OQv9rLXPRU/Ut10Z3/TydLol/39QCQ19U93kWprWEfPL1d4+daEjluw35WJw9/CGPgTWfQbg4h+5gGXOPfkmjKXSzyp/qWlKumI4gHsr1cqbU6dUrQYP0PFdERlevU8PlqOEata1ESb5fEdZotFUSre0Qj+PHHl+2UDFAOZQf6ADMi2UVqCxWPJr1k3MMKzBDVD2xll9KLnYhJonzCfmPAWbVxOkEzzNU79PMmiHJKoOyPUrziSYeXh/iZoRE6URi3090c9txjvUAzS78nrwuW9kyptQdwV70y6Wh1nGMewhWxMFQ8WBoN4QTQCWuoKerSK2cdX4Qy6/9Uhct9614ZEtp0hx9hcIh9iN4OdoUOqasQFp/S5eJar3K6/zT/yUvXTCOeOzkXjCF/1YX+gc5Kv+CNMkcVo68ckqIz5OQqWpD8zg33qKshTnubweNUwx6ERbH1adBW7ZxxmVTf0fNHXToTyoeasKwHHkDteozZWGzBfWsqat9tUrXbMWx7L/vTBC6dGz3ZkqHNIJEWsK5uuhvOCQF3C6PDk5PDwlHep3wMnjsEFtFiZ/WkL3keDaldNlRP9X7IPFUPumBTXhTdGy8+JSjwrjdlBTupX7+cMFGbtyjblBXk18Lq6Lvwe2wO9yOfEwbPEhq1Wm+lh8UVWbsivuYYMHxuLneH6z//2rPrFsoLDbssSJOwfzb1tB89GLssGZJdH4CF6ULm1Z/VAnRpS521REBqSa+bmkWseEkIuYNRhhQd6VpXPAJv+wC03ZtszRNCQtvQW23V5FS9zKPbFlucadaFY/d2RhGPCWe1UMQHz9tU3/AJFHhGCkB62QaXgJkoC9u3jh1dYVgvmC2xZ5+vHLMefzj/hmy9hjuNih36Ey1rCF1KIJvM1uTL/4eMurOoFOIUKxBHBvVF+5uXcOI7OiXG9e4RK1URqQnQk36nWXstnOcBI9HpyruNlOC3z3/XFvr0/XqEs/smEoId+XIqT54SfkoAUqFai1qcdjTOrVsjEb/XyxIMZ9rZrdj3tlXwRi2zwup3wux6kfBMUIby7PYD8BTEKMpbXKuVBH7TrofO/afBmDaLDj/v4yMhIJnKvb+eu9z1VMD5SgSz0TaGgKFaVEN/9eT8iJ5zaGx1l1yuIiA5LC7LoSUrSnXJ+EPDQqZ991cjImBD5tWf8gtyM/sRmb42Qolg/TlawTXtUW8XB8pj4EI0AnL35vtUz4NOHLUDaJY5J7mjfQl+FPLbxKnjfs2vnvb5MZGSEjzzuE/wazVf0E5YWFBYtiLDrjYqm9uaEB95/R5SogqIYatGJ/9rb/xk50qK43Cne+30oTw8ztzFlPK2zuKVuanxb3Vg1O4+Oum8OcOpRGkW+X795HcgP8rnIKur59Fk3vkvWIq8b+8blz6AfKMbyvC3pGRoCoyw5UsOLCjdnN3MBfpQrPS6FyP9jxh3q0ozo/5YOJVjZO2caubHxDkSvH3VGSow6raTW6hsu7Qsue5OAL9uqnG9cEBcQrh+Io7uYlabu8qnhLdxtGqoeCouo39quXIiPWwFF8W/viBJYp3B7CbOkYtJoGBpoYfdhraLQD71QW5BZxnqFsEow/9WKdzYhEwfdvYZm2CrG5mYps0X4IXxSofIaEIPieYy+MhAFUJWZUhRpH0Ihx7nk+eWk7Tkcxz8jeXbkclIC0Ja4RGnZXz8mwriC2LzAjPTJo4k51SOZAcf4l1V/Z2i/cYlSyENHl7saYXJPCyx3iEdXuppgcqoZVjqH/6+vOdzSWbevNjIv0LYtrqtuL5gfN6xYmJV85KybFMJfrLXCb/j5tlboHDTVHPFVbfLfkllQ0lx6R6Q8PFbkutH9/zQ/RiG+WwIlTWilLa3p8qZHm/OitROVFGW3itasLLsz9ZJcjMAKvfnPae0pnDHGTxAW5RtIs9Fdyd4qINTrDYbQBSFp6dtnguur5wJKOjYm4qwyI+n+ir4KUVYWW1LLSJU6ZTq9oZ5FoRM/pwGbg32kMMUwZZF85Lcn7sQ0u8qlmNMG18ZvWK2XghRQnSxww6bKHmUpE57X4RKlqjQwC3nxcLYCYtO7uz180UC4dEo+rCmkYVa/fkQdlIR87JjDWmSu/nL9mxW35HXYMdrdrxekJGBr9Upxbo9d77u62Z3Uej23l34LfoBbuOMoP4mmCLXV5qzd1EatMYaGmmBE1NM3efStjKgnb/LfNyB7cqUKUkt9bnvSvukttxmWGEbFP0Win+LD4gMG3cRvSgwhzAJPzwLmMyaXyG5M/EpDQ8nGcbONw+qgKIZk5Fu0hqejXTrZg8pNdPCgp7nYc/GavbWPPxbubHtVVv28K9OxtbAozFcUFj0GYKHFn+N0DhIylOlYVhmH6cJ1dEp1ia0SJhNyd5c+vFZuPwBCSA5H/MpV9zZEzOc0Nj15WwWPFvNlW5Iv0vRZOKRh02pkNYtgh2adj2waQtMV6Rc9fCKMLOQCLkD7YXHxj7cuek83/V9VVhEfiX5/HN1Ecmq8XSKQNja2PftYA7VoxxtR/Y/Bkb31Kz+FI+nTziyf2VmbWJI1K5/pIvB4dO/ViEf4pb1LBfdHanr2tuYX+aeIOnJTncybwHVy4ro4OaamOsMDgpc4DVqBYCCGLLT7TVHN3YZ87rUEV8UQJiN4MLmy6MxdbmOj4v5iViYHDAT6hMY5cm/kN9TefVvUtZpQzOOmFmckJBRmpHILefFDrET/oKBE1htJeA/+sHVc8nyHSlwCmYPiSFbnxe3R2tMY6QmKN27O+/2kOjOnNfNh7RT1wNISZmkzj4ahQZPIg1D/vm6vv7N3qzaHgh9+k8vaYk5025x4/JCS7vqMxCMB1qImEj3/GsOdfdSiwSsr8Yi3/yJkfJg+Q0NFugRd0BGJMZqKWgpq6wt+GYsMLZM/O0RDy8ciWOJaT2l3kwHNDHYDDUYoSwGt+kdwIqd9EaHlwbKxyMZT6x0v3iiNkFY68+8iuAakoCykpWHSIAsteeztHWDvRumT43CsBpzk2eRYaklgffutMhM93nqr5GNOLl4868QjG6lnXkr8MAb2o/MmnjZkailiccbHSoWsNvZNlSyfknto+MCZ+sqaGnv3dX10eQ1Eo8dzmcGK92SuPb+sZWB60HhtpT7Y67YeoQo/fxZSjxxR3DF2O0J9+Hbv4XW40ug27hZdwRzrrvV2nr2eWfaxOItaduZmnxvUjDuCEHfU3Et/aFg1woKMDavPZRCtGCpe4Y13jP925+Fm+fqJ+yqfxIyNxTytqIx5QmS4suIpBp4Q8wiMby9YTDi9v6wTlAxBAwCUoQSOAyjsOsVLkQuTIDjdFJSA0o/YyRNRZ/gY8mDEGZT448BQLsvDPv9riKeXkZCw0Y+MsUq8KWGRuhkBk/qqFhyrleGnducN3pBEKBqB5YF49fZfAwAFANA/j35XUMfW4b2bCoZf6zwVTD/rcvG/t/J8N6ymeNdB/KgZ7x7vxrem5bQft6MPB/Z/Z/lvnxxkWt4tB9i9ZsqX+Jpbix/zI3J40xiD25Ob+IO56PJJ47/pfvW+U975K1jnr2mCAOLb1nDTJ+okzOln5qYXAXjndzkNAD7/+6857Pz4dP50F8CIAQCC/9sIQnrowBGxBKQ80sN11ZOLw309Xv+jdT2gXrrVGT0gDOpwvbPEGcl2OaS0HGC4jpgDXL6d9oijvPA3ahWWFk4c2wW8PU9e+1GRYtog7Xcj6kZu76FheE7r9i6xY9ExwpuCGYiWAlQPYftfmu2NkFHjzaaiuxEc14le+AMvldXepBQNzmiGDZWQvTUlad9c7i3mUM0lt+CYZHCv09QTj/KVr7WL7dqhlpczqnXs07Tezdu3Rexk7IUz2i0XeuUgPqSWNe7MkpS87t28ygmXLPUirWroaA0EFi28tc30C9KzaTralExyaz2RSiP6D2j/5vLoBMMj2m4Aag94DgEOaewmGH0gORW2CDUTtQXA5XAcSNJdfiDj8OiBXLWXCwXvQIO42HCAUXoYjkSALbrgnTDBGRzNNmw6FLJiybIdimKFilRRDFu2QNFr1roQn1LSixCQ80OxRrt2JLYhZFukWyy0Y3Mbv1qBAktWWKm75uSbZ2hNgSOxbFZI4eE1swqsqbl71IOtDmAO1fSYFoPVxJJdQbnUUvnKFNqvq8aQDr061UidfB6M0hkeasWGdcqZvQCMMZiSI5r2G4I0/D+NT7YYAAAA) format('woff2');}
+@font-face{font-family:'Inter VBM';font-style:normal;font-weight:400;font-display:swap;src:url(data:font/woff2;base64,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) format('woff2');}
+
+.hero-antetitulo {
+  font-family: 'Manrope VBM', 'Poppins', sans-serif;
+  font-weight: 800; font-size: 22.7px; letter-spacing: 7.7px; fill: #5fd0ff;
+}
+.hero-linha {
+  font-family: 'Manrope VBM', 'Poppins', sans-serif;
+  font-weight: 800; font-size: 134.5px; letter-spacing: -2.7px;
+}
+.hero-subtitulo {
+  font-family: 'Inter VBM', 'Poppins', sans-serif;
+  font-weight: 400; font-size: 30.9px; fill: #d6e8f4; fill-opacity: .78;
+}
+
+/* ── Posição do bloco de texto (06/10/2026) ─────────────────────────
+   Com o símbolo VPS fora da arte, o bloco sobe para o centro da área
+   abaixo do menu e cresce 10% (mesma conta do atributo transform no
+   <g class="hero-bloco"> do HTML, que fica de reserva). Em SVG, px no
+   CSS = unidade do viewBox (2400×1145) e a origem é 0 0, então:
+   translate(esquerda, topo) scale(s) translate(-169, -485), onde
+   (169,485) é o canto superior esquerdo do bloco no desenho original.
+   O bloco mede ~710×515 unidades em escala 1.
+
+   Em tela de pé (celular, tablet em retrato) a arte é encaixada pela
+   ALTURA e só ~1145×(largura/altura) unidades de largura ficam
+   visíveis — 529 num celular de 390×844. O bloco não cabia (era
+   cortado no meio de "Pessoas." mesmo antes desta revisão). Cada degrau
+   abaixo escolhe escala e margem para o bloco caber inteiro na faixa
+   visível daquela proporção, sempre centrado na altura (centro 615). */
+.hero-bloco { transform: translate(169px, 332px) scale(1.1) translate(-169px, -485px); }
+@media (max-aspect-ratio: 1/1)  { .hero-bloco { transform: translate(90px, 370px) scale(.95) translate(-169px, -485px); } }
+@media (max-aspect-ratio: 3/4)  { .hero-bloco { transform: translate(70px, 409px) scale(.8)  translate(-169px, -485px); } }
+@media (max-aspect-ratio: 9/16) { .hero-bloco { transform: translate(45px, 455px) scale(.62) translate(-169px, -485px); } }
+@media (max-aspect-ratio: 9/20) { .hero-bloco { transform: translate(35px, 486px) scale(.5)  translate(-169px, -485px); } }
+
+/* Acima de 1920px o vbm-app.css limita o .page-content a 1800px e o
+   centraliza. A hero desta tela é de ponta a ponta (full-bleed): aqui o
+   limite não se aplica, senão a arte ficaria numa faixa no meio. */
+@media (min-width: 1921px) {
+  .page-content { max-width: none; }
+}
+
+/* ── Top Navigation Bar — replicado 1:1 de Referencias/Value Drive Tree/style.css (.topbar) ── */
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: none;
+  transition: background .3s var(--ease-out), box-shadow .3s var(--ease-out), border-color .3s var(--ease-out);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .topnav { backdrop-filter: blur(4px) saturate(120%); -webkit-backdrop-filter: blur(4px) saturate(120%); }
+}
+/* Vidro no topo; azul sólido só depois de rolar a página */
+.topnav.scrolled {
+  background: var(--vbm-blue);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+
+/* ── Logo ── */
+.topnav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: 1.5rem;
+  position: relative; z-index: 1;
+}
+.topnav-logo img { height: 26px; width: auto; filter: brightness(10); }
+
+/* ── Nav Links ── */
+.topnav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .15rem;
+  flex: 1;
+  position: relative; z-index: 1;
+}
+
+.topnav-link {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem .85rem;
+  border-radius: .45rem;
+  font-family:'Poppins', sans-serif;font-weight:400;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  color: rgba(255,255,255,.75);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .18s;
+  position: relative;
+}
+.topnav-link i { font-size: .72rem; }
+.topnav-link:hover { color: #fff; }
+.topnav-link.active {
+  color: #fff;
+}
+.topnav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 50%;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #fff 25%, #fff 75%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(255,255,255,.65);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: width .3s var(--ease-out), opacity .3s var(--ease-out);
+}
+.topnav-link.active::after {
+  width: 60%;
+  opacity: 1;
+}
+.topnav-link:not(.active):hover::after {
+  width: 30%;
+  opacity: .4;
+}
+
+/* Badge on link */
+.topnav-badge {
+  font-size: .55rem;
+  padding: .1rem .35rem;
+  border-radius: 10rem;
+  background: #c2770e;
+  color: #fff;
+  font-family:'Poppins', sans-serif;font-weight:700;
+  line-height: 1.4;
+}
+
+/* ── Section divider in links ── */
+.topnav-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,.25);
+  flex-shrink: 0;
+  margin: 0 .1rem;
+}
+
+/* ── Right actions ── */
+.topnav-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  position: relative; z-index: 1;
+}
+
+/* User chip — tamanhos/cores 1:1 de Referencias/Value Drive Tree/style.css (.user-chip) */
+.topnav-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255,255,255,.22);
+  flex-shrink: 0;
+}
+.topnav-user-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
+}
+.topnav-user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--vbm-blue-light), var(--vbm-blue-dark));
+  border: 1.5px solid rgba(255,255,255,.5);
+  display: flex; align-items: center; justify-content: center;
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: 11px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.topnav-user-name {
+  font-family:'Poppins', sans-serif;font-weight:600;
+  font-size: 11.5px;
+  color: #fff;
+  white-space: nowrap;
+}
+.topnav-user-role {
+  font-family:'Poppins', sans-serif;font-weight:600;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.6);
+  white-space: nowrap;
+}
+
+/* ── Mobile hamburger ── */
+.topnav-mobile-toggle {
+  display: none;
+  width: 34px; height: 34px;
+  border-radius: .4rem;
+  border: none;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7);
+  align-items: center; justify-content: center;
+  font-size: .85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Mobile drawer */
+.topnav-drawer {
+  display: none;
+  position: fixed;
+  top: 64px; left: 0; right: 0;
+  background: #020e1c;
+  border-bottom: 1px solid rgba(60,181,229,.15);
+  z-index: 299;
+  padding: .75rem 1rem;
+  flex-direction: column;
+  gap: .25rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.topnav-drawer.open { display: flex; }
+.topnav-drawer .topnav-link { font-size: .8rem; padding: .65rem .9rem; }
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .topnav-links { display: none; }
+  .topnav-mobile-toggle { display: flex; }
+  .topnav-user-role { display: none; }
+}
+@media (max-width: 540px) {
+  .topnav-user-name { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════
+   SETTINGS (engrenagem) — replicado 1:1 de
+   Referencias/Value Drive Tree/style.css
+═══════════════════════════════════════════════════ */
+
+/* ── Botão de engrenagem (abre o painel de configurações) ── */
+.settings-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 100px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .25s, transform .35s var(--ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] {
+  background: rgba(255,255,255,.18);
+  transform: rotate(50deg);
+}
+
+/* ════════════════════════════════════════════════════════════
+   PAINEL LATERAL DE CONFIGURAÇÕES (Theme + Language)
+   ════════════════════════════════════════════════════════════ */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 399;
+  transition: opacity .3s var(--ease-out);
+}
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+
+.settings-panel {
+  position: fixed;
+  top: 0; right: 0;
+  width: 300px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22);
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .38s var(--ease-out);
+}
+.settings-panel.open { transform: translateX(0); }
+
+.settings-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef1f6;
+}
+.settings-panel-head h2 {
+  font-family:'Poppins', sans-serif;font-weight:700;
+  font-size: .92rem;
+  letter-spacing: -.01em;
+  color: var(--vbm-dark);
+}
+.settings-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
+  border: none;
+  border-radius: 100px;
+  background: #fafcfe;
+  color: var(--vbm-mid);
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--vbm-blue); color: #fff; }
+
+.settings-panel-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title {
+  display: flex; align-items: center; gap: 5px;
+  font-family:'Poppins', sans-serif;font-weight:600;
+  font-size: 11px;
+  color: var(--vbm-dark);
+}
+.settings-info {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 1px solid #e8e8e8;
+  color: var(--vbm-mid);
+  font-size: 8px;
+  font-style: italic;
+  font-family: Georgia, serif;
+  cursor: help;
+}
+
+.settings-divider {
+  height: 1px;
+  background: #eef1f6;
+  margin: 18px 0;
+}
+
+/* Theme — segmentado Claro / Escuro */
+.theme-toggle {
+  display: flex; align-items: center;
+  background: #fafcfe;
+  border: 1px solid #e8e8e8;
+  border-radius: 100px;
+  padding: .16rem; gap: .1rem;
+  width: fit-content;
+}
+.theme-toggle-btn {
+  padding: .38rem 1.05rem; border-radius: 100px;
+  font-size: .64rem; letter-spacing: .02em;
+  color: var(--vbm-mid); border: none; background: transparent;
+  cursor: pointer; font-family:'Poppins', sans-serif;font-weight:600;
+  transition: background .2s, color .2s; white-space: nowrap; line-height: 1;
+}
+.theme-toggle-btn.active {
+  background: var(--vbm-blue); color: #fff;
+  box-shadow: 0 4px 14px rgba(60,181,229,.35);
+}
+
+/* Language — select nativo com aparência custom (borda + chevron) */
+.settings-select-wrap { position: relative; }
+.settings-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 9px;
+  padding: .5rem 1.9rem .5rem .75rem;
+  font-family:'Poppins', sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--vbm-dark);
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .2s;
+}
+.settings-select:hover { border-color: var(--vbm-blue-light); }
+.settings-select:focus {
+  outline: none;
+  border-color: var(--vbm-blue);
+  box-shadow: 0 0 0 3px rgba(60,181,229,.15);
+}
+.settings-select-caret {
+  width: 9px; height: 9px;
+  position: absolute;
+  right: .75rem; top: 50%;
+  transform: translateY(-50%);
+  color: var(--vbm-mid);
+  pointer-events: none;
+}
+
+/* Transições suaves ao alternar tema */
+.settings-panel, .settings-panel-head, .settings-panel-head h2,
+.settings-close, .settings-section-title, .settings-info,
+.settings-divider, .theme-toggle, .theme-toggle-btn,
+.settings-select, .settings-select-caret, .settings-backdrop {
+  transition-property: background, background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: .25s, .25s, .25s, .25s, .25s, .3s, .38s;
+  transition-timing-function: var(--ease-out);
+}
+
+/* ── Tema Escuro do painel de Configurações — vidro real, replicando
+   1:1 o padrão ".ds-modal"/".ds-input" (vidro) de
+   Referencias/VBM - Design System/Design_System_VBM.html ── */
+[data-bg="dark"] .settings-panel {
+  background: rgba(13,38,64,.92);
+  border-left: 1px solid rgba(255,255,255,.12);
+  box-shadow: -16px 0 48px rgba(0,0,0,.45);
+}
+@supports (backdrop-filter: blur(1px)) {
+  [data-bg="dark"] .settings-panel {
+    background: rgba(255,255,255,.07);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2 { color: #fff; }
+/* O fechar no tema escuro vem de css/vbm-app.css (regra única). */
+[data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+
+/* Select (form) — "vidro leve" idêntico ao .ds-input dark da referência */
+[data-bg="dark"] .settings-select {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
+  color: var(--vbm-white);
+}
+@supports (backdrop-filter: blur(1px)) {
+  [data-bg="dark"] .settings-select { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+}
+[data-bg="dark"] .settings-select:focus {
+  border-color: var(--vbm-blue);
+  box-shadow: 0 0 0 3px rgba(60,181,229,.18);
+  background: rgba(255,255,255,.09);
+}
+[data-bg="dark"] .settings-select option { background: var(--vbm-blue-deep); color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* ════════════════════════════════════════════════════════════
+   TEMA ESCURO — aplicado à página inteira (replica o alcance do
+   body[data-bg="dark"] da referência, que reskina TODOS os
+   componentes visíveis, não só o painel de configurações)
+   ════════════════════════════════════════════════════════════ */
+body,
+.topnav, .topnav-link, .settings-btn {
+  transition: background .3s var(--ease-out), background-color .3s var(--ease-out),
+              border-color .3s var(--ease-out), color .3s var(--ease-out),
+              box-shadow .3s var(--ease-out);
+}
+
+body[data-bg="dark"] {
+  /* Redefine os tokens de texto do Design System — cascade automático
+     para TODO texto que usa var(--vbm-dark)/var(--vbm-mid), inclusive
+     nos estilos inline dos cards/tabela/hero (nenhum deles usa esses
+     tokens como background nesta página, então é seguro sobrescrever). */
+  --vbm-dark: #f4f7fb;
+  --vbm-mid: rgba(244,247,251,.55);
+  --vbm-text: rgba(244,247,251,.82);
+  background:
+    radial-gradient(ellipse 80% 50% at 72% 6%, rgba(60,181,229,.10) 0%, transparent 55%),
+    linear-gradient(160deg, #10131a 0%, var(--vbm-blue-deep) 100%);
+  background-attachment: fixed;
+}
+
+/* Topbar — vidro no topo (translúcido) e opaco só depois do scroll,
+   igual ao tema claro, só que com tinte escuro em vez de azul */
+[data-bg="dark"] .topnav {
+  background: transparent;
+  border-bottom-color: rgba(255,255,255,.05);
+}
+[data-bg="dark"] .topnav.scrolled {
+  background: rgba(13,38,64,.92);
+  box-shadow: 0 2px 24px rgba(0,0,0,.4);
+}
+[data-bg="dark"] .topnav-link { color: rgba(255,255,255,.65); }
+[data-bg="dark"] .topnav-link:hover { color: #fff; }
+[data-bg="dark"] .topnav-sep { background: rgba(255,255,255,.14); }
+[data-bg="dark"] .topnav-user { border-left-color: rgba(255,255,255,.16); }
+
+/* Scrollbar discreto (webkit) para um acabamento mais premium */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.14); border-radius: 100px; border: 2px solid transparent; background-clip: content-box; }
+[data-bg="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); background-clip: content-box; }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP NAVIGATION ═══ -->
+<nav class="topnav" id="topnav">
+  <a href="index.html" class="topnav-logo">
+    <img src="assets/images/vale-logo.svg" alt="Vale"/>
+  </a>
+
+  <div class="topnav-links" id="topnavLinks">
+    <!-- Principal -->
+    <a href="kaizen-novo.html" class="topnav-link">
+      <i class="fa-solid fa-plus-circle"></i> <span data-i18n="nav.novoKaizen">Novo Kaizen</span>
+    </a>
+
+    <div class="topnav-sep"></div>
+
+    <!-- Gestão -->
+    <a href="biblioteca.html" class="topnav-link">
+      <i class="fa-solid fa-book"></i> <span data-i18n="nav.biblioteca">Biblioteca</span>
+    </a>
+    <a href="aprovacao.html" class="topnav-link">
+      <i class="fa-solid fa-clipboard-check"></i> <span data-i18n="nav.aprovacao">Aprovação</span>
+      <span class="topnav-badge">3</span>
+    </a>
+
+    <div class="topnav-sep"></div>
+
+    <!-- Config -->
+    <a href="admin.html" class="topnav-link">
+      <i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav.administracao">Administração</span>
+    </a>
+  </div>
+
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.btnTitle" aria-label="Configurações">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser">
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar"></div>
+    </div>
+    <button class="topnav-mobile-toggle" id="mobileToggle" title="Menu" aria-label="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile nav drawer -->
+<div class="topnav-drawer" id="topnavDrawer">
+  <a href="kaizen-novo.html" class="topnav-link"><i class="fa-solid fa-plus-circle"></i> <span data-i18n="nav.novoKaizen">Novo Kaizen</span></a>
+  <a href="biblioteca.html" class="topnav-link"><i class="fa-solid fa-book"></i> <span data-i18n="nav.biblioteca">Biblioteca</span></a>
+  <a href="aprovacao.html" class="topnav-link"><i class="fa-solid fa-clipboard-check"></i> <span data-i18n="nav.aprovacao">Aprovação</span> <span class="topnav-badge">3</span></a>
+  <a href="admin.html" class="topnav-link"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav.administracao">Administração</span></a>
+</div>
+
+<!-- ═══ PAINEL LATERAL DE CONFIGURAÇÕES (Theme + Language) ═══ -->
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true">
+  <div class="settings-panel-head">
+    <h2 data-i18n="settings.title">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="settings.theme">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Alternar tema">
+        <button class="theme-toggle-btn active" id="btnWhite" data-i18n="theme.white">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" data-i18n="theme.dark">Escuro</button>
+      </div>
+    </section>
+
+    <div class="settings-divider"></div>
+
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="settings.language">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="settings.languageInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="app-layout">
+<main class="app-main">
+
+
+  <!-- PAGE CONTENT -->
+  <div class="page-content">
+
+    <!-- ═══ HERO BANNER ═══ -->
+    <!-- NÃO usar loading="lazy" aqui: esta é a maior imagem visível na
+         primeira dobra (o LCP da tela), e adiar seu início só atrasaria a
+         pintura. O que dá para melhorar sem mudar o visual:
+           • fetchpriority="high" — sobe na fila do navegador, à frente de
+             recursos menos importantes;
+           • decoding="async" — a decodificação sai da thread principal,
+             então a interface não congela enquanto a imagem é processada.
+         A ARTE É O 00_COMPOSICAO_ARTE.webp (162 KB). Antes era o
+         00_COMPOSICAO_COMPLETA.svg, de 6,9 MB: um SVG que servia só de
+         embrulho para 5 PNGs em base64 — um deles uma FOTO 2400x1145
+         salva como PNG (3,9 MB) — e que, por ser base64, quase não
+         comprimia (gzip tirava 31%). Era, disparado, o maior gargalo do
+         app. Como o conteúdo já era todo raster, gerar um WebP no mesmo
+         tamanho (2400x1145) não perde nada de nitidez: o que se perde é
+         só o peso. Conferido lado a lado com a versão vetorial em
+         1920x1080, inclusive no símbolo VPS e na textura da rocha, que
+         são as partes mais sensíveis.
+
+         06/10/2026: o símbolo VPS foi RETIRADO da arte (a área foi
+         preenchida com a própria textura da rocha, com a iluminação
+         casada nas bordas). O ?v= na URL força o navegador a buscar a
+         versão nova — sem ele a cópia antiga, com o símbolo, podia ficar
+         até 1 h em cache.
+
+         Os dois arquivos antigos (00_COMPOSICAO_COMPLETA.svg e .webp)
+         foram REMOVIDOS do projeto — ninguém os carregava e juntos
+         pesavam 5,9 MB no pacote de deploy.
+
+         Limite conhecido: 2400 px de largura. Em telas maiores que isso
+         a arte é ampliada e perde um pouco de nitidez — exatamente como
+         acontecia antes, já que os PNGs dentro do SVG também tinham
+         2400 px.
+
+         O TEXTO DA HERO NÃO ESTÁ DENTRO DA IMAGEM. Ele era <text>
+         dentro do SVG e, por vir por <img>, ficava fora do alcance da
+         página: não dava para traduzir nem para trocar a cor. Agora a
+         arte vem no <img> e as palavras no <svg> logo abaixo, no MESMO
+         sistema de coordenadas (viewBox 2400x1145) e com o mesmo
+         enquadramento do object-fit da imagem — por isso aparecem
+         exatamente onde apareciam. Sendo DOM de verdade, entram no
+         data-i18n como qualquer outro texto da tela. -->
+    <div class="dash-hero">
+      <!-- Arte e texto dividem UM único wrapper animado: se cada um
+           tivesse a sua animação de zoom, bastaria começarem com alguns
+           milissegundos de diferença para o texto descolar da arte. -->
+      <div class="dash-hero-zoom">
+        <img class="dash-hero-bg-img"
+             src="assets/images/00_COMPOSICAO_ARTE.webp?v=20261006-1"
+             fetchpriority="high"
+             decoding="async"
+             data-i18n-alt="hero.alt"
+             alt=""/>
+
+        <!-- preserveAspectRatio="xMinYMax slice" é o equivalente exato,
+             em SVG, do object-fit:cover + object-position:left bottom da
+             imagem: mesmo recorte, mesma âncora, mesma escala em
+             qualquer tamanho de tela.
+             aria-hidden porque o alt da imagem já anuncia esta mesma
+             frase — sem isso o leitor de tela leria tudo duas vezes. -->
+        <svg class="dash-hero-texto" viewBox="0 0 2400 1145"
+             preserveAspectRatio="xMinYMax slice" role="heading" aria-level="1"
+             aria-label="Gestão Kaizen — Pessoas. Método. Resultado." focusable="false">
+          <!-- 06/10/2026: o símbolo VPS saiu da arte (ficava em y≈239–436,
+               acima deste bloco). Para não deixar o buraco, o bloco de texto
+               sobe para o centro óptico da área abaixo do menu e cresce 10%,
+               ocupando o espaço liberado. A transformação é aplicada ao
+               grupo inteiro, em torno do canto superior esquerdo do bloco
+               (169,485): as posições relativas entre as linhas não mudam e,
+               por estar no mesmo viewBox/slice da arte, continua valendo em
+               qualquer resolução. Topo do bloco: 332; base: ≈898 (de 1145). -->
+          <g class="hero-bloco" transform="translate(169 332) scale(1.1) translate(-169 -485)">
+            <text class="hero-antetitulo" x="169" y="502" data-i18n="hero.antetitulo">Kaizen System</text>
+            <text class="hero-linha" x="169" y="629" fill="#ffffff" data-i18n="hero.linha1">Pessoas.</text>
+            <text class="hero-linha" x="169" y="769" fill="#5fd0ff" data-i18n="hero.linha2">Método.</text>
+            <text class="hero-linha" x="169" y="909" fill="#007e7a" data-i18n="hero.linha3">Resultado.</text>
+            <text class="hero-subtitulo" x="169" y="993" data-i18n="hero.subtitulo">VBM Solução de Problemas e Melhoria Contínua</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+  </div><!-- /page-content -->
+</main>
+</div>
+
+
+<script src="js/vbm-app.js?v=20260921-1"></script>
+<!-- Dados do usuário logado (Microsoft Graph) — reaproveita o token do
+     login já existente; sem MSAL próprio, sem alterar o fluxo de auth. -->
+<script src="js/usuario-graph.js?v=20260912-1"></script>
+<!-- clientId/authority do Entra ID: fonte única, usada também pela tela
+     de Aprovação para enviar o aviso da decisão. -->
+<script src="js/msal-config.js?v=20260915-1"></script>
+<script>
+// ─── Login com conta Microsoft (MSAL.js / Azure AD - Entra ID) ───
+// PENDENTE DE CONFIGURAÇÃO: preencha clientId e authority abaixo com os
+// dados do app registrado no Azure Portal (Azure AD/Entra ID > App
+// registrations > New registration):
+//   • clientId  = "Application (client) ID" do app registrado
+//   • authority = "https://login.microsoftonline.com/<TENANT_ID>"
+//                 (Tenant ID = "Directory (tenant) ID", ou use
+//                 "organizations" para aceitar qualquer tenant do Azure AD)
+//   • Em "Authentication" no Azure Portal, adicione esta URL exata como
+//     Redirect URI do tipo SPA: a própria URL desta página (ex.:
+//     http://localhost/index.html ou o domínio final de produção).
+//   • Em "API permissions", garanta o escopo "User.Read" (Microsoft Graph).
+// Enquanto os campos abaixo estiverem com os placeholders, este bloco não
+// tenta nenhum login — nada quebra. O cabeçalho ainda mostra a pessoa
+// real: js/usuario-graph.js usa a identidade que o proxy do Databricks
+// Apps já repassa (ver GET /api/me em server.js), sem depender do MSAL.
+(function () {
+  // clientId e authority moram em js/msal-config.js — um lugar só para
+  // preencher, agora que a tela de Aprovação também precisa deles.
+  if (!window.VBMMsal || !window.VBMMsal.estaConfigurado()) return;
+  var MSAL_CONFIG = {
+    clientId: window.VBMMsal.config.clientId,
+    authority: window.VBMMsal.config.authority,
+    // Sem a query nem o fragmento — o Entra compara o redirect_uri por
+    // igualdade exata. Ver enderecoDeRetorno() em js/msal-config.js.
+    redirectUri: window.location.origin + window.location.pathname
+  };
+  var LOGIN_SCOPES = ['User.Read'];
+
+  // A msal-browser.min.js (~200 KB, CDN externo) só é baixada a partir
+  // daqui — ou seja, apenas quando o login está de fato configurado.
+  // Antes ela vinha num <script src> fixo no HTML e era baixada em todo
+  // carregamento do dashboard, mesmo com os placeholders acima fazendo
+  // este bloco sair na linha anterior sem usá-la para nada.
+  var MSAL_CDN = 'https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js';
+
+  function carregarMsal() {
+    return new Promise(function (resolve, reject) {
+      if (typeof msal !== 'undefined') return resolve();
+      var s = document.createElement('script');
+      s.src = MSAL_CDN;
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error('Falha ao carregar ' + MSAL_CDN)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  var nameEl   = document.getElementById('topnavUserName');
+  var avatarEl = document.getElementById('topnavUserAvatar');
+
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    var first = parts[0] ? parts[0][0] : '';
+    var last  = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase();
+  }
+
+  // Render imediato, só com o que o token já traz (nome + iniciais).
+  // A segunda linha (matrícula) NÃO é tocada aqui: ela vem do MDM via
+  // js/usuario-graph.js, que já roda antes deste bloco (piso Databricks)
+  // e é reforçada quando o Graph responder.
+  function renderAccount(account) {
+    if (!account) return;
+    var name = account.name || account.username;
+    if (nameEl) nameEl.textContent = name;
+    if (avatarEl) avatarEl.textContent = initials(name);
+  }
+
+  // Perfil completo (nome, empresa, foto, cargo, gestor, etc.) fica a
+  // cargo do js/usuario-graph.js, que reaproveita ESTE token — mesmo
+  // escopo delegado User.Read, sem login novo. Só entregamos aqui a
+  // função que devolve o access token; a busca no Graph, o cache da
+  // sessão e a renderização no cabeçalho ficam lá, compartilhados com
+  // as demais telas.
+  function carregarPerfilGraph(msalInstance, account) {
+    if (!window.VBMUsuario) return Promise.resolve(null);
+    return VBMUsuario.carregarDoGraph(async function () {
+      var tokenResp = await msalInstance.acquireTokenSilent({ scopes: LOGIN_SCOPES, account: account });
+      return tokenResp.accessToken;
+    });
+  }
+
+  (async function () {
+    try {
+      await carregarMsal();
+    } catch (e) {
+      // CDN indisponível: mantém o usuário mockado, como já acontecia
+      // quando o <script src> externo falhava.
+      console.warn('Login Microsoft indisponível, mantendo usuário padrão.', e);
+      return;
+    }
+
+    var msalInstance = new msal.PublicClientApplication({
+      auth: {
+        clientId: MSAL_CONFIG.clientId,
+        authority: MSAL_CONFIG.authority,
+        redirectUri: MSAL_CONFIG.redirectUri
+      },
+      cache: { cacheLocation: 'sessionStorage' }
+    });
+    await msalInstance.initialize();
+
+    try {
+      var redirectResult = await msalInstance.handleRedirectPromise();
+      var account = (redirectResult && redirectResult.account) || msalInstance.getAllAccounts()[0];
+
+      if (!account) {
+        // Sem sessão ativa: tenta login silencioso (SSO) e, se falhar,
+        // redireciona para o login da Microsoft.
+        try {
+          var silent = await msalInstance.ssoSilent({ scopes: LOGIN_SCOPES });
+          account = silent.account;
+        } catch (silentErr) {
+          msalInstance.loginRedirect({ scopes: LOGIN_SCOPES });
+          return;
+        }
+      }
+
+      msalInstance.setActiveAccount(account);
+      // Nome/iniciais na hora, direto do token — a foto e a empresa
+      // chegam logo depois, quando o Graph responder.
+      renderAccount(account);
+      await carregarPerfilGraph(msalInstance, account);
+    } catch (e) {
+      // Falha de autenticação: mantém o usuário mockado como fallback.
+      console.warn('Login Microsoft indisponível, mantendo usuário padrão.', e);
+    }
+  })();
+})();
+
+// Topnav: vidro no topo da página, azul sólido ao rolar
+(function(){
+  var topnav = document.getElementById('topnav');
+  if(!topnav) return;
+  function onScroll(){
+    topnav.classList.toggle('scrolled', window.scrollY > 8);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+
+(function(){
+  // Mobile toggle for topnav drawer
+  var btn    = document.getElementById('mobileToggle');
+  var drawer = document.getElementById('topnavDrawer');
+  if(btn && drawer){
+    btn.addEventListener('click', function(){
+      var open = drawer.classList.toggle('open');
+      btn.querySelector('i').className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    });
+    // Close on outside click
+    document.addEventListener('click', function(e){
+      if(!btn.contains(e.target) && !drawer.contains(e.target)){
+        drawer.classList.remove('open');
+        btn.querySelector('i').className = 'fa-solid fa-bars';
+      }
+    });
+  }
+})();
+
+// ─── Painel de Configurações (engrenagem) — replicado de Value Driver Tree ───
+(function () {
+  var btn = document.getElementById('settingsBtn');
+  var panel = document.getElementById('settingsPanel');
+  var backdrop = document.getElementById('settingsBackdrop');
+  var closeBtn = document.getElementById('settingsClose');
+  if (!btn || !panel || !backdrop) return;
+
+  function openPanel() {
+    panel.classList.add('open');
+    backdrop.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    panel.setAttribute('aria-hidden', 'false');
+  }
+  function closePanel() {
+    panel.classList.remove('open');
+    backdrop.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('aria-hidden', 'true');
+  }
+
+  btn.addEventListener('click', function () {
+    panel.classList.contains('open') ? closePanel() : openPanel();
+  });
+  closeBtn && closeBtn.addEventListener('click', closePanel);
+  backdrop.addEventListener('click', closePanel);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closePanel();
+  });
+})();
+
+// ─── Tema (Claro/Escuro) do painel de Configurações ───
+(function () {
+  var THEME_KEY = 'vdt-theme';
+  var btnWhite = document.getElementById('btnWhite');
+  var btnBusiness = document.getElementById('btnBusiness');
+  if (!btnWhite && !btnBusiness) return;
+
+  function applyTheme(theme) {
+    var isDark = theme === 'dark';
+    document.body.dataset.bg = isDark ? 'dark' : '';
+    if (btnWhite) btnWhite.classList.toggle('active', !isDark);
+    if (btnBusiness) btnBusiness.classList.toggle('active', isDark);
+  }
+
+  var saved = 'light';
+  try { saved = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch (e) {}
+  applyTheme(saved);
+
+  btnWhite && btnWhite.addEventListener('click', function () {
+    applyTheme('light');
+    try { localStorage.setItem(THEME_KEY, 'light'); } catch (e) {}
+  });
+  btnBusiness && btnBusiness.addEventListener('click', function () {
+    applyTheme('dark');
+    try { localStorage.setItem(THEME_KEY, 'dark'); } catch (e) {}
+  });
+})();
+
+// ─── Idioma (PT-BR/EN) do painel de Configurações ───
+(function () {
+  /* Dicionário de tradução — contém APENAS as chaves presentes no DOM
+     desta página (topnav + painel de configurações). Ao adicionar um
+     data-i18n no HTML, inclua a chave correspondente nos dois idiomas. */
+  var I18N = {
+    'pt-BR': {
+      'a11y.abrirMenu': 'Abrir menu',
+      'a11y.expandir': 'Expandir',
+      'a11y.avancar': 'Avançar',
+      'a11y.voltar': 'Voltar',
+      'a11y.adicionar': 'Adicionar',
+      'common.fechar': 'Fechar',
+      'settings.btnTitle':   'Configurações',
+      'settings.title':      'Configurações',
+      'settings.close':      'Fechar',
+      'settings.theme':      'Tema',
+      'settings.language':   'Idioma',
+      'settings.languageInfo': 'Idioma da interface',
+      'theme.white':         'Claro',
+      'theme.dark':          'Escuro',
+      'nav.novoKaizen':      'Novo Kaizen',
+      'nav.biblioteca':      'Biblioteca',
+      'nav.aprovacao':       'Aprovação',
+      'nav.administracao':   'Administração',
+      'role.operador':       'Operador',
+      /* Texto da hero: são os <text> do SVG sobreposto à arte. Entram
+         aqui como qualquer outro texto da tela porque agora são DOM.
+         'hero.alt' é o alt da imagem — a mesma frase, para quem usa
+         leitor de tela. */
+      'hero.antetitulo':     'Kaizen System',
+      'hero.linha1':         'Pessoas.',
+      'hero.linha2':         'Método.',
+      'hero.linha3':         'Resultado.',
+      'hero.subtitulo':      'VBM Solução de Problemas e Melhoria Contínua',
+      'hero.alt':            'Gestão Kaizen — Pessoas. Método. Resultado.'
+    },
+    'en': {
+      'a11y.abrirMenu': 'Open menu',
+      'a11y.expandir': 'Expand',
+      'a11y.avancar': 'Next',
+      'a11y.voltar': 'Back',
+      'a11y.adicionar': 'Add',
+      'common.fechar': 'Close',
+      'settings.btnTitle':   'Settings',
+      'settings.title':      'Settings',
+      'settings.close':      'Close',
+      'settings.theme':      'Theme',
+      'settings.language':   'Language',
+      'settings.languageInfo': 'Interface language',
+      'theme.white':         'Light',
+      'theme.dark':          'Dark',
+      'nav.novoKaizen':      'New Kaizen',
+      'nav.biblioteca':      'Library',
+      'nav.aprovacao':       'Approval',
+      'nav.administracao':   'Administration',
+      'role.operador':       'Operator',
+      'hero.antetitulo':     'Kaizen System',
+      'hero.linha1':         'People.',
+      'hero.linha2':         'Method.',
+      'hero.linha3':         'Result.',
+      'hero.subtitulo':      'VBM Problem Solving & Continuous Improvement',
+      'hero.alt':            'Kaizen Management — People. Method. Result.'
+    }
+  };
+
+  var select = document.getElementById('langSelect');
+  if (!select) return;
+
+  /* Cada atributo data-i18n-* mapeia para uma propriedade/atributo do
+     elemento. Tabela em vez de blocos repetidos: para suportar um novo
+     alvo de tradução, basta acrescentar uma linha aqui. */
+  var TARGETS = [
+    ['data-i18n',             'textContent'],
+    ['data-i18n-title',       'title'],
+    ['data-i18n-aria',        'aria-label'],
+    ['data-i18n-placeholder', 'placeholder'],
+    ['data-i18n-alt',         'alt']
+  ];
+
+  function translate(lang) {
+    var dict = I18N[lang] || I18N['pt-BR'];
+    TARGETS.forEach(function (target) {
+      var attr = target[0], prop = target[1];
+      document.querySelectorAll('[' + attr + ']').forEach(function (el) {
+        var value = dict[el.getAttribute(attr)];
+        if (value == null) return;
+        if (prop === 'textContent') el.textContent = value;
+        else el.setAttribute(prop, value);
+      });
+    });
+  }
+
+  function applyLang(lang) {
+    if (!I18N[lang]) lang = 'pt-BR';
+    select.value = lang;
+    translate(lang);
+    try { localStorage.setItem('vdt-lang', lang); } catch (e) {}
+    // Avisa quem mostra dados do banco (listas bilíngues) para
+    // reconsultar no novo idioma — ver window.VBMIdioma em vbm-app.js.
+    try { window.dispatchEvent(new Event('vbm:idioma')); } catch (e) {}
+  }
+
+  select.addEventListener('change', function () { applyLang(select.value); });
+
+  var savedLang = 'pt-BR';
+  try { savedLang = localStorage.getItem('vdt-lang') || 'pt-BR'; } catch (e) {}
+  applyLang(savedLang);
+})();
+</script>
+</body>
+</html>

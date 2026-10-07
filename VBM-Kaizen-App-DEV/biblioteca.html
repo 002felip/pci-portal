@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ═══════════════════════════════════════════════════════════════════
+  VBM KAIZEN · Biblioteca de Kaizens aprovados
+  ═══════════════════════════════════════════════════════════════════
+  PAPEL DA PÁGINA
+    Repositório consultivo. Alterna entre visão em grade e lista pelo
+    data-view-toggle; busca/filtros via data-filter-input.
+
+  DEPENDÊNCIAS (carregadas no <head> / fim do <body>)
+    • Font Awesome 6  — ícones (fa-solid ...)
+    • css/vbm-app.css — Design System VBM: tokens (--vbm-*), reset,
+      componentes compartilhados (.btn, .form-control, .modal, .badge...)
+    • js/vbm-app.js  — comportamento compartilhado: modais, abas,
+      wizard, filtros, toasts, toggles. Auto-inicializa no DOMContentLoaded.
+    NÃO usa jQuery, Bootstrap nem AOS — foram removidos por não terem
+    uso real (economia de ~446 KB por página).
+
+  ORGANIZAÇÃO DESTE ARQUIVO
+    1. <style> local .... overrides desta tela apenas. O que for
+                          reutilizável deve ir para vbm-app.css.
+    2. <body> .......... topnav → painel de configurações → conteúdo
+    3. <script> ........ blocos IIFE independentes, um por recurso
+
+  TEMA CLARO/ESCURO
+    Alternado por body[data-bg="dark"] (persistido em localStorage
+    'vdt-theme'). Toda regra de cor precisa do par claro + escuro.
+
+  INTERNACIONALIZAÇÃO (i18n)
+    Marque o elemento com data-i18n / -title / -aria / -placeholder e
+    cadastre a chave nos DOIS dicionários (pt-BR e en) no fim do arquivo.
+    Idioma persistido em localStorage 'vdt-lang'.
+  ═══════════════════════════════════════════════════════════════════
+-->
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>VBM Kaizen — Biblioteca</title>
+<link href="css/fontawesome-subset.css?v=20260930-1" rel="stylesheet"/>
+<link href="css/vbm-app.css?v=20261006-1" rel="stylesheet"/>
+<!-- Poppins servida pelo próprio app (css/poppins.css + assets/fonts/poppins).
+     Vinha de fonts.googleapis.com: em rede sem saída para a internet o
+     pedido ficava pendente e o evento load da página nunca disparava. -->
+<link href="css/poppins.css?v=20260912-1" rel="stylesheet"/>
+<link href="assets/icons/a1922a98664cc516_favicon-32x32-1.png" rel="icon"/>
+<style>
+/* ═══════════════════════════════════════════════════
+   TOPNAV LAYOUT OVERRIDE — replicado 1:1 do index.html
+═══════════════════════════════════════════════════ */
+.app-layout{display:block;min-height:100vh}.app-main{margin-left:0}
+
+.topnav{position:sticky;top:0;z-index:100;height:64px;background:linear-gradient(145deg,#082d4f 0%,#1b6898 100%);display:flex;align-items:center;padding:0 2rem;gap:0;border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 2px 20px rgba(8,45,79,.18)}
+@supports (backdrop-filter: blur(1px)) { .topnav { backdrop-filter: blur(4px) saturate(120%); -webkit-backdrop-filter: blur(4px) saturate(120%); } }
+
+.topnav-logo{display:flex;align-items:center;text-decoration:none;flex-shrink:0;margin-right:1.5rem;position:relative;z-index:1}
+.topnav-logo img{height:26px;width:auto}
+
+.topnav-links{display:flex;align-items:center;justify-content:center;gap:.15rem;flex:1;position:relative;z-index:1}
+.topnav-link{display:flex;align-items:center;gap:.4rem;padding:.5rem .85rem;border-radius:.45rem;font-family:'Poppins',sans-serif;font-weight:400;font-size:.72rem;letter-spacing:.04em;color:rgba(255,255,255,.75);text-decoration:none;white-space:nowrap;transition:color .18s;position:relative}
+.topnav-link i{font-size:.72rem}
+.topnav-link:hover{color:#fff}
+.topnav-link.active{color:#fff}
+.topnav-link::after{content:'';position:absolute;bottom:-1px;left:50%;width:0;height:1.5px;background:linear-gradient(90deg,transparent,#fff 25%,#fff 75%,transparent);border-radius:10px;box-shadow:0 0 8px rgba(255,255,255,.65);opacity:0;transform:translateX(-50%);transition:width .3s var(--ease-out),opacity .3s var(--ease-out)}
+.topnav-link.active::after{width:60%;opacity:1}
+.topnav-link:not(.active):hover::after{width:30%;opacity:.4}
+
+.topnav-badge{font-size:.55rem;padding:.1rem .35rem;border-radius:10rem;background:#c2770e;color:#fff;font-family:'Poppins',sans-serif;font-weight:700;line-height:1.4}
+.topnav-sep{width:1px;height:20px;background:rgba(255,255,255,.25);flex-shrink:0;margin:0 .1rem}
+.topnav-actions{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-left:auto;position:relative;z-index:1}
+
+.topnav-user{display:flex;align-items:center;gap:10px;padding-left:10px;border-left:1px solid rgba(255,255,255,.22);flex-shrink:0}
+.topnav-user-text{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+.topnav-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(145deg,var(--vbm-blue-light),var(--vbm-blue-dark));border:1.5px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
+.topnav-user-name{font-family:'Poppins',sans-serif;font-weight:600;font-size:11.5px;color:#fff;white-space:nowrap}
+.topnav-user-role{font-family:'Poppins',sans-serif;font-weight:600;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);white-space:nowrap}
+
+.topnav-mobile-toggle{display:none;width:34px;height:34px;border-radius:.4rem;border:none;background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;flex-shrink:0}
+.topnav-drawer{display:none;position:fixed;top:64px;left:0;right:0;background:#020e1c;border-bottom:1px solid rgba(60,181,229,.15);z-index:299;padding:.75rem 1rem;flex-direction:column;gap:.25rem;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.topnav-drawer.open{display:flex}
+.topnav-drawer .topnav-link{font-size:.8rem;padding:.65rem .9rem}
+
+@media(max-width:960px){.topnav-links{display:none}.topnav-mobile-toggle{display:flex}.topnav-user-role{display:none}}
+@media(max-width:540px){.topnav-user-name{display:none}}
+
+/* Grids do modal de detalhe (Problema/Meta, Resultados Alcançados) —
+   empilham em telas estreitas em vez de espremer o conteúdo. */
+@media(max-width:640px){
+  .kd-2col{grid-template-columns:1fr !important;}
+  .kd-3col{grid-template-columns:1fr !important;}
+}
+
+/* ═══════════════════════════════════════════════════
+   SETTINGS (engrenagem) — replicado 1:1 de
+   Referencias/Value Drive Tree/style.css
+═══════════════════════════════════════════════════ */
+.settings-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border:none;border-radius:100px;background:transparent;color:#fff;cursor:pointer;flex-shrink:0;transition:background .25s,transform .35s var(--ease-spring)}
+.settings-btn:hover{background:rgba(255,255,255,.12)}
+.settings-btn[aria-expanded="true"]{background:rgba(255,255,255,.18);transform:rotate(50deg)}
+
+.settings-backdrop{position:fixed;inset:0;background:rgba(9,20,34,.4);opacity:0;pointer-events:none;z-index:399;transition:opacity .3s var(--ease-out)}
+@supports (backdrop-filter: blur(1px)) { .settings-backdrop { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); } }
+.settings-backdrop.open{opacity:1;pointer-events:auto}
+
+.settings-panel{position:fixed;top:0;right:0;width:300px;max-width:90vw;height:100vh;background:#fff;box-shadow:-16px 0 48px rgba(9,20,34,.22);z-index:400;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .38s var(--ease-out)}
+.settings-panel.open{transform:translateX(0)}
+.settings-panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eef1f6}
+.settings-panel-head h2{font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:-.01em;color:var(--vbm-dark)}
+.settings-close{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;border-radius:100px;background:#fafcfe;color:var(--vbm-mid);cursor:pointer;transition:background .2s,color .2s}
+.settings-close svg{width:11px;height:11px}
+.settings-close:hover{background:var(--vbm-blue);color:#fff}
+.settings-panel-body{padding:20px;display:flex;flex-direction:column;overflow-y:auto}
+.settings-section{display:flex;flex-direction:column;gap:9px}
+.settings-section-title{display:flex;align-items:center;gap:5px;font-family:'Poppins',sans-serif;font-weight:600;font-size:11px;color:var(--vbm-dark)}
+.settings-info{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1px solid #e8e8e8;color:var(--vbm-mid);font-size:8px;font-style:italic;font-family:Georgia,serif;cursor:help}
+.settings-divider{height:1px;background:#eef1f6;margin:18px 0}
+.theme-toggle{display:flex;align-items:center;background:#fafcfe;border:1px solid #e8e8e8;border-radius:100px;padding:.16rem;gap:.1rem;width:fit-content}
+.theme-toggle-btn{padding:.38rem 1.05rem;border-radius:100px;font-size:.64rem;letter-spacing:.02em;color:var(--vbm-mid);border:none;background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;transition:background .2s,color .2s;white-space:nowrap;line-height:1}
+.theme-toggle-btn.active{background:var(--vbm-blue);color:#fff;box-shadow:0 4px 14px rgba(60,181,229,.35)}
+.settings-select-wrap{position:relative}
+.settings-select{width:100%;appearance:none;-webkit-appearance:none;background:#fff;border:1.5px solid #e8e8e8;border-radius:9px;padding:.5rem 1.9rem .5rem .75rem;font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:300;color:var(--vbm-dark);cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.settings-select:hover{border-color:var(--vbm-blue-light)}
+.settings-select:focus{outline:none;border-color:var(--vbm-blue);box-shadow:0 0 0 3px rgba(60,181,229,.15)}
+.settings-select-caret{width:9px;height:9px;position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--vbm-mid);pointer-events:none}
+
+.settings-panel,.settings-panel-head,.settings-panel-head h2,.settings-close,.settings-section-title,.settings-info,.settings-divider,.theme-toggle,.theme-toggle-btn,.settings-select,.settings-select-caret,.settings-backdrop{transition-property:background,background-color,border-color,color,box-shadow,opacity,transform;transition-duration:.25s,.25s,.25s,.25s,.25s,.3s,.38s;transition-timing-function:var(--ease-out)}
+
+[data-bg="dark"] .settings-backdrop{background:rgba(0,0,0,.55)}
+[data-bg="dark"] .settings-panel{background:var(--vbm-blue-deep);box-shadow:-16px 0 48px rgba(0,0,0,.45)}
+[data-bg="dark"] .settings-panel-head{border-bottom-color:rgba(255,255,255,.1)}
+[data-bg="dark"] .settings-panel-head h2{color:#fff}
+/* O fechar no tema escuro vem de css/vbm-app.css (regra única). */
+[data-bg="dark"] .settings-section-title{color:#fff}
+[data-bg="dark"] .settings-info{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.5)}
+[data-bg="dark"] .settings-divider{background:rgba(255,255,255,.1)}
+[data-bg="dark"] .theme-toggle{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+[data-bg="dark"] .theme-toggle-btn{color:rgba(255,255,255,.55)}
+[data-bg="dark"] .theme-toggle-btn.active{color:#fff}
+[data-bg="dark"] .settings-select{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:#fff}
+[data-bg="dark"] .settings-select option{background:var(--vbm-blue-deep);color:#fff}
+[data-bg="dark"] .settings-select-caret{color:rgba(255,255,255,.5)}
+
+/* ════════════════════════════════════════════════════════════
+   TEMA ESCURO — aplicado à página inteira
+   ════════════════════════════════════════════════════════════ */
+body,.topnav,.topnav-link,.settings-btn{transition:background .3s var(--ease-out),background-color .3s var(--ease-out),border-color .3s var(--ease-out),color .3s var(--ease-out),box-shadow .3s var(--ease-out)}
+body[data-bg="dark"]{--vbm-dark:#f4f7fb;--vbm-mid:rgba(244,247,251,.55);--vbm-text:rgba(244,247,251,.82);background:radial-gradient(ellipse 80% 50% at 72% 6%,rgba(60,181,229,.10) 0%,transparent 55%),linear-gradient(160deg,#10131a 0%,var(--vbm-blue-deep) 100%);background-attachment:fixed}
+[data-bg="dark"] .topnav{background:transparent;border-bottom-color:rgba(255,255,255,.05)}
+[data-bg="dark"] .topnav-link{color:rgba(255,255,255,.65)}
+[data-bg="dark"] .topnav-link:hover{color:#fff}
+[data-bg="dark"] .topnav-sep{background:rgba(255,255,255,.14)}
+[data-bg="dark"] .topnav-user{border-left-color:rgba(255,255,255,.16)}
+[data-bg="dark"] .stat-card,[data-bg="dark"] .section-card{background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.12) !important;box-shadow:0 4px 24px rgba(0,0,0,.3) !important}
+[data-bg="dark"] .stat-label,[data-bg="dark"] .section-card-title{color:rgba(255,255,255,.9)}
+[data-bg="dark"] .section-card-icon{background:rgba(255,255,255,.08);color:#fff}
+[data-bg="dark"] .data-table thead th{color:rgba(255,255,255,.5);background:rgba(255,255,255,.04);border-bottom-color:rgba(255,255,255,.14)}
+[data-bg="dark"] .data-table tbody tr{border-color:rgba(255,255,255,.08)}
+[data-bg="dark"] .data-table td{border-bottom-color:rgba(255,255,255,.08)}
+[data-bg="dark"] .kaizen-card,[data-bg="dark"] .approval-item{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+[data-bg="dark"] .kaizen-card-foot{border-top-color:rgba(255,255,255,.08)}
+[data-bg="dark"] .kaizen-tag{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.85)}
+[data-bg="dark"] .btn-icon{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.85)}
+[data-bg="dark"] .btn-icon-blue{background:rgba(60,181,229,.22);color:#8fdcff;border:none}
+[data-bg="dark"] .badge-aprovado{background:rgba(22,163,74,.2);color:#4ade80}
+[data-bg="dark"] .badge-reprovado{background:rgba(220,38,38,.2);color:#f87171}
+[data-bg="dark"] .badge-aguardando{background:rgba(194,119,14,.22);color:#fbbf24}
+[data-bg="dark"] .badge-rascunho{background:rgba(255,255,255,.12);color:rgba(255,255,255,.8)}
+[data-bg="dark"] .kaizen-card-id{color:var(--vbm-blue-light)}
+[data-bg="dark"] .filter-bar{background:rgba(255,255,255,.03);border-bottom-color:rgba(255,255,255,.08)}
+[data-bg="dark"] .filter-search{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+[data-bg="dark"] .filter-search input{color:#fff}
+[data-bg="dark"] .filter-search input::placeholder{color:rgba(255,255,255,.35)}
+[data-bg="dark"] .filter-search i{color:rgba(255,255,255,.35)}
+[data-bg="dark"] .filter-search:focus-within i{color:var(--vbm-blue-light)}
+[data-bg="dark"] .filter-select{background-color:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ffffff' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")}
+[data-bg="dark"] .filter-select option{background:var(--vbm-blue-deep);color:#fff}
+[data-bg="dark"] .filter-view-btn{background:rgba(255,255,255,.1) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important}
+[data-bg="dark"] .filter-view-btn i{color:#fff !important}
+[data-bg="dark"] .filter-view-btn.active,[data-bg="dark"] .filter-view-btn:hover{background:var(--vbm-blue) !important;border-color:var(--vbm-blue) !important;color:#fff !important}
+
+/* Limpar filtros — mesma linguagem dos controles ao lado: a borda, o
+   raio, a tipografia e a altura são os do .filter-select; o hover (azul
+   + fundo pálido) é o do .filter-view-btn. Discreto por padrão, só
+   ganha cor quando o mouse chega. Some da linha em telas estreitas?
+   Não: acompanha o flex-wrap do .filter-bar como os demais. */
+.filter-clear-btn{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:#fff;border:1.5px solid #e0e0e0;border-radius:.4rem;
+  padding:.45rem .8rem;font-size:.78rem;
+  font-family:'Poppins',sans-serif;font-weight:400;color:var(--vbm-mid);
+  cursor:pointer;transition:border-color .2s,color .2s,background-color .2s;
+}
+.filter-clear-btn i{font-size:.72rem}
+.filter-clear-btn:hover{border-color:var(--vbm-blue);color:var(--vbm-blue);background:var(--vbm-blue-pale)}
+.filter-clear-btn:focus-visible{outline:2px solid var(--vbm-blue);outline-offset:2px}
+[data-bg="dark"] .filter-clear-btn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:rgba(255,255,255,.75)}
+[data-bg="dark"] .filter-clear-btn:hover{background:var(--vbm-blue);border-color:var(--vbm-blue);color:#fff}
+
+/* Filtro de múltipla seleção (Unidade, Categoria, Status, Ano).
+   O gatilho copia a métrica do .filter-select ao lado (altura, borda,
+   raio, tipografia) para não quebrar o alinhamento da barra. O painel
+   é absoluto — por isso o .section-card que o envolve precisa perder o
+   overflow:hidden ENQUANTO ele está aberto (classe abaixo), senão o
+   próprio cartão corta o painel. */
+.ms-filter{position:relative;min-width:150px}
+.ms-filter-trigger{
+  display:flex;align-items:center;gap:.4rem;width:100%;
+  background:#fff;border:1.5px solid #e0e0e0;border-radius:.4rem;
+  padding:.42rem .7rem;font-size:.78rem;font-family:'Poppins',sans-serif;font-weight:400;
+  color:var(--vbm-dark);cursor:pointer;transition:border-color .2s;text-align:left;
+}
+.ms-filter-trigger:hover,.ms-filter-trigger.open{border-color:var(--vbm-blue)}
+.ms-filter-trigger.ms-filter-ativo{border-color:var(--vbm-blue);color:var(--vbm-blue-dark)}
+.ms-filter-label{flex:1;display:flex;align-items:center;gap:.3rem;flex-wrap:nowrap;overflow:hidden;color:inherit}
+.ms-filter-trigger:not(.ms-filter-ativo) .ms-filter-label{color:var(--vbm-mid)}
+.ms-filter-trigger i.fa-chevron-down{font-size:.6rem;color:#bbb;transition:transform .2s var(--ease-out),color .2s;flex-shrink:0}
+.ms-filter-trigger.open i.fa-chevron-down{transform:rotate(180deg);color:var(--vbm-blue)}
+.ms-filter-chip{
+  background:var(--vbm-blue-pale);color:var(--vbm-blue-dark);border-radius:.3rem;
+  padding:.1rem .4rem;font-size:.68rem;font-weight:600;white-space:nowrap;flex-shrink:0;
+}
+.ms-filter-chip-mais{background:var(--vbm-blue);color:#fff}
+.ms-filter-contador{display:none}
+.ms-filter-panel{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:60;
+  min-width:240px;max-width:300px;background:#fff;border:1px solid #e6e6e6;border-radius:.6rem;
+  box-shadow:0 10px 30px rgba(16,24,40,.14);opacity:0;transform:translateY(-6px) scale(.98);
+  pointer-events:none;transition:opacity .18s var(--ease-out),transform .18s var(--ease-out);
+  overflow:hidden;
+}
+.ms-filter-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.ms-filter-panel-esquerda{left:auto;right:0}
+.ms-filter-toolbar{display:flex;gap:.5rem;padding:.65rem .6rem .5rem;border-bottom:1px solid #f0f0f0}
+.ms-filter-toolbtn{
+  background:none;border:none;color:var(--vbm-blue);font-size:.7rem;font-weight:600;
+  font-family:'Poppins',sans-serif;cursor:pointer;padding:.15rem 0;transition:color .2s;
+}
+.ms-filter-toolbtn:hover{color:var(--vbm-blue-dark);text-decoration:underline}
+.ms-filter-list{max-height:220px;overflow-y:auto;padding:.35rem}
+.ms-filter-item{
+  display:flex;align-items:center;gap:.55rem;padding:.4rem .5rem;border-radius:.35rem;
+  cursor:pointer;transition:background-color .15s;
+}
+.ms-filter-item:hover{background:var(--vbm-blue-pale)}
+.ms-filter-item-marcado{background:var(--vbm-blue-pale)}
+.ms-filter-item input{position:absolute;opacity:0;width:1px;height:1px}
+.ms-filter-item-check{
+  width:16px;height:16px;border-radius:.25rem;border:1.5px solid #d0d0d0;background:#fff;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background-color .15s,border-color .15s;
+}
+.ms-filter-item-check i{font-size:.6rem;color:#fff;transform:scale(0);transition:transform .15s var(--ease-spring)}
+.ms-filter-item input:checked ~ .ms-filter-item-check{background:var(--vbm-blue);border-color:var(--vbm-blue)}
+.ms-filter-item input:checked ~ .ms-filter-item-check i{transform:scale(1)}
+.ms-filter-item-texto{font-size:.76rem;color:var(--vbm-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-filter-empty{padding:1rem;text-align:center;font-size:.74rem;color:var(--vbm-mid)}
+.section-card.ms-filter-open{overflow:visible}
+/* Ordenação: gatilho = .filter-view-btn, menu = mesmo painel dos filtros. */
+.bib-ordem{position:relative}
+.bib-ordem-menu{min-width:190px}
+.bib-ordem-item{width:100%;background:none;border:0;font-family:'Poppins',sans-serif;text-align:left;justify-content:space-between}
+.bib-ordem-item i{font-size:.65rem;color:var(--vbm-blue);visibility:hidden}
+.bib-ordem-item[aria-checked="true"]{background:var(--vbm-blue-pale)}
+.bib-ordem-item[aria-checked="true"] i{visibility:visible}
+.bib-ordem-item:focus-visible,#bibOrdemBtn:focus-visible{outline:2px solid var(--vbm-blue);outline-offset:2px}
+[data-bg="dark"] .bib-ordem-item[aria-checked="true"]{background:rgba(255,255,255,.08)}
+[data-bg="dark"] .bib-ordem-item i{color:var(--vbm-blue-light)}
+[data-bg="dark"] .ms-filter-trigger{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#fff}
+[data-bg="dark"] .ms-filter-trigger:not(.ms-filter-ativo) .ms-filter-label{color:rgba(255,255,255,.35)}
+[data-bg="dark"] .ms-filter-trigger:hover,[data-bg="dark"] .ms-filter-trigger.open{border-color:var(--vbm-blue-light)}
+[data-bg="dark"] .ms-filter-trigger.ms-filter-ativo{color:var(--vbm-blue-light)}
+[data-bg="dark"] .ms-filter-chip{background:rgba(60,181,229,.18);color:var(--vbm-blue-light)}
+[data-bg="dark"] .ms-filter-panel{background:var(--vbm-blue-deep);border-color:rgba(255,255,255,.12)}
+[data-bg="dark"] .ms-filter-toolbar{border-bottom-color:rgba(255,255,255,.1)}
+[data-bg="dark"] .ms-filter-item:hover,[data-bg="dark"] .ms-filter-item-marcado{background:rgba(255,255,255,.08)}
+[data-bg="dark"] .ms-filter-item-check{border-color:rgba(255,255,255,.3);background:transparent}
+[data-bg="dark"] .ms-filter-item-texto{color:#fff}
+[data-bg="dark"] .ms-filter-empty{color:rgba(255,255,255,.45)}
+
+/* ══════════════════════════════════════════════════════════════
+   PADRONIZAÇÃO TIPOGRÁFICA — mesma escala aplicada ao formulário
+   de kaizen-novo.html: menos peso (Medium/Semibold no lugar de
+   Bold), tamanhos levemente reduzidos, hierarquia por tamanho+
+   peso+cor. Escopo local — não altera css/vbm-app.css.
+   ══════════════════════════════════════════════════════════════ */
+.page-header-title { font-weight:600; font-size:1.15rem; letter-spacing:-.01em; }
+.page-header-sub { font-size:.76rem; }
+.section-card-title { font-weight:600; font-size:.84rem; }
+.kaizen-card-title { font-weight:600; font-size:.84rem; }
+.stat-label { font-size:.7rem; }
+.modal-title { font-weight:600; font-size:.95rem; }
+.form-group { margin-bottom:1.05rem; }
+.form-label { font-weight:500; font-size:.72rem; letter-spacing:.01em; margin-bottom:.35rem; }
+.form-control { font-size:.7rem; font-weight:300; }
+.form-control::placeholder { color:#a8a8a8; font-weight:300; }
+[data-bg="dark"] .form-control::placeholder { color:rgba(255,255,255,.3); }
+.form-helper { font-size:.68rem; line-height:1.5; }
+.filter-search input { font-size:.7rem; font-weight:300; }
+.filter-search input::placeholder { color:#a8a8a8; }
+.filter-select { font-size:.74rem; }
+
+.repl-badge{border-radius:.4rem;padding:.5rem .75rem;margin-top:.5rem;display:flex;align-items:center;gap:.4rem;font-size:.7rem;}
+.repl-badge i{font-size:.72rem;}
+.repl-green{background:#e8f8f0;color:#16a34a;}
+.repl-green i{color:#16a34a;}
+.repl-blue{background:var(--vbm-blue-pale);color:var(--vbm-blue-dark);}
+.repl-blue i{color:var(--vbm-blue);}
+[data-bg="dark"] .repl-green{background:rgba(22,163,74,.18);color:#4ade80;}
+[data-bg="dark"] .repl-green i{color:#4ade80;}
+[data-bg="dark"] .repl-blue{background:rgba(60,181,229,.18);color:var(--vbm-blue-light);}
+[data-bg="dark"] .repl-blue i{color:var(--vbm-blue-light);}
+
+/* ══════════════════════════════════════════════════════════════
+   REFINAMENTO PREMIUM — elevação visual dos componentes desta
+   página, seguindo os tokens do Design System (raios, sombras
+   em camadas, glass sutil, transições var(--ease-out)).
+   ══════════════════════════════════════════════════════════════ */
+
+/* Section card — casca com sombra em camadas, mais "flutuante" */
+.section-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+  transition: box-shadow .35s var(--ease-out), border-color .35s var(--ease-out), background .35s var(--ease-out);
+}
+[data-bg="dark"] .section-card { border: 1px solid rgba(255,255,255,.1); }
+
+/* Kaizen cards — mais próximos do vbm-card do Design System:
+   borda sutil, sombra progressiva, leve elevação + glow no hover */
+.kaizen-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: none;
+  overflow: hidden;
+  transition: transform .38s var(--ease-out), box-shadow .38s var(--ease-out), border-color .38s var(--ease-out), opacity .6s var(--ease-out);
+  position: relative; /* âncora da lixeira, ver .kaizen-card-delete */
+}
+.kaizen-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px rgba(16,24,40,.12);
+  border-color: rgba(60,181,229,.28);
+}
+.kaizen-card-accent { display: none; }
+.kaizen-card-title { transition: color .25s var(--ease-out); }
+.kaizen-card:hover .kaizen-card-title { color: var(--vbm-blue-dark); }
+[data-bg="dark"] .kaizen-card {
+  box-shadow: none;
+}
+[data-bg="dark"] .kaizen-card:hover {
+  box-shadow: 0 20px 48px rgba(0,0,0,.32);
+  border-color: rgba(60,181,229,.35);
+}
+[data-bg="dark"] .kaizen-card:hover .kaizen-card-title { color: var(--vbm-blue-light); }
+
+/* Tags — pill discreta e consistente */
+.kaizen-tag {
+  border-radius: 100px;
+  transition: background .2s var(--ease-out), border-color .2s var(--ease-out), color .2s var(--ease-out);
+}
+
+/* Badges de status — pill com dot, alinhado ao badge-blue do Design System */
+.badge { border-radius: 100px; font-weight: 600; letter-spacing: .01em; }
+
+/* Caixas Replicável — mesma linguagem de pill/glass */
+.repl-badge { border-radius: .6rem; transition: background .2s var(--ease-out), color .2s var(--ease-out); }
+
+/* Botões de ação — vidro fosco sem borda; ícone sempre em primeiro plano,
+   com contraste forte sobre o vidro. Hover só intensifica o vidro
+   (blur/opacidade/sombra), nunca troca a cor do ícone ou do tom. */
+.btn-icon {
+  border: none !important;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 100px;
+  color: var(--vbm-dark) !important;
+  position: relative;
+  transition: background .25s var(--ease-out), box-shadow .25s var(--ease-out), transform .25s var(--ease-spring), backdrop-filter .25s var(--ease-out);
+}
+.btn-icon i { position: relative; z-index: 1; }
+.btn-icon-blue { color: var(--vbm-blue-dark) !important; }
+.btn-icon:hover {
+  transform: scale(1.07);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 20px rgba(16,24,40,.12), inset 0 1px 0 rgba(255,255,255,.5);
+  filter: saturate(1.15);
+}
+
+/* Balões do card. Cada um com seu próprio efeito vidro — fundo
+   translúcido, borda sutil e desfoque —, e os dois grupos (desperdícios
+   e demais classificações) afastados um do outro para a leitura não
+   depender de decorar a ordem. Quebra de linha quando falta espaço; sem
+   corte de texto. */
+.kaizen-card-tags { display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; }
+.kaizen-tag-grupo { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+/* Rótulo do grupo: diz o que os balões ao lado são, sem competir com
+   eles — menor, sem caixa e na cor de apoio. */
+.kaizen-tag-titulo {
+  font-size: .55rem; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--vbm-mid); font-family: 'Poppins', sans-serif; font-weight: 600;
+  margin-right: .1rem;
+}
+[data-bg="dark"] .kaizen-tag-titulo { color: rgba(255,255,255,.55); }
+.kaizen-card-tags .kaizen-tag {
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(16,24,40,.10);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: var(--vbm-text);
+  white-space: normal;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+}
+.kaizen-card-tags .grupo-desperdicio .kaizen-tag {
+  background: rgba(60,181,229,.14);
+  border-color: rgba(60,181,229,.28);
+  color: var(--vbm-blue-dark);
+}
+[data-bg="dark"] .kaizen-card-tags .kaizen-tag {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.16);
+  color: rgba(255,255,255,.88);
+  box-shadow: none;
+}
+[data-bg="dark"] .kaizen-card-tags .grupo-desperdicio .kaizen-tag {
+  background: rgba(60,181,229,.20);
+  border-color: rgba(60,181,229,.34);
+  color: #bfe8ff;
+}
+
+/* Editar: terceiro botão da linha de ações. Só o foco visível é
+   acrescentado — tamanho, cor e hover são os do .btn-icon que Visualizar
+   e Imprimir já usam. */
+.kaizen-card-edit.btn-icon:focus-visible {
+  outline: 2px solid var(--vbm-blue);
+  outline-offset: 2px;
+}
+/* Desabilitado: mesmo tamanho e mesma posição — só o contraste cai, para
+   a linha de ações não mudar de card para card. */
+.kaizen-card-edit.btn-icon[disabled] {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.kaizen-card-edit.btn-icon[disabled]:hover {
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+/* Excluir: só existe quando o servidor manda PODE_EXCLUIR (dono/admin +
+   status fora de Aprovado/Rejeitado) — nunca "desabilitado", só ausente.
+   Canto superior direito do card (fora da linha de ações), sem deslocar
+   nada abaixo — position:absolute sobre o .kaizen-card, que ganhou
+   position:relative só para isto. Cor SÓLIDA em repouso (não opacidade
+   baixa — inviabilizava identificar o botão sem passar o mouse); hover/
+   foco só escurecem um tom, discretamente. */
+.kaizen-card-delete {
+  position: absolute;
+  top: .6rem; right: .6rem;
+  z-index: 2;
+  width: 28px; height: 28px;
+  font-size: .68rem;
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+.kaizen-card-delete svg { width: 11px; height: 12.6px; }
+.kaizen-card-delete:hover,
+.kaizen-card-delete:focus-visible { background: #dc2626 !important; color: #fff !important; }
+.kaizen-card-delete:focus-visible {
+  outline: 2px solid var(--vbm-blue);
+  outline-offset: 2px;
+}
+/* Toque: 40×40 mínimo em telas sem mouse, sem aumentar o ícone no desktop. */
+@media (hover: none) and (pointer: coarse) {
+  .kaizen-card-delete { width: 40px; height: 40px; top: .35rem; right: .35rem; }
+}
+
+[data-bg="dark"] .btn-icon { border: none !important; color: #fff !important; }
+[data-bg="dark"] .btn-icon-blue { color: #bfe8ff !important; }
+/* Depois do .btn-icon genérico de propósito — mesma ordem de
+   .btn-icon-blue acima, senão o color:#fff dele vence por serem a
+   mesma especificidade e ele vir depois. */
+[data-bg="dark"] .kaizen-card-delete { background: rgba(220,38,38,.22) !important; color: #ff8080 !important; }
+[data-bg="dark"] .kaizen-card-delete:hover,
+[data-bg="dark"] .kaizen-card-delete:focus-visible { background: #dc2626 !important; color: #fff !important; }
+[data-bg="dark"] .btn-icon:hover {
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 22px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14);
+  filter: saturate(1.2) brightness(1.1);
+}
+
+/* Filtros — inputs/selects com foco elegante (ring azul suave) */
+.filter-search, .filter-select, .filter-view-btn {
+  border-radius: .6rem;
+  transition: border-color .25s var(--ease-out), box-shadow .25s var(--ease-out), background .25s var(--ease-out);
+}
+.filter-search:focus-within { box-shadow: 0 0 0 3px rgba(60,181,229,.14); }
+.filter-select:focus { box-shadow: 0 0 0 3px rgba(60,181,229,.14); }
+[data-bg="dark"] .filter-search:focus-within { box-shadow: 0 0 0 3px rgba(60,181,229,.2); }
+[data-bg="dark"] .filter-select:focus { box-shadow: 0 0 0 3px rgba(60,181,229,.2); }
+.filter-view-btn { border-radius: .55rem; }
+
+/* Modal — vidro fosco e sombra profunda, igual ao .ds-modal do Design System */
+.modal-backdrop { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.modal { border-radius: 1.25rem; box-shadow: 0 32px 80px rgba(0,0,0,.2); }
+/* O modal no tema escuro vem de css/vbm-app.css (regra única). */
+
+/* Tabela — linhas com hover sutil e tipografia mais legível */
+.data-table tbody tr { transition: background .2s var(--ease-out); }
+[data-bg="dark"] .data-table tbody tr:hover td { background: rgba(255,255,255,.04); }
+/* Rodapé "Exibindo X · Carregar mais" — acompanha a cor do topo do card */
+[data-bg="dark"] .bib-table-foot { border-top-color: rgba(255,255,255,.1) !important; }
+
+/* Colunas #, Categoria, Unidade, Data, Status e Ações centralizadas;
+   só o Título segue alinhado à esquerda (leitura natural do texto). */
+.data-table th:nth-child(1), .data-table td:nth-child(1),
+.data-table th:nth-child(3), .data-table td:nth-child(3),
+.data-table th:nth-child(4), .data-table td:nth-child(4),
+.data-table th:nth-child(5), .data-table td:nth-child(5),
+.data-table th:nth-child(6), .data-table td:nth-child(6),
+.data-table th:nth-child(7), .data-table td:nth-child(7) { text-align: center; }
+.data-table td:nth-child(6) .badge { display:inline-flex; }
+/* A classe fica no proprio <td>, então o seletor tem de ser td.table-actions
+   — como descendente (td .table-actions) ele nunca casava, e os botões
+   ficavam encostados à esquerda, fora do eixo do título "Ações". */
+.data-table td.table-actions { justify-content: center; }
+.data-table th:last-child { text-align: center; }
+
+/* Badge de Categoria — largura fixa para todas as tags, independente
+   do tamanho do texto, com o mesmo efeito vidro (glass) usado nas tags
+   dos cards da grade (fundo translúcido + blur). */
+.data-table td:nth-child(3) .badge { min-width: 92px; justify-content: center; }
+.data-table td:nth-child(3) .badge-blue {
+  background: rgba(60,181,229,.12);
+  border: 1px solid rgba(60,181,229,.28);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+[data-bg="dark"] .data-table td:nth-child(3) .badge-blue {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.2);
+  color: rgba(255,255,255,.85);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+
+/* Cards da grade — todos os textos em peso 400 (Regular) */
+.kaizen-card-id, .kaizen-card-title, .kaizen-meta-item,
+.kaizen-tag, .kaizen-card-foot .badge { font-weight: 400 !important; }
+
+/* Botão "Carregar mais" — mesmo tamanho compacto/pill e efeito (leve
+   elevação no hover, sem glow) do botão "Salvar rascunho" do wizard
+   (.wizard-header-btn em kaizen-novo.html), adaptado às cores do tema
+   claro/escuro desta tela. */
+.bib-loadmore-btn.btn {
+  padding: .38rem .85rem; font-size: .68rem; gap: .35rem; border-radius: 100px;
+  box-shadow: none;
+}
+.bib-loadmore-btn.btn-outline:hover {
+  background: rgba(60,181,229,.08); color: var(--vbm-blue-dark);
+  transform: translateY(-1px); box-shadow: none;
+}
+[data-bg="dark"] .bib-loadmore-btn.btn-outline {
+  background: rgba(255,255,255,.05); color: #fff; border-color: rgba(255,255,255,.32);
+}
+[data-bg="dark"] .bib-loadmore-btn.btn-outline:hover {
+  background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.5); color: #fff;
+  transform: translateY(-1px); box-shadow: none;
+}
+
+/* Scrollbar discreto (webkit) para um acabamento mais premium */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.14); border-radius: 100px; border: 2px solid transparent; background-clip: content-box; }
+[data-bg="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); background-clip: content-box; }
+
+/* Foco visível e consistente em elementos interativos (acessibilidade) */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--vbm-blue);
+  outline-offset: 2px;
+  border-radius: .35rem;
+}
+
+/* ── Hero da Biblioteca ──────────────────────────────────────────────
+   06/10/2026. Os espaçamentos saíram do style inline para cá (mesmos
+   valores de antes) para poderem ser ajustados por media query. */
+.bib-hero { padding: 2rem; }
+.bib-hero-ante { margin-bottom: .6rem; }
+.bib-hero-sub { margin-bottom: .75rem; }
+.bib-hero-desc { max-width: 440px; }
+/* O bloco de texto cede largura antes de o cartão de resumo cair para
+   baixo dele: com a descrição mais larga (abaixo), em ~1024px o cartão
+   quebrava de linha e a hero ficava MAIS alta. 18rem é o piso — abaixo
+   disso o flex-wrap leva o cartão para baixo, como sempre foi no celular. */
+.bib-hero-texto { flex: 1 1 18rem; min-width: 0; }
+.bib-resumo { padding: 1.1rem 1.4rem; }
+.bib-resumo-titulo { margin-bottom: .75rem; }
+.bib-resumo-corpo,
+.bib-resumo-lista { display: flex; flex-direction: column; gap: .55rem; }
+
+/* Em telas de até ~1080px de altura (1920×1080 com ou sem escala do
+   Windows, 1600×900, 1440×900, 1366×768, 1280×720…) a hero media
+   ~305px — quem ditava a altura era o cartão de resumo, com os 5 status
+   empilhados um embaixo do outro. Corte de ~35% (→ ~198px) por
+   REORGANIZAÇÃO, não por redução: os status passam a correr em duas
+   colunas num cartão mais largo, a descrição cabe numa linha só e os
+   respiros encolhem. Fontes, cores e o tamanho do título continuam os
+   mesmos. Uma linha sozinha na grade (o caso normal do "Total <ano>")
+   ocupa a largura toda, como antes. Telas mais altas e o celular
+   (≤768px, onde o cartão já cai para baixo do texto) não mudam. */
+@media (max-height: 1100px) and (min-width: 769px) {
+  .bib-hero { padding: 1.2rem 2rem; }
+  .bib-hero-ante { margin-bottom: .4rem; }
+  .bib-hero-sub { margin-bottom: .35rem; }
+  .bib-hero-desc { max-width: 42rem; }
+  .bib-resumo { padding: .8rem 1.25rem; }
+  .bib-resumo-titulo { margin-bottom: .5rem; }
+  .bib-resumo-corpo { gap: .4rem; }
+  .bib-resumo-lista {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    column-gap: 2.25rem; row-gap: .3rem;
+  }
+  .bib-resumo-lista > :only-child { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+
+<nav class="topnav" id="topnav">
+  <a href="index.html" class="topnav-logo">
+    <img src="assets/images/vale-logo-color.svg" alt="Vale"/>
+  </a>
+  <div class="topnav-links">
+    <a href="index.html" class="topnav-link"><i class="fa-solid fa-house"></i> <span data-i18n="nav.menu">Menu</span></a>
+    <div class="topnav-sep"></div>
+    <a href="kaizen-novo.html" class="topnav-link"><i class="fa-solid fa-plus-circle"></i> <span data-i18n="nav.novoKaizen">Novo Kaizen</span></a>
+    <div class="topnav-sep"></div>
+    <a href="biblioteca.html" class="topnav-link active"><i class="fa-solid fa-book"></i> <span data-i18n="nav.biblioteca">Biblioteca</span></a>
+    <a href="aprovacao.html" class="topnav-link"><i class="fa-solid fa-clipboard-check"></i> <span data-i18n="nav.aprovacao">Aprovação</span><span class="topnav-badge">3</span></a>
+    <div class="topnav-sep"></div>
+    <a href="admin.html" class="topnav-link"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav.administracao">Administração</span></a>
+  </div>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.btnTitle" aria-label="Configurações">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user">
+      <div class="topnav-user-text">
+        <span class="topnav-user-name"></span>
+        <span class="topnav-user-role"></span>
+      </div>
+      <div class="topnav-user-avatar"></div>
+    </div>
+    <button class="topnav-mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+<div class="topnav-drawer" id="topnavDrawer">
+  <a href="index.html" class="topnav-link"><i class="fa-solid fa-house"></i> <span data-i18n="nav.menu">Menu</span></a>
+  <a href="kaizen-novo.html" class="topnav-link"><i class="fa-solid fa-plus-circle"></i> <span data-i18n="nav.novoKaizen">Novo Kaizen</span></a>
+  <a href="biblioteca.html" class="topnav-link active"><i class="fa-solid fa-book"></i> <span data-i18n="nav.biblioteca">Biblioteca</span></a>
+  <a href="aprovacao.html" class="topnav-link"><i class="fa-solid fa-clipboard-check"></i> <span data-i18n="nav.aprovacao">Aprovação</span><span class="topnav-badge">3</span></a>
+  <a href="admin.html" class="topnav-link"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav.administracao">Administração</span></a>
+</div>
+
+<!-- ═══ PAINEL LATERAL DE CONFIGURAÇÕES (Theme + Language) ═══ -->
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true">
+  <div class="settings-panel-head">
+    <h2 data-i18n="settings.title">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="settings.theme">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Alternar tema">
+        <button class="theme-toggle-btn active" id="btnWhite" data-i18n="theme.white">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" data-i18n="theme.dark">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="settings.language">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="settings.languageInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+
+<main class="app-main">
+  <div class="page-content">
+
+    <!-- Hero banner for library -->
+    <div class="bib-hero" style="position:relative;border-radius:1.25rem;overflow:hidden;margin-bottom:1.5rem;background-color:#041523;background-image:url('assets/images/Fundo_VNL_2400x1145.webp'),linear-gradient(135deg,#041523,#082d4f);background-size:cover;background-position:center;">
+      <div style="position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(60,181,229,.18) 0%,transparent 65%);top:-100px;right:-60px;filter:blur(50px);animation:orb1 20s ease-in-out infinite;pointer-events:none;"></div>
+      <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div class="bib-hero-texto">
+          <div class="bib-hero-ante" style="font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--vbm-blue-light);" data-i18n="bib.officialRepo">Repositório Oficial</div>
+          <div style="font-family:'Poppins',sans-serif;font-weight:700;font-style:italic;font-size:clamp(1.8rem,4vw,3rem);color:#fff;mix-blend-mode:overlay;line-height:.9;margin-bottom:.4rem;" data-i18n="bib.heroTitle" role="heading" aria-level="1">BIBLIOTECA</div>
+          <div class="bib-hero-sub" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(.9rem,2vw,1.3rem);color:rgba(255,255,255,.75);mix-blend-mode:overlay;" data-i18n="bib.heroSubtitle">KAIZENS · VALE BASE METALS</div>
+          <p class="bib-hero-desc" style="font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.6;" data-i18n="bib.heroDesc">Todos os Kaizens aprovados da organização. Consulte, inspire-se e replique melhorias em sua área.</p>
+        </div>
+        <div class="bib-resumo" style="background:rgba(255,255,255,.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:.9rem;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+          <div class="bib-resumo-titulo" style="font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);text-align:center;" data-i18n="bib.summaryTitle">Resumo da Biblioteca</div>
+          <div class="bib-resumo-corpo">
+            <!-- Uma linha por ano, montada em carregarResumo(). -->
+            <div id="bibResumoAnos" class="bib-resumo-lista"></div>
+            <div style="height:1px;background:rgba(255,255,255,.1);"></div>
+            <!-- Uma linha por status CADASTRADO, montada em
+                 carregarResumo() a partir da mesma lista que enche o
+                 filtro "Todos os status": os dois têm de oferecer os
+                 mesmos itens. Eram três linhas fixas aqui (Aprovados,
+                 Reprovados, Aguardando), e o painel escondia "Revisado"
+                 e "Solicitado alterações" enquanto o filtro logo abaixo
+                 os mostrava.
+
+                 Ponto colorido antes do nome, igual ao Resumo da
+                 Aprovação. As linhas de total por ano não levam ponto:
+                 ano não é status. -->
+            <div id="bibResumoStatus" class="bib-resumo-lista"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="section-card reveal">
+      <div class="filter-bar">
+        <!-- Nome do Kaizen. Sem data-filter-input: o filtro genérico de
+             vbm-app.js esconde item por item pelo texto do card, o que
+             brigaria com a paginação (Carregar mais) e com os demais
+             filtros. Quem filtra aqui é aplicarFiltros(), no rodapé. -->
+        <div class="filter-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="bibFiltroNome" placeholder="Nome do Kaizen..." data-i18n-placeholder="bib.searchPlaceholder"/>
+        </div>
+        <!-- Mesmo comportamento do campo de Nome do Kaizen, mas sobre o
+             nome do líder: nasce vazio e filtra a cada tecla. -->
+        <div class="filter-search">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" id="bibFiltroUsuario" placeholder="Nome do usuário..." data-i18n-placeholder="bib.userPlaceholder"/>
+        </div>
+        <!-- Cada um vira um filtro de múltipla seleção (checkboxes,
+             busca, chips) montado por criarFiltroMultiplo(); o container
+             mantém o mesmo id de antes, então nada mais na página muda. -->
+        <div class="ms-filter" id="bibFiltroUnidade"></div>
+        <div class="ms-filter" id="bibFiltroCategoria"></div>
+        <div class="ms-filter" id="bibFiltroStatus"></div>
+        <div class="ms-filter" id="bibFiltroPeriodo"></div>
+        <!-- Depois do último filtro e antes dos botões de grade/lista —
+             que continuam encostados à direita pelo margin-left:auto. -->
+        <button type="button" class="filter-clear-btn" id="bibLimparFiltros"
+                data-i18n-title="bib.clearFilters" title="Limpar filtros" aria-label="bib.clearFilters">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          <span data-i18n="bib.clearFilters">Limpar filtros</span>
+        </button>
+        <!-- Exporta TODOS os registros que os filtros acima aprovam (não
+             só os exibidos na tela) — ver GET /api/kaizens/exportar. -->
+        <button type="button" class="filter-clear-btn" id="bibExportarExcel"
+                data-i18n-title="bib.exportExcel" title="Exportar Excel" aria-label="bib.exportExcel">
+          <i class="fa-solid fa-file-excel"></i>
+          <span data-i18n="bib.exportExcel">Exportar Excel</span>
+        </button>
+        <div class="filter-view-toggle" style="margin-left:auto;">
+          <!-- Ordenação da lista (GET /api/kaizens?ordem=). Não é filtro:
+               "Limpar filtros" não mexe nela. Fica destacado quando a
+               ordem não é a padrão (mais recentes). -->
+          <div class="bib-ordem" id="bibOrdem">
+            <button type="button" class="filter-view-btn" id="bibOrdemBtn"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="bibOrdemMenu"
+                    title="Ordenar" data-i18n-title="bib.sort" aria-label="Ordenar" data-i18n-aria="bib.sort">
+              <i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i>
+            </button>
+            <div class="ms-filter-panel ms-filter-panel-esquerda bib-ordem-menu" id="bibOrdemMenu" role="menu" aria-labelledby="bibOrdemBtn">
+              <div class="ms-filter-list">
+                <button type="button" role="menuitemradio" aria-checked="true" class="ms-filter-item bib-ordem-item" data-ordem="recentes" tabindex="-1"><span class="ms-filter-item-texto" data-i18n="bib.sortRecent">Mais recentes</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                <button type="button" role="menuitemradio" aria-checked="false" class="ms-filter-item bib-ordem-item" data-ordem="antigos" tabindex="-1"><span class="ms-filter-item-texto" data-i18n="bib.sortOldest">Mais antigos</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                <button type="button" role="menuitemradio" aria-checked="false" class="ms-filter-item bib-ordem-item" data-ordem="nome-az" tabindex="-1"><span class="ms-filter-item-texto" data-i18n="bib.sortNameAz">Nome (A–Z)</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                <button type="button" role="menuitemradio" aria-checked="false" class="ms-filter-item bib-ordem-item" data-ordem="nome-za" tabindex="-1"><span class="ms-filter-item-texto" data-i18n="bib.sortNameZa">Nome (Z–A)</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+              </div>
+            </div>
+          </div>
+          <button class="filter-view-btn active" data-view-toggle="biblioteca" data-view="grid" title="Grade" data-i18n-title="common.grid" aria-label="Grade"><i class="fa-solid fa-th-large"></i></button>
+          <button class="filter-view-btn" data-view-toggle="biblioteca" data-view="list" title="Lista" data-i18n-title="common.list" aria-label="Lista"><i class="fa-solid fa-list"></i></button>
+        </div>
+      </div>
+
+      <!-- GRID VIEW -->
+      <div data-view="biblioteca" data-view-mode="grid">
+      <div id="bibList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:1.1rem;padding:1.25rem;">
+      </div>
+      </div><!-- /grid view -->
+
+      <!-- LIST VIEW -->
+      <div data-view="biblioteca" data-view-mode="list" style="display:none;">
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="table.idKaizen">ID Kaizen</th><th data-i18n="table.titulo">Título</th><th data-i18n="table.categoria">Categoria</th><th data-i18n="bib.unidade">Unidade</th><th data-i18n="table.data">Data</th><th data-i18n="table.status">Status</th><th data-i18n="table.acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="bibListaTabela">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bib-table-foot no-print" style="padding:1rem 1.5rem;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
+        <span style="font-size:.72rem;color:var(--vbm-mid);" id="bibShowingCount">Carregando…</span>
+        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--vbm-mid);">
+            <span data-i18n="bib.perPage">Por página</span>
+            <select class="filter-select" id="bibTamanhoPagina" style="padding:.35rem 1.6rem .35rem .6rem;font-size:.72rem;">
+              <option value="12">12</option>
+              <option value="24" selected>24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
+            </select>
+          </label>
+          <button class="btn-icon" id="bibPaginaAnterior" title="Página anterior" data-i18n-title="bib.prevPage" aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i></button>
+          <span style="font-size:.72rem;color:var(--vbm-mid);white-space:nowrap;" id="bibPaginaAtual">Página 1 de 1</span>
+          <button class="btn-icon" id="bibPaginaProxima" title="Próxima página" data-i18n-title="bib.nextPage" aria-label="Próxima página"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- Modal: Detalhe com Print A4 -->
+<div class="modal-backdrop" id="modalBibDetail" role="dialog" aria-modal="true" aria-labelledby="bibModalTitulo">
+  <div class="modal modal-xl">
+    <div class="modal-head">
+      <div class="modal-icon" style="background:#e8f8f0;"><i class="fa-solid fa-circle-check" style="color:#16a34a;"></i></div>
+      <div class="modal-title" id="bibModalTitulo">—</div>
+      <button class="modal-close" data-modal-close aria-label="Fechar" data-i18n-aria="common.fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="bibPrint">
+      <!-- Print header (visible on print) -->
+      <div style="display:none;" class="print-header">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid #eaeaea;">
+          <div style="font-family:'Poppins', sans-serif;font-weight:700;font-size:1.4rem;">Vale Base Metals — Kaizen</div>
+          <div style="margin-left:auto;font-size:.75rem;color:#888;">Impresso em: <span id="printDate"></span></div>
+        </div>
+      </div>
+
+      <div class="kaizen-detail-head">
+        <div class="kd-id" id="bibModalId">—</div>
+        <div class="kd-title" id="bibModalTitle">—</div>
+        <!-- Mesmas duas faixas do relatório A4 (ver window.printKaizen em
+             js/vbm-app.js): primeiro QUEM e QUANDO, depois a classificação. -->
+        <div class="kd-metas" id="bibModalMetasPessoas" style="margin-bottom:.4rem;"><!-- populado via JS --></div>
+        <div class="kd-metas" id="bibModalMetas"><!-- populado via JS --></div>
+      </div>
+
+      <div class="kd-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div class="kd-section">
+          <div class="kd-section-head"><div class="kd-section-icon"><i class="fa-solid fa-bullseye"></i></div><div class="kd-section-title" data-i18n="kd.problemStatement">Declaração do Problema</div></div>
+          <div class="kd-section-body" style="font-size:.83rem;line-height:1.65;" id="bibModalProblema">—</div>
+        </div>
+        <div class="kd-section">
+          <div class="kd-section-head"><div class="kd-section-icon"><i class="fa-solid fa-flag"></i></div><div class="kd-section-title" data-i18n="kd.goal">Meta / Objetivo</div></div>
+          <div class="kd-section-body" style="font-size:.83rem;line-height:1.65;" id="bibModalObjetivo">—</div>
+        </div>
+      </div>
+
+      <div class="kd-section" style="margin-bottom:1rem;">
+        <div class="kd-section-head"><div class="kd-section-icon"><i class="fa-solid fa-camera"></i></div><div class="kd-section-title" data-i18n="kd.evidenceBeforeAfter">Evidências Antes &amp; Depois</div></div>
+        <div class="kd-section-body">
+          <div class="kd-before-after">
+            <div class="kd-photo-box">
+              <!-- Sem height inline: a altura vem do CSS (#modalBibDetail
+                   .kd-photo-box img), o mesmo que a Aprovação usa. Um
+                   style="" aqui venceria a regra e a foto continuaria
+                   pequena no modal ampliado. -->
+              <img id="bibModalImgAntes" src="" alt="" loading="lazy" decoding="async" hidden/>
+              <div class="kd-photo-vazia" id="bibModalVazioAntes" data-i18n="kd.noImage">Sem imagem registrada</div>
+              <div class="kd-photo-box-body"><div class="kd-photo-label" data-i18n="kd.before">Antes</div><div class="kd-photo-desc" id="bibModalDescAntes">—</div></div>
+            </div>
+            <div class="kd-photo-box">
+              <img id="bibModalImgDepois" src="" alt="" loading="lazy" decoding="async" hidden/>
+              <div class="kd-photo-vazia" id="bibModalVazioDepois" data-i18n="kd.noImage">Sem imagem registrada</div>
+              <div class="kd-photo-box-body"><div class="kd-photo-label" data-i18n="kd.after">Depois</div><div class="kd-photo-desc" id="bibModalDescDepois">—</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kd-section" style="margin-bottom:1rem;" id="bibModalResultadosWrap">
+        <div class="kd-section-head"><div class="kd-section-icon"><i class="fa-solid fa-chart-bar"></i></div><div class="kd-section-title" data-i18n="kd.resultsAchieved">Resultados Alcançados</div></div>
+        <div class="kd-section-body">
+          <div id="bibModalResultados" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;overflow-wrap:break-word;"><!-- populado via JS --></div>
+        </div>
+      </div>
+
+      <div class="kd-section">
+        <div class="kd-section-head"><div class="kd-section-icon"><i class="fa-solid fa-lightbulb"></i></div><div class="kd-section-title" data-i18n="kd.learningsReplication">Aprendizados &amp; Potencial de Replicação</div></div>
+        <div class="kd-section-body" style="font-size:.83rem;line-height:1.65;" id="bibModalLicoes">—</div>
+      </div>
+    </div>
+    <div class="modal-foot no-print">
+      <button class="btn btn-ghost" data-modal-close data-i18n="common.fechar">Fechar</button>
+      <!-- O id do Kaizen aberto fica no botão (preenchido por
+           preencherModal): imprimir passou a ser pelo ID, não pelo que
+           estiver montado na tela. -->
+      <button class="btn btn-outline" id="bibModalImprimir" onclick="imprimirKaizen(this.dataset.kaizen)">
+        <i class="fa-solid fa-print"></i> <span data-i18n="common.imprimirA4">Imprimir A4</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+<script src="js/vbm-app.js?v=20260921-1"></script>
+<!-- Dados do usuário logado (Microsoft Graph) — reaproveita o token do
+     login já existente; sem MSAL próprio, sem alterar o fluxo de auth. -->
+<script src="js/usuario-graph.js?v=20260912-1"></script>
+<script>
+// ─── Biblioteca: lê de verdade de kzn_pedravisaoconsolidada (era mock) ───
+// GET /api/kaizens (lista, filtros por querystring), GET /api/kaizens/:id
+// (detalhe do modal), GET /api/kaizens/resumo (contadores do hero).
+(function () {
+  // O TEXTO do status vem do cadastro (kzn_status.NM_STATUS, no idioma
+  // pedido) — a tela não decide mais o rótulo. A COR continua aqui: o
+  // cadastro não tem coluna de cor, e o casamento é pelo nome em
+  // português, com queda para o azul neutro em qualquer status novo.
+  // Nomes como estão em kzn_status, nos dois idiomas — a lista mostra
+  // NM_STATUS no idioma da tela, então a chave precisa existir nos dois.
+  var CLASSE_POR_NOME = {
+    'aprovado': 'badge-aprovado',
+    'approved': 'badge-aprovado',
+    'concluido': 'badge-aprovado',
+    'reprovado': 'badge-reprovado',
+    'rejeitado': 'badge-reprovado',
+    'reject': 'badge-reprovado',
+    'rejected': 'badge-reprovado',
+    'aguardando aprovacao': 'badge-aguardando',
+    'awaiting approval': 'badge-aguardando',
+    'em aprovacao': 'badge-aguardando',
+    'aguardando': 'badge-aguardando',
+    'revisado': 'badge-blue',
+    'reviewed': 'badge-blue',
+    'rascunho': 'badge-rascunho',
+    'aberto': 'badge-rascunho',
+  };
+  function semAcento(t) {
+    return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+  function statusInfo(k) {
+    var nome = k && k.NM_STATUS;
+    return {
+      classe: CLASSE_POR_NOME[semAcento(nome)] || 'badge-blue',
+      rotulo: nome || '—',
+    };
+  }
+
+  /* A foto mora em /imgs/{antes|depois}/{ID}.png — o nome NÃO muda
+     quando a foto é trocada, então a URL precisa carregar a versão para
+     o navegador saber que o conteúdo mudou. A versão é a DT_ATUALIZACAO
+     do próprio Kaizen (chega como DT_CRIACAO na resposta), e é ela que
+     autoriza o servidor a marcar a resposta como imutável — sem isso
+     cada foto era rebuscada do volume do Databricks a cada minuto. */
+  /* Mostra a foto OU um aviso no lugar dela — nunca um <img src="">.
+     Com src vazio o navegador resolve para a URL da própria página,
+     baixa o HTML, não consegue decodificar e desenha o ícone de imagem
+     quebrada com o texto alternativo ao lado: parecia defeito da tela
+     quando era só um Kaizen sem a foto de "Depois".
+
+     Dois casos levam ao mesmo aviso: não há caminho gravado, e há
+     caminho mas o arquivo não voltou do volume (onerror). É o mesmo
+     tratamento que o relatório A4 já faz. */
+  function mostrarFoto(idImg, idVazio, url) {
+    var img = document.getElementById(idImg);
+    var vazio = document.getElementById(idVazio);
+    if (!img || !vazio) return;
+    // "Carregando": spinner do padrão global (VBMLoading.overlay) sobre a
+    // caixa da foto, desligado no load/erro. Só é LIGADO quando há de
+    // fato um download em andamento — reabrir o mesmo Kaizen atribui o
+    // MESMO src, que não dispara 'load' de novo, e o spinner ficaria
+    // preso na tela se fosse ligado nesse caso.
+    var caixa = img.closest('.kd-photo-box');
+    var carregando = function (ligar) {
+      if (window.VBMLoading && caixa) VBMLoading.overlay(caixa, ligar);
+    };
+    var semFoto = function (chave, padrao) {
+      carregando(false);
+      img.hidden = true;
+      img.removeAttribute('src');
+      vazio.hidden = false;
+      vazio.dataset.i18n = chave;
+      vazio.textContent = txtI18n(chave, padrao);
+    };
+    if (!url) { semFoto('kd.noImage', 'Sem imagem registrada'); return; }
+
+    img.onerror = function () { semFoto('kd.imageFailed', 'Imagem não disponível'); };
+    img.onload = function () { carregando(false); };
+    img.hidden = false;
+    vazio.hidden = true;
+    if (img.getAttribute('src') !== url) { carregando(true); img.src = url; }
+    // Reabrir com a MESMA url: o load já aconteceu (ou já falhou) e não
+    // vai disparar outra vez — o estado é decidido aqui, na hora.
+    else if (img.complete && img.naturalWidth === 0) semFoto('kd.imageFailed', 'Imagem não disponível');
+    else if (img.complete) carregando(false);
+    else carregando(true); // mesma url, download ainda em andamento
+  }
+
+  /* largura: 1280 na tela (padrão) e 1600 no PDF — o servidor devolve a
+     foto redimensionada em WebP em vez do original do celular (vários
+     MB). Só aceita as larguras de fotos.js no servidor. */
+  function urlImagem(path, versao, largura) {
+    if (!path) return '';
+    var url = '/api/kaizens/imagem?path=' + encodeURIComponent(path) + '&w=' + (largura || 1280);
+    return versao ? url + '&v=' + encodeURIComponent(String(versao).slice(0, 19)) : url;
+  }
+  function formatarMesAno(dataStr) {
+    if (!dataStr) return '—';
+    var d = new Date(dataStr);
+    return d.toLocaleDateString(idiomaDaTela(), { month: 'short', year: 'numeric' }).replace('.', '');
+  }
+  // Mesma lógica de pk_data() em js/vbm-app.js (relatório A4): dia/mês/ano
+  // lidos direto do texto ISO, sem passar por Date — não sujeito a fuso.
+  function formatarDataCompleta(dataStr) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dataStr || ''));
+    if (!m) return '';
+    return idiomaDaTela() === 'en' ? m[1] + '/' + m[2] + '/' + m[3] : m[3] + '/' + m[2] + '/' + m[1];
+  }
+
+  var bibList = document.getElementById('bibList');
+  var bibTabela = document.getElementById('bibListaTabela');
+  var showingCount = document.getElementById('bibShowingCount');
+  var selTamanhoPagina = document.getElementById('bibTamanhoPagina');
+  var btnPaginaAnterior = document.getElementById('bibPaginaAnterior');
+  var btnPaginaProxima = document.getElementById('bibPaginaProxima');
+  var paginaAtualLabel = document.getElementById('bibPaginaAtual');
+  var selUsuario = document.getElementById('bibFiltroUsuario');
+  var inputNome = document.getElementById('bibFiltroNome');
+  if (!bibList) return;
+
+  // Registro dos "fechar" de todas as instâncias, para abrir uma
+  // fechar as outras. Sem isto, cada gatilho chama e.stopPropagation()
+  // (necessário para o próprio clique não contar como "clique fora" e
+  // fechar o painel que acabou de abrir) — e esse mesmo stopPropagation
+  // impede o clique de chegar ao listener de "clique fora" dos OUTROS
+  // filtros, que nunca fecham. Precisa existir ANTES da primeira
+  // chamada a criarFiltroMultiplo (função é hoisted; a atribuição de um
+  // var não é — sem isto, o próprio push() já falhava no primeiro
+  // filtro criado, antes dos outros três chegarem a existir).
+  var todosFiltrosMultiplos = [];
+
+  // Os quatro filtros de múltipla seleção. onChange já dispara a mesma
+  // aplicarFiltros() usada pelos demais controles da barra.
+  var filtroUnidade = criarFiltroMultiplo(document.getElementById('bibFiltroUnidade'),
+    { placeholder: txtI18n('filter.allUnits', 'Todas as unidades'), onChange: function () { aplicarFiltros(); } });
+  var filtroCategoria = criarFiltroMultiplo(document.getElementById('bibFiltroCategoria'),
+    { placeholder: txtI18n('filter.allCategories', 'Todas as categorias'), onChange: function () { aplicarFiltros(); } });
+  var filtroStatus = criarFiltroMultiplo(document.getElementById('bibFiltroStatus'),
+    { placeholder: txtI18n('filter.allStatus', 'Todos os status'), onChange: function () { aplicarFiltros(); } });
+  var filtroPeriodo = criarFiltroMultiplo(document.getElementById('bibFiltroPeriodo'),
+    { placeholder: txtI18n('filter.allYears', 'Todos os anos'), onChange: function () { aplicarFiltros(); } });
+
+  /* A lista é PAGINADA PELO SERVIDOR. A versão anterior baixava a base
+     inteira e peneirava em memória: com 2.000 Kaizens eram 1,1 MB de
+     JSON por abertura para desenhar 6 cards, e o custo crescia junto com
+     a base. Agora cada filtro vira parâmetro da consulta e "Carregar
+     mais" pede a página seguinte.
+
+     "lote" guarda só o que já foi carregado (as páginas pedidas até
+     agora), "total" é quantos existem com os filtros atuais. */
+  var lote = [];
+  var total = 0;
+  var paginaAtual = 0;
+  var PAGE_SIZE = 24;
+  var carregando = false;
+  var detalheCache = {};
+
+  /* Terceiro botão da linha de ações do card, depois de Visualizar e
+     Imprimir. Mesmo .btn-icon dos outros dois, então dimensões, hover e
+     foco vêm do mesmo lugar — não há estilo próprio para manter. */
+  function botaoEditarHtml(k) {
+    // Os dois sinais vêm calculados por linha em GET /api/kaizens, no
+    // servidor: PODE_EDITAR é a permissão da pessoa (autor, aprovador
+    // designado ou admin) — mas só quando ORIGEM='A'; um Kaizen histórico
+    // nunca tem PODE_EDITAR, nem para o autor/aprovador/admin (SQL_PODE_
+    // EDITAR em server.js) — e EDICAO_LIBERADA junta essa permissão com
+    // o status do Kaizen. Aqui é só apresentação — as rotas de edição
+    // refazem as duas checagens.
+    //
+    // Sem permissão o botão nem aparece (é o caso de todo card
+    // histórico); com permissão mas em status que não aceita edição ele
+    // aparece DESABILITADO, para o lugar do botão não mudar de card
+    // para card.
+    if (!k.PODE_EDITAR) return '';
+    var liberado = !!k.EDICAO_LIBERADA;
+    var rotulo = liberado
+      ? txtI18n('bib.editKaizen', 'Editar Kaizen')
+      : txtI18n('bib.editBlocked', 'Edição indisponível para o status atual');
+    var chave = liberado ? 'bib.editKaizen' : 'bib.editBlocked';
+    return '<button type="button" class="btn-icon btn-icon-blue kaizen-card-edit"' +
+      (liberado ? '' : ' disabled aria-disabled="true"') +
+      ' data-editar-kaizen="' + k.ID_KAIZEN + '"' +
+      // De qual tabela o card veio. Viaja para o Novo Kaizen junto com o
+      // ID: é o que faz a edição ler — e depois gravar — na tabela certa.
+      ' data-editar-origem="' + escaparHtml(k.ORIGEM || '') + '"' +
+      ' title="' + rotulo + '" data-i18n-title="' + chave + '"' +
+      ' aria-label="' + rotulo + '" data-i18n-aria="' + chave + '">' +
+      '<i class="fa-solid fa-pen" aria-hidden="true"></i></button>';
+  }
+
+  /* Lixeira do card: só existe quando o servidor manda PODE_EXCLUIR
+     (dono OU admin, e status fora de Aprovado/Rejeitado — ver
+     SQL_PODE_EXCLUIR em server.js). Ao contrário do lápis, não tem
+     versão desabilitada: sem permissão, o botão nem entra no HTML. */
+  function botaoExcluirHtml(k) {
+    if (!k.PODE_EXCLUIR) return '';
+    // Sem data-i18n-title/-aria de propósito: o rótulo tem o código do
+    // Kaizen embutido (aria-label descritivo pedido), e o mecanismo
+    // genérico de troca de idioma SOBRESCREVE title/aria-label pelo texto
+    // fixo do dicionário — perderia o código. Troca real de idioma já
+    // reconstrói o card inteiro via carregarLista() (ver window.addEventListener('vbm:idioma', ...)),
+    // com o rótulo certo no idioma novo.
+    var tooltip = txtI18n('bib.deleteKaizen', 'Excluir Kaizen');
+    var ariaLabel = tooltip + ' ' + k.ROTULO;
+    return '<button type="button" class="btn-icon kaizen-card-delete"' +
+      ' data-excluir-kaizen="' + k.ID_KAIZEN + '"' +
+      ' data-excluir-rotulo="' + escaparHtml(k.ROTULO) + '"' +
+      ' data-excluir-titulo="' + escaparHtml(k.NM_KAIZEN) + '"' +
+      ' title="' + escaparHtml(tooltip) + '"' +
+      ' aria-label="' + escaparHtml(ariaLabel) + '">' +
+      // SVG inline (não fa-trash-can): o glifo dependia de css/fontawesome-
+      // subset.css chegar íntegro no deploy — uma linha só de ~18 mil
+      // caracteres (a fonte em base64) que, no ambiente real, seguiu
+      // chegando corrompida mesmo após reenvios. Embutido aqui, o ícone
+      // não depende de mais nenhum arquivo — o mesmo desenho, extraído da
+      // própria fonte (viewBox 448×512, padrão Font Awesome).
+      '<svg viewBox="0 0 448 512" aria-hidden="true" focusable="false"><path fill="currentColor" d="M135 82Q144 65 164 64H284Q304 65 313 82L320 96H416Q430 96 439 105Q448 114 448 128Q448 142 439 151Q430 160 416 160H32Q18 160 9 151Q0 142 0 128Q0 114 9 105Q18 96 32 96H128L135 82ZM32 192H416V512Q415 539 397 557Q379 575 352 576H96Q69 575 51 557Q33 539 32 512V192ZM128 256Q113 257 112 272V496Q113 511 128 512Q143 511 144 496V272Q143 257 128 256ZM224 256Q209 257 208 272V496Q209 511 224 512Q239 511 240 496V272Q239 257 224 256ZM320 256Q305 257 304 272V496Q305 511 320 512Q335 511 336 496V272Q335 257 320 256Z"/></svg></button>';
+  }
+
+  /* Os cards são montados depois do applyLang, então o texto do idioma
+     tem de ser lido na hora — mesmo caminho já usado por bib.countTemplate. */
+  function txtI18n(chave, padrao) {
+    return (window.__i18n && window.__i18n[chave]) || padrao;
+  }
+
+  /* Texto vindo do banco entra em innerHTML: escapa antes. O resto do
+     card já monta assim, e um nome de cadastro com "<" quebraria a
+     estrutura do card se passasse cru. */
+  function escaparHtml(txt) {
+    var d = document.createElement('div');
+    d.textContent = txt == null ? '' : String(txt);
+    return d.innerHTML;
+  }
+
+  /* Balões do card, por CAMPO e não por posição numa lista.
+     Os desperdícios ("Redução de Desperdícios") formam um grupo próprio,
+     separado do grupo das demais classificações — hoje a categoria. Cada
+     valor vira um balão independente: nada de juntar dois textos no
+     mesmo balão, e nada de texto fixo aqui — tudo vem do banco, já no
+     idioma da tela (a API traduz categoria e desperdício por ID_IDIOMA). */
+  function baloesHtml(k) {
+    function grupo(valores, chaveTitulo, padraoTitulo, classeExtra) {
+      var itens = (valores || []).filter(Boolean);
+      if (!itens.length) return '';
+      return '<span class="kaizen-tag-grupo' + (classeExtra ? ' ' + classeExtra : '') + '">' +
+        '<span class="kaizen-tag-titulo" data-i18n="' + chaveTitulo + '">' +
+          escaparHtml(txtI18n(chaveTitulo, padraoTitulo)) + '</span>' +
+        itens.map(function (v) {
+          return '<span class="kaizen-tag">' + escaparHtml(v) + '</span>';
+        }).join('') + '</span>';
+    }
+    // Categoria primeiro, desperdícios depois — a ordem pedida na tela.
+    return grupo([k.NM_CATEGORIA], 'bib.groupCategoria', 'Categoria') +
+           grupo(k.DESPERDICIOS, 'bib.groupDesperdicios', 'Redução de Desperdícios', 'grupo-desperdicio');
+  }
+
+  function cartaoHtml(k) {
+    var info = statusInfo(k);
+    var tags = baloesHtml(k);
+    return (
+      '<div class="kaizen-card" data-filter-item>' +
+      botaoExcluirHtml(k) +
+      '<div class="kaizen-card-accent accent-green"></div>' +
+      '<div class="kaizen-card-body" style="display:flex;flex-direction:column;padding-bottom:.4rem;">' +
+      '<div class="kaizen-card-id">' + escaparHtml(k.ROTULO) + (k.NM_SITE ? ' · ' + escaparHtml(k.NM_SITE) : '') + '</div>' +
+      '<div class="kaizen-card-title" style="font-weight:600;font-size:.76rem;">' + escaparHtml(k.NM_KAIZEN) + '</div>' +
+      '<div class="kaizen-card-tags">' + tags + '</div>' +
+      '<div class="kaizen-meta" style="margin-top:auto;margin-bottom:0;">' +
+      '<div class="kaizen-meta-item"><i class="fa-solid fa-user"></i> ' + escaparHtml(k.NM_LIDER || '—') + '</div>' +
+      '<div class="kaizen-meta-item"><i class="fa-solid fa-calendar"></i> ' + formatarMesAno(k.DT_CRIACAO) + '</div>' +
+      '</div></div>' +
+      '<div class="kaizen-card-foot">' +
+      '<span class="badge ' + info.classe + '">' + info.rotulo + '</span>' +
+      '<div class="kaizen-card-actions">' +
+      '<button class="btn-icon btn-icon-blue" title="Ver detalhe" data-ver-detalhe="' + k.ID_KAIZEN + '" aria-label="Ver detalhe"><i class="fa-solid fa-eye"></i></button>' +
+      '<button class="btn-icon" title="Imprimir A4" onclick="imprimirKaizen(' + k.ID_KAIZEN + ')" aria-label="Imprimir A4"><i class="fa-solid fa-print"></i></button>' +
+      botaoEditarHtml(k) +
+      '</div></div></div>'
+    );
+  }
+
+  function linhaHtml(k) {
+    var info = statusInfo(k);
+    return (
+      '<tr data-filter-item>' +
+      '<td><span style="font-family:\'Poppins\',sans-serif;color:var(--vbm-blue);font-size:.72rem;">' + escaparHtml(k.ROTULO) + '</span></td>' +
+      '<td><span style="font-size:.82rem;">' + escaparHtml(k.NM_KAIZEN) + '</span></td>' +
+      '<td><span class="badge badge-blue" style="font-size:.58rem;">' + escaparHtml(k.NM_CATEGORIA || '—') + '</span></td>' +
+      '<td><span style="font-size:.75rem;color:var(--vbm-mid);">' + escaparHtml(k.NM_SITE || '—') + '</span></td>' +
+      '<td><span style="font-size:.75rem;color:var(--vbm-mid);">' + formatarMesAno(k.DT_CRIACAO) + '</span></td>' +
+      '<td><span class="badge ' + info.classe + '">' + info.rotulo + '</span></td>' +
+      '<td class="table-actions">' +
+      '<button class="btn-icon btn-icon-blue" title="Ver" data-ver-detalhe="' + k.ID_KAIZEN + '" aria-label="Ver"><i class="fa-solid fa-eye"></i></button>' +
+      '<button class="btn-icon" onclick="imprimirKaizen(' + k.ID_KAIZEN + ')" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print"></i></button>' +
+      botaoEditarHtml(k) +
+      '</td></tr>'
+    );
+  }
+
+  function render() {
+    bibList.innerHTML = lote.map(cartaoHtml).join('') || '<p style="padding:1.5rem;color:var(--vbm-mid);font-size:.8rem;">' + escaparHtml(txtI18n('bib.empty', 'Nenhum Kaizen encontrado.')) + '</p>';
+    bibTabela.innerHTML = lote.map(linhaHtml).join('');
+    // "Exibindo 1–24 de 6.000 registros". inicio/fim são da PÁGINA atual
+    // (não do total acumulado — cada página SUBSTITUI a anterior, não
+    // soma mais, ver carregarLista).
+    var inicio = total === 0 ? 0 : (paginaAtual * PAGE_SIZE) + 1;
+    var fim = Math.min((paginaAtual + 1) * PAGE_SIZE, total);
+    var molde = (window.__i18n && window.__i18n['bib.countRangeTemplate']) || 'Exibindo {inicio}–{fim} de {total} registros';
+    showingCount.textContent = molde
+      .replace('{inicio}', inicio.toLocaleString(idiomaDaTela()))
+      .replace('{fim}', fim.toLocaleString(idiomaDaTela()))
+      .replace('{total}', total.toLocaleString(idiomaDaTela()));
+
+    var totalPaginas = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    var moldePagina = (window.__i18n && window.__i18n['bib.pageTemplate']) || 'Página {atual} de {totalPaginas}';
+    paginaAtualLabel.textContent = moldePagina
+      .replace('{atual}', paginaAtual + 1)
+      .replace('{totalPaginas}', totalPaginas);
+    btnPaginaAnterior.disabled = paginaAtual <= 0;
+    btnPaginaProxima.disabled = (paginaAtual + 1) >= totalPaginas;
+  }
+
+  // Paginação clássica: cada clique troca de página (a lista da tela é
+  // SUBSTITUÍDA, não acumulada — ver o "lote = itens" em carregarLista,
+  // sem o "carregar mais" de antes).
+  btnPaginaAnterior.addEventListener('click', function () {
+    if (carregando || paginaAtual <= 0) return;
+    carregarLista({ pagina: paginaAtual - 1 });
+  });
+  btnPaginaProxima.addEventListener('click', function () {
+    if (carregando) return;
+    var totalPaginas = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (paginaAtual + 1 >= totalPaginas) return;
+    carregarLista({ pagina: paginaAtual + 1 });
+  });
+  // Tamanho de página: reinicia na primeira página, mantendo a escolha
+  // (não é um filtro — não passa por aplicarFiltros/filtrosAtuais).
+  selTamanhoPagina.addEventListener('change', function () {
+    PAGE_SIZE = parseInt(selTamanhoPagina.value, 10) || 24;
+    carregarLista({ pagina: 0 });
+  });
+
+  /* Clique no lápis: abre a MESMA página de cadastro em modo de edição,
+     levando só o ID_KAIZEN na navegação. Nada do conteúdo vai na URL —
+     o formulário busca o registro no servidor, que confere a permissão
+     de novo antes de devolver qualquer campo. Delegado nos containers
+     porque os cards e as linhas são remontados a cada filtro — e nos
+     DOIS, grade e lista, senão o mesmo botão funcionaria só numa
+     visão. */
+  function aoClicarEditar(e) {
+    var botao = e.target.closest('[data-editar-kaizen]');
+    if (!botao) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Botão desabilitado não navega. O <button disabled> já não dispara
+    // clique nem Enter, mas a checagem fica explícita para o dia em que
+    // o estilo do desabilitado mudar.
+    if (botao.disabled) return;
+    window.location.href = 'kaizen-novo.html?id=' + encodeURIComponent(botao.dataset.editarKaizen) +
+      '&origem=' + encodeURIComponent(botao.dataset.editarOrigem || '');
+  }
+  bibList.addEventListener('click', aoClicarEditar);
+  if (bibTabela) bibTabela.addEventListener('click', aoClicarEditar);
+
+  /* Clique na lixeira: confirma (código + título do Kaizen — mensagem do
+     modal), chama DELETE /api/kaizens/:id e só em caso de sucesso
+     recarrega a PÁGINA ATUAL da lista + o resumo — a mesma fonte que
+     decidiu se o botão existia decide o que sobra na lista depois, sem
+     remover o card "na mão". Só na grade (o card só existe lá, ver
+     cartaoHtml/botaoExcluirHtml). */
+  function aoClicarExcluir(e) {
+    var botao = e.target.closest('[data-excluir-kaizen]');
+    if (!botao || botao.disabled) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var id = botao.dataset.excluirKaizen;
+    var mensagem = botao.dataset.excluirRotulo + ' — ' + botao.dataset.excluirTitulo;
+    confirmarAcao({
+      variant: 'desativar',
+      titulo: txtI18n('bib.deleteConfirmTitle', 'Excluir Kaizen?'),
+      mensagem: mensagem,
+      confirmarLabel: txtI18n('bib.deleteConfirmBtn', 'Excluir'),
+    }).then(function (ok) {
+      if (!ok) return;
+      if (window.VBMLoading) VBMLoading.botao(botao, true);
+      fetch('/api/kaizens/' + encodeURIComponent(id), { method: 'DELETE', headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, body: j }; });
+        })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && res.body.error) || txtI18n('bib.deleteErrorMsg', 'Erro ao excluir o Kaizen.'));
+          showToast('success', txtI18n('bib.deleteSuccessTitle', 'Kaizen excluído'), txtI18n('bib.deleteSuccessMsg', 'O Kaizen foi removido da Biblioteca.'));
+          carregarLista({ pagina: paginaAtual });
+          carregarResumo();
+        })
+        .catch(function (err) {
+          if (window.VBMLoading) VBMLoading.botao(botao, false);
+          showToast('error', txtI18n('bib.deleteErrorTitle', 'Erro ao excluir'), err.message);
+        });
+    });
+  }
+  bibList.addEventListener('click', aoClicarExcluir);
+
+  /* Fábrica do filtro de múltipla seleção (Unidade, Categoria, Status,
+     Ano): um botão-gatilho que mostra chips/contagem da seleção atual e
+     um painel com "Selecionar Todos", "Limpar Seleção" e a lista de
+     checkboxes — sem campo de busca de propósito: é só selecionar,
+     nunca digitar. Substitui o antigo <select> mantendo o mesmo id no
+     container, então nada fora daqui precisa mudar para continuar
+     encontrando o filtro. */
+  function criarFiltroMultiplo(container, opts) {
+    if (!container) return { setItens: function () {}, getSelecionados: function () { return []; }, limpar: function () {} };
+    var placeholder = opts.placeholder;
+    var mudou = opts.onChange || function () {};
+    var itens = [];
+    var selecionados = [];
+    var aberto = false;
+
+    container.classList.add('ms-filter');
+    container.innerHTML =
+      '<button type="button" class="ms-filter-trigger"><span class="ms-filter-label"></span>' +
+        '<i class="fa-solid fa-chevron-down"></i></button>' +
+      '<div class="ms-filter-panel">' +
+        '<div class="ms-filter-toolbar">' +
+          '<button type="button" class="ms-filter-toolbtn" data-acao="todos">' + escaparHtml(txtI18n('msFilter.selectAll', 'Selecionar Todos')) + '</button>' +
+          '<button type="button" class="ms-filter-toolbtn" data-acao="limpar">' + escaparHtml(txtI18n('msFilter.clearSelection', 'Limpar Seleção')) + '</button>' +
+        '</div>' +
+        '<div class="ms-filter-list"></div>' +
+        '<div class="ms-filter-empty" hidden>' + escaparHtml(txtI18n('msFilter.noResults', 'Nenhum item encontrado')) + '</div>' +
+      '</div>';
+
+    var trigger = container.querySelector('.ms-filter-trigger');
+    var label = container.querySelector('.ms-filter-label');
+    var panel = container.querySelector('.ms-filter-panel');
+    var lista = container.querySelector('.ms-filter-list');
+    var vazio = container.querySelector('.ms-filter-empty');
+    var cardPai = container.closest('.section-card');
+
+    function renderLabel() {
+      if (!selecionados.length) {
+        label.textContent = placeholder;
+        trigger.classList.remove('ms-filter-ativo');
+        return;
+      }
+      trigger.classList.add('ms-filter-ativo');
+      var nomes = itens.filter(function (i) { return selecionados.indexOf(i.valor) !== -1; }).map(function (i) { return i.texto; });
+      var html = nomes.slice(0, 2).map(function (n) { return '<span class="ms-filter-chip">' + escaparHtml(n) + '</span>'; }).join('');
+      if (nomes.length > 2) html += '<span class="ms-filter-chip ms-filter-chip-mais">+' + (nomes.length - 2) + '</span>';
+      label.innerHTML = html;
+    }
+
+    function renderLista() {
+      vazio.hidden = itens.length > 0;
+      lista.innerHTML = itens.map(function (i) {
+        var marcado = selecionados.indexOf(i.valor) !== -1;
+        return '<label class="ms-filter-item' + (marcado ? ' ms-filter-item-marcado' : '') + '">' +
+          '<input type="checkbox" value="' + escaparHtml(i.valor) + '"' + (marcado ? ' checked' : '') + '>' +
+          '<span class="ms-filter-item-check"><i class="fa-solid fa-check"></i></span>' +
+          '<span class="ms-filter-item-texto">' + escaparHtml(i.texto) + '</span></label>';
+      }).join('');
+    }
+
+    // Evita o painel nascer cortado do lado direito em telas estreitas:
+    // mede o espaço disponível só na hora de abrir.
+    function posicionar() {
+      panel.classList.remove('ms-filter-panel-esquerda');
+      var r = container.getBoundingClientRect();
+      if (r.left + panel.offsetWidth > window.innerWidth - 8) panel.classList.add('ms-filter-panel-esquerda');
+    }
+
+    function abrir() {
+      if (aberto) return;
+      // Fecha qualquer outro filtro aberto: o próprio clique no gatilho
+      // pára a propagação (ver mais abaixo), então o listener de
+      // "clique fora" dos outros nunca veria este clique sozinho.
+      todosFiltrosMultiplos.forEach(function (f) { if (f !== fechar) f(); });
+      aberto = true;
+      trigger.classList.add('open');
+      panel.classList.add('open');
+      if (cardPai) cardPai.classList.add('ms-filter-open');
+      renderLista();
+      posicionar();
+    }
+
+    function fechar() {
+      if (!aberto) return;
+      aberto = false;
+      trigger.classList.remove('open');
+      panel.classList.remove('open');
+      if (cardPai) cardPai.classList.remove('ms-filter-open');
+    }
+
+    trigger.addEventListener('click', function (e) { e.stopPropagation(); aberto ? fechar() : abrir(); });
+    panel.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    lista.addEventListener('change', function (e) {
+      var chk = e.target.closest('input[type="checkbox"]');
+      if (!chk) return;
+      var v = chk.value;
+      var idx = selecionados.indexOf(v);
+      if (chk.checked && idx === -1) selecionados.push(v);
+      else if (!chk.checked && idx !== -1) selecionados.splice(idx, 1);
+      chk.closest('.ms-filter-item').classList.toggle('ms-filter-item-marcado', chk.checked);
+      renderLabel();
+      mudou();
+    });
+
+    container.querySelector('[data-acao="todos"]').addEventListener('click', function () {
+      itens.forEach(function (i) { if (selecionados.indexOf(i.valor) === -1) selecionados.push(i.valor); });
+      renderLista(); renderLabel(); mudou();
+    });
+    container.querySelector('[data-acao="limpar"]').addEventListener('click', function () {
+      selecionados = [];
+      renderLista(); renderLabel(); mudou();
+    });
+
+    document.addEventListener('click', function (e) { if (aberto && !container.contains(e.target)) fechar(); });
+    document.addEventListener('keydown', function (e) { if (aberto && e.key === 'Escape') fechar(); });
+    window.addEventListener('resize', function () { if (aberto) posicionar(); });
+    todosFiltrosMultiplos.push(fechar);
+
+    renderLabel();
+
+    return {
+      setItens: function (novosItens, valorDe, textoDe) {
+        var validos = {};
+        itens = (novosItens || []).map(function (i) {
+          var v = String(valorDe(i));
+          validos[v] = true;
+          return { valor: v, texto: textoDe(i) };
+        });
+        selecionados = selecionados.filter(function (v) { return validos[v]; });
+        renderLista();
+        renderLabel();
+      },
+      getSelecionados: function () { return selecionados.slice(); },
+      limpar: function () { selecionados = []; renderLista(); renderLabel(); },
+      // Placeholder muda de idioma em runtime (ver 'vbm:idioma' abaixo) —
+      // é texto guardado em closure, não DOM com data-i18n, então precisa
+      // deste método para o translatePanel() conseguir alcançá-lo.
+      setPlaceholder: function (novoTexto) { placeholder = novoTexto; renderLabel(); },
+    };
+  }
+
+  /* Unidades e Anos — GET /api/kaizens/filtros.
+     Unidades vêm de kzn_mdm_hierarquia.NM_SITE (distintas, sem nulo nem
+     vazio, em ordem alfabética) e os anos, de kzn_pedravisaoconsolidada
+     (distintos, do mais recente para o mais antigo). Antes os dois eram
+     montados a partir dos registros já carregados na tela, o que deixava
+     a lista dependente do conteúdo da página: uma unidade sem Kaizen não
+     aparecia, e o filtro de unidade usava NM_ESTADO, não a unidade. */
+  function carregarFiltrosDoBanco() {
+    fetch('/api/kaizens/filtros', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : { unidades: [], anos: [] }; })
+      .then(function (dados) {
+        filtroUnidade.setItens(dados.unidades, function (u) { return u; }, function (u) { return u; });
+        filtroPeriodo.setItens(dados.anos, function (a) { return a; }, function (a) { return a; });
+      })
+      .catch(function () {});
+  }
+
+  /* Status — GET /api/status, a mesma rota da aba Administração, sobre
+     kzn_status. O VALOR da opção é o ID_STATUS (é por ele que o filtro
+     compara) e o texto é o NM_STATUS do cadastro, no idioma da tela.
+     Só os ativos: status desativado não deve ser oferecido como filtro.
+     Antes a lista saía dos registros carregados, então um status sem
+     nenhum Kaizen simplesmente não existia no combo. */
+  function carregarStatus() {
+    fetch('/api/status?idioma=' + idiomaDaTela(), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (itens) {
+        filtroStatus.setItens((itens || []).filter(function (i) { return i.ATIVO; }),
+          function (i) { return i.ID; }, function (i) { return i.NM; });
+      })
+      .catch(function () {});
+  }
+
+  // Normalização usada pelos DOIS campos de busca (Nome do Kaizen e Nome
+  // do usuário), para os dois responderem igual ao que se digita: sem
+  // maiúsculas, sem acento, sem espaço nas pontas e sem espaço repetido
+  // no meio. Sem tirar o acento, "joao" não acharia "JOÃO" — e nome de
+  // pessoa é justamente onde isso mais aparece.
+  function normalizar(texto) {
+    return String(texto || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().replace(/\s+/g, ' ');
+  }
+
+  /** Monta os parâmetros de consulta a partir da barra de filtros. */
+  /* Os seis filtros da barra viram parâmetros da consulta. Eram
+     aplicados no navegador, o que só funcionava porque a base inteira
+     vinha junto — a peneira ficava correta e o tráfego, não. */
+  function filtrosAtuais() {
+    var p = {};
+    if (inputNome.value.trim()) p.q = inputNome.value.trim();
+    if (selUsuario.value.trim()) p.lider = selUsuario.value.trim();
+    var site = filtroUnidade.getSelecionados(); if (site.length) p.site = site.join(',');
+    var categoria = filtroCategoria.getSelecionados(); if (categoria.length) p.categoria = categoria.join(',');
+    var status = filtroStatus.getSelecionados(); if (status.length) p.status = status.join(',');
+    var ano = filtroPeriodo.getSelecionados(); if (ano.length) p.ano = ano.join(',');
+    return p;
+  }
+
+  // Filtro alterado recomeça da primeira página. O resumo do hero
+  // (Total/Aprovado/Reprovado/...) refaz a conta com os MESMOS filtros,
+  // para não mostrar um total e a grade logo abaixo mostrar outro.
+  function aplicarFiltros() {
+    carregarLista({ pagina: 0 });
+    carregarResumo();
+  }
+
+  /* Digitar dispara uma consulta por tecla se nada segurar. 300 ms é o
+     bastante para juntar a digitação numa chamada só, sem parecer lento
+     — antes a filtragem era local e não custava rede nenhuma. */
+  var esperaBusca = null;
+  function aplicarFiltrosComEspera() {
+    clearTimeout(esperaBusca);
+    esperaBusca = setTimeout(aplicarFiltros, 300);
+  }
+
+  // Idioma da última carga. A lista traz textos vindos do banco
+  // (categoria, desperdício), então trocar de idioma pede uma nova
+  // consulta — mas SÓ quando o idioma muda mesmo. O applyLang inicial
+  // dispara 'vbm:idioma' logo depois da primeira carga; sem esta guarda
+  // a página abria fazendo a mesma consulta duas vezes.
+  var idiomaDaLista = null;
+  function idiomaDaTela() {
+    var sel = document.getElementById('langSelect');
+    return (sel && sel.value) || 'pt-BR';
+  }
+
+  /* Busca UMA página no servidor. Cada resposta SUBSTITUI a lista da
+     tela (paginação clássica, não "Carregar mais") — o total só volta a
+     ser contado quando pagina é 0, ver o COUNT condicional em server.js.
+     As opções dos filtros não saem daqui: cada uma vem da sua tabela
+     (ver carregarFiltrosDoBanco, carregarStatus e carregarCategorias). */
+  var requisicaoAtual = 0;
+  var ordemAtual = 'recentes'; // ver o menu de ordenação (#bibOrdem)
+  function carregarLista(opcoes) {
+    var o = opcoes || {};
+    var pagina = o.pagina || 0;
+    idiomaDaLista = idiomaDaTela();
+    carregando = true;
+    // Overlay por cima dos cards atuais (padrão global — ver
+    // window.VBMLoading em vbm-app.js), não mais esvaziar bibList: a
+    // lista antiga fica visível, só esmaecida, até a nova chegar — sem
+    // o "pisca" de página em branco a cada filtro ou troca de página.
+    // render() (abaixo) reescreve bibList.innerHTML no sucesso, o que
+    // já remove o overlay sozinho; a rede de segurança no catch cobre
+    // erro e o caso raro de o script de loading não ter carregado.
+    if (window.VBMLoading) VBMLoading.overlay(bibList, true, { texto: txtI18n('bib.loading', 'Carregando…') });
+    else bibList.innerHTML = '<p style="padding:1.5rem;color:var(--vbm-mid);font-size:.8rem;">' +
+      escaparHtml(txtI18n('bib.loading', 'Carregando…')) + '</p>';
+
+    var params = filtrosAtuais();
+    params.idioma = idiomaDaLista;
+    params.pagina = pagina;
+    params.tamanho = PAGE_SIZE;
+    if (ordemAtual !== 'recentes') params.ordem = ordemAtual;
+
+    // Respostas fora de ordem: digitar rápido dispara pedidos em
+    // sequência e o mais lento pode chegar por último. Só a resposta do
+    // pedido MAIS RECENTE pode desenhar.
+    var meuPedido = ++requisicaoAtual;
+
+    fetch('/api/kaizens?' + new URLSearchParams(params).toString(), { headers: { Accept: 'application/json' } })
+      // Resposta de erro: lê o corpo (o servidor manda {error: "..."})
+      // em vez de descartar o motivo — sem isso a tela só sabia dizer
+      // "deu erro", nunca QUAL, e quem via a tela não tinha como
+      // diagnosticar sem abrir o DevTools.
+      .then(function (r) {
+        if (r.ok) return r.json();
+        return r.json().catch(function () { return null; }).then(function (corpo) {
+          var erro = new Error((corpo && corpo.error) || ('HTTP ' + r.status));
+          // sql: só vem quando o servidor prende o comando que falhou
+          // (ver corpoErroSql em server.js) — diagnóstico temporário.
+          if (corpo && corpo.sql) erro.sql = corpo.sql;
+          throw erro;
+        });
+      })
+      .then(function (resposta) {
+        if (meuPedido !== requisicaoAtual) return;
+        carregando = false;
+        if (!resposta) throw new Error('resposta inválida');
+        var itens = resposta.itens || [];
+        lote = itens;
+        if (pagina === 0) {
+          total = resposta.total != null ? resposta.total : itens.length;
+        }
+        paginaAtual = pagina;
+        render();
+      })
+      .catch(function (err) {
+        if (meuPedido !== requisicaoAtual) return;
+        carregando = false;
+        if (pagina === 0) {
+          bibList.innerHTML = '<p style="padding:1.5rem;color:#dc2626;font-size:.8rem;">' +
+            escaparHtml(txtI18n('bib.loadError', 'Erro ao carregar a Biblioteca.')) +
+            (err && err.message ? '<br><span style="font-size:.7rem;color:var(--vbm-mid);">' +
+              escaparHtml(err.message) + '</span>' : '') +
+            (err && err.sql ? '<br><code style="display:block;margin-top:.5rem;padding:.6rem;' +
+              'background:#f7f7f7;border:1px solid #eee;border-radius:.4rem;font-size:.68rem;' +
+              'color:#555;white-space:pre-wrap;word-break:break-word;">' + escaparHtml(err.sql) + '</code>' : '') +
+            '</p>';
+        } else if (window.VBMLoading) {
+          // Página > 0: bibList não é reescrito (os cards que já
+          // estavam continuam corretos), então só o overlay precisa
+          // sumir — sem isso ficaria preso na tela para sempre.
+          VBMLoading.overlay(bibList, false);
+          showToast('error', txtI18n('bib.loadError', 'Erro ao carregar a Biblioteca.'), (err && err.message) || '');
+        }
+      });
+  }
+
+  selUsuario.addEventListener('input', aplicarFiltrosComEspera);
+  inputNome.addEventListener('input', aplicarFiltrosComEspera);
+
+  /* Nome do usuário: nasce VAZIO, sem filtro nenhum aplicado. Antes
+     este campo era preenchido sozinho com quem estava logado (via
+     window.VBMAcesso.me(), já chamado de qualquer jeito pelo
+     cabeçalho para a navegação — nada muda ali), o que fazia a
+     Biblioteca abrir já filtrada por líder e escondia Kaizens de
+     outras pessoas sem nenhuma ação da pessoa que abriu a tela. */
+
+  /* Limpar filtros: zera os seis campos, campo de usuário incluído, e
+     devolve a tela ao estado de abertura (agora também sem filtro de
+     usuário). */
+  var btnLimpar = document.getElementById('bibLimparFiltros');
+  if (btnLimpar) {
+    btnLimpar.addEventListener('click', function () {
+      inputNome.value = '';
+      filtroUnidade.limpar();
+      filtroCategoria.limpar();
+      filtroStatus.limpar();
+      filtroPeriodo.limpar();
+      selUsuario.value = '';
+      aplicarFiltros();
+    });
+  }
+
+  /* Ordenação — menu do botão #bibOrdemBtn. Só reordena a lista (volta
+     à página 1); o resumo não depende da ordem. Teclado: setas navegam,
+     Esc fecha e devolve o foco ao botão. Abrir fecha os filtros abertos
+     e vice-versa (todosFiltrosMultiplos). */
+  (function () {
+    var caixa = document.getElementById('bibOrdem');
+    var botao = document.getElementById('bibOrdemBtn');
+    var menu = document.getElementById('bibOrdemMenu');
+    if (!caixa || !botao || !menu) return;
+    var itens = Array.prototype.slice.call(menu.querySelectorAll('[data-ordem]'));
+    var cardPai = caixa.closest('.section-card');
+    var aberto = false;
+
+    function fechar(devolverFoco) {
+      if (!aberto) return;
+      aberto = false;
+      menu.classList.remove('open');
+      botao.setAttribute('aria-expanded', 'false');
+      if (cardPai) cardPai.classList.remove('ms-filter-open');
+      if (devolverFoco === true) botao.focus();
+    }
+    function abrir() {
+      if (aberto) return;
+      todosFiltrosMultiplos.forEach(function (f) { if (f !== fechar) f(); });
+      aberto = true;
+      menu.classList.add('open');
+      botao.setAttribute('aria-expanded', 'true');
+      if (cardPai) cardPai.classList.add('ms-filter-open');
+      var marcado = menu.querySelector('[aria-checked="true"]') || itens[0];
+      marcado.focus();
+    }
+    function escolher(item) {
+      var nova = item.dataset.ordem;
+      itens.forEach(function (i) { i.setAttribute('aria-checked', String(i === item)); });
+      botao.classList.toggle('active', nova !== 'recentes');
+      fechar(true);
+      if (nova === ordemAtual) return;
+      ordemAtual = nova;
+      carregarLista({ pagina: 0 });
+    }
+
+    botao.addEventListener('click', function (e) { e.stopPropagation(); aberto ? fechar() : abrir(); });
+    menu.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var item = e.target.closest('[data-ordem]');
+      if (item) escolher(item);
+    });
+    menu.addEventListener('keydown', function (e) {
+      var i = itens.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); itens[(i + 1) % itens.length].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); itens[(i - 1 + itens.length) % itens.length].focus(); }
+      else if (e.key === 'Home') { e.preventDefault(); itens[0].focus(); }
+      else if (e.key === 'End') { e.preventDefault(); itens[itens.length - 1].focus(); }
+      else if (e.key === 'Tab') fechar();
+    });
+    document.addEventListener('click', function (e) { if (aberto && !caixa.contains(e.target)) fechar(); });
+    document.addEventListener('keydown', function (e) { if (aberto && e.key === 'Escape') fechar(true); });
+    todosFiltrosMultiplos.push(fechar);
+  })();
+
+  /* Exportar Excel: mesmos filtros da tela, mas SEM paginação — o
+     servidor traz todas as linhas que os filtros aprovam (ver GET
+     /api/kaizens/exportar) e devolve o arquivo pronto; aqui só cabe
+     baixar. Trava contra clique duplo enquanto a exportação roda. */
+  var btnExportar = document.getElementById('bibExportarExcel');
+  var exportando = false;
+  if (btnExportar) {
+    btnExportar.addEventListener('click', function () {
+      if (exportando) return;
+      exportando = true;
+      VBMLoading.botao(btnExportar, true, { texto: txtI18n('bib.exporting', 'Exportando…') });
+
+      var params = filtrosAtuais();
+      params.idioma = idiomaDaTela();
+
+      fetch('/api/kaizens/exportar?' + new URLSearchParams(params).toString(), { headers: { Accept: '*/*' } })
+        .then(function (r) {
+          if (r.ok) return r.blob();
+          return r.json().catch(function () { return null; }).then(function (corpo) {
+            var erro = new Error((corpo && corpo.error) || ('HTTP ' + r.status));
+            if (corpo && corpo.sql) erro.sql = corpo.sql;
+            throw erro;
+          });
+        })
+        .then(function (blob) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'biblioteca-kaizen-' + new Date().toISOString().slice(0, 10) + '.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        })
+        .catch(function (err) {
+          showToast('error', txtI18n('bib.exportErrorTitle', 'Erro ao exportar'),
+            (err && err.message) || 'Não foi possível gerar o Excel.');
+        })
+        .finally(function () {
+          exportando = false;
+          VBMLoading.botao(btnExportar, false);
+        });
+    });
+  }
+
+  // Categoria (única lista bilíngue do filtro): populada à parte, não
+  // depende dos resultados já carregados, senão só mostraria categorias
+  // que já têm Kaizen aprovado.
+  function carregarCategorias() {
+    var idioma = idiomaDaTela();
+    fetch('/api/categorias?idioma=' + idioma, { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (itens) {
+        filtroCategoria.setItens((itens || []).filter(function (i) { return i.ATIVO; }),
+          function (i) { return i.ID; }, function (i) { return i.NM; });
+      })
+      .catch(function () {});
+  }
+
+  /* Cor do pontinho de cada status, a mesma tabela do Resumo da
+     Aprovação (COR_STATUS em aprovacao.html): as duas telas listam os
+     mesmos status e mostrá-los em cores diferentes só confundiria.
+     O cadastro não tem coluna de cor, então o casamento é pelo nome sem
+     acento, nos dois idiomas, com queda para um cinza neutro — status
+     novo aparece na lista mesmo sem cor combinada. */
+  var COR_RESUMO_STATUS = {
+    'aprovado': '#16a34a', 'approved': '#16a34a', 'concluido': '#16a34a',
+    'reprovado': '#dc2626', 'rejeitado': '#dc2626', 'reject': '#dc2626', 'rejected': '#dc2626',
+    'aguardando aprovacao': '#c2770e', 'awaiting approval': '#c2770e',
+    'em aprovacao': '#c2770e', 'aguardando': '#c2770e',
+    'revisado': '#7c3aed', 'reviewed': '#7c3aed',
+    'solicitado alteracoes': '#3cb5e5', 'solicitado alteracao': '#3cb5e5',
+    'solicitar alteracoes': '#3cb5e5', 'solicitar alteracao': '#3cb5e5',
+    'request changes': '#3cb5e5', 'requested changes': '#3cb5e5', 'change requested': '#3cb5e5',
+  };
+
+  // ─── Resumo (hero) ───
+  // Mesmos filtros da barra (ver filtrosAtuais) — o painel conta só o
+  // que os filtros aprovam, igual à grade logo abaixo.
+  // Só a resposta do pedido MAIS RECENTE desenha (mesma proteção de
+  // carregarLista): trocar filtros em sequência não pode deixar o painel
+  // com a conta de um filtro anterior.
+  var resumoAtual = 0;
+  function carregarResumo() {
+    // ?idioma= porque os NOMES dos status vêm daqui e têm de sair no
+    // idioma da tela, igual aos do filtro.
+    var params = filtrosAtuais();
+    params.idioma = idiomaDaTela();
+    var meuResumo = ++resumoAtual;
+    fetch('/api/kaizens/resumo?' + new URLSearchParams(params).toString(), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (resumo) {
+        if (meuResumo !== resumoAtual || !resumo) return;
+        var anos = Object.keys(resumo.porAno || {}).sort().reverse();
+        // Filtro sem nenhum Kaizen: "Total 0" em vez de a linha sumir.
+        if (!anos.length) { resumo.porAno = { '': 0 }; anos = ['']; }
+        document.getElementById('bibResumoAnos').innerHTML = anos.map(function (a) {
+          return '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">' +
+            '<span style="font-size:.72rem;color:rgba(255,255,255,.55);">Total ' + escaparHtml(a) + '</span>' +
+            '<span style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:.85rem;color:#fff;">' + resumo.porAno[a] + '</span></div>';
+        }).join('');
+
+        /* Os itens saem de statusAno — um por status ATIVO do cadastro,
+           na ordem do ID, que é a mesma origem e a mesma ordem do filtro
+           "Todos os status". A CONTAGEM, porém, vem de totalPorStatus:
+           statusAno conta só o ano corrente, e as linhas de "Total
+           <ano>" logo acima já são por ano — misturar os dois critérios
+           faria a soma dos status não bater com o total. */
+        var totais = resumo.totalPorStatus || {};
+        document.getElementById('bibResumoStatus').innerHTML = (resumo.statusAno || []).map(function (st) {
+          var cor = COR_RESUMO_STATUS[semAcento(st.NM_STATUS)] || 'rgba(255,255,255,.45)';
+          var qtd = totais[String(st.ID_STATUS)] || 0;
+          return '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">' +
+            '<span style="font-size:.72rem;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:.4rem;">' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:' + cor + ';display:inline-block;flex-shrink:0;"></span> ' +
+              escaparHtml(st.NM_STATUS) + '</span>' +
+            '<span style="font-family:\'Poppins\', sans-serif;font-weight:700;font-size:.85rem;color:#fff;">' + qtd + '</span>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function () {});
+  }
+
+  // ─── Modal de detalhe ───
+  function preencherModal(k) {
+    document.getElementById('bibModalTitulo').textContent = k.ROTULO + ' — ' + k.NM_KAIZEN;
+    // O botão "Imprimir A4" do rodapé guarda o ID do que está aberto —
+    // é por ele que a impressão sabe qual Kaizen montar.
+    var btnImprimir = document.getElementById('bibModalImprimir');
+    if (btnImprimir) btnImprimir.dataset.kaizen = k.ID_KAIZEN;
+    // Linha de cima: código · categoria · UNIDADE. A unidade é o NM_SITE
+    // que vem com o Kaizen (kzn_mdm_hierarquia, pelo autor) — o mesmo
+    // valor do card da lista. Antes eram cidade e estado do líder, que
+    // são outra coisa: o endereço da pessoa, não a unidade do Kaizen.
+    document.getElementById('bibModalId').textContent = [k.ROTULO, k.NM_CATEGORIA, k.NM_SITE].filter(Boolean).join(' · ');
+    document.getElementById('bibModalTitle').textContent = k.NM_KAIZEN;
+    // Metas: informação de NEGÓCIO do Kaizen, não das pessoas. Cada uma
+    // com o rótulo em destaque e o valor ao lado. Tudo já vem no mesmo
+    // GET /kaizens/:id que preenche o resto do modal — nenhuma consulta
+    // nova. Os ícones são os que a linha já usava.
+    var meta = function (icone, rotulo, valor) {
+      return '<div class="kd-meta"><i class="fa-solid ' + icone + '"></i> <strong>' +
+             escaparHtml(rotulo) + ':</strong> ' + escaparHtml(valor) + '</div>';
+    };
+    // QUEM e QUANDO — mesma faixa e mesmos rótulos do relatório A4 (ver
+    // window.printKaizen em js/vbm-app.js), pra não ter dois jeitos de
+    // mostrar a mesma informação. Equipe some sozinha quando o Kaizen
+    // não tem membro (mesmo critério do relatório).
+    var equipe = (k.MEMBROS || []).map(function (m) { return m.NM_USUARIO; }).filter(Boolean).join(', ');
+    var dataRef = formatarDataCompleta(k.DT_CONCLUSAO || k.DT_CRIACAO);
+    var metasPessoas = [
+      k.NM_LIDER ? meta('fa-user', txtI18n('print.leader', 'Líder'), k.NM_LIDER) : '',
+      equipe ? meta('fa-users', txtI18n('print.team', 'Equipe'), equipe) : '',
+      dataRef ? meta('fa-calendar-day', txtI18n('print.date', 'Data'), dataRef) : '',
+    ].join('');
+    document.getElementById('bibModalMetasPessoas').innerHTML = metasPessoas;
+    var desperdicios = (k.DESPERDICIOS || []).filter(Boolean).join(', ');
+    var metas = [
+      // Os rótulos de Categoria e Desperdícios são os MESMOS dos balões
+      // do card (bib.groupCategoria / bib.groupDesperdicios): o modal
+      // repete o nome que a pessoa acabou de ler na lista.
+      k.NM_CATEGORIA ? meta('fa-tag', txtI18n('bib.groupCategoria', 'Categoria'), k.NM_CATEGORIA) : '',
+      k.NM_REPLICACAO ? meta('fa-globe', txtI18n('bib.replication', 'Replicação'), k.NM_REPLICACAO) : '',
+      desperdicios ? meta('fa-recycle', txtI18n('bib.groupDesperdicios', 'Redução de Desperdícios'), desperdicios) : '',
+    ].join('');
+    document.getElementById('bibModalMetas').innerHTML = metas;
+    document.getElementById('bibModalProblema').textContent = k.DS_PROBLEMA || '—';
+    document.getElementById('bibModalObjetivo').textContent = k.DS_OBJETIVO || '—';
+    mostrarFoto('bibModalImgAntes', 'bibModalVazioAntes', urlImagem(k.URL_IMG_ANTES, k.DT_CRIACAO));
+    document.getElementById('bibModalDescAntes').textContent = k.DS_ESTADO_ANTES || '—';
+    mostrarFoto('bibModalImgDepois', 'bibModalVazioDepois', urlImagem(k.URL_IMG_DEPOIS, k.DT_CRIACAO));
+    document.getElementById('bibModalDescDepois').textContent = k.DS_ESTADO_DEPOIS || '—';
+
+    var boxes = [];
+    if (k.VL_RESULTADO_FINANCEIRO != null) {
+      boxes.push(
+        '<div style="background:var(--vbm-off-white);border-radius:.5rem;padding:.85rem;border-left:3px solid #16a34a;text-align:center;">' +
+        '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:1.3rem;color:#16a34a;">' + (k.SG_MOEDA || '') + ' ' + Number(k.VL_RESULTADO_FINANCEIRO).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '</div>' +
+        '<div style="font-size:.7rem;color:var(--vbm-mid);">Resultado financeiro</div></div>'
+      );
+    }
+    (k.RESULTADOS || []).forEach(function (r) {
+      boxes.push(
+        '<div style="background:var(--vbm-off-white);border-radius:.5rem;padding:.85rem;border-left:3px solid var(--vbm-blue);text-align:left;">' +
+        '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:.82rem;color:var(--vbm-dark);">' + escaparHtml(r.NM_RESULTADO) + '</div>' +
+        '<div style="font-size:.7rem;color:var(--vbm-mid);margin-top:.2rem;">' + escaparHtml(r.DS_RESULTADO) + '</div></div>'
+      );
+    });
+    document.getElementById('bibModalResultados').innerHTML = boxes.join('') || '<p style="font-size:.78rem;color:var(--vbm-mid);">Nenhum resultado registrado.</p>';
+
+    // Rótulo pelas chaves print.* (as MESMAS que o relatório A4 usa, para
+    // tela e papel não divergirem) e valor escapado: DS_* é texto digitado
+    // pelo usuário e entra em innerHTML.
+    var licoes = [];
+    var item = function (chave, padrao, valor) {
+      return '<strong>' + escaparHtml(txtI18n(chave, padrao)) + ':</strong> ' + escaparHtml(valor);
+    };
+    if (k.DS_LICOES_APRENDIDAS) licoes.push(item('print.lessons', 'Lições Aprendidas', k.DS_LICOES_APRENDIDAS));
+    if (k.DS_RESULTADO_ESPERADO) licoes.push(item('print.goalComparison', 'Comparação com a meta', k.DS_RESULTADO_ESPERADO));
+    if (k.DESPERDICIOS && k.DESPERDICIOS.length) licoes.push(item('print.wasteReduced', 'Desperdícios reduzidos', k.DESPERDICIOS.join(', ')));
+    document.getElementById('bibModalLicoes').innerHTML = licoes.join('<br/><br/>') || '—';
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-ver-detalhe]');
+    if (!btn) return;
+    var id = btn.dataset.verDetalhe;
+    document.getElementById('bibModalTitulo').textContent = 'Carregando…';
+    window.openModal('modalBibDetail');
+
+    carregarDetalhe(id)
+      .then(preencherModal)
+      .catch(function () { document.getElementById('bibModalTitulo').textContent = 'Erro ao carregar.'; });
+  });
+
+  /** Detalhe do Kaizen, do cache ou do servidor. Uma função só para as
+      duas portas de entrada — abrir o modal e imprimir —, senão cada uma
+      teria a sua cópia da mesma consulta e do mesmo cache. */
+  function carregarDetalhe(id) {
+    if (detalheCache[id]) return Promise.resolve(detalheCache[id]);
+    return fetch('/api/kaizens/' + id, { headers: { Accept: 'application/json' } })
+      .then(function (r) {
+        if (!r.ok) throw new Error('falha ao carregar o Kaizen ' + id);
+        return r.json();
+      })
+      .then(function (k) { detalheCache[id] = k; return k; });
+  }
+
+  /* Imprimir A4 — pelo ID do Kaizen, NUNCA pelo que estiver na tela.
+     Os botões da grade e da lista mandavam imprimir o conteúdo do modal
+     ('bibPrint'): quem clicasse sem ter aberto aquele Kaizen imprimia o
+     modal vazio (os "—" do formulário em branco) ou, pior, o Kaizen
+     aberto antes. Agora cada botão carrega o SEU Kaizen e só então
+     manda imprimir — o relatório monta a partir desses dados. */
+  window.imprimirKaizen = function (id) {
+    carregarDetalhe(id).then(function (k) {
+      window.printKaizen(k, {
+        idioma: idiomaDaTela(),
+        // Mesma função que o <img> do modal usa — o relatório não inventa
+        // um jeito próprio de montar o endereço da foto.
+        urlImagem: function (caminho) { return urlImagem(caminho, k.DT_CRIACAO, 1600); },
+        rotulos: {
+          programa: txtI18n('print.program', 'Kaizen Corporativo'),
+          lider: txtI18n('print.leader', 'Líder'),
+          site: txtI18n('print.site', 'Site'),
+          categoria: txtI18n('bib.groupCategoria', 'Categoria'),
+          replicacao: txtI18n('bib.replication', 'Replicação'),
+          desperdicios: txtI18n('bib.groupDesperdicios', 'Redução de Desperdícios'),
+          equipe: txtI18n('print.team', 'Equipe'),
+          data: txtI18n('print.date', 'Data'),
+          licoesAprendidas: txtI18n('print.lessons', 'Lições Aprendidas'),
+          comparacaoMeta: txtI18n('print.goalComparison', 'Comparação com a meta'),
+          desperdiciosReduzidos: txtI18n('print.wasteReduced', 'Desperdícios reduzidos'),
+          problema: txtI18n('kd.problemStatement', 'Declaração do Problema'),
+          objetivo: txtI18n('kd.goal', 'Meta / Objetivo'),
+          evidencias: txtI18n('kd.evidenceBeforeAfter', 'Evidências Antes & Depois'),
+          antes: txtI18n('kd.before', 'Antes'),
+          depois: txtI18n('kd.after', 'Depois'),
+          resultados: txtI18n('kd.resultsAchieved', 'Resultados Alcançados'),
+          licoes: txtI18n('kd.learningsReplication', 'Aprendizados & Potencial de Replicação'),
+          resultadoFinanceiro: txtI18n('print.financialResult', 'Resultado financeiro'),
+          semImagem: txtI18n('print.noImage', 'Sem imagem registrada'),
+          imagemFalhou: txtI18n('print.imageFailed', 'Imagem não disponível'),
+          preparando: txtI18n('print.preparing', 'Preparando relatório para impressão...'),
+          rodape: txtI18n('print.footer', 'VBM Problem Solving & Continuous Improvement'),
+        },
+      });
+    }).catch(function () {
+      showToast('error', txtI18n('print.errorTitle', 'Não foi possível imprimir'),
+        txtI18n('print.errorMsg', 'Não deu para carregar os dados deste Kaizen. Tente de novo.'), 5000);
+    });
+  };
+
+  // A guarda do 'vbm:idioma' compara com o idioma da última listagem, e
+  // quem gravava isso era o carregarLista. Como ele passou a esperar o
+  // /me, o applyLang inicial disparava o evento com a marca ainda em
+  // branco e a página recarregava tudo de novo. A marca é do IDIOMA EM
+  // QUE A TELA ABRIU, então é aqui que ela pertence.
+  idiomaDaLista = idiomaDaTela();
+
+  carregarFiltrosDoBanco();
+  carregarCategorias();
+  carregarStatus();
+  carregarResumo();
+  // A lista já pode ser pedida de imediato: o campo de usuário nasce
+  // vazio, não há mais nenhuma espera por /me antes da primeira consulta.
+  carregarLista();
+  window.addEventListener('vbm:idioma', function () {
+    // O applyLang inicial também dispara este evento; recarregar aqui
+    // repetiria a consulta que acabou de sair. Só refaz em troca real.
+    if (idiomaDaTela() === idiomaDaLista) return;
+    // Unidade e ano não dependem do idioma (nome de site e número), então
+    // ficam de fora: seriam duas consultas para devolver a mesma lista.
+    carregarCategorias();
+    carregarStatus();
+    // O resumo passou a mostrar o NOME de cada status, que é traduzido —
+    // sem recarregar aqui, o painel ficava em português com a tela em
+    // inglês, e divergindo do filtro logo abaixo.
+    carregarResumo();
+    carregarLista();
+    // Placeholder dos 4 filtros de múltipla seleção: texto guardado em
+    // closure (ver setPlaceholder em criarFiltroMultiplo), não DOM com
+    // data-i18n — translatePanel() não alcança, então ficava em
+    // português com o resto da tela já em inglês.
+    filtroUnidade.setPlaceholder(txtI18n('filter.allUnits', 'Todas as unidades'));
+    filtroCategoria.setPlaceholder(txtI18n('filter.allCategories', 'Todas as categorias'));
+    filtroStatus.setPlaceholder(txtI18n('filter.allStatus', 'Todos os status'));
+    filtroPeriodo.setPlaceholder(txtI18n('filter.allYears', 'Todos os anos'));
+  });
+})();
+</script>
+<script>
+(function(){
+  var topnav=document.getElementById('topnav');
+  /* topbar com cor fixa — sem alternância por scroll */
+})();
+(function(){
+  var btn=document.getElementById('mobileToggle'),drawer=document.getElementById('topnavDrawer');
+  if(btn&&drawer){
+    btn.addEventListener('click',function(){
+      var o=drawer.classList.toggle('open');
+      btn.querySelector('i').className=o?'fa-solid fa-xmark':'fa-solid fa-bars';
+    });
+    document.addEventListener('click',function(e){
+      if(!btn.contains(e.target)&&!drawer.contains(e.target)){
+        drawer.classList.remove('open');
+        btn.querySelector('i').className='fa-solid fa-bars';
+      }
+    });
+  }
+})();
+</script>
+<script>
+// ─── Painel de Configurações (engrenagem) — replicado de Value Driver Tree ───
+(function () {
+  var btn = document.getElementById('settingsBtn');
+  var panel = document.getElementById('settingsPanel');
+  var backdrop = document.getElementById('settingsBackdrop');
+  var closeBtn = document.getElementById('settingsClose');
+  if (!btn || !panel || !backdrop) return;
+
+  function openPanel() {
+    panel.classList.add('open');
+    backdrop.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    panel.setAttribute('aria-hidden', 'false');
+  }
+  function closePanel() {
+    panel.classList.remove('open');
+    backdrop.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('aria-hidden', 'true');
+  }
+
+  btn.addEventListener('click', function () {
+    panel.classList.contains('open') ? closePanel() : openPanel();
+  });
+  closeBtn && closeBtn.addEventListener('click', closePanel);
+  backdrop.addEventListener('click', closePanel);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closePanel();
+  });
+})();
+
+// ─── Tema (Claro/Escuro) do painel de Configurações ───
+(function () {
+  var THEME_KEY = 'vdt-theme';
+  var btnWhite = document.getElementById('btnWhite');
+  var btnBusiness = document.getElementById('btnBusiness');
+  if (!btnWhite && !btnBusiness) return;
+
+  function applyTheme(theme) {
+    var isDark = theme === 'dark';
+    document.body.dataset.bg = isDark ? 'dark' : '';
+    if (btnWhite) btnWhite.classList.toggle('active', !isDark);
+    if (btnBusiness) btnBusiness.classList.toggle('active', isDark);
+  }
+
+  var saved = 'light';
+  try { saved = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch (e) {}
+  applyTheme(saved);
+
+  btnWhite && btnWhite.addEventListener('click', function () {
+    applyTheme('light');
+    try { localStorage.setItem(THEME_KEY, 'light'); } catch (e) {}
+  });
+  btnBusiness && btnBusiness.addEventListener('click', function () {
+    applyTheme('dark');
+    try { localStorage.setItem(THEME_KEY, 'dark'); } catch (e) {}
+  });
+})();
+
+// ─── Idioma (PT-BR/EN) do painel de Configurações ───
+(function () {
+  var I18N = {
+    'pt-BR': {
+      'settings.btnTitle': 'Configurações',
+      'settings.title': 'Configurações',
+      'settings.close': 'Fechar',
+      'settings.theme': 'Tema',
+      'theme.white': 'Claro',
+      'theme.dark': 'Escuro',
+      'settings.language': 'Idioma',
+      'settings.languageInfo': 'Idioma da interface',
+      'nav.menu': 'Menu',
+      'nav.novoKaizen': 'Novo Kaizen',
+      'nav.biblioteca': 'Biblioteca',
+      'nav.aprovacao': 'Aprovação',
+      'nav.administracao': 'Administração',
+      'role.operador': 'Operador',
+      'badge.aprovado': 'Aprovado',
+      'badge.rascunhos': 'Rascunhos',
+      'common.fechar': 'Fechar',
+      'a11y.abrirMenu': 'Abrir menu',
+      'a11y.expandir': 'Expandir',
+      'a11y.avancar': 'Avançar',
+      'a11y.voltar': 'Voltar',
+      'a11y.adicionar': 'Adicionar',
+      'common.imprimirA4': 'Imprimir A4',
+      'filter.allCategories': 'Todas as categorias',
+      'filter.allUnits': 'Todas as unidades',
+      'filter.allPeriod': 'Todo o período',
+      'filter.allUsers': 'Todos os usuários',
+      'filter.allStatus': 'Todos os status',
+      'filter.allYears': 'Todos os anos',
+      'cat.seguranca': 'Segurança',
+      'cat.producao': 'Produção',
+      'cat.manutencao': 'Manutenção',
+      'cat.energia': 'Energia',
+      'cat.meioAmbiente': 'Meio Ambiente',
+      'cat.qualidade': 'Qualidade',
+      'bib.officialRepo': 'Repositório Oficial',
+      'bib.heroTitle': 'BIBLIOTECA',
+      // O subtítulo é nome de marca (Vale Base Metals) — não se traduz;
+      // está aqui porque todo texto da hero passa pelo dicionário, e
+      // deixar um de fora era justamente o que fazia o título ficar
+      // preso em português.
+      'bib.heroSubtitle': 'KAIZENS · VALE BASE METALS',
+      'bib.heroDesc': 'Todos os Kaizens aprovados da organização. Consulte, inspire-se e replique melhorias em sua área.',
+      'bib.unidade': 'Unidade',
+      'bib.clearFilters': 'Limpar filtros',
+      'bib.searchPlaceholder': 'Nome do Kaizen...',
+      'bib.showingCount': '31 Kaizens aprovados · Exibindo 6',
+      'bib.countTemplate': '{total} Kaizens · Exibindo {n}',
+      'bib.userPlaceholder': 'Nome do usuário...',
+      'bib.editKaizen': 'Editar Kaizen',
+      'bib.deleteKaizen': 'Excluir Kaizen',
+      'bib.groupCategoria': 'Categoria',
+      'bib.replication': 'Replicação',
+      /* Relatório A4 (ver printKaizen em js/vbm-app.js). */
+      'print.program': 'Kaizen Corporativo',
+      'print.leader': 'Líder',
+      'print.site': 'Site',
+      'print.team': 'Equipe',
+      'print.date': 'Data',
+      'print.lessons': 'Lições Aprendidas',
+      'print.goalComparison': 'Comparação com a meta',
+      'print.wasteReduced': 'Desperdícios reduzidos',
+      'print.financialResult': 'Resultado financeiro',
+      'print.noImage': 'Sem imagem registrada',
+      'print.imageFailed': 'Imagem não disponível',
+      'print.preparing': 'Preparando relatório para impressão...',
+      'print.footer': 'VBM Problem Solving & Continuous Improvement',
+      'print.errorTitle': 'Não foi possível imprimir',
+      'print.errorMsg': 'Não deu para carregar os dados deste Kaizen. Tente de novo.',
+      'bib.groupDesperdicios': 'Redução de Desperdícios',
+      'bib.editBlocked': 'Edição indisponível para o status atual',
+      'bib.loading': 'Carregando…',
+      'bib.exportExcel': 'Exportar Excel',
+      'bib.exporting': 'Exportando…',
+      'bib.sort': 'Ordenar',
+      'bib.sortRecent': 'Mais recentes',
+      'bib.sortOldest': 'Mais antigos',
+      'bib.sortNameAz': 'Nome (A–Z)',
+      'bib.sortNameZa': 'Nome (Z–A)',
+      'bib.exportErrorTitle': 'Erro ao exportar',
+      'bib.perPage': 'Por página',
+      'bib.prevPage': 'Página anterior',
+      'bib.nextPage': 'Próxima página',
+      'bib.countRangeTemplate': 'Exibindo {inicio}–{fim} de {total} registros',
+      'bib.pageTemplate': 'Página {atual} de {totalPaginas}',
+      'kd.noImage': 'Sem imagem registrada',
+      'kd.imageFailed': 'Imagem não disponível',
+      'bib.empty': 'Nenhum Kaizen encontrado.',
+      'bib.loadError': 'Erro ao carregar a Biblioteca.',
+      'bib.summaryTitle': 'Resumo da Biblioteca',
+      'bib.total2024': 'Total 2024',
+      'bib.total2025': 'Total 2025',
+      'bib.total2026': 'Total 2026',
+      'table.idKaizen': 'ID Kaizen',
+      'table.titulo': 'Título',
+      'table.categoria': 'Categoria',
+      'table.data': 'Data',
+      'table.status': 'Status',
+      'table.acoes': 'Ações',
+      'kd.problemStatement': 'Declaração do Problema',
+      'kd.goal': 'Meta / Objetivo',
+      'kd.evidenceBeforeAfter': 'Evidências Antes & Depois',
+      'kd.before': 'Antes',
+      'kd.after': 'Depois',
+      'kd.resultsAchieved': 'Resultados Alcançados',
+      'kd.learningsReplication': 'Aprendizados & Potencial de Replicação',
+      'common.grid': 'Grade',
+      'common.list': 'Lista',
+      'common.viewDetail': 'Ver detalhe',
+      'adm.print': 'Imprimir'
+    },
+    'en': {
+      'settings.btnTitle': 'Settings',
+      'settings.title': 'Settings',
+      'settings.close': 'Close',
+      'settings.theme': 'Theme',
+      'theme.white': 'Light',
+      'theme.dark': 'Dark',
+      'settings.language': 'Language',
+      'settings.languageInfo': 'Interface language',
+      'nav.menu': 'Menu',
+      'nav.novoKaizen': 'New Kaizen',
+      'nav.biblioteca': 'Library',
+      'nav.aprovacao': 'Approval',
+      'nav.administracao': 'Administration',
+      'role.operador': 'Operator',
+      'badge.aprovado': 'Approved',
+      'badge.rascunhos': 'Drafts',
+      'common.fechar': 'Close',
+      'a11y.abrirMenu': 'Open menu',
+      'a11y.expandir': 'Expand',
+      'a11y.avancar': 'Next',
+      'a11y.voltar': 'Back',
+      'a11y.adicionar': 'Add',
+      'common.imprimirA4': 'Print PDF',
+      'filter.allCategories': 'All categories',
+      'filter.allUnits': 'All units',
+      'filter.allPeriod': 'All time',
+      'filter.allUsers': 'All users',
+      'filter.allStatus': 'All statuses',
+      'filter.allYears': 'All years',
+      'cat.seguranca': 'Safety',
+      'cat.producao': 'Production',
+      'cat.manutencao': 'Maintenance',
+      'cat.energia': 'Energy',
+      'cat.meioAmbiente': 'Environment',
+      'cat.qualidade': 'Quality',
+      'bib.officialRepo': 'Official Repository',
+      'bib.heroTitle': 'LIBRARY',
+      'bib.heroSubtitle': 'KAIZENS · VALE BASE METALS',
+      'bib.heroDesc': 'All approved Kaizens across the organization. Browse, get inspired, and replicate improvements in your area.',
+      'bib.unidade': 'Unit',
+      'bib.clearFilters': 'Clear filters',
+      'bib.searchPlaceholder': 'Kaizen name...',
+      'bib.showingCount': '31 approved Kaizens · Showing 6',
+      'bib.countTemplate': '{total} Kaizens · Showing {n}',
+      'bib.userPlaceholder': 'User name...',
+      'bib.editKaizen': 'Edit Kaizen',
+      'bib.deleteKaizen': 'Delete Kaizen',
+      'bib.groupCategoria': 'Category',
+      'bib.replication': 'Replication',
+      'print.program': 'Corporate Kaizen',
+      'print.leader': 'Leader',
+      'print.site': 'Site',
+      'print.team': 'Team',
+      'print.date': 'Date',
+      'print.lessons': 'Lessons Learned',
+      'print.goalComparison': 'Comparison with the goal',
+      'print.wasteReduced': 'Waste reduced',
+      'print.financialResult': 'Financial result',
+      'print.noImage': 'No image on file',
+      'print.imageFailed': 'Image unavailable',
+      'print.preparing': 'Preparing the report for printing...',
+      'print.footer': 'VBM Problem Solving & Continuous Improvement',
+      'print.errorTitle': 'Could not print',
+      'print.errorMsg': 'The data for this Kaizen could not be loaded. Please try again.',
+      'bib.groupDesperdicios': 'Waste Reduction',
+      'bib.editBlocked': 'Editing unavailable for the current status',
+      'bib.loading': 'Loading…',
+      'bib.exportExcel': 'Export Excel',
+      'bib.exporting': 'Exporting…',
+      'bib.sort': 'Sort',
+      'bib.sortRecent': 'Newest first',
+      'bib.sortOldest': 'Oldest first',
+      'bib.sortNameAz': 'Name (A–Z)',
+      'bib.sortNameZa': 'Name (Z–A)',
+      'bib.exportErrorTitle': 'Export failed',
+      'bib.perPage': 'Per page',
+      'bib.prevPage': 'Previous page',
+      'bib.nextPage': 'Next page',
+      'bib.countRangeTemplate': 'Showing {inicio}–{fim} of {total} records',
+      'bib.pageTemplate': 'Page {atual} of {totalPaginas}',
+      'kd.noImage': 'No image on file',
+      'kd.imageFailed': 'Image unavailable',
+      'bib.empty': 'No Kaizen found.',
+      'bib.loadError': 'The Library could not be loaded.',
+      'bib.summaryTitle': 'Library Summary',
+      'bib.total2024': 'Total 2024',
+      'bib.total2025': 'Total 2025',
+      'bib.total2026': 'Total 2026',
+      'table.idKaizen': 'Kaizen ID',
+      'table.titulo': 'Title',
+      'table.categoria': 'Category',
+      'table.data': 'Date',
+      'table.status': 'Status',
+      'table.acoes': 'Actions',
+      'kd.problemStatement': 'Problem Statement',
+      'kd.goal': 'Goal / Objective',
+      'kd.evidenceBeforeAfter': 'Before & After Evidence',
+      'kd.before': 'Before',
+      'kd.after': 'After',
+      'kd.resultsAchieved': 'Results Achieved',
+      'kd.learningsReplication': 'Learnings & Replication Potential',
+      'common.grid': 'Grid',
+      'common.list': 'List',
+      'common.viewDetail': 'View detail',
+      'adm.print': 'Print'
+    }
+  };
+
+  var select = document.getElementById('langSelect');
+  var panel = document.getElementById('settingsPanel');
+  var settingsBtn = document.getElementById('settingsBtn');
+  if (!select || !panel) return;
+
+  function translatePanel(lang) {
+    var dict = I18N[lang] || I18N['pt-BR'];
+    var scope = [document.body];
+    scope.forEach(function (root) {
+      root.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var key = el.dataset.i18n;
+        if (dict[key] != null) el.textContent = dict[key];
+      });
+      root.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+        var key = el.dataset.i18nTitle;
+        if (dict[key] != null) el.setAttribute('title', dict[key]);
+      });
+      root.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+        var key = el.dataset.i18nAria;
+        if (dict[key] != null) el.setAttribute('aria-label', dict[key]);
+      });
+      root.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        var key = el.dataset.i18nPlaceholder;
+        if (dict[key] != null) el.setAttribute('placeholder', dict[key]);
+      });
+      if (root.dataset && root.dataset.i18nTitle && dict[root.dataset.i18nTitle] != null) {
+        root.setAttribute('title', dict[root.dataset.i18nTitle]);
+      }
+    });
+  }
+
+  function applyLang(lang) {
+    if (!I18N[lang]) lang = 'pt-BR';
+    select.value = lang;
+    translatePanel(lang);
+    window.__i18n = I18N[lang] || I18N['pt-BR'];
+    try { localStorage.setItem('vdt-lang', lang); } catch (e) {}
+    // Avisa quem mostra dados do banco (listas bilíngues) para
+    // reconsultar no novo idioma — ver window.VBMIdioma em vbm-app.js.
+    try { window.dispatchEvent(new Event('vbm:idioma')); } catch (e) {}
+  }
+
+  select.addEventListener('change', function () { applyLang(select.value); });
+
+  var savedLang = 'pt-BR';
+  try { savedLang = localStorage.getItem('vdt-lang') || 'pt-BR'; } catch (e) {}
+  applyLang(savedLang);
+})();
+</script>
+</body>
+</html>

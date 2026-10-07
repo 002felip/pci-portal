@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>DER — VBM Kaizen · Schema CI</title>
+<style>
+:root{
+  --vbm-blue:#3cb5e5;--vbm-blue-dark:#1a8bbf;--vbm-blue-deep:#0d2640;--vbm-blue-navy:#041523;
+  --vbm-blue-light:#7dd3f0;--vbm-blue-pale:#e8f7fd;--vbm-white:#fff;--vbm-off-white:#f6f6f6;
+  --vbm-mid:#888;--vbm-dark:#1a1a1a;--vbm-text:#333;--vbm-border:rgba(60,181,229,.25);
+  --role:#c2770e;--role-pale:#fff4e5;--aux:#16a34a;--aux-pale:#eafbf1;
+  --card-bg:#fff;--card-border:#eaeaea;--row-border:#f7f7f7;--head-border:rgba(0,0,0,.06);
+  --line-color:#b7bec6;--arrow-color:#9aa3ac;--log-head:#f0f0f0;
+  --surface:#fff;--surface-alt:#fafcfe;--border:#e8e8e8;--border-light:#eef1f6;
+  --ease-out:cubic-bezier(.2,1,.2,1);
+  transition:background .3s var(--ease-out);
+}
+body[data-bg="dark"]{
+  --vbm-off-white:#0a1c2e;--vbm-dark:#f4f8fb;--vbm-text:rgba(244,248,251,.82);--vbm-mid:rgba(244,248,251,.5);
+  --vbm-blue-pale:rgba(60,181,229,.16);--role-pale:rgba(194,119,14,.2);--aux-pale:rgba(22,163,74,.2);
+  --card-bg:rgba(255,255,255,.05);--card-border:rgba(255,255,255,.14);--row-border:rgba(255,255,255,.08);
+  --head-border:rgba(255,255,255,.09);--line-color:rgba(255,255,255,.32);--arrow-color:rgba(255,255,255,.55);
+  --log-head:rgba(255,255,255,.08);
+  --surface:#0d2640;--surface-alt:rgba(255,255,255,.05);--border:rgba(255,255,255,.14);--border-light:rgba(255,255,255,.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Poppins',system-ui,sans-serif;font-weight:400;background:var(--vbm-off-white);color:var(--vbm-text);padding:3rem;transition:background .3s var(--ease-out),color .3s var(--ease-out);}
+h1{font-family:'Poppins',sans-serif;font-weight:700;font-style:italic;color:var(--vbm-blue-deep);font-size:1.9rem;}
+body[data-bg="dark"] h1{color:var(--vbm-blue-light);}
+.subtitle{color:var(--vbm-mid);font-size:.85rem;margin:.3rem 0 1.4rem;}
+.legend{display:flex;gap:1.6rem;font-size:.72rem;color:var(--vbm-mid);margin-bottom:2rem;flex-wrap:wrap;align-items:center;}
+.legend b{color:var(--vbm-text);}
+.sw{width:13px;height:13px;border-radius:.25rem;display:inline-block;vertical-align:-2px;margin-right:.35rem;}
+.ln{display:inline-block;width:20px;height:3px;border-radius:2px;vertical-align:2px;margin-right:.35rem;}
+.scroll{overflow:auto;padding-bottom:1.5rem;border:1px dashed var(--border);border-radius:.5rem;transition:border-color .3s var(--ease-out);}
+#canvas{position:relative;width:2200px;height:2432px;margin:40px;}
+svg#links{position:absolute;top:0;left:0;width:2200px;height:2432px;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.06));pointer-events:none;}
+.entity{cursor:grab;user-select:none;}
+.entity:active{cursor:grabbing;}
+.entity.dragging{z-index:9;box-shadow:0 16px 40px rgba(0,0,0,.22);}
+.entity.selected{border-color:var(--vbm-blue);box-shadow:0 0 0 2px var(--vbm-blue),0 10px 32px rgba(0,0,0,.14);}
+.toolbar{margin-bottom:1rem;display:flex;align-items:center;}
+.btn-reset{font-family:'Poppins',sans-serif;font-weight:600;font-size:.72rem;color:var(--vbm-blue-dark);background:var(--vbm-blue-pale);border:1px solid var(--vbm-border);border-radius:100px;padding:.45rem 1rem;cursor:pointer;}
+.btn-reset:hover{background:var(--vbm-blue-light);}
+
+/* ── Engrenagem + painel lateral (Tema/Idioma) — mesmo padrão do app VBM ── */
+.header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;}
+.settings-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border:1px solid var(--vbm-border);border-radius:100px;background:var(--vbm-blue-pale);color:var(--vbm-blue-dark);cursor:pointer;flex-shrink:0;transition:background .25s,transform .35s cubic-bezier(.34,1.56,.64,1),color .3s;margin-top:.25rem;}
+.settings-btn:hover{background:var(--vbm-blue-light);color:#fff;}
+.settings-btn[aria-expanded="true"]{background:var(--vbm-blue);color:#fff;transform:rotate(50deg);}
+
+.settings-backdrop{position:fixed;inset:0;background:rgba(9,20,34,.4);opacity:0;pointer-events:none;z-index:199;transition:opacity .3s var(--ease-out);}
+@supports (backdrop-filter:blur(1px)){.settings-backdrop{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}}
+.settings-backdrop.open{opacity:1;pointer-events:auto;}
+
+.settings-panel{position:fixed;top:0;right:0;width:300px;max-width:90vw;height:100vh;background:var(--surface);box-shadow:-16px 0 48px rgba(9,20,34,.22);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .38s var(--ease-out),background .3s var(--ease-out);}
+.settings-panel.open{transform:translateX(0);}
+body[data-bg="dark"] .settings-panel{box-shadow:-16px 0 48px rgba(0,0,0,.4);}
+.settings-panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-light);}
+.settings-panel-head h2{font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:-.01em;color:var(--vbm-dark);}
+.settings-close{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;border-radius:100px;background:var(--surface-alt);color:var(--vbm-mid);cursor:pointer;transition:background .2s,color .2s;}
+.settings-close svg{width:11px;height:11px;}
+.settings-close:hover{background:var(--vbm-blue);color:#fff;}
+.settings-panel-body{padding:20px;display:flex;flex-direction:column;overflow-y:auto;}
+.settings-section{display:flex;flex-direction:column;gap:9px;}
+.settings-section-title{display:flex;align-items:center;gap:5px;font-family:'Poppins',sans-serif;font-weight:600;font-size:11px;color:var(--vbm-dark);}
+.settings-info{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1px solid var(--border);color:var(--vbm-mid);font-size:8px;font-style:italic;font-family:Georgia,serif;cursor:help;}
+.settings-divider{height:1px;background:var(--border-light);margin:18px 0;}
+.theme-toggle{display:flex;align-items:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:100px;padding:.16rem;gap:.1rem;width:fit-content;}
+.theme-toggle-btn{padding:.38rem 1.05rem;border-radius:100px;font-size:.64rem;letter-spacing:.02em;color:var(--vbm-mid);border:none;background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;transition:background .2s,color .2s;white-space:nowrap;line-height:1;}
+.theme-toggle-btn.active{background:var(--vbm-blue);color:#fff;box-shadow:0 4px 14px rgba(60,181,229,.35);}
+.settings-select-wrap{position:relative;}
+.settings-select{width:100%;appearance:none;-webkit-appearance:none;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:.5rem 1.9rem .5rem .75rem;font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:500;color:var(--vbm-dark);cursor:pointer;transition:border-color .2s,box-shadow .2s;}
+.settings-select:hover{border-color:var(--vbm-blue-light);}
+.settings-select:focus{outline:none;border-color:var(--vbm-blue);box-shadow:0 0 0 3px rgba(60,181,229,.15);}
+.settings-select-caret{width:9px;height:9px;position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--vbm-mid);pointer-events:none;}
+body[data-bg="dark"] .settings-select option{background:var(--vbm-blue-deep);color:#fff;}
+svg#links path.rel{fill:none;stroke:var(--line-color);stroke-width:1.6;opacity:.9;stroke-linecap:round;stroke-linejoin:round;transition:opacity .2s,stroke-width .2s,stroke .3s;}
+#arrow-key path{fill:var(--arrow-color);transition:fill .3s;}
+svg#links path.rel.dim{opacity:.12;}
+svg#links path.rel.hot{opacity:1;stroke-width:2.4;stroke:var(--vbm-blue-dark);}
+svg#links path.rel.soft{stroke-dasharray:5 4;}
+.group-label{position:absolute;font-family:'Poppins',sans-serif;font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;color:var(--vbm-blue-dark);transition:color .3s var(--ease-out);}
+body[data-bg="dark"] .group-label{color:var(--vbm-blue-light);}
+.entity{position:absolute;background:var(--card-bg);border-radius:1rem;border:1px solid var(--card-border);overflow:hidden;z-index:1;transition:box-shadow .25s,background .3s var(--ease-out),border-color .3s var(--ease-out);}
+.entity:hover{box-shadow:0 10px 32px rgba(0,0,0,.14);}
+body[data-bg="dark"] .entity:hover{box-shadow:0 10px 32px rgba(0,0,0,.5),0 0 0 1px rgba(60,181,229,.3);}
+.entity-head{height:44px;box-sizing:border-box;padding:0 1rem;display:flex;align-items:center;gap:.6rem;background:var(--vbm-blue-pale);border-bottom:1px solid var(--head-border);transition:background .3s var(--ease-out),border-color .3s var(--ease-out);}
+.entity-icon{width:26px;height:26px;border-radius:.4rem;background:var(--vbm-blue);display:flex;align-items:center;justify-content:center;font-size:.66rem;color:#fff;font-weight:700;flex-shrink:0;}
+.entity-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:.74rem;color:var(--vbm-blue-deep);letter-spacing:.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.entity.role .entity-head{background:var(--role-pale);}
+.entity.role .entity-icon{background:var(--role);}
+.entity.role .entity-title{color:var(--role);}
+.entity.main .entity-head{background:var(--vbm-blue-deep);}
+.entity.main .entity-icon{background:var(--vbm-blue);}
+.entity.main .entity-title{color:#fff;font-size:.78rem;}
+.entity.main{border-color:var(--vbm-blue-deep);box-shadow:0 4px 18px rgba(13,38,64,.15);}
+.entity.log .entity-head{background:var(--log-head);}
+.entity.log .entity-icon{background:var(--vbm-mid);}
+.entity.log .entity-title{color:var(--vbm-dark);font-size:.68rem;}
+.entity.aux .entity-head{background:var(--aux-pale);}
+.entity.aux .entity-icon{background:var(--aux);}
+.entity.aux .entity-title{color:var(--aux);}
+.entity-body{padding:6px 0;box-sizing:border-box;}
+.field{height:22px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:0 1rem;font-size:.66rem;border-bottom:1px solid var(--row-border);transition:border-color .3s var(--ease-out);}
+.field:last-child{border-bottom:none;}
+.field-name{white-space:nowrap;color:var(--vbm-dark);overflow:hidden;text-overflow:ellipsis;}
+.field-name.pk{font-weight:700;color:var(--vbm-blue-dark);}
+.field-name.pk::before{content:'\1F511\ ';font-size:.6rem;}
+.field-name.fk{color:var(--vbm-text);}
+.field-name.fk::before{content:'\21B3\ ';color:var(--vbm-blue);font-weight:700;}
+.field-name.pk.fk::before{content:'\1F511\21B3\ ';}
+.field-type{color:var(--vbm-mid);font-size:.6rem;white-space:nowrap;flex-shrink:0;}
+.field.note{font-size:.62rem;color:var(--vbm-mid);font-style:italic;justify-content:flex-start;}
+footer{margin-top:1.25rem;font-size:.68rem;color:var(--vbm-mid);}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div>
+    <h1>DER — VBM Kaizen</h1>
+    <p class="subtitle" data-i18n="der.subtitle">Schema <b>CI</b> · SQL Server 2016+ · 17 tabelas · gerado a partir do CI_KZN_DDL_v2.sql</p>
+  </div>
+  <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.btnTitle">
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+      <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+      <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+    </svg>
+  </button>
+</div>
+
+<div class="legend">
+  <span><span class="sw" style="background:var(--vbm-blue)"></span><span data-i18n="legend.master">Mestre / domínio</span></span>
+  <span><span class="sw" style="background:var(--role)"></span><span data-i18n="legend.role">Papel (KZN_APROVADOR)</span></span>
+  <span><span class="sw" style="background:var(--vbm-blue-deep)"></span><span data-i18n="legend.main">Tabela principal</span></span>
+  <span><span class="sw" style="background:var(--vbm-mid)"></span><span data-i18n="legend.log">Log de auditoria</span></span>
+  <span><span class="sw" style="background:var(--aux)"></span><span data-i18n="legend.aux">Auxiliar / junção</span></span>
+  <span>🔑 PK &nbsp; ↳ FK &nbsp; <span class="ln" style="background:var(--line-color)"></span> <span data-i18n="legend.line">conexão entre chaves</span></span>
+  <span><span class="ln" style="background:linear-gradient(90deg,var(--line-color) 0 60%,transparent 60% 100%);background-size:8px 3px;"></span> <span data-i18n="legend.soft">relação lógica, sem FK de banco</span></span>
+</div>
+
+<div class="toolbar">
+  <button class="btn-reset" id="btnReset" type="button" data-i18n="toolbar.reset">↺ Restaurar posições originais</button>
+  <span style="font-size:.7rem;color:var(--vbm-mid);margin-left:.75rem;" data-i18n="toolbar.hint">Arraste qualquer tabela (clique em qualquer ponto do card) pra mover — as linhas acompanham.</span>
+</div>
+
+<!-- PAINEL LATERAL DE CONFIGURAÇÕES (Theme + Language) -->
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true">
+  <div class="settings-panel-head">
+    <h2 data-i18n="settings.title">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="settings.theme">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Alternar tema">
+        <button class="theme-toggle-btn active" id="btnWhite" data-i18n="theme.white">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" data-i18n="theme.dark">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="settings.language">Idioma</span>
+        <span class="settings-info" title="Idioma da interface (rótulos e legendas — nomes de tabela/campo não traduzem)" data-i18n-title="settings.languageInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+
+<div class="scroll">
+<div id="canvas">
+
+<svg id="links"><defs>
+  <marker id="arrow-key" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<path class="rel" d="M260,511 L295,511 Q305,511 305,501 L305,71 Q305,61 315,61 L350,61" marker-end="url(#arrow-key)" data-from="e_CATEGORIA" data-to="e_IDIOMA" data-fk-row="1"/>
+<path class="rel" d="M1750,511 L1190,511 Q1180,511 1180,501 L1180,71 Q1180,61 1170,61 L610,61" marker-end="url(#arrow-key)" data-from="e_STATUS" data-to="e_IDIOMA" data-fk-row="1"/>
+<path class="rel" d="M1750,621 L1365,621 Q1355,621 1355,611 L1355,71 Q1355,61 1345,61 L960,61" marker-end="url(#arrow-key)" data-from="e_STATUS" data-to="e_MDM" data-fk-row="6"/>
+<path class="rel" d="M610,511 L490,511 Q480,511 480,501 L480,71 Q480,61 470,61 L350,61" marker-end="url(#arrow-key)" data-from="e_REPLICACAO" data-to="e_IDIOMA" data-fk-row="1"/>
+<path class="rel" d="M700,511 L665,511 Q655,511 655,501 L655,71 Q655,61 645,61 L610,61" marker-end="url(#arrow-key)" data-from="e_DESPERDICIO" data-to="e_IDIOMA" data-fk-row="1"/>
+<path class="rel" d="M1400,511 L1015,511 Q1005,511 1005,501 L1005,71 Q1005,61 995,61 L610,61" marker-end="url(#arrow-key)" data-from="e_TIPO_RESULTADO" data-to="e_IDIOMA" data-fk-row="1"/>
+<path class="rel" d="M525,807 L610,807 Q612.5,807 612.5,804.5 L612.5,63.5 Q612.5,61 615,61 L610,61" marker-end="url(#arrow-key)" data-from="e_RESULTADOS" data-to="e_IDIOMA" data-fk-row="1"/>
+<path class="rel" d="M785,851 L1302.5,851 Q1312.5,851 1312.5,841 L1312.5,499 Q1312.5,489 1322.5,489 L1400,489" marker-end="url(#arrow-key)" data-from="e_RESULTADOS" data-to="e_TIPO_RESULTADO" data-fk-row="3"/>
+<path class="rel" d="M1050,127 L1015,127 Q1005,127 1005,117 L1005,71 Q1005,61 995,61 L960,61" marker-end="url(#arrow-key)" data-from="e_APROVADOR" data-to="e_MDM" data-fk-row="3"/>
+<path class="rel" d="M1050,83 L960,83" marker-end="url(#arrow-key)" data-from="e_APROVADOR" data-to="e_MDM" data-fk-row="1" data-pk-row="1"/>
+<path class="rel" d="M1400,127 L1190,127 Q1180,127 1180,117 L1180,71 Q1180,61 1170,61 L960,61" marker-end="url(#arrow-key)" data-from="e_ADMIN" data-to="e_MDM" data-fk-row="3"/>
+<path class="rel" d="M1400,83 L960,83" marker-end="url(#arrow-key)" data-from="e_ADMIN" data-to="e_MDM" data-fk-row="1" data-pk-row="1"/>
+<path class="rel" d="M1750,105 L1365,105 Q1355,105 1355,95 L1355,71 Q1355,61 1345,61 L960,61" marker-end="url(#arrow-key)" data-from="e_TIPO_USUARIO" data-to="e_MDM" data-fk-row="2"/>
+<path class="rel" d="M960,105 L1345,105 Q1355,105 1355,95 L1355,71 Q1355,61 1365,61 L1750,61" marker-end="url(#arrow-key)" data-from="e_MDM" data-to="e_TIPO_USUARIO" data-fk-row="2"/>
+<path class="rel" d="M610,193 L645,193 Q655,193 655,183 L655,71 Q655,61 665,61 L700,61" marker-end="url(#arrow-key)" data-from="e_IDIOMA" data-to="e_MDM" data-fk-row="6"/>
+<path class="rel" d="M260,621 L470,621 Q480,621 480,611 L480,71 Q480,61 490,61 L700,61" marker-end="url(#arrow-key)" data-from="e_CATEGORIA" data-to="e_MDM" data-fk-row="6"/>
+<path class="rel" d="M610,621 L645,621 Q655,621 655,611 L655,71 Q655,61 665,61 L700,61" marker-end="url(#arrow-key)" data-from="e_REPLICACAO" data-to="e_MDM" data-fk-row="6"/>
+<path class="rel" d="M960,621 L840,621 Q830,621 830,611 L830,71 Q830,61 820,61 L700,61" marker-end="url(#arrow-key)" data-from="e_DESPERDICIO" data-to="e_MDM" data-fk-row="6"/>
+<path class="rel" d="M1050,599 L1015,599 Q1005,599 1005,589 L1005,71 Q1005,61 995,61 L960,61" marker-end="url(#arrow-key)" data-from="e_MOEDA" data-to="e_MDM" data-fk-row="5"/>
+<path class="rel" d="M1400,577 L1190,577 Q1180,577 1180,567 L1180,71 Q1180,61 1170,61 L960,61" marker-end="url(#arrow-key)" data-from="e_TIPO_RESULTADO" data-to="e_MDM" data-fk-row="4"/>
+<path class="rel" d="M785,939 L700,939 Q697.5,939 697.5,936.5 L697.5,63.5 Q697.5,61 695,61 L700,61" marker-end="url(#arrow-key)" data-from="e_RESULTADOS" data-to="e_MDM" data-fk-row="7"/>
+<path class="rel" d="M795,1155 L757.5,1155 Q747.5,1155 747.5,1145 L747.5,71 Q747.5,61 737.5,61 L700,61" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_MDM" data-fk-row="1"/>
+<path class="rel" d="M795,1177 L757.5,1177 Q747.5,1177 747.5,1167 L747.5,71 Q747.5,61 737.5,61 L700,61" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_MDM" data-fk-row="2"/>
+<path class="rel" d="M795,1639 L757.5,1639 Q747.5,1639 747.5,1629 L747.5,71 Q747.5,61 737.5,61 L700,61" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_MDM" data-fk-row="23"/>
+<path class="rel soft" d="M795,1309 L1652.5,1309 Q1662.5,1309 1662.5,1299 L1662.5,499 Q1662.5,489 1672.5,489 L1750,489" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_STATUS" data-fk-row="8"/>
+<path class="rel soft" d="M475,1221 L357.5,1221 Q347.5,1221 347.5,1211 L347.5,499 Q347.5,489 337.5,489 L260,489" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_CATEGORIA" data-fk-row="4"/>
+<path class="rel soft" d="M475,1243 L512.5,1243 Q522.5,1243 522.5,1233 L522.5,499 Q522.5,489 532.5,489 L610,489" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_REPLICACAO" data-fk-row="5"/>
+<path class="rel" d="M795,1331 L912.5,1331 Q922.5,1331 922.5,1321 L922.5,71 Q922.5,61 932.5,61 L1050,61" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_APROVADOR" data-fk-row="9"/>
+<path class="rel soft" d="M795,1463 L795,1463 Q787.5,1463 787.5,1455.5 L787.5,496.5 Q787.5,489 780,489 L700,489" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_DESPERDICIO" data-fk-row="15"/>
+<path class="rel" d="M795,1529 L1177.5,1529 Q1187.5,1529 1187.5,1519 L1187.5,499 Q1187.5,489 1197.5,489 L1050,489" marker-end="url(#arrow-key)" data-from="e_PVC" data-to="e_MOEDA" data-fk-row="18"/>
+<path class="rel" d="M885,1155 L850,1155 Q840,1155 840,1145 L840,1143 Q840,1133 830,1133 L795,1133" marker-end="url(#arrow-key)" data-from="e_LOG" data-to="e_PVC" data-fk-row="1"/>
+<path class="rel" d="M885,1221 L960,1221 Q962.5,1221 962.5,1218.5 L962.5,63.5 Q962.5,61 965,61 L960,61" marker-end="url(#arrow-key)" data-from="e_LOG" data-to="e_MDM" data-fk-row="4"/>
+<path class="rel" d="M1235,1155 L1220,1155 Q1210,1155 1210,1145 L1210,1143 Q1210,1133 1200,1133 L1185,1133" marker-end="url(#arrow-key)" data-from="e_LOG_DETALHE" data-to="e_LOG" data-fk-row="1"/>
+<path class="rel" d="M610,1825 L552.5,1825 Q542.5,1825 542.5,1815 L542.5,1143 Q542.5,1133 532.5,1133 L475,1133" marker-end="url(#arrow-key)" data-from="e_MEMBROS" data-to="e_PVC" data-fk-row="0"/>
+<path class="rel soft" d="M610,1847 L645,1847 Q655,1847 655,1837 L655,71 Q655,61 665,61 L700,61" marker-end="url(#arrow-key)" data-from="e_MEMBROS" data-to="e_MDM" data-fk-row="1"/>
+<path class="rel" d="M700,1825 L737.5,1825 Q747.5,1825 747.5,1815 L747.5,1143 Q747.5,1133 757.5,1133 L795,1133" marker-end="url(#arrow-key)" data-from="e_RESULTADO_KAIZEN" data-to="e_PVC" data-fk-row="0"/>
+<path class="rel soft" d="M700,1847 L787.5,1847 Q797.5,1847 797.5,1837 L797.5,795 Q797.5,785 807.5,785 L785,785" marker-end="url(#arrow-key)" data-from="e_RESULTADO_KAIZEN" data-to="e_RESULTADOS" data-fk-row="1"/>
+<path class="rel" d="M1050,1847 L932.5,1847 Q922.5,1847 922.5,1837 L922.5,1143 Q922.5,1133 912.5,1133 L795,1133" marker-end="url(#arrow-key)" data-from="e_KAIZEN_HIERARQUIA" data-to="e_PVC" data-fk-row="1"/>
+<path class="rel" d="M1400,1825 L1107.5,1825 Q1097.5,1825 1097.5,1815 L1097.5,1143 Q1097.5,1133 1087.5,1133 L795,1133" marker-end="url(#arrow-key)" data-from="e_KZDESP" data-to="e_PVC" data-fk-row="0"/>
+<path class="rel soft" d="M1400,1847 L1190,1847 Q1180,1847 1180,1837 L1180,499 Q1180,489 1170,489 L960,489" marker-end="url(#arrow-key)" data-from="e_KZDESP" data-to="e_DESPERDICIO" data-fk-row="1"/>
+</svg>
+
+<div class="group-label" style="left:0;top:-26px;" data-i18n="group.masters">Mestres de referência</div>
+<div class="entity" id="e_IDIOMA" style="left:350px;top:0;width:260px;height:230px;">
+  <div class="entity-head"><div class="entity-icon">ID</div><div class="entity-title">KZN_IDIOMA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name">SG_IDIOMA</span><span class="field-type">VARCHAR(5)</span></div>
+    <div class="field"><span class="field-name">NM_IDIOMA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">NM_PAIS</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_MDM" style="left:700px;top:0;width:260px;height:384px;">
+  <div class="entity-head"><div class="entity-icon">RH</div><div class="entity-title">KZN_MDM_HIERARQUIA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk">CD_MATRICULA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name pk fk">ID_TIPO_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_USUARIO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">CD_EMAIL</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name">NM_SITUACAO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name">NM_POSICAO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">NM_EMPRESA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">NM_PAIS</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">NM_ESTADO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">NM_CIDADE</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">NM_SITE</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field note">NM_HIERARQUIA_N1…N8 (8x, VARCHAR(80))</div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity role" id="e_APROVADOR" style="left:1050px;top:0;width:260px;height:164px;">
+  <div class="entity-head"><div class="entity-icon">AP</div><div class="entity-title">KZN_APROVADOR</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_APROVADOR</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">CD_MATRICULA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity role" id="e_ADMIN" style="left:1400px;top:0;width:260px;height:164px;">
+  <div class="entity-head"><div class="entity-icon">AD</div><div class="entity-title">KZN_ADMIN</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_ADMIN</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">CD_MATRICULA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_TIPO_USUARIO" style="left:1750px;top:0;width:260px;height:142px;">
+  <div class="entity-head"><div class="entity-icon">TU</div><div class="entity-title">KZN_TIPO_USUARIO</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_TIPO_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_USUARIO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+
+<div class="group-label" style="left:0;top:402px;" data-i18n="group.domain">Domínio do Kaizen (cadastros padronizados)</div>
+<div class="entity" id="e_CATEGORIA" style="left:0;top:428px;width:260px;height:230px;">
+  <div class="entity-head"><div class="entity-icon">CT</div><div class="entity-title">KZN_CATEGORIA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_CATEGORIA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name">NM_CATEGORIA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">DS_CATEGORIA</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_REPLICACAO" style="left:350px;top:428px;width:260px;height:230px;">
+  <div class="entity-head"><div class="entity-icon">RP</div><div class="entity-title">KZN_REPLICACAO</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_REPLICACAO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name">NM_REPLICACAO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">DS_REPLICACAO</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_DESPERDICIO" style="left:700px;top:428px;width:260px;height:230px;">
+  <div class="entity-head"><div class="entity-icon">DP</div><div class="entity-title">KZN_DESPERDICIO</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_DESPERDICIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name">NM_DESPERDICIO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">DS_DESPERDICIO</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_MOEDA" style="left:1050px;top:428px;width:260px;height:208px;">
+  <div class="entity-head"><div class="entity-icon">MO</div><div class="entity-title">KZN_MOEDA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_MOEDA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_MOEDA</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_MOEDA</span><span class="field-type">CHAR(3)</span></div>
+    <div class="field"><span class="field-name">NM_PAIS</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_TIPO_RESULTADO" style="left:1400px;top:428px;width:260px;height:186px;">
+  <div class="entity-head"><div class="entity-icon">TR</div><div class="entity-title">KZN_TIPO_RESULTADO</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_TIPO_RESULTADO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_TIPO_RESULTADO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity" id="e_STATUS" style="left:1750px;top:428px;width:260px;height:230px;">
+  <div class="entity-head"><div class="entity-icon">ST</div><div class="entity-title">KZN_STATUS</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_STATUS</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name">NM_STATUS</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">DS_STATUS</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+
+<div class="entity" id="e_RESULTADOS" style="left:525px;top:724px;width:260px;height:252px;">
+  <div class="entity-head"><div class="entity-icon">RS</div><div class="entity-title">KZN_RESULTADOS</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_RESULTADO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_IDIOMA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name fk">ID_TIPO_RESULTADO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_RESULTADO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">DS_RESULTADO</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name">SG_ATIVO</span><span class="field-type">VARCHAR(1)</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+
+<div class="group-label" style="left:0;top:1046px;" data-i18n="group.main">Tabela principal &amp; auditoria</div>
+<div class="entity main" id="e_PVC" style="left:475px;top:1072px;width:320px;height:582px;">
+  <div class="entity-head"><div class="entity-icon">KZ</div><div class="entity-title">KZN_PEDRAVISAOCONSOLIDADA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_KAIZEN</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO_CADASTRO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO_LIDER</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_KAIZEN</span><span class="field-type">VARCHAR(100)</span></div>
+    <div class="field"><span class="field-name fk">ID_CATEGORIA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_REPLICACAO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DS_PROBLEMA</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">DS_OBJETIVO</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name fk">ID_STATUS</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_APROVADOR</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_IMG_ANTES</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">DS_ESTADO_ANTES</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">URL_IMG_DEPOIS</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">DS_ESTADO_DEPOIS</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">URL_REFERENCIA</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name fk">ID_DESPERDICIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DS_LICOES_APRENDIDAS</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">VL_RESULTADO_FINANCEIRO</span><span class="field-type">DECIMAL(18,2)</span></div>
+    <div class="field"><span class="field-name fk">ID_MOEDA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DS_RESULTADO_ESPERADO</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">DT_CONCLUSAO</span><span class="field-type">DATE</span></div>
+    <div class="field"><span class="field-name">DS_MOTIVO</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO_ATUALIZACAO</span><span class="field-type">INT</span></div>
+  </div>
+</div>
+<div class="entity log" id="e_LOG" style="left:885px;top:1072px;width:300px;height:164px;">
+  <div class="entity-head"><div class="entity-icon">LG</div><div class="entity-title">KZN_LOG_PEDRAVISAOCONSOLIDADA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_LOG</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_KAIZEN</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">TP_OPERACAO</span><span class="field-type">CHAR(1)</span></div>
+    <div class="field"><span class="field-name">DT_OPERACAO</span><span class="field-type">DATETIME2</span></div>
+    <div class="field"><span class="field-name fk">ID_USUARIO_OPERACAO</span><span class="field-type">INT</span></div>
+  </div>
+</div>
+<div class="entity log" id="e_LOG_DETALHE" style="left:1235px;top:1072px;width:300px;height:164px;">
+  <div class="entity-head"><div class="entity-icon">LD</div><div class="entity-title">KZN_LOG_PEDRAVISAOCONSOLIDADA_DETALHE</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_LOG_DETALHE</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_LOG</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">NM_CAMPO</span><span class="field-type">VARCHAR(30)</span></div>
+    <div class="field"><span class="field-name">VL_ANTERIOR</span><span class="field-type">VARCHAR(300)</span></div>
+    <div class="field"><span class="field-name">VL_NOVO</span><span class="field-type">VARCHAR(300)</span></div>
+  </div>
+</div>
+
+<div class="group-label" style="left:0;top:1738px;" data-i18n="group.aux">Auxiliares / junção</div>
+<div class="entity aux" id="e_MEMBROS" style="left:350px;top:1764px;width:260px;height:120px;">
+  <div class="entity-head"><div class="entity-icon">ME</div><div class="entity-title">KZN_MEMBROS_EQUIPE</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk fk">ID_KAIZEN</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_USUARIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity aux" id="e_RESULTADO_KAIZEN" style="left:700px;top:1764px;width:260px;height:142px;">
+  <div class="entity-head"><div class="entity-icon">RK</div><div class="entity-title">KZN_RESULTADO_KAIZEN</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk fk">ID_KAIZEN</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_RESULTADO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">URL_ICONE</span><span class="field-type">VARCHAR(200)</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity aux" id="e_KAIZEN_HIERARQUIA" style="left:1050px;top:1764px;width:260px;height:142px;">
+  <div class="entity-head"><div class="entity-icon">KH</div><div class="entity-title">KZN_KAIZEN_HIERARQUIA</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk">ID_KAIZEN_HIERARQUIA</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name fk">ID_KAIZEN</span><span class="field-type">INT</span></div>
+    <div class="field note">NM_HIERARQUIA_N1…N8 (8x, VARCHAR(80))</div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+<div class="entity aux" id="e_KZDESP" style="left:1400px;top:1764px;width:260px;height:120px;">
+  <div class="entity-head"><div class="entity-icon">KD</div><div class="entity-title">KZN_KAIZEN_DESPERDICIO</div></div>
+  <div class="entity-body">
+    <div class="field"><span class="field-name pk fk">ID_KAIZEN</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name pk fk">ID_DESPERDICIO</span><span class="field-type">INT</span></div>
+    <div class="field"><span class="field-name">DT_ATUALIZACAO</span><span class="field-type">DATETIME2</span></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<footer data-i18n="footer.text">Linhas em SVG (recalculadas ao vivo — funciona só se o visualizador executar JS; sem JS as tabelas ficam fixas na posição inicial, mas as linhas continuam corretas) · arraste qualquer tabela pra mover, passe o mouse pra destacar as ligações.</footer>
+
+<script>
+// ── seleção: clique numa tabela fixa o destaque das ligações (origem/
+// destino), pra navegar a tela sem precisar manter o mouse em cima.
+// Passar o mouse continua dando um preview rápido; ao sair, volta pro
+// que estiver selecionado (ou limpo, se nada estiver selecionado).
+let selectedId = null;
+function applyHighlight(id){
+  document.querySelectorAll('.entity').forEach(el=>el.classList.toggle('selected', el.id===id));
+  document.querySelectorAll('svg#links path.rel').forEach(l=>{
+    if(!id){ l.classList.remove('hot','dim'); return; }
+    if(l.dataset.from===id || l.dataset.to===id){ l.classList.add('hot'); l.classList.remove('dim'); }
+    else { l.classList.add('dim'); l.classList.remove('hot'); }
+  });
+}
+document.querySelectorAll('.entity').forEach(el=>{
+  el.addEventListener('mouseenter', ()=>{
+    if(dragEl) return;
+    applyHighlight(el.id);
+  });
+  el.addEventListener('mouseleave', ()=>{
+    applyHighlight(selectedId);
+  });
+});
+// clicar fora de qualquer tabela limpa a seleção
+document.getElementById('canvas').addEventListener('click', e=>{
+  if(e.target.closest('.entity')) return;
+  selectedId = null;
+  applyHighlight(null);
+});
+
+// ── recálculo das linhas a partir da posição atual das caixas ──
+function rectOf(el){
+  return {x:parseFloat(el.style.left), y:parseFloat(el.style.top),
+          w:parseFloat(el.style.width), h:parseFloat(el.style.height)};
+}
+// métricas do CSS: 44px de cabeçalho + 6px de padding do corpo + 22px por
+// linha de campo — dá a altura exata de qualquer linha (PK ou FK) na caixa
+const HEAD_H = 44, BODY_PAD = 6, ROW_H = 22, CORNER_R = 10;
+function rowY(r, idx){ return r.y+HEAD_H+BODY_PAD+idx*ROW_H+ROW_H/2; }
+function centerX(r){ return r.x+r.w/2; }
+// conector "árvore": sai da caixa de origem pelo lado que aponta pro
+// destino, na altura exata da linha do FK, um único cotovelo no meio do
+// caminho (cantos arredondados), entra na caixa de destino pelo lado
+// oposto na altura exata da linha da PK
+function rowAnchors(rFrom, fkRow, rTo, pkRow){
+  const fromRight = centerX(rTo) >= centerX(rFrom);
+  const toLeft = fromRight;
+  const p1 = {x: fromRight ? rFrom.x+rFrom.w : rFrom.x, y: rowY(rFrom, fkRow)};
+  const p2 = {x: toLeft   ? rTo.x            : rTo.x+rTo.w, y: rowY(rTo, pkRow)};
+  return {p1,p2};
+}
+// um segmento horizontal (y1===y2) ou vertical (x1===x2) cruza o
+// retângulo r? (toque exato na borda não conta — só cruzar o interior)
+function segRectHit(x1,y1,x2,y2,r){
+  const rx0=r.x, rx1=r.x+r.w, ry0=r.y, ry1=r.y+r.h;
+  if(y1===y2){
+    if(y1<=ry0 || y1>=ry1) return false;
+    const xlo=Math.min(x1,x2), xhi=Math.max(x1,x2);
+    return xhi>rx0 && xlo<rx1;
+  }
+  if(x1<=rx0 || x1>=rx1) return false;
+  const ylo=Math.min(y1,y2), yhi=Math.max(y1,y2);
+  return yhi>ry0 && ylo<ry1;
+}
+// o cotovelo cruza alguma tabela que NÃO seja a origem/destino desta
+// ligação? `others` já vem pré-calculado (ver updateAllLines) pra não
+// reconsultar o DOM a cada passo da busca durante o arraste.
+function pathCollides(xMid, p1, p2, others){
+  for(let i=0;i<others.length;i++){
+    const r = others[i];
+    if(segRectHit(p1.x,p1.y, xMid,p1.y, r)) return true;
+    if(segRectHit(xMid,p2.y, p2.x,p2.y, r)) return true;
+    if(segRectHit(xMid,p1.y, xMid,p2.y, r)) return true;
+  }
+  return false;
+}
+// acha o xMid mais próximo do natural que não atravessa nenhuma tabela de
+// terceiros — evita o cotovelo "sumir" atrás de uma tabela que não tem
+// nada a ver com a ligação (fica parecendo um traço solto no meio da tela)
+function findSafeXMid(p1, p2, others){
+  const natural = (p1.x+p2.x)/2;
+  if(!pathCollides(natural, p1, p2, others)) return natural;
+  const STEP = 5, MAX = 1400;
+  for(let d=STEP; d<=MAX; d+=STEP){
+    if(!pathCollides(natural-d, p1, p2, others)) return natural-d;
+    if(!pathCollides(natural+d, p1, p2, others)) return natural+d;
+  }
+  return natural;
+}
+function elbowPath(p1, p2, xMid, r){
+  r = r || CORNER_R;
+  if(Math.abs(p1.y-p2.y) < 0.5) return `M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+  const dxSign = Math.sign(xMid-p1.x) || 1;
+  const dySign = Math.sign(p2.y-p1.y) || 1;
+  const rr = Math.max(2, Math.min(r, Math.abs(xMid-p1.x), Math.abs(p2.x-xMid), Math.abs(p2.y-p1.y)/2));
+  const a = {x: xMid-dxSign*rr, y: p1.y};
+  const b = {x: xMid,           y: p1.y+dySign*rr};
+  const c = {x: xMid,           y: p2.y-dySign*rr};
+  const d = {x: xMid+dxSign*rr, y: p2.y};
+  return `M${p1.x},${p1.y} L${a.x},${a.y} Q${xMid},${p1.y} ${b.x},${b.y} L${c.x},${c.y} Q${xMid},${p2.y} ${d.x},${d.y} L${p2.x},${p2.y}`;
+}
+function updateLine(line, allEntities){
+  const fromEl = document.getElementById(line.dataset.from);
+  const toEl = document.getElementById(line.dataset.to);
+  if(!fromEl || !toEl) return;
+  const rFrom = rectOf(fromEl), rTo = rectOf(toEl);
+  const fkRow = parseInt(line.dataset.fkRow||0, 10);
+  const pkRow = parseInt(line.dataset.pkRow||0, 10);
+  const {p1,p2} = rowAnchors(rFrom, fkRow, rTo, pkRow);
+  const others = allEntities.filter(x=>x.el!==fromEl && x.el!==toEl).map(x=>x.r);
+  const xMid = findSafeXMid(p1, p2, others);
+  line.setAttribute('d', elbowPath(p1, p2, xMid));
+}
+function updateAllLines(){
+  const allEntities = Array.from(document.querySelectorAll('.entity')).map(el=>({el, r:rectOf(el)}));
+  document.querySelectorAll('svg#links path.rel').forEach(line=>updateLine(line, allEntities));
+}
+
+// ── arrastar pelo cabeçalho ─────────────────────────────────────
+let dragEl = null, startX = 0, startY = 0, origLeft = 0, origTop = 0, dragMoved = false;
+const CW = 2200, CH = 2432; // deve bater com #canvas no CSS
+const CLICK_THRESHOLD = 4; // px — abaixo disso, pointerdown+up conta como clique (seleção), não arraste
+
+document.querySelectorAll('.entity').forEach(card=>{
+  card.addEventListener('pointerdown', e=>{
+    dragEl = card;
+    dragMoved = false;
+    dragEl.classList.add('dragging');
+    startX = e.clientX; startY = e.clientY;
+    origLeft = parseFloat(dragEl.style.left);
+    origTop = parseFloat(dragEl.style.top);
+    card.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  card.addEventListener('pointermove', e=>{
+    if(dragEl !== card) return;
+    if(Math.abs(e.clientX-startX) > CLICK_THRESHOLD || Math.abs(e.clientY-startY) > CLICK_THRESHOLD) dragMoved = true;
+    if(!dragMoved) return;
+    const w = parseFloat(dragEl.style.width), h = parseFloat(dragEl.style.height);
+    let nl = origLeft + (e.clientX-startX), nt = origTop + (e.clientY-startY);
+    nl = Math.max(0, Math.min(nl, CW-w));
+    nt = Math.max(0, Math.min(nt, CH-h));
+    dragEl.style.left = nl+'px'; dragEl.style.top = nt+'px';
+    updateAllLines();
+  });
+  card.addEventListener('pointerup', e=>{
+    if(dragEl === card){
+      dragEl.classList.remove('dragging');
+      if(!dragMoved) selectedId = (selectedId===card.id) ? null : card.id; // clique real (sem arrastar) alterna a seleção
+      dragEl = null;
+    }
+    applyHighlight(selectedId);
+  });
+});
+
+// ── restaurar posições originais ────────────────────────────────
+const initialPos = {};
+document.querySelectorAll('.entity').forEach(el=>{
+  initialPos[el.id] = {left: el.style.left, top: el.style.top};
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  document.querySelectorAll('.entity').forEach(el=>{
+    el.style.left = initialPos[el.id].left;
+    el.style.top = initialPos[el.id].top;
+  });
+  updateAllLines();
+});
+
+// ── painel de configurações: abre/fecha via engrenagem, fecha no backdrop/✕/Esc ──
+(function(){
+  const btn = document.getElementById('settingsBtn');
+  const panel = document.getElementById('settingsPanel');
+  const backdrop = document.getElementById('settingsBackdrop');
+  const closeBtn = document.getElementById('settingsClose');
+  if(!btn || !panel || !backdrop) return;
+
+  function openPanel(){
+    panel.classList.add('open'); backdrop.classList.add('open');
+    btn.setAttribute('aria-expanded','true'); panel.setAttribute('aria-hidden','false');
+  }
+  function closePanel(){
+    panel.classList.remove('open'); backdrop.classList.remove('open');
+    btn.setAttribute('aria-expanded','false'); panel.setAttribute('aria-hidden','true');
+  }
+  btn.addEventListener('click', ()=> panel.classList.contains('open') ? closePanel() : openPanel());
+  closeBtn && closeBtn.addEventListener('click', closePanel);
+  backdrop.addEventListener('click', closePanel);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePanel(); });
+})();
+
+// ── tema Claro/Escuro — persiste em localStorage, aplica via data-bg no <body> ──
+(function(){
+  const KEY = 'der-kzn-theme';
+  const btnWhite = document.getElementById('btnWhite');
+  const btnBusiness = document.getElementById('btnBusiness');
+  if(!btnWhite || !btnBusiness) return;
+
+  function applyTheme(theme){
+    const isDark = theme === 'dark';
+    document.body.dataset.bg = isDark ? 'dark' : '';
+    btnWhite.classList.toggle('active', !isDark);
+    btnBusiness.classList.toggle('active', isDark);
+  }
+  let saved = 'light';
+  try{ saved = localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light'; }catch(e){}
+  applyTheme(saved);
+
+  btnWhite.addEventListener('click', ()=>{ applyTheme('light'); try{localStorage.setItem(KEY,'light');}catch(e){} });
+  btnBusiness.addEventListener('click', ()=>{ applyTheme('dark'); try{localStorage.setItem(KEY,'dark');}catch(e){} });
+})();
+
+// ── idioma da interface — traduz rótulos/legendas (nomes de tabela/campo
+// são identificadores do banco e não traduzem) ──
+(function(){
+  const KEY = 'der-kzn-lang';
+  const select = document.getElementById('langSelect');
+  if(!select) return;
+
+  const I18N = {
+    'pt-BR': {
+      'der.subtitle': 'Schema <b>CI</b> · SQL Server 2016+ · 17 tabelas · gerado a partir do CI_KZN_DDL_v2.sql',
+      'legend.master': 'Mestre / domínio',
+      'legend.role': 'Papel (KZN_APROVADOR)',
+      'legend.main': 'Tabela principal',
+      'legend.log': 'Log de auditoria',
+      'legend.aux': 'Auxiliar / junção',
+      'legend.line': 'conexão entre chaves',
+      'legend.soft': 'relação lógica, sem FK de banco',
+      'toolbar.reset': '↺ Restaurar posições originais',
+      'toolbar.hint': 'Arraste qualquer tabela (clique em qualquer ponto do card) pra mover — as linhas acompanham.',
+      'group.masters': 'Mestres de referência',
+      'group.domain': 'Domínio do Kaizen (cadastros padronizados)',
+      'group.main': 'Tabela principal &amp; auditoria',
+      'group.aux': 'Auxiliares / junção',
+      'footer.text': 'Linhas em SVG (recalculadas ao vivo — funciona só se o visualizador executar JS; sem JS as tabelas ficam fixas na posição inicial, mas as linhas continuam corretas) · arraste qualquer tabela pra mover, passe o mouse pra destacar as ligações.',
+      'settings.btnTitle': 'Configurações',
+      'settings.title': 'Configurações',
+      'settings.close': 'Fechar',
+      'settings.theme': 'Tema',
+      'theme.white': 'Claro',
+      'theme.dark': 'Escuro',
+      'settings.language': 'Idioma',
+      'settings.languageInfo': 'Idioma da interface (rótulos e legendas — nomes de tabela/campo não traduzem)',
+    },
+    'en': {
+      'der.subtitle': 'Schema <b>CI</b> · SQL Server 2016+ · 17 tables · generated from CI_KZN_DDL_v2.sql',
+      'legend.master': 'Master / domain',
+      'legend.role': 'Role (KZN_APROVADOR)',
+      'legend.main': 'Main table',
+      'legend.log': 'Audit log',
+      'legend.aux': 'Auxiliary / junction',
+      'legend.line': 'key-to-key connection',
+      'legend.soft': 'logical relation, no DB FK',
+      'toolbar.reset': '↺ Reset original layout',
+      'toolbar.hint': 'Drag any table (click anywhere on the card) to move it — the lines follow.',
+      'group.masters': 'Reference masters',
+      'group.domain': 'Kaizen domain (standardized records)',
+      'group.main': 'Main table &amp; audit',
+      'group.aux': 'Auxiliary / junction',
+      'footer.text': 'Lines are SVG (recalculated live — only works if the viewer runs JS; without JS the tables stay in their initial position, but the lines are still correct) · drag any table to move it, hover to highlight its connections.',
+      'settings.btnTitle': 'Settings',
+      'settings.title': 'Settings',
+      'settings.close': 'Close',
+      'settings.theme': 'Theme',
+      'theme.white': 'Light',
+      'theme.dark': 'Dark',
+      'settings.language': 'Language',
+      'settings.languageInfo': 'Interface language (labels and legends — table/field names don\'t translate)',
+    },
+  };
+
+  function translatePage(lang){
+    const dict = I18N[lang] || I18N['pt-BR'];
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key = el.getAttribute('data-i18n');
+      if(dict[key] != null) el.innerHTML = dict[key];
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+      const key = el.getAttribute('data-i18n-title');
+      if(dict[key] != null) el.setAttribute('title', dict[key]);
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+      const key = el.getAttribute('data-i18n-aria');
+      if(dict[key] != null) el.setAttribute('aria-label', dict[key]);
+    });
+  }
+  function applyLang(lang){
+    if(!I18N[lang]) lang = 'pt-BR';
+    select.value = lang;
+    translatePage(lang);
+    try{ localStorage.setItem(KEY, lang); }catch(e){}
+  }
+  select.addEventListener('change', ()=> applyLang(select.value));
+
+  let saved = 'pt-BR';
+  try{ saved = localStorage.getItem(KEY) || 'pt-BR'; }catch(e){}
+  applyLang(saved);
+})();
+</script>
+</body>
+</html>

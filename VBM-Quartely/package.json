@@ -1,0 +1,20 @@
+{
+  "name": "quartely-dashboard",
+  "version": "2.0.0",
+  "description": "Quartely — dashboard de barras (trimestre/semestre/ano) com conexão direta ao Azure SQL PRD",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "start:local": "node --env-file=.env server.js"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "express": "^5.2.1",
+    "mssql": "^11.0.1",
+    "multer": "^1.4.5-lts.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,11 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+pydantic-settings>=2.4
+python-multipart>=0.0.9
+openpyxl>=3.1
+
+# SQL backend (DATA_BACKEND=sql). Not imported in JSON mode.
+SQLAlchemy>=2.0.30
+psycopg[binary]>=3.2
+databricks-sdk>=0.89.0
