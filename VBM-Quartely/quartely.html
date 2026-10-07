@@ -584,6 +584,13 @@ body:not([data-bg]) .qf-panel { background: rgba(20,32,48,.96); }
 /* Selecionado sem dados com os demais filtros (cascata): esmaecido, ainda desmarcável */
 .qf-option.is-sem-dados > span:nth-child(2) { opacity: .55; text-decoration: line-through; }
 .qf-sem-dados { margin-left: auto; font-size: .62rem; font-style: italic; opacity: .7; }
+/* Horizonte agrupado: cabeçalho de grupo recolhível + itens recuados; parcial = traço */
+.qf-group-head { font-weight: 600; }
+.qf-group-toggle { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; font-size: .6rem; opacity: .7; }
+.qf-group-count { margin-left: auto; font-size: .62rem; font-weight: 500; opacity: .6; }
+.qf-group-item { padding-left: 2.1rem; }
+.qf-option.is-partial .qf-check, html body .qf-option.is-partial .qf-check { background: var(--vbm-blue); border-color: var(--vbm-blue); }
+.qf-option.is-partial .qf-check i { opacity: 1; transform: scale(1); }
 .qf-option.qf-radio.is-checked .qf-check::after {
   content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff;
 }
@@ -3035,9 +3042,100 @@ function selectOption(def, value) {
   onFilterChanged(def.key);
 }
 
+// ── Horizonte agrupado (estilo Power BI): Mensal / Trimestral / Semestral /
+//    Anual, recolhíveis, com UM item por período ("Jan 26" = JanB/JanP/JanA 26).
+//    As opções já vêm da cascata (filterOptions); marcar um período marca os
+//    rótulos dele disponíveis — quem escolhe Budget/Plan/Act é a Visão. O estado
+//    continua sendo o Set de Types, então gráficos salvos não mudam.
+const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
+const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
+
+function periodosDoHorizonte(options) {
+  const mapa = new Map();
+  options.forEach(o => {
+    const { core, yearSuffix } = splitTypeLabel(o.value.trim());
+    const grupo = getHorizonType(core) || 'OUTROS';
+    const base = core.slice(0, -1);
+    const rotulo = grupo === 'YEAR' ? `20${base}` : grupo === 'OUTROS' ? o.value : `${base}${yearSuffix}`;
+    const chave = `${grupo}|${rotulo}`;
+    if (!mapa.has(chave)) mapa.set(chave, { grupo, rotulo, tipos: [], semDados: true });
+    const p = mapa.get(chave);
+    p.tipos.push(o.value);
+    if (!o.semDados) p.semDados = false;
+  });
+  return [...mapa.values()];
+}
+
+function renderHorizonteAgrupado(def, container, term, searchTerm) {
+  const sel = filterState.horizontes;
+  const periodos = periodosDoHorizonte(filterOptions.horizontes || [])
+    .filter(p => !term || p.rotulo.toLowerCase().includes(term) || p.tipos.some(t => t.toLowerCase().includes(term)));
+  if (!periodos.length) {
+    container.innerHTML = term
+      ? `<div class="qf-option-empty">Nenhum resultado para "${escapeHtml(searchTerm)}"</div>`
+      : `<div class="qf-option-empty">Nenhuma opção disponível com os demais filtros atuais</div>`;
+    return;
+  }
+  const estado = tipos => {
+    const n = tipos.filter(t => sel.has(t)).length;
+    return n === 0 ? '' : n === tipos.length ? 'is-checked' : 'is-partial';
+  };
+  const caixa = st => `<span class="qf-check"><i class="fa-solid ${st === 'is-partial' ? 'fa-minus' : 'fa-check'}"></i></span>`;
+  const ariaChecked = st => (st === 'is-checked' ? 'true' : st === 'is-partial' ? 'mixed' : 'false');
+  const grupos = [];
+  let html = '';
+  HORIZONTE_GRUPOS.forEach(([g, nome]) => {
+    const itens = periodos.filter(p => p.grupo === g);
+    if (!itens.length) return;
+    const gi = grupos.push(itens) - 1;
+    const st = estado(itens.flatMap(p => p.tipos));
+    const aberto = term ? true : horizonteGrupoAberto.has(g) ? horizonteGrupoAberto.get(g) : st !== '';
+    html += `<div class="qf-group">
+      <div class="qf-option qf-group-head ${st}" data-grupo="${gi}" role="checkbox" aria-checked="${ariaChecked(st)}" tabindex="0">
+        <button type="button" class="qf-group-toggle" data-toggle="${g}" aria-expanded="${aberto}" aria-label="${aberto ? 'Recolher' : 'Expandir'} ${nome}"><i class="fa-solid fa-chevron-${aberto ? 'down' : 'right'}" aria-hidden="true"></i></button>
+        ${caixa(st)}<span>${nome}</span><span class="qf-group-count">${itens.length}</span>
+      </div>
+      ${aberto ? itens.map((p, pi) => {
+        const sp = estado(p.tipos);
+        return `<div class="qf-option qf-group-item ${sp}${p.semDados ? ' is-sem-dados' : ''}" data-grupo="${gi}" data-periodo="${pi}" role="checkbox" aria-checked="${ariaChecked(sp)}" tabindex="0" title="${escapeHtml(p.tipos.join(', '))}">
+          ${caixa(sp)}<span>${escapeHtml(p.rotulo)}</span>${p.semDados ? '<span class="qf-sem-dados">sem dados</span>' : ''}
+        </div>`;
+      }).join('') : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
+
+  // Período ou grupo: tudo marcado → desmarca; senão marca todos os rótulos
+  const alternar = tipos => {
+    const todos = tipos.every(t => sel.has(t));
+    tipos.forEach(t => (todos ? sel.delete(t) : sel.add(t)));
+    onFilterChanged(def.key);
+  };
+  const acionar = el => {
+    const itens = grupos[+el.dataset.grupo];
+    alternar(el.dataset.periodo != null ? itens[+el.dataset.periodo].tipos : itens.flatMap(p => p.tipos));
+  };
+  container.querySelectorAll('.qf-group-toggle').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      horizonteGrupoAberto.set(btn.dataset.toggle, btn.getAttribute('aria-expanded') !== 'true');
+      renderFilterOptions(def, searchTerm);
+    });
+  });
+  container.querySelectorAll('.qf-option').forEach(el => {
+    el.addEventListener('click', () => acionar(el));
+    el.addEventListener('keydown', e => {
+      if (e.target !== el || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      acionar(el);
+    });
+  });
+}
+
 function renderFilterOptions(def, searchTerm) {
   const container = document.getElementById(`qfOptions-${def.key}`);
   const term = (searchTerm || '').trim().toLowerCase();
+  if (def.key === 'horizontes') { renderHorizonteAgrupado(def, container, term, searchTerm); return; }
   const options = filterOptions[def.key] || [];
   const visible = term ? options.filter(o => o.label.toLowerCase().includes(term)) : options;
 
