@@ -2206,8 +2206,9 @@ function getDefaultColorForBar(barType) {
   return DEFAULT_SERIES_COLORS[lastChar] || DEFAULT_SERIES_COLORS.default;
 }
 
-// Extrai o tipo de horizonte (Trimestre, Semestre, Anual) do core do período
+// Extrai o tipo de horizonte (Mês, Trimestre, Semestre, Anual) do core do período
 function getHorizonType(core) {
+  if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[A-Z]$/i.test(core)) return 'MONTH';
   if (/^Q\d/i.test(core)) return 'QUARTER';
   if (/^H\d/i.test(core)) return 'SEMESTER';
   if (/^\d{2,4}[A-Z]/i.test(core)) return 'YEAR';
@@ -2678,12 +2679,9 @@ function buildFallbackRows() {
   return rows;
 }
 
-// A página Quarterly nunca exibe granularidade Mensal (CD_VISAO = 'MONTH').
-// A QUARTELY.sql de origem já não produz essas linhas (bloco comentado),
-// mas o filtro fica aqui como segunda camada de defesa — se um dia o
-// bloco MONTH voltar à query (p.ex. para alimentar uma futura página
-// Monthly), a Quarterly continua correta sem precisar de nenhum ajuste.
-const QUARTERLY_VISOES = ['QUARTER', 'SEMESTER', 'YEAR'];
+// Granularidades exibidas: Mensal (bloco MONTH da query, rótulos "JanB 26"),
+// Trimestral, Semestral e Anual. Qualquer outro CD_VISAO é ignorado.
+const QUARTERLY_VISOES = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR'];
 function isQuarterlyVisao(row) { return QUARTERLY_VISOES.includes(row.CD_VISAO); }
 
 // ── Carga de dados: API real, com fallback local ────────────────────────
