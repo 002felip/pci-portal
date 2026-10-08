@@ -1973,7 +1973,7 @@ const COLORS = {
 const DEFAULT_SERIES_COLORS = {
   'A': '#3CB5E5', // Actual — Azul-Vale
   'F': '#3CB5E5', // Forecast — Azul-Vale
-  'P': '#007E7A', // Plan — Verde-Vale
+  'P': '#6E8CBA', // Plan — Azul-Aço
   'B': '#BCBEC0', // Budget — Cinza-Médio
   'default': '#BCBEC0'
 };
@@ -2034,12 +2034,15 @@ const COL_PREFIXO = 'col:';
 const COR_COLUNA_RE = /^col:[A-Za-z0-9 ._\/-]{1,24}$/;
 const COR_COLUNA_MAX = 80;
 const PALETAS_COLUNAS = [
-  { id: 'vale', label: 'Paleta VBM', cores: ['#007E7A', '#3CB5E5', '#555555', '#034944', '#2626D1', '#747678'] },
-  { id: 'executiva', label: 'Paleta Executiva', cores: ['#1B5E80', '#6E8CBA', '#A3B4D2', '#3A4A6B', '#00B0F0', '#C5D0E3'] },
-  { id: 'azul', label: 'Azul Monocromático', de: '#1B5E80', ate: '#9DDAF2' },
-  { id: 'verde', label: 'Verde Monocromático', de: '#034944', ate: '#7FBEBC' },
+  // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas
+  // (validada para daltonismo). Monocromáticas e gradiente: do mais claro ao
+  // mais escuro, com a ponta clara visível sobre o fundo #F6F6F6.
+  { id: 'vale', label: 'Paleta VBM', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
+  { id: 'executiva', label: 'Paleta Executiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#747678', '#C5D0E3'] },
+  { id: 'azul', label: 'Azul Monocromático', de: '#5FB4DC', ate: '#0F3F5C' },
+  { id: 'verde', label: 'Verde Monocromático', de: '#6FAFAC', ate: '#023832' },
   { id: 'performance', label: 'Escala de Performance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
-  { id: 'gradiente', label: 'Escala Gradiente', de: '#3CB5E5', ate: '#034944' }
+  { id: 'gradiente', label: 'Escala Gradiente', de: '#5FB4DC', ate: '#023832' }
 ];
 const misturarHex = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
 
@@ -2314,7 +2317,7 @@ function renderTurnoverChart(sourceRows) {
     const barColor = getBarColor(type);
 
     // Cor da pílula: versão pálida da cor da barra (ou padrão)
-    const pillColor = isActualOrFcst ? '#D8F0FA' : lastChar === 'P' ? '#D9ECEB' : '#E6E7E8';
+    const pillColor = isActualOrFcst ? '#D8F0FA' : lastChar === 'P' ? '#E2E8F1' : '#E6E7E8';
 
     // Anual não tem prefixo de letra (core começa direto pelo ano: "25B"),
     // Trimestral começa com "Q", o restante (Semestral, "H1B") cai no piso.
