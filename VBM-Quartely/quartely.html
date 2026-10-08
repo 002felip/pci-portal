@@ -1146,6 +1146,11 @@ body[data-bg="dark"] .qe-panel {
 .qe-sec-body > .qe-field:last-child { margin-bottom: 0; } /* só o último do painel; dentro de grupos o espaçamento se mantém */
 .qe-label { font-size: .68rem; font-weight: 600; color: var(--qe-strong); }
 .qe-req { color: var(--qe-err); }
+.qe-stepper { display: grid; grid-template-columns: 34px 1fr 34px; gap: 6px; align-items: center; }
+.qe-stepper .qe-step { padding: 0; font-size: 1rem; font-weight: 600; line-height: 1; }
+.qe-stepper .qe-step:disabled { opacity: .4; cursor: not-allowed; }
+.qe-stepper .qe-step-val { text-align: center; -moz-appearance: textfield; }
+.qe-stepper .qe-step-val::-webkit-inner-spin-button, .qe-stepper .qe-step-val::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .qe-input, .qe-select {
   width: 100%; min-width: 0; padding: .48rem .65rem; border: 1.5px solid var(--qe-line-strong); border-radius: 8px;
   background: var(--qe-surface); color: var(--qe-strong); font: 500 .74rem 'Poppins', 'Segoe UI', sans-serif;
@@ -1711,11 +1716,19 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <div class="qe-row">
             <div class="qe-field">
               <label class="qe-label" for="qeDecBar">Decimais das barras</label>
-              <select class="qe-select" id="qeDecBar"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+              <div class="qe-stepper">
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)">&minus;</button>
+                <input class="qe-input qe-step-val" id="qeDecBar" type="number" min="0" max="3" step="1" inputmode="numeric">
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)">+</button>
+              </div>
             </div>
             <div class="qe-field">
               <label class="qe-label" for="qeDecDelta">Decimais do delta</label>
-              <select class="qe-select" id="qeDecDelta"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+              <div class="qe-stepper">
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)">&minus;</button>
+                <input class="qe-input qe-step-val" id="qeDecDelta" type="number" min="0" max="3" step="1" inputmode="numeric">
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)">+</button>
+              </div>
             </div>
           </div>
           <p class="qe-hint" id="qeNumExemplo"></p>
@@ -4137,6 +4150,7 @@ function renderEditor() {
   $qe('qeSufixo').value = cfg.titulo.sufixo;
   $qe('qeDecBar').value = String(cfg.decBar);
   $qe('qeDecDelta').value = String(cfg.decDelta);
+  syncSteppers();
   $qe('qeUnidade').value = cfg.unidade.valor;
   $qe('qeUnidadeCustom').value = cfg.unidade.custom;
   const preset = SCALE_OPTIONS.find(o => o.v !== 'custom' && Number(o.v) === cfg.unidade.fator);
@@ -4166,8 +4180,8 @@ function readEditorForm() {
   cfg.titulo.sep = $qe('qeSep').value;
   cfg.titulo.prefixo = $qe('qePrefixo').value;
   cfg.titulo.sufixo = $qe('qeSufixo').value;
-  cfg.decBar = Number($qe('qeDecBar').value);
-  cfg.decDelta = Number($qe('qeDecDelta').value);
+  cfg.decBar = casasValidas($qe('qeDecBar'));
+  cfg.decDelta = casasValidas($qe('qeDecDelta'));
   cfg.unidade.valor = $qe('qeUnidade').value;
   cfg.unidade.custom = $qe('qeUnidadeCustom').value;
   const escala = $qe('qeEscala').value;
@@ -5126,8 +5140,21 @@ function editorOnFiltersChanged() {
   renderEditorTarget();
 }
 
+// Casas decimais (− / +): valor inteiro de 0 a 3; botões desabilitados nos limites
+function casasValidas(el) {
+  const n = Math.round(Number(el.value));
+  return Number.isFinite(n) ? Math.min(3, Math.max(0, n)) : 0;
+}
+function syncSteppers() {
+  document.querySelectorAll('#qeForm [data-step]').forEach(b => {
+    const v = casasValidas($qe(b.dataset.alvo));
+    b.disabled = Number(b.dataset.step) < 0 ? v <= 0 : v >= 3;
+  });
+}
+
 function onEditorInput(t) {
   if (!editor.draft) return;
+  if (t.classList.contains('qe-step-val') && t.value !== '') { t.value = String(casasValidas(t)); syncSteppers(); }
   if (t.matches('input[data-campo]')) {
     const f = editor.draft.cfg.titulo.campos.find(x => x.k === t.dataset.campo);
     if (f) f.on = t.checked;
@@ -5176,6 +5203,14 @@ function initEditor() {
   form.addEventListener('input', e => onEditorInput(e.target));
   form.addEventListener('change', e => onEditorInput(e.target));
   form.addEventListener('click', e => {
+    const passo = e.target.closest('[data-step]');
+    if (passo) {
+      const alvo = $qe(passo.dataset.alvo);
+      alvo.value = String(Math.min(3, Math.max(0, casasValidas(alvo) + Number(passo.dataset.step))));
+      alvo.dispatchEvent(new Event('input', { bubbles: true }));
+      syncSteppers();
+      return;
+    }
     const mover = e.target.closest('[data-mover]');
     if (mover) { moveTitleField(mover.dataset.campoK, Number(mover.dataset.mover)); return; }
     const reset = e.target.closest('[data-col-reset]');
