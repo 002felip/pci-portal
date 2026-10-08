@@ -2216,6 +2216,7 @@ function getDefaultColorForBar(barType) {
 // Extrai o tipo de horizonte (Mês, Trimestre, Semestre, Anual) do core do período
 function getHorizonType(core) {
   if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[A-Z]$/i.test(core)) return 'MONTH';
+  if (/^YTD[A-Z]$/i.test(core)) return 'YTD';
   if (/^Q\d/i.test(core)) return 'QUARTER';
   if (/^H\d/i.test(core)) return 'SEMESTER';
   if (/^\d{2,4}[A-Z]/i.test(core)) return 'YEAR';
@@ -2687,8 +2688,8 @@ function buildFallbackRows() {
 }
 
 // Granularidades exibidas: Mensal (bloco MONTH da query, rótulos "JanB 26"),
-// Trimestral, Semestral e Anual. Qualquer outro CD_VISAO é ignorado.
-const QUARTERLY_VISOES = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR'];
+// Trimestral, Semestral, Anual e YTD ("YTDB 26"). Outro CD_VISAO é ignorado.
+const QUARTERLY_VISOES = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD'];
 function isQuarterlyVisao(row) { return QUARTERLY_VISOES.includes(row.CD_VISAO); }
 
 // ── Carga de dados: API real, com fallback local ────────────────────────
@@ -3047,7 +3048,7 @@ function selectOption(def, value) {
 //    As opções já vêm da cascata (filterOptions); marcar um período marca os
 //    rótulos dele disponíveis — quem escolhe Budget/Plan/Act é a Visão. O estado
 //    continua sendo o Set de Types, então gráficos salvos não mudam.
-const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
+const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YEAR', 'Anual'], ['YTD', 'Year to Date (YTD)'], ['OUTROS', 'Outros']];
 const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
 
 function periodosDoHorizonte(options) {

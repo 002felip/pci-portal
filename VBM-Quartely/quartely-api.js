@@ -269,13 +269,13 @@ SELECT
   CASE WHEN UnpivotedData.Type = 'Budget' THEN 6 ELSE 7 END AS 'ORDEM_GRAFICO',
   CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 1 END AS 'ID_TYPE',
   CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' WHEN UnpivotedData.Type = 'Supply' THEN 'Plan' ELSE 'Act/Fcst' END AS 'NM_TYPE',
-  CONCAT('YTD', RIGHT(YEAR(PVC.DT_REF), 2),
+  CONCAT('YTD',
     CASE
       WHEN UnpivotedData.Type = 'Budget' THEN 'B'
       WHEN UnpivotedData.Type = 'Supply' THEN 'P'
       WHEN EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(@YTD_FIM), 1)) <= CAST(@DT_REF AS DATE) THEN 'A'
       ELSE 'F'
-    END) AS 'Type',
+    END, ' ', RIGHT(YEAR(PVC.DT_REF), 2)) AS 'Type',
   SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
   'YTD' AS CD_VISAO, 'Year To Date (YTD)' AS NM_VISAO, 5 AS ORDEM_VISAO,
   YEAR(PVC.DT_REF) AS ORDEM_ANO, YEAR(PVC.DT_REF) AS ORDEM_PERIODO,
