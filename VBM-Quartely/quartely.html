@@ -2558,11 +2558,11 @@ function escapeHtml(str) {
 const FILTER_PANEL_LABELS = { ano: 'Ano', sites: 'Business e Site', visoes: 'Cenário (Visão)', horizontes: 'Horizonte', product: 'Produto' };
 
 const FILTER_DEFS = [
-  { key: 'ano',        label: 'Ano',        icon: 'fa-calendar-days', multiple: true,  allLabel: 'Todos os anos',       searchable: false },
+  { key: 'product',    label: 'Product',    icon: 'fa-tags',          multiple: false, allLabel: 'Selecione um Product', searchable: true, required: true },
+  { key: 'ano',       label: 'Ano',        icon: 'fa-calendar-days', multiple: true,  allLabel: 'Todos os anos',       searchable: false },
   { key: 'sites',      label: 'Site',       icon: 'fa-location-dot',  multiple: true,  allLabel: 'Todos os sites',      searchable: true  },
   { key: 'visoes',     label: 'Visão',      icon: 'fa-eye',           multiple: true,  allLabel: 'Todas as visões',     searchable: false },
-  { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Todos os horizontes', searchable: true  },
-  { key: 'product',    label: 'Product',    icon: 'fa-tags',          multiple: false, allLabel: 'Selecione um Product', searchable: true, required: true }
+  { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Todos os horizontes', searchable: true  }
 ];
 
 // filterState: Set vazio (multi) ou null (single) == "Todos" (sem restrição)
@@ -3048,7 +3048,7 @@ function selectOption(def, value) {
 //    As opções já vêm da cascata (filterOptions); marcar um período marca os
 //    rótulos dele disponíveis — quem escolhe Budget/Plan/Act é a Visão. O estado
 //    continua sendo o Set de Types, então gráficos salvos não mudam.
-const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YEAR', 'Anual'], ['YTD', 'Year to Date (YTD)'], ['OUTROS', 'Outros']];
+const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date (YTD)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
 const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
 
 function periodosDoHorizonte(options) {
