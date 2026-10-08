@@ -1502,10 +1502,8 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       </div>
     </div></div>
     <p class="qe-msg" id="qeFiltrosMsg" role="status" aria-live="polite"></p>
-    <footer class="qe-foot qe-foot-3">
+    <footer class="qe-foot" style="grid-template-columns: 1fr;">
       <button type="button" class="qe-btn" id="qfClearBtn">Limpar filtros</button>
-      <button type="button" class="qe-btn" id="qeFiltrosCancelar">Cancelar</button>
-      <button type="button" class="qe-btn primary" id="qeFiltrosAplicar">Aplicar filtros</button>
     </footer>
   </section>
 
@@ -2770,17 +2768,48 @@ function rowMatchesFilters(r, exceptKey) {
   if (!skip('ano') && filterState.ano.size && !filterState.ano.has(String(r.ORDEM_ANO))) return false;
   if (!skip('sites') && filterState.sites.size && !filterState.sites.has(String(r.ID_SITE))) return false;
   if (!skip('visoes') && filterState.visoes.size && !filterState.visoes.has(r.NM_TYPE)) return false;
-  if (!skip('horizontes') && filterState.horizontes.size && !filterState.horizontes.has(r.Type)) return false;
+  if (!skip('horizontes') && filterState.horizontes.size && !periodosSelecionados().has(periodoDoTipo(r.Type))) return false;
   if (!skip('product') && filterState.product !== null && r.NM_KPI !== filterState.product) return false;
   return true;
 }
 
+// Horizonte filtra por PERÍODO ("Q3 26"), não pela série do rótulo ("Q3B 26"):
+// quem escolhe Budget/Plan/Act é o Cenário. Marcar Plan no Cenário traz o Plan
+// dos períodos já escolhidos, sem precisar remarcar o Horizonte. O estado
+// continua guardando rótulos (compatível com gráficos salvos).
+const PERIODO_CACHE = new Map();
+function periodoDoTipo(t) {
+  let p = PERIODO_CACHE.get(t);
+  if (p === undefined) {
+    const { core, yearSuffix } = splitTypeLabel(String(t).trim());
+    p = getHorizonType(core) ? `${core.slice(0, -1)}${yearSuffix}` : String(t);
+    PERIODO_CACHE.set(t, p);
+  }
+  return p;
+}
+const rotuloPeriodo = p => (/^\d{2}$/.test(p) ? `20${p}` : p);
+let periodosSelCache = { sig: null, set: new Set() };
+function periodosSelecionados() {
+  const sig = [...filterState.horizontes].join('\u0001');
+  if (sig !== periodosSelCache.sig) periodosSelCache = { sig, set: new Set([...filterState.horizontes].map(periodoDoTipo)) };
+  return periodosSelCache.set;
+}
+// Mesmo período em outro ano: "Q3 26" → "Q3 25", "26" → "25"
+const trocarAnoPeriodo = (p, yy) => (/^\d{2}$/.test(p) ? yy : p.replace(/\d{2}$/, yy));
+
 // Cascata (estilo Power BI): as OPÇÕES de cada campo vêm das linhas que
-// passam em TODOS os demais filtros — nenhum campo fica fora da cascata.
-const OPTION_IGNORED_FILTERS = {};
+// passam nos demais filtros. O Horizonte é o filtro mais detalhado: não
+// esconde opções de Produto, Site, Ano e Cenário — ao escolher uma delas,
+// ele se ajusta (ver podarSelecoesSemDados).
+const OPTION_IGNORED_FILTERS = { product: ['horizontes'], sites: ['horizontes'], ano: ['horizontes'], visoes: ['horizontes'] };
 
 // Valor de cada campo numa linha (mesma comparação de rowMatchesFilters)
-const valorDoFiltro = (k, r) => (k === 'ano' ? String(r.ORDEM_ANO) : k === 'sites' ? String(r.ID_SITE) : k === 'visoes' ? r.NM_TYPE : k === 'horizontes' ? r.Type : r.NM_KPI);
+const valorDoFiltro = (k, r) => (k === 'ano' ? String(r.ORDEM_ANO) : k === 'sites' ? String(r.ID_SITE) : k === 'visoes' ? r.NM_TYPE : k === 'horizontes' ? periodoDoTipo(r.Type) : r.NM_KPI);
+const valorSelecionado = (k, v) => (k === 'horizontes' ? periodoDoTipo(v) : v);
+
+// Produto padrão: Copper Production (Produção de cobre) quando disponível
+const PRODUTO_PADRAO = /copper production|produ[çc][aã]o de cobre/i;
+const produtoPreferido = opcoes => opcoes.find(o => PRODUTO_PADRAO.test(o.value)) || opcoes[0];
 
 // Após uma escolha em `driver`, um campo cuja seleção ficou INTEIRA sem
 // dados é limpo (ex.: Horizonte = 25B e Ano = 2026 → Horizonte volta a
@@ -2795,13 +2824,21 @@ function podarSelecoesSemDados(driver) {
       if (def.key === driver) return;
       const sel = filterState[def.key];
       if (def.multiple ? !sel.size : sel === null) return;
-      const linhas = allRows.filter(r => rowMatchesFilters(r, def.key));
+      const linhas = allRows.filter(r => rowMatchesFilters(r, [def.key, ...(OPTION_IGNORED_FILTERS[def.key] || [])]));
       const validos = new Set(linhas.map(r => valorDoFiltro(def.key, r)));
       if (def.multiple) {
-        if (![...sel].some(v => validos.has(v))) { sel.clear(); mudou = true; }
+        if ([...sel].some(v => validos.has(valorSelecionado(def.key, v)))) return;
+        // Horizonte sem dados após trocar o Ano: leva os mesmos períodos para
+        // o(s) ano(s) escolhido(s) (Q3 26 → Q3 25) antes de desistir e limpar
+        const anos = def.key === 'horizontes' ? [...filterState.ano].map(a => a.slice(-2)) : [];
+        const alvo = new Set([...sel].flatMap(v => anos.map(yy => trocarAnoPeriodo(periodoDoTipo(v), yy))));
+        const novos = alvo.size ? [...new Set(linhas.filter(r => alvo.has(periodoDoTipo(r.Type))).map(r => r.Type))] : [];
+        sel.clear();
+        novos.forEach(t => sel.add(t));
+        mudou = true;
       } else if (!validos.has(sel)) {
-        // Campo obrigatório (Product): passa para a 1ª opção com dados
-        const primeira = def.required ? extractOptions(def.key, linhas)[0] : null;
+        // Campo obrigatório (Product): passa para Copper Production ou a 1ª com dados
+        const primeira = def.required ? produtoPreferido(extractOptions(def.key, linhas)) : null;
         filterState[def.key] = primeira ? primeira.value : null;
         mudou = true;
       }
@@ -2812,10 +2849,9 @@ function podarSelecoesSemDados(driver) {
 
 function onFilterChanged(key) {
   podarSelecoesSemDados(key);
-  // Painel Filtros aberto: as opções dependentes se atualizam na hora, mas
-  // o gráfico só muda em "Aplicar filtros" (Cancelar volta ao aplicado).
-  if (filtrosAplicados) { refreshFilterBar(); return; }
+  // Aplicação automática: cada clique já atualiza opções dependentes e gráfico
   refreshFiltersAndChart();
+  if (filtrosAplicados) filtrosAplicadosAgora('');
 }
 
 // linhas que passam em TODOS os filtros — usadas para montar o gráfico e
@@ -2909,7 +2945,7 @@ function recomputeFilterOptions() {
     filterOptions[def.key] = extractOptions(def.key, narrowed, selected);
     // Selecionado sem dados com os demais filtros: continua na lista, marcado
     const comDados = new Set(narrowed.map(r => String(valorDoFiltro(def.key, r)).trim()));
-    filterOptions[def.key].forEach(o => { if (!comDados.has(o.value)) o.semDados = true; });
+    filterOptions[def.key].forEach(o => { if (!comDados.has(valorSelecionado(def.key, o.value))) o.semDados = true; });
   });
 }
 
@@ -3018,7 +3054,9 @@ function renderTriggerLabel(def) {
   }
   const set = filterState[def.key];
   if (set.size === 0) { labelEl.textContent = def.allLabel; return; }
-  const labels = [...set].map(v => (filterOptions[def.key] || []).find(o => o.value === v)?.label || v);
+  const labels = def.key === 'horizontes'
+    ? [...new Set([...set].map(v => rotuloPeriodo(periodoDoTipo(v))))]
+    : [...set].map(v => (filterOptions[def.key] || []).find(o => o.value === v)?.label || v);
   const shown = labels.slice(0, 2);
   const rest = labels.length - shown.length;
   labelEl.innerHTML = shown.map(l => `<span class="qf-badge">${escapeHtml(l)}</span>`).join('')
@@ -3081,9 +3119,12 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
       : `<div class="qf-option-empty">Nenhuma opção disponível com os demais filtros atuais</div>`;
     return;
   }
-  const estado = tipos => {
-    const n = tipos.filter(t => sel.has(t)).length;
-    return n === 0 ? '' : n === tipos.length ? 'is-checked' : 'is-partial';
+  // Marcado = período escolhido (qualquer série dele); grupo parcial = parte dos períodos
+  const selPer = periodosSelecionados();
+  const marcado = p => selPer.has(periodoDoTipo(p.tipos[0]));
+  const estado = itens => {
+    const n = itens.filter(marcado).length;
+    return n === 0 ? '' : n === itens.length ? 'is-checked' : 'is-partial';
   };
   const caixa = st => `<span class="qf-check"><i class="fa-solid ${st === 'is-partial' ? 'fa-minus' : 'fa-check'}"></i></span>`;
   const ariaChecked = st => (st === 'is-checked' ? 'true' : st === 'is-partial' ? 'mixed' : 'false');
@@ -3093,7 +3134,7 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
     const itens = periodos.filter(p => p.grupo === g);
     if (!itens.length) return;
     const gi = grupos.push(itens) - 1;
-    const st = estado(itens.flatMap(p => p.tipos));
+    const st = estado(itens);
     const aberto = term ? true : horizonteGrupoAberto.has(g) ? horizonteGrupoAberto.get(g) : st !== '';
     html += `<div class="qf-group">
       <div class="qf-option qf-group-head ${st}" data-grupo="${gi}" role="checkbox" aria-checked="${ariaChecked(st)}" tabindex="0">
@@ -3101,7 +3142,7 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
         ${caixa(st)}<span>${nome}</span><span class="qf-group-count">${itens.length}</span>
       </div>
       ${aberto ? itens.map((p, pi) => {
-        const sp = estado(p.tipos);
+        const sp = estado([p]);
         return `<div class="qf-option qf-group-item ${sp}${p.semDados ? ' is-sem-dados' : ''}" data-grupo="${gi}" data-periodo="${pi}" role="checkbox" aria-checked="${ariaChecked(sp)}" tabindex="0" title="${escapeHtml(p.tipos.join(', '))}">
           ${caixa(sp)}<span>${escapeHtml(p.rotulo)}</span>${p.semDados ? '<span class="qf-sem-dados">sem dados</span>' : ''}
         </div>`;
@@ -3110,15 +3151,19 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
   });
   container.innerHTML = html;
 
-  // Período ou grupo: tudo marcado → desmarca; senão marca todos os rótulos
-  const alternar = tipos => {
-    const todos = tipos.every(t => sel.has(t));
-    tipos.forEach(t => (todos ? sel.delete(t) : sel.add(t)));
+  // Período ou grupo: tudo marcado → desmarca (todas as séries); senão marca
+  const alternar = itens => {
+    if (itens.every(marcado)) {
+      const sair = new Set(itens.map(p => periodoDoTipo(p.tipos[0])));
+      [...sel].forEach(t => { if (sair.has(periodoDoTipo(t))) sel.delete(t); });
+    } else {
+      itens.forEach(p => p.tipos.forEach(t => sel.add(t)));
+    }
     onFilterChanged(def.key);
   };
   const acionar = el => {
     const itens = grupos[+el.dataset.grupo];
-    alternar(el.dataset.periodo != null ? itens[+el.dataset.periodo].tipos : itens.flatMap(p => p.tipos));
+    alternar(el.dataset.periodo != null ? [itens[+el.dataset.periodo]] : itens);
   };
   container.querySelectorAll('.qf-group-toggle').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -3314,8 +3359,8 @@ function detectCurrentPeriod(rows, cdVisao) {
 // Product é seleção única obrigatória: padrão = 1º NM_KPI em ordem alfabética
 // entre os disponíveis para os demais filtros ativos (evita gráfico vazio)
 function getDefaultProduct() {
-  const available = extractOptions('product', allRows.filter(r => rowMatchesFilters(r, 'product')));
-  return (available[0] || extractOptions('product', allRows)[0])?.value ?? null;
+  const available = extractOptions('product', allRows.filter(r => rowMatchesFilters(r, ['product', 'horizontes'])));
+  return (produtoPreferido(available) || produtoPreferido(extractOptions('product', allRows)))?.value ?? null;
 }
 
 function applyDefaultFilters(rows) {
@@ -4711,14 +4756,14 @@ async function confirmarAdicionar() {
   }
 }
 
-// ── Filtros (mesmo componente/estado da antiga barra; o gráfico só muda em Aplicar) ──
+// ── Filtros (mesmo componente/estado da antiga barra; aplicação automática a cada clique) ──
 let filtrosAplicados = null; // { chart, filtros } aplicados, enquanto o painel Filtros está aberto
 
 function abrirFiltros() {
   const tem = !!activeChart;
   $qe('qeFiltrosVazio').hidden = tem;
   $qe('qeFiltrosConteudo').hidden = !tem;
-  ['qfClearBtn', 'qeFiltrosCancelar', 'qeFiltrosAplicar'].forEach(id => { $qe(id).disabled = !tem; });
+  $qe('qfClearBtn').disabled = !tem;
   filtrosAplicados = tem ? { chart: activeChart, filtros: serializeFilters() } : null;
   msgEm('qeFiltrosMsg', '');
   renderResumoFiltros();
@@ -4747,24 +4792,11 @@ function filtrosAplicadosAgora(texto) {
   msgEm('qeFiltrosMsg', texto, 'ok');
 }
 
-function aplicarFiltros() {
-  if (!activeChart) return;
-  closeAllPanels();
-  refreshFiltersAndChart();
-  filtrosAplicadosAgora('Filtros aplicados ao gráfico.');
-}
-
-function cancelarFiltros() {
-  closeAllPanels();
-  const havia = descartarFiltrosPendentes();
-  msgEm('qeFiltrosMsg', havia ? 'Alterações não aplicadas foram descartadas.' : 'Nenhuma alteração pendente.', 'info');
-}
-
 function textoDoFiltro(f, def) {
   const v = f[def.key];
   if (!def.multiple) return v || 'Nenhum';
   if (!v || !v.length) return 'Todos';
-  const rotulos = v.map(x => {
+  const rotulos = def.key === 'horizontes' ? [...new Set(v.map(x => rotuloPeriodo(periodoDoTipo(x))))] : v.map(x => {
     if (def.key !== 'sites') return x;
     const r = allRows.find(l => String(l.ID_SITE) === x);
     return r && r.NM_SITE ? r.NM_SITE : `Site ${x}`;
@@ -5169,8 +5201,6 @@ function initEditor() {
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
   $qe('qeAddConfirmar').addEventListener('click', confirmarAdicionar);
   $qe('qeAddCancelar').addEventListener('click', recolherPainel);
-  $qe('qeFiltrosAplicar').addEventListener('click', aplicarFiltros);
-  $qe('qeFiltrosCancelar').addEventListener('click', cancelarFiltros);
   const viewBg = $qe('qeViewBg');
   viewBg.addEventListener('input', e => onFundoInput(e.target, 'input'));
   viewBg.addEventListener('change', e => onFundoInput(e.target, 'change'));
