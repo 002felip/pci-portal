@@ -234,7 +234,7 @@ SELECT
     WHEN UnpivotedData.Type = 'Forecast' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'F')
   END AS 'Type',
   SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
-  'YEAR' AS CD_VISAO, 'Anual' AS NM_VISAO, 4 AS ORDEM_VISAO,
+  'YEAR' AS CD_VISAO, 'Anual' AS NM_VISAO, 5 AS ORDEM_VISAO,
   YEAR(PVC.DT_REF) AS ORDEM_ANO, YEAR(PVC.DT_REF) AS ORDEM_PERIODO,
   CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 3 END AS ORDEM_SERIE
 FROM
@@ -279,7 +279,7 @@ SELECT
       ELSE 'A'
     END, ' ', RIGHT(YEAR(PVC.DT_REF), 2)) AS 'Type',
   SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
-  'YTD' AS CD_VISAO, 'Year To Date (YTD)' AS NM_VISAO, 5 AS ORDEM_VISAO,
+  'YTD' AS CD_VISAO, 'Year To Date (YTD)' AS NM_VISAO, 4 AS ORDEM_VISAO,
   YEAR(PVC.DT_REF) AS ORDEM_ANO, YEAR(PVC.DT_REF) AS ORDEM_PERIODO,
   CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 3 END AS ORDEM_SERIE
 FROM

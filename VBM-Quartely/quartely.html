@@ -2533,7 +2533,7 @@ function renderLinhasSuavizadas(el, rows, cfg) {
 const SERIE_ORDER = { 'Budget': 1, 'Plan': 2, 'Act/Fcst': 3 }; // negócio, não alfabético
 function serieOrder(nmType) { return SERIE_ORDER[nmType] ?? 99; }
 
-// Ordem pedida explicitamente: Trimestre → Semestre → Ano SEMPRE primeiro
+// Ordem pedida explicitamente: Mês → Trimestre → Semestre → YTD → Ano SEMPRE primeiro
 // (ORDEM_VISAO), independente do ano — com múltiplos anos selecionados,
 // os grupos Trimestral/Semestral/Anual não se misturam entre si; dentro de
 // cada grupo, mantém a ordem temporal já existente (Ano → Período → Série).
@@ -2682,9 +2682,9 @@ function buildFallbackRows() {
 
         // ANUAL — Budget/Plan/Act-Fcst, ano corrente em aberto ('F')
         const yearClosed = year < CURRENT_YEAR;
-        mk(`${year}-01-01`, site, product, 'Budget',   `${yy}B`, 1, 4, 'Anual', year, base * 12.3 * yearFactor);
-        mk(`${year}-01-01`, site, product, 'Plan',     `${yy}P`, 2, 4, 'Anual', year, base * 11.6 * yearFactor);
-        mk(`${year}-01-01`, site, product, 'Act/Fcst', `${yy}${yearClosed ? 'A' : 'F'}`, 3, 4, 'Anual', year, base * 10.4 * yearFactor);
+        mk(`${year}-01-01`, site, product, 'Budget',   `${yy}B`, 1, 5, 'Anual', year, base * 12.3 * yearFactor);
+        mk(`${year}-01-01`, site, product, 'Plan',     `${yy}P`, 2, 5, 'Anual', year, base * 11.6 * yearFactor);
+        mk(`${year}-01-01`, site, product, 'Act/Fcst', `${yy}${yearClosed ? 'A' : 'F'}`, 3, 5, 'Anual', year, base * 10.4 * yearFactor);
       });
     });
   });
