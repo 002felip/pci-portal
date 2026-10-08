@@ -706,7 +706,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
      --stroke  linhas de nível (Mid Gray com transparência)
      --hair    ponta fraca do fio guia (Light Gray esmaecido)
      --glass   preenchimento da pílula (Off-white translúcido) */
-  --stroke: rgba(136,136,136,.38);
+  --stroke: rgba(116,118,120,.38);
   --hair: rgba(204,204,204,.14);
   --glass: rgba(246,246,246,.92);
 
@@ -887,9 +887,9 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
    ──────────────────────────────────────────────────────────────────── */
 /* Cores de feedback (VBM): Success, Error, Neutral. --qe-* = cor escolhida
    no painel de edição para o gráfico (sem ela, valem as cores padrão). */
-.is-up   { --ink: var(--qe-up, #1BA13A); --tint: var(--qe-up-rgb, 27,161,58); --ink-text: var(--qe-up, #15803D); }      /* Success Green (texto AA) */
+.is-up   { --ink: var(--qe-up, #007E7A); --tint: var(--qe-up-rgb, 0,126,122); --ink-text: var(--qe-up, #007E7A); }      /* Verde-Vale (texto AA) */
 .is-down { --ink: var(--qe-down, #DC2626); --tint: var(--qe-down-rgb, 220,38,38); --ink-text: var(--qe-down, #B91C1C); } /* Error Red (texto AA) */
-.is-flat { --ink: var(--qe-flat, #888888); --tint: var(--qe-flat-rgb, 136,136,136); --ink-text: var(--qe-flat, #4B5563); } /* Mid Gray (texto AA) */
+.is-flat { --ink: var(--qe-flat, #747678); --tint: var(--qe-flat-rgb, 116,118,120); --ink-text: var(--qe-flat, #555555); } /* Cinza-Vale (texto AA) */
 .dcnx.no-tint { --tint: 100,116,139; }
 
 .dcnx {
@@ -1933,35 +1933,36 @@ const CFG = {
   casasDecimais: 2
 };
 
-// Paleta VBM — alinhada ao design system corporativo
-// Primary: #3CB5E5 (azul claro), #1B40BF (azul escuro)
-// Neutrals: #333333 (text), #888888 (mid), #CCCCCC (light), #FFFFFF (white), #F6F6F6 (off-white)
-// Feedback: #1BA13A (success), #CC7700 (warning), #DC2626 (error)
+// Paleta VBM (Vale Base Metals)
+// Principal: #007E7A Verde-Vale, #3CB5E5 Azul-Vale, #555555 Cinza-Escuro-Vale, #FFFFFF Branco
+// Secundária (gráficos): #034944 Verde-Escuro, #2626D1 Azul-Escuro, #747678 Cinza-Vale,
+//   #BCBEC0 Cinza-Médio, #E6E7E8 Cinza-Claro
 
-// Paleta limitada de cores VBM para seleção (ordenada de clara para escura)
+// Paleta VBM para seleção (Principal + Secundária, tons derivados e Print 1),
+// ordenada de clara para escura. Vermelho mantido só para delta negativo.
 const PALETTE_COLORS = [
   // Cores Claras
-  '#FFFFFF', // White
-  '#F6F6F6', // Off-white
-  '#E7E6E6', // Very Light Gray
-  '#DEEFF8', // Pale Blue
-  '#D8F7FD', // Pale Blue
+  '#FFFFFF', // Branco
+  '#F6F6F6', // Off-white (fundo padrão)
+  '#E6E7E8', // Cinza-Claro
+  '#D9ECEB', // Verde-Vale 15%
+  '#D8F0FA', // Azul-Vale 15%
   // Cores Médias
-  '#CCCCCC', // Light Gray
-  '#BCBEBF', // Medium Gray
-  '#7DD3F0', // Light Blue
-  '#3DADD8', // Cyan
-  '#3CB5E5', // Primary Blue
-  '#0F9ED5', // Vivid Blue
+  '#BCBEC0', // Cinza-Médio
+  '#7FBEBC', // Verde-Vale 50%
+  '#9DDAF2', // Azul-Vale 50%
+  '#3CB5E5', // Azul-Vale
+  '#00B0F0', // Ciano (Print 1)
+  '#6E8CBA', // Azul-Aço (Print 1)
   // Cores Escuras
-  '#888888', // Mid Gray
-  '#44546A', // Dark Slate
-  '#156082', // Deep Cyan
-  '#116080', // Dark Cyan
-  '#1B40BF', // Dark Blue
-  '#007E79', // Teal
-  '#1BA13A', // Success Green
-  '#DC2626', // Error Red
+  '#747678', // Cinza-Vale
+  '#555555', // Cinza-Escuro-Vale
+  '#007E7A', // Verde-Vale
+  '#034944', // Verde-Escuro
+  '#1B5E80', // Azul-Petróleo (Print 1)
+  '#3A4A6B', // Azul-Marinho (Print 1)
+  '#2626D1', // Azul-Escuro
+  '#DC2626', // Vermelho (delta negativo)
 ];
 
 const COLORS = {
@@ -1970,11 +1971,11 @@ const COLORS = {
 
 // Cores padrão para cada tipo de série (por último caractere)
 const DEFAULT_SERIES_COLORS = {
-  'A': '#3CB5E5', // Actual (Primary Blue) — Real
-  'F': '#3CB5E5', // Forecast (Primary Blue) — Forecast
-  'P': '#3CB5E5', // Plan (Primary Blue) — Real/Forecast
-  'B': '#BCBEBF', // Budget (Medium Gray) — Budget
-  'default': '#BCBEBF'
+  'A': '#3CB5E5', // Actual — Azul-Vale
+  'F': '#3CB5E5', // Forecast — Azul-Vale
+  'P': '#007E7A', // Plan — Verde-Vale
+  'B': '#BCBEC0', // Budget — Cinza-Médio
+  'default': '#BCBEC0'
 };
 
 const DEFAULT_COLORS = { ...COLORS, ...DEFAULT_SERIES_COLORS };
@@ -2011,10 +2012,10 @@ const EDIT_COLOR_DEFS = [
   { k: 'serie:P',    label: 'Barras Plan',                  def: DEFAULT_SERIES_COLORS.P },
   { k: 'serie:B',    label: 'Barras comparativas (Budget)', def: DEFAULT_SERIES_COLORS.B },
   { k: 'bgChart',    label: 'Fundo do gráfico',             def: '#F6F6F6' },
-  { k: 'delta:up',   label: 'Delta positivo',               def: '#1BA13A' },
+  { k: 'delta:up',   label: 'Delta positivo',               def: '#007E7A' },
   { k: 'delta:down', label: 'Delta negativo',               def: '#DC2626' },
-  { k: 'delta:flat', label: 'Delta neutro',                 def: '#888888' },
-  { k: 'conector',   label: 'Conectores',                   def: '#888888' }
+  { k: 'delta:flat', label: 'Delta neutro',                 def: '#747678' },
+  { k: 'conector',   label: 'Conectores',                   def: '#747678' }
 ];
 const hexToRgb = hex => [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16)).join(',');
 
@@ -2033,12 +2034,12 @@ const COL_PREFIXO = 'col:';
 const COR_COLUNA_RE = /^col:[A-Za-z0-9 ._\/-]{1,24}$/;
 const COR_COLUNA_MAX = 80;
 const PALETAS_COLUNAS = [
-  { id: 'vale', label: 'Paleta Vale', cores: ['#007E7A', '#EDB111', '#3CB5E5', '#69BE28', '#0D4C92', '#E37222'] },
-  { id: 'executiva', label: 'Paleta Executiva', cores: ['#0D2A4A', '#3CB5E5', '#7A8B99', '#1F6F8B', '#C9A227', '#BCBEBF'] },
-  { id: 'azul', label: 'Azul Monocromático', de: '#0B3C6E', ate: '#9ED8F0' },
-  { id: 'verde', label: 'Verde Monocromático', de: '#0B5D3B', ate: '#A6DCB4' },
-  { id: 'performance', label: 'Escala de Performance', escala: ['#DC2626', '#EDB111', '#1BA13A'] },
-  { id: 'gradiente', label: 'Escala Gradiente', de: '#3CB5E5', ate: '#0D2A4A' }
+  { id: 'vale', label: 'Paleta VBM', cores: ['#007E7A', '#3CB5E5', '#555555', '#034944', '#2626D1', '#747678'] },
+  { id: 'executiva', label: 'Paleta Executiva', cores: ['#1B5E80', '#6E8CBA', '#A3B4D2', '#3A4A6B', '#00B0F0', '#C5D0E3'] },
+  { id: 'azul', label: 'Azul Monocromático', de: '#1B5E80', ate: '#9DDAF2' },
+  { id: 'verde', label: 'Verde Monocromático', de: '#034944', ate: '#7FBEBC' },
+  { id: 'performance', label: 'Escala de Performance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
+  { id: 'gradiente', label: 'Escala Gradiente', de: '#3CB5E5', ate: '#034944' }
 ];
 const misturarHex = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
 
@@ -2313,7 +2314,7 @@ function renderTurnoverChart(sourceRows) {
     const barColor = getBarColor(type);
 
     // Cor da pílula: versão pálida da cor da barra (ou padrão)
-    const pillColor = isActualOrFcst ? '#D8F7FD' : lastChar === 'P' ? '#E8F4FF' : '#E8E8E8';
+    const pillColor = isActualOrFcst ? '#D8F0FA' : lastChar === 'P' ? '#D9ECEB' : '#E6E7E8';
 
     // Anual não tem prefixo de letra (core começa direto pelo ano: "25B"),
     // Trimestral começa com "Q", o restante (Semestral, "H1B") cai no piso.
