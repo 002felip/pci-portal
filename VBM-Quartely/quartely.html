@@ -723,8 +723,22 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .main-wrapper::-webkit-resizer { background: transparent; }
 
 .chart-header { flex-shrink: 0; }
-.chart-title { color: #316866; font-family: 'Vale Sans Medium', 'Segoe UI', sans-serif; font-size: 1.4rem; font-weight: 400; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
-.chart-subtitle { color: #4B5563; font-family: 'Vale Sans', 'Segoe UI', sans-serif; font-size: 1.05rem; margin: 0; font-weight: 200; }
+/* Exportar (canto superior direito do card): aparece ao passar o mouse, ao focar ou no card selecionado */
+.chart-container { position: relative; }
+.chart-export { position: absolute; top: 12px; right: 14px; z-index: 30; opacity: 0; transition: opacity .15s; }
+.main-wrapper:hover .chart-export, .main-wrapper.is-selected .chart-export, .chart-export:focus-within, .chart-export.is-open { opacity: 1; }
+@media (hover: none) { .chart-export { opacity: 1; } }
+.chart-export-btn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; border: 1px solid rgba(15,23,42,.12); background: rgba(255,255,255,.92); color: #0B6E99; cursor: pointer; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+.chart-export-btn:hover { background: #0B6E99; color: #fff; border-color: #0B6E99; }
+.chart-export-btn:focus-visible, .chart-export-menu button:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
+.chart-export-menu { position: absolute; right: 0; top: 40px; min-width: 170px; padding: 6px; border-radius: 10px; background: #fff; border: 1px solid rgba(15,23,42,.1); box-shadow: 0 8px 24px rgba(15,23,42,.16); display: flex; flex-direction: column; }
+.chart-export-menu[hidden] { display: none; }
+.chart-export-menu button { text-align: left; padding: 9px 10px; border: 0; border-radius: 7px; background: none; color: #1F2937; font: 500 .8rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; }
+.chart-export-menu button:hover { background: #EEF6FB; color: #0B6E99; }
+.chart-export-ok { position: absolute; right: 0; top: 40px; white-space: nowrap; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem 'Poppins', 'Segoe UI', sans-serif; box-shadow: 0 6px 18px rgba(15,23,42,.2); }
+/* Fontes do gráfico: --ft-<elemento>-s (escala), -w (peso), -i (estilo), -c (cor) vêm da aba Fontes */
+.chart-title { color: var(--ft-titulo-c, #316866); font-family: 'Vale Sans Medium', 'Segoe UI', sans-serif; font-size: calc(1.4rem * var(--ft-titulo-s, 1)); font-weight: var(--ft-titulo-w, 700); font-style: var(--ft-titulo-i, normal); letter-spacing: -.005em; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.chart-subtitle { color: var(--ft-unidade-c, #4B5563); font-family: 'Vale Sans', 'Segoe UI', sans-serif; font-size: calc(1.05rem * var(--ft-unidade-s, 1)); margin: 0; font-weight: var(--ft-unidade-w, 300); font-style: var(--ft-unidade-i, normal); }
 
 /* Container do gráfico com fundo */
 .chart-container {
@@ -740,7 +754,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .chart-container.is-compact .chart-area { margin-top: calc(var(--folga) + 32px); margin-bottom: 20px; }
 /* Delta desligado: só o espaço do rótulo de valor acima da barra mais alta */
 .chart-container .chart-area.sem-delta { margin-top: 34px; }
-.chart-container.is-compact .chart-title { font-size: 1.15rem; }
+.chart-container.is-compact .chart-title { font-size: calc(1.15rem * var(--ft-titulo-s, 1)); }
 .chart-header { cursor: move; touch-action: none; user-select: none; }
 .chart-resize-handle {
   position: absolute; right: 0; bottom: 0; width: 24px; height: 24px;
@@ -819,8 +833,8 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
   box-shadow: 0 0 0 2px rgba(60,181,229,.55), 0 0 28px rgba(60,181,229,.28), 0 18px 44px rgba(2,10,20,.32);
 }
 /* Título do selecionado: o elemento mais visível do card, com marcador e selo */
-.charts-board > .main-wrapper.is-selected .chart-title { font-weight: 700; padding-left: 10px; box-shadow: inset 3px 0 0 #3CB5E5; }
-.charts-board > .main-wrapper.is-selected .chart-container:not(.is-dark-bg) .chart-title { color: #0B6E99; }
+.charts-board > .main-wrapper.is-selected .chart-title { font-weight: var(--ft-titulo-w, 700); padding-left: 10px; box-shadow: inset 3px 0 0 #3CB5E5; }
+.charts-board > .main-wrapper.is-selected .chart-container:not(.is-dark-bg) .chart-title { color: var(--ft-titulo-c, #0B6E99); }
 .charts-board > .main-wrapper.is-selected .chart-title::after {
   content: 'Selecionado'; display: inline-block; margin-left: 10px; padding: 2px 8px; vertical-align: 4px;
   border-radius: 100px; background: #E0F4FC; border: 1px solid #7DD3F0; color: #0B6E99;
@@ -862,12 +876,13 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 
 .value-label {
   position: absolute; bottom: calc(var(--h) + 7px); left: 50%; transform: translateX(-50%);
-  white-space: nowrap; color: var(--ink-strong); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
-  font-size: .8rem; font-variant-numeric: tabular-nums; z-index: 6;
+  white-space: nowrap; color: var(--ft-valores-c, var(--ink-strong)); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
+  font-size: calc(.8rem * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 700); font-style: var(--ft-valores-i, normal);
+  font-variant-numeric: tabular-nums; letter-spacing: .01em; z-index: 6;
 }
 .axis-label {
   position: absolute; bottom: -22px; left: 0; width: 100%; text-align: center;
-  font-size: clamp(.80rem, 2vh, .8rem); color: var(--ink-soft); font-weight: 500;
+  font-size: calc(.8rem * var(--ft-eixo-s, 1)); color: var(--ft-eixo-c, var(--ink-soft)); font-weight: var(--ft-eixo-w, 500); font-style: var(--ft-eixo-i, normal);
 }
 .chart-empty-state {
   margin: auto; color: var(--ink-soft); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
@@ -944,7 +959,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
   backdrop-filter: blur(12px) saturate(150%);
   color: var(--ink-text, var(--ink));
   font-family: 'Vale Sans', 'Segoe UI', sans-serif;
-  font-size: clamp(.76rem, 2.2vh, .82rem); font-weight: 400; line-height: 1.15;
+  font-size: calc(clamp(.76rem, 2.2vh, .82rem) * var(--ft-deltas-s, 1)); font-weight: var(--ft-deltas-w, 700); font-style: var(--ft-deltas-i, normal); line-height: 1.15;
   white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: .01em;
   box-shadow: 0 2px 12px rgba(15,23,42,.05);
   opacity: 0; transform: translate(-50%, 8px) scale(.96);
@@ -961,9 +976,9 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 .main-wrapper:not(.qe-static) .ql-svg { animation: qlIn .6s cubic-bezier(.16,.84,.28,1) both; }
 @keyframes qlIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .ql-svg .qc-base { stroke: #CBD5E1; stroke-width: 1; }
-.ql-svg .qc-eixo { fill: var(--ink-soft); font-size: 12.8px; font-weight: 500; }
-.ql-svg .qc-leg { fill: var(--ink-soft); font-size: 11.5px; }
-.ql-rotulo { fill: var(--ink-soft); font-size: 12.8px; font-weight: 700; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
+.ql-svg .qc-eixo { fill: var(--ft-eixo-c, var(--ink-soft)); font-size: calc(12.8px * var(--ft-eixo-s, 1)); font-weight: var(--ft-eixo-w, 500); font-style: var(--ft-eixo-i, normal); }
+.ql-svg .qc-leg { fill: var(--ft-eixo-c, var(--ink-soft)); font-size: calc(11.5px * var(--ft-eixo-s, 1)); font-style: var(--ft-eixo-i, normal); }
+.ql-rotulo { fill: var(--ft-valores-c, var(--ink-soft)); font-size: calc(12.8px * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 700); font-style: var(--ft-valores-i, normal); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
 @media (prefers-reduced-motion: reduce) { .ql-svg { animation: none !important; } }
 
 /* Re-render só de layout (painel de edição abrindo/fechando): sem replay das animações */
@@ -1012,8 +1027,8 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 .palette-tip[hidden] { display: none; }
 
 .chart-container.is-dark-bg { --ink-strong: #FFFFFF; --ink-soft: rgba(255,255,255,.8); }
-.chart-container.is-dark-bg .chart-title { color: #FFFFFF; }
-.chart-container.is-dark-bg .chart-subtitle { color: rgba(255,255,255,.75); }
+.chart-container.is-dark-bg .chart-title { color: var(--ft-titulo-c, #FFFFFF); }
+.chart-container.is-dark-bg .chart-subtitle { color: var(--ft-unidade-c, rgba(255,255,255,.75)); }
 .chart-pager {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   flex-shrink: 0; font-size: .78rem; color: var(--ink-soft);
@@ -1027,8 +1042,8 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 
 @media (max-width: 640px) {
   .chart-container { padding: 16px 14px 12px; }
-  .chart-title { font-size: 1.15rem; }
-  .chart-subtitle { font-size: .9rem; }
+  .chart-title { font-size: calc(1.15rem * var(--ft-titulo-s, 1)); }
+  .chart-subtitle { font-size: calc(.9rem * var(--ft-unidade-s, 1)); }
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1223,6 +1238,25 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-grupo-corpo { padding: 12px; border-top: 1px solid var(--qe-line); }
 .qe-grupo-corpo > :last-child { margin-bottom: 0; }
 .qe-ln-series { display: flex; flex-direction: column; gap: 10px; }
+.qe-ft-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.qe-ft-lista { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.qe-ft-item { padding: 10px; border: 1px solid var(--qe-line); border-radius: 10px; }
+.qe-ft-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.qe-ft-ctrl { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.qe-ft-escala { display: grid; grid-template-columns: 30px 48px 30px; gap: 4px; align-items: center; }
+.qe-ft-escala output { text-align: center; font: 600 .74rem 'Poppins', sans-serif; color: var(--qe-strong); font-variant-numeric: tabular-nums; }
+.qe-ft-escala .qe-btn, .qe-ft-estilo .qe-btn { min-height: 30px; padding: 0; }
+.qe-ft-estilo { display: grid; grid-template-columns: 30px 30px; gap: 4px; }
+.qe-ft-estilo .qe-btn[aria-pressed="true"] { background: var(--qe-accent); border-color: var(--qe-accent); color: #fff; }
+.qe-ft-item .qe-color-btn { width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.qe-ft-reset { border: 0; background: none; color: var(--qe-accent); font: 600 .7rem 'Poppins', sans-serif; cursor: pointer; padding: 2px 4px; }
+.qe-ft-reset:focus-visible { outline: 2px solid var(--qe-accent); outline-offset: 2px; }
+.qe-pct-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.qe-pct-chip { min-height: 30px; padding: .25rem .6rem; border: 1px solid var(--qe-line-strong); border-radius: 999px; background: var(--qe-surface); color: var(--qe-text); font: 600 .72rem 'Poppins', sans-serif; cursor: pointer; }
+.qe-pct-chip[aria-pressed="true"] { background: var(--qe-accent); border-color: var(--qe-accent); color: #fff; }
+.qe-pct-chip:focus-visible { outline: 2px solid var(--qe-accent); outline-offset: 2px; }
+.ql-pct-linha { stroke: #747678; stroke-width: 1.2; stroke-dasharray: 5 4; opacity: .85; }
+.ql-pct-rotulo { fill: var(--ink-soft); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
 .qe-ln-serie { padding: 10px; border: 1px solid var(--qe-line); border-radius: 10px; background: var(--qe-surface-alt); }
 .qe-ln-serie .qe-color-row { margin-bottom: 8px; }
 .qe-ln-serie .qe-row { margin-bottom: 0; }
@@ -1431,6 +1465,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <button type="button" class="qe-tool" data-qe-go="ident" aria-controls="qePanel" aria-expanded="false" aria-label="Identificação" data-tip="Identificação"><i class="fa-solid fa-id-card" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="titulo" aria-controls="qePanel" aria-expanded="false" aria-label="Título" data-tip="Título"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="numeros" aria-controls="qePanel" aria-expanded="false" aria-label="Formatação numérica" data-tip="Formatação numérica"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="fontes" aria-controls="qePanel" aria-expanded="false" aria-label="Fontes" data-tip="Fontes"><i class="fa-solid fa-font" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade de medida" data-tip="Unidade de medida"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="cores" aria-controls="qePanel" aria-expanded="false" aria-label="Cores" data-tip="Cores"><i class="fa-solid fa-palette" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="persist" aria-controls="qePanel" aria-expanded="false" aria-label="Persistência" data-tip="Persistência"><i class="fa-solid fa-database" aria-hidden="true"></i></button>
@@ -1648,6 +1683,17 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
                 <div class="qe-ln-series" id="qeLnSeries"></div>
               </fieldset>
               <p class="qe-hint">Períodos de Forecast (projeção) são desenhados pontilhados automaticamente; os realizados seguem o estilo da série.</p>
+              <fieldset class="qe-field">
+                <legend class="qe-label">Percentis (linhas de referência)</legend>
+                <div class="qe-pct-chips" id="qePctChips" role="group" aria-label="Percentis exibidos"></div>
+                <div class="qe-row qe-row-acao">
+                  <input class="qe-input" id="qePctNovo" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="Outro percentil (1–99)" aria-label="Outro percentil, de 1 a 99">
+                  <button type="button" class="qe-btn" id="qePctAdd">Adicionar</button>
+                </div>
+                <label class="qe-label" for="qePctBase">Calcular sobre</label>
+                <select class="qe-select" id="qePctBase"><option value="serie:AF">Actual | Forecast</option><option value="serie:B">Budget</option><option value="serie:P">Plan</option><option value="todas">Todas as séries exibidas</option></select>
+                <p class="qe-hint">Até 5 percentis. Cálculo igual ao PERCENTIL.INC do Excel, sobre os pontos exibidos.</p>
+              </fieldset>
             </div>
           </details>
         </div>
@@ -1708,6 +1754,21 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
             <span class="qe-label" id="qePreviewLbl">Pré-visualização</span>
             <div class="qe-preview" id="qePreview" role="status" aria-labelledby="qePreviewLbl"></div>
           </div>
+        </div>
+      </section>
+
+      <section class="qe-sec" data-sec="fontes" hidden>
+        <div class="qe-sec-body">
+          <div class="qe-field">
+            <span class="qe-label" id="qeFtPresetLbl">Estilo rápido</span>
+            <div class="qe-ft-presets" role="group" aria-labelledby="qeFtPresetLbl">
+              <button type="button" class="qe-btn" data-ft-preset="executivo">Executivo</button>
+              <button type="button" class="qe-btn" data-ft-preset="apresentacao">Apresentação</button>
+              <button type="button" class="qe-btn" data-ft-preset="compacto">Compacto</button>
+            </div>
+          </div>
+          <div class="qe-ft-lista" id="qeFontes"></div>
+          <p class="qe-hint">Tamanho relativo ao padrão (70% a 160%), que já se ajusta à tela. Aplicado na hora; grave em Salvar.</p>
         </div>
       </section>
 
@@ -1823,6 +1884,13 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <div class="chart-header">
         <p class="chart-title" id="chartTitle"></p>
         <p class="chart-subtitle" id="chartSubtitle">(%)</p>
+      </div>
+      <div class="chart-export">
+        <button type="button" class="chart-export-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Exportar gráfico" title="Exportar gráfico"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
+        <div class="chart-export-menu" role="menu" hidden>
+          <button type="button" role="menuitem" data-export="copiar">Copiar imagem</button>
+          <button type="button" role="menuitem" data-export="png">Baixar PNG</button>
+        </div>
       </div>
       <div class="chart-area" id="chartArea" role="group" aria-label="Colunas do gráfico"></div>
       <div class="chart-pager" id="chartPager" hidden></div>
@@ -2007,6 +2075,7 @@ function applyChartBackgroundColor() {
   if (wrapper) {
     wrapper.style.setProperty('--chart-bg', COLORS.bgChart);
     applyDeltaColorVars(wrapper);
+    if (activeChart) aplicarFontesVars(wrapper, activeChartCfg().fontes);
   }
   // Fundo escuro → textos claros, para manter título/eixos/rótulos legíveis
   const container = wrapper && wrapper.querySelector('.chart-container');
@@ -2449,10 +2518,13 @@ function renderLinhasSuavizadas(el, rows, cfg) {
   if (!visiveis.length) { el.innerHTML = '<p class="chart-empty-state">Nenhum dado para os filtros selecionados.</p>'; return; }
 
   const valores = visiveis.flatMap(s => pontos[s.k].filter(Boolean).map(p => p.v));
+  const basePct = ln.percentilBase === 'todas' ? valores : (pontos[ln.percentilBase] || []).filter(Boolean).map(p => p.v);
+  const pcts = (ln.percentis || []).map(p => ({ p, v: percentil(basePct, p) })).filter(q => q.v != null);
   let min = Math.min(...valores), max = Math.max(...valores);
   if (min === max) { min -= 1; max += 1; }
   const folga = (max - min) * 0.12;
-  const topo = (ln.legenda ? 34 : 12) + (ln.rotulos ? 18 : 4), base = H - 30, esq = 12, dir = 12;
+  // Com percentis, uma margem à direita recebe os rótulos (fora da área dos dados)
+  const topo = (ln.legenda ? 34 : 12) + (ln.rotulos ? 18 : 4), base = H - 30, esq = 12, dir = pcts.length ? 98 : 12;
   const y = v => base - ((v - (min - folga)) / (max - min + 2 * folga)) * (base - topo);
   const band = (W - esq - dir) / periodos.length;
   const x = i => esq + band * (i + 0.5);
@@ -2463,6 +2535,17 @@ function renderLinhasSuavizadas(el, rows, cfg) {
   // Eixo X: rótulos sem sobreposição (pula alternados quando faltar espaço)
   const passoX = Math.max(1, Math.ceil(64 / band));
   periodos.forEach((p, i) => { if (i % passoX === 0) partes.push(txt(x(i), base + 20, p.rotulo, 'qc-eixo', ' text-anchor="middle"')); });
+
+  // Percentis: linhas tracejadas de referência, rótulo à direita ("P75 · 123,45")
+  // Rótulos na margem direita, de cima para baixo, afastados 14px entre si
+  let ultimoY = -Infinity;
+  [...pcts].sort((a, b) => b.v - a.v).forEach(q => {
+    const py = y(q.v), ry = Math.max(py + 4, ultimoY + 14);
+    ultimoY = ry;
+    partes.push(`<line class="ql-pct-linha" x1="${esq}" x2="${W - dir + 4}" y1="${py.toFixed(1)}" y2="${py.toFixed(1)}"/>`);
+    partes.push(txt(W - dir + 8, ry, `P${q.p} · ${fmt(q.v)}`, 'ql-pct-rotulo'));
+    aria.push(`Percentil ${q.p}: ${fmt(q.v)}`);
+  });
 
   visiveis.forEach(s => {
     const cfgS = ln.series[s.k], cor = corDaSerie(s.k);
@@ -2503,7 +2586,7 @@ function renderLinhasSuavizadas(el, rows, cfg) {
       if (!ln.rotulos) return;
       const cor = corDaSerie(s.k), [r, g, b] = [1, 3, 5].map(n => parseInt(cor.substr(n, 2), 16) / 255);
       const legivel = 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.7; // cor clara demais → cinza do tema
-      partes.push(txt(x(i), ordem === 0 ? y(p.v) - 10 : y(p.v) + 19, fmt(p.v), 'ql-rotulo', ` text-anchor="middle"${legivel ? ` style="fill:${cor}"` : ''}`));
+      partes.push(txt(x(i), ordem === 0 ? y(p.v) - 10 : y(p.v) + 19, fmt(p.v), 'ql-rotulo', ` text-anchor="middle"${legivel && !(cfg.fontes && cfg.fontes.valores.cor) ? ` style="fill:${cor}"` : ''}`));
     });
   });
 
@@ -3552,6 +3635,105 @@ function labelCharts() {
   });
 }
 
+// ── Exportar gráfico como imagem (sem bibliotecas): o card vira SVG com
+//    foreignObject, com os estilos calculados copiados para cada elemento,
+//    e é desenhado num canvas em 2x. Controles de edição ficam de fora. ──
+const EXPORT_FORA = '.chart-export, .chart-resize-handle, .chart-pager, .color-palette';
+function copiarEstilos(orig, clone) {
+  const cs = getComputedStyle(orig);
+  let css = '';
+  for (let i = 0; i < cs.length; i++) { const p = cs[i]; css += `${p}:${cs.getPropertyValue(p)};`; }
+  clone.setAttribute('style', css + 'animation:none;transition:none;');
+  const a = orig.children, b = clone.children;
+  for (let i = 0; i < a.length; i++) if (b[i]) copiarEstilos(a[i], b[i]);
+}
+async function graficoParaPng(card, escala = 2) {
+  const alvo = card.querySelector('.chart-container');
+  const { width: w, height: h } = alvo.getBoundingClientRect();
+  const clone = alvo.cloneNode(true);
+  copiarEstilos(alvo, clone);
+  clone.querySelectorAll(EXPORT_FORA).forEach(n => n.remove());
+  clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  clone.style.margin = '0';
+  clone.style.boxShadow = 'none';
+  const xml = new XMLSerializer().serializeToString(clone);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject x="0" y="0" width="100%" height="100%">${xml}</foreignObject></svg>`;
+  const img = new Image();
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  await img.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(w * escala);
+  canvas.height = Math.round(h * escala);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(escala, escala);
+  ctx.fillStyle = getComputedStyle(alvo).backgroundColor || '#FFFFFF';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  return new Promise((ok, erro) => canvas.toBlob(b => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'));
+}
+function nomeArquivoGrafico(card) {
+  const titulo = (card.querySelector('.chart-title')?.textContent || 'grafico').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').slice(0, 80);
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${titulo} - ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.png`;
+}
+function avisoExport(caixa, msg) {
+  caixa.querySelector('.chart-export-ok')?.remove();
+  const el = document.createElement('div');
+  el.className = 'chart-export-ok';
+  el.textContent = msg;
+  caixa.appendChild(el);
+  announce(msg);
+  setTimeout(() => el.remove(), 2200);
+}
+function fecharMenusExport(exceto) {
+  document.querySelectorAll('.chart-export.is-open').forEach(c => {
+    if (c === exceto) return;
+    c.classList.remove('is-open');
+    c.querySelector('.chart-export-menu').hidden = true;
+    c.querySelector('.chart-export-btn').setAttribute('aria-expanded', 'false');
+  });
+}
+async function exportarGrafico(card, acao) {
+  const caixa = card.querySelector('.chart-export');
+  fecharMenusExport();
+  try {
+    const blob = graficoParaPng(card);
+    if (acao === 'copiar' && navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      avisoExport(caixa, 'Imagem copiada. Cole no PowerPoint, e-mail ou Teams.');
+      return;
+    }
+    const url = URL.createObjectURL(await blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: nomeArquivoGrafico(card) });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    avisoExport(caixa, acao === 'copiar' ? 'Cópia não permitida pelo navegador: imagem baixada.' : 'Imagem PNG baixada.');
+  } catch (err) {
+    console.error('[quartely] exportar:', err);
+    avisoExport(caixa, 'Não foi possível exportar o gráfico.');
+  }
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.chart-export-btn');
+  const item = e.target.closest('.chart-export-menu [data-export]');
+  if (item) { exportarGrafico(item.closest('.main-wrapper'), item.dataset.export); return; }
+  if (btn) {
+    const caixa = btn.closest('.chart-export'), menu = caixa.querySelector('.chart-export-menu'), abrir = menu.hidden;
+    fecharMenusExport(caixa);
+    menu.hidden = !abrir;
+    caixa.classList.toggle('is-open', abrir);
+    btn.setAttribute('aria-expanded', String(abrir));
+    if (abrir) menu.querySelector('button').focus();
+    return;
+  }
+  if (!e.target.closest('.chart-export')) fecharMenusExport();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const aberto = document.querySelector('.chart-export.is-open');
+  if (aberto) { fecharMenusExport(); aberto.querySelector('.chart-export-btn').focus(); e.stopPropagation(); }
+}, true);
+
 function announce(msg) {
   const live = document.getElementById('chartLive');
   live.textContent = '';
@@ -3896,8 +4078,52 @@ function defaultChartCfg() {
     tipoGrafico: TIPOS_GRAFICO[0].id,
     exibirDelta: true,
     linhas: normalizeLinhasCfg(null),
-    modoCor: 'grupo', paletaColunas: ''
+    modoCor: 'grupo', paletaColunas: '',
+    fontes: normalizarFontes(null)
   };
+}
+
+// ── Fontes do gráfico: escala (%), negrito, itálico e cor por elemento ──
+// Padrão "Executivo": títulos e números em negrito, eixos e unidade discretos.
+const FONTE_ELEMENTOS = [
+  { k: 'titulo',  nome: 'Título',             normal: 400, cor: true },
+  { k: 'unidade', nome: 'Unidade (subtítulo)', normal: 300, cor: true },
+  { k: 'valores', nome: 'Valores (números)',   normal: 400, cor: true },
+  { k: 'deltas',  nome: 'Deltas (variação %)', normal: 400, cor: false }, // cor segue positivo/negativo
+  { k: 'eixo',    nome: 'Eixo e legenda',      normal: 500, cor: true }
+];
+const FONTE_PRESETS = {
+  executivo:    { titulo: [100, 1], unidade: [100, 0], valores: [100, 1], deltas: [100, 1], eixo: [100, 0] },
+  apresentacao: { titulo: [120, 1], unidade: [110, 0], valores: [120, 1], deltas: [110, 1], eixo: [110, 0] },
+  compacto:     { titulo: [90, 1],  unidade: [90, 0],  valores: [90, 1],  deltas: [90, 1],  eixo: [90, 0] }
+};
+const FONTE_ESCALA_MIN = 70, FONTE_ESCALA_MAX = 160, FONTE_PASSO = 10;
+function fontesDoPreset(id) {
+  const p = FONTE_PRESETS[id] || FONTE_PRESETS.executivo, f = {};
+  FONTE_ELEMENTOS.forEach(({ k }) => { f[k] = { escala: p[k][0], negrito: !!p[k][1], italico: false, cor: '' }; });
+  return f;
+}
+function normalizarFontes(src) {
+  const s = src && typeof src === 'object' ? src : {}, f = fontesDoPreset('executivo');
+  FONTE_ELEMENTOS.forEach(({ k, cor }) => {
+    const e = s[k] && typeof s[k] === 'object' ? s[k] : {}, n = Math.round(Number(e.escala) / FONTE_PASSO) * FONTE_PASSO;
+    f[k] = {
+      escala: n >= FONTE_ESCALA_MIN && n <= FONTE_ESCALA_MAX ? n : f[k].escala,
+      negrito: typeof e.negrito === 'boolean' ? e.negrito : f[k].negrito,
+      italico: e.italico === true,
+      cor: cor && /^#[0-9A-F]{6}$/i.test(e.cor || '') ? e.cor.toUpperCase() : ''
+    };
+  });
+  return f;
+}
+function aplicarFontesVars(el, fontes) {
+  const f = fontes || normalizarFontes(null);
+  FONTE_ELEMENTOS.forEach(({ k, normal }) => {
+    el.style.setProperty(`--ft-${k}-s`, String(f[k].escala / 100));
+    el.style.setProperty(`--ft-${k}-w`, f[k].negrito ? '700' : String(normal));
+    el.style.setProperty(`--ft-${k}-i`, f[k].italico ? 'italic' : 'normal');
+    if (f[k].cor) el.style.setProperty(`--ft-${k}-c`, f[k].cor); else el.style.removeProperty(`--ft-${k}-c`);
+  });
 }
 
 // Configuração das Linhas (tipo 'line-smooth'); mesmas regras de normalizarLinhas no servidor
@@ -3919,8 +4145,24 @@ function normalizeLinhasCfg(src) {
     legenda: l.legenda !== false,
     suave: l.suave !== false,
     espessura: LINHAS_ESPESSURA.hasOwnProperty(l.espessura) ? l.espessura : 'media',
-    series
+    series,
+    percentis: normalizarPercentis(l.percentis),
+    percentilBase: PCT_BASES.includes(l.percentilBase) ? l.percentilBase : 'serie:AF'
   };
+}
+const PCT_BASES = ['serie:AF', 'serie:B', 'serie:P', 'todas'];
+const PCT_PADRAO = [10, 25, 50, 75, 80, 90, 95];
+const PCT_MAX = 5;
+function normalizarPercentis(v) {
+  const n = (Array.isArray(v) ? v : []).map(Number).filter(x => Number.isInteger(x) && x >= 1 && x <= 99);
+  return [...new Set(n)].sort((a, b) => a - b).slice(0, PCT_MAX);
+}
+// PERCENTIL.INC (Excel): interpolação linear entre os vizinhos ordenados
+function percentil(valores, p) {
+  const v = [...valores].sort((a, b) => a - b);
+  if (!v.length) return null;
+  const h = (v.length - 1) * p / 100, lo = Math.floor(h);
+  return lo + 1 < v.length ? v[lo] + (h - lo) * (v[lo + 1] - v[lo]) : v[lo];
 }
 
 // Mesmas regras de normalizarConfig (quartely-api.js): só chaves e valores conhecidos
@@ -3960,7 +4202,8 @@ function normalizeChartCfg(src) {
     exibirDelta: s.exibirDelta !== false,
     linhas: normalizeLinhasCfg(s.linhas),
     modoCor: s.modoCor === 'coluna' ? 'coluna' : 'grupo',
-    paletaColunas: PALETAS_COLUNAS.some(p => p.id === s.paletaColunas) ? s.paletaColunas : ''
+    paletaColunas: PALETAS_COLUNAS.some(p => p.id === s.paletaColunas) ? s.paletaColunas : '',
+    fontes: normalizarFontes(s.fontes)
   };
 }
 
@@ -4080,7 +4323,7 @@ function applyDbConfigsToCharts() {
 }
 
 function configForDb(c) {
-  return { titulo: c.cfg.titulo, decBar: c.cfg.decBar, decDelta: c.cfg.decDelta, unidade: c.cfg.unidade, tipoGrafico: c.cfg.tipoGrafico, exibirDelta: c.cfg.exibirDelta, linhas: c.cfg.linhas, modoCor: c.cfg.modoCor, paletaColunas: c.cfg.paletaColunas, cores: editorColorsOf(c.colors) };
+  return { titulo: c.cfg.titulo, decBar: c.cfg.decBar, decDelta: c.cfg.decDelta, unidade: c.cfg.unidade, tipoGrafico: c.cfg.tipoGrafico, exibirDelta: c.cfg.exibirDelta, linhas: c.cfg.linhas, modoCor: c.cfg.modoCor, paletaColunas: c.cfg.paletaColunas, fontes: c.cfg.fontes, cores: editorColorsOf(c.colors) };
 }
 
 // ── Painel: seleção, rascunho e formulário ──
@@ -4164,6 +4407,7 @@ function renderEditor() {
   $qe('qeLnLegenda').checked = cfg.linhas.legenda;
   $qe('qeLnSuave').value = cfg.linhas.suave ? '1' : '0';
   $qe('qeLnEspessura').value = cfg.linhas.espessura;
+  $qe('qePctBase').value = cfg.linhas.percentilBase;
   renderLinhasSeries();
   renderSavedList();
   renderTitleFields();
@@ -4198,6 +4442,7 @@ function readEditorForm() {
   cfg.linhas.legenda = $qe('qeLnLegenda').checked;
   cfg.linhas.suave = $qe('qeLnSuave').value === '1';
   cfg.linhas.espessura = $qe('qeLnEspessura').value;
+  cfg.linhas.percentilBase = $qe('qePctBase').value;
 }
 
 // Partes que dependem do rascunho: visibilidade, prévia do título, exemplo numérico e contador
@@ -4351,7 +4596,82 @@ function restaurarColunasEditor() {
   aplicarColunasAoVivo('Cores das colunas restauradas: cada coluna volta à cor do seu grupo.');
 }
 
+function renderFontes() {
+  const f = editor.draft.cfg.fontes;
+  $qe('qeFontes').innerHTML = FONTE_ELEMENTOS.map(({ k, nome, cor }) => {
+    const e = f[k], id = `qeFt-${k}`;
+    return `<div class="qe-ft-item" role="group" aria-labelledby="${id}">
+      <div class="qe-ft-topo"><span class="qe-label" id="${id}">${nome}</span><button type="button" class="qe-ft-reset" data-ft-reset="${k}">Padrão</button></div>
+      <div class="qe-ft-ctrl">
+        <div class="qe-ft-escala">
+          <button type="button" class="qe-btn" data-ft-escala="${k}" data-dir="-1" aria-label="Diminuir ${nome}"${e.escala <= FONTE_ESCALA_MIN ? ' disabled' : ''}>&minus;</button>
+          <output aria-live="polite">${e.escala}%</output>
+          <button type="button" class="qe-btn" data-ft-escala="${k}" data-dir="1" aria-label="Aumentar ${nome}"${e.escala >= FONTE_ESCALA_MAX ? ' disabled' : ''}>+</button>
+        </div>
+        <div class="qe-ft-estilo">
+          <button type="button" class="qe-btn" data-ft-toggle="negrito" data-ft="${k}" aria-pressed="${e.negrito}" aria-label="Negrito em ${nome}" title="Negrito"><b>B</b></button>
+          <button type="button" class="qe-btn" data-ft-toggle="italico" data-ft="${k}" aria-pressed="${e.italico}" aria-label="Itálico em ${nome}" title="Itálico"><i style="font-family:serif">I</i></button>
+        </div>
+        ${cor ? `<button type="button" class="qe-color-btn" data-ft-cor="${k}" aria-haspopup="listbox" aria-label="Cor de ${nome}: ${e.cor || 'automática'}">
+          <span class="qe-swatch" style="background:${e.cor || 'transparent'};${e.cor ? '' : 'background-image:linear-gradient(135deg,#BCBEC0 0 45%,#fff 45% 55%,#BCBEC0 55%)'}" aria-hidden="true"></span><span>${e.cor || 'Auto'}</span>
+        </button>` : '<span class="qe-hint" style="margin:0">Cor: positivo/negativo</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+// Fontes valem na hora (como Exibir Delta): rascunho + gráfico, gravadas em Salvar
+function aplicarFontesAoVivo(foco) {
+  const c = editor.chart, f = JSON.parse(JSON.stringify(editor.draft.cfg.fontes));
+  if (c) {
+    c.cfg = { ...c.cfg, fontes: f };
+    // Só variáveis CSS: troca a tipografia sem redesenhar nem reanimar o gráfico
+    if (c === activeChart) aplicarFontesVars(document.getElementById('chartWrapper'), f);
+    saveCharts();
+  }
+  renderFontes();
+  if (foco) $qe('qeFontes').querySelector(foco)?.focus();
+}
+function onFontesClick(e) {
+  const f = editor.draft.cfg.fontes;
+  const preset = e.target.closest('[data-ft-preset]');
+  if (preset) { editor.draft.cfg.fontes = fontesDoPreset(preset.dataset.ftPreset); aplicarFontesAoVivo(); editorMsg('Estilo de fontes aplicado.', 'ok'); return true; }
+  const reset = e.target.closest('[data-ft-reset]');
+  if (reset) { const k = reset.dataset.ftReset; f[k] = fontesDoPreset('executivo')[k]; aplicarFontesAoVivo(`[data-ft-reset="${k}"]`); return true; }
+  const esc = e.target.closest('[data-ft-escala]');
+  if (esc) {
+    const k = esc.dataset.ftEscala, dir = Number(esc.dataset.dir);
+    f[k].escala = Math.min(FONTE_ESCALA_MAX, Math.max(FONTE_ESCALA_MIN, f[k].escala + dir * FONTE_PASSO));
+    aplicarFontesAoVivo(`[data-ft-escala="${k}"][data-dir="${dir}"]:not([disabled])`);
+    return true;
+  }
+  const tg = e.target.closest('[data-ft-toggle]');
+  if (tg) { const k = tg.dataset.ft, prop = tg.dataset.ftToggle; f[k][prop] = !f[k][prop]; aplicarFontesAoVivo(`[data-ft-toggle="${prop}"][data-ft="${k}"]`); return true; }
+  const cb = e.target.closest('[data-ft-cor]');
+  if (cb) {
+    const k = cb.dataset.ftCor, r = cb.getBoundingClientRect();
+    openChartPalette(f[k].cor || '#555555', r.left - 8, r.bottom, cor => { f[k].cor = cor.toUpperCase(); aplicarFontesAoVivo(`[data-ft-cor="${k}"]`); }, cb);
+    return true;
+  }
+  return false;
+}
+
+function renderPercentis() {
+  const sel = editor.draft.cfg.linhas.percentis;
+  const lista = [...new Set([...PCT_PADRAO, ...sel])].sort((a, b) => a - b);
+  $qe('qePctChips').innerHTML = lista.map(p => `<button type="button" class="qe-pct-chip" data-pct="${p}" aria-pressed="${sel.includes(p)}">P${p}</button>`).join('');
+}
+function alternarPercentil(p) {
+  const ln = editor.draft.cfg.linhas;
+  if (ln.percentis.includes(p)) ln.percentis = ln.percentis.filter(x => x !== p);
+  else if (ln.percentis.length >= PCT_MAX) { editorMsg(`Máximo de ${PCT_MAX} percentis.`, 'err'); return; }
+  else ln.percentis = normalizarPercentis([...ln.percentis, p]);
+  renderPercentis();
+  refreshEditorDerived();
+}
+
 function renderLinhasSeries() {
+  renderPercentis();
+  renderFontes();
   const ln = editor.draft.cfg.linhas;
   const ESTILOS = { solida: 'Sólida', tracejada: 'Tracejada', pontilhada: 'Pontilhada' };
   $qe('qeLnSeries').innerHTML = LINHAS_SERIES.map(({ k, nome }, i) => {
@@ -4644,7 +4964,7 @@ function abrirVisao(view, btn, sec) {
 }
 
 // Edição do gráfico: um ícone = uma seção; as demais ficam ocultas
-const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', numeros: 'Formatação numérica', unidade: 'Unidade de medida', cores: 'Cores', persist: 'Persistência' };
+const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', numeros: 'Formatação numérica', unidade: 'Unidade de medida', cores: 'Cores', persist: 'Persistência' };
 function irParaSecao(sec) {
   if (!SECOES_EDITOR[sec]) return;
   editor.secao = sec;
@@ -5203,6 +5523,16 @@ function initEditor() {
   form.addEventListener('input', e => onEditorInput(e.target));
   form.addEventListener('change', e => onEditorInput(e.target));
   form.addEventListener('click', e => {
+    if (onFontesClick(e)) return;
+    const chipPct = e.target.closest('[data-pct]');
+    if (chipPct) { alternarPercentil(Number(chipPct.dataset.pct)); return; }
+    if (e.target.closest('#qePctAdd')) {
+      const n = Math.round(Number($qe('qePctNovo').value));
+      if (!(n >= 1 && n <= 99)) { editorMsg('Informe um percentil entre 1 e 99.', 'err'); $qe('qePctNovo').focus(); return; }
+      if (!editor.draft.cfg.linhas.percentis.includes(n)) alternarPercentil(n);
+      $qe('qePctNovo').value = '';
+      return;
+    }
     const passo = e.target.closest('[data-step]');
     if (passo) {
       const alvo = $qe(passo.dataset.alvo);

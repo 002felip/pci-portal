@@ -396,8 +396,28 @@ function normalizarConfig(entrada) {
     linhas: normalizarLinhas(c.linhas),
     modoCor: c.modoCor === 'coluna' ? 'coluna' : 'grupo',
     paletaColunas: CONFIG_PALETAS.includes(c.paletaColunas) ? c.paletaColunas : '',
+    fontes: normalizarFontes(c.fontes),
     cores,
   };
+}
+
+// Fontes do gráfico (aba Fontes): escala 70–160% em passos de 10, negrito,
+// itálico e cor (#RRGGBB ou '' = automática). Deltas não têm cor própria.
+const FONTE_PADRAO = { titulo: true, unidade: false, valores: true, deltas: true, eixo: false };
+function normalizarFontes(entrada) {
+  const f = entrada && typeof entrada === 'object' ? entrada : {};
+  const saida = {};
+  Object.keys(FONTE_PADRAO).forEach(k => {
+    const e = f[k] && typeof f[k] === 'object' ? f[k] : {};
+    const n = Math.round(Number(e.escala) / 10) * 10;
+    saida[k] = {
+      escala: n >= 70 && n <= 160 ? n : 100,
+      negrito: typeof e.negrito === 'boolean' ? e.negrito : FONTE_PADRAO[k],
+      italico: e.italico === true,
+      cor: k !== 'deltas' && /^#[0-9A-F]{6}$/i.test(e.cor || '') ? e.cor.toUpperCase() : '',
+    };
+  });
+  return saida;
 }
 
 // ── Background da apresentação ──────────────────────────────────────────
@@ -468,6 +488,10 @@ function normalizarLinhas(entrada) {
     suave: l.suave !== false,
     espessura: ['fina', 'media', 'grossa'].includes(l.espessura) ? l.espessura : 'media',
     series,
+    // Percentis exibidos como linhas de referência (1–99, até 5) e a série-base
+    percentis: [...new Set((Array.isArray(l.percentis) ? l.percentis : []).map(Number)
+      .filter(x => Number.isInteger(x) && x >= 1 && x <= 99))].sort((x, y) => x - y).slice(0, 5),
+    percentilBase: ['serie:AF', 'serie:B', 'serie:P', 'todas'].includes(l.percentilBase) ? l.percentilBase : 'serie:AF',
   };
 }
 
