@@ -76,6 +76,8 @@ html, body {
   overflow-x: clip;
   overflow-y: auto;
 }
+/* body sem rolagem própria: quem rola é a página, e o header (sticky) fica fixo no topo */
+body { overflow-y: visible; }
 
 /* Fundo num ÚNICO lugar: o elemento raiz. O fundo da raiz pinta o canvas
    inteiro (toda a largura, toda a altura e toda a área de rolagem), sem
@@ -121,10 +123,14 @@ body {
   gap: 0;
   border-bottom: 1px solid rgba(255,255,255,.05);
   box-shadow: 0 2px 20px rgba(13,38,64,.18);
+  transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease;
 }
 @supports (backdrop-filter: blur(1px)) {
   .topnav { backdrop-filter: blur(4px) saturate(120%); -webkit-backdrop-filter: blur(4px) saturate(120%); }
+  /* Ao rolar: vidro mais translúcido e desfocado sobre os gráficos */
+  .topnav.is-scrolled { background: rgba(8,26,46,.78); backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); }
 }
+.topnav.is-scrolled { box-shadow: 0 10px 32px rgba(2,10,20,.38); border-bottom-color: rgba(60,181,229,.28); }
 .topnav-logo svg { height: 26px; width: auto; filter: brightness(10); display: block; }
 
 .topnav-logo {
@@ -139,52 +145,19 @@ body {
 
 .topnav-logo img { height: 26px; width: auto; filter: brightness(10); }
 
-.topnav-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .15rem;
-  flex: 1;
-  position: relative;
-  z-index: 1;
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: .85rem; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none; z-index: 1;
 }
-
-.topnav-link {
-  display: flex;
-  align-items: center;
-  gap: .4rem;
-  padding: .5rem .85rem;
-  border-radius: .45rem;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 400;
-  font-size: .72rem;
-  letter-spacing: .04em;
-  color: rgba(255,255,255,.75);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color .18s;
-  position: relative;
+.topnav-brand-vbm { font-weight: 600; letter-spacing: .22em; margin-right: -.22em; }
+.topnav-brand-sep { width: 1px; height: 18px; background: linear-gradient(180deg, transparent, rgba(255,255,255,.55), transparent); }
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand-nome::after {
+  content: ''; display: block; height: 1.5px; margin-top: 6px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
 }
-
-.topnav-link:hover { color: #fff; }
-.topnav-link.active { color: #fff; }
-
-.topnav-link::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  width: 0;
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent, #fff 25%, #fff 75%, transparent);
-  border-radius: 10px;
-  box-shadow: 0 0 8px rgba(255,255,255,.65);
-  opacity: 0;
-  transform: translateX(-50%);
-  transition: width .3s var(--ease-out), opacity .3s var(--ease-out);
-}
-
-.topnav-link.active::after { width: 60%; opacity: 1; }
 
 .topnav-sep {
   width: 1px;
@@ -449,10 +422,13 @@ body {
 }
 
 @media (max-width: 960px) {
-  .topnav-links { display: none; }
+  .topnav-brand { font-size: .9rem; gap: .6rem; }
   .topnav-user-role { display: none; }
 }
-@media (max-width: 540px) { .topnav-user-name { display: none; } }
+@media (max-width: 540px) {
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: static; transform: none; font-size: .8rem; gap: .45rem; margin: 0 auto; }
+}
 @media (max-width: 768px) { .page-content { padding: 1rem; } }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -1388,11 +1364,9 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 </svg>
   </a>
 
-  <div class="topnav-links" id="topnavLinks">
-    <a href="/" class="topnav-link">
-      <i class="fa-solid fa-house" aria-hidden="true"></i> <span data-i18n="nav.menu">Menu</span>
-    </a>
-  </div>
+  <h1 class="topnav-brand" aria-label="VBM - Performance Hub">
+    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-sep" aria-hidden="true"></span><span class="topnav-brand-nome" aria-hidden="true">Performance Hub</span>
+  </h1>
 
   <div class="topnav-actions">
     <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.btnTitle" aria-label="Configurações" data-i18n-aria="settings.btnTitle">
@@ -3681,7 +3655,11 @@ async function graficoParaPng(card, escala = 2) {
   const alvo = card.querySelector('.chart-container');
   const { width: w, height: h } = alvo.getBoundingClientRect();
   const clone = alvo.cloneNode(true);
-  copiarEstilos(alvo, clone);
+  // A imagem sai sem o destaque azul de seleção (borda, brilho e marcador do título);
+  // tudo síncrono, sem pintura no meio: a tela não pisca
+  const selecionado = card.classList.contains('is-selected');
+  card.classList.remove('is-selected');
+  try { copiarEstilos(alvo, clone); } finally { if (selecionado) card.classList.add('is-selected'); }
   clone.querySelectorAll(EXPORT_FORA).forEach(n => n.remove());
   clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
   clone.style.margin = '0';
@@ -5740,7 +5718,7 @@ function initEditor() {
   const agendarTopo = () => {
     if (topoPendente) return;
     topoPendente = true;
-    requestAnimationFrame(() => { topoPendente = false; updateEditorTop(); });
+    requestAnimationFrame(() => { topoPendente = false; updateEditorTop(); $qe('topnav').classList.toggle('is-scrolled', scrollY > 8); });
   };
   window.addEventListener('scroll', agendarTopo, { passive: true });
   window.addEventListener('resize', () => { agendarTopo(); $qe('qeBackdrop').hidden = !(editor.open && isEditorDrawer()); });
