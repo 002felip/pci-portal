@@ -3830,10 +3830,18 @@ function clampPos(c, x, y) {
 }
 // Exibe o card dentro da área disponível sem alterar o tamanho/posição
 // salvos (ex.: painel de edição aberto estreita a área temporariamente).
+// Painel lateral aberto (tela larga): o quadro estreita e todos os gráficos encolhem na
+// mesma proporção (posição e largura); pos/size guardados não mudam, e ao fechar voltam
+function escalaQuadro() {
+  if (!document.body.classList.contains('qe-open') || !matchMedia('(min-width: 1024px)').matches) return 1;
+  const painel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--qe-panel-w')) || 0;
+  const w = board.clientWidth;
+  return Math.min(1, w / (w + painel + 8)); // +8 = diferença das margens do .app-main aberto/fechado
+}
 function applyChartLayout(c) {
-  const maxW = board.clientWidth - 2 * BOARD_M;
-  const w = Math.max(Math.min(c.size.w, maxW), Math.min(420, maxW));
-  c.el.style.left = clamp(c.pos.x, BOARD_M, board.clientWidth - BOARD_M - w) + 'px';
+  const maxW = board.clientWidth - 2 * BOARD_M, k = escalaQuadro();
+  const w = k < 1 ? Math.min(c.size.w * k, maxW) : Math.max(Math.min(c.size.w, maxW), Math.min(420, maxW));
+  c.el.style.left = clamp(c.pos.x * k, BOARD_M, board.clientWidth - BOARD_M - w) + 'px';
   c.el.style.top = c.pos.y + 'px';
   c.el.style.width = w + 'px';
   c.el.querySelector('.chart-container').style.height = c.size.h + 'px';
@@ -4055,7 +4063,9 @@ function initCharts() {
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      charts.forEach(c => { c.size = clampSize(c.size.w, c.size.h); applyChartLayout(c); c.pos = { x: clampPos(c, c.pos.x, c.pos.y).x, y: c.pos.y }; applyChartLayout(c); });
+      // Com o painel aberto só reescala: tamanhos guardados não encolhem
+      if (escalaQuadro() < 1) charts.forEach(applyChartLayout);
+      else charts.forEach(c => { c.size = clampSize(c.size.w, c.size.h); applyChartLayout(c); c.pos = { x: clampPos(c, c.pos.x, c.pos.y).x, y: c.pos.y }; applyChartLayout(c); });
       updateBoardHeight();
       renderAllCharts();
     }, 120);
@@ -5690,6 +5700,12 @@ function initEditor() {
   const toolbar = $qe('qeToolbar');
   toolbar.querySelectorAll('[data-qe-view]').forEach(b => b.addEventListener('click', () => abrirVisao(b.dataset.qeView, b)));
   toolbar.querySelectorAll('[data-qe-go]').forEach(b => b.addEventListener('click', () => abrirVisao('editar', b, b.dataset.qeGo)));
+  // Clique em qualquer lugar fora do painel e da paleta recolhe o painel (os gráficos voltam ao tamanho)
+  document.addEventListener('pointerdown', e => {
+    if (!editor.open || isEditorDrawer()) return; // no drawer o fundo escuro já fecha
+    if (e.target.closest('.qe-panel, .qe-toolbar, #chartPalette, .qf-panel, .qf-modal-overlay, .settings-panel, .settings-backdrop')) return;
+    setEditorOpen(false);
+  }, true);
   $qe('qeExcluirConfirmar').addEventListener('click', confirmarExclusao);
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
   $qe('qeAddConfirmar').addEventListener('click', confirmarAdicionar);
