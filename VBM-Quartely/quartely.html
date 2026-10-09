@@ -2368,7 +2368,8 @@ function renderTurnoverChart(sourceRows) {
 
   chartAreaEl.closest('.chart-container').classList.toggle('is-compact', chartAreaEl.closest('.chart-container').clientHeight < 340);
   // value: arredondado para os cálculos (como sempre); raw: só para exibição
-  const data = sourceRows.map(d => ({ type: d.type, value: Number(d.value.toFixed(CFG.casasDecimais)), raw: d.value }));
+  // Valor real para alturas e deltas; o arredondamento é só na exibição (formatBarValue)
+  const data = sourceRows.map(d => ({ type: d.type, value: d.value, raw: d.value }));
   const maxValue = Math.max(...data.map(d => d.value), 0);
   const cfg = activeChartCfg();
   // Colunas exibidas (todas as páginas): base da lista "Cores das colunas" do painel
@@ -4606,8 +4607,11 @@ function sincronizarEscala(origem) {
   };
   if (origem === 'unidade') {
     if (sel.value === '') { fixa(1); return; }
+    if (sel.value === '%') { fixa(100); return; } // fração → percentual (0,95 → 95%)
     const alvo = multDe(sel.value);
     if (base && alvo && base[0] === alvo[0]) fixa(base[1] / alvo[1]);
+  } else if (esc.value === '100') {
+    sel.value = '%';
   } else if (base && esc.value !== 'custom') {
     const m = base[1] / Number(esc.value);
     const u = UNIT_OPTIONS.find(o => { const x = multDe(o.v); return x && x[0] === base[0] && Math.abs(x[1] - m) < 1e-9 * m; });
