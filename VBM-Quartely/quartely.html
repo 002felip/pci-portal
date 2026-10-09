@@ -812,11 +812,11 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .charts-board > .main-wrapper.is-selected .chart-title { font-weight: var(--ft-titulo-w, 400); padding-left: 10px; box-shadow: inset 3px 0 0 #3CB5E5; }
 .charts-board > .main-wrapper.is-selected .chart-container:not(.is-dark-bg) .chart-title { color: var(--ft-titulo-c, #0B6E99); }
 .charts-board > .main-wrapper.is-selected .chart-title::after {
-  content: 'Selecionado'; display: inline-block; margin-left: 10px; padding: 2px 8px; vertical-align: 4px;
+  content: var(--txt-selecionado, 'Selecionado'); display: inline-block; margin-left: 10px; padding: 2px 8px; vertical-align: 4px;
   border-radius: 100px; background: #E0F4FC; border: 1px solid #7DD3F0; color: #0B6E99;
   font: 700 .55rem/1.3 'Poppins', 'Segoe UI', sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
 }
-body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::after { content: 'Editando'; background: #0B6E99; border-color: #0B6E99; color: #fff; }
+body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::after { content: var(--txt-editando, 'Editando'); background: #0B6E99; border-color: #0B6E99; color: #fff; }
 
 /* área do gráfico — gap em px garante que a distância centro-a-centro
    entre colunas vizinhas seja (100% + gap), o que permite ancorar a
@@ -1348,7 +1348,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 <!-- ═══ TOP NAVIGATION ═══ -->
 <nav class="topnav" id="topnav">
   <!-- Logo embutido (SVG inline): não depende de arquivo publicado. -->
-  <a href="/" class="topnav-logo" title="Menu">
+  <a href="/" class="topnav-logo" title="Menu" data-i18n-title="ui.menu">
     <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
   <mask id="mask0_220_2284" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
     <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
@@ -1387,7 +1387,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
 <!-- ═══ PAINEL LATERAL DE CONFIGURAÇÕES (Tema + Idioma) — padrão Kaizen ═══ -->
 <div class="settings-backdrop" id="settingsBackdrop"></div>
-<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true">
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="ui.configuracoes">
   <div class="settings-panel-head">
     <h2 data-i18n="settings.title">Configurações</h2>
     <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
@@ -1397,7 +1397,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <div class="settings-panel-body">
     <section class="settings-section">
       <span class="settings-section-title" data-i18n="settings.theme">Tema</span>
-      <div class="theme-toggle" role="group" aria-label="Alternar tema">
+      <div class="theme-toggle" role="group" aria-label="Alternar tema" data-i18n-aria="ui.alternar_tema">
         <button class="theme-toggle-btn active" id="btnWhite" type="button" data-i18n="theme.white">Claro</button>
         <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="theme.dark">Escuro</button>
       </div>
@@ -1409,7 +1409,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <span class="settings-info" title="Idioma da interface" data-i18n-title="settings.languageInfo">i</span>
       </span>
       <div class="settings-select-wrap">
-        <select id="langSelect" class="settings-select" aria-label="Idioma">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="ui.idioma">
           <option value="pt-BR">Português (Brasil)</option>
           <option value="en">English</option>
         </select>
@@ -1424,8 +1424,8 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       </span>
       <div class="settings-select-wrap">
         <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="settings.number">
-          <option value="pt-BR">Brasil — 1.234,56</option>
-          <option value="en-CA">Canadá — 1,234.56</option>
+          <option value="pt-BR" data-i18n="ui.brasil_1_234_56">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="ui.canada_1_234_56">Canadá — 1,234.56</option>
         </select>
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </div>
@@ -1443,20 +1443,20 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 </div>
 
 <!-- ═══ EDIÇÃO DO GRÁFICO — barra de ferramentas + painel de propriedades ═══ -->
-<nav class="qe-toolbar" id="qeToolbar" aria-label="Edição do gráfico">
-  <button type="button" class="qe-tool" id="qeAdd" data-qe-view="add" aria-controls="qePanel" aria-expanded="false" aria-label="Adicionar gráfico" data-tip="Adicionar gráfico"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" id="qeDel" data-qe-view="excluir" aria-controls="qePanel" aria-expanded="false" aria-label="Excluir gráfico" data-tip="Excluir gráfico (selecione um gráfico)" disabled><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+<nav class="qe-toolbar" id="qeToolbar" aria-label="Edição do gráfico" data-i18n-aria="ui.edicao_do_grafico">
+  <button type="button" class="qe-tool" id="qeAdd" data-qe-view="add" aria-controls="qePanel" aria-expanded="false" aria-label="Adicionar gráfico" data-tip="Adicionar gráfico" data-i18n-tip="ui.adicionar_grafico" data-i18n-aria="ui.adicionar_grafico"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" id="qeDel" data-qe-view="excluir" aria-controls="qePanel" aria-expanded="false" aria-label="Excluir gráfico" data-tip="Excluir gráfico (selecione um gráfico)" disabled data-i18n-aria="ui.excluir_grafico"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
   <button type="button" class="qe-tool" id="qeFiltrosBtn" data-qe-view="filtros" aria-controls="qePanel" aria-expanded="false" aria-label="Filtros" data-tip="Filtros"><i class="fa-solid fa-filter" aria-hidden="true"></i><span class="qe-badge" id="qeFiltrosBadge" aria-hidden="true" hidden></span></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
-  <button type="button" class="qe-tool" data-qe-go="tipo" aria-controls="qePanel" aria-expanded="false" aria-label="Tipo de Gráfico" data-tip="Tipo de Gráfico"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="ident" aria-controls="qePanel" aria-expanded="false" aria-label="Identificação" data-tip="Identificação"><i class="fa-solid fa-id-card" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="titulo" aria-controls="qePanel" aria-expanded="false" aria-label="Título" data-tip="Título"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="numeros" aria-controls="qePanel" aria-expanded="false" aria-label="Formatação numérica" data-tip="Formatação numérica"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="fontes" aria-controls="qePanel" aria-expanded="false" aria-label="Fontes" data-tip="Fontes"><i class="fa-solid fa-font" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade de medida" data-tip="Unidade de medida"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="cores" aria-controls="qePanel" aria-expanded="false" aria-label="Cores" data-tip="Cores"><i class="fa-solid fa-palette" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="persist" aria-controls="qePanel" aria-expanded="false" aria-label="Persistência" data-tip="Persistência"><i class="fa-solid fa-database" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="tipo" aria-controls="qePanel" aria-expanded="false" aria-label="Tipo de Gráfico" data-tip="Tipo de Gráfico" data-i18n-tip="ui.tipo_de_grafico" data-i18n-aria="ui.tipo_de_grafico"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="ident" aria-controls="qePanel" aria-expanded="false" aria-label="Identificação" data-tip="Identificação" data-i18n-tip="ui.identificacao" data-i18n-aria="ui.identificacao"><i class="fa-solid fa-id-card" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="titulo" aria-controls="qePanel" aria-expanded="false" aria-label="Título" data-tip="Título" data-i18n-tip="ui.titulo" data-i18n-aria="ui.titulo"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="numeros" aria-controls="qePanel" aria-expanded="false" aria-label="Formatação numérica" data-tip="Formatação numérica" data-i18n-tip="ui.formatacao_numerica" data-i18n-aria="ui.formatacao_numerica"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="fontes" aria-controls="qePanel" aria-expanded="false" aria-label="Fontes" data-tip="Fontes" data-i18n-tip="ui.fontes" data-i18n-aria="ui.fontes"><i class="fa-solid fa-font" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade de medida" data-tip="Unidade de medida" data-i18n-tip="ui.unidade_de_medida" data-i18n-aria="ui.unidade_de_medida"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="cores" aria-controls="qePanel" aria-expanded="false" aria-label="Cores" data-tip="Cores" data-i18n-tip="ui.cores" data-i18n-aria="ui.cores"><i class="fa-solid fa-palette" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="persist" aria-controls="qePanel" aria-expanded="false" aria-label="Persistência" data-tip="Persistência" data-i18n-tip="ui.persistencia" data-i18n-aria="ui.persistencia"><i class="fa-solid fa-database" aria-hidden="true"></i></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
   <button type="button" class="qe-tool" data-qe-view="bg" aria-controls="qePanel" aria-expanded="false" aria-label="Background" data-tip="Background"><i class="fa-solid fa-image" aria-hidden="true"></i></button>
 </nav>
@@ -1466,12 +1466,12 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <header class="qe-head">
     <div class="qe-head-text">
       <p class="qe-eyebrow" id="qeHeading">Editando gráfico</p>
-      <h2 class="qe-chart-name"><span id="qeTarget"></span><span class="qe-edit-badge" id="qeEditBadge">Editando</span></h2>
+      <h2 class="qe-chart-name"><span id="qeTarget"></span><span class="qe-edit-badge" id="qeEditBadge" data-i18n="ui.editando">Editando</span></h2>
     </div>
-    <button type="button" class="qe-icon-btn" id="qeCollapse" aria-label="Recolher painel" title="Recolher painel">
+    <button type="button" class="qe-icon-btn" id="qeCollapse" aria-label="Recolher painel" title="Recolher painel" data-i18n-aria="ui.recolher_painel" data-i18n-title="ui.recolher_painel">
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3L3 8l5 5M13 3L8 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
     </button>
-    <button type="button" class="qe-icon-btn" id="qeClose" aria-label="Fechar edição" title="Fechar edição">
+    <button type="button" class="qe-icon-btn" id="qeClose" aria-label="Fechar edição" title="Fechar edição" data-i18n-aria="ui.fechar_edicao" data-i18n-title="ui.fechar_edicao">
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
     </button>
   </header>
@@ -1480,16 +1480,16 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <!-- Excluir gráfico: confirmação + dados do gráfico selecionado (no resumo acima) -->
   <section class="qe-view" id="qeViewExcluir" data-view="excluir" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
-      <p class="qe-empty" id="qeExcluirVazio" hidden><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>Selecione um gráfico para excluir</p>
+      <p class="qe-empty" id="qeExcluirVazio" hidden><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i><span data-i18n="ui.selecione_um_grafico_para_excluir">Selecione um gráfico para excluir</span></p>
       <div id="qeExcluirConteudo">
         <p class="qe-alerta" id="qeExcluirTexto"></p>
-        <p class="qe-hint">O gráfico sai do quadro. Uma configuração salva no banco é mantida e pode ser carregada em outro gráfico.</p>
+        <p class="qe-hint" data-i18n="ui.o_grafico_sai_do_quadro_uma_configuracao_s">O gráfico sai do quadro. Uma configuração salva no banco é mantida e pode ser carregada em outro gráfico.</p>
       </div>
     </div></div>
     <p class="qe-msg" id="qeExcluirMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot">
-      <button type="button" class="qe-btn" id="qeExcluirCancelar">Cancelar</button>
-      <button type="button" class="qe-btn danger" id="qeExcluirConfirmar">Excluir</button>
+      <button type="button" class="qe-btn" id="qeExcluirCancelar" data-i18n="ui.cancelar">Cancelar</button>
+      <button type="button" class="qe-btn danger" id="qeExcluirConfirmar" data-i18n="ui.excluir">Excluir</button>
     </footer>
   </section>
 
@@ -1497,33 +1497,33 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <section class="qe-view" id="qeViewAdd" data-view="add" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
       <div class="qe-field">
-        <label class="qe-label" for="qeAddNome">Nome do gráfico (opcional)</label>
+        <label class="qe-label" for="qeAddNome" data-i18n="ui.nome_do_grafico_opcional">Nome do gráfico (opcional)</label>
         <input class="qe-input" id="qeAddNome" type="text" maxlength="100" autocomplete="off">
       </div>
       <div class="qe-field">
-        <label class="qe-label" for="qeAddProduto">Produto</label>
+        <label class="qe-label" for="qeAddProduto" data-i18n="ui.produto">Produto</label>
         <select class="qe-select" id="qeAddProduto"></select>
       </div>
       <div class="qe-field">
-        <label class="qe-label" for="qeAddSalvo">Começar de uma configuração salva (opcional)</label>
+        <label class="qe-label" for="qeAddSalvo" data-i18n="ui.comecar_de_uma_configuracao_salva_opcional">Começar de uma configuração salva (opcional)</label>
         <select class="qe-select" id="qeAddSalvo"></select>
       </div>
-      <p class="qe-hint">O novo gráfico usa os filtros padrão do dashboard e o tamanho do gráfico selecionado. Depois de criado, ele fica selecionado para configuração.</p>
+      <p class="qe-hint" data-i18n="ui.o_novo_grafico_usa_os_filtros_padrao_do_da">O novo gráfico usa os filtros padrão do dashboard e o tamanho do gráfico selecionado. Depois de criado, ele fica selecionado para configuração.</p>
     </div></div>
     <p class="qe-msg" id="qeAddMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot">
-      <button type="button" class="qe-btn" id="qeAddCancelar">Cancelar</button>
-      <button type="button" class="qe-btn primary" id="qeAddConfirmar">Adicionar</button>
+      <button type="button" class="qe-btn" id="qeAddCancelar" data-i18n="ui.cancelar">Cancelar</button>
+      <button type="button" class="qe-btn primary" id="qeAddConfirmar" data-i18n="ui.adicionar">Adicionar</button>
     </footer>
   </section>
 
   <!-- Filtros do gráfico selecionado (mesmo componente da antiga barra superior) -->
   <section class="qe-view" id="qeViewFiltros" data-view="filtros" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
-      <p class="qe-empty" id="qeFiltrosVazio" hidden><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>Selecione um gráfico para filtrar</p>
+      <p class="qe-empty" id="qeFiltrosVazio" hidden><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i><span data-i18n="ui.selecione_um_grafico_para_filtrar">Selecione um gráfico para filtrar</span></p>
       <div id="qeFiltrosConteudo">
         <div class="qe-field">
-          <span class="qe-label" id="qeResumoLbl">Filtros aplicados</span>
+          <span class="qe-label" id="qeResumoLbl" data-i18n="ui.filtros_aplicados">Filtros aplicados</span>
           <div class="qe-resumo" id="qeResumoFiltros" aria-labelledby="qeResumoLbl"></div>
         </div>
         <div class="qf-stack" id="filtersBar"></div>
@@ -1531,7 +1531,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
     </div></div>
     <p class="qe-msg" id="qeFiltrosMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot" style="grid-template-columns: 1fr;">
-      <button type="button" class="qe-btn" id="qfClearBtn">Limpar filtros</button>
+      <button type="button" class="qe-btn" id="qfClearBtn" data-i18n="ui.limpar_filtros">Limpar filtros</button>
     </footer>
   </section>
 
@@ -1539,148 +1539,148 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <section class="qe-view" id="qeViewBg" data-view="bg" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
       <fieldset class="qe-field">
-        <legend class="qe-label">Tipo de fundo</legend>
+        <legend class="qe-label" data-i18n="ui.tipo_de_fundo">Tipo de fundo</legend>
         <div class="qe-seg qe-seg-4">
-          <label><input type="radio" name="qeBgTipo" value="padrao"><span>Padrão</span></label>
-          <label><input type="radio" name="qeBgTipo" value="solido"><span>Cor</span></label>
-          <label><input type="radio" name="qeBgTipo" value="gradiente"><span>Gradiente</span></label>
-          <label><input type="radio" name="qeBgTipo" value="imagem"><span>Imagem</span></label>
+          <label><input type="radio" name="qeBgTipo" value="padrao"><span data-i18n="ui.padrao">Padrão</span></label>
+          <label><input type="radio" name="qeBgTipo" value="solido"><span data-i18n="ui.cor">Cor</span></label>
+          <label><input type="radio" name="qeBgTipo" value="gradiente"><span data-i18n="ui.gradiente">Gradiente</span></label>
+          <label><input type="radio" name="qeBgTipo" value="imagem"><span data-i18n="ui.imagem">Imagem</span></label>
         </div>
       </fieldset>
-      <p class="qe-hint" data-bg-show="padrao">Fundo oficial do Quarterly: acompanha o tema da engrenagem (claro ou escuro).</p>
+      <p class="qe-hint" data-bg-show="padrao" data-i18n="ui.fundo_oficial_do_quarterly_acompanha_o_tem">Fundo oficial do Quarterly: acompanha o tema da engrenagem (claro ou escuro).</p>
       <div class="qe-field" data-bg-show="solido">
-        <label class="qe-label" for="qeBgCorHex">Cor</label>
+        <label class="qe-label" for="qeBgCorHex" data-i18n="ui.cor">Cor</label>
         <div class="qe-color-pair">
-          <input type="color" id="qeBgCor" aria-label="Seletor de cor do fundo">
+          <input type="color" id="qeBgCor" aria-label="Seletor de cor do fundo" data-i18n-aria="ui.seletor_de_cor_do_fundo">
           <input class="qe-input" id="qeBgCorHex" type="text" maxlength="7" autocomplete="off" spellcheck="false" aria-describedby="qeBgCorErr">
         </div>
         <p class="qe-error" id="qeBgCorErr" hidden></p>
       </div>
       <div data-bg-show="gradiente">
         <div class="qe-field">
-          <span class="qe-label">Cores do gradiente</span>
+          <span class="qe-label" data-i18n="ui.cores_do_gradiente">Cores do gradiente</span>
           <div class="qe-color-pair">
-            <input type="color" id="qeBgG1" aria-label="Cor inicial do gradiente">
-            <input type="color" id="qeBgG2" aria-label="Segunda cor do gradiente">
-            <input type="color" id="qeBgG3" aria-label="Terceira cor do gradiente">
-            <label class="qe-check" style="flex:0 1 auto;"><input type="checkbox" id="qeBgG3On"> 3ª cor</label>
+            <input type="color" id="qeBgG1" aria-label="Cor inicial do gradiente" data-i18n-aria="ui.cor_inicial_do_gradiente">
+            <input type="color" id="qeBgG2" aria-label="Segunda cor do gradiente" data-i18n-aria="ui.segunda_cor_do_gradiente">
+            <input type="color" id="qeBgG3" aria-label="Terceira cor do gradiente" data-i18n-aria="ui.terceira_cor_do_gradiente">
+            <label class="qe-check" style="flex:0 1 auto;"><input type="checkbox" id="qeBgG3On"> <span data-i18n="ui.3a_cor">3ª cor</span></label>
           </div>
         </div>
         <div class="qe-field">
-          <label class="qe-label" for="qeBgAngulo">Direção</label>
+          <label class="qe-label" for="qeBgAngulo" data-i18n="ui.direcao">Direção</label>
           <select class="qe-select" id="qeBgAngulo">
-            <option value="0">↑ Para cima (0°)</option><option value="45">↗ Diagonal (45°)</option>
-            <option value="90">→ Para a direita (90°)</option><option value="135">↘ Diagonal (135°)</option>
-            <option value="180">↓ Para baixo (180°)</option><option value="225">↙ Diagonal (225°)</option>
-            <option value="270">← Para a esquerda (270°)</option><option value="315">↖ Diagonal (315°)</option>
+            <option value="0" data-i18n="ui.para_cima_0">↑ Para cima (0°)</option><option value="45" data-i18n="ui.diagonal_45">↗ Diagonal (45°)</option>
+            <option value="90" data-i18n="ui.para_a_direita_90">→ Para a direita (90°)</option><option value="135" data-i18n="ui.diagonal_135">↘ Diagonal (135°)</option>
+            <option value="180" data-i18n="ui.para_baixo_180">↓ Para baixo (180°)</option><option value="225" data-i18n="ui.diagonal_225">↙ Diagonal (225°)</option>
+            <option value="270" data-i18n="ui.para_a_esquerda_270">← Para a esquerda (270°)</option><option value="315" data-i18n="ui.diagonal_315">↖ Diagonal (315°)</option>
           </select>
         </div>
       </div>
       <div data-bg-show="imagem">
         <div class="qe-field">
-          <label class="qe-label" for="qeBgArquivo">Imagem (PNG, JPG ou WEBP, até 5 MB)</label>
+          <label class="qe-label" for="qeBgArquivo" data-i18n="ui.imagem_png_jpg_ou_webp_ate_5_mb">Imagem (PNG, JPG ou WEBP, até 5 MB)</label>
           <div class="qe-file-row">
             <input class="qe-file" id="qeBgArquivo" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="qeBgArquivoNome qeBgArquivoErr">
-            <label class="qe-btn" for="qeBgArquivo"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>Escolher imagem</label>
+            <label class="qe-btn" for="qeBgArquivo"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i><span data-i18n="ui.escolher_imagem">Escolher imagem</span></label>
             <span class="qe-file-nome" id="qeBgArquivoNome">Nenhum arquivo selecionado</span>
           </div>
           <p class="qe-error" id="qeBgArquivoErr" hidden></p>
         </div>
         <div class="qe-row">
           <div class="qe-field">
-            <label class="qe-label" for="qeBgTamanho">Ajuste</label>
-            <select class="qe-select" id="qeBgTamanho"><option value="cover">Cobrir</option><option value="contain">Conter</option><option value="auto">Tamanho original</option></select>
+            <label class="qe-label" for="qeBgTamanho" data-i18n="ui.ajuste">Ajuste</label>
+            <select class="qe-select" id="qeBgTamanho"><option value="cover" data-i18n="ui.cobrir">Cobrir</option><option value="contain" data-i18n="ui.conter">Conter</option><option value="auto" data-i18n="ui.tamanho_original">Tamanho original</option></select>
           </div>
           <div class="qe-field">
-            <label class="qe-label" for="qeBgPosicao">Posição</label>
+            <label class="qe-label" for="qeBgPosicao" data-i18n="ui.posicao">Posição</label>
             <select class="qe-select" id="qeBgPosicao">
-              <option value="center">Centralizar</option><option value="top">Topo</option><option value="bottom">Base</option>
-              <option value="left">Esquerda</option><option value="right">Direita</option>
-              <option value="top left">Topo à esquerda</option><option value="top right">Topo à direita</option>
-              <option value="bottom left">Base à esquerda</option><option value="bottom right">Base à direita</option>
+              <option value="center" data-i18n="ui.centralizar">Centralizar</option><option value="top" data-i18n="ui.topo">Topo</option><option value="bottom" data-i18n="ui.base">Base</option>
+              <option value="left" data-i18n="ui.esquerda">Esquerda</option><option value="right" data-i18n="ui.direita">Direita</option>
+              <option value="top left" data-i18n="ui.topo_a_esquerda">Topo à esquerda</option><option value="top right" data-i18n="ui.topo_a_direita">Topo à direita</option>
+              <option value="bottom left" data-i18n="ui.base_a_esquerda">Base à esquerda</option><option value="bottom right" data-i18n="ui.base_a_direita">Base à direita</option>
             </select>
           </div>
         </div>
-        <label class="qe-check qe-field"><input type="checkbox" id="qeBgRepetir"> Repetir a imagem</label>
+        <label class="qe-check qe-field"><input type="checkbox" id="qeBgRepetir"> <span data-i18n="ui.repetir_a_imagem">Repetir a imagem</span></label>
         <div class="qe-field">
-          <label class="qe-label" for="qeBgOverlay">Sobreposição de cor (contraste com os cards)</label>
+          <label class="qe-label" for="qeBgOverlay" data-i18n="ui.sobreposicao_de_cor_contraste_com_os_cards">Sobreposição de cor (contraste com os cards)</label>
           <div class="qe-color-pair">
-            <input type="color" id="qeBgOverlayCor" aria-label="Cor da sobreposição">
+            <input type="color" id="qeBgOverlayCor" aria-label="Cor da sobreposição" data-i18n-aria="ui.cor_da_sobreposicao">
             <input class="qe-range" id="qeBgOverlay" type="range" min="0" max="90" step="5" aria-describedby="qeBgOverlayVal">
             <span class="qe-count" id="qeBgOverlayVal"></span>
           </div>
         </div>
       </div>
       <div class="qe-field">
-        <span class="qe-label">Prévia</span>
-        <div class="qe-bg-preview" id="qeBgPreview" role="img" aria-label="Prévia do fundo"></div>
+        <span class="qe-label" data-i18n="ui.previa">Prévia</span>
+        <div class="qe-bg-preview" id="qeBgPreview" role="img" aria-label="Prévia do fundo" data-i18n-aria="ui.previa_do_fundo"></div>
       </div>
       <p class="qe-hint" id="qeBgStatus"></p>
-      <button type="button" class="qe-btn" id="qeBgUsarSalvo" style="width:100%;" hidden>Restaurar o fundo salvo no banco</button>
+      <button type="button" class="qe-btn" id="qeBgUsarSalvo" style="width:100%;" hidden data-i18n="ui.restaurar_o_fundo_salvo_no_banco">Restaurar o fundo salvo no banco</button>
     </div></div>
     <p class="qe-msg" id="qeBgMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot qe-foot-3">
-      <button type="button" class="qe-btn" id="qeBgVisualizar" title="Aplica temporariamente, sem salvar">Visualizar</button>
-      <button type="button" class="qe-btn" id="qeBgCancelar" title="Descarta o que não foi aplicado">Cancelar</button>
-      <button type="button" class="qe-btn" id="qeBgAplicar" title="Aplica nesta sessão">Aplicar</button>
-      <button type="button" class="qe-btn qe-span-2" id="qeBgRestaurar">Restaurar padrão</button>
-      <button type="button" class="qe-btn primary" id="qeBgSalvar" title="Salva para todos ao carregar o dashboard">Salvar</button>
+      <button type="button" class="qe-btn" id="qeBgVisualizar" title="Aplica temporariamente, sem salvar" data-i18n="ui.visualizar" data-i18n-title="ui.aplica_temporariamente_sem_salvar">Visualizar</button>
+      <button type="button" class="qe-btn" id="qeBgCancelar" title="Descarta o que não foi aplicado" data-i18n="ui.cancelar" data-i18n-title="ui.descarta_o_que_nao_foi_aplicado">Cancelar</button>
+      <button type="button" class="qe-btn" id="qeBgAplicar" title="Aplica nesta sessão" data-i18n="ui.aplicar" data-i18n-title="ui.aplica_nesta_sessao">Aplicar</button>
+      <button type="button" class="qe-btn qe-span-2" id="qeBgRestaurar" data-i18n="ui.restaurar_padrao">Restaurar padrão</button>
+      <button type="button" class="qe-btn primary" id="qeBgSalvar" title="Salva para todos ao carregar o dashboard" data-i18n="ui.salvar" data-i18n-title="ui.salva_para_todos_ao_carregar_o_dashboard">Salvar</button>
     </footer>
   </section>
 
   <section class="qe-view" id="qeViewEditar" data-view="editar">
-  <p class="qe-empty" id="qeEmpty"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>Selecione um gráfico para editar</p>
+  <p class="qe-empty" id="qeEmpty"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i><span data-i18n="ui.selecione_um_grafico_para_editar">Selecione um gráfico para editar</span></p>
 
   <form class="qe-form" id="qeForm" novalidate hidden>
     <div class="qe-body">
       <section class="qe-sec" data-sec="tipo" hidden>
         <div class="qe-sec-body">
           <div class="qe-field">
-            <label class="qe-label" for="qeTipoGrafico">Tipo de Gráfico</label>
+            <label class="qe-label" for="qeTipoGrafico" data-i18n="ui.tipo_de_grafico">Tipo de Gráfico</label>
             <select class="qe-select" id="qeTipoGrafico"></select>
-            <span class="qe-hint">As configurações abaixo mudam conforme o tipo escolhido.</span>
+            <span class="qe-hint" data-i18n="ui.as_configuracoes_abaixo_mudam_conforme_o_t">As configurações abaixo mudam conforme o tipo escolhido.</span>
           </div>
 
           <!-- Só o grupo do tipo escolhido aparece; cada tipo guarda o próprio estado -->
           <details class="qe-grupo" data-tipo-grupo="bar" open>
-            <summary>Configurações de Barras</summary>
+            <summary data-i18n="ui.configuracoes_de_barras">Configurações de Barras</summary>
             <div class="qe-grupo-corpo">
-              <label class="qe-check qe-field"><input type="checkbox" id="qeExibirDelta"> Exibir Delta</label>
-              <p class="qe-hint">Percentuais, conectores e indicadores positivos/negativos entre as barras. Aplicado na hora.</p>
+              <label class="qe-check qe-field"><input type="checkbox" id="qeExibirDelta"> <span data-i18n="ui.exibir_delta">Exibir Delta</span></label>
+              <p class="qe-hint" data-i18n="ui.percentuais_conectores_e_indicadores_posit">Percentuais, conectores e indicadores positivos/negativos entre as barras. Aplicado na hora.</p>
             </div>
           </details>
 
           <details class="qe-grupo" data-tipo-grupo="line-smooth" open>
-            <summary>Configurações de Linhas</summary>
+            <summary data-i18n="ui.configuracoes_de_linhas">Configurações de Linhas</summary>
             <div class="qe-grupo-corpo">
-              <label class="qe-check qe-field"><input type="checkbox" id="qeLnMarcadores"> Mostrar marcadores</label>
-              <label class="qe-check qe-field"><input type="checkbox" id="qeLnRotulos"> Mostrar rótulos dos valores</label>
-              <label class="qe-check qe-field"><input type="checkbox" id="qeLnLegenda"> Mostrar legenda</label>
+              <label class="qe-check qe-field"><input type="checkbox" id="qeLnMarcadores"> <span data-i18n="ui.mostrar_marcadores">Mostrar marcadores</span></label>
+              <label class="qe-check qe-field"><input type="checkbox" id="qeLnRotulos"> <span data-i18n="ui.mostrar_rotulos_dos_valores">Mostrar rótulos dos valores</span></label>
+              <label class="qe-check qe-field"><input type="checkbox" id="qeLnLegenda"> <span data-i18n="ui.mostrar_legenda">Mostrar legenda</span></label>
               <div class="qe-row">
                 <div class="qe-field">
-                  <label class="qe-label" for="qeLnSuave">Suavização da curva</label>
-                  <select class="qe-select" id="qeLnSuave"><option value="1">Ligado</option><option value="0">Desligado</option></select>
+                  <label class="qe-label" for="qeLnSuave" data-i18n="ui.suavizacao_da_curva">Suavização da curva</label>
+                  <select class="qe-select" id="qeLnSuave"><option value="1" data-i18n="ui.ligado">Ligado</option><option value="0" data-i18n="ui.desligado">Desligado</option></select>
                 </div>
                 <div class="qe-field">
-                  <label class="qe-label" for="qeLnEspessura">Espessura da linha</label>
-                  <select class="qe-select" id="qeLnEspessura"><option value="fina">Fina</option><option value="media">Média</option><option value="grossa">Grossa</option></select>
+                  <label class="qe-label" for="qeLnEspessura" data-i18n="ui.espessura_da_linha">Espessura da linha</label>
+                  <select class="qe-select" id="qeLnEspessura"><option value="fina" data-i18n="ui.fina">Fina</option><option value="media" data-i18n="ui.media">Média</option><option value="grossa" data-i18n="ui.grossa">Grossa</option></select>
                 </div>
               </div>
               <fieldset class="qe-field">
-                <legend class="qe-label">Séries</legend>
+                <legend class="qe-label" data-i18n="ui.series">Séries</legend>
                 <div class="qe-ln-series" id="qeLnSeries"></div>
               </fieldset>
-              <p class="qe-hint">Períodos de Forecast (projeção) são desenhados pontilhados automaticamente; os realizados seguem o estilo da série.</p>
+              <p class="qe-hint" data-i18n="ui.periodos_de_forecast_projecao_sao_desenhad">Períodos de Forecast (projeção) são desenhados pontilhados automaticamente; os realizados seguem o estilo da série.</p>
               <fieldset class="qe-field">
-                <legend class="qe-label">Percentis (linhas de referência)</legend>
-                <div class="qe-pct-chips" id="qePctChips" role="group" aria-label="Percentis exibidos"></div>
+                <legend class="qe-label" data-i18n="ui.percentis_linhas_de_referencia">Percentis (linhas de referência)</legend>
+                <div class="qe-pct-chips" id="qePctChips" role="group" aria-label="Percentis exibidos" data-i18n-aria="ui.percentis_exibidos"></div>
                 <div class="qe-row qe-row-acao">
-                  <input class="qe-input" id="qePctNovo" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="Outro percentil (1–99)" aria-label="Outro percentil, de 1 a 99">
-                  <button type="button" class="qe-btn" id="qePctAdd">Adicionar</button>
+                  <input class="qe-input" id="qePctNovo" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="Outro percentil (1–99)" aria-label="Outro percentil, de 1 a 99" data-i18n-ph="ui.outro_percentil_199" data-i18n-aria="ui.outro_percentil_de_1_a_99">
+                  <button type="button" class="qe-btn" id="qePctAdd" data-i18n="ui.adicionar">Adicionar</button>
                 </div>
-                <label class="qe-label" for="qePctBase">Calcular sobre</label>
-                <select class="qe-select" id="qePctBase"><option value="serie:AF">Actual | Forecast</option><option value="serie:B">Budget</option><option value="serie:P">Plan</option><option value="todas">Todas as séries exibidas</option></select>
-                <p class="qe-hint">Até 5 percentis. Cálculo igual ao PERCENTIL.INC do Excel, sobre os pontos exibidos.</p>
+                <label class="qe-label" for="qePctBase" data-i18n="ui.calcular_sobre">Calcular sobre</label>
+                <select class="qe-select" id="qePctBase"><option value="serie:AF">Actual | Forecast</option><option value="serie:B">Budget</option><option value="serie:P">Plan</option><option value="todas" data-i18n="ui.todas_as_series_exibidas">Todas as séries exibidas</option></select>
+                <p class="qe-hint" data-i18n="ui.ate_5_percentis_calculo_igual_ao_percentil">Até 5 percentis. Cálculo igual ao PERCENTIL.INC do Excel, sobre os pontos exibidos.</p>
               </fieldset>
             </div>
           </details>
@@ -1690,10 +1690,10 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <section class="qe-sec" data-sec="ident" hidden>
         <div class="qe-sec-body">
           <div class="qe-field">
-            <label class="qe-label" for="qeNome">Nome do gráfico <span class="qe-req" aria-hidden="true">*</span></label>
+            <label class="qe-label" for="qeNome"><span data-i18n="ui.nome_do_grafico">Nome do gráfico</span> <span class="qe-req" aria-hidden="true">*</span></label>
             <input class="qe-input" id="qeNome" type="text" maxlength="100" autocomplete="off" required aria-required="true" aria-describedby="qeNomeHint qeNomeErr">
             <div class="qe-hint-row">
-              <span class="qe-hint" id="qeNomeHint">Identifica o gráfico no banco. Independe do título exibido.</span>
+              <span class="qe-hint" id="qeNomeHint" data-i18n="ui.identifica_o_grafico_no_banco_independe_do">Identifica o gráfico no banco. Independe do título exibido.</span>
               <span class="qe-count" id="qeNomeCount" aria-hidden="true">0/100</span>
             </div>
             <p class="qe-error" id="qeNomeErr" hidden></p>
@@ -1705,41 +1705,41 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <section class="qe-sec" data-sec="titulo" hidden>
         <div class="qe-sec-body">
           <fieldset class="qe-field">
-            <legend class="qe-label">Tipo de título</legend>
+            <legend class="qe-label" data-i18n="ui.tipo_de_titulo">Tipo de título</legend>
             <div class="qe-seg">
-              <label><input type="radio" name="qeTituloModo" value="auto"><span>Automático</span></label>
-              <label><input type="radio" name="qeTituloModo" value="fixo"><span>Fixo</span></label>
-              <label><input type="radio" name="qeTituloModo" value="dinamico"><span>Dinâmico</span></label>
+              <label><input type="radio" name="qeTituloModo" value="auto"><span data-i18n="ui.automatico">Automático</span></label>
+              <label><input type="radio" name="qeTituloModo" value="fixo"><span data-i18n="ui.fixo">Fixo</span></label>
+              <label><input type="radio" name="qeTituloModo" value="dinamico"><span data-i18n="ui.dinamico">Dinâmico</span></label>
             </div>
-            <span class="qe-hint" data-show="auto">Usa o Product selecionado no filtro (padrão).</span>
+            <span class="qe-hint" data-show="auto" data-i18n="ui.usa_o_product_selecionado_no_filtro_padrao">Usa o Product selecionado no filtro (padrão).</span>
           </fieldset>
           <div class="qe-field" data-show="fixo">
-            <label class="qe-label" for="qeTituloFixo">Texto do título</label>
+            <label class="qe-label" for="qeTituloFixo" data-i18n="ui.texto_do_titulo">Texto do título</label>
             <input class="qe-input" id="qeTituloFixo" type="text" maxlength="120" autocomplete="off">
           </div>
           <div data-show="dinamico">
             <fieldset class="qe-field">
-              <legend class="qe-label">Campos e ordem</legend>
+              <legend class="qe-label" data-i18n="ui.campos_e_ordem">Campos e ordem</legend>
               <ol class="qe-fieldlist" id="qeCampos"></ol>
-              <span class="qe-hint">Valores vêm dos filtros do gráfico. Business não é um filtro do dashboard: aparece no nome do Site (ex.: “Copper Business | Global”).</span>
+              <span class="qe-hint" data-i18n="ui.valores_vem_dos_filtros_do_grafico_busines">Valores vêm dos filtros do gráfico. Business não é um filtro do dashboard: aparece no nome do Site (ex.: “Copper Business | Global”).</span>
             </fieldset>
             <div class="qe-field">
-              <label class="qe-label" for="qeSep">Separador</label>
+              <label class="qe-label" for="qeSep" data-i18n="ui.separador">Separador</label>
               <select class="qe-select" id="qeSep"></select>
             </div>
             <div class="qe-row">
               <div class="qe-field">
-                <label class="qe-label" for="qePrefixo">Prefixo</label>
+                <label class="qe-label" for="qePrefixo" data-i18n="ui.prefixo">Prefixo</label>
                 <input class="qe-input" id="qePrefixo" type="text" maxlength="40" autocomplete="off">
               </div>
               <div class="qe-field">
-                <label class="qe-label" for="qeSufixo">Sufixo</label>
+                <label class="qe-label" for="qeSufixo" data-i18n="ui.sufixo">Sufixo</label>
                 <input class="qe-input" id="qeSufixo" type="text" maxlength="40" autocomplete="off">
               </div>
             </div>
           </div>
           <div class="qe-field">
-            <span class="qe-label" id="qePreviewLbl">Pré-visualização</span>
+            <span class="qe-label" id="qePreviewLbl" data-i18n="ui.pre_visualizacao">Pré-visualização</span>
             <div class="qe-preview" id="qePreview" role="status" aria-labelledby="qePreviewLbl"></div>
           </div>
         </div>
@@ -1748,15 +1748,15 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <section class="qe-sec" data-sec="fontes" hidden>
         <div class="qe-sec-body">
           <div class="qe-field">
-            <span class="qe-label" id="qeFtPresetLbl">Estilo rápido</span>
+            <span class="qe-label" id="qeFtPresetLbl" data-i18n="ui.estilo_rapido">Estilo rápido</span>
             <div class="qe-ft-presets" role="group" aria-labelledby="qeFtPresetLbl">
-              <button type="button" class="qe-btn" data-ft-preset="executivo">Executivo</button>
-              <button type="button" class="qe-btn" data-ft-preset="apresentacao">Apresentação</button>
-              <button type="button" class="qe-btn" data-ft-preset="compacto">Compacto</button>
+              <button type="button" class="qe-btn" data-ft-preset="executivo" data-i18n="ui.executivo">Executivo</button>
+              <button type="button" class="qe-btn" data-ft-preset="apresentacao" data-i18n="ui.apresentacao">Apresentação</button>
+              <button type="button" class="qe-btn" data-ft-preset="compacto" data-i18n="ui.compacto">Compacto</button>
             </div>
           </div>
           <div class="qe-ft-lista" id="qeFontes"></div>
-          <p class="qe-hint">Tamanho relativo ao padrão (70% a 160%), que já se ajusta à tela. Aplicado na hora; grave em Salvar.</p>
+          <p class="qe-hint" data-i18n="ui.tamanho_relativo_ao_padrao_70_a_160_que_ja">Tamanho relativo ao padrão (70% a 160%), que já se ajusta à tela. Aplicado na hora; grave em Salvar.</p>
         </div>
       </section>
 
@@ -1764,19 +1764,19 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <div class="qe-sec-body">
           <div class="qe-row">
             <div class="qe-field">
-              <label class="qe-label" for="qeDecBar">Decimais das barras</label>
+              <label class="qe-label" for="qeDecBar" data-i18n="ui.decimais_das_barras">Decimais das barras</label>
               <div class="qe-stepper">
-                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)">&minus;</button>
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)" data-i18n-aria="ui.menos_uma_casa_decimal_barras">&minus;</button>
                 <input class="qe-input qe-step-val" id="qeDecBar" type="number" min="0" max="3" step="1" inputmode="numeric">
-                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)">+</button>
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)" data-i18n-aria="ui.mais_uma_casa_decimal_barras">+</button>
               </div>
             </div>
             <div class="qe-field">
-              <label class="qe-label" for="qeDecDelta">Decimais do delta</label>
+              <label class="qe-label" for="qeDecDelta" data-i18n="ui.decimais_do_delta">Decimais do delta</label>
               <div class="qe-stepper">
-                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)">&minus;</button>
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)" data-i18n-aria="ui.menos_uma_casa_decimal_delta">&minus;</button>
                 <input class="qe-input qe-step-val" id="qeDecDelta" type="number" min="0" max="3" step="1" inputmode="numeric">
-                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)">+</button>
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)" data-i18n-aria="ui.mais_uma_casa_decimal_delta">+</button>
               </div>
             </div>
           </div>
@@ -1787,74 +1787,74 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <section class="qe-sec" data-sec="unidade" hidden>
         <div class="qe-sec-body">
           <div class="qe-field">
-            <label class="qe-label" for="qeUnidade">Unidade</label>
+            <label class="qe-label" for="qeUnidade" data-i18n="ui.unidade">Unidade</label>
             <select class="qe-select" id="qeUnidade"></select>
           </div>
           <div class="qe-field" data-show="unidade-custom">
-            <label class="qe-label" for="qeUnidadeCustom">Unidade personalizada</label>
+            <label class="qe-label" for="qeUnidadeCustom" data-i18n="ui.unidade_personalizada">Unidade personalizada</label>
             <input class="qe-input" id="qeUnidadeCustom" type="text" maxlength="12" autocomplete="off" aria-describedby="qeUnidadeErr">
             <p class="qe-error" id="qeUnidadeErr" hidden></p>
           </div>
           <div class="qe-field">
-            <label class="qe-label" for="qeEscala">Escala dos valores</label>
+            <label class="qe-label" for="qeEscala" data-i18n="ui.escala_dos_valores">Escala dos valores</label>
             <select class="qe-select" id="qeEscala"></select>
           </div>
           <div class="qe-field" data-show="escala-custom">
-            <label class="qe-label" for="qeFator">Fator de escala (multiplica o valor exibido)</label>
+            <label class="qe-label" for="qeFator" data-i18n="ui.fator_de_escala_multiplica_o_valor_exibido">Fator de escala (multiplica o valor exibido)</label>
             <input class="qe-input" id="qeFator" type="number" min="0.000000001" step="any" inputmode="decimal" aria-describedby="qeFatorErr">
             <p class="qe-error" id="qeFatorErr" hidden></p>
           </div>
-          <label class="qe-check qe-field"><input type="checkbox" id="qeNosRotulos"> Exibir a unidade nos rótulos das barras</label>
-          <p class="qe-hint">Aplicada no subtítulo e nos valores das barras. Os dados de origem não mudam e os deltas (%) não usam unidade.</p>
+          <label class="qe-check qe-field"><input type="checkbox" id="qeNosRotulos"> <span data-i18n="ui.exibir_a_unidade_nos_rotulos_das_barras">Exibir a unidade nos rótulos das barras</span></label>
+          <p class="qe-hint" data-i18n="ui.aplicada_no_subtitulo_e_nos_valores_das_ba">Aplicada no subtítulo e nos valores das barras. Os dados de origem não mudam e os deltas (%) não usam unidade.</p>
         </div>
       </section>
 
       <section class="qe-sec" data-sec="cores" hidden>
         <div class="qe-sec-body">
           <fieldset class="qe-field" id="qeModoCorBox">
-            <legend class="qe-label">Modo de Coloração</legend>
+            <legend class="qe-label" data-i18n="ui.modo_de_coloracao">Modo de Coloração</legend>
             <div class="qe-seg">
-              <label><input type="radio" name="qeModoCor" value="grupo"><span>Por Grupo</span></label>
-              <label><input type="radio" name="qeModoCor" value="coluna"><span>Por Coluna</span></label>
+              <label><input type="radio" name="qeModoCor" value="grupo"><span data-i18n="ui.por_grupo">Por Grupo</span></label>
+              <label><input type="radio" name="qeModoCor" value="coluna"><span data-i18n="ui.por_coluna">Por Coluna</span></label>
             </div>
           </fieldset>
           <div class="qe-colunas" id="qeColunasBox" hidden>
-            <p class="qe-colunas-tit" id="qeColunasTit">Cores das colunas</p>
+            <p class="qe-colunas-tit" id="qeColunasTit" data-i18n="ui.cores_das_colunas">Cores das colunas</p>
             <div class="qe-colunas-paleta">
               <div class="qe-field">
-                <label class="qe-label" for="qePaleta">Paleta</label>
+                <label class="qe-label" for="qePaleta" data-i18n="ui.paleta">Paleta</label>
                 <select class="qe-select" id="qePaleta"></select>
               </div>
             </div>
             <div class="qe-colors" id="qeColunas" role="group" aria-labelledby="qeColunasTit"></div>
-            <button type="button" class="qe-btn" id="qeColunasPadrao" style="width:100%;margin-top:10px;">Restaurar cores das colunas</button>
+            <button type="button" class="qe-btn" id="qeColunasPadrao" style="width:100%;margin-top:10px;" data-i18n="ui.restaurar_cores_das_colunas">Restaurar cores das colunas</button>
           </div>
           <div class="qe-colors" id="qeCores"></div>
-          <button type="button" class="qe-btn" id="qeCoresPadrao" style="width:100%;margin-top:12px;">Restaurar cores padrão</button>
+          <button type="button" class="qe-btn" id="qeCoresPadrao" style="width:100%;margin-top:12px;" data-i18n="ui.restaurar_cores_padrao">Restaurar cores padrão</button>
         </div>
       </section>
 
       <section class="qe-sec" data-sec="persist" hidden>
         <div class="qe-sec-body">
           <div class="qe-field">
-            <label class="qe-label" for="qeSalvos">Configurações salvas</label>
+            <label class="qe-label" for="qeSalvos" data-i18n="ui.configuracoes_salvas">Configurações salvas</label>
             <div class="qe-row qe-row-acao">
               <select class="qe-select" id="qeSalvos"></select>
-              <button type="button" class="qe-btn" id="qeCarregar">Carregar</button>
+              <button type="button" class="qe-btn" id="qeCarregar" data-i18n="ui.carregar">Carregar</button>
             </div>
-            <span class="qe-hint">Traz para este gráfico uma configuração já salva no banco.</span>
+            <span class="qe-hint" data-i18n="ui.traz_para_este_grafico_uma_configuracao_ja">Traz para este gráfico uma configuração já salva no banco.</span>
           </div>
           <div class="qe-status" id="qeStatus"></div>
-          <button type="button" class="qe-btn" id="qeRecarregar" style="width:100%;margin-top:12px;">Recarregar do banco</button>
+          <button type="button" class="qe-btn" id="qeRecarregar" style="width:100%;margin-top:12px;" data-i18n="ui.recarregar_do_banco">Recarregar do banco</button>
         </div>
       </section>
     </div>
 
     <p class="qe-msg" id="qeMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot">
-      <button type="button" class="qe-btn" id="qeRestaurar" title="Volta às configurações padrão no gráfico (Salvar grava no banco)">Restaurar padrão</button>
-      <button type="button" class="qe-btn" id="qeCancelar" title="Desfaz as alterações feitas desde que o gráfico foi aberto no painel (ou desde o último Salvar)">Cancelar</button>
-      <button type="button" class="qe-btn primary qe-span-3" id="qeSalvar" title="Valida, aplica e salva no banco">Salvar</button>
+      <button type="button" class="qe-btn" id="qeRestaurar" title="Volta às configurações padrão no gráfico (Salvar grava no banco)" data-i18n="ui.restaurar_padrao" data-i18n-title="ui.volta_as_configuracoes_padrao_no_grafico_s">Restaurar padrão</button>
+      <button type="button" class="qe-btn" id="qeCancelar" title="Desfaz as alterações feitas desde que o gráfico foi aberto no painel (ou desde o último Salvar)" data-i18n="ui.cancelar" data-i18n-title="ui.desfaz_as_alteracoes_feitas_desde_que_o_gr">Cancelar</button>
+      <button type="button" class="qe-btn primary qe-span-3" id="qeSalvar" title="Valida, aplica e salva no banco" data-i18n="ui.salvar" data-i18n-title="ui.valida_aplica_e_salva_no_banco">Salvar</button>
     </footer>
   </form>
   </section>
@@ -1872,17 +1872,17 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <p class="chart-subtitle" id="chartSubtitle">(%)</p>
       </div>
       <div class="chart-export">
-        <button type="button" class="chart-export-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Exportar gráfico" title="Exportar gráfico"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
+        <button type="button" class="chart-export-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Exportar gráfico" title="Exportar gráfico" data-i18n-aria="ui.exportar_grafico" data-i18n-title="ui.exportar_grafico"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
         <div class="chart-export-menu" role="menu" hidden>
-          <button type="button" role="menuitem" data-export="copiar">Copiar imagem</button>
-          <button type="button" role="menuitem" data-export="png">Baixar PNG</button>
+          <button type="button" role="menuitem" data-export="copiar" data-i18n="ui.copiar_imagem">Copiar imagem</button>
+          <button type="button" role="menuitem" data-export="png" data-i18n="ui.baixar_png">Baixar PNG</button>
         </div>
       </div>
-      <div class="chart-area" id="chartArea" role="group" aria-label="Colunas do gráfico"></div>
+      <div class="chart-area" id="chartArea" role="group" aria-label="Colunas do gráfico" data-i18n-aria="ui.colunas_do_grafico"></div>
       <div class="chart-pager" id="chartPager" hidden></div>
-      <div class="chart-resize-handle" id="chartResizeHandle" title="Redimensionar" aria-hidden="true"></div>
+      <div class="chart-resize-handle" id="chartResizeHandle" title="Redimensionar" aria-hidden="true" data-i18n-title="ui.redimensionar"></div>
     </div>
-    <div class="color-palette" id="chartPalette" role="listbox" aria-label="Paleta de cores"></div>
+    <div class="color-palette" id="chartPalette" role="listbox" aria-label="Paleta de cores" data-i18n-aria="ui.paleta_de_cores"></div>
   </div>
 
 </div>
@@ -1968,13 +1968,190 @@ const i18n = {
   'en':    { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.number': 'Number format', 'settings.numberInfo': 'Decimal and thousands separators in charts', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
              'nav.menu': 'Menu', 'nav.quartely': 'Quarterly', 'nav.monthly': 'Monthly', 'chart.empty': 'No data for the selected filters.' }
 };
+// Textos da interface: chave → [pt-BR, en]. HTML estático usa data-i18n (texto),
+// data-i18n-title / -aria / -ph (placeholder) / -tip (dica da paleta); o JS usa tx('chave').
+const I18N_UI = {
+  'ui.menu': ['Menu', 'Menu'],
+  'ui.configuracoes': ['Configurações', 'Settings'],
+  'ui.alternar_tema': ['Alternar tema', 'Toggle theme'],
+  'ui.idioma': ['Idioma', 'Language'],
+  'ui.brasil_1_234_56': ['Brasil — 1.234,56', 'Brazil — 1.234,56'],
+  'ui.canada_1_234_56': ['Canadá — 1,234.56', 'Canada — 1,234.56'],
+  'ui.edicao_do_grafico': ['Edição do gráfico', 'Chart editing'],
+  'ui.adicionar_grafico': ['Adicionar gráfico', 'Add chart'],
+  'ui.excluir_grafico': ['Excluir gráfico', 'Delete chart'],
+  'ui.filtros': ['Filtros', 'Filters'],
+  'ui.tipo_de_grafico': ['Tipo de Gráfico', 'Chart Type'],
+  'ui.identificacao': ['Identificação', 'Identification'],
+  'ui.titulo': ['Título', 'Title'],
+  'ui.formatacao_numerica': ['Formatação numérica', 'Number formatting'],
+  'ui.fontes': ['Fontes', 'Fonts'],
+  'ui.unidade_de_medida': ['Unidade de medida', 'Unit of measure'],
+  'ui.cores': ['Cores', 'Colors'],
+  'ui.persistencia': ['Persistência', 'Persistence'],
+  'ui.editando_grafico': ['Editando gráfico', 'Editing chart'],
+  'ui.editando': ['Editando', 'Editing'],
+  'ui.recolher_painel': ['Recolher painel', 'Collapse panel'],
+  'ui.fechar_edicao': ['Fechar edição', 'Close editor'],
+  'ui.selecione_um_grafico_para_excluir': ['Selecione um gráfico para excluir', 'Select a chart to delete'],
+  'ui.o_grafico_sai_do_quadro_uma_configuracao_s': ['O gráfico sai do quadro. Uma configuração salva no banco é mantida e pode ser carregada em outro gráfico.', 'The chart is removed from the board. A configuration saved in the database is kept and can be loaded into another chart.'],
+  'ui.cancelar': ['Cancelar', 'Cancel'],
+  'ui.excluir': ['Excluir', 'Delete'],
+  'ui.nome_do_grafico_opcional': ['Nome do gráfico (opcional)', 'Chart name (optional)'],
+  'ui.produto': ['Produto', 'Product'],
+  'ui.comecar_de_uma_configuracao_salva_opcional': ['Começar de uma configuração salva (opcional)', 'Start from a saved configuration (optional)'],
+  'ui.o_novo_grafico_usa_os_filtros_padrao_do_da': ['O novo gráfico usa os filtros padrão do dashboard e o tamanho do gráfico selecionado. Depois de criado, ele fica selecionado para configuração.', 'The new chart uses the dashboard default filters and the size of the selected chart. Once created, it stays selected for configuration.'],
+  'ui.adicionar': ['Adicionar', 'Add'],
+  'ui.selecione_um_grafico_para_filtrar': ['Selecione um gráfico para filtrar', 'Select a chart to filter'],
+  'ui.filtros_aplicados': ['Filtros aplicados', 'Applied filters'],
+  'ui.limpar_filtros': ['Limpar filtros', 'Clear filters'],
+  'ui.tipo_de_fundo': ['Tipo de fundo', 'Background type'],
+  'ui.padrao': ['Padrão', 'Default'],
+  'ui.cor': ['Cor', 'Color'],
+  'ui.gradiente': ['Gradiente', 'Gradient'],
+  'ui.imagem': ['Imagem', 'Image'],
+  'ui.fundo_oficial_do_quarterly_acompanha_o_tem': ['Fundo oficial do Quarterly: acompanha o tema da engrenagem (claro ou escuro).', 'Official Quarterly background: follows the theme set in the gear menu (light or dark).'],
+  'ui.seletor_de_cor_do_fundo': ['Seletor de cor do fundo', 'Background color picker'],
+  'ui.cores_do_gradiente': ['Cores do gradiente', 'Gradient colors'],
+  'ui.cor_inicial_do_gradiente': ['Cor inicial do gradiente', 'Gradient start color'],
+  'ui.segunda_cor_do_gradiente': ['Segunda cor do gradiente', 'Gradient second color'],
+  'ui.terceira_cor_do_gradiente': ['Terceira cor do gradiente', 'Gradient third color'],
+  'ui.3a_cor': ['3ª cor', '3rd color'],
+  'ui.direcao': ['Direção', 'Direction'],
+  'ui.para_cima_0': ['↑ Para cima (0°)', '↑ Up (0°)'],
+  'ui.diagonal_45': ['↗ Diagonal (45°)', '↗ Diagonal (45°)'],
+  'ui.para_a_direita_90': ['→ Para a direita (90°)', '→ Right (90°)'],
+  'ui.diagonal_135': ['↘ Diagonal (135°)', '↘ Diagonal (135°)'],
+  'ui.para_baixo_180': ['↓ Para baixo (180°)', '↓ Down (180°)'],
+  'ui.diagonal_225': ['↙ Diagonal (225°)', '↙ Diagonal (225°)'],
+  'ui.para_a_esquerda_270': ['← Para a esquerda (270°)', '← Left (270°)'],
+  'ui.diagonal_315': ['↖ Diagonal (315°)', '↖ Diagonal (315°)'],
+  'ui.imagem_png_jpg_ou_webp_ate_5_mb': ['Imagem (PNG, JPG ou WEBP, até 5 MB)', 'Image (PNG, JPG or WEBP, up to 5 MB)'],
+  'ui.escolher_imagem': ['Escolher imagem', 'Choose image'],
+  'ui.nenhum_arquivo_selecionado': ['Nenhum arquivo selecionado', 'No file selected'],
+  'ui.ajuste': ['Ajuste', 'Fit'],
+  'ui.cobrir': ['Cobrir', 'Cover'],
+  'ui.conter': ['Conter', 'Contain'],
+  'ui.tamanho_original': ['Tamanho original', 'Original size'],
+  'ui.posicao': ['Posição', 'Position'],
+  'ui.centralizar': ['Centralizar', 'Center'],
+  'ui.topo': ['Topo', 'Top'],
+  'ui.base': ['Base', 'Bottom'],
+  'ui.esquerda': ['Esquerda', 'Left'],
+  'ui.direita': ['Direita', 'Right'],
+  'ui.topo_a_esquerda': ['Topo à esquerda', 'Top left'],
+  'ui.topo_a_direita': ['Topo à direita', 'Top right'],
+  'ui.base_a_esquerda': ['Base à esquerda', 'Bottom left'],
+  'ui.base_a_direita': ['Base à direita', 'Bottom right'],
+  'ui.repetir_a_imagem': ['Repetir a imagem', 'Repeat image'],
+  'ui.sobreposicao_de_cor_contraste_com_os_cards': ['Sobreposição de cor (contraste com os cards)', 'Color overlay (contrast with the cards)'],
+  'ui.cor_da_sobreposicao': ['Cor da sobreposição', 'Overlay color'],
+  'ui.previa': ['Prévia', 'Preview'],
+  'ui.previa_do_fundo': ['Prévia do fundo', 'Background preview'],
+  'ui.restaurar_o_fundo_salvo_no_banco': ['Restaurar o fundo salvo no banco', 'Restore the background saved in the database'],
+  'ui.aplica_temporariamente_sem_salvar': ['Aplica temporariamente, sem salvar', 'Applies temporarily, without saving'],
+  'ui.visualizar': ['Visualizar', 'Preview'],
+  'ui.descarta_o_que_nao_foi_aplicado': ['Descarta o que não foi aplicado', 'Discards what was not applied'],
+  'ui.aplica_nesta_sessao': ['Aplica nesta sessão', 'Applies in this session'],
+  'ui.aplicar': ['Aplicar', 'Apply'],
+  'ui.restaurar_padrao': ['Restaurar padrão', 'Restore default'],
+  'ui.salva_para_todos_ao_carregar_o_dashboard': ['Salva para todos ao carregar o dashboard', 'Saves for everyone when the dashboard loads'],
+  'ui.salvar': ['Salvar', 'Save'],
+  'ui.selecione_um_grafico_para_editar': ['Selecione um gráfico para editar', 'Select a chart to edit'],
+  'ui.as_configuracoes_abaixo_mudam_conforme_o_t': ['As configurações abaixo mudam conforme o tipo escolhido.', 'The settings below change according to the selected type.'],
+  'ui.configuracoes_de_barras': ['Configurações de Barras', 'Bar settings'],
+  'ui.exibir_delta': ['Exibir Delta', 'Show Delta'],
+  'ui.percentuais_conectores_e_indicadores_posit': ['Percentuais, conectores e indicadores positivos/negativos entre as barras. Aplicado na hora.', 'Percentages, connectors and positive/negative indicators between bars. Applied instantly.'],
+  'ui.configuracoes_de_linhas': ['Configurações de Linhas', 'Line settings'],
+  'ui.mostrar_marcadores': ['Mostrar marcadores', 'Show markers'],
+  'ui.mostrar_rotulos_dos_valores': ['Mostrar rótulos dos valores', 'Show value labels'],
+  'ui.mostrar_legenda': ['Mostrar legenda', 'Show legend'],
+  'ui.suavizacao_da_curva': ['Suavização da curva', 'Curve smoothing'],
+  'ui.ligado': ['Ligado', 'On'],
+  'ui.desligado': ['Desligado', 'Off'],
+  'ui.espessura_da_linha': ['Espessura da linha', 'Line width'],
+  'ui.fina': ['Fina', 'Thin'],
+  'ui.media': ['Média', 'Medium'],
+  'ui.grossa': ['Grossa', 'Thick'],
+  'ui.series': ['Séries', 'Series'],
+  'ui.periodos_de_forecast_projecao_sao_desenhad': ['Períodos de Forecast (projeção) são desenhados pontilhados automaticamente; os realizados seguem o estilo da série.', 'Forecast (projection) periods are drawn dotted automatically; actual periods follow the series style.'],
+  'ui.percentis_linhas_de_referencia': ['Percentis (linhas de referência)', 'Percentiles (reference lines)'],
+  'ui.percentis_exibidos': ['Percentis exibidos', 'Displayed percentiles'],
+  'ui.outro_percentil_de_1_a_99': ['Outro percentil, de 1 a 99', 'Another percentile, from 1 to 99'],
+  'ui.outro_percentil_199': ['Outro percentil (1–99)', 'Another percentile (1–99)'],
+  'ui.calcular_sobre': ['Calcular sobre', 'Calculate on'],
+  'ui.todas_as_series_exibidas': ['Todas as séries exibidas', 'All displayed series'],
+  'ui.ate_5_percentis_calculo_igual_ao_percentil': ['Até 5 percentis. Cálculo igual ao PERCENTIL.INC do Excel, sobre os pontos exibidos.', 'Up to 5 percentiles. Same calculation as Excel PERCENTILE.INC, over the displayed points.'],
+  'ui.nome_do_grafico': ['Nome do gráfico', 'Chart name'],
+  'ui.identifica_o_grafico_no_banco_independe_do': ['Identifica o gráfico no banco. Independe do título exibido.', 'Identifies the chart in the database. Independent of the displayed title.'],
+  'ui.tipo_de_titulo': ['Tipo de título', 'Title type'],
+  'ui.automatico': ['Automático', 'Automatic'],
+  'ui.fixo': ['Fixo', 'Fixed'],
+  'ui.dinamico': ['Dinâmico', 'Dynamic'],
+  'ui.usa_o_product_selecionado_no_filtro_padrao': ['Usa o Product selecionado no filtro (padrão).', 'Uses the Product selected in the filter (default).'],
+  'ui.texto_do_titulo': ['Texto do título', 'Title text'],
+  'ui.campos_e_ordem': ['Campos e ordem', 'Fields and order'],
+  'ui.valores_vem_dos_filtros_do_grafico_busines': ['Valores vêm dos filtros do gráfico. Business não é um filtro do dashboard: aparece no nome do Site (ex.: “Copper Business | Global”).', 'Values come from the chart filters. Business is not a dashboard filter: it appears in the Site name (e.g. “Copper Business | Global”).'],
+  'ui.separador': ['Separador', 'Separator'],
+  'ui.prefixo': ['Prefixo', 'Prefix'],
+  'ui.sufixo': ['Sufixo', 'Suffix'],
+  'ui.pre_visualizacao': ['Pré-visualização', 'Preview'],
+  'ui.estilo_rapido': ['Estilo rápido', 'Quick style'],
+  'ui.executivo': ['Executivo', 'Executive'],
+  'ui.apresentacao': ['Apresentação', 'Presentation'],
+  'ui.compacto': ['Compacto', 'Compact'],
+  'ui.tamanho_relativo_ao_padrao_70_a_160_que_ja': ['Tamanho relativo ao padrão (70% a 160%), que já se ajusta à tela. Aplicado na hora; grave em Salvar.', 'Size relative to the default (70% to 160%), which already adapts to the screen. Applied instantly; store it with Save.'],
+  'ui.decimais_das_barras': ['Decimais das barras', 'Bar decimals'],
+  'ui.menos_uma_casa_decimal_barras': ['Menos uma casa decimal (barras)', 'One fewer decimal place (bars)'],
+  'ui.mais_uma_casa_decimal_barras': ['Mais uma casa decimal (barras)', 'One more decimal place (bars)'],
+  'ui.decimais_do_delta': ['Decimais do delta', 'Delta decimals'],
+  'ui.menos_uma_casa_decimal_delta': ['Menos uma casa decimal (delta)', 'One fewer decimal place (delta)'],
+  'ui.mais_uma_casa_decimal_delta': ['Mais uma casa decimal (delta)', 'One more decimal place (delta)'],
+  'ui.unidade': ['Unidade', 'Unit'],
+  'ui.unidade_personalizada': ['Unidade personalizada', 'Custom unit'],
+  'ui.escala_dos_valores': ['Escala dos valores', 'Value scale'],
+  'ui.fator_de_escala_multiplica_o_valor_exibido': ['Fator de escala (multiplica o valor exibido)', 'Scale factor (multiplies the displayed value)'],
+  'ui.exibir_a_unidade_nos_rotulos_das_barras': ['Exibir a unidade nos rótulos das barras', 'Show the unit in bar labels'],
+  'ui.aplicada_no_subtitulo_e_nos_valores_das_ba': ['Aplicada no subtítulo e nos valores das barras. Os dados de origem não mudam e os deltas (%) não usam unidade.', 'Applied to the subtitle and bar values. Source data does not change and deltas (%) do not use a unit.'],
+  'ui.modo_de_coloracao': ['Modo de Coloração', 'Coloring Mode'],
+  'ui.por_grupo': ['Por Grupo', 'By Group'],
+  'ui.por_coluna': ['Por Coluna', 'By Column'],
+  'ui.cores_das_colunas': ['Cores das colunas', 'Column colors'],
+  'ui.paleta': ['Paleta', 'Palette'],
+  'ui.restaurar_cores_das_colunas': ['Restaurar cores das colunas', 'Restore column colors'],
+  'ui.restaurar_cores_padrao': ['Restaurar cores padrão', 'Restore default colors'],
+  'ui.configuracoes_salvas': ['Configurações salvas', 'Saved configurations'],
+  'ui.carregar': ['Carregar', 'Load'],
+  'ui.traz_para_este_grafico_uma_configuracao_ja': ['Traz para este gráfico uma configuração já salva no banco.', 'Brings a configuration already saved in the database into this chart.'],
+  'ui.recarregar_do_banco': ['Recarregar do banco', 'Reload from database'],
+  'ui.volta_as_configuracoes_padrao_no_grafico_s': ['Volta às configurações padrão no gráfico (Salvar grava no banco)', 'Returns the chart to the default settings (Save stores it in the database)'],
+  'ui.desfaz_as_alteracoes_feitas_desde_que_o_gr': ['Desfaz as alterações feitas desde que o gráfico foi aberto no painel (ou desde o último Salvar)', 'Undoes the changes made since the chart was opened in the panel (or since the last Save)'],
+  'ui.valida_aplica_e_salva_no_banco': ['Valida, aplica e salva no banco', 'Validates, applies and saves to the database'],
+  'ui.exportar_grafico': ['Exportar gráfico', 'Export chart'],
+  'ui.copiar_imagem': ['Copiar imagem', 'Copy image'],
+  'ui.baixar_png': ['Baixar PNG', 'Download PNG'],
+  'ui.colunas_do_grafico': ['Colunas do gráfico', 'Chart columns'],
+  'ui.redimensionar': ['Redimensionar', 'Resize'],
+  'ui.paleta_de_cores': ['Paleta de cores', 'Color palette'],
+  'ui.selecionado': ['Selecionado', 'Selected']
+};
+Object.entries(I18N_UI).forEach(([k, [pt, en]]) => { i18n['pt-BR'][k] = pt; i18n.en[k] = en; });
+let idioma = 'pt-BR';
+// Texto no idioma atual; {nome} no texto é trocado por vars.nome
+const tx = (k, vars) => {
+  let s = (i18n[idioma] && i18n[idioma][k]) || i18n['pt-BR'][k] || k;
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, n) => (vars[n] != null ? vars[n] : m));
+  return s;
+};
 function applyI18n(lang) {
+  if (!i18n[lang]) lang = 'pt-BR';
+  idioma = lang;
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (i18n[lang] && i18n[lang][key]) el.textContent = i18n[lang][key];
   });
-  [['data-i18n-title', 'title'], ['data-i18n-aria', 'aria-label']].forEach(([attr, alvo]) => {
+  [['data-i18n-title', 'title'], ['data-i18n-aria', 'aria-label'], ['data-i18n-ph', 'placeholder'], ['data-i18n-tip', 'data-tip']].forEach(([attr, alvo]) => {
     document.querySelectorAll('[' + attr + ']').forEach(el => {
       const v = i18n[lang] && i18n[lang][el.getAttribute(attr)];
       if (v) el.setAttribute(alvo, v);
@@ -1982,9 +2159,14 @@ function applyI18n(lang) {
   });
   const sel = document.getElementById('langSelect');
   if (sel) sel.value = i18n[lang] ? lang : 'pt-BR';
+  // Selos "Selecionado"/"Editando" do card vêm do CSS (::after)
+  document.documentElement.style.setProperty('--txt-selecionado', JSON.stringify(tx('ui.selecionado')));
+  document.documentElement.style.setProperty('--txt-editando', JSON.stringify(tx('ui.editando')));
   try { localStorage.setItem('vdt-lang', lang); } catch (e) {}
+  // Partes montadas pelo JS se redesenham no novo idioma
+  document.dispatchEvent(new CustomEvent('qtr:idioma', { detail: lang }));
 }
-applyI18n(localStorage.getItem('vdt-lang') || 'pt-BR');
+applyI18n((() => { try { return localStorage.getItem('vdt-lang'); } catch (e) { return null; } })() || 'pt-BR');
 document.getElementById('langSelect').addEventListener('change', e => applyI18n(e.target.value));
 document.getElementById('numSelect').value = numLocale;
 document.getElementById('numSelect').addEventListener('change', e => {
