@@ -1846,12 +1846,11 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           </fieldset>
           <div class="qe-colunas" id="qeColunasBox" hidden>
             <p class="qe-colunas-tit" id="qeColunasTit">Cores das colunas</p>
-            <div class="qe-row qe-colunas-paleta">
+            <div class="qe-colunas-paleta">
               <div class="qe-field">
                 <label class="qe-label" for="qePaleta">Paleta</label>
                 <select class="qe-select" id="qePaleta"></select>
               </div>
-              <button type="button" class="qe-btn" id="qeAplicarPaleta">Aplicar Paleta</button>
             </div>
             <div class="qe-colors" id="qeColunas" role="group" aria-labelledby="qeColunasTit"></div>
             <button type="button" class="qe-btn" id="qeColunasPadrao" style="width:100%;margin-top:10px;">Restaurar cores das colunas</button>
@@ -1879,10 +1878,9 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
     <p class="qe-msg" id="qeMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot">
-      <button type="button" class="qe-btn" id="qeRestaurar" title="Volta às configurações padrão (aplique ou salve para confirmar)">Restaurar padrão</button>
-      <button type="button" class="qe-btn" id="qeCancelar" title="Descarta as alterações não aplicadas">Cancelar</button>
-      <button type="button" class="qe-btn" id="qeAplicar" title="Aplica no gráfico sem salvar no banco">Aplicar</button>
-      <button type="button" class="qe-btn primary" id="qeSalvar" title="Valida, aplica e salva no banco">Salvar</button>
+      <button type="button" class="qe-btn" id="qeRestaurar" title="Volta às configurações padrão no gráfico (Salvar grava no banco)">Restaurar padrão</button>
+      <button type="button" class="qe-btn" id="qeCancelar" title="Desfaz as alterações feitas desde que o gráfico foi aberto no painel (ou desde o último Salvar)">Cancelar</button>
+      <button type="button" class="qe-btn primary qe-span-3" id="qeSalvar" title="Valida, aplica e salva no banco">Salvar</button>
     </footer>
   </form>
   </section>
@@ -3593,6 +3591,7 @@ function setChartIds(c, on) {
 
 function activateChart(c) {
   if (!c || activeChart === c) return;
+  aplicarRascunhoAoVivo(0); // texto ainda em pausa vai para o gráfico que estava em edição
   descartarFiltrosPendentes(); // filtro não aplicado nunca vai para outro gráfico
   closeChartPalette();
   closeAllPanels();
@@ -4067,8 +4066,8 @@ function initCharts() {
 // EDIÇÃO DO GRÁFICO — barra de ferramentas + painel de propriedades
 // Cada card guarda a própria configuração em c.cfg (nome/vínculo no banco,
 // título, casas decimais, unidade) e as cores em c.colors. O painel edita
-// um RASCUNHO (editor.draft): o gráfico só muda em Aplicar/Salvar;
-// Cancelar descarta. Fonte principal = banco (api/config-graficos); o
+// um RASCUNHO (editor.draft) aplicado na hora no gráfico; Salvar grava no
+// banco e Cancelar volta ao estado de quando o gráfico foi aberto no painel. Fonte principal = banco (api/config-graficos); o
 // 'vdt-charts' do localStorage é a cópia local usada enquanto o banco não
 // responde ou se ele estiver indisponível.
 // ════════════════════════════════════════════════════════════════════
@@ -4366,6 +4365,7 @@ function editorSync() {
   editor.chart = activeChart;
   closeChartPalette();
   loadDraft();
+  guardarBaseEditor();
   renderEditor();
   if (editor.open && editor.view === 'filtros') abrirFiltros(); // filtros do gráfico recém-selecionado
   if (editor.open && editor.view === 'excluir') abrirExcluir();
@@ -4519,6 +4519,7 @@ function moveTitleField(k, dir) {
   [campos[i], campos[j]] = [campos[j], campos[i]];
   renderTitleFields();
   refreshEditorDerived();
+  aplicarRascunhoAoVivo();
   const lista = $qe('qeCampos');
   const btn = lista.querySelector(`[data-campo-k="${k}"][data-mover="${dir}"]`);
   (btn && !btn.disabled ? btn : lista.querySelector(`[data-campo-k="${k}"]:not(:disabled)`)).focus();
@@ -4749,6 +4750,7 @@ function alternarPercentil(p) {
   else ln.percentis = normalizarPercentis([...ln.percentis, p]);
   renderPercentis();
   refreshEditorDerived();
+  aplicarRascunhoAoVivo();
 }
 
 function renderLinhasSeries() {
@@ -4872,12 +4874,33 @@ function commitDraft(c) {
   renderEditor();
 }
 
-function aplicarEditor() {
-  if (!editor.draft || editor.saving) return;
-  readEditorForm();
-  if (!validateDraft(false)) { editorMsg('Corrija os campos destacados.', 'err'); return; }
-  commitDraft(editor.chart);
-  editorMsg('Alterações aplicadas ao gráfico (ainda não salvas no banco).', 'ok');
+// Toda alteração do painel vale na hora no gráfico (sem Aplicar); Salvar grava no banco.
+// Texto digitado espera uma pausa curta; só redesenha o que mudou.
+let vivoTimer = 0;
+function aplicarRascunhoAoVivo(atraso) {
+  clearTimeout(vivoTimer);
+  if (atraso) { vivoTimer = setTimeout(() => aplicarRascunhoAoVivo(0), atraso); return; }
+  const c = editor.chart, d = editor.draft;
+  if (!c || !d || editor.saving) return;
+  const u = d.cfg.unidade; // unidade inválida espera a correção (o gráfico mantém a última válida)
+  const unidadeOk = !(u.valor === 'custom' && !u.custom.trim()) && Number.isFinite(u.fator) && u.fator > 0 && u.fator <= 1e9;
+  const novo = normalizeChartCfg(JSON.parse(JSON.stringify({ ...d.cfg, nome: d.cfg.nome.trim(), unidade: unidadeOk ? d.cfg.unidade : c.cfg.unidade })));
+  const semTitulo = x => JSON.stringify({ ...x, titulo: 0, nome: 0 });
+  const soTitulo = semTitulo(novo) === semTitulo(c.cfg) && JSON.stringify({ ...c.colors }) === JSON.stringify({ ...d.colors });
+  if (JSON.stringify(novo) === JSON.stringify(c.cfg) && soTitulo) return;
+  c.cfg = novo;
+  setChartColors(c, { ...d.colors });
+  if (c === activeChart) { if (soTitulo) updateChartTitle(); else renderActiveChart(); }
+  saveCharts();
+  labelCharts();
+  renderEditorTarget();
+  renderDbStatus();
+}
+
+// Ponto de partida do Cancelar: estado do gráfico ao ser aberto no painel (ou ao salvar)
+function guardarBaseEditor() {
+  const c = editor.chart;
+  editor.base = c ? { cfg: JSON.parse(JSON.stringify(c.cfg)), colors: { ...c.colors } } : null;
 }
 
 function setEditorSaving(on) {
@@ -4910,6 +4933,7 @@ async function salvarEditor() {
         editor.draft.cfg.idConfig = c.cfg.idConfig;
         editor.draft.cfg.nome = c.cfg.nome;
       }
+      if (editor.chart === c) guardarBaseEditor();
       renderEditorTarget();
       renderDbStatus();
       editorMsg(`Configuração “${c.cfg.nome}” salva no banco.`, 'ok');
@@ -4925,10 +4949,19 @@ async function salvarEditor() {
 }
 
 function cancelarEditor() {
-  if (!editor.chart || editor.saving) return;
+  const c = editor.chart, b = editor.base;
+  if (!c || editor.saving) return;
+  clearTimeout(vivoTimer);
+  if (b) {
+    const antes = JSON.stringify([c.cfg, c.colors]);
+    c.cfg = JSON.parse(JSON.stringify(b.cfg));
+    setChartColors(c, { ...b.colors });
+    if (c === activeChart && JSON.stringify([c.cfg, c.colors]) !== antes) { renderActiveChart(); labelCharts(); }
+    saveCharts();
+  }
   loadDraft();
   renderEditor();
-  editorMsg('Alterações não aplicadas foram descartadas.', 'info');
+  editorMsg('Alterações desfeitas: o gráfico voltou ao estado anterior à edição.', 'info');
 }
 
 function restaurarPadraoEditor() {
@@ -4938,7 +4971,8 @@ function restaurarPadraoEditor() {
   editor.draft = { cfg: { ...defaultChartCfg(), nome, idConfig }, colors: { bgChart: '#F6F6F6' } };
   clearFieldErrors();
   renderEditor();
-  editorMsg('Padrão carregado no painel. Clique em Aplicar ou Salvar para confirmar neste gráfico.', 'info');
+  aplicarRascunhoAoVivo();
+  editorMsg('Padrão aplicado ao gráfico. Clique em Salvar para gravar no banco.', 'ok');
 }
 
 function restaurarCoresEditor() {
@@ -5556,19 +5590,20 @@ function syncSteppers() {
   });
 }
 
-function onEditorInput(t) {
+function onEditorInput(t, e) {
   if (!editor.draft) return;
   if (t.classList.contains('qe-step-val') && t.value !== '') { t.value = String(casasValidas(t)); syncSteppers(); }
   if (t.matches('input[data-campo]')) {
     const f = editor.draft.cfg.titulo.campos.find(x => x.k === t.dataset.campo);
     if (f) f.on = t.checked;
+    aplicarRascunhoAoVivo();
   } else if (t.name === 'qeModoCor') {
     if (t.checked && editor.draft.cfg.modoCor !== t.value) {
       editor.draft.cfg.modoCor = t.value;
       aplicarColunasAoVivo(t.value === 'coluna' ? 'Modo Por Coluna: defina a cor de cada coluna.' : 'Modo Por Grupo: cores das séries aplicadas.');
     }
   } else if (t.id === 'qePaleta') {
-    // a paleta só vale ao clicar em "Aplicar Paleta"
+    if (editor.draft.cfg.paletaColunas !== t.value) { aplicarPaletaColunas(); $qe('qePaleta').focus(); }
   } else if (t.id === 'qeExibirDelta') {
     const c = editor.chart, ligado = t.checked;
     editor.draft.cfg.exibirDelta = ligado;
@@ -5592,8 +5627,10 @@ function onEditorInput(t) {
     editor.draft.cfg.linhas.series[t.dataset.lnOpac].opacidade = 1 - Number(t.value) / 100;
     $qe(t.dataset.lnRotulo).textContent = t.value + '%';
     aplicarCoresAoVivo();
-  } else if (t.id !== 'qeSalvos') {
+  } else if (t.id !== 'qeSalvos' && t.id !== 'qePctNovo') {
     readEditorForm();
+    // Texto digitado espera uma pausa; seleções, caixas e passos valem na hora
+    aplicarRascunhoAoVivo(e && e.type === 'input' && t.matches('input[type="text"], input:not([type]), textarea') ? 300 : 0);
   }
   if (t.getAttribute('aria-invalid') === 'true') {
     t.removeAttribute('aria-invalid');
@@ -5613,8 +5650,8 @@ function initEditor() {
   PALETAS_COLUNAS.forEach(p => $qe('qePaleta').add(new Option(p.label, p.id)));
 
   form.addEventListener('submit', e => e.preventDefault()); // Enter não grava no banco
-  form.addEventListener('input', e => onEditorInput(e.target));
-  form.addEventListener('change', e => onEditorInput(e.target));
+  form.addEventListener('input', e => onEditorInput(e.target, e));
+  form.addEventListener('change', e => onEditorInput(e.target, e));
   form.addEventListener('click', e => {
     if (onFontesClick(e)) return;
     const chipPct = e.target.closest('[data-pct]');
@@ -5641,12 +5678,10 @@ function initEditor() {
     const cor = e.target.closest('.qe-color-btn');
     if (cor) (cor.dataset.col !== undefined ? pickColunaCor(cor) : pickColor(cor));
   });
-  $qe('qeAplicar').addEventListener('click', aplicarEditor);
   $qe('qeSalvar').addEventListener('click', salvarEditor);
   $qe('qeCancelar').addEventListener('click', cancelarEditor);
   $qe('qeRestaurar').addEventListener('click', restaurarPadraoEditor);
   $qe('qeCoresPadrao').addEventListener('click', restaurarCoresEditor);
-  $qe('qeAplicarPaleta').addEventListener('click', aplicarPaletaColunas);
   $qe('qeColunasPadrao').addEventListener('click', restaurarColunasEditor);
   $qe('qeCarregar').addEventListener('click', carregarSalvoEditor);
   $qe('qeRecarregar').addEventListener('click', recarregarDoBanco);
