@@ -343,7 +343,7 @@ const CONFIG_COR_COLUNA_MAX = 80;
 const CONFIG_PALETAS = ['vale', 'executiva', 'azul', 'verde', 'performance', 'gradiente'];
 const CONFIG_CAMPOS_TITULO = ['product', 'sites', 'visoes', 'horizontes', 'ano'];
 const CONFIG_SEPARADORES = [' ', ' - ', ' / ', ' | ', '\n'];
-const CONFIG_UNIDADES = ['', 't', 'Kt', 'Mt', '%', 'US$', 'KUSD', 'MUSD', 'custom'];
+const CONFIG_UNIDADES = ['', 't', 'Kt', 'Mt', '%', 'US$', 'KUSD', 'MUSD', 'BUSD', 'custom'];
 
 function tabelaConfig(nome) {
   const t = nome || CONFIG_TABELA_PADRAO;
@@ -403,7 +403,7 @@ function normalizarConfig(entrada) {
 
 // Fontes do gráfico (aba Fontes): escala 70–160% em passos de 10, negrito,
 // itálico e cor (#RRGGBB ou '' = automática). Deltas não têm cor própria.
-const FONTE_PADRAO = { titulo: true, unidade: false, valores: true, deltas: true, eixo: false };
+const FONTE_PADRAO = { titulo: false, unidade: false, valores: false, deltas: false, eixo: false }; // Regular: negrito só se marcado
 function normalizarFontes(entrada) {
   const f = entrada && typeof entrada === 'object' ? entrada : {};
   const saida = {};

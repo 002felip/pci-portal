@@ -737,8 +737,8 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .chart-export-menu button:hover { background: #EEF6FB; color: #0B6E99; }
 .chart-export-ok { position: absolute; right: 0; top: 40px; white-space: nowrap; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem 'Poppins', 'Segoe UI', sans-serif; box-shadow: 0 6px 18px rgba(15,23,42,.2); }
 /* Fontes do gráfico: --ft-<elemento>-s (escala), -w (peso), -i (estilo), -c (cor) vêm da aba Fontes */
-.chart-title { color: var(--ft-titulo-c, #316866); font-family: 'Vale Sans Medium', 'Segoe UI', sans-serif; font-size: calc(1.4rem * var(--ft-titulo-s, 1)); font-weight: var(--ft-titulo-w, 700); font-style: var(--ft-titulo-i, normal); letter-spacing: -.005em; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
-.chart-subtitle { color: var(--ft-unidade-c, #4B5563); font-family: 'Vale Sans', 'Segoe UI', sans-serif; font-size: calc(1.05rem * var(--ft-unidade-s, 1)); margin: 0; font-weight: var(--ft-unidade-w, 300); font-style: var(--ft-unidade-i, normal); }
+.chart-title { color: var(--ft-titulo-c, #316866); font-family: 'Vale Sans Medium', 'Segoe UI', sans-serif; font-size: calc(1.4rem * var(--ft-titulo-s, 1)); font-weight: var(--ft-titulo-w, 400); font-style: var(--ft-titulo-i, normal); letter-spacing: -.005em; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.chart-subtitle { color: var(--ft-unidade-c, #4B5563); font-family: 'Vale Sans', 'Segoe UI', sans-serif; font-size: calc(1.05rem * var(--ft-unidade-s, 1)); margin: 0; font-weight: var(--ft-unidade-w, 400); font-style: var(--ft-unidade-i, normal); }
 
 /* Container do gráfico com fundo */
 .chart-container {
@@ -833,7 +833,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
   box-shadow: 0 0 0 2px rgba(60,181,229,.55), 0 0 28px rgba(60,181,229,.28), 0 18px 44px rgba(2,10,20,.32);
 }
 /* Título do selecionado: o elemento mais visível do card, com marcador e selo */
-.charts-board > .main-wrapper.is-selected .chart-title { font-weight: var(--ft-titulo-w, 700); padding-left: 10px; box-shadow: inset 3px 0 0 #3CB5E5; }
+.charts-board > .main-wrapper.is-selected .chart-title { font-weight: var(--ft-titulo-w, 400); padding-left: 10px; box-shadow: inset 3px 0 0 #3CB5E5; }
 .charts-board > .main-wrapper.is-selected .chart-container:not(.is-dark-bg) .chart-title { color: var(--ft-titulo-c, #0B6E99); }
 .charts-board > .main-wrapper.is-selected .chart-title::after {
   content: 'Selecionado'; display: inline-block; margin-left: 10px; padding: 2px 8px; vertical-align: 4px;
@@ -877,12 +877,12 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 .value-label {
   position: absolute; bottom: calc(var(--h) + 7px); left: 50%; transform: translateX(-50%);
   white-space: nowrap; color: var(--ft-valores-c, var(--ink-strong)); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
-  font-size: calc(.8rem * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 700); font-style: var(--ft-valores-i, normal);
+  font-size: calc(.8rem * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 400); font-style: var(--ft-valores-i, normal);
   font-variant-numeric: tabular-nums; letter-spacing: .01em; z-index: 6;
 }
 .axis-label {
   position: absolute; bottom: -22px; left: 0; width: 100%; text-align: center;
-  font-size: calc(.8rem * var(--ft-eixo-s, 1)); color: var(--ft-eixo-c, var(--ink-soft)); font-weight: var(--ft-eixo-w, 500); font-style: var(--ft-eixo-i, normal);
+  font-size: calc(.8rem * var(--ft-eixo-s, 1)); color: var(--ft-eixo-c, var(--ink-soft)); font-weight: var(--ft-eixo-w, 400); font-style: var(--ft-eixo-i, normal);
 }
 .chart-empty-state {
   margin: auto; color: var(--ink-soft); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
@@ -959,7 +959,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
   backdrop-filter: blur(12px) saturate(150%);
   color: var(--ink-text, var(--ink));
   font-family: 'Vale Sans', 'Segoe UI', sans-serif;
-  font-size: calc(clamp(.76rem, 2.2vh, .82rem) * var(--ft-deltas-s, 1)); font-weight: var(--ft-deltas-w, 700); font-style: var(--ft-deltas-i, normal); line-height: 1.15;
+  font-size: calc(clamp(.76rem, 2.2vh, .82rem) * var(--ft-deltas-s, 1)); font-weight: var(--ft-deltas-w, 400); font-style: var(--ft-deltas-i, normal); line-height: 1.15;
   white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: .01em;
   box-shadow: 0 2px 12px rgba(15,23,42,.05);
   opacity: 0; transform: translate(-50%, 8px) scale(.96);
@@ -976,9 +976,9 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 .main-wrapper:not(.qe-static) .ql-svg { animation: qlIn .6s cubic-bezier(.16,.84,.28,1) both; }
 @keyframes qlIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .ql-svg .qc-base { stroke: #CBD5E1; stroke-width: 1; }
-.ql-svg .qc-eixo { fill: var(--ft-eixo-c, var(--ink-soft)); font-size: calc(12.8px * var(--ft-eixo-s, 1)); font-weight: var(--ft-eixo-w, 500); font-style: var(--ft-eixo-i, normal); }
+.ql-svg .qc-eixo { fill: var(--ft-eixo-c, var(--ink-soft)); font-size: calc(12.8px * var(--ft-eixo-s, 1)); font-weight: var(--ft-eixo-w, 400); font-style: var(--ft-eixo-i, normal); }
 .ql-svg .qc-leg { fill: var(--ft-eixo-c, var(--ink-soft)); font-size: calc(11.5px * var(--ft-eixo-s, 1)); font-style: var(--ft-eixo-i, normal); }
-.ql-rotulo { fill: var(--ft-valores-c, var(--ink-soft)); font-size: calc(12.8px * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 700); font-style: var(--ft-valores-i, normal); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
+.ql-rotulo { fill: var(--ft-valores-c, var(--ink-soft)); font-size: calc(12.8px * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 400); font-style: var(--ft-valores-i, normal); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
 @media (prefers-reduced-motion: reduce) { .ql-svg { animation: none !important; } }
 
 /* Re-render só de layout (painel de edição abrindo/fechando): sem replay das animações */
@@ -1256,7 +1256,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-pct-chip[aria-pressed="true"] { background: var(--qe-accent); border-color: var(--qe-accent); color: #fff; }
 .qe-pct-chip:focus-visible { outline: 2px solid var(--qe-accent); outline-offset: 2px; }
 .ql-pct-linha { stroke: #747678; stroke-width: 1.2; stroke-dasharray: 5 4; opacity: .85; }
-.ql-pct-rotulo { fill: var(--ink-soft); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
+.ql-pct-rotulo { fill: var(--ink-soft); font-size: 11.5px; font-weight: 400; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--chart-bg); stroke-width: 3px; stroke-linejoin: round; }
 .qe-ln-serie { padding: 10px; border: 1px solid var(--qe-line); border-radius: 10px; background: var(--qe-surface-alt); }
 .qe-ln-serie .qe-color-row { margin-bottom: 8px; }
 .qe-ln-serie .qe-row { margin-bottom: 0; }
@@ -1438,6 +1438,20 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <select id="langSelect" class="settings-select" aria-label="Idioma">
           <option value="pt-BR">Português (Brasil)</option>
           <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="settings.number">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="settings.numberInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="settings.number">
+          <option value="pt-BR">Brasil — 1.234,56</option>
+          <option value="en-CA">Canadá — 1,234.56</option>
         </select>
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </div>
@@ -1967,11 +1981,19 @@ document.querySelectorAll('.topnav-link').forEach(link => {
   });
 });
 
+// Formato numérico de quem está vendo (Configurações): Brasil 1.234,56 | Canadá 1,234.56.
+// Preferência por pessoa (localStorage); sem escolha, segue o idioma do navegador.
+const NUM_LOCALES = ['pt-BR', 'en-CA'];
+let numLocale = (() => {
+  try { const v = localStorage.getItem('vdt-num'); if (NUM_LOCALES.includes(v)) return v; } catch (e) { /* sem storage */ }
+  return /^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR';
+})();
+
 // ─── i18n ───
 const i18n = {
-  'pt-BR': { 'settings.btnTitle': 'Configurações', 'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'settings.languageInfo': 'Idioma da interface', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
+  'pt-BR': { 'settings.btnTitle': 'Configurações', 'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'settings.number': 'Formato numérico', 'settings.numberInfo': 'Separador decimal e de milhar dos gráficos', 'settings.languageInfo': 'Idioma da interface', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
              'nav.menu': 'Menu', 'nav.quartely': 'Quartely', 'nav.monthly': 'Monthly', 'chart.empty': 'Nenhum dado para os filtros selecionados.' },
-  'en':    { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
+  'en':    { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.number': 'Number format', 'settings.numberInfo': 'Decimal and thousands separators in charts', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
              'nav.menu': 'Menu', 'nav.quartely': 'Quarterly', 'nav.monthly': 'Monthly', 'chart.empty': 'No data for the selected filters.' }
 };
 function applyI18n(lang) {
@@ -1992,6 +2014,14 @@ function applyI18n(lang) {
 }
 applyI18n(localStorage.getItem('vdt-lang') || 'pt-BR');
 document.getElementById('langSelect').addEventListener('change', e => applyI18n(e.target.value));
+document.getElementById('numSelect').value = numLocale;
+document.getElementById('numSelect').addEventListener('change', e => {
+  if (!NUM_LOCALES.includes(e.target.value)) return;
+  numLocale = e.target.value;
+  try { localStorage.setItem('vdt-num', numLocale); } catch (err) { /* só nesta sessão */ }
+  if (typeof renderAllCharts === 'function' && charts.length) renderAllCharts();
+  if (editor && editor.draft) refreshEditorDerived(); // exemplo da Formatação numérica
+});
 
 // ════════════════════════════════════════════════════════════════════
 // GRÁFICO DE TURNOVER — motor de renderização (porte do sistema DAX)
@@ -2267,10 +2297,10 @@ function renderChartPager(total, start, end, pageCount) {
 }
 
 function formatNumber(v, decimals) {
-  return v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return v.toLocaleString(numLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 function formatPct(v, decimals = 1) {
-  const s = (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const s = (v * 100).toLocaleString(numLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   return (v > 0 ? '+' : '') + s + '%';
 }
 
@@ -4049,10 +4079,10 @@ const TITLE_SEPS = [
 const UNIT_OPTIONS = [
   { v: '', label: 'Automática (do indicador)' }, { v: 't', label: 't — tonelada' }, { v: 'Kt', label: 'Kt — mil toneladas' },
   { v: 'Mt', label: 'Mt — milhão de toneladas' }, { v: '%', label: '% — percentual' }, { v: 'US$', label: 'US$ — dólar' },
-  { v: 'KUSD', label: 'KUSD — mil dólares' }, { v: 'MUSD', label: 'MUSD — milhão de dólares' }, { v: 'custom', label: 'Personalizada…' }
+  { v: 'KUSD', label: 'KUSD — mil dólares' }, { v: 'MUSD', label: 'MUSD — milhão de dólares' }, { v: 'BUSD', label: 'BUSD — bilhão de dólares' }, { v: 'custom', label: 'Personalizada…' }
 ];
 const SCALE_OPTIONS = [
-  { v: '1', label: 'Sem escala (× 1)' }, { v: '0.001', label: '÷ 1.000 (mil)' }, { v: '0.000001', label: '÷ 1.000.000 (milhão)' },
+  { v: '1', label: 'Sem escala (× 1)' }, { v: '0.001', label: '÷ 1.000 (mil)' }, { v: '0.000001', label: '÷ 1.000.000 (milhão)' }, { v: '0.000000001', label: '÷ 1.000.000.000 (bilhão)' },
   { v: '1000', label: '× 1.000' }, { v: '100', label: '× 100 (fração → %)' }, { v: 'custom', label: 'Personalizada…' }
 ];
 // Tipos de gráfico disponíveis. Novo tipo = novo item aqui (o primeiro é o padrão).
@@ -4087,15 +4117,16 @@ function defaultChartCfg() {
 // Padrão "Executivo": títulos e números em negrito, eixos e unidade discretos.
 const FONTE_ELEMENTOS = [
   { k: 'titulo',  nome: 'Título',             normal: 400, cor: true },
-  { k: 'unidade', nome: 'Unidade (subtítulo)', normal: 300, cor: true },
+  { k: 'unidade', nome: 'Unidade (subtítulo)', normal: 400, cor: true },
   { k: 'valores', nome: 'Valores (números)',   normal: 400, cor: true },
   { k: 'deltas',  nome: 'Deltas (variação %)', normal: 400, cor: false }, // cor segue positivo/negativo
-  { k: 'eixo',    nome: 'Eixo e legenda',      normal: 500, cor: true }
+  { k: 'eixo',    nome: 'Eixo e legenda',      normal: 400, cor: true }
 ];
 const FONTE_PRESETS = {
-  executivo:    { titulo: [100, 1], unidade: [100, 0], valores: [100, 1], deltas: [100, 1], eixo: [100, 0] },
-  apresentacao: { titulo: [120, 1], unidade: [110, 0], valores: [120, 1], deltas: [110, 1], eixo: [110, 0] },
-  compacto:     { titulo: [90, 1],  unidade: [90, 0],  valores: [90, 1],  deltas: [90, 1],  eixo: [90, 0] }
+  // Regular em tudo: negrito só quando o usuário marca B
+  executivo:    { titulo: [100, 0], unidade: [100, 0], valores: [100, 0], deltas: [100, 0], eixo: [100, 0] },
+  apresentacao: { titulo: [120, 0], unidade: [110, 0], valores: [120, 0], deltas: [110, 0], eixo: [110, 0] },
+  compacto:     { titulo: [90, 0],  unidade: [90, 0],  valores: [90, 0],  deltas: [90, 0],  eixo: [90, 0] }
 };
 const FONTE_ESCALA_MIN = 70, FONTE_ESCALA_MAX = 160, FONTE_PASSO = 10;
 function fontesDoPreset(id) {
@@ -4547,6 +4578,53 @@ function renderColunas() {
 }
 
 // Cores por coluna valem na hora no gráfico (como Exibir Delta); Salvar grava no banco
+// Cores, fundo, deltas, conectores e estilo das séries valem na hora (sem Aplicar); gravadas em Salvar
+function aplicarCoresAoVivo() {
+  const c = editor.chart, d = editor.draft;
+  if (!c || !d) return;
+  setChartColors(c, { ...d.colors });
+  c.cfg = { ...c.cfg, linhas: JSON.parse(JSON.stringify(d.cfg.linhas)) };
+  if (c === activeChart) renderActiveChart();
+  saveCharts();
+}
+
+// Unidade ↔ escala: mesma família (toneladas, dólares) → fator = base dos dados ÷ unidade escolhida
+const UNIDADE_MULT = { t: ['t', 1], kt: ['t', 1e3], mt: ['t', 1e6], 'us$': ['usd', 1], usd: ['usd', 1], kusd: ['usd', 1e3], musd: ['usd', 1e6], busd: ['usd', 1e9] };
+const multDe = u => UNIDADE_MULT[String(u || '').trim().toLowerCase()] || null;
+function unidadeDosDados(c) {
+  const prod = c === activeChart ? filterState.product : c && c.filters && c.filters.product;
+  const r = allRows.find(x => x.NM_KPI === prod && x.SG_UNID);
+  return r ? r.SG_UNID : '';
+}
+function sincronizarEscala(origem) {
+  const base = multDe(unidadeDosDados(editor.chart));
+  const sel = $qe('qeUnidade'), esc = $qe('qeEscala');
+  const fixa = f => {
+    const preset = SCALE_OPTIONS.find(o => o.v !== 'custom' && Math.abs(Number(o.v) - f) < 1e-15);
+    esc.value = preset ? preset.v : 'custom';
+    $qe('qeFator').value = String(f);
+  };
+  if (origem === 'unidade') {
+    if (sel.value === '') { fixa(1); return; }
+    const alvo = multDe(sel.value);
+    if (base && alvo && base[0] === alvo[0]) fixa(base[1] / alvo[1]);
+  } else if (base && esc.value !== 'custom') {
+    const m = base[1] / Number(esc.value);
+    const u = UNIT_OPTIONS.find(o => { const x = multDe(o.v); return x && x[0] === base[0] && Math.abs(x[1] - m) < 1e-9 * m; });
+    if (u) sel.value = u.v;
+  }
+}
+// Unidade e escala valem na hora; unidade personalizada vazia ou fator inválido esperam a correção
+function aplicarUnidadeAoVivo() {
+  const c = editor.chart, u = editor.draft && editor.draft.cfg.unidade;
+  if (!c || !u) return;
+  if ((u.valor === 'custom' && !u.custom.trim()) || !(Number.isFinite(u.fator) && u.fator > 0 && u.fator <= 1e9)) return;
+  c.cfg = { ...c.cfg, unidade: { ...u } };
+  if (c === activeChart) renderActiveChart();
+  saveCharts();
+  labelCharts();
+}
+
 function aplicarColunasAoVivo(msg) {
   const c = editor.chart, d = editor.draft;
   if (!c || !d) return;
@@ -4702,6 +4780,7 @@ function pickColor(btn) {
     // Cor da série substitui as cores por barra (versão anterior) daquela série
     if (k.startsWith('serie:')) Object.keys(cores).forEach(t => { if (!t.includes(':') && t !== 'bgChart' && serieKeyOf(t) === k) delete cores[t]; });
     const caixa = btn.closest('#qeLnSeries') ? 'qeLnSeries' : 'qeCores';
+    aplicarCoresAoVivo();
     renderColors();
     renderLinhasSeries();
     $qe(caixa).querySelector(`[data-cor="${k}"]`).focus();
@@ -4861,8 +4940,9 @@ function restaurarPadraoEditor() {
 function restaurarCoresEditor() {
   if (!editor.draft) return;
   editor.draft.colors = { bgChart: '#F6F6F6' }; // só o gráfico selecionado
+  aplicarCoresAoVivo();
   renderColors();
-  editorMsg('Cores padrão no painel. Clique em Aplicar ou Salvar para confirmar neste gráfico.', 'info');
+  editorMsg('Cores padrão aplicadas ao gráfico. Grave em Salvar.', 'ok');
 }
 
 function carregarSalvoEditor() {
@@ -5494,11 +5574,20 @@ function onEditorInput(t) {
       saveCharts();
       editorMsg(ligado ? 'Delta exibido.' : 'Delta ocultado.', 'ok');
     }
+  } else if (t.id === 'qeUnidade' || t.id === 'qeEscala') {
+    sincronizarEscala(t.id === 'qeUnidade' ? 'unidade' : 'escala');
+    readEditorForm();
+    aplicarUnidadeAoVivo();
+  } else if (t.id === 'qeUnidadeCustom' || t.id === 'qeFator' || t.id === 'qeNosRotulos') {
+    readEditorForm();
+    aplicarUnidadeAoVivo();
   } else if (t.matches('[data-ln-estilo]')) {
     editor.draft.cfg.linhas.series[t.dataset.lnEstilo].estilo = t.value;
+    aplicarCoresAoVivo();
   } else if (t.matches('[data-ln-opac]')) {
     editor.draft.cfg.linhas.series[t.dataset.lnOpac].opacidade = 1 - Number(t.value) / 100;
     $qe(t.dataset.lnRotulo).textContent = t.value + '%';
+    aplicarCoresAoVivo();
   } else if (t.id !== 'qeSalvos') {
     readEditorForm();
   }
