@@ -6215,9 +6215,10 @@ function initEditor() {
     if (e.target.closest('.qe-panel, .qe-toolbar, #chartPalette, .qf-panel, .qf-modal-overlay, .settings-panel, .settings-backdrop, .is-board-item')) return;
     setEditorOpen(false);
   }, true);
-  // Painel recolhido: clicar num gráfico (sem arrastar) abre o painel na última visão usada
-  document.addEventListener('click', e => {
-    if (editor.open || isEditorDrawer() || Date.now() - ultimoArraste < 400 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  // Painel recolhido: duplo clique num gráfico abre o painel na última visão usada
+  // (clique simples só seleciona: mover e redimensionar sem o quadro reescalar)
+  document.addEventListener('dblclick', e => {
+    if (editor.open || isEditorDrawer() || e.ctrlKey || e.metaKey || e.shiftKey) return;
     const card = e.target.closest('.is-board-item');
     if (!card || e.target.closest('.chart-export, .chart-pager, .chart-resize-handle, button, a, input, select')) return;
     abrirUltimaVisao();
