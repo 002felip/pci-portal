@@ -147,15 +147,13 @@ body {
 
 .topnav-brand {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  display: flex; align-items: center; gap: .85rem; margin: 0;
+  display: flex; align-items: center; gap: .32em; margin: 0;
   font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
   color: #fff; white-space: nowrap; pointer-events: none; z-index: 1;
 }
-.topnav-brand-vbm { font-weight: 600; letter-spacing: .22em; margin-right: -.22em; }
-.topnav-brand-sep { width: 1px; height: 18px; background: linear-gradient(180deg, transparent, rgba(255,255,255,.55), transparent); }
-.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
-.topnav-brand-nome::after {
-  content: ''; display: block; height: 1.5px; margin-top: 6px; border-radius: 2px;
+.topnav-brand-vbm, .topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -7px; height: 1.5px; border-radius: 2px;
   background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
 }
 
@@ -422,12 +420,12 @@ body {
 }
 
 @media (max-width: 960px) {
-  .topnav-brand { font-size: .9rem; gap: .6rem; }
+  .topnav-brand { font-size: .9rem; }
   .topnav-user-role { display: none; }
 }
 @media (max-width: 540px) {
   .topnav-user-name { display: none; }
-  .topnav-brand { position: static; transform: none; font-size: .8rem; gap: .45rem; margin: 0 auto; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
 }
 @media (max-width: 768px) { .page-content { padding: 1rem; } }
 
@@ -1390,7 +1388,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   </a>
 
   <h1 class="topnav-brand" aria-label="VBM - Performance Hub">
-    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-sep" aria-hidden="true"></span><span class="topnav-brand-nome" aria-hidden="true">Performance Hub</span>
+    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-nome" aria-hidden="true">Performance Hub</span>
   </h1>
 
   <div class="topnav-actions">
