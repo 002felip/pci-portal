@@ -741,6 +741,9 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 }
 .chart-resize-handle:hover, .main-wrapper.is-resizing .chart-resize-handle { opacity: .4; }
 .main-wrapper.is-dragging, .main-wrapper.is-resizing { user-select: none; }
+/* Seleção por área: retângulo desenhado sobre o quadro vazio */
+.board-marquee { position: absolute; z-index: 9999; pointer-events: none; border: 1px solid #3CB5E5; background: rgba(60,181,229,.12); border-radius: 2px; }
+.charts-board.is-marqueeing { user-select: none; cursor: crosshair; }
 /* Modal de exclusão — card branco, overlay escurecido, ícone de erro à esquerda */
 .qf-modal-overlay {
   position: fixed; inset: 0; z-index: 10000; display: none;
@@ -791,7 +794,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
   background-image: linear-gradient(rgba(125,211,240,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(125,211,240,.09) 1px, transparent 1px);
   background-size: 24px 24px;
 }
-.snap-guide { position: absolute; display: none; pointer-events: none; z-index: 50; background: rgba(125,211,240,.75); }
+.snap-guide { position: absolute; display: none; pointer-events: none; z-index: 9999; background: rgba(125,211,240,.75); }
 .snap-guide.v { top: 0; bottom: 0; width: 1px; }
 .snap-guide.h { left: 0; right: 0; height: 1px; }
 .board-empty { padding: 48px 16px; text-align: center; color: rgba(255,255,255,.82); font-size: .9rem; }
@@ -802,6 +805,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .page-content.charts-board { display: block; position: relative; }
 .charts-board > .main-wrapper { position: absolute; min-width: 0; max-width: none; }
+.page-content.charts-board { isolation: isolate; } /* z-index dos cards fica restrito ao quadro */
 .charts-board.is-multi > .main-wrapper.is-selected .chart-container {
   box-shadow: 0 0 0 2px rgba(60,181,229,.55), 0 12px 40px rgba(10,20,35,.12), 0 2px 8px rgba(10,20,35,.06);
 }
@@ -2172,7 +2176,7 @@ const I18N_UI = {
   'ui.paleta_de_cores': ['Paleta de cores', 'Color palette'],
   'ui.selecionado': ['Selecionado', 'Selected'],
   'ui.colunas': ['Colunas', 'Columns'],
-  'ui.n_selecionados': ['{n} gráficos selecionados. Arraste um deles para mover o grupo; Ctrl/Shift + clique adiciona ou remove.', '{n} charts selected. Drag one of them to move the group; Ctrl/Shift + click adds or removes.'],
+  'ui.n_selecionados': ['{n} gráficos selecionados. Arraste um deles para mover o grupo ou o canto para redimensionar; Ctrl/Shift + clique adiciona ou remove.', '{n} charts selected. Drag one of them to move the group or the corner to resize; Ctrl/Shift + click adds or removes.'],
   'ui.ordem_das_colunas': ['Ordem das colunas', 'Column order'],
   'ui.ordem_dica': ['Arraste pela alça ou use ▲▼. Vale na hora; grave em Salvar. Colunas novas (de outros filtros) entram no fim.', 'Drag by the handle or use ▲▼. Applied instantly; store it with Save. New columns (from other filters) go to the end.'],
   'ui.ordem_so_barras': ['A ordem personalizada vale para o tipo Barras. Nas Linhas, o eixo segue a sequência dos períodos.', 'The custom order applies to the Bars type. In Lines, the axis follows the period sequence.'],
@@ -3812,6 +3816,16 @@ function setChartIds(c, on) {
   });
 }
 
+// Gráfico clicado vai para o primeiro plano (ordem de empilhamento da sessão)
+let zTopo = 1;
+function trazerParaFrente(c) {
+  if (!c || c.el.style.zIndex === String(zTopo)) return;
+  if (zTopo > 9000) { // renumera mantendo a ordem atual
+    zTopo = 1;
+    [...charts].sort((a, b) => (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0)).forEach(o => { o.el.style.zIndex = String(++zTopo); });
+  }
+  c.el.style.zIndex = String(++zTopo);
+}
 function activateChart(c) {
   if (!c || activeChart === c) return;
   aplicarRascunhoAoVivo(0); // texto ainda em pausa vai para o gráfico que estava em edição
@@ -4020,6 +4034,11 @@ function onChartShortcut(e) {
   const t = e.target;
   if (t.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]') || document.querySelector('.qf-modal-overlay.open')) return;
   const k = e.key.toLowerCase();
+  if (k === 'a' && t.closest('.is-board-item') && charts.length > 1) {
+    e.preventDefault(); // Ctrl+A num gráfico: seleciona todos os gráficos
+    definirMultiSel(charts);
+    return;
+  }
   if (k === 'c' && activeChart && !String(window.getSelection() || '')) {
     stashActive();
     // A cópia leva a configuração visual, mas não o nome/vínculo no banco (senão duplicaria o registro)
@@ -4096,6 +4115,63 @@ function limparMultiSel() {
   multiSel.clear();
   marcarMultiSel();
 }
+function definirMultiSel(lista) {
+  multiSel.clear();
+  lista.forEach(o => multiSel.add(o));
+  if (lista.length && !lista.includes(activeChart)) activateChart(lista[lista.length - 1]);
+  lista.forEach(trazerParaFrente);
+  if (activeChart) trazerParaFrente(activeChart);
+  marcarMultiSel();
+  if (multiSel.size > 1) mostrarAviso(tx('ui.n_selecionados', { n: multiSel.size }));
+}
+// Seleção por área: arrastar no quadro vazio desenha o retângulo; gráficos tocados entram
+// na seleção (Ctrl/Shift soma à seleção atual). Só mouse/caneta: no toque o arraste rola a página.
+function iniciarSelecaoArea() {
+  let ini = null, caixa = null, base = [], soma = false;
+  const tocados = r => charts.filter(c => {
+    const b = c.el.getBoundingClientRect();
+    return b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top;
+  });
+  board.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.pointerType === 'touch' || e.target.closest('.is-board-item, .board-empty, button, a, input, select')) return;
+    soma = e.ctrlKey || e.metaKey || e.shiftKey;
+    base = soma ? (multiSel.size ? [...multiSel] : activeChart ? [activeChart] : []) : [];
+    ini = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  });
+  board.addEventListener('pointermove', e => {
+    if (!ini || e.pointerId !== ini.id) return;
+    if (!caixa) {
+      if (Math.abs(e.clientX - ini.x) + Math.abs(e.clientY - ini.y) < 5) return;
+      board.setPointerCapture(e.pointerId);
+      caixa = document.createElement('div');
+      caixa.className = 'board-marquee';
+      board.appendChild(caixa);
+      board.classList.add('is-marqueeing');
+    }
+    const r = { left: Math.min(ini.x, e.clientX), right: Math.max(ini.x, e.clientX), top: Math.min(ini.y, e.clientY), bottom: Math.max(ini.y, e.clientY) };
+    const bb = board.getBoundingClientRect();
+    Object.assign(caixa.style, { left: r.left - bb.left + 'px', top: r.top - bb.top + 'px', width: r.right - r.left + 'px', height: r.bottom - r.top + 'px' });
+    const sel = new Set([...base, ...tocados(r)]);
+    charts.forEach(c => c.el.classList.toggle('is-multisel', sel.has(c)));
+    ini.sel = sel;
+  });
+  const fim = e => {
+    if (!ini || e.pointerId !== ini.id) return;
+    const sel = ini.sel ? [...ini.sel] : null;
+    ini = null;
+    if (!caixa) return; // clique simples: segue o comportamento normal (limpa a seleção)
+    caixa.remove();
+    caixa = null;
+    board.classList.remove('is-marqueeing');
+    ultimoArraste = Date.now();
+    if (!sel || !sel.length) { marcarMultiSel(); return; }
+    if (sel.length === 1) { limparMultiSel(); activateChart(sel[0]); return; }
+    definirMultiSel(charts.filter(c => sel.includes(c)));
+    announce(tx('ui.n_selecionados', { n: sel.length }));
+  };
+  board.addEventListener('pointerup', fim);
+  board.addEventListener('pointercancel', fim);
+}
 function alternarMultiSel(c) {
   if (!multiSel.size && activeChart) multiSel.add(activeChart);
   if (multiSel.has(c) && multiSel.size > 1) {
@@ -4168,7 +4244,7 @@ function attachMoveResize(c) {
       const grupo = multiSel.size > 1 && multiSel.has(c) ? charts.filter(o => multiSel.has(o)) : [c];
       const k = escalaQuadro(), topo = board.getBoundingClientRect().top;
       const ini = grupo.map(o => ({ o, x: o.pos.x * k, y: o.pos.y, w: o.el.offsetWidth, h: o.el.offsetHeight }));
-      grupo.forEach(o => o.el.classList.add('is-dragging'));
+      grupo.forEach(o => { o.el.classList.add('is-dragging'); trazerParaFrente(o); });
       // Limites do deslocamento: o grupo inteiro fica dentro do quadro e da área visível
       const lim = {
         dxMin: Math.max(...ini.map(m => BOARD_M - m.x)),
@@ -4192,7 +4268,10 @@ function attachMoveResize(c) {
     if (!s) {
       c.el.classList.add('is-resizing');
       const k = escalaQuadro();
-      return { k, x: e.clientX, y: e.clientY, w: c.el.offsetWidth, h: c.size.h, extra: c.el.offsetHeight - c.size.h, others: startArrange([c], k) };
+      // Grupo selecionado: os demais recebem o mesmo acréscimo de largura/altura
+      const grupo = multiSel.size > 1 && multiSel.has(c) ? charts.filter(o => multiSel.has(o) && o !== c) : [];
+      const ini = grupo.map(o => ({ o, w: o.el.offsetWidth, h: o.size.h }));
+      return { k, x: e.clientX, y: e.clientY, w: c.el.offsetWidth, h: c.size.h, extra: c.el.offsetHeight - c.size.h, ini, others: startArrange([c, ...grupo], k) };
     }
     const size = clampSize(s.w + e.clientX - s.x, s.h + e.clientY - s.y); // largura em tela
     // Borda direita/inferior alinhada a outro gráfico, ou mesma largura/altura de outro
@@ -4206,12 +4285,17 @@ function attachMoveResize(c) {
     if (by) size.h += by.d;
     c.size = { w: size.w / s.k, h: size.h };
     applyChartLayout(c);
+    const dw = size.w - s.w, dh = size.h - s.h;
+    s.ini.forEach(m => { const t = clampSize(m.w + dw, m.h + dh); m.o.size = { w: t.w / s.k, h: t.h }; applyChartLayout(m.o); });
     showGuides(bx ? c.pos.x * s.k + size.w : null, by ? c.pos.y + s.extra + size.h : null);
   }, () => {
     c.el.classList.remove('is-resizing');
     endArrange();
     updateBoardHeight();
-    renderTurnoverChart(getFilteredChartRows());
+    if (multiSel.size > 1 && multiSel.has(c)) {
+      renderSemAnimacao = true; // redesenha o grupo sem reanimar
+      try { renderAllCharts(); } finally { renderSemAnimacao = false; }
+    } else renderTurnoverChart(getFilteredChartRows());
     saveCharts();
   });
 }
@@ -4318,6 +4402,7 @@ function initCharts() {
     const w = e.target.closest('.is-board-item');
     if (w) {
       const c = charts.find(x => x.el === w);
+      trazerParaFrente(c);
       // Ctrl/⌘ ou Shift + clique: entra ou sai da seleção múltipla
       if (e.button === 0 && (e.ctrlKey || e.metaKey || e.shiftKey) && !e.target.closest('.chart-export, .chart-pager, .chart-resize-handle')) {
         e.preventDefault(); // sem seleção de texto no Shift+clique
@@ -4328,7 +4413,8 @@ function initCharts() {
       activateChart(c);
     }
     // Clique no fundo da página (fora de gráficos, filtros, paleta, modal e edição) remove a seleção
-    else if (!e.target.closest('.qf-panel, #chartPalette, .qf-modal-overlay, .topnav, .qe-toolbar, .qe-panel, .qe-backdrop, .settings-panel, .settings-backdrop')) deselectChart();
+    // (com Ctrl/Shift o arraste no quadro soma à seleção atual: não limpa)
+    else if (!(e.ctrlKey || e.metaKey || e.shiftKey) && !e.target.closest('.qf-panel, #chartPalette, .qf-modal-overlay, .topnav, .qe-toolbar, .qe-panel, .qe-backdrop, .settings-panel, .settings-backdrop')) deselectChart();
   }, true);
   // Clique simples (sem arrastar) num gráfico do grupo: volta à seleção só dele
   document.addEventListener('click', (e) => {
@@ -4345,9 +4431,11 @@ function initCharts() {
   });
   document.addEventListener('focusin', (e) => {
     const w = e.target.closest && e.target.closest('.is-board-item');
+    if (w) trazerParaFrente(charts.find(c => c.el === w));
     if (w) activateChart(charts.find(c => c.el === w));
   });
   document.addEventListener('keydown', onChartShortcut);
+  iniciarSelecaoArea();
   const live = document.createElement('div');
   live.id = 'chartLive'; live.className = 'sr-only'; live.setAttribute('aria-live', 'polite');
   document.body.appendChild(live);
