@@ -1178,6 +1178,15 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-seg input:checked + span { background: #0B6E99; color: #fff; box-shadow: 0 4px 12px rgba(60,181,229,.3); }
 .qe-seg input:focus-visible + span { outline: 2px solid var(--vbm-blue-light); outline-offset: 1px; }
 
+/* Ordem das colunas: alça de arraste + ▲▼ */
+.qe-ordem .qe-fl-item { cursor: grab; user-select: none; }
+.qe-ordem .qe-fl-item.is-arrastando { opacity: .45; }
+.qe-ordem .qe-fl-item.is-alvo-antes { box-shadow: 0 -2px 0 #3CB5E5; }
+.qe-ordem .qe-fl-item.is-alvo-depois { box-shadow: 0 2px 0 #3CB5E5; }
+.qe-ordem .qe-alca { color: var(--qe-muted); font-size: .8rem; line-height: 1; letter-spacing: -2px; flex-shrink: 0; }
+.qe-ordem .qe-fl-text { flex: 1; font-size: .72rem; color: var(--qe-strong); flex-direction: row; gap: 8px; align-items: baseline; }
+.qe-ordem .qe-fl-val { font-size: .6rem; }
+.qe-ordem-vazio { font-size: .7rem; color: var(--qe-muted); padding: 6px 0; }
 /* Campos do título dinâmico (ordem com ▲▼) */
 .qe-fieldlist { list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .qe-fl-item { display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 8px; border: 1px solid var(--qe-line); border-radius: 8px; background: var(--qe-surface-alt); }
@@ -1465,6 +1474,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <button type="button" class="qe-tool" data-qe-go="numeros" aria-controls="qePanel" aria-expanded="false" aria-label="Formatação numérica" data-tip="Formatação numérica" data-i18n-tip="ui.formatacao_numerica" data-i18n-aria="ui.formatacao_numerica"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="fontes" aria-controls="qePanel" aria-expanded="false" aria-label="Fontes" data-tip="Fontes" data-i18n-tip="ui.fontes" data-i18n-aria="ui.fontes"><i class="fa-solid fa-font" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade de medida" data-tip="Unidade de medida" data-i18n-tip="ui.unidade_de_medida" data-i18n-aria="ui.unidade_de_medida"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="colunas" aria-controls="qePanel" aria-expanded="false" aria-label="Colunas" data-tip="Colunas" data-i18n-tip="ui.colunas" data-i18n-aria="ui.colunas"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="cores" aria-controls="qePanel" aria-expanded="false" aria-label="Cores" data-tip="Cores" data-i18n-tip="ui.cores" data-i18n-aria="ui.cores"><i class="fa-solid fa-palette" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="persist" aria-controls="qePanel" aria-expanded="false" aria-label="Persistência" data-tip="Persistência" data-i18n-tip="ui.persistencia" data-i18n-aria="ui.persistencia"><i class="fa-solid fa-database" aria-hidden="true"></i></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
@@ -1824,6 +1834,16 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         </div>
       </section>
 
+      <section class="qe-sec" data-sec="colunas" hidden>
+        <div class="qe-sec-body">
+          <p class="qe-label" id="qeOrdemTit" data-i18n="ui.ordem_das_colunas">Ordem das colunas</p>
+          <ol class="qe-fieldlist qe-ordem" id="qeOrdem" aria-labelledby="qeOrdemTit"></ol>
+          <p class="qe-hint" id="qeOrdemDica" data-i18n="ui.ordem_dica">Arraste pela alça ou use ▲▼. Vale na hora; grave em Salvar. Colunas novas (de outros filtros) entram no fim.</p>
+          <p class="qe-hint" id="qeOrdemLinhas" hidden data-i18n="ui.ordem_so_barras">A ordem personalizada vale para o tipo Barras. Nas Linhas, o eixo segue a sequência dos períodos.</p>
+          <button type="button" class="qe-btn" id="qeOrdemPadrao" style="width:100%;margin-top:12px;" data-i18n="ui.restaurar_ordem_padrao">Restaurar ordem padrão</button>
+        </div>
+      </section>
+
       <section class="qe-sec" data-sec="cores" hidden>
         <div class="qe-sec-body">
           <fieldset class="qe-field" id="qeModoCorBox">
@@ -2149,6 +2169,17 @@ const I18N_UI = {
   'ui.redimensionar': ['Redimensionar', 'Resize'],
   'ui.paleta_de_cores': ['Paleta de cores', 'Color palette'],
   'ui.selecionado': ['Selecionado', 'Selected'],
+  'ui.colunas': ['Colunas', 'Columns'],
+  'ui.ordem_das_colunas': ['Ordem das colunas', 'Column order'],
+  'ui.ordem_dica': ['Arraste pela alça ou use ▲▼. Vale na hora; grave em Salvar. Colunas novas (de outros filtros) entram no fim.', 'Drag by the handle or use ▲▼. Applied instantly; store it with Save. New columns (from other filters) go to the end.'],
+  'ui.ordem_so_barras': ['A ordem personalizada vale para o tipo Barras. Nas Linhas, o eixo segue a sequência dos períodos.', 'The custom order applies to the Bars type. In Lines, the axis follows the period sequence.'],
+  'ui.restaurar_ordem_padrao': ['Restaurar ordem padrão', 'Restore default order'],
+  'ui.ordem_vazia': ['Nenhuma coluna exibida. Ajuste os filtros para listar as colunas.', 'No columns displayed. Adjust the filters to list the columns.'],
+  'ui.mover_cima': ['Mover {nome} para cima', 'Move {nome} up'],
+  'ui.mover_baixo': ['Mover {nome} para baixo', 'Move {nome} down'],
+  'ui.ordem_posicao': ['{nome} na posição {n}', '{nome} in position {n}'],
+  'ui.ordem_restaurada': ['Ordem padrão das colunas restaurada.', 'Default column order restored.'],
+  'ui.personalizada': ['personalizada', 'custom'],
   'ui.graficos_a_excluir': ['Gráficos a excluir', 'Charts to delete'],
   'ui.selecionar_todos': ['Selecionar todos', 'Select all'],
   'ui.excluir_graficos': ['Excluir gráficos', 'Delete charts'],
@@ -2677,7 +2708,7 @@ function renderTurnoverChart(sourceRows) {
   chartAreaEl.classList.toggle('sem-delta', !cfg.exibirDelta);
   document.getElementById('chartArea').innerHTML = html;
   // Painel aberto neste gráfico: a lista de colunas acompanha o que está exibido
-  if (editorReady && !editorHold && editor.draft && editor.chart === activeChart) renderColunas();
+  if (editorReady && !editorHold && editor.draft && editor.chart === activeChart) { renderColunas(); renderOrdemColunas(); }
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -3276,9 +3307,20 @@ function getFilteredChartRows() {
   // 1) filtrar (já feito acima) -> 2) ordenar pelas chaves técnicas ->
   // 3) só então montar o array final type/value que o gráfico consome —
   // categoria e valor seguem sempre o mesmo índice, um único sort.
-  return Array.from(sums, ([type, acc]) => ({ type, ...acc }))
+  const lista = Array.from(sums, ([type, acc]) => ({ type, ...acc }))
     .sort(compareByTechnicalKeys)
     .map(({ type, value }) => ({ type, value }));
+  return ordenarColunas(lista, activeChartCfg());
+}
+
+// Ordem escolhida na seção Colunas (só Barras): as colunas da lista vêm primeiro,
+// na ordem dela; as que não estão na lista (ex.: novo filtro) seguem no fim, na ordem padrão
+function ordenarColunas(lista, cfg) {
+  const ordem = cfg && cfg.tipoGrafico === 'bar' && cfg.ordemColunas;
+  if (!ordem || !ordem.length) return lista;
+  const pos = new Map(ordem.map((t, i) => [t, i]));
+  return lista.map((d, i) => ({ d, i, p: pos.has(d.type.trim()) ? pos.get(d.type.trim()) : Infinity }))
+    .sort((a, b) => a.p - b.p || a.i - b.i).map(x => x.d);
 }
 
 // Título: automático = NM_KPI do Product selecionado (seleção única
@@ -4309,7 +4351,8 @@ function defaultChartCfg() {
     exibirDelta: true,
     linhas: normalizeLinhasCfg(null),
     modoCor: 'grupo', paletaColunas: '',
-    fontes: normalizarFontes(null)
+    fontes: normalizarFontes(null),
+    ordemColunas: []
   };
 }
 
@@ -4434,8 +4477,15 @@ function normalizeChartCfg(src) {
     linhas: normalizeLinhasCfg(s.linhas),
     modoCor: s.modoCor === 'coluna' ? 'coluna' : 'grupo',
     paletaColunas: PALETAS_COLUNAS.some(p => p.id === s.paletaColunas) ? s.paletaColunas : '',
-    fontes: normalizarFontes(s.fontes)
+    fontes: normalizarFontes(s.fontes),
+    ordemColunas: normalizarOrdemColunas(s.ordemColunas)
   };
+}
+// Mesmas regras de normalizarOrdemColunas no servidor
+const ORDEM_ROTULO = /^[A-Za-z0-9 ._\/-]{1,24}$/;
+function normalizarOrdemColunas(v) {
+  const vistos = new Set();
+  return (Array.isArray(v) ? v : []).filter(t => typeof t === 'string' && ORDEM_ROTULO.test(t) && !vistos.has(t) && vistos.add(t)).slice(0, 200);
 }
 
 const activeChartCfg = () => (activeChart ? activeChart.cfg : defaultChartCfg());
@@ -4554,7 +4604,7 @@ function applyDbConfigsToCharts() {
 }
 
 function configForDb(c) {
-  return { titulo: c.cfg.titulo, decBar: c.cfg.decBar, decDelta: c.cfg.decDelta, unidade: c.cfg.unidade, tipoGrafico: c.cfg.tipoGrafico, exibirDelta: c.cfg.exibirDelta, linhas: c.cfg.linhas, modoCor: c.cfg.modoCor, paletaColunas: c.cfg.paletaColunas, fontes: c.cfg.fontes, cores: editorColorsOf(c.colors) };
+  return { titulo: c.cfg.titulo, decBar: c.cfg.decBar, decDelta: c.cfg.decDelta, unidade: c.cfg.unidade, tipoGrafico: c.cfg.tipoGrafico, exibirDelta: c.cfg.exibirDelta, linhas: c.cfg.linhas, modoCor: c.cfg.modoCor, paletaColunas: c.cfg.paletaColunas, fontes: c.cfg.fontes, ordemColunas: c.cfg.ordemColunas, cores: editorColorsOf(c.colors) };
 }
 
 // ── Painel: seleção, rascunho e formulário ──
@@ -4645,6 +4695,7 @@ function renderEditor() {
   renderSavedList();
   renderTitleFields();
   renderColors();
+  renderOrdemColunas();
   refreshEditorDerived();
 }
 
@@ -4843,6 +4894,89 @@ function aplicarColunasAoVivo(msg) {
   saveCharts();
   renderColors();
   if (msg) editorMsg(msg, 'ok');
+}
+
+// ── Seção Colunas: ordem das colunas exibidas (arrastar ou ▲▼), aplicada na hora ──
+function renderOrdemColunas() {
+  const lista = $qe('qeOrdem'), d = editor.draft;
+  if (!lista || !d) return;
+  const cols = colunasDoEditor(), barras = d.cfg.tipoGrafico === 'bar';
+  $qe('qeOrdemLinhas').hidden = barras;
+  $qe('qeOrdemPadrao').disabled = !d.cfg.ordemColunas.length;
+  lista.innerHTML = cols.length ? cols.map((col, i) => {
+    const t = escapeHtml(col.t);
+    return `<li class="qe-fl-item" draggable="true" data-ordem="${t}">
+      <span class="qe-alca" aria-hidden="true">⋮⋮</span>
+      <span class="qe-fl-text"><span>${t}</span><span class="qe-fl-val">${escapeHtml(cenarioDoTipo(col.t))}</span></span>
+      <button type="button" class="qe-mini" data-ordem-mover="-1" data-ordem-t="${t}" aria-label="${escapeHtml(tx('ui.mover_cima', { nome: col.t }))}"${i === 0 ? ' disabled' : ''}>▲</button>
+      <button type="button" class="qe-mini" data-ordem-mover="1" data-ordem-t="${t}" aria-label="${escapeHtml(tx('ui.mover_baixo', { nome: col.t }))}"${i === cols.length - 1 ? ' disabled' : ''}>▼</button>
+    </li>`;
+  }).join('') : `<li class="qe-ordem-vazio">${escapeHtml(tx('ui.ordem_vazia'))}</li>`;
+}
+// Nova ordem das colunas visíveis; rótulos fora da tela (outros filtros) mantêm a posição relativa no fim
+function definirOrdemColunas(visiveis) {
+  const d = editor.draft;
+  d.cfg.ordemColunas = [...visiveis, ...d.cfg.ordemColunas.filter(t => !visiveis.includes(t))];
+  aplicarRascunhoAoVivo();
+  renderOrdemColunas();
+}
+function moverColuna(t, dir) {
+  const ordem = colunasDoEditor().map(c => c.t), i = ordem.indexOf(t), j = i + dir;
+  if (i < 0 || j < 0 || j >= ordem.length) return;
+  [ordem[i], ordem[j]] = [ordem[j], ordem[i]];
+  definirOrdemColunas(ordem);
+  const lista = $qe('qeOrdem');
+  const btn = lista.querySelector(`[data-ordem-t="${CSS.escape(t)}"][data-ordem-mover="${dir}"]`);
+  (btn && !btn.disabled ? btn : lista.querySelector(`[data-ordem-t="${CSS.escape(t)}"]:not(:disabled)`))?.focus();
+  announce(tx('ui.ordem_posicao', { nome: t, n: j + 1 }));
+}
+function restaurarOrdemColunas() {
+  if (!editor.draft) return;
+  editor.draft.cfg.ordemColunas = [];
+  aplicarRascunhoAoVivo();
+  renderOrdemColunas();
+  editorMsg(tx('ui.ordem_restaurada'), 'ok');
+}
+function initOrdemColunas() {
+  const lista = $qe('qeOrdem');
+  let arrastando = null;
+  const limpar = () => lista.querySelectorAll('.is-alvo-antes, .is-alvo-depois').forEach(el => el.classList.remove('is-alvo-antes', 'is-alvo-depois'));
+  lista.addEventListener('click', e => {
+    const b = e.target.closest('[data-ordem-mover]');
+    if (b) moverColuna(b.dataset.ordemT, Number(b.dataset.ordemMover));
+  });
+  lista.addEventListener('dragstart', e => {
+    const li = e.target.closest('[data-ordem]');
+    if (!li) return;
+    arrastando = li.dataset.ordem;
+    li.classList.add('is-arrastando');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', arrastando);
+  });
+  lista.addEventListener('dragover', e => {
+    const li = e.target.closest('[data-ordem]');
+    if (!arrastando || !li) return;
+    e.preventDefault();
+    limpar();
+    const r = li.getBoundingClientRect();
+    li.classList.add(e.clientY < r.top + r.height / 2 ? 'is-alvo-antes' : 'is-alvo-depois');
+  });
+  lista.addEventListener('dragleave', e => { if (!lista.contains(e.relatedTarget)) limpar(); });
+  lista.addEventListener('drop', e => {
+    const li = e.target.closest('[data-ordem]');
+    if (!arrastando || !li) return;
+    e.preventDefault();
+    const depois = li.classList.contains('is-alvo-depois'), alvo = li.dataset.ordem;
+    limpar();
+    if (alvo === arrastando) return;
+    const ordem = colunasDoEditor().map(c => c.t).filter(t => t !== arrastando);
+    ordem.splice(ordem.indexOf(alvo) + (depois ? 1 : 0), 0, arrastando);
+    const t = arrastando;
+    definirOrdemColunas(ordem);
+    announce(tx('ui.ordem_posicao', { nome: t, n: ordem.indexOf(t) + 1 }));
+  });
+  lista.addEventListener('dragend', () => { arrastando = null; limpar(); lista.querySelectorAll('.is-arrastando').forEach(el => el.classList.remove('is-arrastando')); });
+  $qe('qeOrdemPadrao').addEventListener('click', restaurarOrdemColunas);
 }
 
 function focarColuna(sel) {
@@ -5284,7 +5418,7 @@ function abrirVisao(view, btn, sec) {
 }
 
 // Edição do gráfico: um ícone = uma seção; as demais ficam ocultas
-const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', numeros: 'Formatação numérica', unidade: 'Unidade de medida', cores: 'Cores', persist: 'Persistência' };
+const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', numeros: 'Formatação numérica', unidade: 'Unidade de medida', colunas: 'Colunas', cores: 'Cores', persist: 'Persistência' };
 function irParaSecao(sec) {
   if (!SECOES_EDITOR[sec]) return;
   editor.secao = sec;
@@ -5908,6 +6042,7 @@ function initEditor() {
   $qe('qeRestaurar').addEventListener('click', restaurarPadraoEditor);
   $qe('qeCoresPadrao').addEventListener('click', restaurarCoresEditor);
   $qe('qeColunasPadrao').addEventListener('click', restaurarColunasEditor);
+  initOrdemColunas();
   $qe('qeCarregar').addEventListener('click', carregarSalvoEditor);
   $qe('qeRecarregar').addEventListener('click', recarregarDoBanco);
 
@@ -5927,7 +6062,7 @@ function initEditor() {
     $qe('qeExcluirLista').querySelectorAll('input[data-excluir]').forEach(i => { i.checked = e.target.checked; });
     atualizarExclusao();
   });
-  document.addEventListener('qtr:idioma', () => { updateChartActionButtons(); if (editor.open && editor.view === 'excluir') abrirExcluir(true); });
+  document.addEventListener('qtr:idioma', () => { updateChartActionButtons(); renderOrdemColunas(); if (editor.open && editor.view === 'excluir') abrirExcluir(true); });
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
   $qe('qeAddConfirmar').addEventListener('click', confirmarAdicionar);
   $qe('qeAddCancelar').addEventListener('click', recolherPainel);

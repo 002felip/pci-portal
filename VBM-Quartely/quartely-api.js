@@ -397,8 +397,19 @@ function normalizarConfig(entrada) {
     modoCor: c.modoCor === 'coluna' ? 'coluna' : 'grupo',
     paletaColunas: CONFIG_PALETAS.includes(c.paletaColunas) ? c.paletaColunas : '',
     fontes: normalizarFontes(c.fontes),
+    // Ordem das colunas (seção Colunas): rótulos de Type na ordem escolhida
+    ordemColunas: normalizarOrdemColunas(c.ordemColunas),
     cores,
   };
+}
+
+const CONFIG_ORDEM_ROTULO = /^[A-Za-z0-9 ._\/-]{1,24}$/;
+const CONFIG_ORDEM_MAX = 200;
+function normalizarOrdemColunas(v) {
+  const vistos = new Set();
+  return (Array.isArray(v) ? v : [])
+    .filter(t => typeof t === 'string' && CONFIG_ORDEM_ROTULO.test(t) && !vistos.has(t) && vistos.add(t))
+    .slice(0, CONFIG_ORDEM_MAX);
 }
 
 // Fontes do gráfico (aba Fontes): escala 70–160% em passos de 10, negrito,
