@@ -560,6 +560,8 @@ body:not([data-bg]) .qf-panel { background: rgba(20,32,48,.96); }
 /* Selecionado sem dados com os demais filtros (cascata): esmaecido, ainda desmarcável */
 .qf-option.is-sem-dados > span:nth-child(2) { opacity: .55; text-decoration: line-through; }
 .qf-sem-dados { margin-left: auto; font-size: .62rem; font-style: italic; opacity: .7; }
+.qf-cenario { margin-left: auto; font-size: .62rem; letter-spacing: .02em; opacity: .6; white-space: nowrap; }
+.qf-cenario + .qf-sem-dados { margin-left: 8px; }
 /* Horizonte agrupado: cabeçalho de grupo recolhível + itens recuados; parcial = traço */
 .qf-group-head { font-weight: 600; }
 .qf-group-toggle { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; font-size: .6rem; opacity: .7; }
@@ -1265,6 +1267,14 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-msg.is-ok { color: var(--qe-ok); }
 .qe-msg.is-err { color: var(--qe-err); }
 .qe-msg.is-info { color: var(--qe-muted); }
+.qe-excluir-lista { border: 0; padding: 0; margin: 0 0 12px; }
+.qe-excluir-todos { padding: 6px 0 8px; border-bottom: 1px solid var(--qe-line); margin-bottom: 6px; font-weight: 600; }
+#qeExcluirLista { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; }
+#qeExcluirLista .qe-check { padding: 6px 8px; border-radius: 8px; }
+#qeExcluirLista .qe-check:hover { background: rgba(60,181,229,.08); }
+#qeExcluirLista .qe-check span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Gráfico marcado para exclusão: contorno vermelho no quadro */
+.charts-board > .main-wrapper.is-marcado-excluir .chart-container { outline: 2px dashed #C62828; outline-offset: 3px; }
 .qe-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 14px 14px; border-top: 1px solid var(--qe-line); background: var(--qe-surface); }
 .qe-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: .45rem .7rem;
@@ -1482,7 +1492,12 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
       <p class="qe-empty" id="qeExcluirVazio" hidden><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i><span data-i18n="ui.selecione_um_grafico_para_excluir">Selecione um gráfico para excluir</span></p>
       <div id="qeExcluirConteudo">
-        <p class="qe-alerta" id="qeExcluirTexto"></p>
+        <fieldset class="qe-field qe-excluir-lista">
+          <legend class="qe-label" data-i18n="ui.graficos_a_excluir">Gráficos a excluir</legend>
+          <label class="qe-check qe-excluir-todos"><input type="checkbox" id="qeExcluirTodos"> <span data-i18n="ui.selecionar_todos">Selecionar todos</span></label>
+          <div id="qeExcluirLista"></div>
+        </fieldset>
+        <p class="qe-alerta" id="qeExcluirTexto" aria-live="polite"></p>
         <p class="qe-hint" data-i18n="ui.o_grafico_sai_do_quadro_uma_configuracao_s">O gráfico sai do quadro. Uma configuração salva no banco é mantida e pode ser carregada em outro gráfico.</p>
       </div>
     </div></div>
@@ -2133,7 +2148,19 @@ const I18N_UI = {
   'ui.colunas_do_grafico': ['Colunas do gráfico', 'Chart columns'],
   'ui.redimensionar': ['Redimensionar', 'Resize'],
   'ui.paleta_de_cores': ['Paleta de cores', 'Color palette'],
-  'ui.selecionado': ['Selecionado', 'Selected']
+  'ui.selecionado': ['Selecionado', 'Selected'],
+  'ui.graficos_a_excluir': ['Gráficos a excluir', 'Charts to delete'],
+  'ui.selecionar_todos': ['Selecionar todos', 'Select all'],
+  'ui.excluir_graficos': ['Excluir gráficos', 'Delete charts'],
+  'ui.graficos_no_quadro': ['{n} gráfico(s) no quadro', '{n} chart(s) on the board'],
+  'ui.excluir_n': ['Excluir ({n})', 'Delete ({n})'],
+  'ui.grafico_n': ['Nº {n}', 'No. {n}'],
+  'ui.msg_marque_graficos': ['Marque os gráficos que deseja excluir.', 'Check the charts you want to delete.'],
+  'ui.msg_confirma_1': ['Deseja excluir o gráfico ‘{nome}’? Esta ação não poderá ser desfeita.', 'Delete the chart ‘{nome}’? This action cannot be undone.'],
+  'ui.msg_confirma_n': ['Deseja excluir {n} gráficos? Esta ação não poderá ser desfeita.', 'Delete {n} charts? This action cannot be undone.'],
+  'ui.msg_1_excluido': ['Gráfico excluído.', 'Chart deleted.'],
+  'ui.msg_n_excluidos': ['{n} gráficos excluídos.', '{n} charts deleted.'],
+  'ui.msg_falha_excluir': ['Não foi possível excluir os gráficos. Tente novamente.', 'The charts could not be deleted. Please try again.']
 };
 Object.entries(I18N_UI).forEach(([k, [pt, en]]) => { i18n['pt-BR'][k] = pt; i18n.en[k] = en; });
 let idioma = 'pt-BR';
@@ -3049,15 +3076,15 @@ function rowMatchesFilters(r, exceptKey) {
   if (!skip('ano') && filterState.ano.size && !filterState.ano.has(String(r.ORDEM_ANO))) return false;
   if (!skip('sites') && filterState.sites.size && !filterState.sites.has(String(r.ID_SITE))) return false;
   if (!skip('visoes') && filterState.visoes.size && !filterState.visoes.has(r.NM_TYPE)) return false;
-  if (!skip('horizontes') && filterState.horizontes.size && !periodosSelecionados().has(periodoDoTipo(r.Type))) return false;
+  if (!skip('horizontes') && filterState.horizontes.size && !filterState.horizontes.has(r.Type)) return false;
   if (!skip('product') && filterState.product !== null && r.NM_KPI !== filterState.product) return false;
   return true;
 }
 
-// Horizonte filtra por PERÍODO ("Q3 26"), não pela série do rótulo ("Q3B 26"):
-// quem escolhe Budget/Plan/Act é o Cenário. Marcar Plan no Cenário traz o Plan
-// dos períodos já escolhidos, sem precisar remarcar o Horizonte. O estado
-// continua guardando rótulos (compatível com gráficos salvos).
+// Horizonte filtra pelo rótulo exato ("Q2A 25"): as opções seguem o Cenário
+// escolhido (Act/Fcst → Q2A 25, Budget → Q2B 25…), e cada uma pode ser marcada
+// sozinha. periodoDoTipo ("Q2A 25" → "Q2 25") serve para levar a seleção a
+// outro ano. O estado guarda rótulos (compatível com gráficos salvos).
 const PERIODO_CACHE = new Map();
 function periodoDoTipo(t) {
   let p = PERIODO_CACHE.get(t);
@@ -3067,13 +3094,6 @@ function periodoDoTipo(t) {
     PERIODO_CACHE.set(t, p);
   }
   return p;
-}
-const rotuloPeriodo = p => (/^\d{2}$/.test(p) ? `20${p}` : p);
-let periodosSelCache = { sig: null, set: new Set() };
-function periodosSelecionados() {
-  const sig = [...filterState.horizontes].join('\u0001');
-  if (sig !== periodosSelCache.sig) periodosSelCache = { sig, set: new Set([...filterState.horizontes].map(periodoDoTipo)) };
-  return periodosSelCache.set;
 }
 // Mesmo período em outro ano: "Q3 26" → "Q3 25", "26" → "25"
 const trocarAnoPeriodo = (p, yy) => (/^\d{2}$/.test(p) ? yy : p.replace(/\d{2}$/, yy));
@@ -3085,8 +3105,14 @@ const trocarAnoPeriodo = (p, yy) => (/^\d{2}$/.test(p) ? yy : p.replace(/\d{2}$/
 const OPTION_IGNORED_FILTERS = { product: ['horizontes'], sites: ['horizontes'], ano: ['horizontes'], visoes: ['horizontes'] };
 
 // Valor de cada campo numa linha (mesma comparação de rowMatchesFilters)
-const valorDoFiltro = (k, r) => (k === 'ano' ? String(r.ORDEM_ANO) : k === 'sites' ? String(r.ID_SITE) : k === 'visoes' ? r.NM_TYPE : k === 'horizontes' ? periodoDoTipo(r.Type) : r.NM_KPI);
-const valorSelecionado = (k, v) => (k === 'horizontes' ? periodoDoTipo(v) : v);
+const valorDoFiltro = (k, r) => (k === 'ano' ? String(r.ORDEM_ANO) : k === 'sites' ? String(r.ID_SITE) : k === 'visoes' ? r.NM_TYPE : k === 'horizontes' ? r.Type : r.NM_KPI);
+const valorSelecionado = (k, v) => v;
+// Cenário (NM_TYPE) de um rótulo do Horizonte: "Q2A 25" → "Act/Fcst"
+const CENARIO_DO_TIPO = new Map();
+function cenarioDoTipo(t) {
+  if (!CENARIO_DO_TIPO.has(t)) { const r = allRows.find(x => x.Type === t); if (!r) return ''; CENARIO_DO_TIPO.set(t, r.NM_TYPE); }
+  return CENARIO_DO_TIPO.get(t);
+}
 
 // Produto padrão: Copper Production (Produção de cobre) quando disponível
 const PRODUTO_PADRAO = /copper production|produ[çc][aã]o de cobre/i;
@@ -3109,11 +3135,11 @@ function podarSelecoesSemDados(driver) {
       const validos = new Set(linhas.map(r => valorDoFiltro(def.key, r)));
       if (def.multiple) {
         if ([...sel].some(v => validos.has(valorSelecionado(def.key, v)))) return;
-        // Horizonte sem dados após trocar o Ano: leva os mesmos períodos para
-        // o(s) ano(s) escolhido(s) (Q3 26 → Q3 25) antes de desistir e limpar
+        // Horizonte sem dados após trocar o Ano: leva os mesmos períodos e
+        // cenários para o(s) ano(s) escolhido(s) (Q3F 26 → Q3A 25) antes de limpar
         const anos = def.key === 'horizontes' ? [...filterState.ano].map(a => a.slice(-2)) : [];
-        const alvo = new Set([...sel].flatMap(v => anos.map(yy => trocarAnoPeriodo(periodoDoTipo(v), yy))));
-        const novos = alvo.size ? [...new Set(linhas.filter(r => alvo.has(periodoDoTipo(r.Type))).map(r => r.Type))] : [];
+        const alvo = new Set([...sel].flatMap(v => anos.map(yy => `${trocarAnoPeriodo(periodoDoTipo(v), yy)}|${cenarioDoTipo(v)}`)));
+        const novos = alvo.size ? [...new Set(linhas.filter(r => alvo.has(`${periodoDoTipo(r.Type)}|${r.NM_TYPE}`)).map(r => r.Type))] : [];
         sel.clear();
         novos.forEach(t => sel.add(t));
         mudou = true;
@@ -3336,7 +3362,7 @@ function renderTriggerLabel(def) {
   const set = filterState[def.key];
   if (set.size === 0) { labelEl.textContent = def.allLabel; return; }
   const labels = def.key === 'horizontes'
-    ? [...new Set([...set].map(v => rotuloPeriodo(periodoDoTipo(v))))]
+    ? [...set]
     : [...set].map(v => (filterOptions[def.key] || []).find(o => o.value === v)?.label || v);
   const shown = labels.slice(0, 2);
   const rest = labels.length - shown.length;
@@ -3367,20 +3393,18 @@ function selectOption(def, value) {
 }
 
 // ── Horizonte agrupado (estilo Power BI): Mensal / Trimestral / Semestral /
-//    Anual, recolhíveis, com UM item por período ("Jan 26" = JanB/JanP/JanA 26).
-//    As opções já vêm da cascata (filterOptions); marcar um período marca os
-//    rótulos dele disponíveis — quem escolhe Budget/Plan/Act é a Visão. O estado
-//    continua sendo o Set de Types, então gráficos salvos não mudam.
+//    Anual, recolhíveis, com UM item por rótulo ("Q2A 25", "Q2B 25", "Q2P 25").
+//    As opções vêm da cascata (filterOptions): só aparecem os rótulos dos
+//    Cenários escolhidos, na ordem das barras. O estado é o Set de Types.
 const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date (YTD)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
 const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
 
 function periodosDoHorizonte(options) {
   const mapa = new Map();
   options.forEach(o => {
-    const { core, yearSuffix } = splitTypeLabel(o.value.trim());
+    const { core } = splitTypeLabel(o.value.trim());
     const grupo = getHorizonType(core) || 'OUTROS';
-    const base = core.slice(0, -1);
-    const rotulo = grupo === 'YEAR' ? `20${base}` : grupo === 'OUTROS' ? o.value : `${base}${yearSuffix}`;
+    const rotulo = o.value;
     const chave = `${grupo}|${rotulo}`;
     if (!mapa.has(chave)) mapa.set(chave, { grupo, rotulo, tipos: [], semDados: true });
     const p = mapa.get(chave);
@@ -3401,8 +3425,7 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
     return;
   }
   // Marcado = período escolhido (qualquer série dele); grupo parcial = parte dos períodos
-  const selPer = periodosSelecionados();
-  const marcado = p => selPer.has(periodoDoTipo(p.tipos[0]));
+  const marcado = p => p.tipos.every(t => sel.has(t));
   const estado = itens => {
     const n = itens.filter(marcado).length;
     return n === 0 ? '' : n === itens.length ? 'is-checked' : 'is-partial';
@@ -3425,18 +3448,17 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
       ${aberto ? itens.map((p, pi) => {
         const sp = estado([p]);
         return `<div class="qf-option qf-group-item ${sp}${p.semDados ? ' is-sem-dados' : ''}" data-grupo="${gi}" data-periodo="${pi}" role="checkbox" aria-checked="${ariaChecked(sp)}" tabindex="0" title="${escapeHtml(p.tipos.join(', '))}">
-          ${caixa(sp)}<span>${escapeHtml(p.rotulo)}</span>${p.semDados ? '<span class="qf-sem-dados">sem dados</span>' : ''}
+          ${caixa(sp)}<span>${escapeHtml(p.rotulo)}</span><span class="qf-cenario">${escapeHtml(cenarioDoTipo(p.tipos[0]))}</span>${p.semDados ? '<span class="qf-sem-dados">sem dados</span>' : ''}
         </div>`;
       }).join('') : ''}
     </div>`;
   });
   container.innerHTML = html;
 
-  // Período ou grupo: tudo marcado → desmarca (todas as séries); senão marca
+  // Rótulo ou grupo: tudo marcado → desmarca; senão marca
   const alternar = itens => {
     if (itens.every(marcado)) {
-      const sair = new Set(itens.map(p => periodoDoTipo(p.tipos[0])));
-      [...sel].forEach(t => { if (sair.has(periodoDoTipo(t))) sel.delete(t); });
+      itens.forEach(p => p.tipos.forEach(t => sel.delete(t)));
     } else {
       itens.forEach(p => p.tipos.forEach(t => sel.add(t)));
     }
@@ -3966,8 +3988,9 @@ function onChartShortcut(e) {
 function updateChartActionButtons() {
   const rm = document.getElementById('qeDel');
   if (!rm) return;
-  rm.disabled = !activeChart;
-  rm.dataset.tip = rm.disabled ? 'Excluir gráfico (selecione um gráfico)' : 'Excluir gráfico';
+  rm.disabled = !charts.length;
+  rm.dataset.tip = tx('ui.excluir_graficos');
+  rm.setAttribute('aria-label', rm.dataset.tip);
   const empty = board.querySelector('.board-empty');
   if (empty) empty.hidden = charts.length > 0;
   board.classList.toggle('is-multi', charts.length > 1);
@@ -4145,30 +4168,37 @@ function addChart() {
 
 // Excluir abre o painel de confirmação da paleta (ver confirmarExclusao)
 function removeSelectedChart() {
-  if (!activeChart) return;
+  if (!charts.length) return;
   abrirVisao('excluir', document.getElementById('qeDel'));
 }
 
 function deleteActiveChart() {
-  const c = activeChart;
+  if (activeChart) deleteCharts([activeChart]);
+}
+
+// Exclui vários gráficos de uma vez (de baixo para cima: cada espaço liberado é ocupado
+// pelos gráficos abaixo na mesma faixa horizontal)
+function deleteCharts(lista) {
+  const alvo = lista.filter(c => charts.includes(c)).sort((a, b) => b.pos.y - a.pos.y);
+  if (!alvo.length) return;
   closeChartPalette();
-  const label = c.el.getAttribute('aria-label').replace(', selecionado', '');
-  const gap = c.el.offsetHeight + 24, top = c.pos.y, l = c.pos.x, r = c.pos.x + c.el.offsetWidth;
-  c.el.remove();
-  charts = charts.filter(x => x !== c);
-  activeChart = null;
-  // Sobe os gráficos abaixo (mesma faixa horizontal) para ocupar o espaço liberado
-  charts.forEach(o => {
-    if (o.pos.y > top && o.pos.x < r && o.pos.x + o.el.offsetWidth > l) {
-      o.pos = { x: o.pos.x, y: Math.max(BOARD_M, o.pos.y - gap) };
-      applyChartLayout(o);
-    }
+  alvo.forEach(c => {
+    const gap = c.el.offsetHeight + 24, top = c.pos.y, l = c.pos.x, r = c.pos.x + c.el.offsetWidth;
+    c.el.remove();
+    charts = charts.filter(x => x !== c);
+    if (c === activeChart) activeChart = null;
+    charts.forEach(o => {
+      if (o.pos.y > top && o.pos.x < r && o.pos.x + o.el.offsetWidth > l) {
+        o.pos = { x: o.pos.x, y: Math.max(BOARD_M, o.pos.y - gap) };
+        applyChartLayout(o);
+      }
+    });
   });
   updateChartActionButtons();
   updateBoardHeight();
   saveCharts();
   editorSync();
-  announce(label + ' excluído.');
+  announce(alvo.length === 1 ? tx('ui.msg_1_excluido') : tx('ui.msg_n_excluidos', { n: alvo.length }));
 }
 
 let excluindoGrafico = false;
@@ -4553,11 +4583,12 @@ function loadDraft() {
 // Cabeçalho do painel: o gráfico em edição em destaque + resumo do contexto
 function renderEditorTarget() {
   const c = editor.chart;
-  const doGrafico = !['bg', 'add'].includes(editor.view);
+  const doGrafico = !['bg', 'add', 'excluir'].includes(editor.view);
   const resumo = $qe('qeResumoGrafico');
   $qe('qeEditBadge').hidden = !(doGrafico && c);
   if (!doGrafico || !c) {
-    $qe('qeTarget').textContent = editor.view === 'bg' ? 'Background' : editor.view === 'add' ? 'Novo gráfico' : 'Nenhum gráfico selecionado';
+    $qe('qeTarget').textContent = editor.view === 'bg' ? 'Background' : editor.view === 'add' ? 'Novo gráfico'
+      : editor.view === 'excluir' ? tx('ui.graficos_no_quadro', { n: charts.length }) : 'Nenhum gráfico selecionado';
     resumo.hidden = true;
     return;
   }
@@ -5203,7 +5234,7 @@ function relayoutBoard() {
 }
 
 // ── Paleta lateral: uma visão por vez no mesmo painel ──
-const PANEL_TITULOS = { add: 'Adicionar gráfico', filtros: 'Filtros', editar: 'Edição', bg: 'Dashboard', excluir: 'Excluir gráfico' };
+const PANEL_TITULOS = { add: 'Adicionar gráfico', filtros: 'Filtros', editar: 'Edição', bg: 'Dashboard', excluir: 'Excluir gráficos' };
 editor.view = 'editar';
 editor.tool = null; // botão da paleta da visão aberta (destacado)
 
@@ -5215,6 +5246,7 @@ function marcarFerramenta() {
 function sairDaVisao(v) {
   if (v === 'filtros') { closeAllPanels(); descartarFiltrosPendentes(); filtrosAplicados = null; }
   if (v === 'bg') fundoDescartarVisualizacao();
+  if (v === 'excluir') desmarcarExclusao();
 }
 
 function setEditorOpen(open) {
@@ -5223,7 +5255,7 @@ function setEditorOpen(open) {
   editor.open = open;
   $qe('qePanel').hidden = !open;
   document.body.classList.toggle('qe-open', open);
-  document.body.classList.toggle('qe-ctx-grafico', open && !['bg', 'add'].includes(editor.view));
+  document.body.classList.toggle('qe-ctx-grafico', open && !['bg', 'add', 'excluir'].includes(editor.view));
   $qe('qeBackdrop').hidden = !(open && isEditorDrawer());
   marcarFerramenta();
   if (!open) closeChartPalette();
@@ -5239,7 +5271,7 @@ function abrirVisao(view, btn, sec) {
   editor.tool = btn;
   $qe('qePanel').querySelectorAll('.qe-view').forEach(v => { v.hidden = v.dataset.view !== view; });
   setEditorOpen(true);
-  document.body.classList.toggle('qe-ctx-grafico', !['bg', 'add'].includes(view));
+  document.body.classList.toggle('qe-ctx-grafico', !['bg', 'add', 'excluir'].includes(view));
   marcarFerramenta();
   if (view === 'editar') irParaSecao(sec || editor.secao || 'ident');
   else $qe('qeHeading').textContent = PANEL_TITULOS[view];
@@ -5265,30 +5297,53 @@ function irParaSecao(sec) {
 }
 
 // ── Excluir gráfico (painel de confirmação; mesmo deleteActiveChart) ──
-function abrirExcluir() {
-  const c = activeChart;
-  $qe('qeExcluirVazio').hidden = !!c;
-  $qe('qeExcluirConteudo').hidden = !c;
-  $qe('qeExcluirConfirmar').disabled = !c;
-  $qe('qeExcluirTexto').textContent = c ? `Deseja excluir o gráfico ‘${nomeDoGrafico(c)}’? Esta ação não poderá ser desfeita.` : '';
+// Lista com caixas de marcação: o gráfico selecionado já vem marcado; marque outros
+// para excluir todos de uma vez (uma confirmação só)
+const tituloDoCard = c => (c.el.querySelector('.chart-title')?.textContent || '').replace(/\s+/g, ' ').trim() || nomeDoGrafico(c);
+function abrirExcluir(manter) {
+  const marcados = new Set(manter ? excluirMarcados().map(c => c.id) : activeChart ? [activeChart.id] : []);
+  $qe('qeExcluirVazio').hidden = charts.length > 0;
+  $qe('qeExcluirConteudo').hidden = !charts.length;
+  $qe('qeExcluirLista').innerHTML = charts.map((c, i) => `<label class="qe-check" title="${escapeHtml(tituloDoCard(c))}">
+      <input type="checkbox" data-excluir="${c.id}"${marcados.has(c.id) ? ' checked' : ''}>
+      <span>${tx('ui.grafico_n', { n: i + 1 })} · ${escapeHtml(tituloDoCard(c))}</span></label>`).join('');
   msgEm('qeExcluirMsg', '');
+  atualizarExclusao();
 }
+const excluirMarcados = () => [...$qe('qeExcluirLista').querySelectorAll('input[data-excluir]:checked')]
+  .map(i => charts.find(c => c.id === i.dataset.excluir)).filter(Boolean);
+function atualizarExclusao() {
+  renderEditorTarget();
+  const sel = excluirMarcados(), n = sel.length, todos = $qe('qeExcluirTodos');
+  todos.checked = n > 0 && n === charts.length;
+  todos.indeterminate = n > 0 && n < charts.length;
+  charts.forEach(c => c.el.classList.toggle('is-marcado-excluir', editor.open && editor.view === 'excluir' && sel.includes(c)));
+  const btn = $qe('qeExcluirConfirmar');
+  btn.disabled = !n || excluindoGrafico;
+  btn.textContent = n > 1 ? tx('ui.excluir_n', { n }) : tx('ui.excluir');
+  $qe('qeExcluirTexto').textContent = !n ? tx('ui.msg_marque_graficos')
+    : n === 1 ? tx('ui.msg_confirma_1', { nome: tituloDoCard(sel[0]) })
+    : tx('ui.msg_confirma_n', { n });
+}
+function desmarcarExclusao() { charts.forEach(c => c.el.classList.remove('is-marcado-excluir')); }
 
 function confirmarExclusao() {
-  if (excluindoGrafico || !activeChart) return; // vários cliques = uma exclusão
+  const sel = excluirMarcados();
+  if (excluindoGrafico || !sel.length) return; // vários cliques = uma exclusão
   excluindoGrafico = true;
   $qe('qeExcluirConfirmar').disabled = true;
   try {
-    deleteActiveChart();
+    desmarcarExclusao();
+    deleteCharts(sel);
     setEditorOpen(false);
     $qe('qeAdd').focus();
-    mostrarAviso('Gráfico excluído.');
+    mostrarAviso(sel.length === 1 ? tx('ui.msg_1_excluido') : tx('ui.msg_n_excluidos', { n: sel.length }));
   } catch (err) {
-    console.error('[quartely] falha ao excluir gráfico:', err);
-    msgEm('qeExcluirMsg', 'Não foi possível excluir o gráfico. Tente novamente.', 'err');
+    console.error('[quartely] falha ao excluir gráficos:', err);
+    msgEm('qeExcluirMsg', tx('ui.msg_falha_excluir'), 'err');
   } finally {
     excluindoGrafico = false;
-    $qe('qeExcluirConfirmar').disabled = !activeChart;
+    if (editor.open && editor.view === 'excluir') abrirExcluir(true);
   }
 }
 
@@ -5418,7 +5473,7 @@ function textoDoFiltro(f, def) {
   const v = f[def.key];
   if (!def.multiple) return v || 'Nenhum';
   if (!v || !v.length) return 'Todos';
-  const rotulos = def.key === 'horizontes' ? [...new Set(v.map(x => rotuloPeriodo(periodoDoTipo(x))))] : v.map(x => {
+  const rotulos = def.key === 'horizontes' ? v : v.map(x => {
     if (def.key !== 'sites') return x;
     const r = allRows.find(l => String(l.ID_SITE) === x);
     return r && r.NM_SITE ? r.NM_SITE : `Site ${x}`;
@@ -5867,6 +5922,12 @@ function initEditor() {
     setEditorOpen(false);
   }, true);
   $qe('qeExcluirConfirmar').addEventListener('click', confirmarExclusao);
+  $qe('qeExcluirLista').addEventListener('change', atualizarExclusao);
+  $qe('qeExcluirTodos').addEventListener('change', e => {
+    $qe('qeExcluirLista').querySelectorAll('input[data-excluir]').forEach(i => { i.checked = e.target.checked; });
+    atualizarExclusao();
+  });
+  document.addEventListener('qtr:idioma', () => { updateChartActionButtons(); if (editor.open && editor.view === 'excluir') abrirExcluir(true); });
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
   $qe('qeAddConfirmar').addEventListener('click', confirmarAdicionar);
   $qe('qeAddCancelar').addEventListener('click', recolherPainel);
