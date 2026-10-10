@@ -153,7 +153,7 @@ body {
 }
 .topnav-brand-vbm, .topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
 .topnav-brand::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -7px; height: 1.5px; border-radius: 2px;
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
   background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
 }
 
@@ -1188,6 +1188,10 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-ordem .qe-alca { color: var(--qe-muted); font-size: .8rem; line-height: 1; letter-spacing: -2px; flex-shrink: 0; }
 .qe-ordem .qe-fl-text { flex: 1; font-size: .72rem; color: var(--qe-strong); flex-direction: row; gap: 8px; align-items: baseline; }
 .qe-ordem .qe-fl-val { font-size: .6rem; }
+.qe-delta-chk { display: inline-flex; align-items: center; gap: 3px; font-size: .68rem; font-weight: 600; color: var(--qe-muted); cursor: pointer; flex-shrink: 0; }
+.qe-delta-chk input { width: 14px; height: 14px; margin: 0; accent-color: #0B6E99; cursor: pointer; }
+.qe-delta-chk input:disabled { cursor: default; opacity: .55; }
+.qe-delta-chk input:focus-visible { outline: 2px solid var(--vbm-blue-light); outline-offset: 2px; }
 .qe-ordem-vazio { font-size: .7rem; color: var(--qe-muted); padding: 6px 0; }
 /* Campos do título dinâmico (ordem com ▲▼) */
 .qe-fieldlist { list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -1842,7 +1846,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <div class="qe-sec-body">
           <p class="qe-label" id="qeOrdemTit" data-i18n="ui.ordem_das_colunas">Ordem das colunas</p>
           <ol class="qe-fieldlist qe-ordem" id="qeOrdem" aria-labelledby="qeOrdemTit"></ol>
-          <p class="qe-hint" id="qeOrdemDica" data-i18n="ui.ordem_dica">Arraste pela alça ou use ▲▼. Vale na hora; grave em Salvar. Colunas novas (de outros filtros) entram no fim.</p>
+          <p class="qe-hint" id="qeOrdemDica" data-i18n="ui.ordem_dica">Arraste pela alça ou use ▲▼. Δ liga o delta com a coluna anterior (os automáticos ficam marcados e travados). Vale na hora; grave em Salvar.</p>
           <p class="qe-hint" id="qeOrdemLinhas" hidden data-i18n="ui.ordem_so_barras">A ordem personalizada vale para o tipo Barras. Nas Linhas, o eixo segue a sequência dos períodos.</p>
           <button type="button" class="qe-btn" id="qeOrdemPadrao" style="width:100%;margin-top:12px;" data-i18n="ui.restaurar_ordem_padrao">Restaurar ordem padrão</button>
         </div>
@@ -2176,7 +2180,9 @@ const I18N_UI = {
   'ui.colunas': ['Colunas', 'Columns'],
   'ui.n_selecionados': ['{n} gráficos selecionados. Arraste um deles para mover o grupo ou o canto para redimensionar; Ctrl/Shift + clique adiciona ou remove.', '{n} charts selected. Drag one of them to move the group or the corner to resize; Ctrl/Shift + click adds or removes.'],
   'ui.ordem_das_colunas': ['Ordem das colunas', 'Column order'],
-  'ui.ordem_dica': ['Arraste pela alça ou use ▲▼. Vale na hora; grave em Salvar. Colunas novas (de outros filtros) entram no fim.', 'Drag by the handle or use ▲▼. Applied instantly; store it with Save. New columns (from other filters) go to the end.'],
+  'ui.ordem_dica': ['Arraste pela alça ou use ▲▼. Δ liga o delta com a coluna anterior (os automáticos ficam marcados e travados). Vale na hora; grave em Salvar.', 'Drag by the handle or use ▲▼. Δ turns on the delta against the previous column (automatic ones stay checked and locked). Applied instantly; store it with Save.'],
+  'ui.delta_anterior': ['Delta com a coluna anterior ({a})', 'Delta against the previous column ({a})'],
+  'ui.delta_auto': ['Delta automático (mesmo cenário)', 'Automatic delta (same scenario)'],
   'ui.ordem_so_barras': ['A ordem personalizada vale para o tipo Barras. Nas Linhas, o eixo segue a sequência dos períodos.', 'The custom order applies to the Bars type. In Lines, the axis follows the period sequence.'],
   'ui.restaurar_ordem_padrao': ['Restaurar ordem padrão', 'Restore default order'],
   'ui.ordem_vazia': ['Nenhuma coluna exibida. Ajuste os filtros para listar as colunas.', 'No columns displayed. Adjust the filters to list the columns.'],
@@ -2616,6 +2622,14 @@ function renderTurnoverChart(sourceRows) {
     if (!realSeq && groupKey(prev.type) !== groupKey(d.type)) return;
     if (!isValidComparison(pc, dc)) return;
     if (Number.isFinite(d.value) && Number.isFinite(prev.value) && prev.value !== 0) pairIndex[i] = i - 1;
+  });
+  // Deltas automáticos (regra acima) + os marcados na seção Colunas ("delta com a anterior")
+  const autoDelta = new Set(Object.keys(pairIndex).map(i => data[i].type.trim()));
+  if (activeChart) activeChart.deltasAuto = autoDelta;
+  const manuais = new Set(cfg.deltasManuais || []);
+  data.forEach((d, i) => {
+    const prev = data[i - 1];
+    if (prev && manuais.has(d.type.trim()) && Number.isFinite(d.value) && Number.isFinite(prev.value) && prev.value !== 0) pairIndex[i] = i - 1;
   });
 
   // Páginas de até perPage colunas, sem separar colunas de um mesmo grupo comparado
@@ -4500,7 +4514,8 @@ function defaultChartCfg() {
     linhas: normalizeLinhasCfg(null),
     modoCor: 'grupo', paletaColunas: '',
     fontes: normalizarFontes(null),
-    ordemColunas: []
+    ordemColunas: [],
+    deltasManuais: []
   };
 }
 
@@ -4626,7 +4641,8 @@ function normalizeChartCfg(src) {
     modoCor: s.modoCor === 'coluna' ? 'coluna' : 'grupo',
     paletaColunas: PALETAS_COLUNAS.some(p => p.id === s.paletaColunas) ? s.paletaColunas : '',
     fontes: normalizarFontes(s.fontes),
-    ordemColunas: normalizarOrdemColunas(s.ordemColunas)
+    ordemColunas: normalizarOrdemColunas(s.ordemColunas),
+    deltasManuais: normalizarOrdemColunas(s.deltasManuais)
   };
 }
 // Mesmas regras de normalizarOrdemColunas no servidor
@@ -4752,7 +4768,7 @@ function applyDbConfigsToCharts() {
 }
 
 function configForDb(c) {
-  return { titulo: c.cfg.titulo, decBar: c.cfg.decBar, decDelta: c.cfg.decDelta, unidade: c.cfg.unidade, tipoGrafico: c.cfg.tipoGrafico, exibirDelta: c.cfg.exibirDelta, linhas: c.cfg.linhas, modoCor: c.cfg.modoCor, paletaColunas: c.cfg.paletaColunas, fontes: c.cfg.fontes, ordemColunas: c.cfg.ordemColunas, cores: editorColorsOf(c.colors) };
+  return { titulo: c.cfg.titulo, decBar: c.cfg.decBar, decDelta: c.cfg.decDelta, unidade: c.cfg.unidade, tipoGrafico: c.cfg.tipoGrafico, exibirDelta: c.cfg.exibirDelta, linhas: c.cfg.linhas, modoCor: c.cfg.modoCor, paletaColunas: c.cfg.paletaColunas, fontes: c.cfg.fontes, ordemColunas: c.cfg.ordemColunas, deltasManuais: c.cfg.deltasManuais, cores: editorColorsOf(c.colors) };
 }
 
 // ── Painel: seleção, rascunho e formulário ──
@@ -5051,11 +5067,15 @@ function renderOrdemColunas() {
   const cols = colunasDoEditor(), barras = d.cfg.tipoGrafico === 'bar';
   $qe('qeOrdemLinhas').hidden = barras;
   $qe('qeOrdemPadrao').disabled = !d.cfg.ordemColunas.length;
+  const auto = (editor.chart && editor.chart.deltasAuto) || new Set(), manuais = d.cfg.deltasManuais;
   lista.innerHTML = cols.length ? cols.map((col, i) => {
-    const t = escapeHtml(col.t);
+    const t = escapeHtml(col.t), automatico = auto.has(col.t);
+    const delta = i === 0 || !barras ? '' : `<label class="qe-delta-chk" title="${escapeHtml(automatico ? tx('ui.delta_auto') : tx('ui.delta_anterior', { a: cols[i - 1].t }))}">
+        <input type="checkbox" data-delta-t="${t}"${automatico || manuais.includes(col.t) ? ' checked' : ''}${automatico ? ' disabled' : ''}
+          aria-label="${escapeHtml(tx('ui.delta_anterior', { a: cols[i - 1].t }) + ' — ' + col.t)}">Δ</label>`;
     return `<li class="qe-fl-item" draggable="true" data-ordem="${t}">
       <span class="qe-alca" aria-hidden="true">⋮⋮</span>
-      <span class="qe-fl-text"><span>${t}</span><span class="qe-fl-val">${escapeHtml(cenarioDoTipo(col.t))}</span></span>
+      <span class="qe-fl-text"><span>${t}</span><span class="qe-fl-val">${escapeHtml(cenarioDoTipo(col.t))}</span></span>${delta}
       <button type="button" class="qe-mini" data-ordem-mover="-1" data-ordem-t="${t}" aria-label="${escapeHtml(tx('ui.mover_cima', { nome: col.t }))}"${i === 0 ? ' disabled' : ''}>▲</button>
       <button type="button" class="qe-mini" data-ordem-mover="1" data-ordem-t="${t}" aria-label="${escapeHtml(tx('ui.mover_baixo', { nome: col.t }))}"${i === cols.length - 1 ? ' disabled' : ''}>▼</button>
     </li>`;
@@ -5092,6 +5112,15 @@ function initOrdemColunas() {
   lista.addEventListener('click', e => {
     const b = e.target.closest('[data-ordem-mover]');
     if (b) moverColuna(b.dataset.ordemT, Number(b.dataset.ordemMover));
+  });
+  lista.addEventListener('change', e => {
+    const cb = e.target.closest('[data-delta-t]');
+    if (!cb || !editor.draft) return;
+    const t = cb.dataset.deltaT, d = editor.draft.cfg;
+    d.deltasManuais = cb.checked ? [...new Set([...d.deltasManuais, t])] : d.deltasManuais.filter(x => x !== t);
+    aplicarRascunhoAoVivo();
+    renderOrdemColunas();
+    lista.querySelector(`[data-delta-t="${CSS.escape(t)}"]`)?.focus();
   });
   lista.addEventListener('dragstart', e => {
     const li = e.target.closest('[data-ordem]');

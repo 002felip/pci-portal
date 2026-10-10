@@ -405,6 +405,8 @@ function normalizarConfig(entrada) {
     fontes: normalizarFontes(c.fontes),
     // Ordem das colunas (seção Colunas): rótulos de Type na ordem escolhida
     ordemColunas: normalizarOrdemColunas(c.ordemColunas),
+    // Deltas ligados manualmente (seção Colunas): rótulo da coluna que compara com a anterior
+    deltasManuais: normalizarOrdemColunas(c.deltasManuais),
     cores,
   };
 }
