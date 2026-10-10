@@ -1282,6 +1282,8 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 #qeExcluirLista .qe-check { padding: 6px 8px; border-radius: 8px; }
 #qeExcluirLista .qe-check:hover { background: rgba(60,181,229,.08); }
 #qeExcluirLista .qe-check span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Seleção múltipla (Ctrl/Shift + clique): contorno azul em todos do grupo */
+.charts-board > .main-wrapper.is-multisel .chart-container { outline: 2px solid #3CB5E5; outline-offset: 3px; }
 /* Gráfico marcado para exclusão: contorno vermelho no quadro */
 .charts-board > .main-wrapper.is-marcado-excluir .chart-container { outline: 2px dashed #C62828; outline-offset: 3px; }
 .qe-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 14px 14px; border-top: 1px solid var(--qe-line); background: var(--qe-surface); }
@@ -2170,6 +2172,7 @@ const I18N_UI = {
   'ui.paleta_de_cores': ['Paleta de cores', 'Color palette'],
   'ui.selecionado': ['Selecionado', 'Selected'],
   'ui.colunas': ['Colunas', 'Columns'],
+  'ui.n_selecionados': ['{n} gráficos selecionados. Arraste um deles para mover o grupo; Ctrl/Shift + clique adiciona ou remove.', '{n} charts selected. Drag one of them to move the group; Ctrl/Shift + click adds or removes.'],
   'ui.ordem_das_colunas': ['Ordem das colunas', 'Column order'],
   'ui.ordem_dica': ['Arraste pela alça ou use ▲▼. Vale na hora; grave em Salvar. Colunas novas (de outros filtros) entram no fim.', 'Drag by the handle or use ▲▼. Applied instantly; store it with Save. New columns (from other filters) go to the end.'],
   'ui.ordem_so_barras': ['A ordem personalizada vale para o tipo Barras. Nas Linhas, o eixo segue a sequência dos períodos.', 'The custom order applies to the Bars type. In Lines, the axis follows the period sequence.'],
@@ -3839,6 +3842,7 @@ function renderActiveChart() {
 }
 
 function deselectChart() {
+  limparMultiSel();
   if (!activeChart) return;
   descartarFiltrosPendentes();
   closeChartPalette();
@@ -4079,6 +4083,32 @@ function defaultSize() {
   return clampSize(Math.min(board.clientWidth - 2 * BOARD_M, 1200), Math.min(innerHeight * 0.76, 720));
 }
 
+// ── Seleção múltipla (Ctrl/⌘ ou Shift + clique): arrastar um deles move o grupo ──
+const multiSel = new Set();
+function marcarMultiSel() {
+  [...multiSel].forEach(c => { if (!charts.includes(c)) multiSel.delete(c); });
+  const grupo = multiSel.size > 1;
+  charts.forEach(c => c.el.classList.toggle('is-multisel', grupo && multiSel.has(c)));
+  board.classList.toggle('has-multisel', grupo);
+}
+function limparMultiSel() {
+  if (!multiSel.size) return;
+  multiSel.clear();
+  marcarMultiSel();
+}
+function alternarMultiSel(c) {
+  if (!multiSel.size && activeChart) multiSel.add(activeChart);
+  if (multiSel.has(c) && multiSel.size > 1) {
+    multiSel.delete(c);
+    if (c === activeChart) activateChart([...multiSel].pop());
+  } else {
+    multiSel.add(c);
+    activateChart(c);
+  }
+  marcarMultiSel();
+  if (multiSel.size > 1) mostrarAviso(tx('ui.n_selecionados', { n: multiSel.size }));
+}
+let ultimoArraste = 0; // fim de um arraste real: o clique que vem junto não abre o painel
 function drag(el, onMove, onEnd) {
   el.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
@@ -4086,7 +4116,8 @@ function drag(el, onMove, onEnd) {
     closeChartPalette();
     el.setPointerCapture(e.pointerId);
     const start = onMove(null, e);
-    const move = ev => onMove(start, ev);
+    const x0 = e.clientX, y0 = e.clientY;
+    const move = ev => { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) ultimoArraste = Date.now(); onMove(start, ev); };
     const up = () => {
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
@@ -4114,9 +4145,10 @@ function showGuides(x, y) {
   if (y != null) guideH.style.top = y + 'px';
 }
 // Geometria dos demais gráficos lida uma vez no início (arraste sem leituras extras de layout)
-function startArrange(c) {
+// Coordenadas de tela: com o painel aberto o quadro está reescalado (x e largura × k)
+function startArrange(fora, k = 1) {
   board.classList.add('is-arranging');
-  return charts.filter(o => o !== c).map(o => ({ l: o.pos.x, t: o.pos.y, w: o.el.offsetWidth, h: o.el.offsetHeight, ch: o.size.h }));
+  return charts.filter(o => !fora.includes(o)).map(o => ({ l: o.pos.x * k, t: o.pos.y, w: o.el.offsetWidth, h: o.el.offsetHeight, ch: o.size.h }));
 }
 function endArrange() { board.classList.remove('is-arranging'); showGuides(null, null); }
 // Menor ajuste (≤ SNAP) que alinha um dos pontos às linhas-alvo
@@ -4132,27 +4164,39 @@ function nearest(points, targets) {
 function attachMoveResize(c) {
   drag(c.el.querySelector('.chart-header'), (s, e) => {
     if (!s) {
-      c.el.classList.add('is-dragging');
-      return { dx: e.clientX - c.pos.x, dy: e.clientY - c.pos.y, w: c.el.offsetWidth, h: c.el.offsetHeight, others: startArrange(c) };
+      // Gráfico do grupo selecionado: todos andam juntos, com o mesmo deslocamento
+      const grupo = multiSel.size > 1 && multiSel.has(c) ? charts.filter(o => multiSel.has(o)) : [c];
+      const k = escalaQuadro(), topo = board.getBoundingClientRect().top;
+      const ini = grupo.map(o => ({ o, x: o.pos.x * k, y: o.pos.y, w: o.el.offsetWidth, h: o.el.offsetHeight }));
+      grupo.forEach(o => o.el.classList.add('is-dragging'));
+      // Limites do deslocamento: o grupo inteiro fica dentro do quadro e da área visível
+      const lim = {
+        dxMin: Math.max(...ini.map(m => BOARD_M - m.x)),
+        dxMax: Math.min(...ini.map(m => board.clientWidth - BOARD_M - m.w - m.x)),
+        dyMin: Math.max(...ini.map(m => Math.max(BOARD_M, -topo + BOARD_M) - m.y)),
+        dyMax: Math.min(...ini.map(m => innerHeight - topo - BOARD_M - m.h - m.y))
+      };
+      return { k, x0: e.clientX, y0: e.clientY, px: c.pos.x * k, py: c.pos.y, w: c.el.offsetWidth, h: c.el.offsetHeight, ini, lim, others: startArrange(grupo, k) };
     }
-    const pos = clampPos(c, e.clientX - s.dx, e.clientY - s.dy);
-    const sx = nearest([pos.x, pos.x + s.w / 2, pos.x + s.w], s.others.flatMap(o => [o.l, o.l + o.w / 2, o.l + o.w]));
-    const sy = nearest([pos.y, pos.y + s.h / 2, pos.y + s.h], s.others.flatMap(o => [o.t, o.t + o.h / 2, o.t + o.h]));
-    if (sx) pos.x += sx.d;
-    if (sy) pos.y += sy.d;
-    c.pos = pos;
-    applyChartLayout(c);
+    let dx = clamp(e.clientX - s.x0, s.lim.dxMin, s.lim.dxMax), dy = clamp(e.clientY - s.y0, s.lim.dyMin, s.lim.dyMax);
+    const px = s.px + dx, py = s.py + dy;
+    const sx = nearest([px, px + s.w / 2, px + s.w], s.others.flatMap(o => [o.l, o.l + o.w / 2, o.l + o.w]));
+    const sy = nearest([py, py + s.h / 2, py + s.h], s.others.flatMap(o => [o.t, o.t + o.h / 2, o.t + o.h]));
+    if (sx) dx += sx.d;
+    if (sy) dy += sy.d;
+    s.ini.forEach(m => { m.o.pos = { x: (m.x + dx) / s.k, y: m.y + dy }; applyChartLayout(m.o); }); // guarda sem a escala do painel
     showGuides(sx && sx.line, sy && sy.line);
-  }, () => { c.el.classList.remove('is-dragging'); endArrange(); updateBoardHeight(); saveCharts(); });
+  }, () => { charts.forEach(o => o.el.classList.remove('is-dragging')); endArrange(); updateBoardHeight(); saveCharts(); });
 
   drag(c.el.querySelector('.chart-resize-handle'), (s, e) => {
     if (!s) {
       c.el.classList.add('is-resizing');
-      return { x: e.clientX, y: e.clientY, w: c.size.w, h: c.size.h, extra: c.el.offsetHeight - c.size.h, others: startArrange(c) };
+      const k = escalaQuadro();
+      return { k, x: e.clientX, y: e.clientY, w: c.el.offsetWidth, h: c.size.h, extra: c.el.offsetHeight - c.size.h, others: startArrange([c], k) };
     }
-    const size = clampSize(s.w + e.clientX - s.x, s.h + e.clientY - s.y);
+    const size = clampSize(s.w + e.clientX - s.x, s.h + e.clientY - s.y); // largura em tela
     // Borda direita/inferior alinhada a outro gráfico, ou mesma largura/altura de outro
-    const ex = nearest([c.pos.x + size.w], s.others.flatMap(o => [o.l, o.l + o.w]));
+    const ex = nearest([c.pos.x * s.k + size.w], s.others.flatMap(o => [o.l, o.l + o.w]));
     const ew = nearest([size.w], s.others.map(o => o.w));
     const ey = nearest([c.pos.y + s.extra + size.h], s.others.flatMap(o => [o.t, o.t + o.h]));
     const eh = nearest([size.h], s.others.map(o => o.ch));
@@ -4160,9 +4204,9 @@ function attachMoveResize(c) {
     const by = ey && (!eh || Math.abs(ey.d) <= Math.abs(eh.d)) ? ey : eh;
     if (bx) size.w += bx.d;
     if (by) size.h += by.d;
-    c.size = size;
+    c.size = { w: size.w / s.k, h: size.h };
     applyChartLayout(c);
-    showGuides(bx ? c.pos.x + size.w : null, by ? c.pos.y + s.extra + size.h : null);
+    showGuides(bx ? c.pos.x * s.k + size.w : null, by ? c.pos.y + s.extra + size.h : null);
   }, () => {
     c.el.classList.remove('is-resizing');
     endArrange();
@@ -4236,6 +4280,7 @@ function deleteCharts(lista) {
       }
     });
   });
+  marcarMultiSel();
   updateChartActionButtons();
   updateBoardHeight();
   saveCharts();
@@ -4271,14 +4316,31 @@ function initCharts() {
   // Seleciona o card antes de qualquer outra ação (clique, arraste, paleta)
   document.addEventListener('pointerdown', (e) => {
     const w = e.target.closest('.is-board-item');
-    if (w) activateChart(charts.find(c => c.el === w));
+    if (w) {
+      const c = charts.find(x => x.el === w);
+      // Ctrl/⌘ ou Shift + clique: entra ou sai da seleção múltipla
+      if (e.button === 0 && (e.ctrlKey || e.metaKey || e.shiftKey) && !e.target.closest('.chart-export, .chart-pager, .chart-resize-handle')) {
+        e.preventDefault(); // sem seleção de texto no Shift+clique
+        alternarMultiSel(c);
+        return;
+      }
+      if (!multiSel.has(c)) limparMultiSel(); // clique num gráfico do grupo mantém o grupo (para arrastar)
+      activateChart(c);
+    }
     // Clique no fundo da página (fora de gráficos, filtros, paleta, modal e edição) remove a seleção
     else if (!e.target.closest('.qf-panel, #chartPalette, .qf-modal-overlay, .topnav, .qe-toolbar, .qe-panel, .qe-backdrop, .settings-panel, .settings-backdrop')) deselectChart();
   }, true);
+  // Clique simples (sem arrastar) num gráfico do grupo: volta à seleção só dele
+  document.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || multiSel.size < 2 || Date.now() - ultimoArraste < 400) return;
+    const w = e.target.closest('.is-board-item');
+    if (w && !e.target.closest('.chart-export, .chart-pager, .chart-resize-handle')) limparMultiSel();
+  });
   // Teclado: Esc sobre um gráfico remove a seleção (se não houver paleta/modal aberto)
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || !e.target.closest || !e.target.closest('.is-board-item')) return;
     if (document.querySelector('#chartPalette.active, .qf-modal-overlay.open')) return;
+    limparMultiSel();
     deselectChart();
   });
   document.addEventListener('focusin', (e) => {
@@ -5435,7 +5497,7 @@ function irParaSecao(sec) {
 // para excluir todos de uma vez (uma confirmação só)
 const tituloDoCard = c => (c.el.querySelector('.chart-title')?.textContent || '').replace(/\s+/g, ' ').trim() || nomeDoGrafico(c);
 function abrirExcluir(manter) {
-  const marcados = new Set(manter ? excluirMarcados().map(c => c.id) : activeChart ? [activeChart.id] : []);
+  const marcados = new Set(manter ? excluirMarcados().map(c => c.id) : multiSel.size > 1 ? [...multiSel].map(c => c.id) : activeChart ? [activeChart.id] : []);
   $qe('qeExcluirVazio').hidden = charts.length > 0;
   $qe('qeExcluirConteudo').hidden = !charts.length;
   $qe('qeExcluirLista').innerHTML = charts.map((c, i) => `<label class="qe-check" title="${escapeHtml(tituloDoCard(c))}">
@@ -5479,6 +5541,14 @@ function confirmarExclusao() {
     excluindoGrafico = false;
     if (editor.open && editor.view === 'excluir') abrirExcluir(true);
   }
+}
+
+// Reabre o painel na última visão do gráfico (Filtros ou a seção de edição);
+// visões do quadro (Adicionar, Excluir, Background) voltam para a edição
+function abrirUltimaVisao() {
+  if (editor.view === 'filtros') { abrirVisao('filtros', $qe('qeFiltrosBtn')); return; }
+  const sec = SECOES_EDITOR[editor.secao] ? editor.secao : 'ident';
+  abrirVisao('editar', $qe('qeToolbar').querySelector(`[data-qe-go="${sec}"]`), sec);
 }
 
 function recolherPainel() {
@@ -6050,12 +6120,20 @@ function initEditor() {
   const toolbar = $qe('qeToolbar');
   toolbar.querySelectorAll('[data-qe-view]').forEach(b => b.addEventListener('click', () => abrirVisao(b.dataset.qeView, b)));
   toolbar.querySelectorAll('[data-qe-go]').forEach(b => b.addEventListener('click', () => abrirVisao('editar', b, b.dataset.qeGo)));
-  // Clique em qualquer lugar fora do painel e da paleta recolhe o painel (os gráficos voltam ao tamanho)
+  // Clique fora do painel e dos gráficos recolhe o painel (os gráficos voltam ao tamanho);
+  // clique num gráfico mantém o painel aberto, agora para esse gráfico
   document.addEventListener('pointerdown', e => {
     if (!editor.open || isEditorDrawer()) return; // no drawer o fundo escuro já fecha
-    if (e.target.closest('.qe-panel, .qe-toolbar, #chartPalette, .qf-panel, .qf-modal-overlay, .settings-panel, .settings-backdrop')) return;
+    if (e.target.closest('.qe-panel, .qe-toolbar, #chartPalette, .qf-panel, .qf-modal-overlay, .settings-panel, .settings-backdrop, .is-board-item')) return;
     setEditorOpen(false);
   }, true);
+  // Painel recolhido: clicar num gráfico (sem arrastar) abre o painel na última visão usada
+  document.addEventListener('click', e => {
+    if (editor.open || isEditorDrawer() || Date.now() - ultimoArraste < 400 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const card = e.target.closest('.is-board-item');
+    if (!card || e.target.closest('.chart-export, .chart-pager, .chart-resize-handle, button, a, input, select')) return;
+    abrirUltimaVisao();
+  });
   $qe('qeExcluirConfirmar').addEventListener('click', confirmarExclusao);
   $qe('qeExcluirLista').addEventListener('change', atualizarExclusao);
   $qe('qeExcluirTodos').addEventListener('change', e => {
