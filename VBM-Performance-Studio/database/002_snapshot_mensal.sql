@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════
-   VBM-Performance-Hub — resultado mensal dos gráficos (tabela solta)
+   VBM-Performance-Studio — resultado mensal dos gráficos (tabela solta)
    Banco: BDIBPBMSA_PRD  (PERFORMANCEHUB_AZURE_SQL_DATABASE no app.yaml)
 
    PROPOSTA PARA AVALIAÇÃO — não executar antes da aprovação da estrutura.

@@ -1,20 +1,20 @@
 /* ════════════════════════════════════════════════════════════════════
-   VBM-Quartely — configuração dos gráficos (painel de edição)
-   Banco: BDIBPBMSA_PRD  (QUARTELY_AZURE_SQL_DATABASE no app.yaml)
+   VBM-Performance-Studio — configuração dos gráficos (painel de edição)
+   Banco: BDIBPBMSA_PRD  (PERFORMANCEHUB_AZURE_SQL_DATABASE no app.yaml)
 
-   Não havia tabela de configuração para o Quartely; esta é a única
+   Não havia tabela de configuração para o Performance Studio; esta é a única
    estrutura nova. Guarda SÓ apresentação (título, casas decimais,
    unidade/escala e cores) em JSON — nenhum dado de negócio é alterado.
 
-   Usada por GET/PUT /VBM-Quartely/api/config-graficos (quartely-api.js).
-   Outro nome/esquema: declarar QUARTELY_CONFIG_TABLE='ESQUEMA.TABELA'
+   Usada por GET/PUT /VBM-Performance-Studio/api/config-graficos (performancehub-api.js).
+   Outro nome/esquema: declarar PERFORMANCEHUB_CONFIG_TABLE='ESQUEMA.TABELA'
    no app.yaml.
    ════════════════════════════════════════════════════════════════════ */
 IF OBJECT_ID(N'IBP.QUARTELY_CONFIG_GRAFICO', N'U') IS NULL
 BEGIN
   CREATE TABLE IBP.QUARTELY_CONFIG_GRAFICO (
     ID_CONFIG            INT IDENTITY(1,1) NOT NULL,
-    NM_GRAFICO           NVARCHAR(100)     NOT NULL,   -- "Nome do gráfico" (limite repetido em quartely-api.js: NOME_MAX)
+    NM_GRAFICO           NVARCHAR(100)     NOT NULL,   -- "Nome do gráfico" (limite repetido em performancehub-api.js: NOME_MAX)
     DS_CONFIG            NVARCHAR(MAX)     NOT NULL,   -- JSON normalizado pelo servidor
     DT_CRIACAO           DATETIME2(0)      NOT NULL CONSTRAINT DF_QUARTELY_CONFIG_GRAFICO_CRIACAO DEFAULT SYSUTCDATETIME(),
     DT_ATUALIZACAO       DATETIME2(0)      NOT NULL CONSTRAINT DF_QUARTELY_CONFIG_GRAFICO_ATUALIZACAO DEFAULT SYSUTCDATETIME(),

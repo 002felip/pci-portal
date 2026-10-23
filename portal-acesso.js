@@ -1,12 +1,12 @@
 /**
- * Controle de acesso ao Portal (página inicial + VBM-Performance-Hub).
+ * Controle de acesso ao Portal (página inicial + VBM-Performance-Studio).
  *
  * Regra: o usuário logado (X-Forwarded-Email, injetado pelo proxy do
  * Databricks Apps — o navegador não consegue forjá-lo) precisa existir em
  * IBP.USERS com CD_MATRICULA preenchido. O VBM-Kaizen-App NÃO passa por aqui:
  * é aplicação aberta, com validação própria.
  *
- * Banco: produção (BDIBPBMSA_PRD, conexão do Performance Hub) — o log informa qual.
+ * Banco: produção (BDIBPBMSA_PRD, conexão do Performance Studio) — o log informa qual.
  * Colunas: lidas de INFORMATION_SCHEMA (nada é suposto). A coluna de e-mail
  * pode ser fixada com PORTAL_USERS_EMAIL_COLUMN; sem ela, usa a primeira
  * coluna de IBP.USERS cujo nome indique e-mail/UPN/login.

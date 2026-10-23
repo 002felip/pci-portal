@@ -17,8 +17,6 @@ env:
   # Cada aplicação lê a SUA variável — prefixo = nome da pasta.
   - name: 'KAIZEN_AZURE_SQL_DATABASE'    # VBM-Kaizen-App
     value: 'BDIBPBMSA_DEV'
-  - name: 'QUARTELY_AZURE_SQL_DATABASE'  # VBM-Quartely
-    value: 'BDIBPBMSA_PRD'
   - name: 'AZURE_SQL_PORT'
     value: '1433'
   - name: 'AZURE_SQL_SCHEMA'
