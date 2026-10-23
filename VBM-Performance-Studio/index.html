@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <!--
   ═══════════════════════════════════════════════════════════════════
-  QUARTELY · Dashboard — Página de Gráfico
+  VBM PERFORMANCE STUDIO · Dashboard — Página de Gráfico
   ═══════════════════════════════════════════════════════════════════
   PAPEL DA PÁGINA
     Tela de dados: mesma topbar do index.html, sem hero de imagem,
@@ -23,7 +23,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>Quartely — Dashboard</title>
+<title>VBM Performance Studio</title>
+<!-- Poppins servida pelo próprio app (mesmo arquivo do Portal: fontes embutidas, sem internet) -->
+<link rel="stylesheet" href="assets/css/poppins.css"/>
 <script>/* tema (engrenagem) no elemento raiz antes de pintar: o fundo padrão segue claro/escuro */
 try { document.documentElement.setAttribute('data-bg', localStorage.getItem('vdt-theme') === 'dark' ? 'dark' : 'light'); } catch (e) { document.documentElement.setAttribute('data-bg', 'light'); }</script>
 <style>
@@ -43,7 +45,7 @@ try { document.documentElement.setAttribute('data-bg', localStorage.getItem('vdt
   /* Gradiente azul do header (vidro translúcido sobre o fundo) */
   --qtr-grad: linear-gradient(135deg, rgba(4,21,35,.78) 0%, rgba(8,45,79,.66) 60%, rgba(13,61,107,.60) 100%);
   --qtr-base: #02101c;
-  /* FUNDO PADRÃO OFICIAL do Quarterly — só CSS: azul do header com
+  /* FUNDO PADRÃO OFICIAL do Performance Studio — só CSS: azul do header com
      profundidade (dois brilhos discretos sobre o degradê). */
   --qtr-bg-padrao:
     radial-gradient(1100px 620px at 8% -8%, rgba(60,181,229,.16), transparent 62%),
@@ -72,7 +74,10 @@ html[data-bg="light"] .board-empty { color: #4B5563; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overflow-x: clip;
   overflow-y: auto;
 }
@@ -175,6 +180,16 @@ body {
   z-index: 1;
 }
 
+.dash-btn {
+  display: flex; align-items: center; gap: 8px; max-width: 260px; height: 34px; padding: 0 12px;
+  border: 1px solid rgba(255,255,255,.22); border-radius: 100px; background: rgba(255,255,255,.06);
+  color: #fff; font: 500 .72rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; transition: background .25s, border-color .25s;
+}
+.dash-btn:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.35); }
+.dash-btn:focus-visible { outline: 2px solid var(--vbm-blue-light); outline-offset: 2px; }
+.dash-btn.is-vazio { border-color: rgba(60,181,229,.7); }
+.dash-btn-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 760px) { .dash-btn-nome { display: none; } .dash-btn { padding: 0 10px; } }
 .settings-btn {
   display: flex;
   align-items: center;
@@ -690,7 +705,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
   min-width: min(420px, calc(100vw - 32px));
   max-width: 96vw;
   display: flex; flex-direction: column; gap: 16px;
-  font-family: 'Vale Sans Medium', 'Segoe UI', 'system-ui', sans-serif;
+  font-family: 'Poppins', 'Segoe UI', 'system-ui', sans-serif;
   background: transparent;
   transition: background-color .2s ease;
 }
@@ -713,8 +728,8 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .chart-export-menu button:hover { background: #EEF6FB; color: #0B6E99; }
 .chart-export-ok { position: absolute; right: 0; top: 40px; white-space: nowrap; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem 'Poppins', 'Segoe UI', sans-serif; box-shadow: 0 6px 18px rgba(15,23,42,.2); }
 /* Fontes do gráfico: --ft-<elemento>-s (escala), -w (peso), -i (estilo), -c (cor) vêm da aba Fontes */
-.chart-title { color: var(--ft-titulo-c, #316866); font-family: 'Vale Sans Medium', 'Segoe UI', sans-serif; font-size: calc(1.4rem * var(--ft-titulo-s, 1)); font-weight: var(--ft-titulo-w, 400); font-style: var(--ft-titulo-i, normal); letter-spacing: -.005em; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
-.chart-subtitle { color: var(--ft-unidade-c, #4B5563); font-family: 'Vale Sans', 'Segoe UI', sans-serif; font-size: calc(1.05rem * var(--ft-unidade-s, 1)); margin: 0; font-weight: var(--ft-unidade-w, 400); font-style: var(--ft-unidade-i, normal); }
+.chart-title { color: var(--ft-titulo-c, #316866); font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: calc(1.4rem * var(--ft-titulo-s, 1)); font-weight: var(--ft-titulo-w, 400); font-style: var(--ft-titulo-i, normal); letter-spacing: -.005em; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.chart-subtitle { color: var(--ft-unidade-c, #4B5563); font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: calc(1.05rem * var(--ft-unidade-s, 1)); margin: 0; font-weight: var(--ft-unidade-w, 400); font-style: var(--ft-unidade-i, normal); }
 
 /* Container do gráfico com fundo */
 .chart-container {
@@ -831,12 +846,14 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
   margin-top: calc(var(--folga) + 40px);
   margin-bottom: clamp(22px, 5vh, 28px);
 }
-.chart-area::before {
-  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1;
-  background: linear-gradient(90deg, rgba(203,213,225,0), #CBD5E1 8%, #CBD5E1 92%, rgba(203,213,225,0));
-}
-
 .col-wrapper { position: relative; flex: 1 1 0; max-width: 96px; min-width: 30px; height: 100%; }
+/* linha do eixo: cada coluna desenha o seu trecho até o meio do vão; a linha
+   acompanha o conjunto de barras e passa, nas pontas, metade do espaço entre barras */
+.col-wrapper::before {
+  content: ''; position: absolute; bottom: 0; height: 1px; z-index: 1;
+  left: calc(var(--gap) / -2); right: calc(var(--gap) / -2);
+  background: #CBD5E1;
+}
 .col-wrapper::after {
   content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 46%; height: 7px; background: var(--pill-bg); border-radius: 4px; z-index: 2;
@@ -856,7 +873,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 
 .value-label {
   position: absolute; bottom: calc(var(--h) + 7px); left: 50%; transform: translateX(-50%);
-  white-space: nowrap; color: var(--ft-valores-c, var(--ink-strong)); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
+  white-space: nowrap; color: var(--ft-valores-c, var(--ink-strong)); font-family: 'Poppins', 'Segoe UI', sans-serif;
   font-size: calc(.8rem * var(--ft-valores-s, 1)); font-weight: var(--ft-valores-w, 400); font-style: var(--ft-valores-i, normal);
   font-variant-numeric: tabular-nums; letter-spacing: .01em; z-index: 6;
 }
@@ -865,7 +882,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
   font-size: calc(.8rem * var(--ft-eixo-s, 1)); color: var(--ft-eixo-c, var(--ink-soft)); font-weight: var(--ft-eixo-w, 400); font-style: var(--ft-eixo-i, normal);
 }
 .chart-empty-state {
-  margin: auto; color: var(--ink-soft); font-family: 'Vale Sans', 'Segoe UI', sans-serif;
+  margin: auto; color: var(--ink-soft); font-family: 'Poppins', 'Segoe UI', sans-serif;
   font-size: .85rem; text-align: center;
 }
 
@@ -938,7 +955,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
   -webkit-backdrop-filter: blur(12px) saturate(150%);
   backdrop-filter: blur(12px) saturate(150%);
   color: var(--ink-text, var(--ink));
-  font-family: 'Vale Sans', 'Segoe UI', sans-serif;
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
   font-size: calc(clamp(.76rem, 2.2vh, .82rem) * var(--ft-deltas-s, 1)); font-weight: var(--ft-deltas-w, 400); font-style: var(--ft-deltas-i, normal); line-height: 1.15;
   white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: .01em;
   box-shadow: 0 2px 12px rgba(15,23,42,.05);
@@ -951,8 +968,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 
 /* Linhas Suavizadas (SVG) — mesmos tokens das Barras */
 .chart-area.is-linhas { display: block; margin: 4px 0 0; }
-.chart-area.is-linhas::before { display: none; }
-.ql-svg { display: block; font-family: 'Vale Sans', 'Segoe UI', sans-serif; }
+.ql-svg { display: block; font-family: 'Poppins', 'Segoe UI', sans-serif; }
 .main-wrapper:not(.qe-static) .ql-svg { animation: qlIn .6s cubic-bezier(.16,.84,.28,1) both; }
 @keyframes qlIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .ql-svg .qc-base { stroke: #CBD5E1; stroke-width: 1; }
@@ -1002,7 +1018,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 .palette-tip {
   position: absolute; bottom: calc(100% + 6px); transform: translateX(-50%);
   background: rgba(15,23,42,.92); color: #fff; padding: 4px 8px; border-radius: 4px;
-  font: 600 .72rem/1.2 'Segoe UI', sans-serif; white-space: nowrap; pointer-events: none;
+  font: 600 .72rem/1.2 'Poppins', 'Segoe UI', sans-serif; white-space: nowrap; pointer-events: none;
 }
 .palette-tip[hidden] { display: none; }
 
@@ -1117,6 +1133,20 @@ body[data-bg="dark"] .qe-panel {
 .qe-resumo-grafico div { min-width: 0; }
 .qe-resumo-grafico dt { font-size: .56rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--qe-muted); }
 .qe-resumo-grafico dd { margin: 1px 0 0; font-size: .7rem; font-weight: 600; color: var(--qe-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qe-textarea { min-height: 52px; resize: vertical; line-height: 1.45; }
+.qe-dash-novo, .qe-dash-anos { border: 0; padding: 0; margin: 0; min-width: 0; }
+.qe-dash-novo { padding-top: 12px; margin-top: 14px; border-top: 1px solid var(--qe-line); }
+.qe-dash-novo > legend, .qe-dash-anos > legend { float: left; width: 100%; margin-bottom: 8px; }
+.qe-dash-novo > legend + *, .qe-dash-anos > legend + * { clear: both; }
+.qe-dash-anos-lista { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.qe-dash-anos-lista .qe-check { flex: 0 0 auto; }
+.qe-dash-aviso { margin: 0 0 10px; }
+.qe-field.qe-dash-bloco { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--qe-line); }
+.qe-dash-topo { display: grid; gap: 8px; margin-top: 12px; }
+.qe-dash-topo .qe-btn { width: 100%; }
+#qeViewDash [hidden] { display: none !important; }
+.qe-dash-acoes { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; margin-top: 8px; }
+.qe-dash-novo.is-editando, .qe-dash-novo.is-reuso { background: rgba(60,181,229,.06); border-radius: 10px; padding: 12px 10px 4px; }
 .qe-alerta { padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(220,38,38,.35); background: rgba(220,38,38,.08); color: var(--qe-strong); font-size: .76rem; font-weight: 600; line-height: 1.45; margin-bottom: 10px; }
 .qe-btn.danger { background: #B91C1C; border-color: #B91C1C; color: #fff; }
 .qe-btn.danger:hover:not(:disabled) { background: #991B1B; border-color: #991B1B; color: #fff; }
@@ -1391,11 +1421,14 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 </svg>
   </a>
 
-  <h1 class="topnav-brand" aria-label="VBM - Performance Hub">
-    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-nome" aria-hidden="true">Performance Hub</span>
+  <h1 class="topnav-brand" aria-label="VBM - Performance Studio">
+    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-nome" aria-hidden="true">Performance Studio</span>
   </h1>
 
   <div class="topnav-actions">
+    <button class="dash-btn is-vazio" id="dashBtn" type="button" aria-controls="qePanel" aria-haspopup="true">
+      <i class="fa-solid fa-table-columns" aria-hidden="true"></i><span class="dash-btn-nome" id="dashBtnNome">Selecionar dashboard</span>
+    </button>
     <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.btnTitle" aria-label="Configurações" data-i18n-aria="settings.btnTitle">
       <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
         <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
@@ -1462,7 +1495,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
 
 <!-- Só aparece quando /api/chart-data ou /api/sites falha e a página cai
-     no fixture local de teste (ver loadQuartelyData) — nunca deveria
+     no fixture local de teste (ver loadPerformanceHubData) — nunca deveria
      mostrar dado real, então precisa ficar visível, não só no console. -->
 <div class="data-fallback-banner" id="dataFallbackBanner" role="alert" style="display:none;">
   <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
@@ -1471,6 +1504,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
 <!-- ═══ EDIÇÃO DO GRÁFICO — barra de ferramentas + painel de propriedades ═══ -->
 <nav class="qe-toolbar" id="qeToolbar" aria-label="Edição do gráfico" data-i18n-aria="ui.edicao_do_grafico">
+  <button type="button" class="qe-tool" id="qeDash" data-qe-view="dash" aria-controls="qePanel" aria-expanded="false" aria-label="Dashboards" data-tip="Dashboards" data-i18n-tip="ui.dashboards" data-i18n-aria="ui.dashboards"><i class="fa-solid fa-table-columns" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" id="qeAdd" data-qe-view="add" aria-controls="qePanel" aria-expanded="false" aria-label="Adicionar gráfico" data-tip="Adicionar gráfico" data-i18n-tip="ui.adicionar_grafico" data-i18n-aria="ui.adicionar_grafico"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" id="qeDel" data-qe-view="excluir" aria-controls="qePanel" aria-expanded="false" aria-label="Excluir gráfico" data-tip="Excluir gráfico (selecione um gráfico)" disabled data-i18n-aria="ui.excluir_grafico"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
@@ -1527,6 +1561,70 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   </section>
 
   <!-- Adicionar gráfico: as mesmas opções de criação (nome, Product e uma configuração salva) -->
+  <section class="qe-view" id="qeViewDash" data-view="dash" hidden>
+    <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
+      <p class="qe-hint qe-dash-aviso" data-i18n="ui.dash_aviso_local">Validação: os dashboards ficam salvos só neste navegador até a etapa do banco.</p>
+      <div class="qe-status" id="qeDashInfo" aria-live="polite"></div>
+      <div class="qe-dash-topo">
+        <button type="button" class="qe-btn primary" id="qeDashNovo" aria-controls="qeDashForm"><i class="fa-solid fa-plus" aria-hidden="true"></i> <span data-i18n="ui.dash_novo">Novo dashboard</span></button>
+        <button type="button" class="qe-btn" id="qeDashEditar" aria-controls="qeDashForm" data-i18n="ui.dash_editar">Alterar parâmetros de data deste dashboard</button>
+      </div>
+      <div class="qe-field qe-dash-bloco">
+        <label class="qe-label" for="qeDashLista" data-i18n="ui.dash_abrir_reutilizar">Abrir ou reutilizar um dashboard</label>
+        <select class="qe-select" id="qeDashLista" aria-describedby="qeDashListaHint"></select>
+        <div class="qe-dash-acoes">
+          <button type="button" class="qe-btn" id="qeDashAbrir" data-i18n="ui.abrir">Abrir</button>
+          <button type="button" class="qe-btn" id="qeDashReutilizar" data-i18n="ui.dash_reutilizar">Reutilizar em novo período</button>
+        </div>
+        <span class="qe-hint" id="qeDashListaHint" data-i18n="ui.dash_reutilizar_hint">Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.</span>
+      </div>
+      <fieldset class="qe-field qe-dash-novo" id="qeDashForm" hidden>
+        <legend class="qe-label" id="qeDashFormTit">Novo dashboard</legend>
+        <div class="qe-row">
+          <div class="qe-field">
+            <label class="qe-label" for="qeDashMes" data-i18n="ui.dash_mes_ref">Mês referência</label>
+            <select class="qe-select" id="qeDashMes"></select>
+          </div>
+          <div class="qe-field">
+            <label class="qe-label" for="qeDashAno" data-i18n="ui.dash_ano_ref">Ano referência</label>
+            <select class="qe-select" id="qeDashAno"></select>
+          </div>
+        </div>
+        <div class="qe-field">
+          <label class="qe-label" for="qeDashNome"><span data-i18n="ui.dash_nome">Nome do dashboard</span> <span aria-hidden="true">*</span></label>
+          <input class="qe-input" id="qeDashNome" type="text" maxlength="100" autocomplete="off" required aria-required="true" aria-describedby="qeDashNomeHint qeDashNomeErr">
+          <span class="qe-hint" id="qeDashNomeHint" data-i18n="ui.dash_nome_hint">Sugerido pelo padrão "Nome - Mês Ano"; pode ser alterado.</span>
+          <p class="qe-error" id="qeDashNomeErr" hidden></p>
+        </div>
+        <div class="qe-field">
+          <label class="qe-label" for="qeDashDesc" data-i18n="ui.dash_descricao">Descrição (opcional)</label>
+          <textarea class="qe-input qe-textarea" id="qeDashDesc" rows="2" maxlength="500"></textarea>
+        </div>
+        <div class="qe-field">
+          <label class="qe-label" for="qeDashVisao" data-i18n="ui.dash_visao">Visão</label>
+          <select class="qe-select" id="qeDashVisao" aria-describedby="qeDashVisaoHint"><option value="VBM_PRODUCTION_ANALYTICS">VBM Production Analytics</option></select>
+          <span class="qe-hint" id="qeDashVisaoHint" data-i18n="ui.dash_visao_hint">Usa a consulta atual de produção (dados dos gráficos).</span>
+        </div>
+        <fieldset class="qe-field qe-dash-anos">
+          <legend class="qe-label" data-i18n="ui.dash_anos">Anos extraídos do banco</legend>
+          <div class="qe-dash-anos-lista" id="qeDashAnos"></div>
+          <p class="qe-error" id="qeDashAnosErr" hidden></p>
+        </fieldset>
+        <div class="qe-field">
+          <label class="qe-label" for="qeDashYtd" data-i18n="ui.dash_ytd">Year to Date até</label>
+          <select class="qe-select" id="qeDashYtd"></select>
+        </div>
+        <label class="qe-check qe-field" id="qeDashCopiarBox"><input type="checkbox" id="qeDashCopiar" checked> <span data-i18n="ui.dash_copiar">Reaproveitar os gráficos do quadro atual</span></label>
+        <p class="qe-hint" id="qeDashAuto"></p>
+      </fieldset>
+    </div></div>
+    <p class="qe-msg" id="qeDashMsg" role="status" aria-live="polite"></p>
+    <footer class="qe-foot" id="qeDashFoot" hidden>
+      <button type="button" class="qe-btn" id="qeDashCancelar" data-i18n="ui.cancelar">Cancelar</button>
+      <button type="button" class="qe-btn primary" id="qeDashCriar" data-i18n="ui.dash_criar">Criar dashboard</button>
+    </footer>
+  </section>
+
   <section class="qe-view" id="qeViewAdd" data-view="add" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
       <div class="qe-field">
@@ -1541,7 +1639,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <label class="qe-label" for="qeAddSalvo" data-i18n="ui.comecar_de_uma_configuracao_salva_opcional">Começar de uma configuração salva (opcional)</label>
         <select class="qe-select" id="qeAddSalvo"></select>
       </div>
-      <p class="qe-hint" data-i18n="ui.o_novo_grafico_usa_os_filtros_padrao_do_da">O novo gráfico usa os filtros padrão do dashboard e o tamanho do gráfico selecionado. Depois de criado, ele fica selecionado para configuração.</p>
+      <p class="qe-hint" data-i18n="ui.o_novo_grafico_usa_os_filtros_padrao_do_da">O novo gráfico usa os filtros padrão do dashboard (o Site acompanha o Produto escolhido) e o tamanho típico dos gráficos do quadro. Depois de criado, ele fica selecionado para configuração.</p>
     </div></div>
     <p class="qe-msg" id="qeAddMsg" role="status" aria-live="polite"></p>
     <footer class="qe-foot">
@@ -1580,7 +1678,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <label><input type="radio" name="qeBgTipo" value="imagem"><span data-i18n="ui.imagem">Imagem</span></label>
         </div>
       </fieldset>
-      <p class="qe-hint" data-bg-show="padrao" data-i18n="ui.fundo_oficial_do_quarterly_acompanha_o_tem">Fundo oficial do Quarterly: acompanha o tema da engrenagem (claro ou escuro).</p>
+      <p class="qe-hint" data-bg-show="padrao" data-i18n="ui.fundo_oficial_do_performance_hub">Fundo oficial do Performance Studio: acompanha o tema da engrenagem (claro ou escuro).</p>
       <div class="qe-field" data-bg-show="solido">
         <label class="qe-label" for="qeBgCorHex" data-i18n="ui.cor">Cor</label>
         <div class="qe-color-pair">
@@ -1972,6 +2070,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 })();
 
 // ─── Usuário logado (padrão Kaizen: nome, cargo e iniciais) ───
+let usuarioLogado = '';
 fetch('/api/me', { headers: { Accept: 'application/json' } })
   .then(r => (r.ok ? r.json() : null))
   .then(me => {
@@ -1983,6 +2082,8 @@ fetch('/api/me', { headers: { Accept: 'application/json' } })
     document.getElementById('topnavUserAvatar').textContent =
       ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
     document.getElementById('topnavUserAvatar').title = nome;
+    usuarioLogado = me.email || nome; // criador dos dashboards
+    if (typeof renderDash === 'function') renderDash();
   })
   .catch(() => {});
 
@@ -2007,9 +2108,9 @@ let numLocale = (() => {
 // ─── i18n ───
 const i18n = {
   'pt-BR': { 'settings.btnTitle': 'Configurações', 'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'settings.number': 'Formato numérico', 'settings.numberInfo': 'Separador decimal e de milhar dos gráficos', 'settings.languageInfo': 'Idioma da interface', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
-             'nav.menu': 'Menu', 'nav.quartely': 'Quartely', 'nav.monthly': 'Monthly', 'chart.empty': 'Nenhum dado para os filtros selecionados.' },
+             'nav.menu': 'Menu', 'nav.performancehub': 'Performance Studio', 'nav.monthly': 'Monthly', 'chart.empty': 'Nenhum dado para os filtros selecionados.' },
   'en':    { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.number': 'Number format', 'settings.numberInfo': 'Decimal and thousands separators in charts', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
-             'nav.menu': 'Menu', 'nav.quartely': 'Quarterly', 'nav.monthly': 'Monthly', 'chart.empty': 'No data for the selected filters.' }
+             'nav.menu': 'Menu', 'nav.performancehub': 'Performance Studio', 'nav.monthly': 'Monthly', 'chart.empty': 'No data for the selected filters.' }
 };
 // Textos da interface: chave → [pt-BR, en]. HTML estático usa data-i18n (texto),
 // data-i18n-title / -aria / -ph (placeholder) / -tip (dica da paleta); o JS usa tx('chave').
@@ -2043,7 +2144,7 @@ const I18N_UI = {
   'ui.nome_do_grafico_opcional': ['Nome do gráfico (opcional)', 'Chart name (optional)'],
   'ui.produto': ['Produto', 'Product'],
   'ui.comecar_de_uma_configuracao_salva_opcional': ['Começar de uma configuração salva (opcional)', 'Start from a saved configuration (optional)'],
-  'ui.o_novo_grafico_usa_os_filtros_padrao_do_da': ['O novo gráfico usa os filtros padrão do dashboard e o tamanho do gráfico selecionado. Depois de criado, ele fica selecionado para configuração.', 'The new chart uses the dashboard default filters and the size of the selected chart. Once created, it stays selected for configuration.'],
+  'ui.o_novo_grafico_usa_os_filtros_padrao_do_da': ['O novo gráfico usa os filtros padrão do dashboard (o Site acompanha o Produto escolhido) e o tamanho típico dos gráficos do quadro. Depois de criado, ele fica selecionado para configuração.', 'The new chart uses the dashboard default filters (the Site follows the chosen Product) and the typical size of the charts on the board. Once created, it stays selected for configuration.'],
   'ui.adicionar': ['Adicionar', 'Add'],
   'ui.selecione_um_grafico_para_filtrar': ['Selecione um gráfico para filtrar', 'Select a chart to filter'],
   'ui.filtros_aplicados': ['Filtros aplicados', 'Applied filters'],
@@ -2053,7 +2154,7 @@ const I18N_UI = {
   'ui.cor': ['Cor', 'Color'],
   'ui.gradiente': ['Gradiente', 'Gradient'],
   'ui.imagem': ['Imagem', 'Image'],
-  'ui.fundo_oficial_do_quarterly_acompanha_o_tem': ['Fundo oficial do Quarterly: acompanha o tema da engrenagem (claro ou escuro).', 'Official Quarterly background: follows the theme set in the gear menu (light or dark).'],
+  'ui.fundo_oficial_do_performance_hub': ['Fundo oficial do Performance Studio: acompanha o tema da engrenagem (claro ou escuro).', 'Official Performance Studio background: follows the theme set in the gear menu (light or dark).'],
   'ui.seletor_de_cor_do_fundo': ['Seletor de cor do fundo', 'Background color picker'],
   'ui.cores_do_gradiente': ['Cores do gradiente', 'Gradient colors'],
   'ui.cor_inicial_do_gradiente': ['Cor inicial do gradiente', 'Gradient start color'],
@@ -2178,6 +2279,52 @@ const I18N_UI = {
   'ui.paleta_de_cores': ['Paleta de cores', 'Color palette'],
   'ui.selecionado': ['Selecionado', 'Selected'],
   'ui.colunas': ['Colunas', 'Columns'],
+  'ui.dashboards': ['Dashboards', 'Dashboards'],
+  'ui.dashboard': ['Dashboard', 'Dashboard'],
+  'ui.abrir': ['Abrir', 'Open'],
+  'ui.selecione': ['Selecione…', 'Select…'],
+  'ui.dash_aviso_local': ['Validação: os dashboards ficam salvos só neste navegador até a etapa do banco.', 'Validation: dashboards are saved in this browser only until the database stage.'],
+  'ui.dash_selecionar': ['Selecionar dashboard', 'Select dashboard'],
+  'ui.dash_nenhum': ['Nenhum dashboard aberto.', 'No dashboard open.'],
+  'ui.dash_novo': ['Novo dashboard', 'New dashboard'],
+  'ui.dash_mes_ref': ['Mês referência', 'Reference month'],
+  'ui.dash_ano_ref': ['Ano referência', 'Reference year'],
+  'ui.dash_referencia': ['Referência', 'Reference'],
+  'ui.dash_nome': ['Nome do dashboard', 'Dashboard name'],
+  'ui.dash_nome_hint': ['Sugerido pelo padrão "Nome - Mês Ano"; pode ser alterado.', 'Suggested by the "Name - Month Year" pattern; you can change it.'],
+  'ui.dash_descricao': ['Descrição (opcional)', 'Description (optional)'],
+  'ui.dash_descricao_curta': ['Descrição', 'Description'],
+  'ui.dash_visao': ['Visão', 'View'],
+  'ui.dash_anos': ['Anos extraídos do banco', 'Years extracted from the database'],
+  'ui.dash_anos_obrigatorio': ['Selecione ao menos um ano.', 'Select at least one year.'],
+  'ui.dash_ytd': ['Year to Date até', 'Year to Date through'],
+  'ui.dash_copiar': ['Reaproveitar os gráficos do quadro atual', 'Reuse the charts on the current board'],
+  'ui.dash_auto': ['Preenchido automaticamente — Status: Ativo (S) · Criado em: {quando} · Criado por: {usuario}', 'Filled in automatically — Status: Active (S) · Created on: {quando} · Created by: {usuario}'],
+  'ui.dash_criar': ['Criar dashboard', 'Create dashboard'],
+  'ui.dash_abrir_reutilizar': ['Abrir ou reutilizar um dashboard', 'Open or reuse a dashboard'],
+  'ui.dash_reutilizar': ['Reutilizar em novo período', 'Reuse for a new period'],
+  'ui.dash_reutilizar_hint': ['Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.', 'Reuse copies the charts of the chosen dashboard into a new dashboard; adjust the dates below and click Create.'],
+  'ui.dash_editar': ['Alterar parâmetros de data deste dashboard', 'Change this dashboard\'s date parameters'],
+  'ui.dash_form_editar': ['Alterar parâmetros: {nome}', 'Change parameters: {nome}'],
+  'ui.dash_form_reuso': ['Novo período a partir de: {nome}', 'New period from: {nome}'],
+  'ui.dash_salvar_alteracoes': ['Salvar alterações', 'Save changes'],
+  'ui.dash_novo_msg': ['Preencha o novo dashboard e clique em Criar dashboard.', 'Fill in the new dashboard and click Create dashboard.'],
+  'ui.dash_reuso_msg': ['Gráficos de “{nome}” serão reaproveitados. Ajuste mês, ano, anos e YTD e clique em Criar dashboard.', 'Charts from “{nome}” will be reused. Adjust month, year, years and YTD, then click Create dashboard.'],
+  'ui.dash_editar_msg': ['Altere mês, ano, anos extraídos ou YTD e clique em Salvar alterações.', 'Change month, year, extracted years or YTD, then click Save changes.'],
+  'ui.dash_parametros_salvos': ['Parâmetros de “{nome}” atualizados.', '“{nome}” parameters updated.'],
+  'ui.dash_visao_hint': ['Usa a consulta atual de produção (dados dos gráficos).', 'Uses the current production query (chart data).'],
+  'ui.dash_status': ['Status', 'Status'],
+  'ui.dash_ativo': ['Ativo (S)', 'Active (S)'],
+  'ui.dash_inativo': ['Inativo (N)', 'Inactive (N)'],
+  'ui.dash_criado_em': ['Criado em', 'Created on'],
+  'ui.dash_criado_por': ['Criado por', 'Created by'],
+  'ui.dash_lista_vazia': ['Nenhum dashboard cadastrado', 'No dashboards yet'],
+  'ui.dash_nome_obrigatorio': ['Informe o nome do dashboard.', 'Enter the dashboard name.'],
+  'ui.dash_nome_duplicado': ['Já existe um dashboard com este nome. Escolha outro nome.', 'A dashboard with this name already exists. Choose another name.'],
+  'ui.dash_criado': ['Dashboard “{nome}” criado e aberto.', 'Dashboard “{nome}” created and opened.'],
+  'ui.dash_aberto': ['Dashboard “{nome}” aberto.', 'Dashboard “{nome}” opened.'],
+  'ui.dash_escolha': ['Escolha um dashboard da lista.', 'Choose a dashboard from the list.'],
+  'ui.dash_falha_criar': ['Não foi possível gravar o dashboard neste navegador.', 'The dashboard could not be saved in this browser.'],
   'ui.n_selecionados': ['{n} gráficos selecionados. Arraste um deles para mover o grupo ou o canto para redimensionar; Ctrl/Shift + clique adiciona ou remove.', '{n} charts selected. Drag one of them to move the group or the corner to resize; Ctrl/Shift + click adds or removes.'],
   'ui.ordem_das_colunas': ['Ordem das colunas', 'Column order'],
   'ui.ordem_dica': ['Arraste pela alça ou use ▲▼. Δ liga o delta com a coluna anterior (os automáticos ficam marcados e travados). Vale na hora; grave em Salvar.', 'Drag by the handle or use ▲▼. Δ turns on the delta against the previous column (automatic ones stay checked and locked). Applied instantly; store it with Save.'],
@@ -2868,11 +3015,11 @@ function renderLinhasSuavizadas(el, rows, cfg) {
 // ════════════════════════════════════════════════════════════════════
 // ÁREA DE FILTROS — Ano / Site / Visão (Série) / Horizonte / Product
 // ------------------------------------------------------------------------
-// Fonte: QUARTELY.sql — DT_REF, ID_SITE, NM_KPI, NM_TYPE, Type e as chaves
+// Fonte: CHART_DATA_SQL — DT_REF, ID_SITE, NM_KPI, NM_TYPE, Type e as chaves
 // técnicas de ordenação ORDEM_VISAO/ORDEM_ANO/ORDEM_PERIODO/ORDEM_SERIE
 // (uma por bloco MONTH/QUARTER/SEMESTER/YEAR da UNION ALL), mais a junção
 // com IBP.SITES só para resolver NM_SITE:
-//   SELECT DISTINCT Q.ID_SITE, S.NM_SITE FROM QUARTELY_RESULT Q
+//   SELECT DISTINCT Q.ID_SITE, S.NM_SITE FROM CHART_DATA Q
 //   LEFT JOIN IBP.SITES S ON S.ID_SITE = Q.ID_SITE
 // Nenhuma lista de opções é escrita à mão: todo combobox é preenchido
 // extraindo valores distintos das linhas de /api/chart-data e /api/sites.
@@ -2900,7 +3047,7 @@ function compareByTechnicalKeys(a, b) {
       || (a.ORDEM_SERIE - b.ORDEM_SERIE);
 }
 
-// A QUARTELY.sql sufixa Trimestral/Semestral com o ano (" YY", ex.:
+// A CHART_DATA_SQL sufixa Trimestral/Semestral com o ano (" YY", ex.:
 // "Q3F 25") para diferenciar o mesmo período entre anos — Anual já era
 // assim ("25B"). Isola esse sufixo opcional antes de ler o "core" do
 // rótulo (letra de série, prefixo Q/H) — usado tanto na leitura do
@@ -2934,10 +3081,10 @@ const filterState = {
   product: null
 };
 
-let allRows = [];          // linhas cruas de QUARTELY.sql (+ NM_SITE já resolvido)
+let allRows = [];          // linhas cruas de CHART_DATA_SQL (+ NM_SITE já resolvido)
 let filterOptions = {};    // opções de cada combobox, derivadas de allRows
 
-// ── Fixture local (mesmo formato de QUARTELY.sql, chaves técnicas incluídas) ──
+// ── Fixture local (mesmo formato de CHART_DATA_SQL, chaves técnicas incluídas) ──
 // Usado apenas quando /api/chart-data e /api/sites não respondem (ex.:
 // ambiente de desenvolvimento sem conexão com o Azure SQL). Gerado, não
 // hardcoded como lista de opções — os combobox extraem os valores destas
@@ -2947,12 +3094,12 @@ let filterOptions = {};    // opções de cada combobox, derivadas de allRows
 // JOIN IBP.DASHBOARD), para que o fixture de teste não esconda o mesmo bug
 // que a query original tinha (lista incompleta).
 //
-// SEM granularidade Mensal: a QUARTELY.sql de origem tem o bloco MONTH
-// inteiro comentado — a Quarterly nunca recebe linhas 'MONTH' dela. Este
-// fixture não gera nenhuma; ver também o filtro de defesa em loadQuartelyData.
+// SEM granularidade Mensal: a CHART_DATA_SQL de origem tem o bloco MONTH
+// inteiro comentado — o Performance Studio nunca recebe linhas 'MONTH' dela. Este
+// fixture não gera nenhuma; ver também o filtro de defesa em loadPerformanceHubData.
 //
 // [CORREÇÃO — causa-raiz do bug "faltam horizontes em 2025/2026"]
-// A janela real da QUARTELY.sql é @DT_INI = '2025-01-01' até
+// A janela real da CHART_DATA_SQL é @DT_INI = '2025-01-01' até
 // @DT_FIM ≈ dezembro do ano corrente (calculado a partir de GETDATE()) —
 // ou seja, DOIS anos inteiros, não um. Uma versão anterior deste fixture
 // só gerava Trimestral/Semestral para um único "ano corrente", então
@@ -3011,7 +3158,7 @@ function buildFallbackRows() {
 
         // TRIMESTRAL — Q1..Q4, Budget/Plan/Act-Fcst em cada um. Rótulo com
         // sufixo de ano (' YY') igual ao CONCAT(..., ' ', RIGHT(YEAR,2)) da
-        // QUARTELY.sql real — sem isso, "Q3B" de 2025 e 2026 colidiriam no
+        // CHART_DATA_SQL real — sem isso, "Q3B" de 2025 e 2026 colidiriam no
         // mesmo rótulo e a soma por Type os misturaria num só valor.
         for (let q = 1; q <= 4; q++) {
           const isClosed = year < CURRENT_YEAR || (year === CURRENT_YEAR && q <= CURRENT_QUARTER);
@@ -3049,8 +3196,8 @@ function buildFallbackRows() {
 
 // Granularidades exibidas: Mensal (bloco MONTH da query, rótulos "JanB 26"),
 // Trimestral, Semestral, Anual e YTD ("YTDB 26"). Outro CD_VISAO é ignorado.
-const QUARTERLY_VISOES = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD'];
-function isQuarterlyVisao(row) { return QUARTERLY_VISOES.includes(row.CD_VISAO); }
+const VISOES_SUPORTADAS = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD'];
+function isVisaoSuportada(row) { return VISOES_SUPORTADAS.includes(row.CD_VISAO); }
 
 // ── Carga de dados: API real, com fallback local ────────────────────────
 // Mostra/esconde o aviso de "dado de exemplo" — precisa ser visível na
@@ -3062,23 +3209,23 @@ function setDataFallbackWarning(active, detail) {
   if (!banner || !text) return;
   banner.style.display = active ? 'flex' : 'none';
   if (active) {
-    text.textContent = `Exibindo DADOS DE EXEMPLO, não o resultado real da QUARTELY.sql. Nenhum endpoint respondeu — ${detail}. Se o status for 404, o servidor publicado ainda não tem estas rotas (verifique se o deploy pegou o commit novo); se for 500, as rotas existem e o erro está na consulta ao Azure SQL (veja os logs do app).`;
+    text.textContent = `Exibindo DADOS DE EXEMPLO, não o resultado real da CHART_DATA_SQL. Nenhum endpoint respondeu — ${detail}. Se o status for 404, o servidor publicado ainda não tem estas rotas (verifique se o deploy pegou o commit novo); se for 500, as rotas existem e o erro está na consulta ao Azure SQL (veja os logs do app).`;
   }
 }
 
 // Caminhos candidatos da API. De dentro do navegador não dá para saber
-// se o app está publicado sob um subcaminho (.../Quartely/quartely.html
+// se o app está publicado sob um subcaminho (.../Performance-Hub/index.html
 // no Databricks Apps) nem se a plataforma remove esse prefixo antes de
 // chegar ao servidor — e errar essa aposta devolve 404 com o servidor
 // funcionando. Em vez de apostar, tenta os candidatos na ordem e para no
 // primeiro que responder. O servidor registra os MESMOS handlers em
-// todos esses caminhos (ver QUARTELY_BASES no server.js da raiz).
-const QUARTELY_API_BASES = ['api/', '../api/', '/api/', '/Quartely/api/'];
-let quartelyApiBase = null; // base que respondeu primeiro (dados ou configurações)
+// todos esses caminhos (ver PERFORMANCEHUB_API_BASES no server.js da raiz).
+const PERFORMANCEHUB_API_BASES = ['api/', '../api/', '/api/', '/Performance-Studio/api/', '/Performance-Hub/api/'];
+let performanceHubApiBase = null; // base que respondeu primeiro (dados ou configurações)
 
 function basesDaApiResolvidas() {
   const vistas = new Set();
-  for (const base of QUARTELY_API_BASES) {
+  for (const base of PERFORMANCEHUB_API_BASES) {
     try { vistas.add(new URL(base, location.href).href); } catch (e) { /* base inválida: ignora */ }
   }
   return [...vistas];
@@ -3091,7 +3238,7 @@ async function buscarJsonDaApi(baseHref, recurso) {
   return res.json();
 }
 
-async function loadQuartelyData() {
+async function loadPerformanceHubData() {
   const tentativas = [];
   for (const base of basesDaApiResolvidas()) {
     try {
@@ -3100,19 +3247,19 @@ async function loadQuartelyData() {
         buscarJsonDaApi(base, 'sites')
       ]);
       const siteNameById = new Map(sitesList.map(s => [s.ID_SITE ?? s.id_site, s.NM_SITE ?? s.nm_site]));
-      quartelyApiBase = base; // as rotas de configuração usam a mesma base
+      performanceHubApiBase = base; // as rotas de configuração usam a mesma base
       setDataFallbackWarning(false);
-      console.info(`[quartely] dados reais carregados de ${new URL(base).pathname}`);
+      console.info(`[performance-studio] dados reais carregados de ${new URL(base).pathname}`);
       return chartRows
         .map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null }))
-        .filter(isQuarterlyVisao);
+        .filter(isVisaoSuportada);
     } catch (err) {
       tentativas.push(err.message);
     }
   }
-  console.warn('[quartely] nenhum endpoint respondeu, usando fixture local:', tentativas.join(' | '));
+  console.warn('[performance-studio] nenhum endpoint respondeu, usando fixture local:', tentativas.join(' | '));
   setDataFallbackWarning(true, tentativas.join(' | '));
-  return buildFallbackRows().filter(isQuarterlyVisao);
+  return buildFallbackRows().filter(isVisaoSuportada);
 }
 
 // ── Filtros dinâmicos e dependentes ─────────────────────────────────────
@@ -3192,6 +3339,12 @@ function podarSelecoesSemDados(driver) {
         const novos = alvo.size ? [...new Set(linhas.filter(r => alvo.has(`${periodoDoTipo(r.Type)}|${r.NM_TYPE}`)).map(r => r.Type))] : [];
         sel.clear();
         novos.forEach(t => sel.add(t));
+        // Site sem dados para o novo Produto: passa para o "Global" que tem esse Produto
+        // (ex.: Cobalt → "Nickel Business | Global"); sem Global com dados, fica "Todos"
+        if (def.key === 'sites') {
+          const global = linhas.filter(r => /global/i.test(r.NM_SITE || '')).sort((a, b) => String(a.NM_SITE).localeCompare(String(b.NM_SITE), 'pt-BR'))[0];
+          if (global) sel.add(String(global.ID_SITE));
+        }
         mudou = true;
       } else if (!validos.has(sel)) {
         // Campo obrigatório (Product): passa para Copper Production ou a 1ª com dados
@@ -3254,7 +3407,7 @@ function extractOptions(key, rows, ensureValues) {
       .map(({ value, label }) => ({ value, label }));
   }
   if (key === 'visoes') {
-    // Visão (campo NM_TYPE = "Série" na QUARTELY.sql): ordem de negócio
+    // Visão (campo NM_TYPE = "Série" na CHART_DATA_SQL): ordem de negócio
     // Budget → Plan → Act/Fcst, nunca alfabética
     const set = new Set(rows.map(r => r.NM_TYPE));
     if (ensure) ensure.forEach(v => set.add(v));
@@ -3307,7 +3460,7 @@ function recomputeFilterOptions() {
 }
 
 // ── Aplica o filtro + agrega por Type (mesmo SUM/GROUP BY já usado nas
-//    seções Quarter/Semester/Year da própria QUARTELY.sql), depois ordena
+//    seções Quarter/Semester/Year da própria CHART_DATA_SQL), depois ordena
 //    pelas MESMAS chaves técnicas do filtro Horizonte — nunca pelo rótulo
 //    de Type — antes de montar categorias/valores para o gráfico ───────
 function getFilteredChartRows() {
@@ -3365,7 +3518,7 @@ function updateChartUnit() {
   if (units.size === 1) {
     subEl.textContent = `(${[...units][0]})`;
   } else if (units.size > 1) {
-    console.warn(`[quartely] SG_UNID inconsistente para "${filterState.product}": ${[...units].join(', ')} — mantendo unidade anterior em vez de escolher uma arbitrariamente.`);
+    console.warn(`[performance-studio] SG_UNID inconsistente para "${filterState.product}": ${[...units].join(', ')} — mantendo unidade anterior em vez de escolher uma arbitrariamente.`);
   } else {
     subEl.textContent = '(%)';
   }
@@ -3694,7 +3847,7 @@ function closeAllPanels() {
 //    fora da janela, ambiente sem aquele site, etc.), a seleção correspondente
 //    fica vazia e o filtro simplesmente não restringe nada — sem erro.
 // Período "atual" de UMA granularidade (QUARTER/SEMESTER/YEAR), derivado
-// do próprio corte Actual/Forecast que a QUARTELY.sql já calculou a
+// do próprio corte Actual/Forecast que a CHART_DATA_SQL já calculou a
 // partir de @DT_REF (sufixo 'A' = fechado, 'F' = em aberto) — NUNCA do
 // relógio do navegador. O primeiro período em aberto ('F') É o atual;
 // sem nenhum 'F' presente (nada aberto ainda para essa granularidade),
@@ -3749,7 +3902,7 @@ function applyDefaultFilters(rows) {
   if (defaultSite) filterState.sites = new Set([String(defaultSite.ID_SITE)]);
 }
 
-async function initQuartelyPage() {
+async function initPerformanceHubPage() {
   setFiltersInitialLoading(true);
   loadColorPreferences();    // carrega cores salvas do localStorage
   applyChartBackgroundColor(); // aplica cor de fundo ao wrapper
@@ -3757,7 +3910,7 @@ async function initQuartelyPage() {
   // abrem com a cópia local e o banco prevalece quando responder.
   const configsDoBanco = loadEditorConfigs();
   carregarFundo(); // background salvo (global), aplicado assim que responder
-  allRows = await loadQuartelyData();
+  allRows = await loadPerformanceHubData();
   applyDefaultFilters(allRows);
   filterState.product = getDefaultProduct();
   buildFiltersBar();     // cria o DOM primeiro — initCharts já popula tudo
@@ -3774,7 +3927,7 @@ async function initQuartelyPage() {
 function setFiltersInitialLoading(loading) {
   document.getElementById('filtersBar').classList.toggle('is-loading', loading);
 }
-// initQuartelyPage() é chamada no fim do script (depois de todas as declarações).
+// initPerformanceHubPage() é chamada no fim do script (depois de todas as declarações).
 
 // ════════════════════════════════════════════════════════════════════
 // MÚLTIPLOS GRÁFICOS — cada card guarda filtros, produto, cores, página,
@@ -3903,6 +4056,7 @@ function saveCharts() {
       charts: charts.map(c => ({ id: c.id, filters: c.filters, colors: c.colors, cfg: c.cfg, page: c.page, size: c.size, pos: c.pos }))
     }));
   } catch (e) { /* localStorage indisponível — sessão segue sem persistir */ }
+  gravarLayoutDashboard();
 }
 
 // Nome e estado de seleção anunciados por leitor de tela
@@ -3919,13 +4073,40 @@ function labelCharts() {
 //    foreignObject, com os estilos calculados copiados para cada elemento,
 //    e é desenhado num canvas em 2x. Controles de edição ficam de fora. ──
 const EXPORT_FORA = '.chart-export, .chart-resize-handle, .chart-pager, .color-palette';
-function copiarEstilos(orig, clone) {
-  const cs = getComputedStyle(orig);
+function estiloInline(cs) {
   let css = '';
-  for (let i = 0; i < cs.length; i++) { const p = cs[i]; css += `${p}:${cs.getPropertyValue(p)};`; }
-  clone.setAttribute('style', css + 'animation:none;transition:none;');
+  for (let i = 0; i < cs.length; i++) { const p = cs[i]; if (p !== 'content') css += `${p}:${cs.getPropertyValue(p)};`; }
+  return css + 'animation:none;transition:none;';
+}
+// ::before/::after (ex.: linha do eixo em .col-wrapper::before) não são clonados:
+// viram <span> com o mesmo estilo calculado
+function copiarPseudo(orig, clone, tipo) {
+  const cs = getComputedStyle(orig, tipo);
+  if (!cs.content || cs.content === 'none' || cs.content === 'normal' || cs.display === 'none') return;
+  const el = document.createElement('span');
+  el.setAttribute('style', estiloInline(cs));
+  const texto = /^"([\s\S]*)"$/.exec(cs.content);
+  el.textContent = texto ? texto[1].replace(/\\(.)/g, '$1') : '';
+  if (tipo === '::before') clone.insertBefore(el, clone.firstChild); else clone.appendChild(el);
+}
+function copiarEstilos(orig, clone) {
+  clone.setAttribute('style', estiloInline(getComputedStyle(orig)));
   const a = orig.children, b = clone.children;
   for (let i = 0; i < a.length; i++) if (b[i]) copiarEstilos(a[i], b[i]);
+  copiarPseudo(orig, clone, '::before');
+  copiarPseudo(orig, clone, '::after');
+}
+// CSS da Poppins (fontes em data: URI), lido uma vez; sem ele a exportação segue com a fonte do sistema
+let poppinsCssCache = null;
+function cssPoppins() {
+  if (!poppinsCssCache) {
+    const href = document.querySelector('link[href$="poppins.css"]')?.href || 'assets/css/poppins.css';
+    poppinsCssCache = fetch(href)
+      .then(r => (r.ok ? r.text() : ''))
+      .then(t => t.replace(/\]\]>/g, ''))
+      .catch(() => '');
+  }
+  return poppinsCssCache;
 }
 async function graficoParaPng(card, escala = 2) {
   const alvo = card.querySelector('.chart-container');
@@ -3941,7 +4122,9 @@ async function graficoParaPng(card, escala = 2) {
   clone.style.margin = '0';
   clone.style.boxShadow = 'none';
   const xml = new XMLSerializer().serializeToString(clone);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject x="0" y="0" width="100%" height="100%">${xml}</foreignObject></svg>`;
+  // A imagem SVG não enxerga as fontes da página: a Poppins vai embutida nela
+  const fontes = await cssPoppins();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${fontes ? `<defs><style><![CDATA[${fontes}]]></style></defs>` : ''}<foreignObject x="0" y="0" width="100%" height="100%">${xml}</foreignObject></svg>`;
   const img = new Image();
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   await img.decode();
@@ -3949,9 +4132,9 @@ async function graficoParaPng(card, escala = 2) {
   canvas.width = Math.round(w * escala);
   canvas.height = Math.round(h * escala);
   const ctx = canvas.getContext('2d');
+  // Sem preencher o canvas: o card traz o próprio fundo e o lado de fora
+  // dos cantos arredondados fica transparente no PNG
   ctx.scale(escala, escala);
-  ctx.fillStyle = getComputedStyle(alvo).backgroundColor || '#FFFFFF';
-  ctx.fillRect(0, 0, w, h);
   ctx.drawImage(img, 0, 0, w, h);
   return new Promise((ok, erro) => canvas.toBlob(b => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'));
 }
@@ -3993,7 +4176,7 @@ async function exportarGrafico(card, acao) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     avisoExport(caixa, acao === 'copiar' ? 'Cópia não permitida pelo navegador: imagem baixada.' : 'Imagem PNG baixada.');
   } catch (err) {
-    console.error('[quartely] exportar:', err);
+    console.error('[performance-studio] exportar:', err);
     avisoExport(caixa, 'Não foi possível exportar o gráfico.');
   }
 }
@@ -4112,6 +4295,13 @@ function updateBoardHeight() {
 }
 function defaultSize() {
   return clampSize(Math.min(board.clientWidth - 2 * BOARD_M, 1200), Math.min(innerHeight * 0.76, 720));
+}
+// Gráfico novo: tamanho típico dos demais (mediana) — um card grande isolado não define
+// o padrão; quadro vazio: meia largura (dois lado a lado) e 420px de altura
+function tamanhoTipico() {
+  if (!charts.length) return clampSize(Math.floor((board.clientWidth - 3 * BOARD_M) / 2), 420);
+  const med = v => { const o = [...v].sort((a, b) => a - b); return o[Math.floor((o.length - 1) / 2)]; };
+  return clampSize(med(charts.map(c => c.size.w)), med(charts.map(c => c.size.h)));
 }
 
 // ── Seleção múltipla (Ctrl/⌘ ou Shift + clique): arrastar um deles move o grupo ──
@@ -4336,8 +4526,8 @@ function mountChart(saved, el) {
 
 function addChart() {
   stashActive();
-  // Novo gráfico herda as dimensões atuais do card selecionado
-  const size = activeChart ? clampSize(activeChart.size.w, activeChart.size.h) : defaultSize();
+  // Novo gráfico usa o tamanho típico dos demais (mediana), não o do card selecionado
+  const size = tamanhoTipico();
   const bottom = Math.max(0, ...charts.map(c => c.pos.y + c.el.offsetHeight));
   const x = activeChart ? activeChart.pos.x : (board.clientWidth - size.w) / 2;
   const c = mountChart({ size, pos: { x, y: bottom + 24 } });
@@ -4602,7 +4792,7 @@ function percentil(valores, p) {
   return lo + 1 < v.length ? v[lo] + (h - lo) * (v[lo + 1] - v[lo]) : v[lo];
 }
 
-// Mesmas regras de normalizarConfig (quartely-api.js): só chaves e valores conhecidos
+// Mesmas regras de normalizarConfig (performancehub-api.js): só chaves e valores conhecidos
 function normalizeChartCfg(src) {
   const d = defaultChartCfg();
   const s = src && typeof src === 'object' ? src : {};
@@ -4697,7 +4887,7 @@ function composeChartTitle(cfg) {
 
 // ── API (mesma base que serviu os dados) ──
 async function editorApi(recurso, opcoes = {}) {
-  const bases = quartelyApiBase ? [quartelyApiBase] : basesDaApiResolvidas();
+  const bases = performanceHubApiBase ? [performanceHubApiBase] : basesDaApiResolvidas();
   let falha = { status: 0, corpo: { error: 'Servidor indisponível.' } };
   for (const base of bases) {
     let res;
@@ -4715,11 +4905,11 @@ async function editorApi(recurso, opcoes = {}) {
     let corpo = null;
     try { corpo = await res.json(); } catch (e) { corpo = null; }
     // Base ainda não descoberta e 404: a rota não existe aqui, tenta a próxima
-    if (res.status === 404 && !quartelyApiBase) {
+    if (res.status === 404 && !performanceHubApiBase) {
       falha = { status: 404, corpo: { error: 'Rota de configuração não encontrada no servidor.' } };
       continue;
     }
-    if (!quartelyApiBase) quartelyApiBase = base;
+    if (!performanceHubApiBase) performanceHubApiBase = base;
     return { ok: res.ok, status: res.status, corpo: corpo || { error: `HTTP ${res.status}` } };
   }
   return { ok: false, ...falha };
@@ -4733,7 +4923,7 @@ async function loadEditorConfigs() {
     editor.db = { ok: true, carregando: false, itens: r.corpo.itens.filter(i => i && Number.isInteger(i.id) && typeof i.nome === 'string'), erro: '' };
   } else {
     editor.db = { ok: false, carregando: false, itens: [], erro: r.corpo.error || `HTTP ${r.status}` };
-    console.warn('[quartely] configurações do banco indisponíveis — usando a cópia local:', editor.db.erro);
+    console.warn('[performance-studio] configurações do banco indisponíveis — usando a cópia local:', editor.db.erro);
   }
   return editor.db;
 }
@@ -4797,12 +4987,13 @@ function loadDraft() {
 // Cabeçalho do painel: o gráfico em edição em destaque + resumo do contexto
 function renderEditorTarget() {
   const c = editor.chart;
-  const doGrafico = !['bg', 'add', 'excluir'].includes(editor.view);
+  const doGrafico = !['bg', 'add', 'excluir', 'dash'].includes(editor.view);
   const resumo = $qe('qeResumoGrafico');
   $qe('qeEditBadge').hidden = !(doGrafico && c);
   if (!doGrafico || !c) {
     $qe('qeTarget').textContent = editor.view === 'bg' ? 'Background' : editor.view === 'add' ? 'Novo gráfico'
-      : editor.view === 'excluir' ? tx('ui.graficos_no_quadro', { n: charts.length }) : 'Nenhum gráfico selecionado';
+      : editor.view === 'excluir' ? tx('ui.graficos_no_quadro', { n: charts.length })
+      : editor.view === 'dash' ? (dash.atual ? dash.atual.nome : tx('ui.dash_nenhum')) : 'Nenhum gráfico selecionado';
     resumo.hidden = true;
     return;
   }
@@ -5545,7 +5736,7 @@ function relayoutBoard() {
 }
 
 // ── Paleta lateral: uma visão por vez no mesmo painel ──
-const PANEL_TITULOS = { add: 'Adicionar gráfico', filtros: 'Filtros', editar: 'Edição', bg: 'Dashboard', excluir: 'Excluir gráficos' };
+const PANEL_TITULOS = { add: 'Adicionar gráfico', filtros: 'Filtros', editar: 'Edição', bg: 'Dashboard', excluir: 'Excluir gráficos', dash: 'Dashboards' };
 editor.view = 'editar';
 editor.tool = null; // botão da paleta da visão aberta (destacado)
 
@@ -5566,7 +5757,7 @@ function setEditorOpen(open) {
   editor.open = open;
   $qe('qePanel').hidden = !open;
   document.body.classList.toggle('qe-open', open);
-  document.body.classList.toggle('qe-ctx-grafico', open && !['bg', 'add', 'excluir'].includes(editor.view));
+  document.body.classList.toggle('qe-ctx-grafico', open && !['bg', 'add', 'excluir', 'dash'].includes(editor.view));
   $qe('qeBackdrop').hidden = !(open && isEditorDrawer());
   marcarFerramenta();
   if (!open) closeChartPalette();
@@ -5582,7 +5773,7 @@ function abrirVisao(view, btn, sec) {
   editor.tool = btn;
   $qe('qePanel').querySelectorAll('.qe-view').forEach(v => { v.hidden = v.dataset.view !== view; });
   setEditorOpen(true);
-  document.body.classList.toggle('qe-ctx-grafico', !['bg', 'add', 'excluir'].includes(view));
+  document.body.classList.toggle('qe-ctx-grafico', !['bg', 'add', 'excluir', 'dash'].includes(view));
   marcarFerramenta();
   if (view === 'editar') irParaSecao(sec || editor.secao || 'ident');
   else $qe('qeHeading').textContent = PANEL_TITULOS[view];
@@ -5591,6 +5782,7 @@ function abrirVisao(view, btn, sec) {
   else if (view === 'filtros') abrirFiltros();
   else if (view === 'bg') abrirFundo();
   else if (view === 'excluir') abrirExcluir();
+  else if (view === 'dash') abrirDashView();
   if (isEditorDrawer()) $qe('qeClose').focus();
 }
 
@@ -5650,7 +5842,7 @@ function confirmarExclusao() {
     $qe('qeAdd').focus();
     mostrarAviso(sel.length === 1 ? tx('ui.msg_1_excluido') : tx('ui.msg_n_excluidos', { n: sel.length }));
   } catch (err) {
-    console.error('[quartely] falha ao excluir gráficos:', err);
+    console.error('[performance-studio] falha ao excluir gráficos:', err);
     msgEm('qeExcluirMsg', tx('ui.msg_falha_excluir'), 'err');
   } finally {
     excluindoGrafico = false;
@@ -5664,6 +5856,276 @@ function abrirUltimaVisao() {
   if (editor.view === 'filtros') { abrirVisao('filtros', $qe('qeFiltrosBtn')); return; }
   const sec = SECOES_EDITOR[editor.secao] ? editor.secao : 'ident';
   abrirVisao('editar', $qe('qeToolbar').querySelector(`[data-qe-go="${sec}"]`), sec);
+}
+
+// ── Cadastro de dashboards (validação: gravado só neste navegador, sem tabela/API) ──
+// Cada dashboard guarda nome, referência (mês/ano), visão, anos extraídos, YTD e os
+// gráficos do quadro. Reutilizar = novo dashboard com os gráficos de outro, mudando
+// só as datas; Alterar parâmetros = muda as datas do dashboard aberto.
+const DASH_LISTA_KEY = 'vdt-dashboards', DASH_ATUAL_KEY = 'vdt-dashboard-atual';
+const DASH_NOME_BASE = 'VBM Performance Studio';
+// Visões disponíveis: cada uma aponta para uma consulta da API (hoje só a atual de produção)
+const DASH_VISOES = { VBM_PRODUCTION_ANALYTICS: { nome: 'VBM Production Analytics', consulta: 'CHART_DATA_SQL' } };
+const DASH_VISAO_PADRAO = 'VBM_PRODUCTION_ANALYTICS';
+const MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const dash = { atual: null, itens: [], nomeEditado: false, modo: 'novo', origem: null, formAberto: false };
+const layoutDoQuadro = () => ({ charts: charts.map(c => ({ id: c.id, filters: c.filters, colors: c.colors, cfg: c.cfg, page: c.page, size: c.size, pos: c.pos })) });
+const nomeMes = (m, curto) => { const t = new Date(2000, m - 1, 1).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { month: curto ? 'short' : 'long' }); return t.charAt(0).toUpperCase() + t.slice(1); };
+const dataHoraLocal = v => (v ? new Date(v).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
+const nomeVisao = v => (DASH_VISOES[v] || DASH_VISOES[DASH_VISAO_PADRAO]).nome;
+// Referência padrão: mês anterior ao atual (janeiro → dezembro do ano anterior)
+function referenciaPadrao() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return { mes: d.getMonth() + 1, ano: d.getFullYear() }; }
+const proximoMes = (mes, ano) => (mes === 12 ? { mes: 1, ano: ano + 1 } : { mes: mes + 1, ano });
+const baseDoNome = n => String(n || '').replace(/\s+-\s+[A-Za-z]+\s+\d{4}$/, '').trim() || DASH_NOME_BASE;
+const nomePadrao = (base, mes, ano) => `${base} - ${MESES_EN[mes - 1]} ${ano}`;
+const nomeEmUso = (nome, excetoId) => dash.itens.some(d => d.id !== excetoId && d.nome.toLocaleLowerCase() === nome.toLocaleLowerCase());
+
+function lerDashboards() {
+  try {
+    const v = JSON.parse(localStorage.getItem(DASH_LISTA_KEY) || '[]');
+    return Array.isArray(v) ? v.filter(d => d && d.id && d.nome).map(d => ({ ...d, visao: DASH_VISOES[d.visao] ? d.visao : DASH_VISAO_PADRAO })) : [];
+  } catch (e) { return []; }
+}
+function gravarDashboards() {
+  try { localStorage.setItem(DASH_LISTA_KEY, JSON.stringify(dash.itens)); return true; } catch (e) { return false; }
+}
+function definirDashAtual(d) {
+  dash.atual = d || null;
+  try { if (d) localStorage.setItem(DASH_ATUAL_KEY, d.id); else localStorage.removeItem(DASH_ATUAL_KEY); } catch (e) { /* só nesta sessão */ }
+  renderDash();
+}
+// Cada gravação do quadro (saveCharts) atualiza os gráficos do dashboard aberto
+function gravarLayoutDashboard() {
+  if (!dash.atual) return;
+  dash.atual.layout = layoutDoQuadro();
+  dash.atual.atualizadoEm = new Date().toISOString();
+  gravarDashboards();
+}
+// Troca os gráficos do quadro pelos do dashboard (mesmo formato de 'vdt-charts')
+function substituirQuadro(layout) {
+  const lista = layout && Array.isArray(layout.charts) ? layout.charts : [];
+  if (!lista.length) return;
+  limparMultiSel();
+  closeChartPalette();
+  if (activeChart) deselectChart();
+  charts.forEach(c => c.el.remove());
+  charts = [];
+  activeChart = null;
+  lista.forEach(sc => mountChart(JSON.parse(JSON.stringify(sc))));
+  renderAllCharts();
+  activateChart(charts[0]);
+  updateChartActionButtons();
+  updateBoardHeight();
+  saveCharts();
+}
+function abrirDashboard(id, silencioso) {
+  const d = dash.itens.find(x => x.id === id);
+  if (!d) { if (!silencioso) msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); return false; }
+  definirDashAtual(null); // não grava o quadro antigo por cima do dashboard que vai abrir
+  substituirQuadro(d.layout);
+  definirDashAtual(d);
+  gravarLayoutDashboard();
+  prepararFormDash('novo');
+  if (!silencioso) mostrarFormDash(false);
+  if (!silencioso) { msgEm('qeDashMsg', tx('ui.dash_aberto', { nome: d.nome }), 'ok'); announce(tx('ui.dash_aberto', { nome: d.nome })); }
+  return true;
+}
+
+function anosDisponiveis(extra) {
+  const anos = new Set(allRows.map(r => Number(r.ORDEM_ANO)).filter(Number.isFinite));
+  anos.add(new Date().getFullYear());
+  (extra || []).forEach(a => anos.add(Number(a)));
+  return [...anos].sort((a, b) => b - a);
+}
+// Formulário em 3 modos: 'novo' (padrão), 'reuso' (novo período a partir de outro
+// dashboard) e 'editar' (parâmetros do dashboard aberto)
+// O formulário só aparece ao escolher uma ação (Novo, Reutilizar ou Alterar parâmetros)
+function mostrarFormDash(aberto) {
+  dash.formAberto = !!aberto;
+  $qe('qeDashForm').hidden = !aberto;
+  $qe('qeDashFoot').hidden = !aberto;
+  if (aberto) { $qe('qeDashForm').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); $qe('qeDashMes').focus(); }
+}
+function prepararFormDash(modo, origem) {
+  dash.modo = modo || 'novo';
+  dash.origem = origem || null;
+  const base = dash.modo === 'editar' ? dash.atual : dash.origem;
+  const ref = dash.modo === 'editar' ? { mes: base.mesRef, ano: base.anoRef }
+    : dash.modo === 'reuso' ? proximoMes(base.mesRef, base.anoRef) : referenciaPadrao();
+  const anos = anosDisponiveis([ref.ano, ...(base && base.anos ? base.anos : [])]);
+  const marcados = dash.modo === 'editar' ? base.anos
+    : dash.modo === 'reuso' && base.anos ? base.anos.map(a => a + (ref.ano - base.anoRef)) : [ref.ano, ref.ano - 1];
+  const mes = $qe('qeDashMes'), ano = $qe('qeDashAno'), ytd = $qe('qeDashYtd');
+  mes.innerHTML = ''; ytd.innerHTML = ''; ano.innerHTML = '';
+  for (let m = 1; m <= 12; m++) { mes.add(new Option(nomeMes(m), String(m))); ytd.add(new Option(nomeMes(m), String(m))); }
+  anosDisponiveis([...marcados, ref.ano]).forEach(a => ano.add(new Option(String(a), String(a))));
+  mes.value = String(ref.mes); ano.value = String(ref.ano);
+  ytd.value = String(dash.modo === 'editar' ? base.ytdAte : ref.mes);
+  $qe('qeDashAnos').innerHTML = anosDisponiveis(marcados).map(a => `<label class="qe-check"><input type="checkbox" data-dash-ano="${a}"${marcados.includes(a) ? ' checked' : ''}> ${a}</label>`).join('');
+  $qe('qeDashDesc').value = dash.modo === 'editar' ? base.descricao || '' : dash.modo === 'reuso' ? base.descricao || '' : '';
+  $qe('qeDashVisao').value = base && DASH_VISOES[base.visao] ? base.visao : DASH_VISAO_PADRAO;
+  $qe('qeDashCopiar').checked = charts.length > 0;
+  $qe('qeDashCopiarBox').hidden = dash.modo !== 'novo';
+  const form = $qe('qeDashFormTit').closest('fieldset');
+  form.classList.toggle('is-editando', dash.modo === 'editar');
+  form.classList.toggle('is-reuso', dash.modo === 'reuso');
+  $qe('qeDashFormTit').textContent = dash.modo === 'editar' ? tx('ui.dash_form_editar', { nome: base.nome })
+    : dash.modo === 'reuso' ? tx('ui.dash_form_reuso', { nome: base.nome }) : tx('ui.dash_novo');
+  $qe('qeDashCriar').textContent = dash.modo === 'editar' ? tx('ui.dash_salvar_alteracoes') : tx('ui.dash_criar');
+  $qe('qeDashCancelar').textContent = tx('ui.cancelar');
+  dash.nomeEditado = false;
+  if (dash.modo === 'editar') { $qe('qeDashNome').value = base.nome; dash.nomeEditado = true; } else atualizarNomeSugerido();
+  limparErrosDash();
+}
+function atualizarNomeSugerido() {
+  if (dash.nomeEditado) return;
+  const fonte = dash.modo === 'reuso' ? dash.origem : dash.atual;
+  $qe('qeDashNome').value = nomePadrao(baseDoNome(fonte && fonte.nome), Number($qe('qeDashMes').value), Number($qe('qeDashAno').value));
+}
+function limparErrosDash() {
+  ['qeDashNomeErr', 'qeDashAnosErr'].forEach(id => { $qe(id).hidden = true; $qe(id).textContent = ''; });
+  $qe('qeDashNome').removeAttribute('aria-invalid');
+}
+// Lê e valida o formulário; null = erro já exibido no campo
+function lerFormDash(excetoId) {
+  limparErrosDash();
+  const nomeEl = $qe('qeDashNome'), nome = nomeEl.value.trim();
+  const anos = [...$qe('qeDashAnos').querySelectorAll('input:checked')].map(i => Number(i.dataset.dashAno)).sort((a, b) => a - b);
+  const erroNome = msg => { nomeEl.setAttribute('aria-invalid', 'true'); $qe('qeDashNomeErr').textContent = msg; $qe('qeDashNomeErr').hidden = false; nomeEl.focus(); return null; };
+  if (!nome) return erroNome(tx('ui.dash_nome_obrigatorio'));
+  if (nomeEmUso(nome, excetoId)) return erroNome(tx('ui.dash_nome_duplicado'));
+  if (!anos.length) { $qe('qeDashAnosErr').textContent = tx('ui.dash_anos_obrigatorio'); $qe('qeDashAnosErr').hidden = false; $qe('qeDashAnos').querySelector('input')?.focus(); return null; }
+  return {
+    nome, descricao: $qe('qeDashDesc').value.trim().slice(0, 500),
+    mesRef: Number($qe('qeDashMes').value), anoRef: Number($qe('qeDashAno').value),
+    visao: DASH_VISOES[$qe('qeDashVisao').value] ? $qe('qeDashVisao').value : DASH_VISAO_PADRAO,
+    anos, ytdAte: Number($qe('qeDashYtd').value)
+  };
+}
+function salvarFormDash() {
+  if (dash.modo === 'editar') {
+    const a = dash.atual, v = a && lerFormDash(a.id);
+    if (!v) return;
+    Object.assign(a, v, { atualizadoEm: new Date().toISOString() });
+    dash.itens.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
+    if (!gravarDashboards()) { msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
+    renderDash();
+    prepararFormDash('novo');
+    mostrarFormDash(false);
+    msgEm('qeDashMsg', tx('ui.dash_parametros_salvos', { nome: a.nome }), 'ok');
+    announce(tx('ui.dash_parametros_salvos', { nome: a.nome }));
+    return;
+  }
+  const v = lerFormDash(null);
+  if (!v) return;
+  stashActive();
+  const agora = new Date().toISOString();
+  const layout = dash.modo === 'reuso' ? JSON.parse(JSON.stringify(dash.origem.layout || null))
+    : $qe('qeDashCopiar').checked ? layoutDoQuadro() : null;
+  const d = { id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...v, status: 'S', criadoEm: agora, criadoPor: usuarioLogado || '', atualizadoEm: agora, layout };
+  dash.itens = [...dash.itens, d].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  if (!gravarDashboards()) { dash.itens = dash.itens.filter(x => x !== d); msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
+  definirDashAtual(null);
+  // Reutilizado: quadro do dashboard de origem; sem reaproveitar: um gráfico no padrão
+  substituirQuadro(layout && layout.charts && layout.charts.length ? layout : { charts: [{ filters: { ...defaultFilters }, size: tamanhoTipico(), pos: { x: BOARD_M, y: BOARD_M } }] });
+  definirDashAtual(d);
+  gravarLayoutDashboard();
+  prepararFormDash('novo');
+  mostrarFormDash(false);
+  msgEm('qeDashMsg', tx('ui.dash_criado', { nome: d.nome }), 'ok');
+  announce(tx('ui.dash_criado', { nome: d.nome }));
+}
+
+function renderDash() {
+  const btn = $qe('dashBtn');
+  if (!btn) return;
+  const a = dash.atual, nome = a ? a.nome : tx('ui.dash_selecionar');
+  $qe('dashBtnNome').textContent = nome;
+  btn.classList.toggle('is-vazio', !a);
+  btn.title = `${tx('ui.dashboard')}: ${nome}`;
+  btn.setAttribute('aria-label', btn.title);
+  const linha = (k, v) => `<span><b>${escapeHtml(k)}:</b> ${escapeHtml(v)}</span>`;
+  $qe('qeDashInfo').innerHTML = a ? [
+    linha(tx('ui.dash_nome'), a.nome),
+    linha(tx('ui.dash_referencia'), `${nomeMes(a.mesRef)} ${a.anoRef}`),
+    a.descricao ? linha(tx('ui.dash_descricao_curta'), a.descricao) : '',
+    linha(tx('ui.dash_status'), a.status === 'S' ? tx('ui.dash_ativo') : tx('ui.dash_inativo')),
+    linha(tx('ui.dash_visao'), nomeVisao(a.visao)),
+    linha(tx('ui.dash_anos'), (a.anos || []).join(', ')),
+    linha(tx('ui.dash_ytd'), nomeMes(a.ytdAte)),
+    linha(tx('ui.dash_criado_em'), dataHoraLocal(a.criadoEm)),
+    linha(tx('ui.dash_criado_por'), a.criadoPor || '—')
+  ].join('') : `<span>${escapeHtml(tx('ui.dash_nenhum'))}</span>`;
+  $qe('qeDashEditar').hidden = !a;
+  const sel = $qe('qeDashLista'), atualSel = sel.value;
+  sel.innerHTML = '';
+  sel.add(new Option(dash.itens.length ? tx('ui.selecione') : tx('ui.dash_lista_vazia'), ''));
+  dash.itens.forEach(d => sel.add(new Option(`${d.nome} — ${nomeMes(d.mesRef, true)}/${d.anoRef}`, d.id)));
+  sel.value = dash.itens.some(d => d.id === atualSel) ? atualSel : a ? a.id : '';
+  sel.disabled = !dash.itens.length;
+  $qe('qeDashAbrir').disabled = $qe('qeDashReutilizar').disabled = !dash.itens.length;
+  $qe('qeDashAuto').textContent = dash.modo === 'editar' ? '' : tx('ui.dash_auto', { quando: dataHoraLocal(new Date()), usuario: usuarioLogado || '—' });
+  if (editorReady && editor.open && editor.view === 'dash') renderEditorTarget();
+}
+function abrirDashView() {
+  dash.itens = lerDashboards();
+  if (dash.atual) dash.atual = dash.itens.find(d => d.id === dash.atual.id) || null;
+  prepararFormDash('novo');
+  mostrarFormDash(!dash.itens.length); // sem nenhum dashboard: já abre o "Novo"
+  renderDash();
+}
+
+function initDashboards() {
+  dash.itens = lerDashboards();
+  const escolhido = () => {
+    const d = dash.itens.find(x => x.id === $qe('qeDashLista').value);
+    if (!d) { msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); $qe('qeDashLista').focus(); }
+    return d;
+  };
+  $qe('dashBtn').addEventListener('click', () => abrirVisao('dash', $qe('qeDash')));
+  $qe('qeDashCriar').addEventListener('click', salvarFormDash);
+  $qe('qeDashCancelar').addEventListener('click', () => {
+    prepararFormDash('novo');
+    mostrarFormDash(false);
+    msgEm('qeDashMsg', '');
+    $qe('qeDashNovo').focus();
+  });
+  $qe('qeDashNovo').addEventListener('click', () => {
+    prepararFormDash('novo');
+    mostrarFormDash(true);
+    msgEm('qeDashMsg', tx('ui.dash_novo_msg'), 'info');
+  });
+  $qe('qeDashAbrir').addEventListener('click', () => { const d = escolhido(); if (d) abrirDashboard(d.id); });
+  $qe('qeDashReutilizar').addEventListener('click', () => {
+    const d = escolhido();
+    if (!d) return;
+    prepararFormDash('reuso', d);
+    mostrarFormDash(true);
+    msgEm('qeDashMsg', tx('ui.dash_reuso_msg', { nome: d.nome }), 'info');
+  });
+  $qe('qeDashEditar').addEventListener('click', () => {
+    if (!dash.atual) return;
+    prepararFormDash('editar');
+    mostrarFormDash(true);
+    msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
+  });
+  $qe('qeDashMes').addEventListener('change', () => { if (dash.modo !== 'editar') $qe('qeDashYtd').value = $qe('qeDashMes').value; atualizarNomeSugerido(); });
+  $qe('qeDashAno').addEventListener('change', atualizarNomeSugerido);
+  $qe('qeDashNome').addEventListener('input', () => { dash.nomeEditado = true; limparErrosDash(); });
+  $qe('qeDashNome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); salvarFormDash(); } });
+  $qe('qeDashAnos').addEventListener('change', limparErrosDash);
+  document.addEventListener('qtr:idioma', () => {
+    if (editor.open && editor.view === 'dash') {
+      const nome = $qe('qeDashNome').value, editado = dash.nomeEditado;
+      prepararFormDash(dash.modo, dash.origem);
+      if (editado) { $qe('qeDashNome').value = nome; dash.nomeEditado = true; }
+    }
+    renderDash();
+  });
+  let salvo = null;
+  try { salvo = localStorage.getItem(DASH_ATUAL_KEY); } catch (e) { salvo = null; }
+  if (salvo && dash.itens.some(d => d.id === salvo)) abrirDashboard(salvo, true);
+  renderDash();
 }
 
 function recolherPainel() {
@@ -5734,7 +6196,10 @@ async function confirmarAdicionar() {
     } else if (nome) {
       c.cfg = { ...c.cfg, nome };
     }
-    if (produto) filterState.product = produto;
+    if (produto && produto !== filterState.product) {
+      filterState.product = produto;
+      podarSelecoesSemDados('product'); // Site/Ano/Cenário/Horizonte seguem o Produto escolhido
+    }
     refreshFiltersAndChart();
     editor.chart = null;
     editorSync();
@@ -5742,7 +6207,7 @@ async function confirmarAdicionar() {
     editorMsg('Gráfico adicionado e selecionado. Configure-o abaixo.', 'ok');
     mostrarAviso('Gráfico adicionado.');
   } catch (err) {
-    console.error('[quartely] falha ao adicionar gráfico:', err);
+    console.error('[performance-studio] falha ao adicionar gráfico:', err);
     msgEm('qeAddMsg', 'Não foi possível adicionar o gráfico. Tente novamente.', 'err');
   } finally {
     adicionandoGrafico = false;
@@ -5833,7 +6298,7 @@ const copiaFundo = f => JSON.parse(JSON.stringify(f));
 // salvo = o que está gravado no banco (null = nada gravado ou banco indisponível)
 const fundo = { aplicado: copiaFundo(FUNDO_PADRAO), rascunho: copiaFundo(FUNDO_PADRAO), salvo: null, visualizando: false, salvando: false, enviando: false, db: null, salvoEm: null };
 
-// Mesmas regras de normalizarFundo (quartely-api.js)
+// Mesmas regras de normalizarFundo (performancehub-api.js)
 function normalizarFundo(e) {
   const c = e && typeof e === 'object' ? e : {};
   const img = c.imagem && typeof c.imagem === 'object' ? c.imagem : {};
@@ -5858,7 +6323,7 @@ function normalizarFundo(e) {
   return f;
 }
 
-const baseDaApi = () => quartelyApiBase || basesDaApiResolvidas()[0];
+const baseDaApi = () => performanceHubApiBase || basesDaApiResolvidas()[0];
 
 // Fundo padrão = sem estilo inline (vale o CSS oficial em html/.qe-bg-preview)
 function pintarFundo(el, f) {
@@ -5890,7 +6355,7 @@ async function carregarFundo() {
     fundo.aplicado = fundo.salvo ? copiaFundo(fundo.salvo) : copiaFundo(FUNDO_PADRAO);
   } else {
     fundo.db = false;
-    console.warn('[quartely] background do banco indisponível — usando a cópia local:', r.corpo.error);
+    console.warn('[performance-studio] background do banco indisponível — usando a cópia local:', r.corpo.error);
     try { fundo.aplicado = normalizarFundo(JSON.parse(localStorage.getItem(FUNDO_CACHE) || 'null')); } catch (e) { fundo.aplicado = copiaFundo(FUNDO_PADRAO); }
   }
   fundo.rascunho = copiaFundo(fundo.aplicado);
@@ -6006,7 +6471,7 @@ async function enviarImagemFundo(file) {
     atualizarFundoDerivado();
     msgEm('qeBgMsg', 'Imagem enviada. Use Visualizar, Aplicar ou Salvar.', 'ok');
   } catch (e) {
-    console.error('[quartely] envio da imagem de fundo:', e.message);
+    console.error('[performance-studio] envio da imagem de fundo:', e.message);
     falha(e.message);
     msgEm('qeBgMsg', '');
   } finally {
@@ -6070,7 +6535,7 @@ async function salvarFundo() {
       atualizarFundoDerivado();
       msgEm('qeBgMsg', 'Fundo salvo. Ele será aplicado ao carregar o dashboard.', 'ok');
     } else {
-      console.error('[quartely] salvar background:', r.status, r.corpo.error);
+      console.error('[performance-studio] salvar background:', r.status, r.corpo.error);
       msgEm('qeBgMsg', 'Não foi possível salvar o fundo agora. Ele continua aplicado nesta sessão.', 'err');
     }
   } finally {
@@ -6239,7 +6704,7 @@ function initEditor() {
   // clique num gráfico mantém o painel aberto, agora para esse gráfico
   document.addEventListener('pointerdown', e => {
     if (!editor.open || isEditorDrawer()) return; // no drawer o fundo escuro já fecha
-    if (e.target.closest('.qe-panel, .qe-toolbar, #chartPalette, .qf-panel, .qf-modal-overlay, .settings-panel, .settings-backdrop, .is-board-item')) return;
+    if (e.target.closest('.qe-panel, .qe-toolbar, .dash-btn, #chartPalette, .qf-panel, .qf-modal-overlay, .settings-panel, .settings-backdrop, .is-board-item')) return;
     setEditorOpen(false);
   }, true);
   // Painel recolhido: duplo clique num gráfico abre o painel na última visão usada
@@ -6297,12 +6762,13 @@ function initEditor() {
   updateEditorTop();
 
   editorReady = true;
+  initDashboards();
   editorSync();
   renderEditor();
   atualizarIndicadorFiltros();
 }
 
-initQuartelyPage();
+initPerformanceHubPage();
 </script>
 
 </body>
