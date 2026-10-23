@@ -1,0 +1,23 @@
+{
+  "name": "vbm-kaizen-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VBM Kaizen — Databricks App (Node/Express + Azure SQL)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "bash tests/regressao.sh",
+    "verifica-segredos": "bash tests/verifica-segredos.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "compression": "^1.8.0",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "mssql": "^11.0.1",
+    "multer": "^2.0.2"
+  }
+}

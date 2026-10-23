@@ -1,0 +1,98 @@
+/* ===========================================================================
+   SplitPicker — cockpit "level pill" styling.
+
+   Theme tokens mirror the VBM dashboard; each has a light-mode fallback so the
+   control looks right even before you wire it to your own variables. If your
+   app already defines --panel / --panel2 / --line / --muted / --gold / --gold2,
+   this inherits them automatically and follows your dark-mode toggle.
+   ========================================================================= */
+
+.splitpicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---- one pill per split level ---- */
+.split-level {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--panel2, #f4f5f6);
+  border: 1px solid var(--line, #e0e3e7);
+  border-radius: 8px;
+  padding: 3px 4px 3px 7px;
+  transition: border-color .15s ease;
+}
+
+.split-level:focus-within {
+  border-color: var(--gold, #3CB5E5);
+}
+
+.split-tag {
+  color: var(--muted, #747678);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  margin-right: 3px;
+  white-space: nowrap;
+}
+
+/* borderless select so it reads as part of the pill */
+.split-sel {
+  border: none;
+  background: transparent;
+  color: var(--txt, #2f3438);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 2px;
+  cursor: pointer;
+  outline: none;
+  max-width: 190px;
+}
+
+.split-sel:focus { outline: none; }
+
+/* ---- reorder / remove affordances ---- */
+.split-level button {
+  background: transparent;
+  border: none;
+  color: var(--muted, #747678);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  transition: color .12s ease, background .12s ease;
+}
+
+.split-level button:hover:not(:disabled) {
+  color: var(--gold2, #0F6E9E);
+  background: var(--panel, #ffffff);
+}
+
+.split-level button:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+/* ---- add another level ---- */
+.split-add {
+  background: var(--panel2, #f4f5f6);
+  color: var(--gold2, #0F6E9E);
+  border: 1px dashed var(--line, #e0e3e7);
+  border-radius: 8px;
+  padding: 7px 13px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+
+.split-add:hover {
+  border-color: var(--gold, #3CB5E5);
+}

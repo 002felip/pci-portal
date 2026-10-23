@@ -1,0 +1,51 @@
+# Databricks Apps manifest — initiatives-cockpit2
+#
+# ONE app serves both tiers: FastAPI on /api and the compiled React SPA on /.
+
+command:
+  - python
+  - app_entry.py
+
+env:
+  # ---- application ----
+  - name: ENVIRONMENT
+    value: prod
+  - name: DATA_BACKEND
+    value: sql
+
+  # NOTE (v2): DEFAULT_SNAPSHOT is GONE.
+  # Periods are discovered from the data at runtime, so a new quarter needs no
+  # config change and no redeploy. If an environment must land on a fixed
+  # period, set PINNED_SNAPSHOT / PINNED_YEAR here — an override, not a default.
+  # - name: PINNED_SNAPSHOT
+  #   value: Q3
+
+  # Who may reopen a LOCKED period (DELETE /api/snapshots/{id}/close). Locking
+  # freezes the figures leadership signed off on, so reversing it is restricted
+  # to the operators named here, matched against X-Forwarded-Email. Leave unset
+  # and nobody can unlock — the safe default. Comma-separated.
+  - name: UNLOCK_ADMINS
+    value: "david.chen@vale.com"
+
+  # ---- Lakebase ----
+  # PGHOST / PGPORT / PGDATABASE / PGUSER / PGSSLMODE are injected by the
+  # platform because the `database` resource is bound. Do not set them here.
+  #
+  # The one thing the platform does NOT give us is the project/instance NAME,
+  # which the SDK needs to mint a credential. Not a secret, so it is a literal.
+  - name: LAKEBASE_INSTANCE_NAME
+    valueFrom: database  #or ${var.lakebase_project}
+
+  - name: LAKEBASE_ENDPOINT
+    valueFrom: database
+
+  # SQL warehouse ID, resolved from the bound resource key `sql-warehouse`.
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+
+  # Recycle pooled connections well inside the ~60 min token lifetime, and
+  # refresh the cached token 10 minutes before it expires.
+  - name: DB_POOL_RECYCLE_SECONDS
+    value: "1800"
+  - name: LAKEBASE_TOKEN_REFRESH_MARGIN_SECONDS
+    value: "600"

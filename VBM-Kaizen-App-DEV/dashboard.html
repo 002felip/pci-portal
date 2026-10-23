@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ═══════════════════════════════════════════════════════════════════
+  VBM KAIZEN · Dashboard (indicadores do programa)
+  ═══════════════════════════════════════════════════════════════════
+  PAPEL DA PÁGINA
+    Indicadores dos Kaizens ATUAIS + HISTÓRICOS (a mesma fonte da
+    Biblioteca), com os filtros que o relatório do Power BI tinha —
+    inclusive os seis níveis da hierarquia (COO … Coord/Sup).
+
+  DE ONDE VÊM OS DADOS
+    GET  /api/dashboard/dados     fatos compactados de todos os Kaizens
+    GET  /api/dashboard/detalhes  título e equipe (só na aba Base)
+    POST /api/dashboard/exportar  Excel do que a tela está mostrando
+    Rotas em dashboard-kaizen.js. A tela recebe a base inteira UMA vez e
+    filtra/agrega aqui — os filtros em cascata não voltam ao banco a
+    cada clique.
+
+  DEPENDÊNCIAS — as mesmas das demais telas
+    • css/vbm-app.css, css/poppins.css, css/fontawesome-subset.css
+    • js/vbm-app.js (toasts, VBMLoading, badge da Aprovação, links
+      restritos), js/usuario-graph.js (usuário no topo)
+    Gráficos em HTML/CSS puro (mesmo desenho dos gráficos do VBM
+    Quarterly) — nenhuma biblioteca de gráfico externa.
+
+  TEMA E IDIOMA
+    Mesmo painel de Configurações das outras telas: body[data-bg="dark"]
+    (localStorage 'vdt-theme') e 'vdt-lang'. Os nomes de status e
+    categoria vêm do banco nos dois idiomas.
+  ═══════════════════════════════════════════════════════════════════
+-->
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>VBM Kaizen — Dashboard</title>
+<link href="css/fontawesome-subset.css?v=20260930-1" rel="stylesheet"/>
+<link href="css/vbm-app.css?v=20261006-1" rel="stylesheet"/>
+<link href="css/poppins.css?v=20260912-1" rel="stylesheet"/>
+<link href="assets/icons/a1922a98664cc516_favicon-32x32-1.png" rel="icon"/>
+<style>
+/* ═══ Topnav, painel de Configurações e tema escuro base — copiados 1:1
+   de biblioteca.html (linhas 48–152) para a tela ter o mesmo cabeçalho. ═══ */
+/* ═══════════════════════════════════════════════════
+   TOPNAV LAYOUT OVERRIDE — replicado 1:1 do index.html
+═══════════════════════════════════════════════════ */
+.app-layout{display:block;min-height:100vh}.app-main{margin-left:0}
+
+.topnav{position:sticky;top:0;z-index:100;height:64px;background:linear-gradient(145deg,#082d4f 0%,#1b6898 100%);display:flex;align-items:center;padding:0 2rem;gap:0;border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 2px 20px rgba(8,45,79,.18)}
+@supports (backdrop-filter: blur(1px)) { .topnav { backdrop-filter: blur(4px) saturate(120%); -webkit-backdrop-filter: blur(4px) saturate(120%); } }
+
+.topnav-logo{display:flex;align-items:center;text-decoration:none;flex-shrink:0;margin-right:1.5rem;position:relative;z-index:1}
+.topnav-logo img{height:26px;width:auto}
+
+.topnav-links{display:flex;align-items:center;justify-content:center;gap:.15rem;flex:1;position:relative;z-index:1}
+.topnav-link{display:flex;align-items:center;gap:.4rem;padding:.5rem .85rem;border-radius:.45rem;font-family:'Poppins',sans-serif;font-weight:400;font-size:.72rem;letter-spacing:.04em;color:rgba(255,255,255,.75);text-decoration:none;white-space:nowrap;transition:color .18s;position:relative}
+.topnav-link i{font-size:.72rem}
+.topnav-link:hover{color:#fff}
+.topnav-link.active{color:#fff}
+.topnav-link::after{content:'';position:absolute;bottom:-1px;left:50%;width:0;height:1.5px;background:linear-gradient(90deg,transparent,#fff 25%,#fff 75%,transparent);border-radius:10px;box-shadow:0 0 8px rgba(255,255,255,.65);opacity:0;transform:translateX(-50%);transition:width .3s var(--ease-out),opacity .3s var(--ease-out)}
+.topnav-link.active::after{width:60%;opacity:1}
+.topnav-link:not(.active):hover::after{width:30%;opacity:.4}
+
+.topnav-badge{font-size:.55rem;padding:.1rem .35rem;border-radius:10rem;background:#c2770e;color:#fff;font-family:'Poppins',sans-serif;font-weight:700;line-height:1.4}
+.topnav-sep{width:1px;height:20px;background:rgba(255,255,255,.25);flex-shrink:0;margin:0 .1rem}
+.topnav-actions{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-left:auto;position:relative;z-index:1}
+
+.topnav-user{display:flex;align-items:center;gap:10px;padding-left:10px;border-left:1px solid rgba(255,255,255,.22);flex-shrink:0}
+.topnav-user-text{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+.topnav-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(145deg,var(--vbm-blue-light),var(--vbm-blue-dark));border:1.5px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
+.topnav-user-name{font-family:'Poppins',sans-serif;font-weight:600;font-size:11.5px;color:#fff;white-space:nowrap}
+.topnav-user-role{font-family:'Poppins',sans-serif;font-weight:600;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);white-space:nowrap}
+
+.topnav-mobile-toggle{display:none;width:34px;height:34px;border-radius:.4rem;border:none;background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;flex-shrink:0}
+.topnav-drawer{display:none;position:fixed;top:64px;left:0;right:0;background:#020e1c;border-bottom:1px solid rgba(60,181,229,.15);z-index:299;padding:.75rem 1rem;flex-direction:column;gap:.25rem;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.topnav-drawer.open{display:flex}
+.topnav-drawer .topnav-link{font-size:.8rem;padding:.65rem .9rem}
+
+@media(max-width:960px){.topnav-links{display:none}.topnav-mobile-toggle{display:flex}.topnav-user-role{display:none}}
+@media(max-width:540px){.topnav-user-name{display:none}}
+
+/* Grids do modal de detalhe (Problema/Meta, Resultados Alcançados) —
+   empilham em telas estreitas em vez de espremer o conteúdo. */
+@media(max-width:640px){
+  .kd-2col{grid-template-columns:1fr !important;}
+  .kd-3col{grid-template-columns:1fr !important;}
+}
+
+/* ═══════════════════════════════════════════════════
+   SETTINGS (engrenagem) — replicado 1:1 de
+   Referencias/Value Drive Tree/style.css
+═══════════════════════════════════════════════════ */
+.settings-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border:none;border-radius:100px;background:transparent;color:#fff;cursor:pointer;flex-shrink:0;transition:background .25s,transform .35s var(--ease-spring)}
+.settings-btn:hover{background:rgba(255,255,255,.12)}
+.settings-btn[aria-expanded="true"]{background:rgba(255,255,255,.18);transform:rotate(50deg)}
+
+.settings-backdrop{position:fixed;inset:0;background:rgba(9,20,34,.4);opacity:0;pointer-events:none;z-index:399;transition:opacity .3s var(--ease-out)}
+@supports (backdrop-filter: blur(1px)) { .settings-backdrop { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); } }
+.settings-backdrop.open{opacity:1;pointer-events:auto}
+
+.settings-panel{position:fixed;top:0;right:0;width:300px;max-width:90vw;height:100vh;background:#fff;box-shadow:-16px 0 48px rgba(9,20,34,.22);z-index:400;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .38s var(--ease-out)}
+.settings-panel.open{transform:translateX(0)}
+.settings-panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eef1f6}
+.settings-panel-head h2{font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:-.01em;color:var(--vbm-dark)}
+.settings-close{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;border-radius:100px;background:#fafcfe;color:var(--vbm-mid);cursor:pointer;transition:background .2s,color .2s}
+.settings-close svg{width:11px;height:11px}
+.settings-close:hover{background:var(--vbm-blue);color:#fff}
+.settings-panel-body{padding:20px;display:flex;flex-direction:column;overflow-y:auto}
+.settings-section{display:flex;flex-direction:column;gap:9px}
+.settings-section-title{display:flex;align-items:center;gap:5px;font-family:'Poppins',sans-serif;font-weight:600;font-size:11px;color:var(--vbm-dark)}
+.settings-info{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1px solid #e8e8e8;color:var(--vbm-mid);font-size:8px;font-style:italic;font-family:Georgia,serif;cursor:help}
+.settings-divider{height:1px;background:#eef1f6;margin:18px 0}
+.theme-toggle{display:flex;align-items:center;background:#fafcfe;border:1px solid #e8e8e8;border-radius:100px;padding:.16rem;gap:.1rem;width:fit-content}
+.theme-toggle-btn{padding:.38rem 1.05rem;border-radius:100px;font-size:.64rem;letter-spacing:.02em;color:var(--vbm-mid);border:none;background:transparent;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;transition:background .2s,color .2s;white-space:nowrap;line-height:1}
+.theme-toggle-btn.active{background:var(--vbm-blue);color:#fff;box-shadow:0 4px 14px rgba(60,181,229,.35)}
+.settings-select-wrap{position:relative}
+.settings-select{width:100%;appearance:none;-webkit-appearance:none;background:#fff;border:1.5px solid #e8e8e8;border-radius:9px;padding:.5rem 1.9rem .5rem .75rem;font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:300;color:var(--vbm-dark);cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.settings-select:hover{border-color:var(--vbm-blue-light)}
+.settings-select:focus{outline:none;border-color:var(--vbm-blue);box-shadow:0 0 0 3px rgba(60,181,229,.15)}
+.settings-select-caret{width:9px;height:9px;position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--vbm-mid);pointer-events:none}
+
+.settings-panel,.settings-panel-head,.settings-panel-head h2,.settings-close,.settings-section-title,.settings-info,.settings-divider,.theme-toggle,.theme-toggle-btn,.settings-select,.settings-select-caret,.settings-backdrop{transition-property:background,background-color,border-color,color,box-shadow,opacity,transform;transition-duration:.25s,.25s,.25s,.25s,.25s,.3s,.38s;transition-timing-function:var(--ease-out)}
+
+[data-bg="dark"] .settings-backdrop{background:rgba(0,0,0,.55)}
+[data-bg="dark"] .settings-panel{background:var(--vbm-blue-deep);box-shadow:-16px 0 48px rgba(0,0,0,.45)}
+[data-bg="dark"] .settings-panel-head{border-bottom-color:rgba(255,255,255,.1)}
+[data-bg="dark"] .settings-panel-head h2{color:#fff}
+/* O fechar no tema escuro vem de css/vbm-app.css (regra única). */
+[data-bg="dark"] .settings-section-title{color:#fff}
+[data-bg="dark"] .settings-info{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.5)}
+[data-bg="dark"] .settings-divider{background:rgba(255,255,255,.1)}
+[data-bg="dark"] .theme-toggle{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+[data-bg="dark"] .theme-toggle-btn{color:rgba(255,255,255,.55)}
+[data-bg="dark"] .theme-toggle-btn.active{color:#fff}
+[data-bg="dark"] .settings-select{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:#fff}
+[data-bg="dark"] .settings-select option{background:var(--vbm-blue-deep);color:#fff}
+[data-bg="dark"] .settings-select-caret{color:rgba(255,255,255,.5)}
+
+/* ════════════════════════════════════════════════════════════
+   TEMA ESCURO — aplicado à página inteira
+   ════════════════════════════════════════════════════════════ */
+body,.topnav,.topnav-link,.settings-btn{transition:background .3s var(--ease-out),background-color .3s var(--ease-out),border-color .3s var(--ease-out),color .3s var(--ease-out),box-shadow .3s var(--ease-out)}
+body[data-bg="dark"]{--vbm-dark:#f4f7fb;--vbm-mid:rgba(244,247,251,.55);--vbm-text:rgba(244,247,251,.82);background:radial-gradient(ellipse 80% 50% at 72% 6%,rgba(60,181,229,.10) 0%,transparent 55%),linear-gradient(160deg,#10131a 0%,var(--vbm-blue-deep) 100%);background-attachment:fixed}
+[data-bg="dark"] .topnav{background:transparent;border-bottom-color:rgba(255,255,255,.05)}
+[data-bg="dark"] .topnav-link{color:rgba(255,255,255,.65)}
+[data-bg="dark"] .topnav-link:hover{color:#fff}
+[data-bg="dark"] .topnav-sep{background:rgba(255,255,255,.14)}
+[data-bg="dark"] .topnav-user{border-left-color:rgba(255,255,255,.16)}
+
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD
+   Tokens próprios (prefixo --d-), derivados da paleta do app
+   (--vbm-*). Cada token tem par claro/escuro aqui mesmo.
+   ════════════════════════════════════════════════════════════ */
+.dash {
+  --d-surface: #ffffff;
+  --d-surface-alt: #f7f9fc;
+  --d-line: #e8edf3;
+  --d-line-soft: #eef2f6;
+  --d-ink: #0f172a;
+  --d-ink-soft: #5b6676;
+  --d-title: #316866;
+  --d-shadow: 0 10px 30px rgba(15,23,42,.06), 0 1px 3px rgba(15,23,42,.05);
+  --d-track: rgba(13,38,64,.08);
+  --d-pill: #d8f0fa;
+  --d-glass: rgba(246,246,246,.94);
+  --d-stroke: rgba(116,118,120,.38);
+  --d-hair: rgba(204,204,204,.14);
+  --d-up: #007e7a; --d-up-rgb: 0,126,122;
+  --d-down: #b91c1c; --d-down-rgb: 220,38,38;
+  --d-flat: #555555; --d-flat-rgb: 116,118,120;
+  --d-blank: #bcbec0;
+  --d-hover: #f2f8fc;
+  --d-sel: #e6f4fb;
+  --d-ease: cubic-bezier(.16,.84,.28,1);
+  /* Status: escala de azuis e cinzas — sem "arco-íris". A cor de
+     estado de verdade (verde/vermelho) fica só nos selos da tabela. */
+  --st-aprovado: #3cb5e5;
+  --st-emAprovacao: #9ddaf2;
+  --st-revisado: #1b5e80;
+  --st-alteracao: #8a96a6;
+  --st-reprovado: #5e6b7c;
+  --st-outro: #c3ccd6;
+}
+body[data-bg="dark"] .dash {
+  --d-surface: rgba(255,255,255,.06);
+  --d-surface-alt: rgba(255,255,255,.04);
+  --d-line: rgba(255,255,255,.12);
+  --d-line-soft: rgba(255,255,255,.08);
+  --d-ink: #f4f7fb;
+  --d-ink-soft: rgba(244,247,251,.62);
+  --d-title: var(--vbm-blue-light);
+  --d-shadow: 0 4px 24px rgba(0,0,0,.3);
+  --d-track: rgba(255,255,255,.10);
+  --d-pill: rgba(125,211,240,.22);
+  --d-glass: rgba(13,38,64,.94);
+  --d-stroke: rgba(255,255,255,.32);
+  --d-hair: rgba(255,255,255,.06);
+  --d-up: #34d399; --d-up-rgb: 52,211,153;
+  --d-down: #f87171; --d-down-rgb: 248,113,113;
+  --d-flat: rgba(255,255,255,.7); --d-flat-rgb: 200,200,200;
+  --d-blank: rgba(255,255,255,.28);
+  --d-hover: rgba(255,255,255,.05);
+  --d-sel: rgba(60,181,229,.16);
+  --st-emAprovacao: #7dd3f0;
+  --st-alteracao: #9aa6b6;
+  --st-reprovado: #6f7d90;
+  --st-revisado: #2f88b8;
+}
+.dash { display: flex; flex-direction: column; gap: 1.1rem; }
+.dash .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.dash [hidden] { display: none !important; }
+
+/* ── Hero (mesma linguagem da Biblioteca, fundo VBM) ── */
+.dsh-hero {
+  position: relative; border-radius: 1.25rem; overflow: hidden; padding: 1.6rem 2rem;
+  background-color: #041523;
+  background-image: linear-gradient(90deg, rgba(4,21,35,.82) 0%, rgba(4,21,35,.35) 60%, rgba(4,21,35,.55) 100%), url('assets/images/Fundo_VBM_2400x1145.webp');
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap;
+}
+.dsh-hero-orb { position: absolute; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(60,181,229,.18) 0%, transparent 65%); top: -100px; right: -60px; filter: blur(50px); pointer-events: none; }
+.dsh-hero-texto { position: relative; flex: 1 1 18rem; min-width: 0; }
+.dsh-hero-ante { font-size: .6rem; letter-spacing: .25em; text-transform: uppercase; color: var(--vbm-blue-light); margin-bottom: .5rem; }
+.dsh-hero-titulo { font-weight: 700; font-style: italic; font-size: clamp(1.8rem, 4vw, 3rem); color: #fff; line-height: .9; margin-bottom: .4rem; letter-spacing: -.01em; }
+.dsh-hero-sub { font-weight: 300; font-size: clamp(.85rem, 1.8vw, 1.15rem); letter-spacing: .08em; color: rgba(255,255,255,.78); margin-bottom: .45rem; }
+.dsh-hero-desc { font-size: .8rem; color: rgba(255,255,255,.62); line-height: 1.6; max-width: 42rem; }
+.dsh-hero-box {
+  position: relative; display: flex; flex-direction: column; gap: .7rem; min-width: 250px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; padding: .9rem 1.1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18); color: #fff;
+}
+@supports (backdrop-filter: blur(1px)) { .dsh-hero-box { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } }
+.dash-base { display: grid; grid-template-columns: auto auto; gap: .2rem 1.2rem; font-size: .74rem; color: rgba(255,255,255,.72); }
+.dash-base b { color: #fff; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.dash-atualizado { font-size: .66rem; color: rgba(255,255,255,.55); }
+.dash-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+.dash-btn-hero {
+  display: inline-flex; align-items: center; gap: .45rem; height: 38px; padding: 0 .95rem; border-radius: .55rem;
+  border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff;
+  font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; transition: background .2s, border-color .2s;
+}
+.dash-btn-hero:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.4); }
+.dash-btn-hero.primario { background: var(--vbm-blue); border-color: var(--vbm-blue); color: #04263a; font-weight: 600; }
+.dash-btn-hero.primario:hover { background: var(--vbm-blue-light); border-color: var(--vbm-blue-light); }
+.dash-btn-hero:disabled { opacity: .55; cursor: not-allowed; }
+.dash-contador { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #04263a; color: #fff; font-size: .66rem; font-weight: 700; display: inline-grid; place-items: center; }
+
+/* ── Abas da página + filtros ativos ── */
+.dash-barra { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; }
+.dash-abas { display: flex; gap: 4px; padding: 4px; border-radius: .75rem; background: var(--d-surface); border: 1px solid var(--d-line); box-shadow: var(--d-shadow); overflow-x: auto; max-width: 100%; }
+.dash-aba { border: 0; background: transparent; color: var(--d-ink-soft); padding: .55rem 1rem; border-radius: .55rem; font: 500 .76rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; min-height: 38px; display: inline-flex; align-items: center; gap: .45rem; }
+.dash-aba i { font-size: .72rem; }
+.dash-aba:hover { color: var(--d-ink); }
+.dash-aba[aria-selected="true"] { background: var(--vbm-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.dash-chips { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+.dash-chip { display: inline-flex; align-items: center; gap: .45rem; max-width: 100%; padding: .32rem .45rem .32rem .7rem; border-radius: 999px; background: var(--d-surface); border: 1px solid var(--vbm-border); color: var(--d-ink); font: 400 .7rem 'Poppins', sans-serif; cursor: pointer; min-height: 32px; }
+.dash-chip b { font-weight: 600; }
+.dash-chip .v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+.dash-chip i { font-size: .6rem; opacity: .6; }
+.dash-chip:hover { border-color: var(--vbm-blue); }
+.dash-chip-limpar { background: transparent; border-style: dashed; color: var(--d-ink-soft); }
+
+/* ── Cards de status ── */
+.dash-tiles { display: grid; gap: .8rem; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); }
+.dash-tile {
+  position: relative; overflow: hidden; text-align: left; color: var(--d-ink); font-family: 'Poppins', sans-serif;
+  background: var(--d-surface); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow);
+  padding: 1rem 1.15rem; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: .75rem;
+  transition: border-color .2s, opacity .25s;
+}
+button.dash-tile { cursor: pointer; }
+button.dash-tile:hover { border-color: var(--vbm-blue); }
+.dash-tile[aria-pressed="true"] { border-color: var(--vbm-blue); box-shadow: 0 0 0 1px var(--vbm-blue), 0 0 24px rgba(60,181,229,.2), var(--d-shadow); }
+.dash-tiles.tem-status .dash-tile[aria-pressed="false"] { opacity: .5; }
+.t-head { display: flex; align-items: center; gap: .5rem; font-size: .76rem; color: var(--d-ink-soft); }
+.t-head i.q { width: 9px; height: 9px; border-radius: 3px; background: var(--c); flex: none; }
+.t-num { font-size: clamp(1.7rem, 2.6vw, 2.25rem); font-weight: 600; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.t-foot { display: flex; align-items: center; gap: .6rem; }
+.t-bar { flex: 1; height: 5px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
+.t-bar span { display: block; height: 100%; width: var(--w); min-width: 4px; background: var(--c); border-radius: 999px; transform-origin: left; animation: dGrowX .9s var(--d-ease) both; }
+.t-pct { font-size: .72rem; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+@keyframes dGrowX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dash-tile-total { background-image: linear-gradient(140deg, rgba(60,181,229,.16) 0%, rgba(60,181,229,0) 60%); }
+.dash-tile-total::before { content: ''; position: absolute; right: 140px; top: -60px; height: 280px; border-left: 1px solid rgba(60,181,229,.35); transform: rotate(32deg); pointer-events: none; }
+.tt-corpo { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex: 1; }
+.tt-num { font-size: clamp(2.4rem, 4vw, 3.3rem); font-weight: 300; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.tt-sub { margin-top: .4rem; font-size: .74rem; color: var(--d-ink-soft); }
+.donut { position: relative; width: 108px; max-width: 100%; aspect-ratio: 1; flex: none; display: grid; place-content: center; text-align: center; }
+.donut::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--conic); -webkit-mask: radial-gradient(farthest-side, transparent 70%, #000 71%); mask: radial-gradient(farthest-side, transparent 70%, #000 71%); animation: dSpin 1s var(--d-ease) both; }
+@keyframes dSpin { from { transform: rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.donut b { position: relative; font-size: 1.25rem; font-weight: 600; line-height: 1; }
+.donut small { position: relative; font-size: .62rem; color: var(--d-ink-soft); margin-top: 3px; }
+.dash-tile-outros { justify-content: flex-start; gap: .2rem; padding-block: .8rem; }
+.dash-tile-outros .t-head { margin-bottom: .2rem; }
+.orow { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto 42px; align-items: center; gap: .5rem; border: 0; background: transparent; color: var(--d-ink); font: inherit; text-align: left; cursor: pointer; padding: .3rem .5rem; margin-inline: -.5rem; border-radius: .5rem; min-height: 32px; }
+.orow:hover { background: var(--d-hover); }
+.orow[aria-pressed="true"] { background: var(--d-sel); box-shadow: inset 0 0 0 1px rgba(60,181,229,.6); }
+.dash-tiles.tem-status .orow[aria-pressed="false"] { opacity: .5; }
+.orow i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+.orow span { font-size: .74rem; color: var(--d-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orow b { font-size: .95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.orow em { font-style: normal; font-size: .7rem; color: var(--d-ink-soft); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── Grade e cards de gráfico ── */
+.dash-grade { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem; }
+.s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s7 { grid-column: span 7; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+.dash-card { min-width: 0; background: var(--d-surface); color: var(--d-ink); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1.15rem 1.3rem 1rem; display: flex; flex-direction: column; gap: .35rem; }
+.dash-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
+.dash-card-titulo { font-size: 1rem; font-weight: 500; color: var(--d-title); letter-spacing: -.005em; margin: 0; }
+.dash-card-sub { margin: .1rem 0 0; font-size: .72rem; color: var(--d-ink-soft); }
+.dash-rolagem { overflow-x: auto; overflow-y: hidden; margin-inline: -6px; padding-inline: 6px; }
+.dash-vazio { padding: 2.6rem .75rem; text-align: center; color: var(--d-ink-soft); font-size: .78rem; }
+
+/* ── Colunas no padrão do VBM Quarterly (barra + cota de variação) ── */
+.cc { --gap: 14px; --barw: 74%; --folga: 40px; min-width: var(--minw, 520px); padding-bottom: 26px; }
+.cc-area { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: var(--gap); height: var(--area-h, 230px); margin-top: calc(var(--folga) + var(--top-extra, 52px)); }
+.cc-area::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, transparent, var(--d-line) 8%, var(--d-line) 92%, transparent); }
+.col { position: relative; flex: 1 1 0; max-width: 96px; min-width: 14px; height: 100%; }
+.col::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 46%; height: 7px; background: var(--d-pill); border-radius: 4px; z-index: 2; }
+.bar { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: var(--barw); height: var(--h); border-radius: 4px 4px 2px 2px; z-index: 3; background-color: var(--c, var(--vbm-blue)); background-image: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 42%, rgba(15,23,42,.06) 100%); box-shadow: 0 1px 2px rgba(15,23,42,.07); animation: dGrowBar .95s var(--d-ease) both; }
+@keyframes dGrowBar { from { height: 0; } to { height: var(--h); } }
+.col:hover .bar { filter: brightness(1.06); }
+.v-lbl { position: absolute; bottom: calc(var(--h) + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--d-ink); font-size: .74rem; font-variant-numeric: tabular-nums; z-index: 6; }
+.cc.denso .v-lbl { font-size: .58rem; }
+.cc.denso .x-lbl { font-size: .64rem; }
+.x-lbl { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .72rem; color: var(--d-ink-soft); }
+.is-up { --ink-d: var(--d-up); --tint: var(--d-up-rgb); } .is-down { --ink-d: var(--d-down); --tint: var(--d-down-rgb); } .is-flat { --ink-d: var(--d-flat); --tint: var(--d-flat-rgb); }
+.dcnx { position: absolute; top: 0; bottom: 0; z-index: 7; pointer-events: none; width: calc(100% - var(--barw) + var(--gap)); right: calc(50% + var(--barw) / 2); }
+.dref, .dnow { position: absolute; left: -2px; right: -2px; height: 0; transform: scaleX(0); animation: dLine .55s .34s cubic-bezier(.22,.9,.24,1) forwards; }
+.dref { bottom: var(--h-base); border-top: 1px dashed var(--d-stroke); transform-origin: left center; }
+.dnow { bottom: var(--h); border-top: 1px solid var(--d-stroke); transform-origin: right center; }
+@keyframes dLine { to { transform: scaleX(1); } }
+.dfill { position: absolute; left: 0; right: 0; bottom: var(--h-min); height: var(--h-dif); opacity: 0; animation: dFade .6s .62s ease-out forwards; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); }
+.dfill.up { background: linear-gradient(180deg, rgba(var(--tint),.17), rgba(var(--tint),.04)); }
+.dfill.dn { background: repeating-linear-gradient(135deg, rgba(var(--tint),.14) 0 3px, transparent 3px 7px); }
+@keyframes dFade { to { opacity: 1; } }
+.dspan { position: absolute; left: 50%; bottom: var(--h-min); height: var(--h-dif); width: 2px; border-radius: 1px; background: rgba(var(--tint),.6); transform: translateX(-50%) scaleY(0); transform-origin: bottom center; animation: dSpan .55s .48s cubic-bezier(.2,.85,.25,1) forwards; }
+@keyframes dSpan { to { transform: translateX(-50%) scaleY(1); } }
+.dtrack { position: absolute; left: 50%; bottom: calc(var(--h-max) + 22px); width: 1px; height: calc(var(--folga) - 22px + var(--lift, 0px)); transform: translateX(-50%); background: linear-gradient(180deg, var(--d-hair) 0%, var(--d-stroke) 100%); opacity: 0; animation: dFade .5s .7s ease-out forwards; }
+.dpill { position: absolute; left: 50%; bottom: calc(var(--h-max) + var(--folga) + var(--lift, 0px)); display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: 0 2px 12px rgba(15,23,42,.08), inset 0 0 0 1px rgba(15,23,42,.05); color: var(--ink-d); font-size: .66rem; font-weight: 500; line-height: 1.15; white-space: nowrap; font-variant-numeric: tabular-nums; opacity: 0; transform: translate(-50%, 8px) scale(.96); animation: dPill .5s .78s cubic-bezier(.2,.85,.25,1) forwards; }
+.dpill svg { width: 8px; height: 8px; flex: none; }
+@keyframes dPill { to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.avg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed var(--vbm-blue-dark); z-index: 5; opacity: .75; }
+.avg-line span { position: absolute; right: 0; bottom: 4px; font-size: .66rem; font-weight: 600; color: var(--vbm-blue-dark); background: var(--d-glass); padding: 1px 6px; border-radius: 6px; }
+body[data-bg="dark"] .avg-line { border-top-color: var(--vbm-blue-light); }
+body[data-bg="dark"] .avg-line span { color: var(--vbm-blue-light); }
+.dash-legenda { display: flex; gap: .9rem; flex-wrap: wrap; font-size: .68rem; color: var(--d-ink-soft); }
+.dash-legenda span { display: inline-flex; align-items: center; gap: .35rem; }
+.dash-legenda i { width: 14px; height: 0; border-top: 2px solid; display: inline-block; }
+
+/* ── Ranking (barras horizontais) ── */
+.seg { display: flex; gap: 3px; padding: 3px; border-radius: .65rem; background: var(--d-surface-alt); border: 1px solid var(--d-line-soft); overflow-x: auto; max-width: 100%; }
+.seg button { border: 0; background: transparent; color: var(--d-ink-soft); padding: .45rem .8rem; border-radius: .5rem; font: 500 .72rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; min-height: 34px; }
+.seg button:hover { color: var(--d-ink); }
+.seg button[aria-selected="true"] { background: var(--d-surface); color: var(--vbm-blue-dark); box-shadow: 0 1px 3px rgba(15,23,42,.10); }
+body[data-bg="dark"] .seg button[aria-selected="true"] { background: rgba(60,181,229,.2); color: #fff; }
+.rank { display: flex; flex-direction: column; margin-top: .5rem; }
+.rk { display: grid; grid-template-columns: minmax(0, var(--namew, 320px)) minmax(0, 1fr) 64px 52px; align-items: center; gap: .85rem; width: 100%; padding: .42rem .4rem; border: 0; border-bottom: 1px solid var(--d-line-soft); border-radius: .4rem; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rk:last-child { border-bottom: 0; }
+.rk:hover { background: var(--d-hover); }
+.rk[aria-pressed="true"] { background: var(--d-sel); box-shadow: inset 3px 0 0 var(--vbm-blue); }
+.rk-nome { font-size: .76rem; color: var(--d-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .88; }
+.rk-nome.branco { color: var(--d-ink-soft); font-style: italic; }
+.rk-trilho { position: relative; height: 13px; border-radius: 4px; background: var(--d-line-soft); }
+.rk-barra { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); min-width: 3px; border-radius: 4px; background-color: var(--c, var(--vbm-blue)); background-image: linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 50%, rgba(15,23,42,.06) 100%); transform-origin: left; animation: dGrowX .9s var(--d-ease) both; }
+.rk-val { text-align: right; font-size: .84rem; font-weight: 600; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+.rk-pct { text-align: right; font-size: .68rem; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; }
+.dash-nota { font-size: .68rem; color: var(--d-ink-soft); display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-top: .3rem; }
+.dash-nota i.q { width: 10px; height: 10px; border-radius: 3px; background: var(--d-blank); display: inline-block; }
+
+/* ── Tabelas ── */
+.dash-ferramentas { display: flex; gap: .65rem; align-items: center; flex-wrap: wrap; margin-top: .35rem; }
+.dash-ferramentas .filter-search { max-width: 380px; }
+.dash-ferramentas .dash-conta { font-size: .72rem; color: var(--d-ink-soft); }
+.dash-ferramentas .espaco { flex: 1; }
+.dash-tabela-wrap { overflow-x: auto; margin-top: .5rem; border-radius: .65rem; border: 1px solid var(--d-line); }
+.dash-tabela { width: 100%; border-collapse: collapse; font-size: .74rem; }
+.dash-tabela.base { min-width: 1100px; }
+.dash-tabela.lideres { min-width: 820px; }
+.dash-tabela thead th { position: sticky; top: 0; background: var(--vbm-blue-deep); color: #fff; text-align: left; font-weight: 500; padding: 0; white-space: nowrap; }
+.dash-tabela thead th button { display: flex; align-items: center; gap: .35rem; width: 100%; padding: .7rem .75rem; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dash-tabela thead th button:hover { background: rgba(255,255,255,.08); }
+.dash-tabela thead th i { font-size: .55rem; opacity: .4; }
+.dash-tabela thead th[aria-sort="ascending"] i, .dash-tabela thead th[aria-sort="descending"] i { opacity: 1; color: var(--vbm-blue-light); }
+.dash-tabela thead th[aria-sort="ascending"] i { transform: rotate(180deg); }
+.dash-tabela th.num button { justify-content: flex-end; }
+.dash-tabela td.num { text-align: right; }
+.dash-tabela tbody td { padding: .62rem .75rem; border-top: 1px solid var(--d-line-soft); color: var(--d-ink); vertical-align: top; }
+.dash-tabela tbody tr:nth-child(even) td { background: var(--d-surface-alt); }
+.dash-tabela tbody tr:hover td { background: var(--d-hover); }
+.dash-tabela td.id { font-weight: 600; color: var(--vbm-blue-dark); font-variant-numeric: tabular-nums; white-space: nowrap; }
+body[data-bg="dark"] .dash-tabela td.id { color: var(--vbm-blue-light); }
+.dash-tabela td.data, .dash-tabela td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dash-tabela td.titulo { font-weight: 500; min-width: 240px; }
+.dash-tabela td.mudo { color: var(--d-ink-soft); }
+.dash-tag-hist { display: inline-block; margin-left: .35rem; padding: 0 .35rem; border-radius: .3rem; font-size: .58rem; font-weight: 600; letter-spacing: .06em; color: var(--d-ink-soft); border: 1px solid var(--d-line); vertical-align: 1px; }
+.dash-mix { display: flex; height: 8px; width: 140px; border-radius: 999px; overflow: hidden; background: var(--d-line-soft); gap: 1px; }
+.dash-mix span { display: block; height: 100%; background: var(--c); }
+.dash-paginas { display: flex; align-items: center; justify-content: flex-end; gap: .6rem; margin-top: .6rem; font-size: .72rem; color: var(--d-ink-soft); flex-wrap: wrap; }
+.dash-paginas button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--d-line); background: var(--d-surface); color: var(--d-ink); cursor: pointer; display: grid; place-items: center; }
+.dash-paginas button:disabled { opacity: .4; cursor: not-allowed; }
+.dash-paginas button i { font-size: .65rem; }
+.dash-carregando-txt { color: var(--d-ink-soft); font-style: italic; }
+body[data-bg="dark"] .badge-aprovado { background: rgba(22,163,74,.2); color: #4ade80; }
+body[data-bg="dark"] .badge-reprovado { background: rgba(220,38,38,.2); color: #f87171; }
+body[data-bg="dark"] .badge-aguardando { background: rgba(194,119,14,.22); color: #fbbf24; }
+body[data-bg="dark"] .badge-rascunho { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
+body[data-bg="dark"] .badge-blue { background: rgba(60,181,229,.18); color: var(--vbm-blue-light); }
+body[data-bg="dark"] .filter-search { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+body[data-bg="dark"] .filter-search input { color: #fff; }
+body[data-bg="dark"] .filter-search input::placeholder { color: rgba(255,255,255,.35); }
+.dash .btn-excel { display: inline-flex; align-items: center; gap: .45rem; }
+
+/* ── Erro / carregamento ── */
+.dash-erro { display: flex; flex-direction: column; align-items: center; gap: .7rem; text-align: center; padding: 2.4rem 1rem; }
+.dash-erro i { font-size: 1.4rem; color: var(--status-rejected); }
+.dash-erro p { font-size: .78rem; color: var(--d-ink-soft); max-width: 36rem; }
+.dash-esqueleto { min-height: 132px; border-radius: 1rem; background: linear-gradient(90deg, var(--d-surface) 0%, var(--d-surface-alt) 50%, var(--d-surface) 100%); background-size: 200% 100%; border: 1px solid var(--d-line); animation: dShimmer 1.4s linear infinite; }
+@keyframes dShimmer { to { background-position: -200% 0; } }
+
+/* ── Painel de filtros (lateral esquerda; mesmo desenho do painel de
+   Configurações, que abre pela direita) ── */
+.filtros-fundo { position: fixed; inset: 0; background: rgba(9,20,34,.4); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--ease-out); }
+.filtros-fundo.open { opacity: 1; pointer-events: auto; }
+.filtros-painel { position: fixed; top: 0; left: 0; width: 340px; max-width: 92vw; height: 100vh; background: #fff; box-shadow: 16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform .38s var(--ease-out); font-family: 'Poppins', sans-serif; }
+.filtros-painel.open { transform: none; }
+.fp-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.fp-head h2 { font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--vbm-dark); }
+.fp-head h2 .qtd { font-weight: 400; color: var(--vbm-mid); font-size: .78rem; margin-left: .3rem; }
+.fp-corpo { flex: 1; overflow-y: auto; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px; }
+.fp-grupo { font-size: .6rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--vbm-blue-dark); margin-top: 6px; }
+.fp-pe { display: flex; gap: .6rem; padding: 12px 20px 16px; border-top: 1px solid #eef1f6; }
+.fp-pe .btn { flex: 1; justify-content: center; }
+.qf-rotulo { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 600; color: var(--vbm-dark); }
+.qf-gatilho { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 38px; padding: .45rem .75rem; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; color: var(--vbm-dark); font: 300 11.5px 'Poppins', sans-serif; cursor: pointer; text-align: left; transition: border-color .2s, box-shadow .2s; }
+.qf-gatilho:hover { border-color: var(--vbm-blue-light); }
+.qf-campo.open .qf-gatilho { border-color: var(--vbm-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.qf-gatilho.ativo { border-color: var(--vbm-blue); }
+.qf-gatilho .txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qf-gatilho .mais { flex: none; padding: .05rem .4rem; border-radius: .3rem; background: var(--vbm-blue); color: #fff; font-size: .6rem; font-weight: 600; }
+.qf-gatilho i { font-size: .55rem; color: #bbb; transition: transform .2s; }
+.qf-campo.open .qf-gatilho i { transform: rotate(180deg); color: var(--vbm-blue); }
+.qf-lista-painel { display: none; margin-top: 6px; border: 1px solid #e6e6e6; border-radius: .6rem; padding: .45rem; background: #fff; }
+.qf-campo.open .qf-lista-painel { display: block; animation: qfEntra .16s ease both; }
+@keyframes qfEntra { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.qf-busca { display: flex; align-items: center; gap: .45rem; padding: 0 .55rem; margin-bottom: .35rem; border: 1.5px solid #e8e8e8; border-radius: .45rem; }
+.qf-busca i { font-size: .65rem; color: #bbb; }
+.qf-busca input { flex: 1; min-width: 0; height: 32px; border: 0; outline: none; background: none; font: 300 11px 'Poppins', sans-serif; color: var(--vbm-dark); }
+.qf-acoes { display: flex; gap: .8rem; padding: 0 .1rem .35rem; margin-bottom: .3rem; border-bottom: 1px solid #f0f0f0; }
+.qf-link { background: none; border: 0; padding: .2rem 0; color: var(--vbm-blue); font: 600 .66rem 'Poppins', sans-serif; cursor: pointer; }
+.qf-link:hover { color: var(--vbm-blue-dark); text-decoration: underline; }
+.qf-opcoes { max-height: 230px; overflow-y: auto; display: flex; flex-direction: column; }
+.qf-opcao { display: flex; align-items: center; gap: .5rem; width: 100%; padding: .38rem .45rem; border: 0; background: transparent; border-radius: .35rem; font: 400 .72rem 'Poppins', sans-serif; color: var(--vbm-dark); cursor: pointer; text-align: left; min-height: 32px; }
+.qf-opcao:hover, .qf-opcao[aria-selected="true"] { background: var(--vbm-blue-pale); }
+.qf-opcao .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qf-opcao .ct { font-size: .64rem; color: var(--vbm-mid); font-variant-numeric: tabular-nums; }
+.qf-opcao.zero .nm { opacity: .5; text-decoration: line-through; }
+.qf-check { width: 16px; height: 16px; flex: none; border-radius: .25rem; border: 1.5px solid #d0d0d0; background: #fff; display: grid; place-items: center; }
+.qf-check i { font-size: .55rem; color: #fff; transform: scale(0); transition: transform .15s var(--ease-spring); }
+.qf-opcao[aria-selected="true"] .qf-check { background: var(--vbm-blue); border-color: var(--vbm-blue); }
+.qf-opcao[aria-selected="true"] .qf-check i { transform: scale(1); }
+.qf-mais { padding: .45rem; font-size: .64rem; font-style: italic; color: var(--vbm-mid); }
+.qf-texto { width: 100%; height: 38px; padding: 0 .75rem; border-radius: 9px; border: 1.5px solid #e8e8e8; background: #fff; color: var(--vbm-dark); font: 300 11.5px 'Poppins', sans-serif; }
+.qf-texto:focus { outline: none; border-color: var(--vbm-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.qf-dica { font-size: .62rem; color: var(--vbm-mid); margin-top: 4px; }
+[data-bg="dark"] .filtros-fundo { background: rgba(0,0,0,.55); }
+[data-bg="dark"] .filtros-painel { background: var(--vbm-blue-deep); box-shadow: 16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .fp-head, [data-bg="dark"] .fp-pe { border-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .fp-head h2, [data-bg="dark"] .qf-rotulo { color: #fff; }
+[data-bg="dark"] .fp-grupo { color: var(--vbm-blue-light); }
+[data-bg="dark"] .qf-gatilho, [data-bg="dark"] .qf-texto { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: #fff; }
+[data-bg="dark"] .qf-texto::placeholder { color: rgba(255,255,255,.35); }
+[data-bg="dark"] .qf-lista-painel { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
+[data-bg="dark"] .qf-busca { border-color: rgba(255,255,255,.14); }
+[data-bg="dark"] .qf-busca input { color: #fff; }
+[data-bg="dark"] .qf-acoes { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .qf-link { color: var(--vbm-blue-light); }
+[data-bg="dark"] .qf-opcao { color: rgba(255,255,255,.88); }
+[data-bg="dark"] .qf-opcao:hover, [data-bg="dark"] .qf-opcao[aria-selected="true"] { background: rgba(255,255,255,.08); }
+[data-bg="dark"] .qf-opcao .ct, [data-bg="dark"] .qf-mais, [data-bg="dark"] .qf-dica { color: rgba(255,255,255,.5); }
+[data-bg="dark"] .qf-check { background: transparent; border-color: rgba(255,255,255,.3); }
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--vbm-blue); outline-offset: 2px; border-radius: .35rem; }
+
+@media (max-width: 1200px) {
+  .s4, .s5, .s7, .s8 { grid-column: span 12; }
+  .dash-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-tile-total, .dash-tile-outros { grid-column: 1 / -1; }
+}
+@media (max-width: 768px) {
+  .dsh-hero { padding: 1.2rem 1.25rem; }
+  .dsh-hero-box { min-width: 0; width: 100%; }
+  .dash-tiles { grid-template-columns: minmax(0, 1fr); }
+  .dash-tile-total::before { display: none; }
+  .rk { grid-template-columns: minmax(0, 1fr) 56px 46px; row-gap: .3rem; }
+  .rk-nome { grid-column: 1 / -1; }
+  .dash-card { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar, .t-bar span, .rk-barra, .donut::before, .dash-esqueleto { animation: none; }
+  .dref, .dnow { animation: none; transform: none; }
+  .dspan { animation: none; transform: translateX(-50%); }
+  .dfill, .dtrack { animation: none; opacity: 1; }
+  .dpill { animation: none; opacity: 1; transform: translate(-50%, 0); }
+  .filtros-painel, .filtros-fundo { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+
+<nav class="topnav" id="topnav">
+  <a href="index.html" class="topnav-logo">
+    <img src="assets/images/vale-logo-color.svg" alt="Vale"/>
+  </a>
+  <div class="topnav-links">
+    <a href="index.html" class="topnav-link"><i class="fa-solid fa-house"></i> <span data-i18n="nav.menu">Menu</span></a>
+    <div class="topnav-sep"></div>
+    <a href="kaizen-novo.html" class="topnav-link"><i class="fa-solid fa-plus-circle"></i> <span data-i18n="nav.novoKaizen">Novo Kaizen</span></a>
+    <div class="topnav-sep"></div>
+    <a href="biblioteca.html" class="topnav-link"><i class="fa-solid fa-book"></i> <span data-i18n="nav.biblioteca">Biblioteca</span></a>
+    <a href="dashboard.html" class="topnav-link active"><i class="fa-solid fa-chart-bar"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+    <a href="aprovacao.html" class="topnav-link"><i class="fa-solid fa-clipboard-check"></i> <span data-i18n="nav.aprovacao">Aprovação</span><span class="topnav-badge">3</span></a>
+    <div class="topnav-sep"></div>
+    <a href="admin.html" class="topnav-link"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav.administracao">Administração</span></a>
+  </div>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.btnTitle" aria-label="Configurações">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user">
+      <div class="topnav-user-text">
+        <span class="topnav-user-name"></span>
+        <span class="topnav-user-role"></span>
+      </div>
+      <div class="topnav-user-avatar"></div>
+    </div>
+    <button class="topnav-mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+<div class="topnav-drawer" id="topnavDrawer">
+  <a href="index.html" class="topnav-link"><i class="fa-solid fa-house"></i> <span data-i18n="nav.menu">Menu</span></a>
+  <a href="kaizen-novo.html" class="topnav-link"><i class="fa-solid fa-plus-circle"></i> <span data-i18n="nav.novoKaizen">Novo Kaizen</span></a>
+  <a href="biblioteca.html" class="topnav-link"><i class="fa-solid fa-book"></i> <span data-i18n="nav.biblioteca">Biblioteca</span></a>
+  <a href="dashboard.html" class="topnav-link active"><i class="fa-solid fa-chart-bar"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+  <a href="aprovacao.html" class="topnav-link"><i class="fa-solid fa-clipboard-check"></i> <span data-i18n="nav.aprovacao">Aprovação</span><span class="topnav-badge">3</span></a>
+  <a href="admin.html" class="topnav-link"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav.administracao">Administração</span></a>
+</div>
+
+<!-- ═══ PAINEL LATERAL DE CONFIGURAÇÕES (Theme + Language) ═══ -->
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true">
+  <div class="settings-panel-head">
+    <h2 data-i18n="settings.title">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="settings.theme">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Alternar tema">
+        <button class="theme-toggle-btn active" id="btnWhite" data-i18n="theme.white">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" data-i18n="theme.dark">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="settings.language">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="settings.languageInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+
+<!-- ═══ PAINEL DE FILTROS (abre pela esquerda) ═══ -->
+<div class="filtros-fundo" id="filtrosFundo"></div>
+<aside class="filtros-painel" id="filtrosPainel" role="dialog" aria-modal="true" aria-labelledby="fpTitulo" aria-hidden="true" inert>
+  <div class="fp-head">
+    <h2 id="fpTitulo"><span data-i18n="dash.filtros">Filtros</span><span id="fpConta" class="qtd"></span></h2>
+    <button class="settings-close" id="fpFechar" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="fp-corpo" id="fpCorpo"></div>
+  <div class="fp-pe">
+    <button type="button" class="btn btn-outline btn-sm" id="fpLimpar"><i class="fa-solid fa-filter-circle-xmark"></i> <span data-i18n="dash.limparFiltros">Limpar filtros</span></button>
+    <button type="button" class="btn btn-primary btn-sm" id="fpVer" data-i18n="dash.verResultados">Ver resultados</button>
+  </div>
+</aside>
+
+<main class="app-main">
+  <div class="page-content dash" id="dash">
+
+    <div class="dsh-hero">
+      <div class="dsh-hero-orb" aria-hidden="true"></div>
+      <div class="dsh-hero-texto">
+        <div class="dsh-hero-ante" data-i18n="dash.ante">Indicadores do Programa</div>
+        <h1 class="dsh-hero-titulo" data-i18n="dash.titulo">DASHBOARD</h1>
+        <div class="dsh-hero-sub" data-i18n="dash.sub">KAIZENS · VALE BASE METALS</div>
+        <p class="dsh-hero-desc" data-i18n="dash.desc">Kaizens atuais e históricos numa visão só, com os filtros por estrutura do MDM.</p>
+      </div>
+      <div class="dsh-hero-box">
+        <div class="dash-base" id="dashBase">
+          <span data-i18n="dash.baseAtual">Kaizens atuais</span><b id="dashQtdAtual">—</b>
+          <span data-i18n="dash.baseHist">Kaizens do histórico</span><b id="dashQtdHist">—</b>
+        </div>
+        <div class="dash-atualizado" id="dashAtualizado"></div>
+        <div class="dash-acoes">
+          <button type="button" class="dash-btn-hero primario" id="dashAbrirFiltros" aria-controls="filtrosPainel" aria-expanded="false" disabled>
+            <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i><span data-i18n="dash.filtros">Filtros</span><span class="dash-contador" id="dashContaFiltros" hidden>0</span>
+          </button>
+          <button type="button" class="dash-btn-hero" id="dashAtualizar" disabled>
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span data-i18n="dash.atualizar">Atualizar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-barra">
+      <div class="dash-abas" role="tablist" aria-label="Páginas do dashboard" id="dashAbas">
+        <button type="button" class="dash-aba" role="tab" id="aba-total" aria-controls="vis-total" data-vis="total"><i class="fa-solid fa-chart-bar"></i><span data-i18n="dash.abaTotal">Total Kaizen</span></button>
+        <button type="button" class="dash-aba" role="tab" id="aba-lider" aria-controls="vis-lider" data-vis="lider"><i class="fa-solid fa-users"></i><span data-i18n="dash.abaLider">Kaizen Líder</span></button>
+        <button type="button" class="dash-aba" role="tab" id="aba-detalhe" aria-controls="vis-detalhe" data-vis="detalhe"><i class="fa-solid fa-user-check"></i><span data-i18n="dash.abaDetalhe">Detalhamento por líder</span></button>
+        <button type="button" class="dash-aba" role="tab" id="aba-base" aria-controls="vis-base" data-vis="base"><i class="fa-solid fa-list"></i><span data-i18n="dash.abaBase">Base de Dados</span></button>
+      </div>
+      <div class="dash-chips" id="dashChips" hidden></div>
+    </div>
+
+    <section aria-labelledby="dashResumoTitulo">
+      <h2 class="sr-only" id="dashResumoTitulo" data-i18n="dash.resumo">Resumo por status</h2>
+      <div class="dash-tiles" id="dashTiles">
+        <div class="dash-esqueleto" style="grid-column: span 1"></div><div class="dash-esqueleto"></div><div class="dash-esqueleto"></div><div class="dash-esqueleto"></div>
+      </div>
+    </section>
+
+    <div class="dash-card" id="dashErro" hidden>
+      <div class="dash-erro">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <strong data-i18n="dash.erroTitulo">Não foi possível carregar o dashboard.</strong>
+        <p id="dashErroMsg"></p>
+        <button type="button" class="btn btn-primary btn-sm" id="dashTentar"><i class="fa-solid fa-rotate-right"></i> <span data-i18n="dash.tentar">Tentar de novo</span></button>
+      </div>
+    </div>
+
+    <!-- TOTAL KAIZEN -->
+    <section class="dash-grade" id="vis-total" role="tabpanel" aria-labelledby="aba-total" hidden>
+      <article class="dash-card s7">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.mesTitulo">Registros por mês</h3>
+            <p class="dash-card-sub" id="dashMesSub"></p>
+          </div>
+          <div class="dash-legenda"><span><i style="border-color:var(--d-up)"></i><span data-i18n="dash.alta">alta</span></span><span><i style="border-color:var(--d-down)"></i><span data-i18n="dash.queda">queda</span></span></div>
+        </div>
+        <div class="dash-rolagem"><div id="grafMes"></div></div>
+      </article>
+      <article class="dash-card s5">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.anoTitulo">Registros por ano</h3>
+            <p class="dash-card-sub" data-i18n="dash.anoSub">Atual + histórico · variação contra o ano anterior</p>
+          </div>
+        </div>
+        <div class="dash-rolagem"><div id="grafAno"></div></div>
+      </article>
+      <article class="dash-card s12">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.diaTitulo">Registros por dia do mês</h3>
+            <p class="dash-card-sub" data-i18n="dash.diaSub">Dia de criação · linha tracejada = média · barra escura = pico</p>
+          </div>
+        </div>
+        <div class="dash-rolagem"><div id="grafDia"></div></div>
+      </article>
+      <article class="dash-card s12">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.hierTitulo">Registros por nível da estrutura</h3>
+            <p class="dash-card-sub" data-i18n="dash.hierSub">Hierarquia do líder gravada no Kaizen. Clique numa linha para filtrar o painel inteiro.</p>
+          </div>
+          <div class="seg" role="tablist" aria-label="Nível" id="dashNiveis"></div>
+        </div>
+        <div class="rank" id="rankHier" style="--namew: 420px"></div>
+        <div class="dash-nota"><i class="q"></i><span data-i18n="dash.notaBranco">Cinza = nível não preenchido na hierarquia (Em branco).</span></div>
+      </article>
+    </section>
+
+    <!-- KAIZEN LÍDER -->
+    <section class="dash-grade" id="vis-lider" role="tabpanel" aria-labelledby="aba-lider" hidden>
+      <article class="dash-card s5">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.agTitulo">Agentes de Melhoria</h3>
+            <p class="dash-card-sub" data-i18n="dash.agSub">Kaizens liderados · 15 primeiros · clique para filtrar</p>
+          </div>
+        </div>
+        <div class="rank" id="rankLider" style="--namew: 190px"></div>
+      </article>
+      <article class="dash-card s7">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.apTitulo">Aprovadores</h3>
+            <p class="dash-card-sub" id="dashApSub"></p>
+          </div>
+        </div>
+        <div class="rank" id="rankAprov" style="--namew: 260px"></div>
+      </article>
+    </section>
+
+    <!-- DETALHAMENTO POR LÍDER -->
+    <section class="dash-grade" id="vis-detalhe" role="tabpanel" aria-labelledby="aba-detalhe" hidden>
+      <article class="dash-card s12">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.detTitulo">Detalhamento por Kaizen Líder</h3>
+            <p class="dash-card-sub" data-i18n="dash.detSub">Kaizens de cada líder por status, com a taxa de aprovação</p>
+          </div>
+        </div>
+        <div class="dash-ferramentas">
+          <div class="filter-search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="sr-only" for="buscaDet" data-i18n="dash.buscarLider">Buscar líder</label>
+            <input type="text" id="buscaDet" autocomplete="off" placeholder="Buscar líder..." data-i18n-placeholder="dash.buscarLider"/>
+          </div>
+          <span class="dash-conta" id="contaDet" aria-live="polite"></span>
+          <span class="espaco"></span>
+          <button type="button" class="btn btn-outline btn-sm btn-excel" id="exportarDet"><i class="fa-solid fa-file-excel"></i> <span data-i18n="dash.exportar">Exportar Excel</span></button>
+        </div>
+        <div class="dash-tabela-wrap"><table class="dash-tabela lideres"><thead><tr id="cabDet"></tr></thead><tbody id="corpoDet"></tbody></table></div>
+        <div class="dash-paginas" id="pagDet"></div>
+      </article>
+    </section>
+
+    <!-- BASE DE DADOS -->
+    <section class="dash-grade" id="vis-base" role="tabpanel" aria-labelledby="aba-base" hidden>
+      <article class="dash-card s12">
+        <div class="dash-card-head">
+          <div>
+            <h3 class="dash-card-titulo" data-i18n="dash.baseTitulo">Base de dados</h3>
+            <p class="dash-card-sub" data-i18n="dash.baseSub">Todos os Kaizens dentro dos filtros · clique no cabeçalho para ordenar</p>
+          </div>
+        </div>
+        <div class="dash-ferramentas">
+          <div class="filter-search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <label class="sr-only" for="buscaBase" data-i18n="dash.buscarBase">Buscar por ID, pessoa ou título</label>
+            <input type="text" id="buscaBase" autocomplete="off" placeholder="Buscar por ID, pessoa ou título..." data-i18n-placeholder="dash.buscarBase"/>
+          </div>
+          <span class="dash-conta" id="contaBase" aria-live="polite"></span>
+          <span class="espaco"></span>
+          <button type="button" class="btn btn-primary btn-sm btn-excel" id="exportarBase"><i class="fa-solid fa-file-excel"></i> <span data-i18n="dash.exportar">Exportar Excel</span></button>
+        </div>
+        <div class="dash-tabela-wrap"><table class="dash-tabela base"><thead><tr id="cabBase"></tr></thead><tbody id="corpoBase"></tbody></table></div>
+        <div class="dash-paginas" id="pagBase"></div>
+      </article>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<div class="toast-container"></div>
+<script src="js/vbm-app.js?v=20260921-1"></script>
+<script src="js/usuario-graph.js?v=20260912-1"></script>
+<script>
+(function(){
+  var btn=document.getElementById('mobileToggle'),drawer=document.getElementById('topnavDrawer');
+  if(btn&&drawer){
+    btn.addEventListener('click',function(){
+      var o=drawer.classList.toggle('open');
+      btn.querySelector('i').className=o?'fa-solid fa-xmark':'fa-solid fa-bars';
+    });
+    document.addEventListener('click',function(e){
+      if(!btn.contains(e.target)&&!drawer.contains(e.target)){
+        drawer.classList.remove('open');
+        btn.querySelector('i').className='fa-solid fa-bars';
+      }
+    });
+  }
+})();
+</script>
+<script>
+// ─── Painel de Configurações (engrenagem) — igual às demais telas ───
+(function () {
+  var btn = document.getElementById('settingsBtn');
+  var panel = document.getElementById('settingsPanel');
+  var backdrop = document.getElementById('settingsBackdrop');
+  var closeBtn = document.getElementById('settingsClose');
+  if (!btn || !panel || !backdrop) return;
+  function openPanel() { panel.classList.add('open'); backdrop.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); panel.setAttribute('aria-hidden', 'false'); }
+  function closePanel() { panel.classList.remove('open'); backdrop.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); panel.setAttribute('aria-hidden', 'true'); }
+  btn.addEventListener('click', function () { panel.classList.contains('open') ? closePanel() : openPanel(); });
+  closeBtn && closeBtn.addEventListener('click', closePanel);
+  backdrop.addEventListener('click', closePanel);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+})();
+
+// ─── Tema (Claro/Escuro) ───
+(function () {
+  var THEME_KEY = 'vdt-theme';
+  var btnWhite = document.getElementById('btnWhite');
+  var btnBusiness = document.getElementById('btnBusiness');
+  function applyTheme(theme) {
+    var isDark = theme === 'dark';
+    document.body.dataset.bg = isDark ? 'dark' : '';
+    if (btnWhite) btnWhite.classList.toggle('active', !isDark);
+    if (btnBusiness) btnBusiness.classList.toggle('active', isDark);
+  }
+  var saved = 'light';
+  try { saved = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch (e) {}
+  applyTheme(saved);
+  btnWhite && btnWhite.addEventListener('click', function () { applyTheme('light'); try { localStorage.setItem(THEME_KEY, 'light'); } catch (e) {} });
+  btnBusiness && btnBusiness.addEventListener('click', function () { applyTheme('dark'); try { localStorage.setItem(THEME_KEY, 'dark'); } catch (e) {} });
+})();
+
+// ─── Idioma (PT-BR/EN) ───
+// Vem ANTES do script do dashboard: quando os dados chegam,
+// window.__i18n já está pronto. Troca de idioma avisa o dashboard pelo
+// evento 'vbm:idioma' (mesmo mecanismo das outras telas).
+(function () {
+  var I18N = {
+    'pt-BR': {
+      'settings.btnTitle': 'Configurações', 'settings.title': 'Configurações', 'settings.close': 'Fechar',
+      'settings.theme': 'Tema', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
+      'settings.language': 'Idioma', 'settings.languageInfo': 'Idioma da interface',
+      'nav.menu': 'Menu', 'nav.novoKaizen': 'Novo Kaizen', 'nav.biblioteca': 'Biblioteca', 'nav.dashboard': 'Dashboard',
+      'nav.aprovacao': 'Aprovação', 'nav.administracao': 'Administração', 'role.operador': 'Operador',
+      'dash.ante': 'Indicadores do Programa', 'dash.titulo': 'DASHBOARD', 'dash.sub': 'KAIZENS · VALE BASE METALS',
+      'dash.desc': 'Kaizens atuais e históricos numa visão só, com os filtros por estrutura do MDM.',
+      'dash.baseAtual': 'Kaizens atuais', 'dash.baseHist': 'Kaizens do histórico',
+      'dash.atualizadoEm': 'Dados de {data} · renovados a cada {min} min',
+      'dash.filtros': 'Filtros', 'dash.atualizar': 'Atualizar', 'dash.limparFiltros': 'Limpar filtros', 'dash.verResultados': 'Ver resultados',
+      'dash.abaTotal': 'Total Kaizen', 'dash.abaLider': 'Kaizen Líder', 'dash.abaDetalhe': 'Detalhamento por líder', 'dash.abaBase': 'Base de Dados',
+      'dash.resumo': 'Resumo por status', 'dash.total': 'Total de kaizens', 'dash.totalSub': 'kaizens registrados',
+      'dash.aprovados': 'aprovados', 'dash.outros': 'Outros status', 'dash.semStatus': 'Sem status', 'dash.limparStatus': 'Total de kaizens: limpar filtro de status',
+      'dash.mesTitulo': 'Registros por mês', 'dash.mesSub': 'Mês de criação · variação contra o mês anterior · {anos}', 'dash.todosAnos': 'todos os anos',
+      'dash.alta': 'alta', 'dash.queda': 'queda',
+      'dash.anoTitulo': 'Registros por ano', 'dash.anoSub': 'Atual + histórico · variação contra o ano anterior',
+      'dash.diaTitulo': 'Registros por dia do mês', 'dash.diaSub': 'Dia de criação · linha tracejada = média · barra escura = pico', 'dash.media': 'média',
+      'dash.hierTitulo': 'Registros por nível da estrutura', 'dash.hierSub': 'Hierarquia do líder gravada no Kaizen. Clique numa linha para filtrar o painel inteiro.',
+      'dash.notaBranco': 'Cinza = nível não preenchido na hierarquia (Em branco).',
+      'dash.agTitulo': 'Agentes de Melhoria', 'dash.agSub': 'Kaizens liderados · 15 primeiros · clique para filtrar',
+      'dash.apTitulo': 'Aprovadores', 'dash.apSub': '15 primeiros · {nome} aprova {p} dos kaizens filtrados',
+      'dash.detTitulo': 'Detalhamento por Kaizen Líder', 'dash.detSub': 'Kaizens de cada líder por status, com a taxa de aprovação',
+      'dash.buscarLider': 'Buscar líder...', 'dash.contaLideres': '{n} líderes',
+      'dash.baseTitulo': 'Base de dados', 'dash.baseSub': 'Todos os Kaizens dentro dos filtros · clique no cabeçalho para ordenar',
+      'dash.buscarBase': 'Buscar por ID, pessoa ou título...', 'dash.contaKaizens': '{n} kaizens',
+      'dash.exportar': 'Exportar Excel', 'dash.exportando': 'Exportando…', 'dash.erroExportar': 'Erro ao exportar',
+      'dash.paginas': '{a}–{b} de {t}', 'dash.anterior': 'Página anterior', 'dash.proxima': 'Próxima página',
+      'dash.thId': 'ID', 'dash.thData': 'Data criação', 'dash.thStatus': 'Status', 'dash.thAprovador': 'Aprovador', 'dash.thLider': 'Kaizen Líder',
+      'dash.thMembros': 'Membros', 'dash.thExternos': 'Membros externos', 'dash.thTitulo': 'Título', 'dash.thTotal': 'Total', 'dash.thTaxa': '% aprovação', 'dash.thMix': 'Distribuição',
+      'dash.carregandoDetalhes': 'carregando…', 'dash.vazio': 'Nenhum Kaizen com esses filtros.',
+      'dash.erroTitulo': 'Não foi possível carregar o dashboard.', 'dash.tentar': 'Tentar de novo',
+      'dash.gPeriodo': 'Período e status', 'dash.gEstrutura': 'Estrutura (MDM)', 'dash.gPessoas': 'Pessoas',
+      'dash.fStatus': 'Status', 'dash.fOrigem': 'Origem', 'dash.fAno': 'Ano', 'dash.fMes': 'Mês', 'dash.fCategoria': 'Categoria', 'dash.fSite': 'Site',
+      'dash.fCoo': 'COO', 'dash.fDir': 'Diretoria', 'dash.fHead': 'Head', 'dash.fGg': 'Gerência Geral', 'dash.fGa': 'Gerência Área', 'dash.fCs': 'Coord/Sup',
+      'dash.fLider': 'Kaizen Líder', 'dash.fAprovador': 'Aprovador', 'dash.fId': 'ID Kaizen',
+      'dash.todos': 'Todos', 'dash.selTodos': 'Selecionar todos', 'dash.limpar': 'Limpar', 'dash.buscar': 'Buscar…',
+      'dash.maisOpcoes': 'Mostrando {n} de {t}. Use a busca para achar outros.', 'dash.idEx': 'Ex.: 9544, 10001', 'dash.idDica': 'Separe vários IDs por vírgula.',
+      'dash.remover': 'Remover filtro', 'dash.limparTudo': 'Limpar tudo',
+      'dash.atual': 'Atual', 'dash.historico': 'Histórico', 'dash.hist': 'HIST', 'dash.emBranco': '(Em branco)', 'dash.semData': 'Sem data',
+      'dash.meses': ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
+      'dash.mesesLongos': ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+      'dash.vsAnterior': 'vs. período anterior'
+    },
+    'en': {
+      'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close',
+      'settings.theme': 'Theme', 'theme.white': 'Light', 'theme.dark': 'Dark',
+      'settings.language': 'Language', 'settings.languageInfo': 'Interface language',
+      'nav.menu': 'Menu', 'nav.novoKaizen': 'New Kaizen', 'nav.biblioteca': 'Library', 'nav.dashboard': 'Dashboard',
+      'nav.aprovacao': 'Approval', 'nav.administracao': 'Administration', 'role.operador': 'Operator',
+      'dash.ante': 'Program Indicators', 'dash.titulo': 'DASHBOARD', 'dash.sub': 'KAIZENS · VALE BASE METALS',
+      'dash.desc': 'Current and historical Kaizens in one view, filtered by the MDM structure.',
+      'dash.baseAtual': 'Current Kaizens', 'dash.baseHist': 'Historical Kaizens',
+      'dash.atualizadoEm': 'Data from {data} · refreshed every {min} min',
+      'dash.filtros': 'Filters', 'dash.atualizar': 'Refresh', 'dash.limparFiltros': 'Clear filters', 'dash.verResultados': 'See results',
+      'dash.abaTotal': 'Total Kaizen', 'dash.abaLider': 'Kaizen Leader', 'dash.abaDetalhe': 'Leader detail', 'dash.abaBase': 'Database',
+      'dash.resumo': 'Summary by status', 'dash.total': 'Total kaizens', 'dash.totalSub': 'kaizens registered',
+      'dash.aprovados': 'approved', 'dash.outros': 'Other statuses', 'dash.semStatus': 'No status', 'dash.limparStatus': 'Total kaizens: clear status filter',
+      'dash.mesTitulo': 'Records by month', 'dash.mesSub': 'Creation month · change versus previous month · {anos}', 'dash.todosAnos': 'all years',
+      'dash.alta': 'increase', 'dash.queda': 'decrease',
+      'dash.anoTitulo': 'Records by year', 'dash.anoSub': 'Current + history · change versus previous year',
+      'dash.diaTitulo': 'Records by day of month', 'dash.diaSub': 'Creation day · dashed line = average · dark bar = peak', 'dash.media': 'avg',
+      'dash.hierTitulo': 'Records by organization level', 'dash.hierSub': 'Leader hierarchy stored with the Kaizen. Click a row to filter the whole dashboard.',
+      'dash.notaBranco': 'Grey = level empty in the hierarchy (Blank).',
+      'dash.agTitulo': 'Improvement Agents', 'dash.agSub': 'Kaizens led · top 15 · click to filter',
+      'dash.apTitulo': 'Approvers', 'dash.apSub': 'Top 15 · {nome} approves {p} of the filtered kaizens',
+      'dash.detTitulo': 'Detail by Kaizen Leader', 'dash.detSub': 'Each leader’s kaizens by status, with approval rate',
+      'dash.buscarLider': 'Search leader...', 'dash.contaLideres': '{n} leaders',
+      'dash.baseTitulo': 'Database', 'dash.baseSub': 'Every Kaizen within the filters · click a header to sort',
+      'dash.buscarBase': 'Search by ID, person or title...', 'dash.contaKaizens': '{n} kaizens',
+      'dash.exportar': 'Export Excel', 'dash.exportando': 'Exporting…', 'dash.erroExportar': 'Export failed',
+      'dash.paginas': '{a}–{b} of {t}', 'dash.anterior': 'Previous page', 'dash.proxima': 'Next page',
+      'dash.thId': 'ID', 'dash.thData': 'Created', 'dash.thStatus': 'Status', 'dash.thAprovador': 'Approver', 'dash.thLider': 'Kaizen Leader',
+      'dash.thMembros': 'Members', 'dash.thExternos': 'External members', 'dash.thTitulo': 'Title', 'dash.thTotal': 'Total', 'dash.thTaxa': 'Approval %', 'dash.thMix': 'Mix',
+      'dash.carregandoDetalhes': 'loading…', 'dash.vazio': 'No Kaizens match these filters.',
+      'dash.erroTitulo': 'The dashboard could not be loaded.', 'dash.tentar': 'Try again',
+      'dash.gPeriodo': 'Period and status', 'dash.gEstrutura': 'Organization (MDM)', 'dash.gPessoas': 'People',
+      'dash.fStatus': 'Status', 'dash.fOrigem': 'Source', 'dash.fAno': 'Year', 'dash.fMes': 'Month', 'dash.fCategoria': 'Category', 'dash.fSite': 'Site',
+      'dash.fCoo': 'COO', 'dash.fDir': 'Directorate', 'dash.fHead': 'Head', 'dash.fGg': 'General Mgmt', 'dash.fGa': 'Area Mgmt', 'dash.fCs': 'Coord/Sup',
+      'dash.fLider': 'Kaizen Leader', 'dash.fAprovador': 'Approver', 'dash.fId': 'Kaizen ID',
+      'dash.todos': 'All', 'dash.selTodos': 'Select all', 'dash.limpar': 'Clear', 'dash.buscar': 'Search…',
+      'dash.maisOpcoes': 'Showing {n} of {t}. Search to find others.', 'dash.idEx': 'E.g. 9544, 10001', 'dash.idDica': 'Separate several IDs with commas.',
+      'dash.remover': 'Remove filter', 'dash.limparTudo': 'Clear all',
+      'dash.atual': 'Current', 'dash.historico': 'History', 'dash.hist': 'HIST', 'dash.emBranco': '(Blank)', 'dash.semData': 'No date',
+      'dash.meses': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      'dash.mesesLongos': ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      'dash.vsAnterior': 'vs. previous period'
+    }
+  };
+
+  var select = document.getElementById('langSelect');
+  if (!select) return;
+
+  function translatePanel(lang) {
+    var dict = I18N[lang] || I18N['pt-BR'];
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var v = dict[el.dataset.i18n];
+      if (typeof v === 'string') el.textContent = v;
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+      var v = dict[el.dataset.i18nTitle];
+      if (typeof v === 'string') el.setAttribute('title', v);
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      var v = dict[el.dataset.i18nAria];
+      if (typeof v === 'string') el.setAttribute('aria-label', v);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+      var v = dict[el.dataset.i18nPlaceholder];
+      if (typeof v === 'string') el.setAttribute('placeholder', v);
+    });
+  }
+
+  function applyLang(lang) {
+    if (!I18N[lang]) lang = 'pt-BR';
+    select.value = lang;
+    document.documentElement.lang = lang === 'en' ? 'en' : 'pt-BR';
+    translatePanel(lang);
+    window.__i18n = I18N[lang];
+    window.__i18nLang = lang;
+    try { localStorage.setItem('vdt-lang', lang); } catch (e) {}
+    try { window.dispatchEvent(new Event('vbm:idioma')); } catch (e) {}
+  }
+
+  select.addEventListener('change', function () { applyLang(select.value); });
+  var savedLang = 'pt-BR';
+  try { savedLang = localStorage.getItem('vdt-lang') || 'pt-BR'; } catch (e) {}
+  applyLang(savedLang);
+})();
+</script>
+<script src="js/dashboard.js?v=20261016-1"></script>
+</body>
+</html>

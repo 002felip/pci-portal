@@ -1,0 +1,85 @@
+
+bundle:
+  name: initiatives-cockpit
+
+variables:
+  app_name:
+    description: >-
+      Databricks App name. Must match the existing app EXACTLY, or the deploy
+      creates a second app instead of updating this one.
+    default: initiatives-cockpit
+
+  lakebase_project:
+    description: Lakebase Autoscaling project ID (lowercase, hyphen-delimited).
+    default: masterplancockpit
+
+  lakebase_branch:
+    description: Branch inside the project. Every project gets `production`.
+    default: projects/masterplancockpit/branches/production
+
+  lakebase_database:
+    description: Database name inside the branch.
+    default: projects/masterplancockpit/branches/production/databases/databricks-postgres
+
+  warehouse_id:
+    description: >-
+      SQL warehouse ID. Get it with `databricks warehouses list`.
+      Empty by default so `bundle validate` does not fail before you set it.
+    default: 8b5d7d960536d632
+
+sync:
+  include:
+    - backend/app/static/**
+
+resources:
+  apps:
+    cockpit_app:
+      name: ${var.app_name}
+      description: "Strategic initiatives cockpit (React + FastAPI + Lakebase)"
+      source_code_path: ./
+
+      # These `name:` values are the RESOURCE KEYS. They must match the
+      # "Resource key" column in the app's Settings page exactly, because
+      # app.yaml's `valueFrom` resolves against them.
+      resources:
+        - name: database
+          postgres:
+            branch: ${var.lakebase_branch}
+            database: ${var.lakebase_database}
+            permission: CAN_CONNECT_AND_CREATE
+
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+
+targets:
+  # ---- your personal workspace (default) -----------------------------
+  dev:
+    mode: development
+    default: true
+    workspace:
+      # LITERAL. Cannot be a variable. Override at runtime with DATABRICKS_HOST
+      # or `-p <profile>` if you ever need to point elsewhere.
+      host: https://dbc-3255f0de-ed90.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      # `mode: development` normally prefixes names with [dev <user>], which
+      # would create a SECOND app. Pinned so the bundle updates yours.
+      app_name: initiatives-cockpit
+
+  # ---- the client's workspace ----------------------------------------
+  client_prod:
+    mode: production
+    workspace:
+      host: https://REPLACE-ME.cloud.databricks.com
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      app_name: initiatives-cockpit
+      # lakebase_project:  masterplancockpit
+      # lakebase_branch:   projects/masterplancockpit/branches/production
+      # lakebase_database: projects/masterplancockpit/branches/production/databases/databricks-postgres
+      # warehouse_id:      <client warehouse id>
+    permissions:
+      - level: CAN_MANAGE
+        group_name: users
