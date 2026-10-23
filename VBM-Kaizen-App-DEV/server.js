@@ -260,6 +260,25 @@ const PESSOA_DO_APROVADOR = (a) =>
      OR (x.ID_USUARIO = ${a}.ID_USUARIO
          AND (${a}.CD_MATRICULA IS NULL OR LTRIM(RTRIM(CAST(${a}.CD_MATRICULA AS VARCHAR(30)))) = '')))`;
 
+/**
+ * O inverso do PESSOA_DO_APROVADOR: a linha de kzn_aprovador (alias `a`)
+ * É da pessoa `idUsuario` (expressão SQL: parâmetro ou coluna)?
+ *
+ * Os mesmos três ramos, na mesma lógica de idAprovadorPorUsuario():
+ * matrícula do MDM, ID_USUARIO gravado na matrícula, ou linha antiga sem
+ * matrícula. NUNCA `a.ID_USUARIO = idUsuario` sozinho: nas linhas novas
+ * essa coluna guarda QUEM CONCEDEU o direito (o admin que cadastrou), não
+ * o aprovador — usar isso fazia a fila de aprovação aparecer para o admin
+ * e ficar vazia para o aprovador de verdade.
+ */
+const APROVADOR_E_USUARIO = (a, idUsuario) =>
+  `(EXISTS (SELECT 1 FROM ${FULL_MDM_TABLE} mx
+             WHERE mx.ID_USUARIO = ${idUsuario}
+               AND ${MATRICULA_IGUAL("mx.CD_MATRICULA", `${a}.CD_MATRICULA`)})
+     OR TRY_CAST(${a}.CD_MATRICULA AS BIGINT) = ${idUsuario}
+     OR (${a}.ID_USUARIO = ${idUsuario}
+         AND (${a}.CD_MATRICULA IS NULL OR LTRIM(RTRIM(CAST(${a}.CD_MATRICULA AS VARCHAR(30)))) = '')))`;
+
 /** Prioridade dos três ramos do PESSOA_DO_APROVADOR, mais o desempate
  *  por ID_TIPO_USUARIO (a PK do MDM é composta, então a mesma pessoa
  *  aparece em mais de uma linha). Vai junto em todo OUTER APPLY. */
@@ -812,7 +831,7 @@ async function perfilDeAcesso(req) {
                                  WHERE ad.ID_USUARIO = m.ID_USUARIO AND ad.SG_ATIVO IN ${SG_ATIVO_SIM_SQL})
                    THEN 1 ELSE 0 END AS EH_ADMIN,
               CASE WHEN EXISTS (SELECT 1 FROM ${FULL_TABLE_NAME} ap
-                                 WHERE ap.ID_USUARIO = m.ID_USUARIO AND ap.SG_ATIVO IN ${SG_ATIVO_SIM_SQL})
+                                 WHERE ${APROVADOR_E_USUARIO("ap", "m.ID_USUARIO")} AND ap.SG_ATIVO IN ${SG_ATIVO_SIM_SQL})
                    THEN 1 ELSE 0 END AS EH_APROVADOR
        FROM ${FULL_MDM_TABLE} m
        -- Sem LOWER() na COLUNA: a função invalidava qualquer índice em
@@ -5334,7 +5353,7 @@ apiRouter.get("/aprovacoes/contagem", async (req, res) => {
     const idsFila = await idsNaFilaDeAprovacao();
     const r = await runQuery(
       `SELECT COUNT(*) AS QTD FROM ${FULL_PVC_TABLE} p
-       JOIN ${FULL_TABLE_NAME} a ON a.ID_APROVADOR = p.ID_APROVADOR AND a.ID_USUARIO = @idUsuario
+       JOIN ${FULL_TABLE_NAME} a ON a.ID_APROVADOR = p.ID_APROVADOR AND ${APROVADOR_E_USUARIO("a", "@idUsuario")}
        WHERE ${filtroPendente(idsFila)}`,
       paramsComPendente([["idUsuario", sql.Int, idUsuario]], idsFila)
     );
@@ -5359,7 +5378,7 @@ apiRouter.get("/aprovacoes", async (req, res) => {
               p.ID_STATUS, st.NM_STATUS
        FROM ${FULL_PVC_TABLE} p
        LEFT JOIN ${FULL_STATUS_TABLE} st ON st.ID_STATUS = p.ID_STATUS AND st.ID_IDIOMA = @idIdioma
-       JOIN ${FULL_TABLE_NAME} a ON a.ID_APROVADOR = p.ID_APROVADOR AND a.ID_USUARIO = @idUsuario
+       JOIN ${FULL_TABLE_NAME} a ON a.ID_APROVADOR = p.ID_APROVADOR AND ${APROVADOR_E_USUARIO("a", "@idUsuario")}
        LEFT JOIN ${FULL_CATEGORIA_TABLE} cat ON cat.ID_CATEGORIA = p.ID_CATEGORIA AND cat.ID_IDIOMA = @idIdioma
        LEFT JOIN ${FULL_MDM_TABLE} lider ON lider.ID_USUARIO = p.ID_USUARIO_LIDER
        WHERE ${filtroPendente(idsFila)}
@@ -5407,7 +5426,7 @@ async function situacaoDaDecisao(idKaizen, idUsuario) {
     `SELECT p.ID_STATUS,
             EH_APROVADOR = CASE WHEN EXISTS (
               SELECT 1 FROM ${FULL_TABLE_NAME} a
-               WHERE a.ID_APROVADOR = p.ID_APROVADOR AND a.ID_USUARIO = @idUsuario
+               WHERE a.ID_APROVADOR = p.ID_APROVADOR AND ${APROVADOR_E_USUARIO("a", "@idUsuario")}
             ) THEN 1 ELSE 0 END
        FROM ${FULL_PVC_TABLE} p
       WHERE p.ID_KAIZEN = @idKaizen`,
