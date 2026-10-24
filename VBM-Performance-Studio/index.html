@@ -1145,7 +1145,10 @@ body[data-bg="dark"] .qe-panel {
 .qe-dash-topo { display: grid; gap: 8px; margin-top: 12px; }
 .qe-dash-topo .qe-btn { width: 100%; }
 #qeViewDash [hidden] { display: none !important; }
-.qe-dash-acoes { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; margin-top: 8px; }
+.qe-dash-acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.qe-dash-acoes .qe-dash-largo { grid-column: 1 / -1; }
+.qe-dash-confirma { margin: 10px 0 0; }
+.qe-dash-confirma p { margin: 0; }
 .qe-dash-novo.is-editando, .qe-dash-novo.is-reuso { background: rgba(60,181,229,.06); border-radius: 10px; padding: 12px 10px 4px; }
 .qe-alerta { padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(220,38,38,.35); background: rgba(220,38,38,.08); color: var(--qe-strong); font-size: .76rem; font-weight: 600; line-height: 1.45; margin-bottom: 10px; }
 .qe-btn.danger { background: #B91C1C; border-color: #B91C1C; color: #fff; }
@@ -1570,11 +1573,19 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <button type="button" class="qe-btn" id="qeDashEditar" aria-controls="qeDashForm" data-i18n="ui.dash_editar">Alterar parâmetros de data deste dashboard</button>
       </div>
       <div class="qe-field qe-dash-bloco">
-        <label class="qe-label" for="qeDashLista" data-i18n="ui.dash_abrir_reutilizar">Abrir ou reutilizar um dashboard</label>
+        <label class="qe-label" for="qeDashLista" data-i18n="ui.dash_abrir_reutilizar">Abrir, reutilizar ou excluir um dashboard</label>
         <select class="qe-select" id="qeDashLista" aria-describedby="qeDashListaHint"></select>
         <div class="qe-dash-acoes">
           <button type="button" class="qe-btn" id="qeDashAbrir" data-i18n="ui.abrir">Abrir</button>
-          <button type="button" class="qe-btn" id="qeDashReutilizar" data-i18n="ui.dash_reutilizar">Reutilizar em novo período</button>
+          <button type="button" class="qe-btn" id="qeDashExcluir" aria-controls="qeDashExcluirBox" data-i18n="ui.excluir">Excluir</button>
+          <button type="button" class="qe-btn qe-dash-largo" id="qeDashReutilizar" data-i18n="ui.dash_reutilizar">Reutilizar em novo período</button>
+        </div>
+        <div class="qe-alerta qe-dash-confirma" id="qeDashExcluirBox" role="alertdialog" aria-labelledby="qeDashExcluirTexto" hidden>
+          <p id="qeDashExcluirTexto"></p>
+          <div class="qe-dash-acoes">
+            <button type="button" class="qe-btn" id="qeDashExcluirNao" data-i18n="ui.cancelar">Cancelar</button>
+            <button type="button" class="qe-btn danger" id="qeDashExcluirSim" data-i18n="ui.excluir">Excluir</button>
+          </div>
         </div>
         <span class="qe-hint" id="qeDashListaHint" data-i18n="ui.dash_reutilizar_hint">Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.</span>
       </div>
@@ -2310,7 +2321,9 @@ const I18N_UI = {
   'ui.dash_copiar': ['Reaproveitar os gráficos do quadro atual', 'Reuse the charts on the current board'],
   'ui.dash_auto': ['Preenchido automaticamente — Status: Ativo (S) · Criado em: {quando} · Criado por: {usuario}', 'Filled in automatically — Status: Active (S) · Created on: {quando} · Created by: {usuario}'],
   'ui.dash_criar': ['Criar dashboard', 'Create dashboard'],
-  'ui.dash_abrir_reutilizar': ['Abrir ou reutilizar um dashboard', 'Open or reuse a dashboard'],
+  'ui.dash_abrir_reutilizar': ['Abrir, reutilizar ou excluir um dashboard', 'Open, reuse or delete a dashboard'],
+  'ui.dash_excluir_confirma': ['Excluir o dashboard “{nome}”? Ele e os gráficos salvos nele saem da lista deste navegador. Não dá para desfazer.', 'Delete the dashboard “{nome}”? It and the charts saved in it are removed from this browser\'s list. This cannot be undone.'],
+  'ui.dash_excluido': ['Dashboard “{nome}” excluído.', 'Dashboard “{nome}” deleted.'],
   'ui.dash_reutilizar': ['Reutilizar em novo período', 'Reuse for a new period'],
   'ui.dash_reutilizar_hint': ['Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.', 'Reuse copies the charts of the chosen dashboard into a new dashboard; adjust the dates below and click Create.'],
   'ui.dash_editar': ['Alterar parâmetros de data deste dashboard', 'Change this dashboard\'s date parameters'],
@@ -5896,7 +5909,7 @@ const DASH_NOME_BASE = 'VBM Performance Studio';
 const DASH_VISOES = { VBM_PRODUCTION_ANALYTICS: { nome: 'VBM Production Analytics', consulta: 'CHART_DATA_SQL' } };
 const DASH_VISAO_PADRAO = 'VBM_PRODUCTION_ANALYTICS';
 const MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const dash = { atual: null, itens: [], nomeEditado: false, modo: 'novo', origem: null, formAberto: false };
+const dash = { atual: null, itens: [], nomeEditado: false, modo: 'novo', origem: null, formAberto: false, excluir: null };
 const layoutDoQuadro = () => ({ charts: charts.map(c => ({ id: c.id, filters: c.filters, colors: c.colors, cfg: c.cfg, page: c.page, size: c.size, pos: c.pos })) });
 const nomeMes = (m, curto) => { const t = new Date(2000, m - 1, 1).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { month: curto ? 'short' : 'long' }); return t.charAt(0).toUpperCase() + t.slice(1); };
 const dataHoraLocal = v => (v ? new Date(v).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
@@ -6170,11 +6183,36 @@ function renderDash() {
   dash.itens.forEach(d => sel.add(new Option(`${d.nome} — ${nomeMes(d.mesRef, true)}/${d.anoRef}`, d.id)));
   sel.value = dash.itens.some(d => d.id === atualSel) ? atualSel : a ? a.id : '';
   sel.disabled = !dash.itens.length;
-  $qe('qeDashAbrir').disabled = $qe('qeDashReutilizar').disabled = !dash.itens.length;
+  $qe('qeDashAbrir').disabled = $qe('qeDashReutilizar').disabled = $qe('qeDashExcluir').disabled = !dash.itens.length;
   $qe('qeDashAuto').textContent = dash.modo === 'editar' ? '' : tx('ui.dash_auto', { quando: dataHoraLocal(new Date()), usuario: usuarioLogado || '—' });
   if (editorReady && editor.open && editor.view === 'dash') renderEditorTarget();
 }
+// Exclusão: confirmação no próprio painel; tira o dashboard da lista deste navegador
+function fecharExclusaoDash() { $qe('qeDashExcluirBox').hidden = true; dash.excluir = null; }
+function pedirExclusaoDash(d) {
+  dash.excluir = d;
+  $qe('qeDashExcluirTexto').textContent = tx('ui.dash_excluir_confirma', { nome: d.nome });
+  $qe('qeDashExcluirBox').hidden = false;
+  $qe('qeDashExcluirNao').focus();
+}
+function excluirDashboard() {
+  const d = dash.excluir;
+  if (!d) return;
+  const antes = dash.itens;
+  dash.itens = dash.itens.filter(x => x.id !== d.id);
+  if (!gravarDashboards()) { dash.itens = antes; msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
+  fecharExclusaoDash();
+  // Era o aberto: o quadro fica como está, sem dashboard, com a carga mais recente
+  if (dash.atual && dash.atual.id === d.id) { definirDashAtual(null); recarregarDadosDoDashboard(null); }
+  if (dash.formAberto) { prepararFormDash('novo'); mostrarFormDash(false); }
+  renderDash();
+  msgEm('qeDashMsg', tx('ui.dash_excluido', { nome: d.nome }), 'ok');
+  announce(tx('ui.dash_excluido', { nome: d.nome }));
+  $qe(dash.itens.length ? 'qeDashLista' : 'qeDashNovo').focus();
+}
+
 function abrirDashView() {
+  fecharExclusaoDash();
   carregarReferenciasDash();
   dash.itens = lerDashboards();
   if (dash.atual) dash.atual = dash.itens.find(d => d.id === dash.atual.id) || null;
@@ -6204,7 +6242,12 @@ function initDashboards() {
     mostrarFormDash(true);
     msgEm('qeDashMsg', tx('ui.dash_novo_msg'), 'info');
   });
-  $qe('qeDashAbrir').addEventListener('click', () => { const d = escolhido(); if (d) abrirDashboard(d.id); });
+  $qe('qeDashAbrir').addEventListener('click', () => { fecharExclusaoDash(); const d = escolhido(); if (d) abrirDashboard(d.id); });
+  $qe('qeDashExcluir').addEventListener('click', () => { const d = escolhido(); if (d) pedirExclusaoDash(d); });
+  $qe('qeDashExcluirSim').addEventListener('click', excluirDashboard);
+  $qe('qeDashExcluirNao').addEventListener('click', () => { fecharExclusaoDash(); $qe('qeDashExcluir').focus(); });
+  $qe('qeDashExcluirBox').addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); fecharExclusaoDash(); $qe('qeDashExcluir').focus(); } });
+  $qe('qeDashLista').addEventListener('change', fecharExclusaoDash);
   $qe('qeDashReutilizar').addEventListener('click', () => {
     const d = escolhido();
     if (!d) return;
