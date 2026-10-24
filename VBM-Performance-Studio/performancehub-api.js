@@ -304,16 +304,20 @@ ORDER BY ORDEM_ANO, ORDEM_VISAO, ORDEM_PERIODO, ORDEM_SERIE`;
 // Dashboard servido por /chart-data (IBP.DASHBOARD.ID_DASH)
 const ID_DASH = 21;
 
-// Fonte do dashboard: última carga mensal gravada em IBP.PHUB_PERFORMANCESTUDIO
-// (database/002_snapshot_mensal.sql e 003_carga_mensal.sql). Só leitura; o
-// dashboard entra por parâmetro (@idDash). Devolve exatamente as colunas e os
-// nomes da consulta ao vivo, então o index.html não muda. Nome do KPI e unidade
+// Fonte do dashboard: uma carga mensal de IBP.PHUB_PERFORMANCESTUDIO
+// (database/002_snapshot_mensal.sql e 003_carga_mensal.sql). Só leitura.
+//   @dtRef  = mês de referência escolhido = mês final do YTD (ex.: 2026-06-01 →
+//             YTD jan–jun/26 e a projeção feita em junho). NULL = carga mais recente.
+//   @idDash = dashboard. Os dois entram por parâmetro tipado.
+// Cada linha traz DT_REF (a referência da carga) e DT_IND (o período da linha);
+// as demais colunas têm os nomes que o index.html já usa. Nome do KPI e unidade
 // vêm de IBP.DASHBOARD (mesmo join da consulta ao vivo).
 const CHART_DATA_SQL = `
-DECLARE @DT_CARGA DATE = (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @idDash)
+DECLARE @DT_CARGA DATE = COALESCE(@dtRef,
+  (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @idDash))
 
 SELECT
-  R.DT_IND AS DT_REF,
+  R.DT_REF, R.DT_IND,
   R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
   DASH.NM_KPIS_DASH AS NM_KPI, DASH.SG_UNID,
   R.NM_TIPO_VISAO AS NM_TYPE,
@@ -330,6 +334,28 @@ FROM IBP.PHUB_PERFORMANCESTUDIO R
 WHERE R.DT_REF = @DT_CARGA
   AND R.ID_DASH = @idDash
 ORDER BY R.ORDEM_ANO, R.ORDEM_VISAO, R.ORDEM_PERIODO, R.ID_TIPO_VISAO`;
+
+// Referências (meses de YTD) com carga gravada, da mais recente para a mais antiga.
+// NM_YTD é o rótulo para a escolha na tela (ex.: "YTD Jun 26").
+const REFERENCIAS_SQL = `
+SELECT
+  R.DT_REF,
+  CONCAT('YTD ',
+    CHOOSE(MONTH(R.DT_REF), 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'),
+    ' ', RIGHT(YEAR(R.DT_REF), 2)) AS NM_YTD,
+  MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+WHERE R.ID_DASH = @idDash
+GROUP BY R.DT_REF
+ORDER BY R.DT_REF DESC`;
+
+// ?dtRef=AAAA-MM (ou AAAA-MM-01) → 'AAAA-MM-01'; vazio → null; inválido → undefined
+function lerDtRef(valor) {
+  if (valor === undefined || valor === '') return null;
+  const m = typeof valor === 'string' && /^(\d{4})-(0[1-9]|1[0-2])(?:-01)?$/.exec(valor);
+  if (!m || +m[1] < 2000 || +m[1] > 2100) return undefined;
+  return `${m[1]}-${m[2]}-01`;
+}
 
 // 208 = "Invalid object name": a tabela ainda não foi criada nesta base
 const SQL_OBJETO_INEXISTENTE = 208;
@@ -573,7 +599,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     const item = cache.get(chave);
     if (item && item.expiraEm > Date.now()) return item.dados;
     const dados = await buscar();
-    cache.set(chave, { dados, expiraEm: Date.now() + CACHE_TTL_MS });
+    if (dados !== null) cache.set(chave, { dados, expiraEm: Date.now() + CACHE_TTL_MS }); // "sem carga" não fica em cache
     return dados;
   }
 
@@ -596,23 +622,59 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     res.json({ ok: true, caminhoRecebido: req.originalUrl });
   });
 
-  // Lê a última carga de IBP.PHUB_PERFORMANCESTUDIO. Sem tabela ou sem carga
-  // para o dashboard, cai na consulta ao vivo (mesmo formato) e avisa no log;
-  // qualquer outro erro do banco segue como erro.
-  async function buscarChartData() {
+  const tabelaInexistente = (err) => (err.number ?? err.originalError?.info?.number) === SQL_OBJETO_INEXISTENTE;
+
+  // Lê uma carga de IBP.PHUB_PERFORMANCESTUDIO: a do mês escolhido (dtRef) ou,
+  // sem escolha, a mais recente. Mês escolhido sem carga → null (a rota
+  // responde 404; nunca troca por outro mês). Sem escolha e sem tabela/carga,
+  // cai na consulta ao vivo e avisa no log; outro erro do banco segue como erro.
+  async function buscarChartData(dtRef) {
     try {
-      const r = await runQuery(CHART_DATA_SQL, { idDash: [sql.Int, ID_DASH] });
+      const r = await runQuery(CHART_DATA_SQL, {
+        dtRef: [sql.Date, dtRef && new Date(`${dtRef}T00:00:00Z`)],
+        idDash: [sql.Int, ID_DASH],
+      });
       if (r.recordset.length) return r.recordset;
+      if (dtRef) return null;
       console.warn('[performance-studio] IBP.PHUB_PERFORMANCESTUDIO sem carga para o dashboard: usando a consulta ao vivo');
     } catch (err) {
-      const numero = err.number ?? err.originalError?.info?.number;
-      if (numero !== SQL_OBJETO_INEXISTENTE) throw err;
+      if (!tabelaInexistente(err)) throw err;
+      if (dtRef) return null;
       console.warn('[performance-studio] IBP.PHUB_PERFORMANCESTUDIO não existe nesta base: usando a consulta ao vivo');
     }
-    return (await runQuery(CHART_DATA_AO_VIVO_SQL)).recordset;
+    // Ao vivo, o DT_REF da query é o período da linha: vira DT_IND, como na tabela
+    const r = await runQuery(CHART_DATA_AO_VIVO_SQL);
+    return r.recordset.map(({ DT_REF, ...linha }) => ({ DT_REF: null, DT_IND: DT_REF, ...linha }));
   }
 
-  rota('/chart-data', 'chart-data', buscarChartData, 'Failed to fetch chart data');
+  // ?dtRef=AAAA-MM = mês de referência = mês final do YTD (opcional)
+  router.get('/chart-data', async (req, res) => {
+    const dtRef = lerDtRef(req.query.dtRef);
+    if (dtRef === undefined) {
+      return res.status(400).json({ error: 'dtRef inválido: use AAAA-MM (mês de referência do YTD).', campo: 'dtRef' });
+    }
+    try {
+      const dados = await comCache(`chart-data:${dtRef || 'ultima'}`, () => buscarChartData(dtRef));
+      if (dados === null) {
+        return res.status(404).json({ error: `Sem carga para a referência ${dtRef.slice(0, 7)}.`, codigo: 'SEM_CARGA', dtRef: dtRef.slice(0, 7) });
+      }
+      res.json(dados);
+    } catch (err) {
+      console.error('[performance-studio] Erro ao buscar chart-data:', err.message);
+      res.status(500).json({ error: 'Failed to fetch chart data', detalhe: err.message });
+    }
+  });
+
+  // Meses de referência (YTD) com carga, para a escolha na tela; sem tabela → []
+  rota('/chart-data/referencias', 'referencias', async () => {
+    try {
+      const r = await runQuery(REFERENCIAS_SQL, { idDash: [sql.Int, ID_DASH] });
+      return r.recordset.map(l => ({ dtRef: new Date(l.DT_REF).toISOString().slice(0, 7), nome: l.NM_YTD, atualizadoEm: l.DT_ATUALIZACAO }));
+    } catch (err) {
+      if (tabelaInexistente(err)) return [];
+      throw err;
+    }
+  }, 'Failed to fetch references');
   rota('/sites', 'sites', async () => (await runQuery(SITES_SQL)).recordset, 'Failed to fetch sites');
 
   // Lista das configurações salvas (sem cache: reflete a última gravação).
@@ -761,4 +823,4 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
   return router;
 }
 
-module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, SITES_SQL };
+module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, REFERENCIAS_SQL, SITES_SQL, lerDtRef };
