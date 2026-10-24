@@ -5965,6 +5965,28 @@ function deslocarLayout(layout, de, para) {
   });
   return copia;
 }
+// Ano mais recente nos filtros dos gráficos (Ano e Horizonte); 0 = nenhum
+function anoDoLayout(layout) {
+  let ano = 0;
+  ((layout && layout.charts) || []).forEach(c => {
+    const f = c.filters || {};
+    (f.ano || []).forEach(a => { ano = Math.max(ano, Number(a) || 0); });
+    (f.horizontes || []).forEach(t => { const m = / (\d{2})$/.exec(t) || /^(\d{2})[BPAF]$/.exec(t); if (m) ano = Math.max(ano, 2000 + Number(m[1])); });
+  });
+  return ano;
+}
+// Layout do dashboard nos períodos da referência dele. Dashboards gravados antes de
+// refLayout: a referência dos gráficos é deduzida pelo ano mais recente dos filtros.
+function layoutNaReferencia(d) {
+  let de = d.refLayout;
+  if (!de) { const ano = anoDoLayout(d.layout); de = ano && ano !== d.anoRef ? { mes: d.mesRef, ano } : null; }
+  if (!de || (de.mes === d.mesRef && de.ano === d.anoRef)) return d.layout;
+  const layout = deslocarLayout(d.layout, de, { mes: d.mesRef, ano: d.anoRef });
+  // Anos do cadastro = anos usados nos gráficos já ajustados (o cadastro antigo pode estar deslocado)
+  const anos = new Set(layout.charts.flatMap(c => ((c.filters && c.filters.ano) || []).map(Number)).filter(Boolean));
+  d.anos = anos.size ? [...anos].sort((x, y) => x - y) : [d.anoRef - 1, d.anoRef];
+  return layout;
+}
 // Referência dos dados que estão no quadro agora ({mes, ano}); null = desconhecida
 function referenciaDoQuadro() {
   if (dadosCarga.dtRef) return { ano: Number(dadosCarga.dtRef.slice(0, 4)), mes: Number(dadosCarga.dtRef.slice(5, 7)) };
@@ -6062,6 +6084,8 @@ function definirDashAtual(d) {
 function gravarLayoutDashboard() {
   if (!dash.atual) return;
   dash.atual.layout = layoutDoQuadro();
+  // Referência em que os filtros dos gráficos foram montados (para ajustar ao abrir)
+  dash.atual.refLayout = { mes: dash.atual.mesRef, ano: dash.atual.anoRef };
   dash.atual.atualizadoEm = new Date().toISOString();
   gravarDashboards();
 }
@@ -6086,7 +6110,7 @@ function abrirDashboard(id, silencioso) {
   const d = dash.itens.find(x => x.id === id);
   if (!d) { if (!silencioso) msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); return false; }
   definirDashAtual(null); // não grava o quadro antigo por cima do dashboard que vai abrir
-  substituirQuadro(d.layout);
+  substituirQuadro(layoutNaReferencia(d));
   definirDashAtual(d);
   gravarLayoutDashboard();
   recarregarDadosDoDashboard(d);
