@@ -1612,7 +1612,8 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         </fieldset>
         <div class="qe-field">
           <label class="qe-label" for="qeDashYtd" data-i18n="ui.dash_ytd">Year to Date até</label>
-          <select class="qe-select" id="qeDashYtd"></select>
+          <select class="qe-select" id="qeDashYtd" disabled aria-describedby="qeDashYtdHint"></select>
+          <span class="qe-hint" id="qeDashYtdHint" data-i18n="ui.dash_ytd_hint">Acompanha o mês de referência: os dados gravados no banco vão até esse mês.</span>
         </div>
         <label class="qe-check qe-field" id="qeDashCopiarBox"><input type="checkbox" id="qeDashCopiar" checked> <span data-i18n="ui.dash_copiar">Reaproveitar os gráficos do quadro atual</span></label>
         <p class="qe-hint" id="qeDashAuto"></p>
@@ -2298,6 +2299,11 @@ const I18N_UI = {
   'ui.dash_anos': ['Anos extraídos do banco', 'Years extracted from the database'],
   'ui.dash_anos_obrigatorio': ['Selecione ao menos um ano.', 'Select at least one year.'],
   'ui.dash_ytd': ['Year to Date até', 'Year to Date through'],
+  'ui.dash_ytd_hint': ['Acompanha o mês de referência: os dados gravados no banco vão até esse mês.', 'Follows the reference month: the data stored in the database runs through that month.'],
+  'ui.dash_dados': ['Dados exibidos', 'Data shown'],
+  'ui.dash_dados_ref': ['carga de {ref}', '{ref} load'],
+  'ui.dash_dados_sem': ['sem carga para {ref}', 'no load for {ref}'],
+  'ui.dash_sem_carga': ['Sem dados no banco para {ref}. Rode a carga mensal desse mês para ver este dashboard.', 'No data in the database for {ref}. Run the monthly load for that month to see this dashboard.'],
   'ui.dash_copiar': ['Reaproveitar os gráficos do quadro atual', 'Reuse the charts on the current board'],
   'ui.dash_auto': ['Preenchido automaticamente — Status: Ativo (S) · Criado em: {quando} · Criado por: {usuario}', 'Filled in automatically — Status: Active (S) · Created on: {quando} · Created by: {usuario}'],
   'ui.dash_criar': ['Criar dashboard', 'Create dashboard'],
@@ -2309,8 +2315,8 @@ const I18N_UI = {
   'ui.dash_form_reuso': ['Novo período a partir de: {nome}', 'New period from: {nome}'],
   'ui.dash_salvar_alteracoes': ['Salvar alterações', 'Save changes'],
   'ui.dash_novo_msg': ['Preencha o novo dashboard e clique em Criar dashboard.', 'Fill in the new dashboard and click Create dashboard.'],
-  'ui.dash_reuso_msg': ['Gráficos de “{nome}” serão reaproveitados. Ajuste mês, ano, anos e YTD e clique em Criar dashboard.', 'Charts from “{nome}” will be reused. Adjust month, year, years and YTD, then click Create dashboard.'],
-  'ui.dash_editar_msg': ['Altere mês, ano, anos extraídos ou YTD e clique em Salvar alterações.', 'Change month, year, extracted years or YTD, then click Save changes.'],
+  'ui.dash_reuso_msg': ['Gráficos de “{nome}” serão reaproveitados. Ajuste mês, ano e anos (o YTD acompanha o mês) e clique em Criar dashboard.', 'Charts from “{nome}” will be reused. Adjust month, year and years (YTD follows the month), then click Create dashboard.'],
+  'ui.dash_editar_msg': ['Altere mês, ano ou anos extraídos (o YTD acompanha o mês) e clique em Salvar alterações.', 'Change month, year or extracted years (YTD follows the month), then click Save changes.'],
   'ui.dash_parametros_salvos': ['Parâmetros de “{nome}” atualizados.', '“{nome}” parameters updated.'],
   'ui.dash_visao_hint': ['Usa a consulta atual de produção (dados dos gráficos).', 'Uses the current production query (chart data).'],
   'ui.dash_status': ['Status', 'Status'],
@@ -3234,32 +3240,50 @@ function basesDaApiResolvidas() {
 async function buscarJsonDaApi(baseHref, recurso) {
   const url = new URL(recurso, baseHref);
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`${url.pathname} → ${res.status}`);
+  if (!res.ok) {
+    const erro = new Error(`${url.pathname} → ${res.status}`);
+    if (res.status === 404) { try { erro.codigo = (await res.json()).codigo; } catch (e) { /* 404 sem JSON: rota ausente */ } }
+    throw erro;
+  }
   return res.json();
 }
 
-async function loadPerformanceHubData() {
+// Referência (mês/ano = mês final do YTD) dos dados em allRows. dtRef null =
+// carga mais recente; semCarga = o banco não tem a carga do mês escolhido.
+const dadosCarga = { dtRef: null, semCarga: false };
+
+// dtRef 'AAAA-MM': escolhido no dashboard aberto; null = carga mais recente.
+// Devolve { linhas, semCarga }.
+async function loadPerformanceHubData(dtRef) {
   const tentativas = [];
+  const recursoDados = dtRef ? `chart-data?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data';
   for (const base of basesDaApiResolvidas()) {
     try {
       const [chartRows, sitesList] = await Promise.all([
-        buscarJsonDaApi(base, 'chart-data'),
+        buscarJsonDaApi(base, recursoDados),
         buscarJsonDaApi(base, 'sites')
       ]);
       const siteNameById = new Map(sitesList.map(s => [s.ID_SITE ?? s.id_site, s.NM_SITE ?? s.nm_site]));
       performanceHubApiBase = base; // as rotas de configuração usam a mesma base
       setDataFallbackWarning(false);
       console.info(`[performance-studio] dados reais carregados de ${new URL(base).pathname}`);
-      return chartRows
-        .map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null }))
-        .filter(isVisaoSuportada);
+      return {
+        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada),
+        semCarga: false
+      };
     } catch (err) {
+      // A API respondeu, mas não há carga do mês escolhido: nada de dado de exemplo
+      if (err.codigo === 'SEM_CARGA') {
+        performanceHubApiBase = base;
+        setDataFallbackWarning(false);
+        return { linhas: [], semCarga: true };
+      }
       tentativas.push(err.message);
     }
   }
   console.warn('[performance-studio] nenhum endpoint respondeu, usando fixture local:', tentativas.join(' | '));
   setDataFallbackWarning(true, tentativas.join(' | '));
-  return buildFallbackRows().filter(isVisaoSuportada);
+  return { linhas: buildFallbackRows().filter(isVisaoSuportada), semCarga: false };
 }
 
 // ── Filtros dinâmicos e dependentes ─────────────────────────────────────
@@ -3910,7 +3934,8 @@ async function initPerformanceHubPage() {
   // abrem com a cópia local e o banco prevalece quando responder.
   const configsDoBanco = loadEditorConfigs();
   carregarFundo(); // background salvo (global), aplicado assim que responder
-  allRows = await loadPerformanceHubData();
+  dadosCarga.dtRef = dtRefDoDashboardSalvo();
+  ({ linhas: allRows, semCarga: dadosCarga.semCarga } = await loadPerformanceHubData(dadosCarga.dtRef));
   applyDefaultFilters(allRows);
   filterState.product = getDefaultProduct();
   buildFiltersBar();     // cria o DOM primeiro — initCharts já popula tudo
@@ -5876,6 +5901,33 @@ const nomeVisao = v => (DASH_VISOES[v] || DASH_VISOES[DASH_VISAO_PADRAO]).nome;
 // Referência padrão: mês anterior ao atual (janeiro → dezembro do ano anterior)
 function referenciaPadrao() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return { mes: d.getMonth() + 1, ano: d.getFullYear() }; }
 const proximoMes = (mes, ano) => (mes === 12 ? { mes: 1, ano: ano + 1 } : { mes: mes + 1, ano });
+// Referência do dashboard para a API: 'AAAA-MM' (= DT_REF da carga mensal = mês final do YTD)
+const dtRefDe = d => (d && d.mesRef && d.anoRef ? `${d.anoRef}-${String(d.mesRef).padStart(2, '0')}` : null);
+const nomeDtRef = dtRef => (dtRef ? `${nomeMes(Number(dtRef.slice(5, 7)))} ${dtRef.slice(0, 4)}` : '');
+function dtRefDoDashboardSalvo() {
+  try {
+    const id = localStorage.getItem(DASH_ATUAL_KEY);
+    return id ? dtRefDe(lerDashboards().find(d => d.id === id)) : null;
+  } catch (e) { return null; }
+}
+// Troca os dados do quadro pela carga da referência do dashboard (só se mudou)
+async function recarregarDadosDoDashboard(d) {
+  const alvo = dtRefDe(d);
+  if (alvo === dadosCarga.dtRef) return;
+  const vez = (recarregarDadosDoDashboard.vez = (recarregarDadosDoDashboard.vez || 0) + 1);
+  dadosCarga.dtRef = alvo;
+  setFiltersInitialLoading(true);
+  try {
+    const { linhas, semCarga } = await loadPerformanceHubData(alvo);
+    if (vez !== recarregarDadosDoDashboard.vez) return; // outra referência foi pedida depois
+    allRows = linhas;
+    dadosCarga.semCarga = semCarga;
+    renderAllCharts();
+    if (semCarga) { mostrarAviso(tx('ui.dash_sem_carga', { ref: nomeDtRef(alvo) }), true); announce(tx('ui.dash_sem_carga', { ref: nomeDtRef(alvo) })); }
+  } finally {
+    if (vez === recarregarDadosDoDashboard.vez) { setFiltersInitialLoading(false); renderDash(); }
+  }
+}
 const baseDoNome = n => String(n || '').replace(/\s+-\s+[A-Za-z]+\s+\d{4}$/, '').trim() || DASH_NOME_BASE;
 const nomePadrao = (base, mes, ano) => `${base} - ${MESES_EN[mes - 1]} ${ano}`;
 const nomeEmUso = (nome, excetoId) => dash.itens.some(d => d.id !== excetoId && d.nome.toLocaleLowerCase() === nome.toLocaleLowerCase());
@@ -5883,7 +5935,7 @@ const nomeEmUso = (nome, excetoId) => dash.itens.some(d => d.id !== excetoId && 
 function lerDashboards() {
   try {
     const v = JSON.parse(localStorage.getItem(DASH_LISTA_KEY) || '[]');
-    return Array.isArray(v) ? v.filter(d => d && d.id && d.nome).map(d => ({ ...d, visao: DASH_VISOES[d.visao] ? d.visao : DASH_VISAO_PADRAO })) : [];
+    return Array.isArray(v) ? v.filter(d => d && d.id && d.nome).map(d => ({ ...d, ytdAte: d.mesRef, visao: DASH_VISOES[d.visao] ? d.visao : DASH_VISAO_PADRAO })) : [];
   } catch (e) { return []; }
 }
 function gravarDashboards() {
@@ -5925,6 +5977,7 @@ function abrirDashboard(id, silencioso) {
   substituirQuadro(d.layout);
   definirDashAtual(d);
   gravarLayoutDashboard();
+  recarregarDadosDoDashboard(d);
   prepararFormDash('novo');
   if (!silencioso) mostrarFormDash(false);
   if (!silencioso) { msgEm('qeDashMsg', tx('ui.dash_aberto', { nome: d.nome }), 'ok'); announce(tx('ui.dash_aberto', { nome: d.nome })); }
@@ -5960,7 +6013,7 @@ function prepararFormDash(modo, origem) {
   for (let m = 1; m <= 12; m++) { mes.add(new Option(nomeMes(m), String(m))); ytd.add(new Option(nomeMes(m), String(m))); }
   anosDisponiveis([...marcados, ref.ano]).forEach(a => ano.add(new Option(String(a), String(a))));
   mes.value = String(ref.mes); ano.value = String(ref.ano);
-  ytd.value = String(dash.modo === 'editar' ? base.ytdAte : ref.mes);
+  ytd.value = String(ref.mes);
   $qe('qeDashAnos').innerHTML = anosDisponiveis(marcados).map(a => `<label class="qe-check"><input type="checkbox" data-dash-ano="${a}"${marcados.includes(a) ? ' checked' : ''}> ${a}</label>`).join('');
   $qe('qeDashDesc').value = dash.modo === 'editar' ? base.descricao || '' : dash.modo === 'reuso' ? base.descricao || '' : '';
   $qe('qeDashVisao').value = base && DASH_VISOES[base.visao] ? base.visao : DASH_VISAO_PADRAO;
@@ -5999,7 +6052,7 @@ function lerFormDash(excetoId) {
     nome, descricao: $qe('qeDashDesc').value.trim().slice(0, 500),
     mesRef: Number($qe('qeDashMes').value), anoRef: Number($qe('qeDashAno').value),
     visao: DASH_VISOES[$qe('qeDashVisao').value] ? $qe('qeDashVisao').value : DASH_VISAO_PADRAO,
-    anos, ytdAte: Number($qe('qeDashYtd').value)
+    anos, ytdAte: Number($qe('qeDashMes').value)
   };
 }
 function salvarFormDash() {
@@ -6010,6 +6063,7 @@ function salvarFormDash() {
     dash.itens.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
     if (!gravarDashboards()) { msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
     renderDash();
+    recarregarDadosDoDashboard(a);
     prepararFormDash('novo');
     mostrarFormDash(false);
     msgEm('qeDashMsg', tx('ui.dash_parametros_salvos', { nome: a.nome }), 'ok');
@@ -6030,6 +6084,7 @@ function salvarFormDash() {
   substituirQuadro(layout && layout.charts && layout.charts.length ? layout : { charts: [{ filters: { ...defaultFilters }, size: tamanhoTipico(), pos: { x: BOARD_M, y: BOARD_M } }] });
   definirDashAtual(d);
   gravarLayoutDashboard();
+  recarregarDadosDoDashboard(d);
   prepararFormDash('novo');
   mostrarFormDash(false);
   msgEm('qeDashMsg', tx('ui.dash_criado', { nome: d.nome }), 'ok');
@@ -6053,6 +6108,7 @@ function renderDash() {
     linha(tx('ui.dash_visao'), nomeVisao(a.visao)),
     linha(tx('ui.dash_anos'), (a.anos || []).join(', ')),
     linha(tx('ui.dash_ytd'), nomeMes(a.ytdAte)),
+    dadosCarga.dtRef ? linha(tx('ui.dash_dados'), tx(dadosCarga.semCarga ? 'ui.dash_dados_sem' : 'ui.dash_dados_ref', { ref: nomeDtRef(dadosCarga.dtRef) })) : '',
     linha(tx('ui.dash_criado_em'), dataHoraLocal(a.criadoEm)),
     linha(tx('ui.dash_criado_por'), a.criadoPor || '—')
   ].join('') : `<span>${escapeHtml(tx('ui.dash_nenhum'))}</span>`;
@@ -6109,7 +6165,7 @@ function initDashboards() {
     mostrarFormDash(true);
     msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
   });
-  $qe('qeDashMes').addEventListener('change', () => { if (dash.modo !== 'editar') $qe('qeDashYtd').value = $qe('qeDashMes').value; atualizarNomeSugerido(); });
+  $qe('qeDashMes').addEventListener('change', () => { $qe('qeDashYtd').value = $qe('qeDashMes').value; atualizarNomeSugerido(); });
   $qe('qeDashAno').addEventListener('change', atualizarNomeSugerido);
   $qe('qeDashNome').addEventListener('input', () => { dash.nomeEditado = true; limparErrosDash(); });
   $qe('qeDashNome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); salvarFormDash(); } });
