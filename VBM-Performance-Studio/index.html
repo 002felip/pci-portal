@@ -5926,6 +5926,51 @@ function dtRefDoDashboardSalvo() {
     return id ? dtRefDe(lerDashboards().find(d => d.id === id)) : null;
   } catch (e) { return null; }
 }
+// ── Períodos dos gráficos ao trocar a referência (reutilizar / alterar datas) ──
+// Cada rótulo de coluna ("Q4F 26", "SepA 26", "H2B 26", "YTDA 26", "26F") vai para o
+// mesmo período deslocado pela diferença de anos entre as referências; a letra A/F
+// é refeita para a nova referência (fechado = A, em aberto = F), como na carga.
+const MESES_ROTULO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function deslocarRotulo(rotulo, delta, ref) {
+  const t = String(rotulo);
+  const ano2 = yy => String((2000 + Number(yy) + delta) % 100).padStart(2, '0');
+  // A/F: o período fecha até o mês de referência → 'A'
+  const letra = (s, yy, mesFim) => (s !== 'A' && s !== 'F') ? s
+    : ((2000 + Number(yy) + delta) * 12 + mesFim <= ref.ano * 12 + ref.mes ? 'A' : 'F');
+  let m;
+  if ((m = /^([A-Z][a-z]{2})([BPAF]) (\d{2})$/.exec(t)) && MESES_ROTULO.includes(m[1])) return `${m[1]}${letra(m[2], m[3], MESES_ROTULO.indexOf(m[1]) + 1)} ${ano2(m[3])}`;
+  if ((m = /^Q([1-4])([BPAF]) (\d{2})$/.exec(t))) return `Q${m[1]}${letra(m[2], m[3], m[1] * 3)} ${ano2(m[3])}`;
+  if ((m = /^H([12])([BPAF]) (\d{2})$/.exec(t))) return `H${m[1]}${letra(m[2], m[3], m[1] * 6)} ${ano2(m[3])}`;
+  if ((m = /^YTD([BPA]) (\d{2})$/.exec(t))) return `YTD${m[1]} ${ano2(m[2])}`; // YTD: só meses fechados
+  if ((m = /^(\d{2})([BPAF])$/.exec(t))) return `${ano2(m[1])}${letra(m[2], m[1], 12)}`;
+  return t; // rótulo desconhecido: fica como está
+}
+// Cópia do layout com Ano, Horizonte, ordem das colunas, deltas manuais e cores
+// por coluna traduzidos de uma referência {mes, ano} para outra
+function deslocarLayout(layout, de, para) {
+  const copia = JSON.parse(JSON.stringify(layout || null));
+  if (!copia || !Array.isArray(copia.charts) || !de || !para) return copia;
+  const delta = para.ano - de.ano;
+  const rot = t => deslocarRotulo(t, delta, para);
+  copia.charts.forEach(c => {
+    const f = c.filters || {};
+    if (Array.isArray(f.ano)) f.ano = f.ano.map(a => String(Number(a) + delta));
+    if (Array.isArray(f.horizontes)) f.horizontes = [...new Set(f.horizontes.map(rot))];
+    if (c.cfg) {
+      if (Array.isArray(c.cfg.ordemColunas)) c.cfg.ordemColunas = [...new Set(c.cfg.ordemColunas.map(rot))];
+      if (Array.isArray(c.cfg.deltasManuais)) c.cfg.deltasManuais = [...new Set(c.cfg.deltasManuais.map(rot))];
+    }
+    if (c.colors) c.colors = Object.fromEntries(Object.entries(c.colors).map(([k, v]) => [k.startsWith(COL_PREFIXO) ? COL_PREFIXO + rot(k.slice(COL_PREFIXO.length)) : k, v]));
+    c.page = 0;
+  });
+  return copia;
+}
+// Referência dos dados que estão no quadro agora ({mes, ano}); null = desconhecida
+function referenciaDoQuadro() {
+  if (dadosCarga.dtRef) return { ano: Number(dadosCarga.dtRef.slice(0, 4)), mes: Number(dadosCarga.dtRef.slice(5, 7)) };
+  return comReferencias() ? { ano: dashReferencias[0].ano, mes: dashReferencias[0].mes } : null;
+}
+
 // Referências com carga no banco (DT_REF da tabela), da mais recente para a
 // mais antiga. null = API indisponível (dados de exemplo): o formulário
 // mantém todos os meses; [] = tabela sem carga: não dá para criar/alterar.
@@ -5940,6 +5985,7 @@ async function carregarReferenciasDash() {
       // Formulário aberto: refaz as opções mantendo a escolha, se ela tiver carga
       const padrao = referenciaPadrao();
       preencherMesAno({ mes: Number($qe('qeDashMes').value) || padrao.mes, ano: Number($qe('qeDashAno').value) || padrao.ano });
+      deslocarAnosDash();
       atualizarNomeSugerido();
       return;
     } catch (e) { /* tenta a próxima base */ }
@@ -6077,7 +6123,8 @@ function prepararFormDash(modo, origem) {
   const marcados = dash.modo === 'editar' ? base.anos
     : dash.modo === 'reuso' && base.anos ? base.anos.map(a => a + (ref.ano - base.anoRef)) : [ref.ano, ref.ano - 1];
   preencherMesAno(ref, marcados);
-  $qe('qeDashAnos').innerHTML = anosDisponiveis(marcados).map(a => `<label class="qe-check"><input type="checkbox" data-dash-ano="${a}"${marcados.includes(a) ? ' checked' : ''}> ${a}</label>`).join('');
+  renderAnosDash(marcados);
+  $qe('qeDashAno').dataset.anterior = String(ref.ano);
   $qe('qeDashDesc').value = dash.modo === 'editar' ? base.descricao || '' : dash.modo === 'reuso' ? base.descricao || '' : '';
   $qe('qeDashVisao').value = base && DASH_VISOES[base.visao] ? base.visao : DASH_VISAO_PADRAO;
   $qe('qeDashCopiar').checked = charts.length > 0;
@@ -6092,6 +6139,17 @@ function prepararFormDash(modo, origem) {
   dash.nomeEditado = false;
   if (dash.modo === 'editar') { $qe('qeDashNome').value = base.nome; dash.nomeEditado = true; } else atualizarNomeSugerido();
   limparErrosDash();
+}
+function renderAnosDash(marcados) {
+  $qe('qeDashAnos').innerHTML = anosDisponiveis(marcados).map(a => `<label class="qe-check"><input type="checkbox" data-dash-ano="${a}"${marcados.includes(a) ? ' checked' : ''}> ${a}</label>`).join('');
+}
+// Troca do ano no formulário: os anos marcados andam junto (2025+2026 → 2024+2025)
+function deslocarAnosDash() {
+  const sel = $qe('qeDashAno'), novo = Number(sel.value), antes = Number(sel.dataset.anterior) || novo;
+  sel.dataset.anterior = String(novo);
+  if (novo === antes) return;
+  const marcados = [...$qe('qeDashAnos').querySelectorAll('input:checked')].map(i => Number(i.dataset.dashAno) + novo - antes);
+  renderAnosDash(marcados.length ? marcados : [novo, novo - 1]);
 }
 function atualizarNomeSugerido() {
   if (dash.nomeEditado) return;
@@ -6123,7 +6181,12 @@ function salvarFormDash() {
   if (dash.modo === 'editar') {
     const a = dash.atual, v = a && lerFormDash(a.id);
     if (!v) return;
+    const antes = { mes: a.mesRef, ano: a.anoRef };
+    stashActive();
+    const layoutAtual = layoutDoQuadro();
     Object.assign(a, v, { atualizadoEm: new Date().toISOString() });
+    // Data mudou: os gráficos passam para os períodos da nova referência (grava no dashboard)
+    if (antes.mes !== v.mesRef || antes.ano !== v.anoRef) substituirQuadro(deslocarLayout(layoutAtual, antes, { mes: v.mesRef, ano: v.anoRef }));
     dash.itens.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
     if (!gravarDashboards()) { msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
     renderDash();
@@ -6138,8 +6201,9 @@ function salvarFormDash() {
   if (!v) return;
   stashActive();
   const agora = new Date().toISOString();
-  const layout = dash.modo === 'reuso' ? JSON.parse(JSON.stringify(dash.origem.layout || null))
-    : $qe('qeDashCopiar').checked ? layoutDoQuadro() : null;
+  const para = { mes: v.mesRef, ano: v.anoRef };
+  const layout = dash.modo === 'reuso' ? deslocarLayout(dash.origem.layout, { mes: dash.origem.mesRef, ano: dash.origem.anoRef }, para)
+    : $qe('qeDashCopiar').checked ? deslocarLayout(layoutDoQuadro(), referenciaDoQuadro(), para) : null;
   const d = { id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...v, status: 'S', criadoEm: agora, criadoPor: usuarioLogado || '', atualizadoEm: agora, layout };
   dash.itens = [...dash.itens, d].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   if (!gravarDashboards()) { dash.itens = dash.itens.filter(x => x !== d); msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
@@ -6262,7 +6326,7 @@ function initDashboards() {
     msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
   });
   $qe('qeDashMes').addEventListener('change', () => { $qe('qeDashYtd').value = $qe('qeDashMes').value; atualizarNomeSugerido(); });
-  $qe('qeDashAno').addEventListener('change', () => { preencherMeses(Number($qe('qeDashMes').value)); atualizarNomeSugerido(); });
+  $qe('qeDashAno').addEventListener('change', () => { preencherMeses(Number($qe('qeDashMes').value)); deslocarAnosDash(); atualizarNomeSugerido(); });
   $qe('qeDashNome').addEventListener('input', () => { dash.nomeEditado = true; limparErrosDash(); });
   $qe('qeDashNome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); salvarFormDash(); } });
   $qe('qeDashAnos').addEventListener('change', limparErrosDash);
