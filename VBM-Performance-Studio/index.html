@@ -1583,13 +1583,14 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <div class="qe-row">
           <div class="qe-field">
             <label class="qe-label" for="qeDashMes" data-i18n="ui.dash_mes_ref">Mês referência</label>
-            <select class="qe-select" id="qeDashMes"></select>
+            <select class="qe-select" id="qeDashMes" aria-describedby="qeDashRefHint"></select>
           </div>
           <div class="qe-field">
             <label class="qe-label" for="qeDashAno" data-i18n="ui.dash_ano_ref">Ano referência</label>
-            <select class="qe-select" id="qeDashAno"></select>
+            <select class="qe-select" id="qeDashAno" aria-describedby="qeDashRefHint"></select>
           </div>
         </div>
+        <p class="qe-hint" id="qeDashRefHint" hidden></p>
         <div class="qe-field">
           <label class="qe-label" for="qeDashNome"><span data-i18n="ui.dash_nome">Nome do dashboard</span> <span aria-hidden="true">*</span></label>
           <input class="qe-input" id="qeDashNome" type="text" maxlength="100" autocomplete="off" required aria-required="true" aria-describedby="qeDashNomeHint qeDashNomeErr">
@@ -2299,6 +2300,8 @@ const I18N_UI = {
   'ui.dash_anos': ['Anos extraídos do banco', 'Years extracted from the database'],
   'ui.dash_anos_obrigatorio': ['Selecione ao menos um ano.', 'Select at least one year.'],
   'ui.dash_ytd': ['Year to Date até', 'Year to Date through'],
+  'ui.dash_ref_hint': ['Só aparecem os meses com carga no banco (DT_REF).', 'Only months with data loaded in the database (DT_REF) are listed.'],
+  'ui.dash_sem_referencias': ['Nenhuma carga no banco ainda. Rode a carga mensal para criar ou alterar dashboards.', 'No data loaded in the database yet. Run the monthly load to create or change dashboards.'],
   'ui.dash_ytd_hint': ['Acompanha o mês de referência: os dados gravados no banco vão até esse mês.', 'Follows the reference month: the data stored in the database runs through that month.'],
   'ui.dash_dados': ['Dados exibidos', 'Data shown'],
   'ui.dash_dados_ref': ['carga de {ref}', '{ref} load'],
@@ -5910,6 +5913,56 @@ function dtRefDoDashboardSalvo() {
     return id ? dtRefDe(lerDashboards().find(d => d.id === id)) : null;
   } catch (e) { return null; }
 }
+// Referências com carga no banco (DT_REF da tabela), da mais recente para a
+// mais antiga. null = API indisponível (dados de exemplo): o formulário
+// mantém todos os meses; [] = tabela sem carga: não dá para criar/alterar.
+let dashReferencias = null;
+async function carregarReferenciasDash() {
+  for (const base of performanceHubApiBase ? [performanceHubApiBase] : basesDaApiResolvidas()) {
+    try {
+      const lista = await buscarJsonDaApi(base, 'chart-data/referencias');
+      dashReferencias = (Array.isArray(lista) ? lista : [])
+        .map(r => ({ ano: Number(String(r.dtRef).slice(0, 4)), mes: Number(String(r.dtRef).slice(5, 7)) }))
+        .filter(r => r.ano && r.mes >= 1 && r.mes <= 12);
+      // Formulário aberto: refaz as opções mantendo a escolha, se ela tiver carga
+      const padrao = referenciaPadrao();
+      preencherMesAno({ mes: Number($qe('qeDashMes').value) || padrao.mes, ano: Number($qe('qeDashAno').value) || padrao.ano });
+      atualizarNomeSugerido();
+      return;
+    } catch (e) { /* tenta a próxima base */ }
+  }
+}
+const comReferencias = () => Array.isArray(dashReferencias) && dashReferencias.length > 0;
+const temReferencia = (ano, mes) => !comReferencias() || dashReferencias.some(r => r.ano === ano && r.mes === mes);
+// Mês/ano pedido, se tiver carga; senão a carga mais recente
+const referenciaValida = ref => (temReferencia(ref.ano, ref.mes) ? ref : { ano: dashReferencias[0].ano, mes: dashReferencias[0].mes });
+function preencherMesAno(ref, anosExtras) {
+  ref = referenciaValida(ref);
+  const ano = $qe('qeDashAno');
+  const anos = comReferencias() ? [...new Set(dashReferencias.map(r => r.ano))] : anosDisponiveis([ref.ano, ...(anosExtras || [])]);
+  ano.innerHTML = '';
+  anos.forEach(a => ano.add(new Option(String(a), String(a))));
+  ano.value = String(ref.ano);
+  preencherMeses(ref.mes);
+  atualizarEstadoReferencias();
+}
+// Meses do ano escolhido (só os com carga); YTD acompanha o mês
+function preencherMeses(mesDesejado) {
+  const mes = $qe('qeDashMes'), ytd = $qe('qeDashYtd'), anoSel = Number($qe('qeDashAno').value);
+  const meses = comReferencias() ? dashReferencias.filter(r => r.ano === anoSel).map(r => r.mes).sort((a, b) => a - b)
+    : Array.from({ length: 12 }, (_, i) => i + 1);
+  mes.innerHTML = ''; ytd.innerHTML = '';
+  meses.forEach(m => { mes.add(new Option(nomeMes(m), String(m))); ytd.add(new Option(nomeMes(m), String(m))); });
+  mes.value = String(meses.includes(mesDesejado) ? mesDesejado : meses[meses.length - 1]);
+  ytd.value = mes.value;
+}
+function atualizarEstadoReferencias() {
+  const vazio = Array.isArray(dashReferencias) && !dashReferencias.length;
+  $qe('qeDashMes').disabled = $qe('qeDashAno').disabled = $qe('qeDashCriar').disabled = vazio;
+  const dica = $qe('qeDashRefHint');
+  dica.textContent = vazio ? tx('ui.dash_sem_referencias') : dashReferencias ? tx('ui.dash_ref_hint') : '';
+  dica.hidden = !dica.textContent;
+}
 // Troca os dados do quadro pela carga da referência do dashboard (só se mudou)
 async function recarregarDadosDoDashboard(d) {
   const alvo = dtRefDe(d);
@@ -6003,17 +6056,14 @@ function prepararFormDash(modo, origem) {
   dash.modo = modo || 'novo';
   dash.origem = origem || null;
   const base = dash.modo === 'editar' ? dash.atual : dash.origem;
-  const ref = dash.modo === 'editar' ? { mes: base.mesRef, ano: base.anoRef }
-    : dash.modo === 'reuso' ? proximoMes(base.mesRef, base.anoRef) : referenciaPadrao();
+  const pedida = dash.modo === 'editar' ? { mes: base.mesRef, ano: base.anoRef }
+    : dash.modo === 'reuso' ? proximoMes(base.mesRef, base.anoRef)
+    : comReferencias() ? { mes: dashReferencias[0].mes, ano: dashReferencias[0].ano } : referenciaPadrao();
+  const ref = comReferencias() ? referenciaValida(pedida) : pedida;
   const anos = anosDisponiveis([ref.ano, ...(base && base.anos ? base.anos : [])]);
   const marcados = dash.modo === 'editar' ? base.anos
     : dash.modo === 'reuso' && base.anos ? base.anos.map(a => a + (ref.ano - base.anoRef)) : [ref.ano, ref.ano - 1];
-  const mes = $qe('qeDashMes'), ano = $qe('qeDashAno'), ytd = $qe('qeDashYtd');
-  mes.innerHTML = ''; ytd.innerHTML = ''; ano.innerHTML = '';
-  for (let m = 1; m <= 12; m++) { mes.add(new Option(nomeMes(m), String(m))); ytd.add(new Option(nomeMes(m), String(m))); }
-  anosDisponiveis([...marcados, ref.ano]).forEach(a => ano.add(new Option(String(a), String(a))));
-  mes.value = String(ref.mes); ano.value = String(ref.ano);
-  ytd.value = String(ref.mes);
+  preencherMesAno(ref, marcados);
   $qe('qeDashAnos').innerHTML = anosDisponiveis(marcados).map(a => `<label class="qe-check"><input type="checkbox" data-dash-ano="${a}"${marcados.includes(a) ? ' checked' : ''}> ${a}</label>`).join('');
   $qe('qeDashDesc').value = dash.modo === 'editar' ? base.descricao || '' : dash.modo === 'reuso' ? base.descricao || '' : '';
   $qe('qeDashVisao').value = base && DASH_VISOES[base.visao] ? base.visao : DASH_VISAO_PADRAO;
@@ -6047,6 +6097,7 @@ function lerFormDash(excetoId) {
   const erroNome = msg => { nomeEl.setAttribute('aria-invalid', 'true'); $qe('qeDashNomeErr').textContent = msg; $qe('qeDashNomeErr').hidden = false; nomeEl.focus(); return null; };
   if (!nome) return erroNome(tx('ui.dash_nome_obrigatorio'));
   if (nomeEmUso(nome, excetoId)) return erroNome(tx('ui.dash_nome_duplicado'));
+  if (!temReferencia(Number($qe('qeDashAno').value), Number($qe('qeDashMes').value))) { msgEm('qeDashMsg', tx('ui.dash_ref_hint'), 'err'); $qe('qeDashMes').focus(); return null; }
   if (!anos.length) { $qe('qeDashAnosErr').textContent = tx('ui.dash_anos_obrigatorio'); $qe('qeDashAnosErr').hidden = false; $qe('qeDashAnos').querySelector('input')?.focus(); return null; }
   return {
     nome, descricao: $qe('qeDashDesc').value.trim().slice(0, 500),
@@ -6124,6 +6175,7 @@ function renderDash() {
   if (editorReady && editor.open && editor.view === 'dash') renderEditorTarget();
 }
 function abrirDashView() {
+  carregarReferenciasDash();
   dash.itens = lerDashboards();
   if (dash.atual) dash.atual = dash.itens.find(d => d.id === dash.atual.id) || null;
   prepararFormDash('novo');
@@ -6133,6 +6185,7 @@ function abrirDashView() {
 
 function initDashboards() {
   dash.itens = lerDashboards();
+  carregarReferenciasDash();
   const escolhido = () => {
     const d = dash.itens.find(x => x.id === $qe('qeDashLista').value);
     if (!d) { msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); $qe('qeDashLista').focus(); }
@@ -6166,7 +6219,7 @@ function initDashboards() {
     msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
   });
   $qe('qeDashMes').addEventListener('change', () => { $qe('qeDashYtd').value = $qe('qeDashMes').value; atualizarNomeSugerido(); });
-  $qe('qeDashAno').addEventListener('change', atualizarNomeSugerido);
+  $qe('qeDashAno').addEventListener('change', () => { preencherMeses(Number($qe('qeDashMes').value)); atualizarNomeSugerido(); });
   $qe('qeDashNome').addEventListener('input', () => { dash.nomeEditado = true; limparErrosDash(); });
   $qe('qeDashNome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); salvarFormDash(); } });
   $qe('qeDashAnos').addEventListener('change', limparErrosDash);
