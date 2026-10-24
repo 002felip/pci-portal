@@ -28,10 +28,13 @@ const express = require('express');
 const multer = require('multer');
 const sql = require('mssql');
 
+// Consulta AO VIVO às bases de origem. É a mesma lógica que a carga mensal
+// (database/003_carga_mensal.sql) grava em IBP.PHUB_PERFORMANCESTUDIO; o
+// dashboard só a usa enquanto a tabela não existe ou não tem carga.
 // Janela e data de referência vêm do banco (IBP.CONTROLE_PROCESSOS),
 // nunca do relógio do servidor de aplicação: é @DT_REF que decide o
 // corte Actual/Forecast ('A' vs 'F') de cada período.
-const CHART_DATA_SQL = `
+const CHART_DATA_AO_VIVO_SQL = `
 DECLARE @DT_INI AS DATE, @DT_FIM AS DATE, @DT_REF AS DATE, @YTD_FIM AS DATE
 
 SET @DT_INI = '2025-01-01'
@@ -298,6 +301,39 @@ GROUP BY
 
 ORDER BY ORDEM_ANO, ORDEM_VISAO, ORDEM_PERIODO, ORDEM_SERIE`;
 
+// Dashboard servido por /chart-data (IBP.DASHBOARD.ID_DASH)
+const ID_DASH = 21;
+
+// Fonte do dashboard: última carga mensal gravada em IBP.PHUB_PERFORMANCESTUDIO
+// (database/002_snapshot_mensal.sql e 003_carga_mensal.sql). Só leitura; o
+// dashboard entra por parâmetro (@idDash). Devolve exatamente as colunas e os
+// nomes da consulta ao vivo, então o index.html não muda. Nome do KPI e unidade
+// vêm de IBP.DASHBOARD (mesmo join da consulta ao vivo).
+const CHART_DATA_SQL = `
+DECLARE @DT_CARGA DATE = (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @idDash)
+
+SELECT
+  R.DT_IND AS DT_REF,
+  R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  DASH.NM_KPIS_DASH AS NM_KPI, DASH.SG_UNID,
+  R.NM_TIPO_VISAO AS NM_TYPE,
+  R.NM_VISAO AS [Type],
+  R.VL_KPI AS [Value],
+  R.CD_PERIODO AS CD_VISAO, R.ORDEM_VISAO,
+  R.ORDEM_ANO, R.ORDEM_PERIODO,
+  R.ID_TIPO_VISAO AS ORDEM_SERIE
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+  INNER JOIN IBP.DASHBOARD DASH
+    ON DASH.ID_DASH = R.ID_DASH
+    AND R.ID_SISTEMA = DASH.ID_SISTEMA
+    AND CONCAT(R.ID_SITE, R.ID_OPERACAO, R.ID_KPI) = CONCAT(DASH.ID_SITE, DASH.ID_OPERACAO, DASH.ID_KPI)
+WHERE R.DT_REF = @DT_CARGA
+  AND R.ID_DASH = @idDash
+ORDER BY R.ORDEM_ANO, R.ORDEM_VISAO, R.ORDEM_PERIODO, R.ID_TIPO_VISAO`;
+
+// 208 = "Invalid object name": a tabela ainda não foi criada nesta base
+const SQL_OBJETO_INEXISTENTE = 208;
+
 // A origem correta é IBP.DASHBOARD.ID_SITE (todo site configurado para
 // este dashboard), não IBP.PEDRAVISAOCONSOLIDADA: partir de PVC por
 // INNER JOIN omite qualquer site cadastrado no DASHBOARD mas ainda sem
@@ -541,10 +577,11 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     return dados;
   }
 
-  function rota(caminho, chaveCache, consulta, oQueFalhou) {
+  // `buscar`: função que devolve as linhas (vai para o cache)
+  function rota(caminho, chaveCache, buscar, oQueFalhou) {
     router.get(caminho, async (req, res) => {
       try {
-        const dados = await comCache(chaveCache, async () => (await runQuery(consulta)).recordset);
+        const dados = await comCache(chaveCache, buscar);
         res.json(dados);
       } catch (err) {
         console.error(`[performance-studio] Erro ao buscar ${chaveCache}:`, err.message);
@@ -559,8 +596,24 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     res.json({ ok: true, caminhoRecebido: req.originalUrl });
   });
 
-  rota('/chart-data', 'chart-data', CHART_DATA_SQL, 'Failed to fetch chart data');
-  rota('/sites', 'sites', SITES_SQL, 'Failed to fetch sites');
+  // Lê a última carga de IBP.PHUB_PERFORMANCESTUDIO. Sem tabela ou sem carga
+  // para o dashboard, cai na consulta ao vivo (mesmo formato) e avisa no log;
+  // qualquer outro erro do banco segue como erro.
+  async function buscarChartData() {
+    try {
+      const r = await runQuery(CHART_DATA_SQL, { idDash: [sql.Int, ID_DASH] });
+      if (r.recordset.length) return r.recordset;
+      console.warn('[performance-studio] IBP.PHUB_PERFORMANCESTUDIO sem carga para o dashboard: usando a consulta ao vivo');
+    } catch (err) {
+      const numero = err.number ?? err.originalError?.info?.number;
+      if (numero !== SQL_OBJETO_INEXISTENTE) throw err;
+      console.warn('[performance-studio] IBP.PHUB_PERFORMANCESTUDIO não existe nesta base: usando a consulta ao vivo');
+    }
+    return (await runQuery(CHART_DATA_AO_VIVO_SQL)).recordset;
+  }
+
+  rota('/chart-data', 'chart-data', buscarChartData, 'Failed to fetch chart data');
+  rota('/sites', 'sites', async () => (await runQuery(SITES_SQL)).recordset, 'Failed to fetch sites');
 
   // Lista das configurações salvas (sem cache: reflete a última gravação).
   router.get('/config-graficos', async (req, res) => {
@@ -708,4 +761,4 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
   return router;
 }
 
-module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, CHART_DATA_SQL, SITES_SQL };
+module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, SITES_SQL };
