@@ -586,6 +586,64 @@ function respostaDeErroConfig(res, err, acao) {
  * MESMA instância em todos compartilha o cache — não multiplica ida ao
  * banco.
  */
+// ── Dashboards gravados no banco (database/004_dashboards.sql) ──────────
+// IBP.PHUB_PS_SETUP: um dashboard por linha, gráficos em JSON (DS_LAYOUT).
+// IBP.PHUB_PS_ACESSO: editores escolhidos pelo dono (e-mails da IBP.USERS).
+// Dono altera, ativa/desativa, exclui e define editores; editor altera e
+// reutiliza; os demais usuários do Studio só visualizam os ativos.
+const DASH_SETUP = 'IBP.PHUB_PS_SETUP';
+const DASH_ACESSO = 'IBP.PHUB_PS_ACESSO';
+const DASH_VISOES = ['VBM_PRODUCTION_ANALYTICS'];
+const DASH_NOME_MAX = 100;     // = NVARCHAR(100) de NM_DASHBOARD
+const DASH_DESC_MAX = 500;     // = NVARCHAR(500) de DS_DASHBOARD
+const DASH_GRAFICOS_MAX = 30;
+const DASH_EDITORES_MAX = 50;
+const EMAIL_MAX = 200;         // = NVARCHAR(200) de NM_USUARIO
+const EMAIL_RE = /^[^\s@<>()[\]\\,;:"']+@[^\s@<>()[\]\\,;:"']+\.[A-Za-z]{2,}$/;
+
+// E-mail em minúsculas, ou null se vazio/inválido
+function lerEmail(valor) {
+  const e = String(valor || '').trim().toLowerCase();
+  return e.length <= EMAIL_MAX && EMAIL_RE.test(e) ? e : null;
+}
+
+// Corpo de criação/alteração → valores prontos para gravar, ou { erro, campo }
+function normalizarDashboard(entrada) {
+  const c = entrada && typeof entrada === 'object' ? entrada : {};
+  const nome = typeof c.nome === 'string' ? c.nome.trim() : '';
+  if (!nome) return { erro: 'Informe o nome do dashboard.', campo: 'nome' };
+  if (nome.length > DASH_NOME_MAX) return { erro: `O nome do dashboard aceita no máximo ${DASH_NOME_MAX} caracteres.`, campo: 'nome' };
+  const descricao = typeof c.descricao === 'string' ? c.descricao.trim().slice(0, DASH_DESC_MAX) : '';
+  if (!DASH_VISOES.includes(c.visao)) return { erro: 'Visão inválida.', campo: 'visao' };
+  const dtRef = lerDtRef(c.dtRef);
+  if (!dtRef) return { erro: 'Mês de referência inválido: use AAAA-MM.', campo: 'dtRef' };
+  const g = c.layout && c.layout.charts;
+  if (!Array.isArray(g) || g.length > DASH_GRAFICOS_MAX || g.some(x => !x || typeof x !== 'object' || Array.isArray(x))) {
+    return { erro: `Gráficos inválidos (até ${DASH_GRAFICOS_MAX} por dashboard).`, campo: 'layout' };
+  }
+  return { nome, descricao: descricao || null, visao: c.visao, dtRef, layout: JSON.stringify({ charts: g }) };
+}
+
+// Linha do banco → objeto da API (papel do usuário: dono, editor ou leitor)
+function dashboardDaLinha(l, email) {
+  let layout = { charts: [] };
+  try { layout = JSON.parse(l.DS_LAYOUT); } catch (e) { /* CHECK ISJSON garante; defesa */ }
+  return {
+    id: l.ID_DASHBOARD,
+    nome: l.NM_DASHBOARD,
+    descricao: l.DS_DASHBOARD || '',
+    visao: l.CD_VISAO,
+    dtRef: new Date(l.DT_REF).toISOString().slice(0, 7),
+    ativo: l.SG_ATIVO === 'S',
+    dono: l.NM_USUARIO_CRIACAO,
+    papel: l.NM_USUARIO_CRIACAO === email ? 'dono' : l.EDITOR ? 'editor' : 'leitor',
+    criadoEm: l.DT_CRIACAO,
+    atualizadoEm: l.DT_ATUALIZACAO,
+    atualizadoPor: l.NM_USUARIO,
+    layout,
+  };
+}
+
 function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento, pastaFundos }) {
   if (typeof runQuery !== 'function') {
     throw new Error('criarPerformanceHubRouter: `runQuery` é obrigatório');
@@ -820,7 +878,202 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     }
   });
 
+  // ── Dashboards ───────────────────────────────────────────────────────
+  // Usuário = X-Forwarded-Email (proxy do Databricks Apps; o navegador não o
+  // forja). Sem ele: 401. Todos os valores entram por parâmetro.
+  const jsonDash = express.json({ limit: '256kb' });
+  const DASH_DUPLICADO = { error: 'Já existe um dashboard ativo deste dono com este nome. Escolha outro nome.', campo: 'nome', codigo: 'NOME_DUPLICADO' };
+  const nomeDuplicado = err => err.number === 2627 || err.number === 2601;
+  const lerId = v => { const n = Number(v); return Number.isInteger(n) && n > 0 && n <= 2147483647 ? n : null; };
+  const COLUNAS_DASH = `S.ID_DASHBOARD, S.NM_DASHBOARD, S.DS_DASHBOARD, S.CD_VISAO, S.DT_REF, S.DS_LAYOUT, S.SG_ATIVO,
+    S.NM_USUARIO_CRIACAO, S.DT_CRIACAO, S.NM_USUARIO, S.DT_ATUALIZACAO,
+    CASE WHEN A.NM_USUARIO IS NULL THEN 0 ELSE 1 END AS EDITOR
+    FROM ${DASH_SETUP} S
+    LEFT JOIN ${DASH_ACESSO} A ON A.ID_DASHBOARD = S.ID_DASHBOARD AND A.NM_USUARIO = @email`;
+
+  // Rota com usuário identificado; erro de banco → 500 sem detalhes internos
+  const comUsuario = (acao, handler) => async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const email = lerEmail(req.get('X-Forwarded-Email'));
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.' });
+    try {
+      await handler(req, res, email);
+    } catch (err) {
+      console.error(`[performance-studio] dashboards (${acao}):`, err.message);
+      if (!res.headersSent) res.status(500).json({ error: `Falha ao ${acao} o dashboard.`, codigo: 'ERRO_BANCO' });
+    }
+  };
+
+  // Um dashboard visível para o usuário (inativo só para o dono); null = não existe
+  async function lerUmDashboard(id, email) {
+    const r = await runQuery(`SELECT ${COLUNAS_DASH} WHERE S.ID_DASHBOARD = @id`,
+      { id: [sql.Int, id], email: [sql.NVarChar(EMAIL_MAX), email] });
+    const l = r.recordset[0];
+    return l && (l.SG_ATIVO === 'S' || l.NM_USUARIO_CRIACAO === email) ? dashboardDaLinha(l, email) : null;
+  }
+  // Dashboard de :id se o papel do usuário estiver em `papeis`; senão responde e devolve null
+  async function dashboardPermitido(req, res, email, papeis) {
+    const id = lerId(req.params.id);
+    if (!id) { res.status(400).json({ error: 'Identificador de dashboard inválido.' }); return null; }
+    const d = await lerUmDashboard(id, email);
+    if (!d) { res.status(404).json({ error: 'Dashboard não encontrado.' }); return null; }
+    if (!papeis.includes(d.papel)) {
+      res.status(403).json({ error: d.papel === 'leitor' ? 'Você tem acesso só de leitura a este dashboard.' : 'Só o dono do dashboard pode fazer isso.' });
+      return null;
+    }
+    return d;
+  }
+  const paramsDash = (v, email) => ({
+    nome: [sql.NVarChar(DASH_NOME_MAX), v.nome],
+    descricao: [sql.NVarChar(DASH_DESC_MAX), v.descricao],
+    visao: [sql.VarChar(40), v.visao],
+    dtRef: [sql.Date, new Date(`${v.dtRef}T00:00:00Z`)],
+    layout: [sql.NVarChar(sql.MAX), v.layout],
+    email: [sql.NVarChar(EMAIL_MAX), email],
+  });
+
+  // Usuários da IBP.USERS com CD_MATRICULA (mesma regra do controle de acesso do Portal)
+  let colunaUsuarios = null;
+  function colunaEmailUsuarios() {
+    if (!colunaUsuarios) {
+      colunaUsuarios = Promise.resolve()
+        .then(() => require('../portal-acesso'))
+        .then(m => m.descobrirColunaEmail(runQuery).then(coluna => ({ coluna, tabela: `[${m.TABELA_USUARIOS.esquema}].[${m.TABELA_USUARIOS.nome}]` })))
+        .catch(err => { colunaUsuarios = null; throw err; });
+    }
+    return colunaUsuarios;
+  }
+  const filtroMatricula = `CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(CAST(CD_MATRICULA AS NVARCHAR(100)))) <> ''`;
+
+  router.get('/dashboards', comUsuario('listar', async (req, res, email) => {
+    const r = await runQuery(`SELECT ${COLUNAS_DASH} WHERE S.SG_ATIVO = 'S' OR S.NM_USUARIO_CRIACAO = @email ORDER BY S.NM_DASHBOARD`,
+      { email: [sql.NVarChar(EMAIL_MAX), email] });
+    res.json({ usuario: email, itens: r.recordset.map(l => dashboardDaLinha(l, email)) });
+  }));
+
+  // Criar (origemId = reutilizar outro: exige ser dono ou editor da origem)
+  router.post('/dashboards', jsonDash, comUsuario('criar', async (req, res, email) => {
+    if (!req.is('application/json')) return res.status(415).json({ error: 'Envie JSON.' });
+    const v = normalizarDashboard(req.body);
+    if (v.erro) return res.status(400).json({ error: v.erro, campo: v.campo });
+    if (req.body.origemId != null) {
+      const id = lerId(req.body.origemId);
+      const origem = id && await lerUmDashboard(id, email);
+      if (!origem) return res.status(404).json({ error: 'Dashboard de origem não encontrado.' });
+      if (origem.papel === 'leitor') return res.status(403).json({ error: 'Você tem acesso só de leitura ao dashboard de origem.' });
+    }
+    try {
+      const r = await runQuery(
+        `INSERT INTO ${DASH_SETUP} (NM_DASHBOARD, DS_DASHBOARD, CD_VISAO, DT_REF, DS_LAYOUT, NM_USUARIO_CRIACAO, NM_USUARIO)
+         OUTPUT INSERTED.ID_DASHBOARD
+         VALUES (@nome, @descricao, @visao, @dtRef, @layout, @email, @email)`, paramsDash(v, email));
+      res.status(201).json(await lerUmDashboard(r.recordset[0].ID_DASHBOARD, email));
+    } catch (err) {
+      if (nomeDuplicado(err)) return res.status(409).json(DASH_DUPLICADO);
+      throw err;
+    }
+  }));
+
+  // Alterar nome, descrição, referência e gráficos (dono ou editor)
+  router.put('/dashboards/:id', jsonDash, comUsuario('alterar', async (req, res, email) => {
+    if (!req.is('application/json')) return res.status(415).json({ error: 'Envie JSON.' });
+    const d = await dashboardPermitido(req, res, email, ['dono', 'editor']);
+    if (!d) return;
+    const v = normalizarDashboard(req.body);
+    if (v.erro) return res.status(400).json({ error: v.erro, campo: v.campo });
+    try {
+      await runQuery(
+        `UPDATE ${DASH_SETUP}
+         SET NM_DASHBOARD = @nome, DS_DASHBOARD = @descricao, CD_VISAO = @visao, DT_REF = @dtRef, DS_LAYOUT = @layout,
+             NM_USUARIO = @email, DT_ATUALIZACAO = SYSUTCDATETIME()
+         WHERE ID_DASHBOARD = @id`, { ...paramsDash(v, email), id: [sql.Int, d.id] });
+      res.json(await lerUmDashboard(d.id, email));
+    } catch (err) {
+      if (nomeDuplicado(err)) return res.status(409).json(DASH_DUPLICADO);
+      throw err;
+    }
+  }));
+
+  // Ativar / desativar (dono)
+  router.put('/dashboards/:id/ativo', jsonDash, comUsuario('ativar ou desativar', async (req, res, email) => {
+    const ativo = req.body && req.body.ativo;
+    if (typeof ativo !== 'boolean') return res.status(400).json({ error: 'Informe ativo: true ou false.', campo: 'ativo' });
+    const d = await dashboardPermitido(req, res, email, ['dono']);
+    if (!d) return;
+    try {
+      await runQuery(
+        `UPDATE ${DASH_SETUP} SET SG_ATIVO = @ativo, NM_USUARIO = @email, DT_ATUALIZACAO = SYSUTCDATETIME() WHERE ID_DASHBOARD = @id`,
+        { ativo: [sql.Char(1), ativo ? 'S' : 'N'], email: [sql.NVarChar(EMAIL_MAX), email], id: [sql.Int, d.id] });
+      res.json(await lerUmDashboard(d.id, email));
+    } catch (err) {
+      // Reativar com o nome já usado por outro dashboard ativo do dono
+      if (nomeDuplicado(err)) return res.status(409).json(DASH_DUPLICADO);
+      throw err;
+    }
+  }));
+
+  // Excluir de vez (dono); os editores saem junto (ON DELETE CASCADE)
+  router.delete('/dashboards/:id', comUsuario('excluir', async (req, res, email) => {
+    const d = await dashboardPermitido(req, res, email, ['dono']);
+    if (!d) return;
+    await runQuery(`DELETE FROM ${DASH_SETUP} WHERE ID_DASHBOARD = @id AND NM_USUARIO_CRIACAO = @email`,
+      { id: [sql.Int, d.id], email: [sql.NVarChar(EMAIL_MAX), email] });
+    res.json({ ok: true, id: d.id });
+  }));
+
+  // Editores (dono)
+  router.get('/dashboards/:id/acessos', comUsuario('ler os editores do', async (req, res, email) => {
+    const d = await dashboardPermitido(req, res, email, ['dono']);
+    if (!d) return;
+    const r = await runQuery(`SELECT NM_USUARIO FROM ${DASH_ACESSO} WHERE ID_DASHBOARD = @id ORDER BY NM_USUARIO`, { id: [sql.Int, d.id] });
+    res.json({ editores: r.recordset.map(l => l.NM_USUARIO) });
+  }));
+
+  // Substitui a lista de editores; só e-mails da IBP.USERS com CD_MATRICULA
+  router.put('/dashboards/:id/acessos', jsonDash, comUsuario('compartilhar', async (req, res, email) => {
+    const lista = req.body && req.body.editores;
+    if (!Array.isArray(lista) || lista.length > DASH_EDITORES_MAX) {
+      return res.status(400).json({ error: `Informe a lista de editores (até ${DASH_EDITORES_MAX}).`, campo: 'editores' });
+    }
+    const invalidos = lista.filter(e => !lerEmail(e));
+    if (invalidos.length) return res.status(400).json({ error: 'E-mail inválido.', campo: 'editores', invalidos });
+    const d = await dashboardPermitido(req, res, email, ['dono']);
+    if (!d) return;
+    const editores = [...new Set(lista.map(lerEmail))].filter(e => e !== d.dono);
+    const paramsEmails = Object.fromEntries(editores.map((e, i) => [`e${i}`, [sql.NVarChar(EMAIL_MAX), e]]));
+    if (editores.length) {
+      const { coluna, tabela } = await colunaEmailUsuarios();
+      const r = await runQuery(
+        `SELECT DISTINCT LOWER(LTRIM(RTRIM([${coluna}]))) AS EMAIL FROM ${tabela}
+         WHERE LOWER(LTRIM(RTRIM([${coluna}]))) IN (${editores.map((_, i) => `@e${i}`).join(', ')}) AND ${filtroMatricula}`, paramsEmails);
+      const cadastrados = new Set(r.recordset.map(l => l.EMAIL));
+      const fora = editores.filter(e => !cadastrados.has(e));
+      if (fora.length) return res.status(400).json({ error: 'Só é possível compartilhar com usuários cadastrados no Portal.', campo: 'editores', invalidos: fora });
+    }
+    await runQuery(
+      `SET XACT_ABORT ON;
+       BEGIN TRANSACTION;
+       DELETE FROM ${DASH_ACESSO} WHERE ID_DASHBOARD = @id;
+       ${editores.length ? `INSERT INTO ${DASH_ACESSO} (ID_DASHBOARD, NM_USUARIO) VALUES ${editores.map((_, i) => `(@id, @e${i})`).join(', ')};` : ''}
+       COMMIT TRANSACTION;`,
+      { id: [sql.Int, d.id], ...paramsEmails });
+    res.json({ editores });
+  }));
+
+  // E-mails que podem ser editores (sugestões na tela); 10 min em cache
+  let usuariosCache = null;
+  router.get('/usuarios', comUsuario('listar os usuários para o', async (req, res) => {
+    if (!usuariosCache || usuariosCache.expiraEm < Date.now()) {
+      const { coluna, tabela } = await colunaEmailUsuarios();
+      const r = await runQuery(
+        `SELECT DISTINCT TOP (5000) LOWER(LTRIM(RTRIM([${coluna}]))) AS EMAIL FROM ${tabela}
+         WHERE [${coluna}] IS NOT NULL AND ${filtroMatricula} ORDER BY EMAIL`);
+      usuariosCache = { itens: r.recordset.map(l => l.EMAIL).filter(e => lerEmail(e)), expiraEm: Date.now() + 10 * 60 * 1000 };
+    }
+    res.json({ itens: usuariosCache.itens });
+  }));
+
   return router;
 }
 
-module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, REFERENCIAS_SQL, SITES_SQL, lerDtRef };
+module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, normalizarDashboard, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, REFERENCIAS_SQL, SITES_SQL, lerDtRef };

@@ -28,6 +28,35 @@ const MENSAGEM = {
   erro: 'Não foi possível validar suas permissões neste momento. Tente novamente mais tarde ou contate o administrador.',
 };
 
+// Coluna de e-mail/login de IBP.USERS (exige CD_MATRICULA). Exportada para o
+// Performance Studio usar a mesma regra ao validar editores de dashboard.
+async function descobrirColunaEmail(runQuery, env = process.env) {
+  const r = await runQuery(
+    'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @esquema AND TABLE_NAME = @tabela',
+    { esquema: [sql.NVarChar(128), TABELA.esquema], tabela: [sql.NVarChar(128), TABELA.nome] });
+  let colunas = r.recordset.map(l => String(l.COLUMN_NAME));
+  if (!colunas.length) {
+    // INFORMATION_SCHEMA esconde tabelas sem permissão: lê a própria tabela
+    // (TOP 0, sem dados) — o erro do SQL Server diz a causa exata no log.
+    try {
+      const t = await runQuery(`SELECT TOP (0) * FROM [${TABELA.esquema}].[${TABELA.nome}]`);
+      colunas = Object.keys((t.recordset && t.recordset.columns) || {});
+    } catch (err) {
+      throw new Error(`${TABELA.esquema}.${TABELA.nome} inacessível para o usuário do app: ${err.message}`);
+    }
+  }
+  const porNome = n => colunas.find(c => c.toUpperCase() === n.toUpperCase());
+  if (!colunas.length) throw new Error(`tabela ${TABELA.esquema}.${TABELA.nome} não encontrada no banco`);
+  if (!porNome('CD_MATRICULA')) throw new Error(`coluna CD_MATRICULA não encontrada em ${TABELA.esquema}.${TABELA.nome}`);
+  const fixada = env.PORTAL_USERS_EMAIL_COLUMN && porNome(env.PORTAL_USERS_EMAIL_COLUMN);
+  const escolhida = fixada
+    || PREFERENCIA_EMAIL.map(porNome).find(Boolean)
+    || colunas.find(c => /E_?MAIL|UPN|LOGIN/i.test(c));
+  if (!escolhida) throw new Error(`nenhuma coluna de e-mail/login em ${TABELA.esquema}.${TABELA.nome} (defina PORTAL_USERS_EMAIL_COLUMN). Colunas: ${colunas.join(', ')}`);
+  if (!/^[A-Za-z_][A-Za-z0-9_]{0,127}$/.test(escolhida)) throw new Error(`nome de coluna inválido: ${escolhida}`);
+  return escolhida;
+}
+
 // conexoes: [{ nome, runQuery }] em ordem de preferência; usa a primeira onde
 // IBP.USERS existe com CD_MATRICULA (runQuery único continua aceito).
 module.exports = function criarControleDeAcesso({ runQuery, conexoes, env = process.env }) {
@@ -41,7 +70,7 @@ module.exports = function criarControleDeAcesso({ runQuery, conexoes, env = proc
     const falhas = [];
     for (const conexao of candidatas) {
       try {
-        const coluna = await descobrirColunaEmail(conexao.runQuery);
+        const coluna = await descobrirColunaEmail(conexao.runQuery, env);
         escolha = { conexao, coluna };
         console.log(`[portal-acesso] validação por ${TABELA.esquema}.${TABELA.nome}.${coluna} + CD_MATRICULA (banco ${conexao.nome})`);
         return escolha;
@@ -50,33 +79,6 @@ module.exports = function criarControleDeAcesso({ runQuery, conexoes, env = proc
       }
     }
     throw new Error(falhas.join(' | '));
-  }
-
-  async function descobrirColunaEmail(runQuery) {
-    const r = await runQuery(
-      'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @esquema AND TABLE_NAME = @tabela',
-      { esquema: [sql.NVarChar(128), TABELA.esquema], tabela: [sql.NVarChar(128), TABELA.nome] });
-    let colunas = r.recordset.map(l => String(l.COLUMN_NAME));
-    if (!colunas.length) {
-      // INFORMATION_SCHEMA esconde tabelas sem permissão: lê a própria tabela
-      // (TOP 0, sem dados) — o erro do SQL Server diz a causa exata no log.
-      try {
-        const t = await runQuery(`SELECT TOP (0) * FROM [${TABELA.esquema}].[${TABELA.nome}]`);
-        colunas = Object.keys((t.recordset && t.recordset.columns) || {});
-      } catch (err) {
-        throw new Error(`${TABELA.esquema}.${TABELA.nome} inacessível para o usuário do app: ${err.message}`);
-      }
-    }
-    const porNome = n => colunas.find(c => c.toUpperCase() === n.toUpperCase());
-    if (!colunas.length) throw new Error(`tabela ${TABELA.esquema}.${TABELA.nome} não encontrada no banco`);
-    if (!porNome('CD_MATRICULA')) throw new Error(`coluna CD_MATRICULA não encontrada em ${TABELA.esquema}.${TABELA.nome}`);
-    const fixada = env.PORTAL_USERS_EMAIL_COLUMN && porNome(env.PORTAL_USERS_EMAIL_COLUMN);
-    const escolhida = fixada
-      || PREFERENCIA_EMAIL.map(porNome).find(Boolean)
-      || colunas.find(c => /E_?MAIL|UPN|LOGIN/i.test(c));
-    if (!escolhida) throw new Error(`nenhuma coluna de e-mail/login em ${TABELA.esquema}.${TABELA.nome} (defina PORTAL_USERS_EMAIL_COLUMN). Colunas: ${colunas.join(', ')}`);
-    if (!/^[A-Za-z_][A-Za-z0-9_]{0,127}$/.test(escolhida)) throw new Error(`nome de coluna inválido: ${escolhida}`);
-    return escolhida;
   }
 
   // Código curto da causa para a tela (sem texto do banco nem dados do cadastro)
@@ -158,3 +160,6 @@ module.exports = function criarControleDeAcesso({ runQuery, conexoes, env = proc
 
   return { rotaStatus, exigir, validar };
 };
+
+module.exports.descobrirColunaEmail = descobrirColunaEmail;
+module.exports.TABELA_USUARIOS = TABELA;
