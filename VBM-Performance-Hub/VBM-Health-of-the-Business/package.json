@@ -1,5 +1,5 @@
 {
-  "name": "performance-hub-dashboard",
+  "name": "vbm-health-of-the-business",
   "version": "2.0.0",
   "description": "Performance Hub — dashboard de barras (trimestre/semestre/ano) com conexão direta ao Azure SQL PRD",
   "main": "server.js",

@@ -118,7 +118,8 @@ async function health(req, res) {
 // Kaizen). Sem ele, o upload responde 503 e o resto do Performance Hub segue normal.
 let armazenamento = null;
 try {
-  const blob = require('../VBM-Kaizen-App/azure-blob');
+  // Pasta do Kaizen na raiz do portal (duas pastas acima desta).
+  const blob = require(path.join(__dirname, '..', '..', process.env.KAIZEN_PASTA || 'VBM-Kaizen-App-DEV', 'azure-blob'));
   armazenamento = { configurado: blob.blobConfigurado, enviar: blob.enviarArquivoParaBlob, baixar: blob.baixarArquivoDoBlob };
 } catch (e) {
   console.warn('[performance-hub] armazenamento de imagens indisponível:', e.message);

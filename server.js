@@ -7,7 +7,11 @@
  *
  *   /                  portal (este diretório: index.html, assets/)
  *   /VBM-Kaizen-App/   VBM-Kaizen-App/server.js  (app Express montável)
- *   /VBM-Performance-Hub/     VBM-Performance-Hub/portal.js    (API própria, banco PRD)
+ *   /VBM-Performance-Hub/     VBM-Performance-Hub/portal.js    (página com as aplicações)
+ *     .../VBM-Performance-Studio/                   cada subpasta tem o próprio portal.js
+ *     .../COO-Business-Units-Dashboard/             (API em <pasta>/api, banco PRD) —
+ *     .../COO-Business-Units-Dashboard-Historical/  lista em VBM-Performance-Hub/portal.js
+ *     .../VBM-Health-of-the-Business/
  *
  * Nova aplicação = nova pasta + uma linha de montagem abaixo.
  */
@@ -85,8 +89,8 @@ if (typeof performanceHub.runQuery === "function") conexoesAcesso.push({ nome: "
 acesso = criarControleDeAcesso({ conexoes: conexoesAcesso });
 portal.use("/VBM-Performance-Hub", express.static(path.join(__dirname, "VBM-Performance-Hub"), { index: "index.html", dotfiles: "ignore" }));
 portal.use("/Performance-Hub", (req, res) => res.redirect(301, "/VBM-Performance-Hub" + req.url));
-// Endereço usado enquanto a pasta se chamou VBM-Performance-Studio (links salvos): volta para o atual.
-portal.use("/VBM-Performance-Studio", (req, res) => res.redirect(301, "/VBM-Performance-Hub" + req.url));
+// Links salvos do Studio na raiz: o Studio agora fica dentro do Hub.
+portal.use("/VBM-Performance-Studio", (req, res) => res.redirect(301, "/VBM-Performance-Hub/VBM-Performance-Studio" + req.url));
 
 // ── Portal ──
 portal.use("/assets", express.static(path.join(__dirname, "assets"), { dotfiles: "ignore" }));
