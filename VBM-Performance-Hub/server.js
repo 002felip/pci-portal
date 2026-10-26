@@ -1,5 +1,5 @@
 /**
- * Performance Studio — app independente (Databricks App próprio).
+ * Performance Hub — app independente (Databricks App próprio).
  *
  * Conexão DIRETA ao Azure SQL de PRODUÇÃO (BDIBPBMSA_PRD), com pool
  * próprio — não depende do servidor do VBM Kaizen. A SQL vem de
@@ -93,12 +93,11 @@ app.use((req, res, next) => { res.set('X-Content-Type-Options', 'nosniff'); next
 // package.json nunca são servidos (não há express.static na pasta raiz).
 const PAGINA = path.join(__dirname, 'index.html');
 const enviarPagina = (req, res) => { res.set('Cache-Control', 'no-store'); res.sendFile(PAGINA); };
-for (const rota of ['/', '/index.html', '/Performance-Studio', '/Performance-Studio/', '/Performance-Studio/index.html', '/Performance-Hub', '/Performance-Hub/', '/Performance-Hub/index.html']) {
+for (const rota of ['/', '/index.html', '/Performance-Hub', '/Performance-Hub/', '/Performance-Hub/index.html']) {
   app.get(rota, enviarPagina);
 }
 const assets = express.static(path.join(__dirname, 'assets'), { index: false, maxAge: '1d' });
 app.use('/assets', assets);
-app.use('/Performance-Studio/assets', assets);
 app.use('/Performance-Hub/assets', assets);
 
 // Health check com o banco: 200 conectado, 503 com o motivo (sem expor credenciais)
@@ -116,16 +115,16 @@ async function health(req, res) {
 // PERFORMANCEHUB_API_BASES em index.html): a MESMA instância do router em
 // todos os caminhos compartilha o cache de 5 min.
 // Imagens de fundo: mesmo Azure Blob do portal (AZURE_STORAGE_*, módulo do
-// Kaizen). Sem ele, o upload responde 503 e o resto do Performance Studio segue normal.
+// Kaizen). Sem ele, o upload responde 503 e o resto do Performance Hub segue normal.
 let armazenamento = null;
 try {
   const blob = require('../VBM-Kaizen-App/azure-blob');
   armazenamento = { configurado: blob.blobConfigurado, enviar: blob.enviarArquivoParaBlob, baixar: blob.baixarArquivoDoBlob };
 } catch (e) {
-  console.warn('[performance-studio] armazenamento de imagens indisponível:', e.message);
+  console.warn('[performance-hub] armazenamento de imagens indisponível:', e.message);
 }
 const router = criarPerformanceHubRouter({ runQuery, tabelaConfiguracao: process.env.PERFORMANCEHUB_CONFIG_TABLE, armazenamento, pastaFundos: process.env.PERFORMANCEHUB_BG_PASTA });
-for (const base of ['/api', '/Performance-Studio/api', '/Performance-Hub/api', '/performance-hub/api']) {
+for (const base of ['/api', '/Performance-Hub/api', '/performance-hub/api']) {
   app.get(`${base}/health`, health);
   app.use(base, (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, router);
 }
@@ -139,14 +138,14 @@ app.use((err, req, res, next) => {
 // ── Start / shutdown ────────────────────────────────────────────────
 const PORT = process.env.DATABRICKS_APP_PORT || process.env.PORT || 8000;
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[performance-studio] ouvindo na porta ${PORT} — banco: ${DB.server || '(não configurado)'}/${DB.database || '(não configurado)'}`);
+  console.log(`[performance-hub] ouvindo na porta ${PORT} — banco: ${DB.server || '(não configurado)'}/${DB.database || '(não configurado)'}`);
   const faltando = configAusente();
-  if (faltando.length) console.warn(`[performance-studio] ATENÇÃO: sem conexão com o banco — faltam ${faltando.join(', ')}`);
-  if (DB.database && !/_PRD$/i.test(DB.database)) console.warn(`[performance-studio] ATENÇÃO: AZURE_SQL_DATABASE="${DB.database}" não é a base de produção (*_PRD)`);
+  if (faltando.length) console.warn(`[performance-hub] ATENÇÃO: sem conexão com o banco — faltam ${faltando.join(', ')}`);
+  if (DB.database && !/_PRD$/i.test(DB.database)) console.warn(`[performance-hub] ATENÇÃO: AZURE_SQL_DATABASE="${DB.database}" não é a base de produção (*_PRD)`);
 });
 
 async function encerrar(sinal) {
-  console.log(`[performance-studio] ${sinal} recebido, encerrando`);
+  console.log(`[performance-hub] ${sinal} recebido, encerrando`);
   server.close(async () => {
     try { if (poolPromise) await (await poolPromise).close(); } catch (e) { /* pool já fechado */ }
     process.exit(0);

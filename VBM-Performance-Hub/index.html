@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <!--
   ═══════════════════════════════════════════════════════════════════
-  VBM PERFORMANCE STUDIO · Dashboard — Página de Gráfico
+  VBM PERFORMANCE HUB · Dashboard — Página de Gráfico
   ═══════════════════════════════════════════════════════════════════
   PAPEL DA PÁGINA
     Tela de dados: mesma topbar do index.html, sem hero de imagem,
@@ -23,7 +23,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>VBM Performance Studio</title>
+<title>VBM Performance Hub</title>
 <!-- Poppins servida pelo próprio app (mesmo arquivo do Portal: fontes embutidas, sem internet) -->
 <link rel="stylesheet" href="assets/css/poppins.css"/>
 <script>/* tema (engrenagem) no elemento raiz antes de pintar: o fundo padrão segue claro/escuro */
@@ -45,7 +45,7 @@ try { document.documentElement.setAttribute('data-bg', localStorage.getItem('vdt
   /* Gradiente azul do header (vidro translúcido sobre o fundo) */
   --qtr-grad: linear-gradient(135deg, rgba(4,21,35,.78) 0%, rgba(8,45,79,.66) 60%, rgba(13,61,107,.60) 100%);
   --qtr-base: #02101c;
-  /* FUNDO PADRÃO OFICIAL do Performance Studio — só CSS: azul do header com
+  /* FUNDO PADRÃO OFICIAL do Performance Hub — só CSS: azul do header com
      profundidade (dois brilhos discretos sobre o degradê). */
   --qtr-bg-padrao:
     radial-gradient(1100px 620px at 8% -8%, rgba(60,181,229,.16), transparent 62%),
@@ -180,7 +180,7 @@ body {
   z-index: 1;
 }
 
-/* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Studio", abaixo da barra */
+/* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
 .dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 104px 4px; }
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
@@ -1443,8 +1443,8 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 </svg>
   </a>
 
-  <h1 class="topnav-brand" aria-label="VBM - Performance Studio">
-    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-nome" aria-hidden="true">Performance Studio</span>
+  <h1 class="topnav-brand" aria-label="VBM - Performance Hub">
+    <span class="topnav-brand-vbm" aria-hidden="true">VBM</span><span class="topnav-brand-nome" aria-hidden="true">Performance Hub</span>
   </h1>
 
   <div class="topnav-actions">
@@ -1717,7 +1717,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <label><input type="radio" name="qeBgTipo" value="imagem"><span data-i18n="ui.imagem">Imagem</span></label>
         </div>
       </fieldset>
-      <p class="qe-hint" data-bg-show="padrao" data-i18n="ui.fundo_oficial_do_performance_hub">Fundo oficial do Performance Studio: acompanha o tema da engrenagem (claro ou escuro).</p>
+      <p class="qe-hint" data-bg-show="padrao" data-i18n="ui.fundo_oficial_do_performance_hub">Fundo oficial do Performance Hub: acompanha o tema da engrenagem (claro ou escuro).</p>
       <div class="qe-field" data-bg-show="solido">
         <label class="qe-label" for="qeBgCorHex" data-i18n="ui.cor">Cor</label>
         <div class="qe-color-pair">
@@ -2154,9 +2154,9 @@ let numLocale = (() => {
 // ─── i18n ───
 const i18n = {
   'pt-BR': { 'settings.btnTitle': 'Configurações', 'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'settings.number': 'Formato numérico', 'settings.numberInfo': 'Separador decimal e de milhar dos gráficos', 'settings.languageInfo': 'Idioma da interface', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
-             'nav.menu': 'Menu', 'nav.performancehub': 'Performance Studio', 'nav.monthly': 'Monthly', 'chart.empty': 'Nenhum dado para os filtros selecionados.' },
+             'nav.menu': 'Menu', 'nav.performancehub': 'Performance Hub', 'nav.monthly': 'Monthly', 'chart.empty': 'Nenhum dado para os filtros selecionados.' },
   'en':    { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.number': 'Number format', 'settings.numberInfo': 'Decimal and thousands separators in charts', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
-             'nav.menu': 'Menu', 'nav.performancehub': 'Performance Studio', 'nav.monthly': 'Monthly', 'chart.empty': 'No data for the selected filters.' }
+             'nav.menu': 'Menu', 'nav.performancehub': 'Performance Hub', 'nav.monthly': 'Monthly', 'chart.empty': 'No data for the selected filters.' }
 };
 // Textos da interface: chave → [pt-BR, en]. HTML estático usa data-i18n (texto),
 // data-i18n-title / -aria / -ph (placeholder) / -tip (dica da paleta); o JS usa tx('chave').
@@ -2200,7 +2200,7 @@ const I18N_UI = {
   'ui.cor': ['Cor', 'Color'],
   'ui.gradiente': ['Gradiente', 'Gradient'],
   'ui.imagem': ['Imagem', 'Image'],
-  'ui.fundo_oficial_do_performance_hub': ['Fundo oficial do Performance Studio: acompanha o tema da engrenagem (claro ou escuro).', 'Official Performance Studio background: follows the theme set in the gear menu (light or dark).'],
+  'ui.fundo_oficial_do_performance_hub': ['Fundo oficial do Performance Hub: acompanha o tema da engrenagem (claro ou escuro).', 'Official Performance Hub background: follows the theme set in the gear menu (light or dark).'],
   'ui.seletor_de_cor_do_fundo': ['Seletor de cor do fundo', 'Background color picker'],
   'ui.cores_do_gradiente': ['Cores do gradiente', 'Gradient colors'],
   'ui.cor_inicial_do_gradiente': ['Cor inicial do gradiente', 'Gradient start color'],
@@ -3180,7 +3180,7 @@ let filterOptions = {};    // opções de cada combobox, derivadas de allRows
 // que a query original tinha (lista incompleta).
 //
 // SEM granularidade Mensal: a CHART_DATA_SQL de origem tem o bloco MONTH
-// inteiro comentado — o Performance Studio nunca recebe linhas 'MONTH' dela. Este
+// inteiro comentado — o Performance Hub nunca recebe linhas 'MONTH' dela. Este
 // fixture não gera nenhuma; ver também o filtro de defesa em loadPerformanceHubData.
 //
 // [CORREÇÃO — causa-raiz do bug "faltam horizontes em 2025/2026"]
@@ -3305,7 +3305,7 @@ function setDataFallbackWarning(active, detail) {
 // funcionando. Em vez de apostar, tenta os candidatos na ordem e para no
 // primeiro que responder. O servidor registra os MESMOS handlers em
 // todos esses caminhos (ver PERFORMANCEHUB_API_BASES no server.js da raiz).
-const PERFORMANCEHUB_API_BASES = ['api/', '../api/', '/api/', '/Performance-Studio/api/', '/Performance-Hub/api/'];
+const PERFORMANCEHUB_API_BASES = ['api/', '../api/', '/api/', '/Performance-Hub/api/'];
 let performanceHubApiBase = null; // base que respondeu primeiro (dados ou configurações)
 
 function basesDaApiResolvidas() {
@@ -3345,7 +3345,7 @@ async function loadPerformanceHubData(dtRef) {
       const siteNameById = new Map(sitesList.map(s => [s.ID_SITE ?? s.id_site, s.NM_SITE ?? s.nm_site]));
       performanceHubApiBase = base; // as rotas de configuração usam a mesma base
       setDataFallbackWarning(false);
-      console.info(`[performance-studio] dados reais carregados de ${new URL(base).pathname}`);
+      console.info(`[performance-hub] dados reais carregados de ${new URL(base).pathname}`);
       return {
         linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada),
         semCarga: false
@@ -3360,7 +3360,7 @@ async function loadPerformanceHubData(dtRef) {
       tentativas.push(err.message);
     }
   }
-  console.warn('[performance-studio] nenhum endpoint respondeu, usando fixture local:', tentativas.join(' | '));
+  console.warn('[performance-hub] nenhum endpoint respondeu, usando fixture local:', tentativas.join(' | '));
   setDataFallbackWarning(true, tentativas.join(' | '));
   return { linhas: buildFallbackRows().filter(isVisaoSuportada), semCarga: false };
 }
@@ -3621,7 +3621,7 @@ function updateChartUnit() {
   if (units.size === 1) {
     subEl.textContent = `(${[...units][0]})`;
   } else if (units.size > 1) {
-    console.warn(`[performance-studio] SG_UNID inconsistente para "${filterState.product}": ${[...units].join(', ')} — mantendo unidade anterior em vez de escolher uma arbitrariamente.`);
+    console.warn(`[performance-hub] SG_UNID inconsistente para "${filterState.product}": ${[...units].join(', ')} — mantendo unidade anterior em vez de escolher uma arbitrariamente.`);
   } else {
     subEl.textContent = '(%)';
   }
@@ -4280,7 +4280,7 @@ async function exportarGrafico(card, acao) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     avisoExport(caixa, acao === 'copiar' ? 'Cópia não permitida pelo navegador: imagem baixada.' : 'Imagem PNG baixada.');
   } catch (err) {
-    console.error('[performance-studio] exportar:', err);
+    console.error('[performance-hub] exportar:', err);
     avisoExport(caixa, 'Não foi possível exportar o gráfico.');
   }
 }
@@ -5019,7 +5019,7 @@ async function loadEditorConfigs() {
     editor.db = { ok: true, carregando: false, itens: r.corpo.itens.filter(i => i && Number.isInteger(i.id) && typeof i.nome === 'string'), erro: '' };
   } else {
     editor.db = { ok: false, carregando: false, itens: [], erro: r.corpo.error || `HTTP ${r.status}` };
-    console.warn('[performance-studio] configurações do banco indisponíveis — usando a cópia local:', editor.db.erro);
+    console.warn('[performance-hub] configurações do banco indisponíveis — usando a cópia local:', editor.db.erro);
   }
   return editor.db;
 }
@@ -5940,7 +5940,7 @@ function confirmarExclusao() {
     $qe('qeAdd').focus();
     mostrarAviso(sel.length === 1 ? tx('ui.msg_1_excluido') : tx('ui.msg_n_excluidos', { n: sel.length }));
   } catch (err) {
-    console.error('[performance-studio] falha ao excluir gráficos:', err);
+    console.error('[performance-hub] falha ao excluir gráficos:', err);
     msgEm('qeExcluirMsg', tx('ui.msg_falha_excluir'), 'err');
   } finally {
     excluindoGrafico = false;
@@ -5962,7 +5962,7 @@ function abrirUltimaVisao() {
 // só as datas; Alterar parâmetros = muda as datas do dashboard aberto.
 // vdt-dashboards: só os dashboards antigos, gravados no navegador (para enviar ao banco)
 const DASH_LISTA_KEY = 'vdt-dashboards';
-const DASH_NOME_BASE = 'VBM Performance Studio';
+const DASH_NOME_BASE = 'VBM Performance Hub';
 // Visões disponíveis: cada uma aponta para uma consulta da API (hoje só a atual de produção)
 const DASH_VISOES = { VBM_PRODUCTION_ANALYTICS: { nome: 'VBM Production Analytics', consulta: 'CHART_DATA_SQL' } };
 const DASH_VISAO_PADRAO = 'VBM_PRODUCTION_ANALYTICS';
@@ -6136,7 +6136,7 @@ async function carregarDashboards() {
   const r = await editorApi('dashboards');
   dash.bancoOk = r.ok && Array.isArray(r.corpo.itens);
   dash.erro = dash.bancoOk ? '' : (r.corpo.error || `HTTP ${r.status}`);
-  if (!dash.bancoOk) { console.warn('[performance-studio] dashboards do banco indisponíveis:', dash.erro); return false; }
+  if (!dash.bancoOk) { console.warn('[performance-hub] dashboards do banco indisponíveis:', dash.erro); return false; }
   dash.usuario = r.corpo.usuario || '';
   dash.itens = r.corpo.itens.map(reg => { const d = dashDoBanco(reg); d.salvo = JSON.stringify(corpoDash(d)); return d; });
   if (dash.atual) {
@@ -6731,7 +6731,7 @@ async function confirmarAdicionar() {
     editorMsg('Gráfico adicionado e selecionado. Configure-o abaixo.', 'ok');
     mostrarAviso('Gráfico adicionado.');
   } catch (err) {
-    console.error('[performance-studio] falha ao adicionar gráfico:', err);
+    console.error('[performance-hub] falha ao adicionar gráfico:', err);
     msgEm('qeAddMsg', 'Não foi possível adicionar o gráfico. Tente novamente.', 'err');
   } finally {
     adicionandoGrafico = false;
@@ -6879,7 +6879,7 @@ async function carregarFundo() {
     fundo.aplicado = fundo.salvo ? copiaFundo(fundo.salvo) : copiaFundo(FUNDO_PADRAO);
   } else {
     fundo.db = false;
-    console.warn('[performance-studio] background do banco indisponível — usando a cópia local:', r.corpo.error);
+    console.warn('[performance-hub] background do banco indisponível — usando a cópia local:', r.corpo.error);
     try { fundo.aplicado = normalizarFundo(JSON.parse(localStorage.getItem(FUNDO_CACHE) || 'null')); } catch (e) { fundo.aplicado = copiaFundo(FUNDO_PADRAO); }
   }
   fundo.rascunho = copiaFundo(fundo.aplicado);
@@ -6995,7 +6995,7 @@ async function enviarImagemFundo(file) {
     atualizarFundoDerivado();
     msgEm('qeBgMsg', 'Imagem enviada. Use Visualizar, Aplicar ou Salvar.', 'ok');
   } catch (e) {
-    console.error('[performance-studio] envio da imagem de fundo:', e.message);
+    console.error('[performance-hub] envio da imagem de fundo:', e.message);
     falha(e.message);
     msgEm('qeBgMsg', '');
   } finally {
@@ -7059,7 +7059,7 @@ async function salvarFundo() {
       atualizarFundoDerivado();
       msgEm('qeBgMsg', 'Fundo salvo. Ele será aplicado ao carregar o dashboard.', 'ok');
     } else {
-      console.error('[performance-studio] salvar background:', r.status, r.corpo.error);
+      console.error('[performance-hub] salvar background:', r.status, r.corpo.error);
       msgEm('qeBgMsg', 'Não foi possível salvar o fundo agora. Ele continua aplicado nesta sessão.', 'err');
     }
   } finally {
