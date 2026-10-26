@@ -1141,6 +1141,14 @@ body[data-bg="dark"] .qe-panel {
 .qe-dash-anos-lista { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .qe-dash-anos-lista .qe-check { flex: 0 0 auto; }
 .qe-dash-aviso { margin: 0 0 10px; }
+.qe-dash-migrar { margin: 0 0 12px; display: grid; gap: 8px; }
+.qe-dash-migrar p { margin: 0; }
+.qe-dash-editores { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 4px; }
+.qe-dash-editores li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .7rem; color: var(--qe-strong); overflow-wrap: anywhere; }
+.qe-dash-editores li .qe-btn { flex-shrink: 0; min-width: 28px; padding: 2px 8px; }
+#qeDashComp > .qe-btn.primary { width: 100%; }
+/* Dashboard só para leitura: só Dashboards e Filtros ficam disponíveis */
+body.is-somente-leitura .qe-toolbar .qe-tool:not(#qeDash):not(#qeFiltrosBtn) { opacity: .38; cursor: not-allowed; }
 .qe-field.qe-dash-bloco { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--qe-line); }
 .qe-dash-topo { display: grid; gap: 8px; margin-top: 12px; }
 .qe-dash-topo .qe-btn { width: 100%; }
@@ -1566,7 +1574,11 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <!-- Adicionar gráfico: as mesmas opções de criação (nome, Product e uma configuração salva) -->
   <section class="qe-view" id="qeViewDash" data-view="dash" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
-      <p class="qe-hint qe-dash-aviso" data-i18n="ui.dash_aviso_local">Validação: os dashboards ficam salvos só neste navegador até a etapa do banco.</p>
+      <div class="qe-alerta qe-dash-migrar" id="qeDashMigrar" hidden>
+        <p id="qeDashMigrarTexto"></p>
+        <button type="button" class="qe-btn primary" id="qeDashMigrarBtn" data-i18n="ui.dash_migrar">Enviar para o banco</button>
+      </div>
+      <p class="qe-hint qe-dash-aviso" id="qeDashAviso" hidden></p>
       <div class="qe-status" id="qeDashInfo" aria-live="polite"></div>
       <div class="qe-dash-topo">
         <button type="button" class="qe-btn primary" id="qeDashNovo" aria-controls="qeDashForm"><i class="fa-solid fa-plus" aria-hidden="true"></i> <span data-i18n="ui.dash_novo">Novo dashboard</span></button>
@@ -1579,6 +1591,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <button type="button" class="qe-btn" id="qeDashAbrir" data-i18n="ui.abrir">Abrir</button>
           <button type="button" class="qe-btn" id="qeDashExcluir" aria-controls="qeDashExcluirBox" data-i18n="ui.excluir">Excluir</button>
           <button type="button" class="qe-btn qe-dash-largo" id="qeDashReutilizar" data-i18n="ui.dash_reutilizar">Reutilizar em novo período</button>
+          <button type="button" class="qe-btn qe-dash-largo" id="qeDashAtivo">Desativar</button>
         </div>
         <div class="qe-alerta qe-dash-confirma" id="qeDashExcluirBox" role="alertdialog" aria-labelledby="qeDashExcluirTexto" hidden>
           <p id="qeDashExcluirTexto"></p>
@@ -1588,6 +1601,17 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           </div>
         </div>
         <span class="qe-hint" id="qeDashListaHint" data-i18n="ui.dash_reutilizar_hint">Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.</span>
+      </div>
+      <div class="qe-field qe-dash-bloco" id="qeDashComp" hidden>
+        <label class="qe-label" for="qeDashCompEmail" data-i18n="ui.dash_editores">Editores deste dashboard</label>
+        <span class="qe-hint" id="qeDashCompHint" data-i18n="ui.dash_editores_hint">Editores alteram e reutilizam; os demais usuários só visualizam.</span>
+        <div class="qe-dash-acoes">
+          <input class="qe-input" id="qeDashCompEmail" type="email" list="qeDashUsuarios" autocomplete="off" maxlength="200" placeholder="nome@vale.com" aria-describedby="qeDashCompHint">
+          <button type="button" class="qe-btn" id="qeDashCompAdd" data-i18n="ui.adicionar">Adicionar</button>
+        </div>
+        <datalist id="qeDashUsuarios"></datalist>
+        <ul class="qe-dash-editores" id="qeDashEditores"></ul>
+        <button type="button" class="qe-btn primary" id="qeDashCompSalvar" data-i18n="ui.dash_editores_salvar">Salvar editores</button>
       </div>
       <fieldset class="qe-field qe-dash-novo" id="qeDashForm" hidden>
         <legend class="qe-label" id="qeDashFormTit">Novo dashboard</legend>
@@ -1617,11 +1641,6 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <select class="qe-select" id="qeDashVisao" aria-describedby="qeDashVisaoHint"><option value="VBM_PRODUCTION_ANALYTICS">VBM Production Analytics</option></select>
           <span class="qe-hint" id="qeDashVisaoHint" data-i18n="ui.dash_visao_hint">Usa a consulta atual de produção (dados dos gráficos).</span>
         </div>
-        <fieldset class="qe-field qe-dash-anos">
-          <legend class="qe-label" data-i18n="ui.dash_anos">Anos extraídos do banco</legend>
-          <div class="qe-dash-anos-lista" id="qeDashAnos"></div>
-          <p class="qe-error" id="qeDashAnosErr" hidden></p>
-        </fieldset>
         <div class="qe-field">
           <label class="qe-label" for="qeDashYtd" data-i18n="ui.dash_ytd">Year to Date até</label>
           <select class="qe-select" id="qeDashYtd" disabled aria-describedby="qeDashYtdHint"></select>
@@ -2296,7 +2315,29 @@ const I18N_UI = {
   'ui.dashboard': ['Dashboard', 'Dashboard'],
   'ui.abrir': ['Abrir', 'Open'],
   'ui.selecione': ['Selecione…', 'Select…'],
-  'ui.dash_aviso_local': ['Validação: os dashboards ficam salvos só neste navegador até a etapa do banco.', 'Validation: dashboards are saved in this browser only until the database stage.'],
+  'ui.dash_migrar': ['Enviar para o banco', 'Send to the database'],
+  'ui.dash_migrar_texto': ['{n} dashboard(s) estão salvos só neste navegador. Envie para o banco para não perder e poder compartilhar.', '{n} dashboard(s) are saved in this browser only. Send them to the database to keep and share them.'],
+  'ui.dash_migrado': ['Envio concluído: {ok} gravado(s) no banco, {pulados} já existia(m) com o mesmo nome, {erros} com erro.', 'Done: {ok} saved to the database, {pulados} already existed with the same name, {erros} failed.'],
+  'ui.dash_banco_erro': ['Não foi possível acessar os dashboards no banco: {erro}', 'Could not reach the dashboards in the database: {erro}'],
+  'ui.dash_falha': ['Não foi possível gravar no banco: {erro}', 'Could not save to the database: {erro}'],
+  'ui.dash_papel_dono': ['Meu', 'Mine'],
+  'ui.dash_papel_editor': ['Editor', 'Editor'],
+  'ui.dash_papel_leitor': ['Leitura', 'Read-only'],
+  'ui.dash_papel': ['Seu acesso', 'Your access'],
+  'ui.dash_dono': ['Dono', 'Owner'],
+  'ui.dash_somente_leitura': ['Somente leitura: você pode ver este dashboard, mas as alterações não são gravadas. Peça ao dono para incluir você como editor.', 'Read-only: you can view this dashboard, but changes are not saved. Ask the owner to add you as an editor.'],
+  'ui.dash_ativar': ['Ativar', 'Activate'],
+  'ui.dash_desativar': ['Desativar', 'Deactivate'],
+  'ui.dash_ativado': ['Dashboard “{nome}” ativado.', 'Dashboard “{nome}” activated.'],
+  'ui.dash_desativado': ['Dashboard “{nome}” desativado: só você o vê na lista.', 'Dashboard “{nome}” deactivated: only you see it in the list.'],
+  'ui.dash_editores': ['Editores deste dashboard', 'Editors of this dashboard'],
+  'ui.dash_editores_hint': ['Editores alteram e reutilizam; os demais usuários só visualizam.', 'Editors can change and reuse it; other users can only view it.'],
+  'ui.dash_editores_salvar': ['Salvar editores', 'Save editors'],
+  'ui.dash_editores_salvos': ['Editores de “{nome}” salvos.', 'Editors of “{nome}” saved.'],
+  'ui.dash_editores_vazio': ['Nenhum editor: só você altera este dashboard.', 'No editors: only you can change this dashboard.'],
+  'ui.dash_editor_remover': ['Remover {email}', 'Remove {email}'],
+  'ui.dash_editor_invalido': ['Informe um e-mail válido de um usuário do Portal.', 'Enter a valid e-mail of a Portal user.'],
+  'ui.dash_editores_fora': ['Não são usuários do Portal: {lista}', 'Not Portal users: {lista}'],
   'ui.dash_selecionar': ['Selecionar dashboard', 'Select dashboard'],
   'ui.dash_nenhum': ['Nenhum dashboard aberto.', 'No dashboard open.'],
   'ui.dash_novo': ['Novo dashboard', 'New dashboard'],
@@ -2322,7 +2363,7 @@ const I18N_UI = {
   'ui.dash_auto': ['Preenchido automaticamente — Status: Ativo (S) · Criado em: {quando} · Criado por: {usuario}', 'Filled in automatically — Status: Active (S) · Created on: {quando} · Created by: {usuario}'],
   'ui.dash_criar': ['Criar dashboard', 'Create dashboard'],
   'ui.dash_abrir_reutilizar': ['Abrir, reutilizar ou excluir um dashboard', 'Open, reuse or delete a dashboard'],
-  'ui.dash_excluir_confirma': ['Excluir o dashboard “{nome}”? Ele e os gráficos salvos nele saem da lista deste navegador. Não dá para desfazer.', 'Delete the dashboard “{nome}”? It and the charts saved in it are removed from this browser\'s list. This cannot be undone.'],
+  'ui.dash_excluir_confirma': ['Excluir de vez o dashboard “{nome}”? Ele sai do banco junto com os editores. Para só tirá-lo da lista dos outros usuários, use Desativar.', 'Permanently delete the dashboard “{nome}”? It is removed from the database together with its editors. To just hide it from other users, use Deactivate.'],
   'ui.dash_excluido': ['Dashboard “{nome}” excluído.', 'Dashboard “{nome}” deleted.'],
   'ui.dash_reutilizar': ['Reutilizar em novo período', 'Reuse for a new period'],
   'ui.dash_reutilizar_hint': ['Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.', 'Reuse copies the charts of the chosen dashboard into a new dashboard; adjust the dates below and click Create.'],
@@ -5807,6 +5848,8 @@ function setEditorOpen(open) {
 }
 
 function abrirVisao(view, btn, sec) {
+  // Dashboard só para leitura: só Dashboards e Filtros
+  if (document.body.classList.contains('is-somente-leitura') && !['dash', 'filtros'].includes(view)) { mostrarAviso(tx('ui.dash_somente_leitura')); return; }
   // Clicar de novo na opção ativa recolhe o painel
   if (editor.open && editor.tool === btn) { setEditorOpen(false); btn.focus(); return; }
   if (editor.view !== view) sairDaVisao(editor.view);
@@ -5903,13 +5946,15 @@ function abrirUltimaVisao() {
 // Cada dashboard guarda nome, referência (mês/ano), visão, anos extraídos, YTD e os
 // gráficos do quadro. Reutilizar = novo dashboard com os gráficos de outro, mudando
 // só as datas; Alterar parâmetros = muda as datas do dashboard aberto.
-const DASH_LISTA_KEY = 'vdt-dashboards', DASH_ATUAL_KEY = 'vdt-dashboard-atual';
+// vdt-dashboards: só os dashboards antigos, gravados no navegador (para enviar ao banco)
+const DASH_LISTA_KEY = 'vdt-dashboards', DASH_ATUAL_KEY = 'vdt-dashboard-atual', DASH_ATUAL_REF_KEY = 'vdt-dashboard-atual-ref';
 const DASH_NOME_BASE = 'VBM Performance Studio';
 // Visões disponíveis: cada uma aponta para uma consulta da API (hoje só a atual de produção)
 const DASH_VISOES = { VBM_PRODUCTION_ANALYTICS: { nome: 'VBM Production Analytics', consulta: 'CHART_DATA_SQL' } };
 const DASH_VISAO_PADRAO = 'VBM_PRODUCTION_ANALYTICS';
 const MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const dash = { atual: null, itens: [], nomeEditado: false, modo: 'novo', origem: null, formAberto: false, excluir: null };
+const dash = { atual: null, itens: [], nomeEditado: false, modo: 'novo', origem: null, formAberto: false, excluir: null,
+  bancoOk: false, erro: '', usuario: '', editores: [], usuariosCarregados: false, gravando: false };
 const layoutDoQuadro = () => ({ charts: charts.map(c => ({ id: c.id, filters: c.filters, colors: c.colors, cfg: c.cfg, page: c.page, size: c.size, pos: c.pos })) });
 const nomeMes = (m, curto) => { const t = new Date(2000, m - 1, 1).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { month: curto ? 'short' : 'long' }); return t.charAt(0).toUpperCase() + t.slice(1); };
 const dataHoraLocal = v => (v ? new Date(v).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
@@ -5922,8 +5967,8 @@ const dtRefDe = d => (d && d.mesRef && d.anoRef ? `${d.anoRef}-${String(d.mesRef
 const nomeDtRef = dtRef => (dtRef ? `${nomeMes(Number(dtRef.slice(5, 7)))} ${dtRef.slice(0, 4)}` : '');
 function dtRefDoDashboardSalvo() {
   try {
-    const id = localStorage.getItem(DASH_ATUAL_KEY);
-    return id ? dtRefDe(lerDashboards().find(d => d.id === id)) : null;
+    const ref = localStorage.getItem(DASH_ATUAL_REF_KEY);
+    return ref && /^\d{4}-(0[1-9]|1[0-2])$/.test(ref) ? ref : null;
   } catch (e) { return null; }
 }
 // ── Períodos dos gráficos ao trocar a referência (reutilizar / alterar datas) ──
@@ -5981,11 +6026,7 @@ function layoutNaReferencia(d) {
   let de = d.refLayout;
   if (!de) { const ano = anoDoLayout(d.layout); de = ano && ano !== d.anoRef ? { mes: d.mesRef, ano } : null; }
   if (!de || (de.mes === d.mesRef && de.ano === d.anoRef)) return d.layout;
-  const layout = deslocarLayout(d.layout, de, { mes: d.mesRef, ano: d.anoRef });
-  // Anos do cadastro = anos usados nos gráficos já ajustados (o cadastro antigo pode estar deslocado)
-  const anos = new Set(layout.charts.flatMap(c => ((c.filters && c.filters.ano) || []).map(Number)).filter(Boolean));
-  d.anos = anos.size ? [...anos].sort((x, y) => x - y) : [d.anoRef - 1, d.anoRef];
-  return layout;
+  return deslocarLayout(d.layout, de, { mes: d.mesRef, ano: d.anoRef });
 }
 // Referência dos dados que estão no quadro agora ({mes, ano}); null = desconhecida
 function referenciaDoQuadro() {
@@ -6007,7 +6048,6 @@ async function carregarReferenciasDash() {
       // Formulário aberto: refaz as opções mantendo a escolha, se ela tiver carga
       const padrao = referenciaPadrao();
       preencherMesAno({ mes: Number($qe('qeDashMes').value) || padrao.mes, ano: Number($qe('qeDashAno').value) || padrao.ano });
-      deslocarAnosDash();
       atualizarNomeSugerido();
       return;
     } catch (e) { /* tenta a próxima base */ }
@@ -6064,31 +6104,86 @@ async function recarregarDadosDoDashboard(d) {
 }
 const baseDoNome = n => String(n || '').replace(/\s+-\s+[A-Za-z]+\s+\d{4}$/, '').trim() || DASH_NOME_BASE;
 const nomePadrao = (base, mes, ano) => `${base} - ${MESES_EN[mes - 1]} ${ano}`;
-const nomeEmUso = (nome, excetoId) => dash.itens.some(d => d.id !== excetoId && d.nome.toLocaleLowerCase() === nome.toLocaleLowerCase());
+// Nome já usado por outro dashboard ATIVO do mesmo dono (o banco garante; aqui só antecipa)
+const nomeEmUso = (nome, excetoId, dono) => dash.itens.some(d => d.id !== excetoId && d.status === 'S' && d.dono === dono && d.nome.toLocaleLowerCase() === nome.toLocaleLowerCase());
 
-function lerDashboards() {
+// ── Dashboards no banco (IBP.PHUB_PS_SETUP, rotas /dashboards) ──
+const podeAlterar = d => !!d && (d.papel === 'dono' || d.papel === 'editor');
+const ehDono = d => !!d && d.papel === 'dono';
+const dashPorId = id => dash.itens.find(d => String(d.id) === String(id)) || null;
+// Registro da API → objeto usado pela tela (mesRef/anoRef/ytdAte a partir do dtRef)
+function dashDoBanco(r) {
+  const ano = Number(String(r.dtRef).slice(0, 4)), mes = Number(String(r.dtRef).slice(5, 7));
+  const layout = r.layout && Array.isArray(r.layout.charts) ? r.layout : { charts: [] };
+  return {
+    id: r.id, nome: r.nome, descricao: r.descricao || '', mesRef: mes, anoRef: ano, ytdAte: mes,
+    visao: DASH_VISOES[r.visao] ? r.visao : DASH_VISAO_PADRAO, status: r.ativo ? 'S' : 'N',
+    papel: r.papel, dono: r.dono, criadoEm: r.criadoEm, criadoPor: r.dono,
+    atualizadoEm: r.atualizadoEm, atualizadoPor: r.atualizadoPor,
+    layout, refLayout: { mes, ano }, salvo: JSON.stringify(layout.charts)
+  };
+}
+const corpoDash = d => ({ nome: d.nome, descricao: d.descricao || '', visao: d.visao, dtRef: dtRefDe(d), layout: { charts: (d.layout && d.layout.charts) || [] } });
+async function carregarDashboards() {
+  const r = await editorApi('dashboards');
+  dash.bancoOk = r.ok && Array.isArray(r.corpo.itens);
+  dash.erro = dash.bancoOk ? '' : (r.corpo.error || `HTTP ${r.status}`);
+  if (!dash.bancoOk) { console.warn('[performance-studio] dashboards do banco indisponíveis:', dash.erro); return false; }
+  dash.usuario = r.corpo.usuario || '';
+  dash.itens = r.corpo.itens.map(dashDoBanco);
+  if (dash.atual) {
+    // O aberto continua com o quadro da tela (alterações ainda não gravadas não se perdem)
+    const novo = dashPorId(dash.atual.id);
+    if (novo) { novo.layout = dash.atual.layout; novo.salvo = dash.atual.salvo; }
+    dash.atual = novo;
+    if (!novo) definirDashAtual(null); // desativado ou excluído por outra pessoa
+  }
+  return true;
+}
+// Dashboards antigos, gravados só neste navegador
+function lerDashboardsLocais() {
   try {
     const v = JSON.parse(localStorage.getItem(DASH_LISTA_KEY) || '[]');
-    return Array.isArray(v) ? v.filter(d => d && d.id && d.nome).map(d => ({ ...d, ytdAte: d.mesRef, visao: DASH_VISOES[d.visao] ? d.visao : DASH_VISAO_PADRAO })) : [];
+    return Array.isArray(v) ? v.filter(d => d && d.nome && d.mesRef && d.anoRef) : [];
   } catch (e) { return []; }
-}
-function gravarDashboards() {
-  try { localStorage.setItem(DASH_LISTA_KEY, JSON.stringify(dash.itens)); return true; } catch (e) { return false; }
 }
 function definirDashAtual(d) {
   dash.atual = d || null;
-  try { if (d) localStorage.setItem(DASH_ATUAL_KEY, d.id); else localStorage.removeItem(DASH_ATUAL_KEY); } catch (e) { /* só nesta sessão */ }
+  try {
+    if (d) { localStorage.setItem(DASH_ATUAL_KEY, String(d.id)); localStorage.setItem(DASH_ATUAL_REF_KEY, dtRefDe(d)); }
+    else { localStorage.removeItem(DASH_ATUAL_KEY); localStorage.removeItem(DASH_ATUAL_REF_KEY); }
+  } catch (e) { /* só nesta sessão */ }
+  // Leitor: só Dashboards e Filtros; o que mudar no quadro não é gravado
+  document.body.classList.toggle('is-somente-leitura', !!d && !podeAlterar(d));
   renderDash();
 }
-// Cada gravação do quadro (saveCharts) atualiza os gráficos do dashboard aberto
+// Cada gravação do quadro (saveCharts) leva os gráficos ao banco, agrupada (1,5 s)
 function gravarLayoutDashboard() {
-  if (!dash.atual) return;
-  dash.atual.layout = layoutDoQuadro();
-  // Referência em que os filtros dos gráficos foram montados (para ajustar ao abrir)
-  dash.atual.refLayout = { mes: dash.atual.mesRef, ano: dash.atual.anoRef };
-  dash.atual.atualizadoEm = new Date().toISOString();
-  gravarDashboards();
+  const d = dash.atual;
+  if (!d) return;
+  d.layout = layoutDoQuadro();
+  d.refLayout = { mes: d.mesRef, ano: d.anoRef };
+  if (!podeAlterar(d)) return;
+  clearTimeout(gravarLayoutDashboard.timer);
+  gravarLayoutDashboard.timer = setTimeout(() => { gravarLayoutDashboard.timer = null; salvarLayoutNoBanco(d); }, 1500);
 }
+async function salvarLayoutNoBanco(d) {
+  const json = JSON.stringify(d.layout.charts);
+  if (json === d.salvo) return; // nada mudou
+  const r = await editorApi(`dashboards/${d.id}`, { method: 'PUT', body: corpoDash(d) });
+  if (r.ok) { d.salvo = json; d.atualizadoEm = r.corpo.atualizadoEm; d.atualizadoPor = r.corpo.atualizadoPor; }
+  else mostrarAviso(tx('ui.dash_falha', { erro: r.corpo.error || `HTTP ${r.status}` }), true);
+}
+// Fechando a página com gravação pendente: envia mesmo assim (keepalive)
+window.addEventListener('pagehide', () => {
+  const d = dash.atual;
+  if (!gravarLayoutDashboard.timer || !podeAlterar(d) || !performanceHubApiBase || JSON.stringify(d.layout.charts) === d.salvo) return;
+  try {
+    fetch(new URL(`dashboards/${d.id}`, performanceHubApiBase), {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpoDash(d)), keepalive: true, credentials: 'same-origin'
+    });
+  } catch (e) { /* melhor esforço */ }
+});
 // Troca os gráficos do quadro pelos do dashboard (mesmo formato de 'vdt-charts')
 function substituirQuadro(layout) {
   const lista = layout && Array.isArray(layout.charts) ? layout.charts : [];
@@ -6107,12 +6202,17 @@ function substituirQuadro(layout) {
   saveCharts();
 }
 function abrirDashboard(id, silencioso) {
-  const d = dash.itens.find(x => x.id === id);
+  const d = dashPorId(id);
   if (!d) { if (!silencioso) msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); return false; }
   definirDashAtual(null); // não grava o quadro antigo por cima do dashboard que vai abrir
-  substituirQuadro(layoutNaReferencia(d));
+  const layout = layoutNaReferencia(d);
+  substituirQuadro(layout);
   definirDashAtual(d);
+  // Abrir não conta como alteração; só grava se os períodos precisaram de ajuste
+  if (layout === d.layout) d.salvo = JSON.stringify(layoutDoQuadro().charts);
   gravarLayoutDashboard();
+  if (ehDono(d)) carregarEditoresDash();
+  if (!podeAlterar(d) && !silencioso) mostrarAviso(tx('ui.dash_somente_leitura'));
   recarregarDadosDoDashboard(d);
   prepararFormDash('novo');
   if (!silencioso) mostrarFormDash(false);
@@ -6143,12 +6243,7 @@ function prepararFormDash(modo, origem) {
     : dash.modo === 'reuso' ? proximoMes(base.mesRef, base.anoRef)
     : comReferencias() ? { mes: dashReferencias[0].mes, ano: dashReferencias[0].ano } : referenciaPadrao();
   const ref = comReferencias() ? referenciaValida(pedida) : pedida;
-  const anos = anosDisponiveis([ref.ano, ...(base && base.anos ? base.anos : [])]);
-  const marcados = dash.modo === 'editar' ? base.anos
-    : dash.modo === 'reuso' && base.anos ? base.anos.map(a => a + (ref.ano - base.anoRef)) : [ref.ano, ref.ano - 1];
-  preencherMesAno(ref, marcados);
-  renderAnosDash(marcados);
-  $qe('qeDashAno').dataset.anterior = String(ref.ano);
+  preencherMesAno(ref);
   $qe('qeDashDesc').value = dash.modo === 'editar' ? base.descricao || '' : dash.modo === 'reuso' ? base.descricao || '' : '';
   $qe('qeDashVisao').value = base && DASH_VISOES[base.visao] ? base.visao : DASH_VISAO_PADRAO;
   $qe('qeDashCopiar').checked = charts.length > 0;
@@ -6164,85 +6259,105 @@ function prepararFormDash(modo, origem) {
   if (dash.modo === 'editar') { $qe('qeDashNome').value = base.nome; dash.nomeEditado = true; } else atualizarNomeSugerido();
   limparErrosDash();
 }
-function renderAnosDash(marcados) {
-  $qe('qeDashAnos').innerHTML = anosDisponiveis(marcados).map(a => `<label class="qe-check"><input type="checkbox" data-dash-ano="${a}"${marcados.includes(a) ? ' checked' : ''}> ${a}</label>`).join('');
-}
-// Troca do ano no formulário: os anos marcados andam junto (2025+2026 → 2024+2025)
-function deslocarAnosDash() {
-  const sel = $qe('qeDashAno'), novo = Number(sel.value), antes = Number(sel.dataset.anterior) || novo;
-  sel.dataset.anterior = String(novo);
-  if (novo === antes) return;
-  const marcados = [...$qe('qeDashAnos').querySelectorAll('input:checked')].map(i => Number(i.dataset.dashAno) + novo - antes);
-  renderAnosDash(marcados.length ? marcados : [novo, novo - 1]);
-}
 function atualizarNomeSugerido() {
   if (dash.nomeEditado) return;
   const fonte = dash.modo === 'reuso' ? dash.origem : dash.atual;
   $qe('qeDashNome').value = nomePadrao(baseDoNome(fonte && fonte.nome), Number($qe('qeDashMes').value), Number($qe('qeDashAno').value));
 }
 function limparErrosDash() {
-  ['qeDashNomeErr', 'qeDashAnosErr'].forEach(id => { $qe(id).hidden = true; $qe(id).textContent = ''; });
+  $qe('qeDashNomeErr').hidden = true; $qe('qeDashNomeErr').textContent = '';
   $qe('qeDashNome').removeAttribute('aria-invalid');
 }
 // Lê e valida o formulário; null = erro já exibido no campo
-function lerFormDash(excetoId) {
+function lerFormDash(excetoId, dono) {
   limparErrosDash();
   const nomeEl = $qe('qeDashNome'), nome = nomeEl.value.trim();
-  const anos = [...$qe('qeDashAnos').querySelectorAll('input:checked')].map(i => Number(i.dataset.dashAno)).sort((a, b) => a - b);
-  const erroNome = msg => { nomeEl.setAttribute('aria-invalid', 'true'); $qe('qeDashNomeErr').textContent = msg; $qe('qeDashNomeErr').hidden = false; nomeEl.focus(); return null; };
-  if (!nome) return erroNome(tx('ui.dash_nome_obrigatorio'));
-  if (nomeEmUso(nome, excetoId)) return erroNome(tx('ui.dash_nome_duplicado'));
+  if (!nome) return erroNomeDash(tx('ui.dash_nome_obrigatorio'));
+  if (nomeEmUso(nome, excetoId, dono)) return erroNomeDash(tx('ui.dash_nome_duplicado'));
   if (!temReferencia(Number($qe('qeDashAno').value), Number($qe('qeDashMes').value))) { msgEm('qeDashMsg', tx('ui.dash_ref_hint'), 'err'); $qe('qeDashMes').focus(); return null; }
-  if (!anos.length) { $qe('qeDashAnosErr').textContent = tx('ui.dash_anos_obrigatorio'); $qe('qeDashAnosErr').hidden = false; $qe('qeDashAnos').querySelector('input')?.focus(); return null; }
   return {
     nome, descricao: $qe('qeDashDesc').value.trim().slice(0, 500),
     mesRef: Number($qe('qeDashMes').value), anoRef: Number($qe('qeDashAno').value),
     visao: DASH_VISOES[$qe('qeDashVisao').value] ? $qe('qeDashVisao').value : DASH_VISAO_PADRAO,
-    anos, ytdAte: Number($qe('qeDashMes').value)
+    ytdAte: Number($qe('qeDashMes').value)
   };
 }
-function salvarFormDash() {
-  if (dash.modo === 'editar') {
-    const a = dash.atual, v = a && lerFormDash(a.id);
-    if (!v) return;
-    const antes = { mes: a.mesRef, ano: a.anoRef };
-    stashActive();
-    const layoutAtual = layoutDoQuadro();
-    Object.assign(a, v, { atualizadoEm: new Date().toISOString() });
-    // Data mudou: os gráficos passam para os períodos da nova referência (grava no dashboard)
-    if (antes.mes !== v.mesRef || antes.ano !== v.anoRef) substituirQuadro(deslocarLayout(layoutAtual, antes, { mes: v.mesRef, ano: v.anoRef }));
-    dash.itens.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
-    if (!gravarDashboards()) { msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
-    renderDash();
-    recarregarDadosDoDashboard(a);
-    prepararFormDash('novo');
-    mostrarFormDash(false);
-    msgEm('qeDashMsg', tx('ui.dash_parametros_salvos', { nome: a.nome }), 'ok');
-    announce(tx('ui.dash_parametros_salvos', { nome: a.nome }));
-    return;
+function erroNomeDash(msg) {
+  const nomeEl = $qe('qeDashNome');
+  nomeEl.setAttribute('aria-invalid', 'true');
+  $qe('qeDashNomeErr').textContent = msg;
+  $qe('qeDashNomeErr').hidden = false;
+  nomeEl.focus();
+  return null;
+}
+// Resposta de erro da API no formulário (409 = nome em uso)
+function erroDaApiDash(r) {
+  if (r.status === 409) return erroNomeDash(tx('ui.dash_nome_duplicado'));
+  msgEm('qeDashMsg', tx('ui.dash_falha', { erro: r.corpo.error || `HTTP ${r.status}` }), 'err');
+  return null;
+}
+async function salvarFormDash() {
+  if (dash.gravando) return; // um clique = uma gravação
+  dash.gravando = true;
+  $qe('qeDashCriar').disabled = true;
+  try {
+    if (dash.modo === 'editar') await salvarParametrosDash();
+    else await criarDashboard();
+  } finally {
+    dash.gravando = false;
+    $qe('qeDashCriar').disabled = Array.isArray(dashReferencias) && !dashReferencias.length;
   }
-  const v = lerFormDash(null);
+}
+// Alterar parâmetros do aberto: data nova → gráficos nos períodos da nova referência
+async function salvarParametrosDash() {
+  const a = dash.atual, v = a && lerFormDash(a.id, a.dono);
   if (!v) return;
   stashActive();
-  const agora = new Date().toISOString();
-  const para = { mes: v.mesRef, ano: v.anoRef };
-  const layout = dash.modo === 'reuso' ? deslocarLayout(dash.origem.layout, { mes: dash.origem.mesRef, ano: dash.origem.anoRef }, para)
-    : $qe('qeDashCopiar').checked ? deslocarLayout(layoutDoQuadro(), referenciaDoQuadro(), para) : null;
-  const d = { id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...v, status: 'S', criadoEm: agora, criadoPor: usuarioLogado || '', atualizadoEm: agora, layout };
-  dash.itens = [...dash.itens, d].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  if (!gravarDashboards()) { dash.itens = dash.itens.filter(x => x !== d); msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
-  definirDashAtual(null);
-  // Reutilizado: quadro do dashboard de origem; sem reaproveitar: um gráfico no padrão
-  substituirQuadro(layout && layout.charts && layout.charts.length ? layout : { charts: [{ filters: { ...defaultFilters }, size: tamanhoTipico(), pos: { x: BOARD_M, y: BOARD_M } }] });
+  const antes = { mes: a.mesRef, ano: a.anoRef };
+  const mudouData = antes.mes !== v.mesRef || antes.ano !== v.anoRef;
+  const layout = mudouData ? deslocarLayout(layoutDoQuadro(), antes, { mes: v.mesRef, ano: v.anoRef }) : layoutDoQuadro();
+  const r = await editorApi(`dashboards/${a.id}`, { method: 'PUT', body: corpoDash({ ...a, ...v, layout }) });
+  if (!r.ok) return erroDaApiDash(r);
+  const d = dashDoBanco(r.corpo);
+  dash.itens = dash.itens.map(x => (x.id === d.id ? d : x)).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
+  dash.atual = d;
+  if (mudouData) substituirQuadro(d.layout);
   definirDashAtual(d);
-  gravarLayoutDashboard();
+  recarregarDadosDoDashboard(d);
+  prepararFormDash('novo');
+  mostrarFormDash(false);
+  msgEm('qeDashMsg', tx('ui.dash_parametros_salvos', { nome: d.nome }), 'ok');
+  announce(tx('ui.dash_parametros_salvos', { nome: d.nome }));
+}
+// Novo (vazio ou copiando o quadro) ou reutilizado de outro dashboard
+async function criarDashboard() {
+  const v = lerFormDash(null, dash.usuario);
+  if (!v) return;
+  stashActive();
+  const para = { mes: v.mesRef, ano: v.anoRef };
+  let layout = dash.modo === 'reuso' ? deslocarLayout(dash.origem.layout, { mes: dash.origem.mesRef, ano: dash.origem.anoRef }, para)
+    : $qe('qeDashCopiar').checked ? deslocarLayout(layoutDoQuadro(), referenciaDoQuadro(), para) : null;
+  // Sem gráficos para reaproveitar: um gráfico no padrão
+  if (!layout || !layout.charts || !layout.charts.length) layout = { charts: [{ filters: { ...defaultFilters }, size: tamanhoTipico(), pos: { x: BOARD_M, y: BOARD_M } }] };
+  const corpo = { ...corpoDash({ ...v, layout }), ...(dash.modo === 'reuso' ? { origemId: dash.origem.id } : {}) };
+  const r = await editorApi('dashboards', { method: 'POST', body: corpo });
+  if (!r.ok) return erroDaApiDash(r);
+  const d = dashDoBanco(r.corpo);
+  dash.itens = [...dash.itens, d].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  definirDashAtual(null);
+  substituirQuadro(d.layout);
+  definirDashAtual(d);
+  d.salvo = JSON.stringify(layoutDoQuadro().charts);
   recarregarDadosDoDashboard(d);
   prepararFormDash('novo');
   mostrarFormDash(false);
   msgEm('qeDashMsg', tx('ui.dash_criado', { nome: d.nome }), 'ok');
   announce(tx('ui.dash_criado', { nome: d.nome }));
+  if (ehDono(d)) carregarEditoresDash();
 }
 
+const papelDash = d => tx(d.papel === 'dono' ? 'ui.dash_papel_dono' : d.papel === 'editor' ? 'ui.dash_papel_editor' : 'ui.dash_papel_leitor');
+const dashSelecionado = () => dashPorId($qe('qeDashLista').value);
 function renderDash() {
   const btn = $qe('dashBtn');
   if (!btn) return;
@@ -6257,25 +6372,128 @@ function renderDash() {
     linha(tx('ui.dash_referencia'), `${nomeMes(a.mesRef)} ${a.anoRef}`),
     a.descricao ? linha(tx('ui.dash_descricao_curta'), a.descricao) : '',
     linha(tx('ui.dash_status'), a.status === 'S' ? tx('ui.dash_ativo') : tx('ui.dash_inativo')),
+    linha(tx('ui.dash_papel'), papelDash(a)),
     linha(tx('ui.dash_visao'), nomeVisao(a.visao)),
-    linha(tx('ui.dash_anos'), (a.anos || []).join(', ')),
     linha(tx('ui.dash_ytd'), nomeMes(a.ytdAte)),
     dadosCarga.dtRef ? linha(tx('ui.dash_dados'), tx(dadosCarga.semCarga ? 'ui.dash_dados_sem' : 'ui.dash_dados_ref', { ref: nomeDtRef(dadosCarga.dtRef) })) : '',
-    linha(tx('ui.dash_criado_em'), dataHoraLocal(a.criadoEm)),
-    linha(tx('ui.dash_criado_por'), a.criadoPor || '—')
+    linha(tx('ui.dash_dono'), a.dono || '—'),
+    linha(tx('ui.dash_criado_em'), dataHoraLocal(a.criadoEm))
   ].join('') : `<span>${escapeHtml(tx('ui.dash_nenhum'))}</span>`;
-  $qe('qeDashEditar').hidden = !a;
+  // Aviso: banco indisponível ou dashboard só para leitura
+  const aviso = $qe('qeDashAviso');
+  aviso.textContent = !dash.bancoOk && dash.erro ? tx('ui.dash_banco_erro', { erro: dash.erro }) : a && !podeAlterar(a) ? tx('ui.dash_somente_leitura') : '';
+  aviso.hidden = !aviso.textContent;
+  $qe('qeDashEditar').hidden = !podeAlterar(a);
+  $qe('qeDashNovo').disabled = !dash.bancoOk;
   const sel = $qe('qeDashLista'), atualSel = sel.value;
   sel.innerHTML = '';
   sel.add(new Option(dash.itens.length ? tx('ui.selecione') : tx('ui.dash_lista_vazia'), ''));
-  dash.itens.forEach(d => sel.add(new Option(`${d.nome} — ${nomeMes(d.mesRef, true)}/${d.anoRef}`, d.id)));
-  sel.value = dash.itens.some(d => d.id === atualSel) ? atualSel : a ? a.id : '';
+  dash.itens.forEach(d => sel.add(new Option(`${d.nome} — ${nomeMes(d.mesRef, true)}/${d.anoRef} · ${papelDash(d)}${d.status === 'S' ? '' : ` · ${tx('ui.dash_inativo')}`}`, String(d.id))));
+  sel.value = dashPorId(atualSel) ? atualSel : a ? String(a.id) : '';
   sel.disabled = !dash.itens.length;
-  $qe('qeDashAbrir').disabled = $qe('qeDashReutilizar').disabled = $qe('qeDashExcluir').disabled = !dash.itens.length;
-  $qe('qeDashAuto').textContent = dash.modo === 'editar' ? '' : tx('ui.dash_auto', { quando: dataHoraLocal(new Date()), usuario: usuarioLogado || '—' });
+  atualizarBotoesDash();
+  renderEditoresDash();
+  renderMigracaoDash();
+  $qe('qeDashAuto').textContent = dash.modo === 'editar' ? '' : tx('ui.dash_auto', { quando: dataHoraLocal(new Date()), usuario: dash.usuario || usuarioLogado || '—' });
   if (editorReady && editor.open && editor.view === 'dash') renderEditorTarget();
 }
-// Exclusão: confirmação no próprio painel; tira o dashboard da lista deste navegador
+// Botões conforme o papel no dashboard escolhido na lista
+function atualizarBotoesDash() {
+  const d = dashSelecionado();
+  $qe('qeDashAbrir').disabled = !d;
+  $qe('qeDashReutilizar').disabled = !podeAlterar(d);
+  $qe('qeDashExcluir').hidden = $qe('qeDashAtivo').hidden = !ehDono(d);
+  if (ehDono(d)) $qe('qeDashAtivo').textContent = tx(d.status === 'S' ? 'ui.dash_desativar' : 'ui.dash_ativar');
+}
+async function alternarAtivoDash() {
+  const d = dashSelecionado();
+  if (!ehDono(d)) return;
+  fecharExclusaoDash();
+  const ativo = d.status !== 'S';
+  const r = await editorApi(`dashboards/${d.id}/ativo`, { method: 'PUT', body: { ativo } });
+  if (!r.ok) { msgEm('qeDashMsg', r.status === 409 ? tx('ui.dash_nome_duplicado') : tx('ui.dash_falha', { erro: r.corpo.error || `HTTP ${r.status}` }), 'err'); return; }
+  d.status = ativo ? 'S' : 'N';
+  renderDash();
+  msgEm('qeDashMsg', tx(ativo ? 'ui.dash_ativado' : 'ui.dash_desativado', { nome: d.nome }), 'ok');
+  announce(tx(ativo ? 'ui.dash_ativado' : 'ui.dash_desativado', { nome: d.nome }));
+}
+
+// ── Editores (só o dono do dashboard aberto) ──
+async function carregarEditoresDash() {
+  const a = dash.atual;
+  dash.editores = [];
+  if (!ehDono(a)) { renderEditoresDash(); return; }
+  const r = await editorApi(`dashboards/${a.id}/acessos`);
+  if (dash.atual !== a) return; // trocou de dashboard no meio
+  dash.editores = r.ok && Array.isArray(r.corpo.editores) ? r.corpo.editores : [];
+  renderEditoresDash();
+  if (!dash.usuariosCarregados) {
+    const u = await editorApi('usuarios');
+    if (u.ok && Array.isArray(u.corpo.itens)) {
+      $qe('qeDashUsuarios').innerHTML = u.corpo.itens.map(e => `<option value="${escapeHtml(e)}"></option>`).join('');
+      dash.usuariosCarregados = true;
+    }
+  }
+}
+function renderEditoresDash() {
+  $qe('qeDashComp').hidden = !ehDono(dash.atual);
+  $qe('qeDashEditores').innerHTML = dash.editores.length
+    ? dash.editores.map(e => `<li><span>${escapeHtml(e)}</span><button type="button" class="qe-btn" data-remover-editor="${escapeHtml(e)}" aria-label="${escapeHtml(tx('ui.dash_editor_remover', { email: e }))}">×</button></li>`).join('')
+    : `<li class="qe-hint">${escapeHtml(tx('ui.dash_editores_vazio'))}</li>`;
+}
+function adicionarEditorDash() {
+  const campo = $qe('qeDashCompEmail'), email = campo.value.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(email)) { msgEm('qeDashMsg', tx('ui.dash_editor_invalido'), 'err'); campo.focus(); return; }
+  if (!dash.editores.includes(email) && email !== (dash.atual && dash.atual.dono)) dash.editores = [...dash.editores, email].sort();
+  campo.value = '';
+  renderEditoresDash();
+  campo.focus();
+}
+async function salvarEditoresDash() {
+  const a = dash.atual;
+  if (!ehDono(a)) return;
+  const r = await editorApi(`dashboards/${a.id}/acessos`, { method: 'PUT', body: { editores: dash.editores } });
+  if (!r.ok) {
+    msgEm('qeDashMsg', Array.isArray(r.corpo.invalidos) && r.corpo.invalidos.length ? tx('ui.dash_editores_fora', { lista: r.corpo.invalidos.join(', ') }) : tx('ui.dash_falha', { erro: r.corpo.error || `HTTP ${r.status}` }), 'err');
+    return;
+  }
+  dash.editores = r.corpo.editores;
+  renderEditoresDash();
+  msgEm('qeDashMsg', tx('ui.dash_editores_salvos', { nome: a.nome }), 'ok');
+  announce(tx('ui.dash_editores_salvos', { nome: a.nome }));
+}
+
+// ── Dashboards antigos do navegador → banco (uma vez) ──
+function renderMigracaoDash() {
+  const n = dash.bancoOk ? lerDashboardsLocais().length : 0;
+  $qe('qeDashMigrar').hidden = !n;
+  if (n) $qe('qeDashMigrarTexto').textContent = tx('ui.dash_migrar_texto', { n });
+}
+async function migrarDashboardsLocais() {
+  const btn = $qe('qeDashMigrarBtn');
+  btn.disabled = true;
+  let ok = 0, pulados = 0, erros = 0;
+  const restantes = [];
+  for (const d of lerDashboardsLocais()) {
+    const local = { ...d, visao: DASH_VISOES[d.visao] ? d.visao : DASH_VISAO_PADRAO };
+    // Gráficos já nos períodos da referência (mesma regra de abrir)
+    const r = await editorApi('dashboards', { method: 'POST', body: corpoDash({ ...local, layout: layoutNaReferencia(local) || { charts: [] } }) });
+    if (r.ok) ok++;
+    else if (r.status === 409) pulados++;
+    else { erros++; restantes.push(d); }
+  }
+  try {
+    if (restantes.length) localStorage.setItem(DASH_LISTA_KEY, JSON.stringify(restantes));
+    else localStorage.removeItem(DASH_LISTA_KEY);
+  } catch (e) { /* segue */ }
+  btn.disabled = false;
+  await carregarDashboards();
+  renderDash();
+  msgEm('qeDashMsg', tx('ui.dash_migrado', { ok, pulados, erros }), erros ? 'err' : 'ok');
+  announce(tx('ui.dash_migrado', { ok, pulados, erros }));
+}
+
+// Exclusão (dono): confirmação no próprio painel; apaga do banco com os editores
 function fecharExclusaoDash() { $qe('qeDashExcluirBox').hidden = true; dash.excluir = null; }
 function pedirExclusaoDash(d) {
   dash.excluir = d;
@@ -6283,12 +6501,14 @@ function pedirExclusaoDash(d) {
   $qe('qeDashExcluirBox').hidden = false;
   $qe('qeDashExcluirNao').focus();
 }
-function excluirDashboard() {
+async function excluirDashboard() {
   const d = dash.excluir;
-  if (!d) return;
-  const antes = dash.itens;
+  if (!d || !ehDono(d)) return;
+  $qe('qeDashExcluirSim').disabled = true;
+  const r = await editorApi(`dashboards/${d.id}`, { method: 'DELETE' });
+  $qe('qeDashExcluirSim').disabled = false;
+  if (!r.ok) { msgEm('qeDashMsg', tx('ui.dash_falha', { erro: r.corpo.error || `HTTP ${r.status}` }), 'err'); return; }
   dash.itens = dash.itens.filter(x => x.id !== d.id);
-  if (!gravarDashboards()) { dash.itens = antes; msgEm('qeDashMsg', tx('ui.dash_falha_criar'), 'err'); return; }
   fecharExclusaoDash();
   // Era o aberto: o quadro fica como está, sem dashboard, com a carga mais recente
   if (dash.atual && dash.atual.id === d.id) { definirDashAtual(null); recarregarDadosDoDashboard(null); }
@@ -6302,18 +6522,20 @@ function excluirDashboard() {
 function abrirDashView() {
   fecharExclusaoDash();
   carregarReferenciasDash();
-  dash.itens = lerDashboards();
-  if (dash.atual) dash.atual = dash.itens.find(d => d.id === dash.atual.id) || null;
   prepararFormDash('novo');
-  mostrarFormDash(!dash.itens.length); // sem nenhum dashboard: já abre o "Novo"
   renderDash();
+  // Lista sempre do banco (compartilhamentos e mudanças de outras pessoas)
+  carregarDashboards().then(() => {
+    if (!dash.formAberto) mostrarFormDash(dash.bancoOk && !dash.itens.length && !lerDashboardsLocais().length);
+    renderDash();
+    carregarEditoresDash();
+  });
 }
 
 function initDashboards() {
-  dash.itens = lerDashboards();
   carregarReferenciasDash();
   const escolhido = () => {
-    const d = dash.itens.find(x => x.id === $qe('qeDashLista').value);
+    const d = dashSelecionado();
     if (!d) { msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); $qe('qeDashLista').focus(); }
     return d;
   };
@@ -6335,25 +6557,36 @@ function initDashboards() {
   $qe('qeDashExcluirSim').addEventListener('click', excluirDashboard);
   $qe('qeDashExcluirNao').addEventListener('click', () => { fecharExclusaoDash(); $qe('qeDashExcluir').focus(); });
   $qe('qeDashExcluirBox').addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); fecharExclusaoDash(); $qe('qeDashExcluir').focus(); } });
-  $qe('qeDashLista').addEventListener('change', fecharExclusaoDash);
+  $qe('qeDashLista').addEventListener('change', () => { fecharExclusaoDash(); atualizarBotoesDash(); });
+  $qe('qeDashAtivo').addEventListener('click', alternarAtivoDash);
+  $qe('qeDashMigrarBtn').addEventListener('click', migrarDashboardsLocais);
+  $qe('qeDashCompAdd').addEventListener('click', adicionarEditorDash);
+  $qe('qeDashCompEmail').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adicionarEditorDash(); } });
+  $qe('qeDashCompSalvar').addEventListener('click', salvarEditoresDash);
+  $qe('qeDashEditores').addEventListener('click', e => {
+    const b = e.target.closest('[data-remover-editor]');
+    if (!b) return;
+    dash.editores = dash.editores.filter(x => x !== b.dataset.removerEditor);
+    renderEditoresDash();
+    $qe('qeDashCompEmail').focus();
+  });
   $qe('qeDashReutilizar').addEventListener('click', () => {
     const d = escolhido();
-    if (!d) return;
+    if (!podeAlterar(d)) return;
     prepararFormDash('reuso', d);
     mostrarFormDash(true);
     msgEm('qeDashMsg', tx('ui.dash_reuso_msg', { nome: d.nome }), 'info');
   });
   $qe('qeDashEditar').addEventListener('click', () => {
-    if (!dash.atual) return;
+    if (!podeAlterar(dash.atual)) return;
     prepararFormDash('editar');
     mostrarFormDash(true);
     msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
   });
   $qe('qeDashMes').addEventListener('change', () => { $qe('qeDashYtd').value = $qe('qeDashMes').value; atualizarNomeSugerido(); });
-  $qe('qeDashAno').addEventListener('change', () => { preencherMeses(Number($qe('qeDashMes').value)); deslocarAnosDash(); atualizarNomeSugerido(); });
+  $qe('qeDashAno').addEventListener('change', () => { preencherMeses(Number($qe('qeDashMes').value)); atualizarNomeSugerido(); });
   $qe('qeDashNome').addEventListener('input', () => { dash.nomeEditado = true; limparErrosDash(); });
   $qe('qeDashNome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); salvarFormDash(); } });
-  $qe('qeDashAnos').addEventListener('change', limparErrosDash);
   document.addEventListener('qtr:idioma', () => {
     if (editor.open && editor.view === 'dash') {
       const nome = $qe('qeDashNome').value, editado = dash.nomeEditado;
@@ -6362,10 +6595,15 @@ function initDashboards() {
     }
     renderDash();
   });
-  let salvo = null;
-  try { salvo = localStorage.getItem(DASH_ATUAL_KEY); } catch (e) { salvo = null; }
-  if (salvo && dash.itens.some(d => d.id === salvo)) abrirDashboard(salvo, true);
   renderDash();
+  // Reabre o dashboard que estava aberto, agora vindo do banco
+  carregarDashboards().then(() => {
+    let salvo = null;
+    try { salvo = localStorage.getItem(DASH_ATUAL_KEY); } catch (e) { salvo = null; }
+    if (salvo && dashPorId(salvo)) abrirDashboard(salvo, true);
+    else if (salvo) definirDashAtual(null); // id antigo do navegador ou dashboard que saiu
+    renderDash();
+  });
 }
 
 function recolherPainel() {
