@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════
-   VBM-Performance-Studio — carga mensal de IBP.PHUB_PERFORMANCESTUDIO
+   VBM-Performance-Hub — carga mensal de IBP.PHUB_PERFORMANCESTUDIO
    Banco: BDIBPBMSA_PRD
 
    Grava o resultado da CHART_DATA_AO_VIVO_SQL (performancehub-api.js) para um mês

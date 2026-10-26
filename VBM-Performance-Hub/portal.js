@@ -1,8 +1,8 @@
 /**
- * Performance Studio acoplado ao Portal em /VBM-Performance-Studio/ (página: index.html).
+ * Performance Hub acoplado ao Portal em /VBM-Performance-Hub/ (página: index.html).
  *
- * Tudo do Performance Studio fica nesta pasta. O server.js do Portal só faz:
- *     require("./VBM-Performance-Studio/portal")(portal);
+ * Tudo do Performance Hub fica nesta pasta. O server.js do Portal só faz:
+ *     require("./VBM-Performance-Hub/portal")(portal);
  * ANTES do express.static da pasta.
  *
  * Conexão PRÓPRIA (pool separado do Kaizen), sempre no Azure SQL PRD.
@@ -16,7 +16,7 @@ const { criarPerformanceHubRouter } = require('./performancehub-api');
 const PRD_SERVER = 'rdb-ibp-bmsa-prd.database.windows.net';
 const PRD_DATABASE = 'BDIBPBMSA_PRD';
 // Prefixo da aplicação no portal (= nome da pasta).
-const BASE = '/VBM-Performance-Studio';
+const BASE = '/VBM-Performance-Hub';
 
 module.exports = function montarPerformanceHubNoPortal(app) {
   const env = process.env;
@@ -36,7 +36,7 @@ module.exports = function montarPerformanceHubNoPortal(app) {
     if (!poolPromise && ultimaFalha && Date.now() - ultimaFalha.em < 30000) return Promise.reject(ultimaFalha.erro);
     if (!poolPromise) {
       const faltando = ['user', 'password'].filter(k => !DB[k]);
-      if (faltando.length) return Promise.reject(new Error(`Performance Studio: credencial do banco ausente (${faltando.join(', ')})`));
+      if (faltando.length) return Promise.reject(new Error(`Performance Hub: credencial do banco ausente (${faltando.join(', ')})`));
       const pool = new sql.ConnectionPool({
         server: DB.server,
         port: DB.port,
@@ -48,15 +48,15 @@ module.exports = function montarPerformanceHubNoPortal(app) {
         requestTimeout: 60000,
         pool: { max: 3, min: 0, idleTimeoutMillis: 30000 },
       });
-      pool.on('error', err => { console.error('[performance-studio] erro no pool:', err.message); poolPromise = null; });
+      pool.on('error', err => { console.error('[performance-hub] erro no pool:', err.message); poolPromise = null; });
       poolPromise = pool.connect().then(p => {
         ultimaFalha = null;
-        console.log(`[performance-studio] conectado a ${DB.server}/${DB.database}`);
+        console.log(`[performance-hub] conectado a ${DB.server}/${DB.database}`);
         return p;
       }).catch(err => {
         poolPromise = null;
         ultimaFalha = { erro: err, em: Date.now() };
-        console.error('[performance-studio] falha ao conectar:', err.message);
+        console.error('[performance-hub] falha ao conectar:', err.message);
         throw err;
       });
     }
@@ -71,7 +71,7 @@ module.exports = function montarPerformanceHubNoPortal(app) {
   };
   const semCache = (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); };
 
-  // Express não diferencia maiúsculas: cobre /VBM-Performance-Studio/api e /vbm-performance-studio/api.
+  // Express não diferencia maiúsculas: cobre /VBM-Performance-Hub/api e /vbm-performance-hub/api.
   app.get(BASE + '/api/health', semCache, async (req, res) => {
     try {
       await runQuery('SELECT 1 AS ok');
@@ -82,27 +82,27 @@ module.exports = function montarPerformanceHubNoPortal(app) {
   });
   // PERFORMANCEHUB_CONFIG_TABLE (opcional): tabela das configurações dos gráficos.
   // Imagens de fundo: mesmo Azure Blob do portal (AZURE_STORAGE_*, módulo do
-  // Kaizen). Sem ele, o upload responde 503 e o resto do Performance Studio segue normal.
+  // Kaizen). Sem ele, o upload responde 503 e o resto do Performance Hub segue normal.
   let armazenamento = null;
   try {
     const blob = require(require('path').join(__dirname, '..', process.env.KAIZEN_PASTA || 'VBM-Kaizen-App', 'azure-blob'));
     armazenamento = { configurado: blob.blobConfigurado, enviar: blob.enviarArquivoParaBlob, baixar: blob.baixarArquivoDoBlob };
   } catch (e) {
-    console.warn('[performance-studio] armazenamento de imagens indisponível:', e.message);
+    console.warn('[performance-hub] armazenamento de imagens indisponível:', e.message);
   }
   app.use(BASE + '/api', semCache, criarPerformanceHubRouter({ runQuery, tabelaConfiguracao: env.PERFORMANCEHUB_CONFIG_TABLE, armazenamento, pastaFundos: env.PERFORMANCEHUB_BG_PASTA }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
   // server.js, portal.js, performancehub-api.js, app.yaml, package*.json, .env*
   // e docs ficam bloqueados (o express.static do Portal serve a pasta).
-  const PUBLICO = /^\/vbm-performance-studio\/?(index\.html|assets\/.+)?$/i;
+  const PUBLICO = /^\/vbm-performance-hub\/?(index\.html|assets\/.+)?$/i;
   app.use(BASE, (req, res, next) => {
     const caminho = req.originalUrl.split('?')[0];
     if (PUBLICO.test(caminho) && !/\.\.|%2e|%5c|\\/i.test(caminho)) return next();
     res.status(404).set('Cache-Control', 'no-store').json({ error: 'Não encontrado.' });
   });
 
-  console.log(`[performance-studio] rotas em ${BASE}/api — banco ${DB.server}/${DB.database}`);
+  console.log(`[performance-hub] rotas em ${BASE}/api — banco ${DB.server}/${DB.database}`);
   // Conexão PRD reaproveitada pelo controle de acesso do Portal (portal-acesso.js)
   return { runQuery };
 };

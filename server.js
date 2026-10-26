@@ -7,7 +7,7 @@
  *
  *   /                  portal (este diretório: index.html, assets/)
  *   /VBM-Kaizen-App/   VBM-Kaizen-App/server.js  (app Express montável)
- *   /VBM-Performance-Studio/     VBM-Performance-Studio/portal.js    (API própria, banco PRD)
+ *   /VBM-Performance-Hub/     VBM-Performance-Hub/portal.js    (API própria, banco PRD)
  *
  * Nova aplicação = nova pasta + uma linha de montagem abaixo.
  */
@@ -29,7 +29,7 @@ if (!KAIZEN_PASTA) {
 if (process.env.KAIZEN_PASTA && process.env.KAIZEN_PASTA !== KAIZEN_PASTA) {
   console.warn(`[portal] KAIZEN_PASTA=${process.env.KAIZEN_PASTA} não existe; usando ${KAIZEN_PASTA}.`);
 }
-process.env.KAIZEN_PASTA = KAIZEN_PASTA; // o VBM-Performance-Studio lê daqui o módulo azure-blob
+process.env.KAIZEN_PASTA = KAIZEN_PASTA; // o VBM-Performance-Hub lê daqui o módulo azure-blob
 console.log(`[portal] VBM-Kaizen-App carregado de ./${KAIZEN_PASTA}`);
 const kaizen = require(path.join(__dirname, KAIZEN_PASTA, "server.js"));
 const criarControleDeAcesso = require("./portal-acesso");
@@ -63,30 +63,30 @@ portal.get(["/admin.html", "/aprovacao.html", "/biblioteca.html", "/kaizen-novo.
 
 // ── Controle de acesso do Portal ──
 // Usuário em IBP.USERS com CD_MATRICULA preenchido (ver portal-acesso.js).
-// Vale para o Portal e o Performance Studio; o VBM-Kaizen-App é aberto (validação própria).
-// Registrado ANTES das rotas do Performance Studio.
+// Vale para o Portal e o Performance Hub; o VBM-Kaizen-App é aberto (validação própria).
+// Registrado ANTES das rotas do Performance Hub.
 let acesso = null;
 const aguardarAcesso = (fn) => (req, res, next) => (acesso ? acesso[fn](req, res, next) : res.status(503).json({ error: "Portal iniciando." }));
 portal.get("/portal/acesso", aguardarAcesso("rotaStatus"));
-portal.use("/VBM-Performance-Studio", aguardarAcesso("exigir"));
+portal.use("/VBM-Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/Performance-Hub", aguardarAcesso("exigir"));
 
-// ── VBM-Performance-Studio ──
-// API (/VBM-Performance-Studio/api) + bloqueio dos arquivos internos da pasta.
-const performanceHub = require("./VBM-Performance-Studio/portal")(portal) || {};
+// ── VBM-Performance-Hub ──
+// API (/VBM-Performance-Hub/api) + bloqueio dos arquivos internos da pasta.
+const performanceHub = require("./VBM-Performance-Hub/portal")(portal) || {};
 // portal.js antigo (não devolve a conexão) não pode derrubar o app: o Portal
-// e o Performance Studio ficam bloqueados com "não foi possível validar" e o log explica.
+// e o Performance Hub ficam bloqueados com "não foi possível validar" e o log explica.
 if (typeof performanceHub.runQuery !== "function") {
-  console.error("[portal-acesso] VBM-Performance-Studio/portal.js desatualizado (não devolve { runQuery }) — publique a versão nova. Acesso ao Portal/Performance Studio bloqueado até lá.");
+  console.error("[portal-acesso] VBM-Performance-Hub/portal.js desatualizado (não devolve { runQuery }) — publique a versão nova. Acesso ao Portal/Performance Hub bloqueado até lá.");
 }
-// IBP.USERS é lida SOMENTE no banco de produção (BDIBPBMSA_PRD, conexão do Performance Studio).
+// IBP.USERS é lida SOMENTE no banco de produção (BDIBPBMSA_PRD, conexão do Performance Hub).
 const conexoesAcesso = [];
 if (typeof performanceHub.runQuery === "function") conexoesAcesso.push({ nome: "PRD (BDIBPBMSA_PRD)", runQuery: performanceHub.runQuery });
 acesso = criarControleDeAcesso({ conexoes: conexoesAcesso });
-portal.use("/VBM-Performance-Studio", express.static(path.join(__dirname, "VBM-Performance-Studio"), { index: "index.html", dotfiles: "ignore" }));
-portal.use("/Performance-Hub", (req, res) => res.redirect(301, "/VBM-Performance-Studio" + req.url));
-// Nome antigo da pasta (favoritos e links salvos): leva para o novo.
-portal.use("/VBM-Performance-Hub", (req, res) => res.redirect(301, "/VBM-Performance-Studio" + req.url));
+portal.use("/VBM-Performance-Hub", express.static(path.join(__dirname, "VBM-Performance-Hub"), { index: "index.html", dotfiles: "ignore" }));
+portal.use("/Performance-Hub", (req, res) => res.redirect(301, "/VBM-Performance-Hub" + req.url));
+// Endereço usado enquanto a pasta se chamou VBM-Performance-Studio (links salvos): volta para o atual.
+portal.use("/VBM-Performance-Studio", (req, res) => res.redirect(301, "/VBM-Performance-Hub" + req.url));
 
 // ── Portal ──
 portal.use("/assets", express.static(path.join(__dirname, "assets"), { dotfiles: "ignore" }));

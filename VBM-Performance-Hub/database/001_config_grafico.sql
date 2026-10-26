@@ -1,12 +1,12 @@
 /* ════════════════════════════════════════════════════════════════════
-   VBM-Performance-Studio — configuração dos gráficos (painel de edição)
+   VBM-Performance-Hub — configuração dos gráficos (painel de edição)
    Banco: BDIBPBMSA_PRD  (PERFORMANCEHUB_AZURE_SQL_DATABASE no app.yaml)
 
-   Não havia tabela de configuração para o Performance Studio; esta é a única
+   Não havia tabela de configuração para o Performance Hub; esta é a única
    estrutura nova. Guarda SÓ apresentação (título, casas decimais,
    unidade/escala e cores) em JSON — nenhum dado de negócio é alterado.
 
-   Usada por GET/PUT /VBM-Performance-Studio/api/config-graficos (performancehub-api.js).
+   Usada por GET/PUT /VBM-Performance-Hub/api/config-graficos (performancehub-api.js).
    Outro nome/esquema: declarar PERFORMANCEHUB_CONFIG_TABLE='ESQUEMA.TABELA'
    no app.yaml.
    ════════════════════════════════════════════════════════════════════ */

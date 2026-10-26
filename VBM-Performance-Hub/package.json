@@ -1,7 +1,7 @@
 {
-  "name": "performance-studio-dashboard",
+  "name": "performance-hub-dashboard",
   "version": "2.0.0",
-  "description": "Performance Studio — dashboard de barras (trimestre/semestre/ano) com conexão direta ao Azure SQL PRD",
+  "description": "Performance Hub — dashboard de barras (trimestre/semestre/ano) com conexão direta ao Azure SQL PRD",
   "main": "server.js",
   "private": true,
   "scripts": {

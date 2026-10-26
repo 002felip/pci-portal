@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════
-   VBM-Performance-Studio — dashboards gravados no banco
+   VBM-Performance-Hub — dashboards gravados no banco
    Banco: BDIBPBMSA_PRD  (PERFORMANCEHUB_AZURE_SQL_DATABASE no app.yaml)
 
    IBP.PHUB_PS_SETUP   um registro por dashboard (gráficos em JSON)
@@ -8,7 +8,7 @@
    Regras:
      - Dono (NM_USUARIO_CRIACAO): altera, ativa/desativa, exclui e define editores.
      - Editor (linha em PHUB_PS_ACESSO): altera e reutiliza.
-     - Demais usuários do Studio: só visualizam os dashboards ativos.
+     - Demais usuários do Performance Hub: só visualizam os dashboards ativos.
      - Desativar = SG_ATIVO 'N' (some para os outros; o dono ainda vê "Inativo").
      - Excluir = DELETE da linha; os editores saem junto (ON DELETE CASCADE).
    DT_REF = mês de referência = DT_REF da carga em IBP.PHUB_PERFORMANCESTUDIO.

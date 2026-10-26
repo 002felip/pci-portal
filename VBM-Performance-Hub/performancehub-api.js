@@ -1,18 +1,18 @@
 /**
- * Performance Studio — rotas de dados (chart-data / sites) como MÓDULO.
+ * Performance Hub — rotas de dados (chart-data / sites) como MÓDULO.
  *
  * POR QUE ISTO EXISTE
  * -------------------
- * O Performance Studio tem dois pontos de entrada possíveis:
+ * O Performance Hub tem dois pontos de entrada possíveis:
  *
- *   1. Standalone, para desenvolvimento: `cd VBM-Performance-Studio && npm start`
- *      (VBM-Performance-Studio/server.js sobe o próprio Express + pool).
+ *   1. Standalone, para desenvolvimento: `cd VBM-Performance-Hub && npm start`
+ *      (VBM-Performance-Hub/server.js sobe o próprio Express + pool).
  *   2. Dentro do app publicado: o Databricks App roda `npm start` na
  *      RAIZ do projeto (ver app.yaml), ou seja, o server.js da raiz —
- *      VBM-Performance-Studio/server.js não roda em produção.
+ *      VBM-Performance-Hub/server.js não roda em produção.
  *
  * Antes deste módulo, a SQL vivia duplicada nos dois server.js: editar
- * a query no Performance Studio não mudava nada em produção, que é exatamente a
+ * a query no Performance Hub não mudava nada em produção, que é exatamente a
  * armadilha que fez o filtro Product parecer quebrado por semanas.
  * Aqui a query existe UMA vez, e os dois pontos de entrada montam o
  * mesmo router.
@@ -491,7 +491,7 @@ function normalizarFontes(entrada) {
 }
 
 // ── Background da apresentação ──────────────────────────────────────────
-// Configuração GLOBAL do dashboard (o Performance Studio não tem preferência por
+// Configuração GLOBAL do dashboard (o Performance Hub não tem preferência por
 // usuário): uma linha reservada na mesma tabela de configuração, com o
 // nome abaixo. Nomes que começam com "__" são reservados e ficam fora da
 // lista de gráficos salvos. A imagem vai para o armazenamento existente
@@ -571,7 +571,7 @@ function lerConfigGravada(json) {
 
 // 208 = objeto inexistente (tabela ainda não criada); 229/230 = sem permissão.
 function respostaDeErroConfig(res, err, acao) {
-  console.error(`[performance-studio] config-graficos (${acao}):`, err.message);
+  console.error(`[performance-hub] config-graficos (${acao}):`, err.message);
   if (err.number === 208) return res.status(503).json({ error: 'Tabela de configuração dos gráficos não encontrada no banco.', codigo: 'SEM_TABELA' });
   if (err.number === 229 || err.number === 230) return res.status(503).json({ error: 'Sem permissão na tabela de configuração dos gráficos.', codigo: 'SEM_PERMISSAO' });
   return res.status(500).json({ error: `Falha ao ${acao} a configuração.`, codigo: 'ERRO_BANCO' });
@@ -590,7 +590,7 @@ function respostaDeErroConfig(res, err, acao) {
 // IBP.PHUB_PS_SETUP: um dashboard por linha, gráficos em JSON (DS_LAYOUT).
 // IBP.PHUB_PS_ACESSO: editores escolhidos pelo dono (e-mails da IBP.USERS).
 // Dono altera, ativa/desativa, exclui e define editores; editor altera e
-// reutiliza; os demais usuários do Studio só visualizam os ativos.
+// reutiliza; os demais usuários do Performance Hub só visualizam os ativos.
 const DASH_SETUP = 'IBP.PHUB_PS_SETUP';
 const DASH_ACESSO = 'IBP.PHUB_PS_ACESSO';
 const DASH_VISOES = ['VBM_PRODUCTION_ANALYTICS'];
@@ -668,7 +668,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
         const dados = await comCache(chaveCache, buscar);
         res.json(dados);
       } catch (err) {
-        console.error(`[performance-studio] Erro ao buscar ${chaveCache}:`, err.message);
+        console.error(`[performance-hub] Erro ao buscar ${chaveCache}:`, err.message);
         res.status(500).json({ error: oQueFalhou, detalhe: err.message });
       }
     });
@@ -694,11 +694,11 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
       });
       if (r.recordset.length) return r.recordset;
       if (dtRef) return null;
-      console.warn('[performance-studio] IBP.PHUB_PERFORMANCESTUDIO sem carga para o dashboard: usando a consulta ao vivo');
+      console.warn('[performance-hub] IBP.PHUB_PERFORMANCESTUDIO sem carga para o dashboard: usando a consulta ao vivo');
     } catch (err) {
       if (!tabelaInexistente(err)) throw err;
       if (dtRef) return null;
-      console.warn('[performance-studio] IBP.PHUB_PERFORMANCESTUDIO não existe nesta base: usando a consulta ao vivo');
+      console.warn('[performance-hub] IBP.PHUB_PERFORMANCESTUDIO não existe nesta base: usando a consulta ao vivo');
     }
     // Ao vivo, o DT_REF da query é o período da linha: vira DT_IND, como na tabela
     const r = await runQuery(CHART_DATA_AO_VIVO_SQL);
@@ -718,7 +718,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
       }
       res.json(dados);
     } catch (err) {
-      console.error('[performance-studio] Erro ao buscar chart-data:', err.message);
+      console.error('[performance-hub] Erro ao buscar chart-data:', err.message);
       res.status(500).json({ error: 'Failed to fetch chart data', detalhe: err.message });
     }
   });
@@ -843,7 +843,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
   const receberImagem = multer({ storage: multer.memoryStorage(), limits: { fileSize: FUNDO_IMG_MAX, files: 1 } }).single('imagem');
   router.post('/background/imagem', (req, res) => {
     if (!armazenamento || !armazenamento.configurado()) {
-      console.error('[performance-studio] upload de fundo: armazenamento de imagens não configurado');
+      console.error('[performance-hub] upload de fundo: armazenamento de imagens não configurado');
       return res.status(503).json({ error: 'Armazenamento de imagens indisponível no momento.' });
     }
     receberImagem(req, res, async (err) => {
@@ -855,7 +855,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
         await armazenamento.enviar(`${pasta}/${ref}`, req.file.buffer, FUNDO_MIME_POR_EXT[ext]);
         res.json({ ref });
       } catch (e) {
-        console.error('[performance-studio] upload de fundo falhou:', e.message);
+        console.error('[performance-hub] upload de fundo falhou:', e.message);
         res.status(502).json({ error: 'Não foi possível enviar a imagem. Tente novamente.' });
       }
     });
@@ -873,7 +873,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
       });
       res.send(buffer);
     } catch (e) {
-      console.error('[performance-studio] leitura de fundo falhou:', e.message);
+      console.error('[performance-hub] leitura de fundo falhou:', e.message);
       res.status(404).json({ error: 'Imagem não encontrada.' });
     }
   });
@@ -899,7 +899,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     try {
       await handler(req, res, email);
     } catch (err) {
-      console.error(`[performance-studio] dashboards (${acao}):`, err.message);
+      console.error(`[performance-hub] dashboards (${acao}):`, err.message);
       if (!res.headersSent) res.status(500).json({ error: `Falha ao ${acao} o dashboard.`, codigo: 'ERRO_BANCO' });
     }
   };

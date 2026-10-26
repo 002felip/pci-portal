@@ -1,12 +1,12 @@
 /**
- * Controle de acesso ao Portal (página inicial + VBM-Performance-Studio).
+ * Controle de acesso ao Portal (página inicial + VBM-Performance-Hub).
  *
  * Regra: o usuário logado (X-Forwarded-Email, injetado pelo proxy do
  * Databricks Apps — o navegador não consegue forjá-lo) precisa existir em
  * IBP.USERS com CD_MATRICULA preenchido. O VBM-Kaizen-App NÃO passa por aqui:
  * é aplicação aberta, com validação própria.
  *
- * Banco: produção (BDIBPBMSA_PRD, conexão do Performance Studio) — o log informa qual.
+ * Banco: produção (BDIBPBMSA_PRD, conexão do Performance Hub) — o log informa qual.
  * Colunas: lidas de INFORMATION_SCHEMA (nada é suposto). A coluna de e-mail
  * pode ser fixada com PORTAL_USERS_EMAIL_COLUMN; sem ela, usa a primeira
  * coluna de IBP.USERS cujo nome indique e-mail/UPN/login.
@@ -29,7 +29,7 @@ const MENSAGEM = {
 };
 
 // Coluna de e-mail/login de IBP.USERS (exige CD_MATRICULA). Exportada para o
-// Performance Studio usar a mesma regra ao validar editores de dashboard.
+// Performance Hub usar a mesma regra ao validar editores de dashboard.
 async function descobrirColunaEmail(runQuery, env = process.env) {
   const r = await runQuery(
     'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @esquema AND TABLE_NAME = @tabela',
