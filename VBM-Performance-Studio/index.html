@@ -6139,7 +6139,7 @@ async function carregarDashboards() {
   dash.erro = dash.bancoOk ? '' : (r.corpo.error || `HTTP ${r.status}`);
   if (!dash.bancoOk) { console.warn('[performance-studio] dashboards do banco indisponíveis:', dash.erro); return false; }
   dash.usuario = r.corpo.usuario || '';
-  dash.itens = r.corpo.itens.map(d => { d.salvo = JSON.stringify(corpoDash(d)); return d; });
+  dash.itens = r.corpo.itens.map(reg => { const d = dashDoBanco(reg); d.salvo = JSON.stringify(corpoDash(d)); return d; });
   if (dash.atual) {
     // O aberto continua como está na tela (alterações ainda não salvas não se perdem)
     const novo = dashPorId(dash.atual.id);
@@ -6256,12 +6256,13 @@ function abrirDashboard(id, silencioso) {
   if (!silencioso && !podeDescartarDash(`abrir:${d.id}`)) return false;
   definirDashAtual(null); // não grava o quadro antigo por cima do dashboard que vai abrir
   const layout = layoutNaReferencia(d);
+  const ajustado = layout !== d.layout; // períodos levados para a referência do dashboard
   substituirQuadro(layout);
   definirDashAtual(d);
   // Abrir não conta como alteração; se os períodos precisaram de ajuste, fica pendente
   const salvoNoBanco = d.salvo;
   gravarLayoutDashboard();
-  d.salvo = layout === d.layout || layout === null ? JSON.stringify(corpoDash(d)) : salvoNoBanco;
+  d.salvo = ajustado ? salvoNoBanco : JSON.stringify(corpoDash(d));
   atualizarEstadoDash();
   if (ehDono(d)) carregarEditoresDash();
   if (!podeAlterar(d) && !silencioso) mostrarAviso(tx('ui.dash_somente_leitura'));
