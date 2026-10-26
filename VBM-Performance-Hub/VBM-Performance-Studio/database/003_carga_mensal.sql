@@ -7,18 +7,27 @@
    DT_REF + ID_DASH, numa transação (tudo ou nada).
 
    Parâmetros (bloco abaixo):
-     @DT_REF     último mês FECHADO. NULL = IBP.CONTROLE_PROCESSOS.DT_INI - 1 mês
-                 (ID_PROCESSO = 2), o mesmo valor que a query da API usa.
+     @DT_REF     mês de referência do dashboard = mês atual (em aberto), o
+                 mesmo @DT_REF da Quartely (ex.: '2026-10-01' → "Outubro 2026":
+                 realizado até setembro, projeção a partir de outubro).
+                 NULL = IBP.CONTROLE_PROCESSOS.DT_INI - 1 mês (ID_PROCESSO = 2).
      @NM_USUARIO quem roda a carga. NULL = login da conexão (SUSER_SNAME()).
      @ID_DASH    dashboard de origem (21 = VBM Production Analytics).
      @ANOS_ANTES anos anteriores incluídos para comparação (1 = desde jan do ano anterior).
 
    Datas derivadas de @DT_REF (a query da API usa GETDATE(); aqui não, para
    que reprocessar um mês dê o mesmo recorte):
-     @DT_INI  = 1º de janeiro de (ano de @DT_REF - @ANOS_ANTES)
-     @DT_FIM  = dezembro do ano do mês seguinte ao fechado (em jan/27, fechado
-                dez/26, já inclui 2027, como a API)
-     @YTD_FIM = @DT_REF (YTD de janeiro até o mês fechado)
+     @DT_REAL = @DT_REF - 1 mês (último mês com REALIZADO)
+     @DT_INI  = 1º de janeiro de (ano de @DT_REAL - @ANOS_ANTES)
+     @DT_FIM  = dezembro do ano de @DT_REF (em jan/27 já inclui 2027, como a API)
+     @YTD_FIM = @DT_REAL (YTD de janeiro até o último mês fechado, só realizado)
+
+   Regras = as da Quartely (quartely-queries.sql):
+     Act/Fcst usa VL_REAL até @DT_REAL e VL_PROJ depois.
+     Rótulo A/F: trimestre e semestre são 'A' quando terminam antes de
+     @DT_REF; ano é 'A' quando é anterior ao ano de @DT_REF; mês é 'A'
+     até @DT_REAL.
+     Ex.: carga '2026-10-01' = Quartely com @DT_REF '2026-10-01'.
 
    Atenção: reprocessar um mês antigo usa os valores ATUAIS de
    PEDRAVISAOCONSOLIDADA (projeções e realizados de hoje), não os da época.
@@ -27,7 +36,7 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 -- ── Parâmetros ───────────────────────────────────────────────────────
-DECLARE @DT_REF     DATE          = NULL;   -- ex.: '2026-09-01'
+DECLARE @DT_REF     DATE          = NULL;   -- ex.: '2026-10-01'
 DECLARE @NM_USUARIO NVARCHAR(200) = NULL;   -- ex.: N'job-carga-mensal'
 DECLARE @ID_DASH    INT           = 21;
 DECLARE @ANOS_ANTES INT           = 1;
@@ -40,9 +49,10 @@ IF @DT_REF IS NULL
 SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
 SET @NM_USUARIO = COALESCE(@NM_USUARIO, SUSER_SNAME());
 
-DECLARE @DT_INI  DATE = DATEFROMPARTS(YEAR(@DT_REF) - @ANOS_ANTES, 1, 1);
-DECLARE @DT_FIM  DATE = DATEFROMPARTS(YEAR(DATEADD(MONTH, 1, @DT_REF)), 12, 1);
-DECLARE @YTD_FIM DATE = @DT_REF;
+DECLARE @DT_REAL DATE = DATEADD(MONTH, -1, @DT_REF);  -- último mês com realizado
+DECLARE @DT_INI  DATE = DATEFROMPARTS(YEAR(@DT_REAL) - @ANOS_ANTES, 1, 1);
+DECLARE @DT_FIM  DATE = DATEFROMPARTS(YEAR(@DT_REF), 12, 1);
+DECLARE @YTD_FIM DATE = @DT_REAL;
 
 -- ── 1. Resultado da query numa temporária (nada é apagado se falhar aqui) ──
 IF OBJECT_ID('tempdb..#R') IS NOT NULL DROP TABLE #R;
@@ -58,8 +68,8 @@ SELECT
   Q.ORDEM_VISAO, Q.ORDEM_ANO, Q.ORDEM_PERIODO
 INTO #R
 FROM (
-    -- CHART_DATA_AO_VIVO_SQL de performancehub-api.js, sem alteração de lógica
-    -- (só ID_DASH = 21 virou @ID_DASH e o ORDER BY final saiu)
+    -- Base: CHART_DATA_AO_VIVO_SQL de performancehub-api.js, com o corte de
+    -- realizado/projeção e os rótulos A/F iguais aos da Quartely
 
     -- MONTH
     SELECT
@@ -73,7 +83,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), 1)) <= EOMONTH(@DT_REF)
+               AND DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), 1) <= @DT_REAL
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -94,8 +104,8 @@ FROM (
         UNION ALL
         SELECT 'Forecast' AS Type,
         CASE
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NULL THEN 0
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
           ELSE PVC.VL_PROJ * DASH.VL_FATOR
         END AS Value
       ) AS UnpivotedData
@@ -121,7 +131,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), DATEPART(QUARTER, PVC.DT_REF) * 3, 1)) <= EOMONTH(@DT_REF)
+               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), DATEPART(QUARTER, PVC.DT_REF) * 3, 1)) <= @DT_REF
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -151,8 +161,8 @@ FROM (
         UNION ALL
         SELECT 'Forecast' AS Type,
         CASE
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NULL THEN 0
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
           ELSE PVC.VL_PROJ * DASH.VL_FATOR
         END AS Value
       ) AS UnpivotedData
@@ -179,7 +189,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1)) <= EOMONTH(@DT_REF)
+               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1)) <= @DT_REF
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -201,8 +211,8 @@ FROM (
         UNION ALL
         SELECT 'Forecast' AS Type,
         CASE
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NULL THEN 0
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
           ELSE PVC.VL_PROJ * DASH.VL_FATOR
         END AS Value
       ) AS UnpivotedData
@@ -223,7 +233,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1)) <= EOMONTH(@DT_REF)
+               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1)) <= @DT_REF
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -240,7 +250,7 @@ FROM (
       CASE
         WHEN UnpivotedData.Type = 'Budget' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'B')
         WHEN UnpivotedData.Type = 'Supply' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'P')
-        WHEN UnpivotedData.Type = 'Forecast' AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), 12, 1)) <= EOMONTH(@DT_REF) THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'A')
+        WHEN UnpivotedData.Type = 'Forecast' AND YEAR(PVC.DT_REF) < YEAR(@DT_REF) THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'A')
         WHEN UnpivotedData.Type = 'Forecast' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'F')
       END AS 'Type',
       SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
@@ -259,8 +269,8 @@ FROM (
         UNION ALL
         SELECT 'Forecast' AS Type,
         CASE
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NULL THEN 0
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
           ELSE PVC.VL_PROJ * DASH.VL_FATOR
         END AS Value
       ) AS UnpivotedData
@@ -302,8 +312,8 @@ FROM (
         UNION ALL
         SELECT 'Forecast' AS Type,
         CASE
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NULL THEN 0
-          WHEN PVC.DT_REF <= EOMONTH(@DT_REF) AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
           ELSE PVC.VL_PROJ * DASH.VL_FATOR
         END AS Value
       ) AS UnpivotedData
@@ -354,7 +364,7 @@ END CATCH;
 
 -- ── 3. Resumo da carga ───────────────────────────────────────────────
 SELECT @DT_REF AS DT_REF, @ID_DASH AS ID_DASH, @LINHAS AS LINHAS_GRAVADAS,
-       @DT_INI AS DT_INI, @DT_FIM AS DT_FIM, @YTD_FIM AS YTD_FIM, @NM_USUARIO AS NM_USUARIO;
+       @DT_INI AS DT_INI, @DT_FIM AS DT_FIM, @YTD_FIM AS YTD_FIM, @DT_REAL AS DT_REAL, @NM_USUARIO AS NM_USUARIO;
 
 SELECT CD_PERIODO, NM_TIPO_VISAO, COUNT(*) AS LINHAS
 FROM IBP.PHUB_PERFORMANCESTUDIO
