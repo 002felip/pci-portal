@@ -88,34 +88,106 @@ function periodoSugerido(hoje = new Date()) {
 }
 
 // ── Python ──────────────────────────────────────────────────────────
-let pythonCache = null;
+// O app NÃO depende do deploy ter instalado as bibliotecas Python no mesmo
+// ambiente do `python3` que o Node enxerga (no Databricks Apps isso não é
+// garantido: o primeiro teste deu "No module named 'pandas'"). Na subida,
+// prepararAmbiente() procura um Python que já importe tudo; se nenhum
+// importar, instala python/requirements.txt numa pasta PRÓPRIA
+// (pip --target) e passa essa pasta no PYTHONPATH do gerador.
+// Pasta: STABLECAPABLE_PYLIBS, senão <esta pasta>/.pylibs, senão o temp do
+// sistema — a primeira em que for possível gravar. Leva alguns minutos na
+// primeira vez; nos reinícios seguintes a pasta já existe (exceto no temp).
+const REQUISITOS = path.join(PYTHON_DIR, 'requirements.txt');
+const TESTE_IMPORT = 'import pandas, numpy, matplotlib, plotly, kaleido, scipy, openpyxl, reportlab, PIL, yaml; print("ok")';
+const ambiente = { estado: 'verificando', python: null, versao: null, libdir: null, mensagem: null, inicio: null };
+let preparo = null;
+
 function rodar(cmd, args, opts = {}) {
   return new Promise((resolve) => {
-    execFile(cmd, args, { timeout: 60000, ...opts }, (err, stdout, stderr) =>
+    execFile(cmd, args, { timeout: 60000, maxBuffer: 64 * 1024 * 1024, ...opts }, (err, stdout, stderr) =>
       resolve({ ok: !err, stdout: String(stdout || ''), stderr: String(stderr || ''), erro: err }));
   });
 }
-/** Primeiro executável que existe: STABLECAPABLE_PYTHON, python3, python. */
-async function acharPython() {
-  if (pythonCache) return pythonCache;
-  const candidatos = [process.env.STABLECAPABLE_PYTHON, 'python3', 'python'].filter(Boolean);
-  for (const c of candidatos) {
-    const r = await rodar(c, ['--version']);
-    if (r.ok) { pythonCache = { cmd: c, versao: (r.stdout || r.stderr).trim() }; return pythonCache; }
-  }
-  throw new Error('Python não encontrado (tentado: ' + candidatos.join(', ') + ').');
-}
+const ultimaLinha = (r) => ((r.stderr || r.stdout || (r.erro && r.erro.message) || '').trim().split('\n').filter(Boolean).pop() || 'falha');
 
-function envPython() {
+function envPython(libdir = ambiente.libdir) {
   return {
     ...process.env,
     PYTHONIOENCODING: 'utf-8',
     PYTHONUNBUFFERED: '1',
     MPLBACKEND: 'Agg',
-    // Não herdar módulos de outro lugar: o gerador importa `src` da própria pasta.
-    PYTHONPATH: PYTHON_DIR,
+    MPLCONFIGDIR: path.join(os.tmpdir(), 'stable-and-capable-mpl'),
+    // `src` do gerador + bibliotecas instaladas pelo próprio app (se houver)
+    PYTHONPATH: [PYTHON_DIR, libdir].filter(Boolean).join(path.delimiter),
   };
 }
+
+function pastasCandidatas() {
+  return [process.env.STABLECAPABLE_PYLIBS, path.join(RAIZ, '.pylibs'), path.join(os.tmpdir(), 'stable-and-capable-pylibs')].filter(Boolean);
+}
+function pastaGravavel() {
+  for (const p of pastasCandidatas()) {
+    try { fs.mkdirSync(p, { recursive: true }); fs.accessSync(p, fs.constants.W_OK); return p; } catch (e) { /* próxima */ }
+  }
+  throw new Error('nenhuma pasta gravável para as bibliotecas Python (' + pastasCandidatas().join(', ') + ')');
+}
+
+async function prepararAmbienteAgora() {
+  ambiente.estado = 'verificando'; ambiente.mensagem = null; ambiente.inicio = new Date().toISOString();
+  // 1. Pythons disponíveis
+  const nomes = [process.env.STABLECAPABLE_PYTHON, 'python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3'].filter(Boolean);
+  const pythons = [];
+  for (const c of [...new Set(nomes)]) {
+    const r = await rodar(c, ['-c', 'import sys; print(sys.executable); print(sys.version.split()[0])']);
+    if (r.ok) {
+      const [exe, ver] = r.stdout.trim().split('\n');
+      if (!pythons.some((p) => p.exe === exe)) pythons.push({ cmd: c, exe, versao: 'Python ' + ver });
+    }
+  }
+  if (!pythons.length) throw new Error('Python não encontrado (tentado: ' + nomes.join(', ') + ').');
+
+  // 2. Algum já importa tudo? (sozinho ou com uma pasta .pylibs de antes)
+  const pastasExistentes = [null, ...pastasCandidatas().filter((p) => fs.existsSync(p))];
+  for (const py of pythons) {
+    for (const lib of pastasExistentes) {
+      const r = await rodar(py.cmd, ['-c', TESTE_IMPORT], { env: envPython(lib), cwd: PYTHON_DIR });
+      if (r.ok) return Object.assign(ambiente, { estado: 'pronto', python: py.cmd, versao: py.versao, libdir: lib });
+    }
+  }
+
+  // 3. Instala no primeiro Python que tiver pip
+  const libdir = pastaGravavel();
+  ambiente.estado = 'instalando'; ambiente.libdir = libdir;
+  console.log(`${TAG} bibliotecas Python ausentes — instalando ${REQUISITOS} em ${libdir} (alguns minutos)…`);
+  let ultimaFalha = '';
+  for (const py of pythons) {
+    let pip = await rodar(py.cmd, ['-m', 'pip', '--version']);
+    if (!pip.ok) { await rodar(py.cmd, ['-m', 'ensurepip', '--default-pip'], { timeout: 300000 }); pip = await rodar(py.cmd, ['-m', 'pip', '--version']); }
+    if (!pip.ok) { ultimaFalha = `${py.cmd}: pip indisponível`; continue; }
+    Object.assign(ambiente, { python: py.cmd, versao: py.versao });
+    const inst = await rodar(py.cmd, ['-m', 'pip', 'install', '--disable-pip-version-check', '--no-input', '--no-warn-script-location',
+      '--upgrade', '--target', libdir, '-r', REQUISITOS], { timeout: 30 * 60 * 1000, env: { ...process.env, PIP_NO_CACHE_DIR: '1' } });
+    if (!inst.ok) { ultimaFalha = `${py.cmd}: pip install falhou — ${ultimaLinha(inst)}`; console.error(TAG, ultimaFalha); continue; }
+    const r = await rodar(py.cmd, ['-c', TESTE_IMPORT], { env: envPython(libdir), cwd: PYTHON_DIR });
+    if (r.ok) { console.log(`${TAG} bibliotecas Python instaladas (${py.versao}).`); return Object.assign(ambiente, { estado: 'pronto' }); }
+    ultimaFalha = `${py.cmd}: instalou, mas o import falhou — ${ultimaLinha(r)}`;
+  }
+  throw new Error(ultimaFalha || 'não foi possível instalar as bibliotecas Python.');
+}
+
+/** Prepara uma vez; se falhar, a próxima chamada tenta de novo. */
+function prepararAmbiente() {
+  if (!preparo) {
+    preparo = prepararAmbienteAgora().catch((err) => {
+      Object.assign(ambiente, { estado: 'erro', mensagem: err.message });
+      console.error(TAG, 'ambiente Python:', err.message);
+      preparo = null;
+      throw err;
+    });
+  }
+  return preparo;
+}
+const estadoAmbiente = () => ({ estado: ambiente.estado, python: ambiente.versao, mensagem: ambiente.mensagem });
 
 // ── Excel de entrada (o mesmo Stable.xlsx de antes, aba "base") ──────
 async function gravarExcel(recordset, destino) {
@@ -156,6 +228,8 @@ const nomeArquivoBu = (bu) => String(bu).normalize('NFD').replace(/[̀-ͯ]/g, ''
 function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
   const router = express.Router();
   router.use(express.json({ limit: '32kb' }));
+  // Bibliotecas Python verificadas/instaladas já na subida do app.
+  prepararAmbiente().catch(() => {});
 
   const PASTA = String(pastaBlob || '01 - Imagens/Stable & Capable').replace(/^\/+|\/+$/g, '');
   const store = armazenamento && armazenamento.configurado && armazenamento.configurado()
@@ -197,21 +271,17 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
       maxAnos: MAX_ANOS,
       armazenamento: store.local ? 'local' : 'blob',
       pasta: PASTA,
+      ambiente: estadoAmbiente(),
       emExecucao: atual ? publico(atual) : null,
     });
   });
 
   router.get('/diagnostico', async (req, res) => {
     const out = { armazenamento: store.local ? 'local (' + store.raiz + ')' : 'Azure Blob: ' + PASTA };
-    try {
-      const py = await acharPython();
-      out.python = py.versao;
-      const r = await rodar(py.cmd, ['-c', 'import pandas, numpy, matplotlib, plotly, kaleido, scipy, openpyxl, reportlab, PIL, yaml; print("ok")'], { env: envPython(), cwd: PYTHON_DIR });
-      out.bibliotecas = r.ok ? 'ok' : (r.stderr.trim().split('\n').pop() || 'falha ao importar');
-    } catch (err) {
-      out.python = err.message;
-    }
-    out.pronto = out.bibliotecas === 'ok';
+    // Não espera uma instalação em andamento (pode levar minutos).
+    if (ambiente.estado !== 'instalando') { try { await prepararAmbiente(); } catch (e) { /* estado já tem a mensagem */ } }
+    Object.assign(out, { ambiente: ambiente.estado, python: ambiente.versao, executavel: ambiente.python, bibliotecas: ambiente.libdir || '(do próprio Python)', mensagem: ambiente.mensagem });
+    out.pronto = ambiente.estado === 'pronto';
     res.status(out.pronto ? 200 : 503).json(out);
   });
 
@@ -271,16 +341,13 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
     const bus = BUS.filter((b) => pedidas.includes(b));
     if (!bus.length) return res.status(400).json({ error: 'Selecione ao menos uma Business Unit.' });
 
-    try { await acharPython(); } catch (err) {
-      return res.status(503).json({ error: 'O ambiente Python do app não está disponível: ' + err.message });
-    }
     await carregarHistorico();
 
     const agora = new Date();
     const id = agora.toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15) + '-' + crypto.randomBytes(2).toString('hex');
     atual = {
       id,
-      status: 'consultando',
+      status: ambiente.estado === 'pronto' ? 'consultando' : 'preparando',
       inicio: iso(inicio),
       fim: iso(fim),
       anos,
@@ -312,6 +379,16 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
     const anotar = (l) => { logCompleto.push(l); registrar(l); };
 
     try {
+      // 0. Ambiente Python (na 1ª vez após o deploy pode estar instalando)
+      if (ambiente.estado !== 'pronto') {
+        ex.status = 'preparando';
+        anotar('Preparando o ambiente Python (bibliotecas do gerador)…');
+        try { await prepararAmbiente(); } catch (err) { throw new Error('Ambiente Python indisponível: ' + err.message); }
+        anotar(`Ambiente pronto: ${ambiente.versao}${ambiente.libdir ? ' + ' + ambiente.libdir : ''}`);
+      }
+      if (cancelado) throw new Error('Cancelada.');
+      ex.status = 'consultando';
+
       // 1. Consulta
       anotar(`Consultando o banco: ${ex.inicio} → ${ex.fim}`);
       const t0 = Date.now();
@@ -338,7 +415,6 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
 
       // 3. PDFs, uma BU por vez
       ex.status = 'gerando';
-      const py = await acharPython();
       for (const b of ex.bus) {
         if (cancelado) break;
         if (b.status === 'sem-dados') continue;
@@ -349,7 +425,7 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
           '--years', String(Math.min(Math.max(ex.anos, 1), MAX_ANOS)), '--reference-year', ex.fim.slice(0, 4)];
         anotar(`── ${b.bu}: gerando PDF`);
         const codigo = await new Promise((resolve) => {
-          const p = spawn(py.cmd, args, { cwd: PYTHON_DIR, env: envPython() });
+          const p = spawn(ambiente.python, args, { cwd: PYTHON_DIR, env: envPython() });
           ex.processo = p;
           const limite = setTimeout(() => { anotar(`${b.bu}: tempo limite excedido — interrompendo.`); p.kill('SIGKILL'); }, TIMEOUT_BU_MS);
           let resto = '';
