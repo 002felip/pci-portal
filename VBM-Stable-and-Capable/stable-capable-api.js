@@ -108,11 +108,38 @@ function rodar(cmd, args, opts = {}) {
       resolve({ ok: !err, stdout: String(stdout || ''), stderr: String(stderr || ''), erro: err }));
   });
 }
-const ultimaLinha = (r) => ((r.stderr || r.stdout || (r.erro && r.erro.message) || '').trim().split('\n').filter(Boolean).pop() || 'falha');
+// Motivo legível de uma falha: última linha do stderr ou, se o processo nem
+// chegou a rodar (ENOENT/EACCES), o erro do sistema com o caminho envolvido.
+const ultimaLinha = (r) => {
+  const saida = (r.stderr || r.stdout || '').trim().split('\n').filter(Boolean).pop();
+  if (saida) return saida;
+  const e = r.erro || {};
+  return [e.code, e.syscall, e.path, e.message].filter(Boolean).join(' · ') || 'falha';
+};
+// Diretório de trabalho dos processos Python: sempre o temp do sistema.
+// NÃO usar a pasta do app: no Databricks Apps o spawn com cwd nela falhou
+// com "spawn python ENOENT" (o gerador não precisa de cwd: caminhos absolutos
+// + PYTHONPATH).
+const CWD_PY = os.tmpdir();
+
+/** Arquivos do gerador que precisam ter sido publicados com o app. */
+function arquivosFaltando() {
+  return [SCRIPT_PY, CONFIG_PY, REQUISITOS, path.join(PYTHON_DIR, 'src', 'report', 'report_builder.py'), path.join(PYTHON_DIR, 'data', 'kpi_list.xlsx')]
+    .filter((f) => !fs.existsSync(f)).map((f) => path.relative(RAIZ, f));
+}
+
+// O Databricks Apps põe entradas RELATIVAS no PATH (ex.: ".venv/bin"), que só
+// valem a partir da raiz do app (process.cwd()). Como os processos Python rodam
+// com cwd no temp, toda entrada relativa vira absoluta aqui.
+const absolutoDoApp = (p) => (path.isAbsolute(p) ? p : path.resolve(process.cwd(), p));
+function pathAbsoluto() {
+  return String(process.env.PATH || '').split(path.delimiter).filter(Boolean).map(absolutoDoApp).join(path.delimiter);
+}
 
 function envPython(libdir = ambiente.libdir) {
   return {
     ...process.env,
+    PATH: pathAbsoluto(),
     PYTHONIOENCODING: 'utf-8',
     PYTHONUNBUFFERED: '1',
     MPLBACKEND: 'Agg',
@@ -134,14 +161,21 @@ function pastaGravavel() {
 
 async function prepararAmbienteAgora() {
   ambiente.estado = 'verificando'; ambiente.mensagem = null; ambiente.inicio = new Date().toISOString();
+  const faltando = arquivosFaltando();
+  if (faltando.length) throw new Error('arquivos do gerador não publicados com o app: ' + faltando.join(', ') + ' (a pasta python/ precisa ir inteira no deploy).');
   // 1. Pythons disponíveis
   const nomes = [process.env.STABLECAPABLE_PYTHON, 'python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3'].filter(Boolean);
   const pythons = [];
   for (const c of [...new Set(nomes)]) {
     const r = await rodar(c, ['-c', 'import sys; print(sys.executable); print(sys.version.split()[0])']);
     if (r.ok) {
-      const [exe, ver] = r.stdout.trim().split('\n');
-      if (!pythons.some((p) => p.exe === exe)) pythons.push({ cmd: c, exe, versao: 'Python ' + ver });
+      const [exeInformado, ver] = r.stdout.trim().split('\n');
+      // Daqui em diante, sempre o caminho ABSOLUTO (não depende do PATH nem do cwd).
+      // sys.executable pode vir RELATIVO: no Databricks Apps veio ".venv/bin/python",
+      // porque o PATH do app tem ".venv/bin". Relativo à raiz do app = process.cwd(),
+      // de onde este teste rodou.
+      const exe = exeInformado && absolutoDoApp(exeInformado.trim());
+      if (exe && fs.existsSync(exe) && !pythons.some((p) => p.cmd === exe)) pythons.push({ cmd: exe, nome: c, versao: 'Python ' + ver });
     }
   }
   if (!pythons.length) throw new Error('Python não encontrado (tentado: ' + nomes.join(', ') + ').');
@@ -150,7 +184,7 @@ async function prepararAmbienteAgora() {
   const pastasExistentes = [null, ...pastasCandidatas().filter((p) => fs.existsSync(p))];
   for (const py of pythons) {
     for (const lib of pastasExistentes) {
-      const r = await rodar(py.cmd, ['-c', TESTE_IMPORT], { env: envPython(lib), cwd: PYTHON_DIR });
+      const r = await rodar(py.cmd, ['-c', TESTE_IMPORT], { env: envPython(lib), cwd: CWD_PY });
       if (r.ok) return Object.assign(ambiente, { estado: 'pronto', python: py.cmd, versao: py.versao, libdir: lib });
     }
   }
@@ -168,7 +202,7 @@ async function prepararAmbienteAgora() {
     const inst = await rodar(py.cmd, ['-m', 'pip', 'install', '--disable-pip-version-check', '--no-input', '--no-warn-script-location',
       '--upgrade', '--target', libdir, '-r', REQUISITOS], { timeout: 30 * 60 * 1000, env: { ...process.env, PIP_NO_CACHE_DIR: '1' } });
     if (!inst.ok) { ultimaFalha = `${py.cmd}: pip install falhou — ${ultimaLinha(inst)}`; console.error(TAG, ultimaFalha); continue; }
-    const r = await rodar(py.cmd, ['-c', TESTE_IMPORT], { env: envPython(libdir), cwd: PYTHON_DIR });
+    const r = await rodar(py.cmd, ['-c', TESTE_IMPORT], { env: envPython(libdir), cwd: CWD_PY });
     if (r.ok) { console.log(`${TAG} bibliotecas Python instaladas (${py.versao}).`); return Object.assign(ambiente, { estado: 'pronto' }); }
     ultimaFalha = `${py.cmd}: instalou, mas o import falhou — ${ultimaLinha(r)}`;
   }
@@ -280,7 +314,8 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
     const out = { armazenamento: store.local ? 'local (' + store.raiz + ')' : 'Azure Blob: ' + PASTA };
     // Não espera uma instalação em andamento (pode levar minutos).
     if (ambiente.estado !== 'instalando') { try { await prepararAmbiente(); } catch (e) { /* estado já tem a mensagem */ } }
-    Object.assign(out, { ambiente: ambiente.estado, python: ambiente.versao, executavel: ambiente.python, bibliotecas: ambiente.libdir || '(do próprio Python)', mensagem: ambiente.mensagem });
+    Object.assign(out, { ambiente: ambiente.estado, python: ambiente.versao, executavel: ambiente.python, bibliotecas: ambiente.libdir || '(do próprio Python)', mensagem: ambiente.mensagem,
+      pastaApp: RAIZ, arquivosFaltando: arquivosFaltando() });
     out.pronto = ambiente.estado === 'pronto';
     res.status(out.pronto ? 200 : 503).json(out);
   });
@@ -425,7 +460,7 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
           '--years', String(Math.min(Math.max(ex.anos, 1), MAX_ANOS)), '--reference-year', ex.fim.slice(0, 4)];
         anotar(`── ${b.bu}: gerando PDF`);
         const codigo = await new Promise((resolve) => {
-          const p = spawn(ambiente.python, args, { cwd: PYTHON_DIR, env: envPython() });
+          const p = spawn(ambiente.python, args, { cwd: CWD_PY, env: envPython() });
           ex.processo = p;
           const limite = setTimeout(() => { anotar(`${b.bu}: tempo limite excedido — interrompendo.`); p.kill('SIGKILL'); }, TIMEOUT_BU_MS);
           let resto = '';
