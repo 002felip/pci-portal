@@ -47,9 +47,9 @@ const CONSULTAS = [
 ];
 
 // ORDEM_GRAFICO do script → janela e série do card
-//   0 = mês Budget · 2 = mês Act/Fcst (1 = Plan, não exibido no dashboard)
+//   0 = mês Budget · 1 = mês Plan (Supply; botão Plan da tela) · 2 = mês Act/Fcst
 //   3 = trimestre Budget · 4 = trimestre Act/Fcst · 6 = ano Budget · 7 = ano Act/Fcst
-const SERIE_POR_ORDEM = { 0: ['MONTH', 'B'], 2: ['MONTH', 'AF'], 3: ['QUARTER', 'B'], 4: ['QUARTER', 'AF'], 6: ['YEAR', 'B'], 7: ['YEAR', 'AF'] };
+const SERIE_POR_ORDEM = { 0: ['MONTH', 'B'], 1: ['MONTH', 'P'], 2: ['MONTH', 'AF'], 3: ['QUARTER', 'B'], 4: ['QUARTER', 'AF'], 6: ['YEAR', 'B'], 7: ['YEAR', 'AF'] };
 
 // Inteiro de query string dentro de um intervalo; null se inválido
 function inteiro(valor, min, max) {
@@ -82,11 +82,12 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
     // Um item por KPI cadastrado (operação + KPI) e janela
     const chave = `${l.ID_OPERACAO}|${l.ID_KPI}|${visao}`;
     if (!porKpi.has(chave)) {
-      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, LETRA_AF: null });
+      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, VL_P: null, LETRA_AF: null });
     }
     const item = porKpi.get(chave);
     const valor = l.VL_KPI == null ? 0 : Number(l.VL_KPI);
     if (s === 'B') item.VL_B = (item.VL_B || 0) + valor;
+    else if (s === 'P') item.VL_P = (item.VL_P || 0) + valor;
     else { item.VL_AF = (item.VL_AF || 0) + valor; item.LETRA_AF = letraAF(l.NM_VISAO) || item.LETRA_AF; }
   }
   return [...porKpi.values()].sort((x, y) => (x.ID_ORDEM - y.ID_ORDEM) || x.CD_VISAO.localeCompare(y.CD_VISAO));

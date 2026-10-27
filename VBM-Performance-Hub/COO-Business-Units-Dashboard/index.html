@@ -34,6 +34,7 @@
   --badge-text: #FFFFFF;
   --serie-b: #BCBEC0;
   --serie-a: #3CB5E5;
+  --serie-p: #0B3A64;
   --good: #007E7A;
   --good-bg: rgba(0,126,122,.10);
   --bad: #B91C1C;
@@ -72,6 +73,7 @@
     --d-hair: rgba(226,232,240,.28);
     --badge-bg: rgba(2,10,20,.55);
     --serie-b: #8E949B;
+    --serie-p: #A9C7DE;
     --good: #34C3B8;
     --good-bg: rgba(52,195,184,.14);
     --bad: #F87171;
@@ -107,6 +109,7 @@
   --d-hair: rgba(226,232,240,.28);
   --badge-bg: rgba(2,10,20,.55);
   --serie-b: #8E949B;
+  --serie-p: #A9C7DE;
   --good: #34C3B8;
   --good-bg: rgba(52,195,184,.14);
   --bad: #F87171;
@@ -282,6 +285,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .b-val { fill: var(--ink-strong); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 .b-axis { fill: var(--ink-soft); font-size: 9.5px; }
 .b-base { stroke: var(--base-line); }
+.b-axis-sm { font-size: 8px; letter-spacing: -.02em; }
 .b-vazio { fill: var(--text-soft); font: italic 400 15px var(--font-display); }
 .cota { animation: fade .5s .6s ease-out both; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
@@ -455,6 +459,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <linearGradient id="g-a" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#62C6EC"/><stop offset=".42" stop-color="#3CB5E5"/><stop offset="1" stop-color="#36A9D8"/>
     </linearGradient>
+    <linearGradient id="g-p" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" style="stop-color: var(--serie-p); stop-opacity: .82"/><stop offset="1" style="stop-color: var(--serie-p)"/>
+    </linearGradient>
     <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
     <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
     <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
@@ -584,6 +591,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <div class="panel-meta">
           <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
             <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+            <li id="legPlan" hidden><span class="swatch" style="background:var(--serie-p)"></span>Plan | Supply (P)</li>
             <li><span class="swatch" style="background:var(--serie-a)"></span>Forecast | Actual (F | A)</li>
           </ul>
           <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
@@ -873,7 +881,7 @@ window.VBMSetup = (function () {
   var UNIDADES = [];
   var hoje = new Date(), mesRef = hoje.getMonth() || 12; // até a consulta responder: mês anterior ao atual
   var ANOS = [mesRef === 12 ? hoje.getFullYear() - 1 : hoje.getFullYear()];
-  var state = { pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', sel: {} };
+  var state = { pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', plan: false, sel: {} };
   var OPTS = {
     visao: function () { return [['Plan', 'Plan']]; },
     ano: function () { return ANOS.map(function (a) { return [a, String(a)]; }); },
@@ -917,14 +925,17 @@ window.VBMSetup = (function () {
     var v = view(ind), ax = axis();
     var showDelta = state.delta === 'on';
     var MT = showDelta ? 46 : 20, MB = 16, PW = W / 3;
-    var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
+    var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
+    var BW = comPlan ? Math.max(12, Math.min(26, PW * 0.22)) : Math.max(16, Math.min(30, PW * 0.3));
+    var GAP = comPlan ? Math.max(10, Math.min(18, PW * 0.15)) : Math.max(14, Math.min(24, PW * 0.2));
     if (!v.d) { // sem dados: só a linha de base e, quando houver, o aviso (Pending / Not applicable)
       var yv0 = H - MB;
       return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
         '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
         (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(T(ind.vazio)) + '</text>' : '') + '</svg>';
     }
-    var all = [].concat.apply([], v.d).filter(function (x) { return x !== null; });
+    // escala: B e A/F das três janelas e, com o botão Plan, o Plan do mês
+    var all = [].concat.apply([], v.d.map(function (p, i) { return comPlan && i === 0 ? p : p.slice(0, 2); })).filter(function (x) { return x !== null && x !== undefined; });
     var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
     function dom(vals) {
       var lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max(0, Math.max.apply(null, vals));
@@ -939,27 +950,37 @@ window.VBMSetup = (function () {
     v.d.forEach(function (pair, i) {
       var dm = dom(all); // escala única: as seis barras do gráfico na mesma régua
       var y = function (val) { return MT + (dm[1] - val) / (dm[1] - dm[0]) * (H - MT - MB); };
-      var x0 = i * PW, cx = x0 + PW / 2;
-      var xb = cx - GAP / 2 - BW, xa = cx + GAP / 2, y0 = y(0);
+      // Com o Plan ligado, o mês tem três barras na ordem Budget, Plan, Actual/Forecast (trio centrado)
+      var trio = comPlan && i === 0, x0 = i * PW, y0 = y(0);
+      var xb = trio ? x0 + PW / 2 - (3 * BW + 2 * GAP) / 2 : x0 + PW / 2 - GAP / 2 - BW;
+      var xp = xb + BW + GAP, xa = trio ? xp + BW + GAP : xb + BW + GAP;
       var dl = delta(pair[0], pair[1], ind, v.dec);
       var semPar = pair[0] === null || pair[1] === null;
       label.push(PER(i) + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
 
 
-      [[xb, pair[0], 'g-b', ax[i][0], 'Budget'], [xa, pair[1], 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']].forEach(function (bar) {
-        if (bar[1] === null) { out += '<text class="b-axis" x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
+      var barras = [[xb, pair[0], 'g-b', ax[i][0], 'Budget'], [xa, pair[1], 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']];
+      if (trio) {
+        // três barras no mês: rótulos sem espaço ("AugB AugP AugA") e menores, para não encostarem
+        barras.splice(1, 0, [xp, pair[2], 'g-p', mesCurto(state.mes - 1) + ' P', 'Plan']);
+        barras.forEach(function (b) { b[3] = b[3].replace(' ', ''); });
+        label.push('Plan ' + fmt(pair[2], v.dec) + '.');
+      }
+      barras.forEach(function (bar) {
+        if (bar[1] === null) { out += '<text class="b-axis' + (trio ? ' b-axis-sm' : '') + '" x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
         var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
         var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
         var bx = bar[0] + BW / 2;
         out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + bar[0] + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + tip + '"/>';
         // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
         out += '<text class="b-val" x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
-        out += '<text class="b-axis" x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
+        out += '<text class="b-axis' + (trio ? ' b-axis-sm' : '') + '" x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
       });
       if (!showDelta || semPar) return;
 
       // Cota de diferença do Performance Hub: nível B tracejado, nível A sólido, faixa, haste, fio guia e pílula.
-      var x1 = xb + BW, x2 = xa, yb = y(pair[0]), ya = y(pair[1]);
+      // Delta = A/F − B; com o Plan no meio, a cota fica no vão entre o Plan e o Actual/Forecast
+      var x1 = (trio ? xp : xb) + BW, x2 = xa, cx = (x1 + x2) / 2, yb = y(pair[0]), ya = y(pair[1]);
       var ytop = Math.min(yb, ya, y0), pillH = 17, pillW = Math.max(38, dl.txt.length * 5.8 + 14);
       var pillY = Math.max(0, ytop - 22 - pillH), up = pair[1] >= pair[0];
       out += '<g class="cota ' + dl.cls + '">';
@@ -998,7 +1019,7 @@ window.VBMSetup = (function () {
   function drawChart(el) {
     var W = Math.min(MAX_W, Math.round(el.clientWidth)), H = Math.min(MAX_H, Math.round(el.clientHeight));
     if (W < 60 || H < 44) return;
-    var key = W + 'x' + H + '|' + state.delta + '|' + (state.sel[el.getAttribute('data-ind')] || '') + '|' + state.tri + state.mes + state.ano;
+    var key = W + 'x' + H + '|' + state.delta + '|' + state.plan + '|' + (state.sel[el.getAttribute('data-ind')] || '') + '|' + state.tri + state.mes + state.ano;
     if (el._key === key) return;
     el._key = key;
     el.innerHTML = chartSvg(byId(el.getAttribute('data-ind')), W, H);
@@ -1052,10 +1073,29 @@ window.VBMSetup = (function () {
     document.querySelectorAll('[data-filter]').forEach(function (g) {
       var k = g.getAttribute('data-filter');
       g.innerHTML = OPTS[k]().map(function (o) {
-        return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (String(state[k]) === String(o[0])) + '">' + esc(o[1]) + '</button>';
+        var on = k === 'visao' ? state.plan : String(state[k]) === String(o[0]);
+        return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
       }).join('');
     });
+    larguraMeses();
   }
+
+  // Botões de mês com largura única: cabe o nome de mês mais longo do idioma (ex.: "September",
+  // "Fevereiro"), para a barra de filtros não mudar de tamanho ao trocar de trimestre
+  var reguaMes = document.createElement('canvas').getContext('2d');
+  function larguraMeses() {
+    var botoes = document.querySelectorAll('[data-filter="mes"] button');
+    if (!botoes.length) return;
+    var cs = getComputedStyle(botoes[0]);
+    reguaMes.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var maior = 0;
+    for (var i = 0; i < 12; i++) maior = Math.max(maior, reguaMes.measureText(mesLongo(i)).width);
+    var w = Math.ceil(maior + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + 'px';
+    botoes.forEach(function (b) { b.style.width = w; });
+  }
+  // a fonte (Poppins) chega depois: mede de novo quando carregar
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(larguraMeses);
+
 
   function render() {
     var vs = visao(), dash = document.getElementById('dash');
@@ -1070,6 +1110,7 @@ window.VBMSetup = (function () {
     unitTrigger.querySelector('.unit-sep').hidden = longo;
     unitTrigger.title = (state.pais ? T('pais.' + state.pais) : '—') + ' › ' + siteTxt;
     renderNav();
+    document.getElementById('legPlan').hidden = !state.plan;
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
     dash.style.setProperty('--rows', vs.rows);
@@ -1305,7 +1346,7 @@ window.VBMSetup = (function () {
         var n = normalizar(l.NM_KPI);
         (porNome[n] = porNome[n] || []).push(chave);
       }
-      porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+      porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
       if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
     });
     var usados = {}, achados = 0;
@@ -1390,7 +1431,7 @@ window.VBMSetup = (function () {
         ((r && r.linhas) || []).forEach(function (l) {
           var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
           if (!porKpi[chave]) { porKpi[chave] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(chave); }
-          porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+          porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
         });
         ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); });
         var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
@@ -1445,6 +1486,12 @@ window.VBMSetup = (function () {
     var btn = e.target.closest('button[data-v]');
     if (!btn) return;
     var k = btn.parentElement.getAttribute('data-filter'), raw = btn.getAttribute('data-v');
+    if (k === 'visao') { // Plan: liga/desliga a barra do Plan (Supply) no mês; não refaz a consulta
+      state.plan = !state.plan;
+      renderFilters();
+      render();
+      return;
+    }
     state[k] = isNaN(Number(raw)) ? raw : Number(raw);
     if (k === 'tri') state.mes = (state.tri - 1) * 3 + 3; // cascata: último mês do trimestre
     renderFilters();
