@@ -124,7 +124,7 @@ body {
   background: var(--qtr-grad);
   display: flex;
   align-items: center;
-  padding: 0 2rem;
+  padding: 0 clamp(.75rem, 3vw, 2rem); /* [RESPONSIVO] respiro lateral fluido */
   gap: 0;
   border-bottom: 1px solid rgba(255,255,255,.05);
   box-shadow: 0 2px 20px rgba(13,38,64,.18);
@@ -143,7 +143,7 @@ body {
   align-items: center;
   text-decoration: none;
   flex-shrink: 0;
-  margin-right: 1.5rem;
+  margin-right: clamp(.5rem, 2vw, 1.5rem);
   position: relative;
   z-index: 1;
 }
@@ -244,6 +244,7 @@ html[data-bg="light"] .dash-titulo-nome { color: #0B3A50; }
   width: 300px;
   max-width: 90vw;
   height: 100vh;
+  height: 100dvh; /* [RESPONSIVO] altura real no celular (barra do navegador) */
   background: #fff;
   box-shadow: -16px 0 48px rgba(9,20,34,.22);
   z-index: 400;
@@ -451,7 +452,10 @@ html[data-bg="light"] .dash-titulo-nome { color: #0B3A50; }
 }
 @media (max-width: 540px) {
   .topnav-user-name { display: none; }
-  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+  /* [RESPONSIVO] nome do app ocupa o espaço entre logo e ações e quebra em 2 linhas se faltar largura */
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: clamp(.7rem, 3.4vw, .8rem); margin: 0 auto;
+    min-width: 0; flex: 0 1 auto; flex-wrap: wrap; justify-content: center; white-space: normal; text-align: center; line-height: 1.2; }
+  .topnav-brand-vbm, .topnav-brand-nome { white-space: nowrap; }
 }
 @media (max-width: 768px) { .page-content { padding: 1rem; } }
 
@@ -724,7 +728,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 /* Alça de resize — reforça visualmente o canto nativo do navegador */
 .main-wrapper::-webkit-resizer { background: transparent; }
 
-.chart-header { flex-shrink: 0; }
+.chart-header { flex-shrink: 0; padding-right: 40px; } /* [RESPONSIVO] título não passa por baixo do botão Exportar */
 /* Exportar (canto superior direito do card): aparece ao passar o mouse, ao focar ou no card selecionado */
 .chart-container { position: relative; }
 .chart-export { position: absolute; top: 12px; right: 14px; z-index: 30; opacity: 0; transition: opacity .15s; }
@@ -776,7 +780,7 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 }
 .qf-modal-overlay.open { display: flex; animation: qfFade .18s ease both; }
 .qf-modal {
-  position: relative; width: min(460px, 100%); max-height: calc(100vh - 32px); overflow-y: auto;
+  position: relative; width: min(460px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto;
   background: #FFFFFF; border-radius: 16px; padding: 24px 28px;
   box-shadow: 0 20px 50px rgba(15,23,42,.22); font-family: 'Poppins', sans-serif; color: #374151;
   animation: qfPop .2s ease both;
@@ -830,6 +834,17 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
 .page-content.charts-board { display: block; position: relative; }
 .charts-board > .main-wrapper { position: absolute; min-width: 0; max-width: none; }
 .page-content.charts-board { isolation: isolate; } /* z-index dos cards fica restrito ao quadro */
+/* [RESPONSIVO] Quadro estreito para o layout livre: grade fluida (colunas pelo espaço
+   disponível; o JS equilibra as linhas), sem sobreposição e sem rolagem lateral */
+.page-content.charts-board.is-fluxo {
+  display: grid; align-items: start; align-content: start; gap: clamp(12px, 2vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+}
+.charts-board.is-fluxo > .main-wrapper { position: relative; width: auto; min-width: 0; }
+.charts-board.is-fluxo .chart-container { max-height: max(260px, 85svh); }
+.charts-board.is-fluxo .chart-header { cursor: default; }
+.charts-board.is-fluxo .chart-resize-handle { display: none; }
+.charts-board.is-fluxo > .board-empty { grid-column: 1 / -1; }
 .charts-board.is-multi > .main-wrapper.is-selected .chart-container {
   box-shadow: 0 0 0 2px rgba(60,181,229,.55), 0 12px 40px rgba(10,20,35,.12), 0 2px 8px rgba(10,20,35,.06);
 }
@@ -979,7 +994,7 @@ body.qe-ctx-grafico .charts-board > .main-wrapper.is-selected .chart-title::afte
 
 /* Linhas Suavizadas (SVG) — mesmos tokens das Barras */
 .chart-area.is-linhas { display: block; margin: 4px 0 0; }
-.ql-svg { display: block; font-family: 'Poppins', 'Segoe UI', sans-serif; }
+.ql-svg { display: block; max-width: 100%; height: auto; font-family: 'Poppins', 'Segoe UI', sans-serif; } /* [RESPONSIVO] nunca passa do card */
 .main-wrapper:not(.qe-static) .ql-svg { animation: qlIn .6s cubic-bezier(.16,.84,.28,1) both; }
 @keyframes qlIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .ql-svg .qc-base { stroke: #CBD5E1; stroke-width: 1; }
@@ -4320,7 +4335,7 @@ function pasteChart() {
   const bottom = Math.max(0, ...charts.map(c => c.pos.y + c.el.offsetHeight));
   const x = activeChart ? activeChart.pos.x : (board.clientWidth - size.w) / 2;
   const c = mountChart({ ...JSON.parse(JSON.stringify(chartClipboard)), size, pos: { x, y: bottom + 24 } });
-  updateBoardHeight();
+  relayoutSeMudou();
   activateChart(c);
   renderActiveChart();
   saveCharts();
@@ -4370,33 +4385,73 @@ function clampSize(w, h) {
   const maxW = board.clientWidth - 2 * BOARD_M;
   return { w: clamp(w, Math.min(420, maxW), maxW), h: clamp(h, CHART_MIN_H, Math.max(CHART_MIN_H, innerHeight * 0.9)) };
 }
-function clampPos(c, x, y) {
-  const boardTop = board.getBoundingClientRect().top;
-  const visibleBottom = innerHeight - boardTop - BOARD_M;
-  return {
-    x: clamp(x, BOARD_M, board.clientWidth - BOARD_M - c.el.offsetWidth),
-    y: clamp(y, Math.max(BOARD_M, -boardTop + BOARD_M), visibleBottom - c.el.offsetHeight)
-  };
-}
 // Exibe o card dentro da área disponível sem alterar o tamanho/posição
 // salvos (ex.: painel de edição aberto estreita a área temporariamente).
-// Painel lateral aberto (tela larga): o quadro estreita e todos os gráficos encolhem na
-// mesma proporção (posição e largura); pos/size guardados não mudam, e ao fechar voltam
+// Quadro mais estreito que o layout (tela menor, painel lateral aberto): todos os gráficos
+// encolhem na mesma proporção (posição e largura), sem sobreposição; pos/size guardados
+// não mudam, e com espaço voltam ao original. Durante mover/redimensionar a escala fica fixa.
+const CARD_MIN_W = 420;
+let escalaFixa = 1;
 function escalaQuadro() {
-  if (!document.body.classList.contains('qe-open') || !matchMedia('(min-width: 1024px)').matches) return 1;
-  const painel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--qe-panel-w')) || 0;
-  const w = board.clientWidth;
-  return Math.min(1, w / (w + painel + 8)); // +8 = diferença das margens do .app-main aberto/fechado
+  if (board.classList.contains('is-arranging')) return escalaFixa;
+  const extensao = Math.max(0, ...charts.map(c => c.pos.x + c.size.w)) + BOARD_M;
+  escalaFixa = Math.min(1, board.clientWidth / Math.max(1, extensao));
+  return escalaFixa;
+}
+// Escalado, algum gráfico ficaria estreito demais: o quadro vira grade fluida (colunas
+// conforme a largura disponível, na ordem de leitura do layout); mover/redimensionar
+// ficam desativados até haver espaço para o layout livre.
+function quadroEmFluxo() {
+  if (charts.length < 2) return false;
+  const k = escalaQuadro(), minW = Math.min(CARD_MIN_W, board.clientWidth - 2 * BOARD_M);
+  return charts.some(c => c.size.w * k < minW - 1);
+}
+function aplicarFluxo(ativo) {
+  board.classList.toggle('is-fluxo', ativo);
+  if (!ativo) { board.style.gridTemplateColumns = ''; charts.forEach(c => { c.el.style.order = ''; }); return; }
+  // Ordem de leitura: linhas pela altura (sobreposição vertical), e da esquerda para a direita
+  const lista = [...charts].sort((a, b) => a.pos.y - b.pos.y);
+  let linha = -1, fimLinha = -Infinity;
+  lista.forEach(c => { if (c.pos.y >= fimLinha) { linha++; fimLinha = c.pos.y + c.size.h / 2; } c.linha = linha; });
+  lista.sort((a, b) => a.linha - b.linha || a.pos.x - b.pos.x).forEach((c, i) => { c.el.style.order = i; delete c.linha; });
+  // Colunas que cabem; linhas equilibradas (4 gráficos: 4, 2 × 2 ou 1 por linha, nunca 3 + 1)
+  const gap = parseFloat(getComputedStyle(board).columnGap) || 0, n = charts.length;
+  const cabem = Math.max(1, Math.min(n, Math.floor((board.clientWidth + gap) / (CARD_MIN_W + gap))));
+  board.style.gridTemplateColumns = `repeat(${Math.ceil(n / Math.ceil(n / cabem))}, minmax(0, 1fr))`;
 }
 function applyChartLayout(c) {
+  const container = c.el.querySelector('.chart-container');
+  if (board.classList.contains('is-fluxo')) {
+    c.el.style.left = c.el.style.top = c.el.style.width = '';
+    container.style.height = c.size.h + 'px';
+    return;
+  }
   const maxW = board.clientWidth - 2 * BOARD_M, k = escalaQuadro();
   const w = k < 1 ? Math.min(c.size.w * k, maxW) : Math.max(Math.min(c.size.w, maxW), Math.min(420, maxW));
   c.el.style.left = clamp(c.pos.x * k, BOARD_M, board.clientWidth - BOARD_M - w) + 'px';
   c.el.style.top = c.pos.y + 'px';
   c.el.style.width = w + 'px';
-  c.el.querySelector('.chart-container').style.height = c.size.h + 'px';
+  container.style.height = c.size.h + 'px';
+}
+// Reposiciona todos os gráficos na largura atual do quadro (layout livre ou grade fluida)
+// Devolve true quando a escala ou a grade mudou (os demais gráficos precisam redesenhar)
+let larguraQuadro = 0;
+function layoutQuadro() {
+  const antes = `${escalaFixa}|${board.classList.contains('is-fluxo')}|${board.style.gridTemplateColumns}`;
+  larguraQuadro = board.clientWidth;
+  aplicarFluxo(quadroEmFluxo());
+  charts.forEach(applyChartLayout);
+  updateBoardHeight();
+  return antes !== `${escalaQuadro()}|${board.classList.contains('is-fluxo')}|${board.style.gridTemplateColumns}`;
+}
+// Após incluir, excluir, mover ou redimensionar: refaz o layout e redesenha se a escala mudou
+function relayoutSeMudou() {
+  if (!layoutQuadro()) return;
+  renderSemAnimacao = true;
+  try { renderAllCharts(); } finally { renderSemAnimacao = false; }
 }
 function updateBoardHeight() {
+  if (board.classList.contains('is-fluxo')) { board.style.minHeight = ''; return; }
   const bottom = Math.max(0, ...charts.map(c => c.pos.y + c.el.offsetHeight));
   board.style.minHeight = Math.max(innerHeight - 64, bottom + 24) + 'px';
 }
@@ -4496,7 +4551,7 @@ function alternarMultiSel(c) {
 let ultimoArraste = 0; // fim de um arraste real: o clique que vem junto não abre o painel
 function drag(el, onMove, onEnd) {
   el.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || board.classList.contains('is-fluxo')) return; // grade fluida: sem mover/redimensionar
     e.preventDefault();
     closeChartPalette();
     el.setPointerCapture(e.pointerId);
@@ -4571,7 +4626,7 @@ function attachMoveResize(c) {
     if (sy) dy += sy.d;
     s.ini.forEach(m => { m.o.pos = { x: (m.x + dx) / s.k, y: m.y + dy }; applyChartLayout(m.o); }); // guarda sem a escala do painel
     showGuides(sx && sx.line, sy && sy.line);
-  }, () => { charts.forEach(o => o.el.classList.remove('is-dragging')); endArrange(); updateBoardHeight(); saveCharts(); });
+  }, () => { charts.forEach(o => o.el.classList.remove('is-dragging')); endArrange(); relayoutSeMudou(); saveCharts(); });
 
   drag(c.el.querySelector('.chart-resize-handle'), (s, e) => {
     if (!s) {
@@ -4600,9 +4655,8 @@ function attachMoveResize(c) {
   }, () => {
     c.el.classList.remove('is-resizing');
     endArrange();
-    updateBoardHeight();
-    if (multiSel.size > 1 && multiSel.has(c)) {
-      renderSemAnimacao = true; // redesenha o grupo sem reanimar
+    if (layoutQuadro() || (multiSel.size > 1 && multiSel.has(c))) {
+      renderSemAnimacao = true; // redesenha o grupo (ou o quadro reescalado) sem reanimar
       try { renderAllCharts(); } finally { renderSemAnimacao = false; }
     } else renderTurnoverChart(getFilteredChartRows());
     saveCharts();
@@ -4617,7 +4671,8 @@ function mountChart(saved, el) {
     colors: saved.colors || { bgChart: '#F6F6F6' },
     cfg: normalizeChartCfg(saved.cfg),
     page: saved.page || 0,
-    size: clampSize((saved.size || defaultSize()).w, (saved.size || defaultSize()).h),
+    // Largura salva preservada (tela menor só reescala na exibição: ver escalaQuadro)
+    size: saved.size && saved.size.w > 0 ? { w: saved.size.w, h: Math.max(CHART_MIN_H, saved.size.h || 0) } : defaultSize(),
     pos: saved.pos || { x: 0, y: 0 }
   };
   if (!el) board.appendChild(c.el);
@@ -4638,7 +4693,7 @@ function addChart() {
   const bottom = Math.max(0, ...charts.map(c => c.pos.y + c.el.offsetHeight));
   const x = activeChart ? activeChart.pos.x : (board.clientWidth - size.w) / 2;
   const c = mountChart({ size, pos: { x, y: bottom + 24 } });
-  updateBoardHeight();
+  relayoutSeMudou();
   activateChart(c);
   renderActiveChart();
   saveCharts();
@@ -4675,7 +4730,7 @@ function deleteCharts(lista) {
   });
   marcarMultiSel();
   updateChartActionButtons();
-  updateBoardHeight();
+  relayoutSeMudou();
   saveCharts();
   editorSync();
   announce(alvo.length === 1 ? tx('ui.msg_1_excluido') : tx('ui.msg_n_excluidos', { n: alvo.length }));
@@ -4739,17 +4794,18 @@ function initCharts() {
   document.body.appendChild(live);
   // Adicionar/Excluir moram na paleta lateral (ver initEditor)
 
+  // Largura real do quadro (janela, painel lateral, barra de rolagem): reescala ou reorganiza
+  // e redesenha os gráficos; tamanhos e posições guardados não mudam
   let resizeTimer;
-  window.addEventListener('resize', () => {
+  new ResizeObserver(() => {
+    if (board.clientWidth === larguraQuadro) return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      // Com o painel aberto só reescala: tamanhos guardados não encolhem
-      if (escalaQuadro() < 1) charts.forEach(applyChartLayout);
-      else charts.forEach(c => { c.size = clampSize(c.size.w, c.size.h); applyChartLayout(c); c.pos = { x: clampPos(c, c.pos.x, c.pos.y).x, y: c.pos.y }; applyChartLayout(c); });
-      updateBoardHeight();
-      renderAllCharts();
+      layoutQuadro();
+      renderSemAnimacao = true;
+      try { renderAllCharts(); } finally { renderSemAnimacao = false; }
     }, 120);
-  });
+  }).observe(board);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -5825,8 +5881,7 @@ function updateEditorTop() {
 // Painel fixo (tela larga) estreita o quadro: reposiciona sem replay das animações
 function relayoutBoard() {
   if (!charts.length || isEditorDrawer()) return;
-  charts.forEach(applyChartLayout);
-  updateBoardHeight();
+  layoutQuadro();
   renderSemAnimacao = true;
   try { renderAllCharts(); } finally { renderSemAnimacao = false; }
 }
@@ -6243,6 +6298,7 @@ function substituirQuadro(layout) {
   charts = [];
   activeChart = null;
   lista.forEach(sc => mountChart(JSON.parse(JSON.stringify(sc))));
+  layoutQuadro();
   renderAllCharts();
   activateChart(charts[0]);
   updateChartActionButtons();
