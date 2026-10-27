@@ -820,7 +820,7 @@ window.VBMSetup = (function () {
       'c.pendente': 'Atualizações finais pendentes', 'c.atrasado': 'Atualização atrasada', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
       'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
       'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
-      'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido',
+      'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido', 'c.capex': 'CAPEX exibido',
       'p.mes': 'mês', 'p.tri': 'trimestre', 'p.ano': 'ano', 'g.semDado': 'sem dado', 'g.variacao': 'variação',
       'n.minas': 'Minas', 'n.voltar': 'Voltar para {bu}', 'n.minasDe': 'Minas de {bu}', 'n.anterior': 'Mina anterior', 'n.proxima': 'Próxima mina',
       'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
@@ -835,7 +835,7 @@ window.VBMSetup = (function () {
       'c.pendente': 'Pending final updates', 'c.atrasado': 'Overdue update', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
       'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
       'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
-      'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown',
+      'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown', 'c.capex': 'CAPEX shown',
       'p.mes': 'month', 'p.tri': 'quarter', 'p.ano': 'year', 'g.semDado': 'no data', 'g.variacao': 'variance',
       'n.minas': 'Mines', 'n.voltar': 'Back to {bu}', 'n.minasDe': 'Mines of {bu}', 'n.anterior': 'Previous mine', 'n.proxima': 'Next mine',
       'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
@@ -875,9 +875,15 @@ window.VBMSetup = (function () {
     k('Copper Production', 0), k('By Product | Gold', 0), k('Copper Production | Sales', 0), k('By Product Gold | Sales', 0)];
   // Nome antigo na query (só para encontrar o KPI; o título vem da query)
   var ORE_MINED = { kpi: ['Ore Mined (Dry)', 'Ore Mined'] };
+  // CAPEX das minas: seletor no card, como o All-in (opções na ordem do ID_ORDEM da query)
+  var CAPEX_MINA = k('CAPEX (Cost)', 0, 'down', { altLabel: 'c.capex', alt: {
+    cost: { lbl: 'Cost', t: 'CAPEX (Cost)', kpi: ['CAPEX'] },
+    sus: { lbl: 'Sustaining', t: 'CAPEX (sustaining)', kpi: ['CAPEX Sustaining'] },
+    gcap: { lbl: 'G Cap Rep', t: 'CAPEX (G Cap Rep)', kpi: ['CAPEX G Cap Rep'] }
+  } });
   var MINA_ONTARIO = { cls: 'dash--mina', colsProd: 2, rows: 2,
     prod: [k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Equivalent Total Development', 0), k('Nickel Grade', 2), k('Copper Grade', 2)],
-    fin: [k('C1 unit cash cost', 0, 'down'), k('CAPEX (Cost)', 0, 'down', { kpi: ['CAPEX'] }), k('Vale - Lateral Mine Development Cost', 0, 'down', { kpi: ['Lateral Mine Development Cost'] }),
+    fin: [k('C1 unit cash cost', 0, 'down'), CAPEX_MINA, k('Vale - Lateral Mine Development Cost', 0, 'down', { kpi: ['Lateral Mine Development Cost'] }),
       k('Mining Production Expenses', 0, 'down')] };
   var MINA_VNL = { cls: 'dash--mina', colsProd: 2, rows: 2,
     prod: [k('Equivalent Total Development', 0), k('Ore Mined', 0, 'up', { kpi: ['Ore Hoisted | Mined (Dry)'] }), k('Nickel Grade', 2), k('Copper Grade', 1)], fin: [] };
@@ -933,7 +939,12 @@ window.VBMSetup = (function () {
   var VAZIA = criarVisao('');
   function visao() { return VISOES[state.bu] || VAZIA; }
   // Alternativa exibida num card com seletor (teores, All-in…): a escolhida ou a primeira
-  function selDe(ind) { var k = state.sel[ind.id]; return ind.alt[k] ? k : Object.keys(ind.alt)[0]; }
+  function selDe(ind) { var k = state.sel[ind.id]; return ind.alt[k] ? k : altChaves(ind)[0]; }
+  // Opções de um card com seletor na ordem do ID_ORDEM da query (sem dados: no fim, na ordem do PDF)
+  function altChaves(ind) {
+    var ks = Object.keys(ind.alt), o = function (k) { var v = ind.alt[k].ordem; return isNaN(v) || v == null ? Infinity : v; };
+    return ks.slice().sort(function (a, b) { return (o(a) - o(b)) || (ks.indexOf(a) - ks.indexOf(b)); });
+  }
   // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
   function normalizar(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
 
@@ -1172,7 +1183,7 @@ window.VBMSetup = (function () {
   function cardHtml(ind) {
     var v = view(ind), ctl = '';
     if (ind.alt) {
-      ctl = '<div class="seg" role="group" aria-label="' + esc(T(ind.altLabel)) + '">' + Object.keys(ind.alt).map(function (k) {
+      ctl = '<div class="seg" role="group" aria-label="' + esc(T(ind.altLabel)) + '">' + altChaves(ind).map(function (k) {
         return '<button type="button" data-alt="' + k + '" data-for="' + ind.id + '" aria-pressed="' + (selDe(ind) === k) + '">' + esc(ind.alt[k].lbl) + '</button>';
       }).join('') + '</div>';
     }
@@ -1707,7 +1718,7 @@ window.VBMSetup = (function () {
       console.groupEnd();
     }
     vs.paineis.forEach(function (p) {
-      p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[Object.keys(c.alt)[0]]; c.t = a0.t; c.u = a0.u; } });
+      p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[altChaves(c)[0]]; c.t = a0.t; c.u = a0.u; } });
     });
     LETRAS_AF = letras;
     return achados;
