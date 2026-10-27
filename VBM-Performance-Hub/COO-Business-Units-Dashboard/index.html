@@ -1472,8 +1472,10 @@ window.VBMSetup = (function () {
   function aplicarFiltros(f) {
     var grupos = {}, porChave = {};
     SITE_ID = {}; MINAS = {}; BU_DA_MINA = {};
-    IR_FILHOS = (f.sites || []).filter(ehFilhoIR);
-    var sites = (f.sites || []).filter(function (st) { return !ehFilhoIR(st); });
+    // Ordem de apresentação: ID_SITE (BUs, minas e refinarias); a IR sem site próprio vai ao fim
+    var porId = (f.sites || []).slice().sort(function (a, b) { return (a.id == null ? Infinity : a.id) - (b.id == null ? Infinity : b.id); });
+    IR_FILHOS = porId.filter(ehFilhoIR);
+    var sites = porId.filter(function (st) { return !ehFilhoIR(st); });
     // refinarias com dados e sem o site "International Refineries": a IR entra mesmo assim
     if (IR_FILHOS.length && !sites.some(function (st) { return normalizar(st.nome) === normalizar(IR_NOME); })) sites.push({ id: null, nome: IR_NOME });
     sites.forEach(function (st) {
@@ -1486,7 +1488,7 @@ window.VBMSetup = (function () {
       var minas = MINAS_DA_BU[bu].map(function (m) {
         var c = Object.keys(porChave).filter(function (n) { return n.indexOf(m) === 0; })[0];
         return c && porChave[c];
-      }).filter(Boolean);
+      }).filter(Boolean).sort(function (a, b) { return SITE_ID[a] - SITE_ID[b]; });
       if (minas.length) MINAS[porChave[bu]] = minas;
       minas.forEach(function (m) { BU_DA_MINA[m] = porChave[bu]; });
     });

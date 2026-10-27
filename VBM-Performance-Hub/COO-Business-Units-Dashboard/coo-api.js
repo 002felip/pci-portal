@@ -142,7 +142,8 @@ function extrairFiltros(linhas, sites) {
     if (l.ORDEM_GRAFICO === 2 && letraAF(l.NM_VISAO) === 'A' && (!ultimo || a * 12 + m > ultimo.ano * 12 + ultimo.mes)) ultimo = { ano: a, mes: m };
   }
   return {
-    sites: [...comDados].map(id => ({ id, nome: nomes.get(id) || `Site ${id}` })).sort((x, y) => x.nome.localeCompare(y.nome)),
+    // Ordem de apresentação das unidades: ID_SITE (ordem padrão do filtro)
+    sites: [...comDados].sort((x, y) => x - y).map(id => ({ id, nome: nomes.get(id) || `Site ${id}` })),
     anos: Object.keys(meses).map(Number).sort(),
     meses: Object.fromEntries(Object.entries(meses).map(([a, ms]) => [a, [...ms].sort((x, y) => x - y)])),
     ultimoRealizado: ultimo,
