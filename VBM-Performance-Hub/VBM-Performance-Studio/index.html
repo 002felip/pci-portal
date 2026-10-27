@@ -715,6 +715,8 @@ html:not([data-bg="dark"]) body:not([data-bg="dark"]) :is(.qf-trigger, .qf-optio
   --stroke: rgba(116,118,120,.38);
   --hair: rgba(204,204,204,.14);
   --glass: rgba(246,246,246,.92);
+  /* Escala das fontes antes da aba Fontes ser aplicada = FONTE_BASE (100% da aba) */
+  --ft-titulo-s: .8; --ft-unidade-s: .8; --ft-valores-s: .8; --ft-deltas-s: .8; --ft-eixo-s: .8;
 
   width: min(92vw, 1200px);
   min-width: min(420px, calc(100vw - 32px));
@@ -2680,7 +2682,29 @@ function applyDeltaColorVars(el) {
 
 // ── Paleta de cores (aberta pelos campos de cor do painel de edição) ──
 // Largura mínima por coluna (+ vão do gráfico): mantém barras, rótulos, valores e deltas sem sobreposição
-const MIN_COL_W = 56;
+// Geometria das colunas no card grande (referência visual): coluna até 96px e o espaço
+// padrão de .main-wrapper (--gap: clamp(10px, 3vw, 30px))
+const COL_W_MAX = 96, COL_GAP_MIN = 4, COL_W_MIN = 30;
+const colGapPadrao = () => Math.min(30, Math.max(10, innerWidth * 0.03));
+// Largura mínima legível: maior rótulo (valor ou eixo) na fonte atual do gráfico + respiro
+let medidorTexto = null;
+function larguraMinimaColuna(area, rotulos) {
+  const css = getComputedStyle(area), rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const fonte = (k, base) => `${css.getPropertyValue(`--ft-${k}-w`).trim() || 400} ${base * rem * (parseFloat(css.getPropertyValue(`--ft-${k}-s`)) || 1)}px Poppins, 'Segoe UI', sans-serif`;
+  medidorTexto = medidorTexto || document.createElement('canvas').getContext('2d');
+  const larg = (txt, f) => { medidorTexto.font = f; return medidorTexto.measureText(txt).width; };
+  const fv = fonte('valores', .8), fe = fonte('eixo', .8);
+  const maior = Math.max(0, ...rotulos.map(([v, t]) => Math.max(larg(v, fv), larg(t, fe))));
+  return Math.max(COL_W_MIN, Math.ceil(maior + 4)); // + espaço mínimo entre colunas = 8px entre rótulos vizinhos
+}
+// Espaço entre colunas pela largura do card (não da tela): igual ao padrão quando cabe;
+// menor, colunas e espaços reduzem na mesma proporção, sem passar dos mínimos
+function ajustarEspacoColunas(area, n, minColW) {
+  const w = area.clientWidth, gapMax = colGapPadrao(), ideal = n * COL_W_MAX + (n - 1) * gapMax;
+  let gap = gapMax * Math.min(1, w / ideal);
+  if (n > 1) gap = Math.min(gap, (w - n * minColW) / (n - 1)); // a coluna mínima tem prioridade
+  area.style.setProperty('--gap', Math.max(Math.min(COL_GAP_MIN, gapMax), Math.floor(gap)) + 'px');
+}
 let chartPage = 0;
 let renderSemAnimacao = false; // true = re-render só de layout (sem replay das animações)
 let chartPaletteOnPick = null;
@@ -2847,12 +2871,10 @@ function renderTurnoverChart(sourceRows) {
 
   // Colunas por página conforme a largura disponível; deltas/comparações seguem calculados
   // sobre `data` completo — só a janela visível é renderizada.
-  // Card estreito: menos colunas por página para os rótulos caberem
-  // (rótulo com unidade ou mais casas decimais pede coluna mais larga)
-  const gapPx = parseFloat(getComputedStyle(chartAreaEl).columnGap) || 0;
-  const unitLen = cfg.unidade.nosRotulos ? unitTextOf(cfg).length : 0;
-  const minColW = MIN_COL_W + Math.ceil(6.6 * ((unitLen ? unitLen + 1 : 0) + Math.max(0, cfg.decBar - 2)));
-  const fit = Math.floor((chartAreaEl.clientWidth + gapPx) / (minColW + gapPx));
+  // Card estreito: colunas e espaços encolhem juntos (mesma proporção do card grande) até a
+  // largura mínima legível, medida pelos rótulos reais; só depois disso o gráfico pagina
+  const minColW = larguraMinimaColuna(chartAreaEl, data.map(d => [formatBarValue(d.raw, cfg), d.type.trim()]));
+  const fit = Math.floor((chartAreaEl.clientWidth + COL_GAP_MIN) / (minColW + COL_GAP_MIN));
   const perPage = Math.max(2, fit);
 
   // Delta entre colunas vizinhas do MESMO grupo (período + ano + granularidade,
@@ -2890,6 +2912,7 @@ function renderTurnoverChart(sourceRows) {
   chartPage = Math.max(0, Math.min(chartPage, pages.length - 1));
   const [pageStart, pageEnd] = pages[chartPage];
   renderChartPager(data.length, pageStart, pageEnd, pages.length);
+  ajustarEspacoColunas(chartAreaEl, pageEnd - pageStart, minColW);
 
   const html = data.map((row, i) => {
     if (i < pageStart || i >= pageEnd) return '';
@@ -4877,6 +4900,9 @@ const FONTE_PRESETS = {
   compacto:     { titulo: [90, 0],  unidade: [90, 0],  valores: [90, 0],  deltas: [90, 0],  eixo: [90, 0] }
 };
 const FONTE_ESCALA_MIN = 70, FONTE_ESCALA_MAX = 160, FONTE_PASSO = 10;
+// Tamanho-base das fontes dos gráficos: 100% na aba Fontes = 80% do tamanho de referência do CSS
+// (mesmo valor nos padrões --ft-*-s de .main-wrapper)
+const FONTE_BASE = 0.8;
 function fontesDoPreset(id) {
   const p = FONTE_PRESETS[id] || FONTE_PRESETS.executivo, f = {};
   FONTE_ELEMENTOS.forEach(({ k }) => { f[k] = { escala: p[k][0], negrito: !!p[k][1], italico: false, cor: '' }; });
@@ -4898,7 +4924,7 @@ function normalizarFontes(src) {
 function aplicarFontesVars(el, fontes) {
   const f = fontes || normalizarFontes(null);
   FONTE_ELEMENTOS.forEach(({ k, normal }) => {
-    el.style.setProperty(`--ft-${k}-s`, String(f[k].escala / 100));
+    el.style.setProperty(`--ft-${k}-s`, String(f[k].escala / 100 * FONTE_BASE));
     el.style.setProperty(`--ft-${k}-w`, f[k].negrito ? '700' : String(normal));
     el.style.setProperty(`--ft-${k}-i`, f[k].italico ? 'italic' : 'normal');
     if (f[k].cor) el.style.setProperty(`--ft-${k}-c`, f[k].cor); else el.style.removeProperty(`--ft-${k}-c`);
