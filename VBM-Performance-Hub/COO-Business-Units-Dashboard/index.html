@@ -979,25 +979,58 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       });
       return cands[0] || null;
     }
+    function aplicar(s, chave) {
+      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; return; }
+      usados[chave] = true; achados++;
+      var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
+      s.d = porKpi[chave].d;
+      // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
+      s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nome;
+      s.u = l.SG_UNID || '';
+    }
+    // Indicadores do PDF na ordem do PDF (Production e depois Financial; alternativas do seletor em sequência)
+    var seq = [];
     vs.paineis.forEach(function (p) {
       p.cards.forEach(function (c) {
         (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) {
           if (!s.tPdf) s.tPdf = s.t;
           var chave = escolher({ t: s.tPdf, kpi: s.kpi, unid: s.unid });
-          if (chave) {
-            usados[chave] = true; achados++;
-            var l = porKpi[chave].l;
-            s.d = porKpi[chave].d;
-            var nome = String(l.NM_KPI).trim();
-            // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
-            s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nome;
-            s.u = l.SG_UNID || '';
-          } else {
-            s.d = null; s.t = s.tPdf; s.u = '';
-          }
+          if (chave) usados[chave] = true;
+          seq.push({ s: s, chave: chave });
         });
-        if (c.alt) { var a0 = c.alt[Object.keys(c.alt)[0]]; c.t = a0.t; c.u = a0.u; }
       });
+    });
+    // Nome sem correspondência: ID_ORDEM, a ordem de apresentação do banco. Entre dois
+    // indicadores reconhecidos pelo nome (âncoras), os KPIs do banco com ID_ORDEM no
+    // intervalo ocupam, na mesma ordem, os cards do PDF que ficaram sem par. Só quando
+    // o número de KPIs no intervalo é igual ao de cards; senão o card fica "Sem dados".
+    var ordemDe = function (c) { return Number(porKpi[c].l.ID_ORDEM); };
+    (function () {
+      var i = 0;
+      while (i < seq.length) {
+        if (seq[i].chave) { i++; continue; }
+        var j = i;
+        while (j < seq.length && !seq[j].chave) j++;
+        var antes = i > 0 ? ordemDe(seq[i - 1].chave) : null, depois = j < seq.length ? ordemDe(seq[j].chave) : null;
+        if (antes !== null || depois !== null) {
+          var cands = Object.keys(porKpi).filter(function (c) {
+            var o = ordemDe(c);
+            return !usados[c] && !isNaN(o) && (antes === null || o > antes) && (depois === null || o < depois);
+          }).sort(function (a, b) { return ordemDe(a) - ordemDe(b); });
+          if (cands.length === j - i) {
+            cands.forEach(function (c, n) { seq[i + n].chave = c; usados[c] = true; });
+          } else if (cands.length) {
+            console.info('[coo-dashboard] ' + vs.titulo + ': sem par pelo nome para ' + seq.slice(i, j).map(function (it) { return it.s.tPdf; }).join(', ') +
+              ' — KPIs do banco com ID_ORDEM no intervalo: ' + cands.map(function (c) { return porKpi[c].l.NM_KPI + ' (' + ordemDe(c) + ')'; }).join(', '));
+          }
+        }
+        i = j;
+      }
+    })();
+    usados = {};
+    seq.forEach(function (it) { aplicar(it.s, it.chave); });
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[Object.keys(c.alt)[0]]; c.t = a0.t; c.u = a0.u; } });
     });
     LETRAS_AF = letras;
     return achados;
