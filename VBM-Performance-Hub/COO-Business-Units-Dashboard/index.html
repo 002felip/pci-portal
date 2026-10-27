@@ -873,8 +873,10 @@ window.VBMSetup = (function () {
     k('CAPEX', 0, 'down', { unid: /M/ }), k('Simple Cash Flow', 0), ALL_IN];
   var COBRE = [k('Mine Movement', 0), k('Ore Milled | ROP (Dry)', 1), TEOR_CU_AU, k('Copper Recovery', 2), k('Gold Recovery', 2),
     k('Copper Production', 0), k('By Product | Gold', 0), k('Copper Production | Sales', 0), k('By Product Gold | Sales', 0)];
+  // Nome antigo na query (só para encontrar o KPI; o título vem da query)
+  var ORE_MINED = { kpi: ['Ore Mined (Dry)', 'Ore Mined'] };
   var MINA_ONTARIO = { cls: 'dash--mina', colsProd: 2, rows: 2,
-    prod: [k('Ore Hoisted | Mined (Dry)', 0), k('Equivalent Total Development', 0), k('Nickel Grade', 2), k('Copper Grade', 2)],
+    prod: [k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Equivalent Total Development', 0), k('Nickel Grade', 2), k('Copper Grade', 2)],
     fin: [k('C1 unit cash cost', 0, 'down'), k('CAPEX (Cost)', 0, 'down', { kpi: ['CAPEX'] }), k('Vale - Lateral Mine Development Cost', 0, 'down', { kpi: ['Lateral Mine Development Cost'] }),
       k('Mining Production Expenses', 0, 'down')] };
   var MINA_VNL = { cls: 'dash--mina', colsProd: 2, rows: 2,
@@ -887,14 +889,14 @@ window.VBMSetup = (function () {
     sossego: { prod: COBRE, fin: FINANCEIRO },
     oncapuma: { prod: [k('Mine Movement', 1), k('Ore Milled | ROP', 1, 'up', { kpi: ['Ore Milled | ROP (Dry)'] }), k('Nickel Feed Grade', 2), k('Nickel Recovery', 2),
       k('Nickel Grade in Ferro Nickel', 1), k('Ferro Nickel', 0), k('Finished Nickel', 0, 'up', NOTA_INTERM), k('Finished Nickel | Sales', 0)], fin: FINANCEIRO },
-    ontario: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Copper Grade', 2), k('Nickel Grade', 2),
+    ontario: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Ore Milled | ROP (Dry)', 0), k('Copper Grade', 2), k('Nickel Grade', 2),
       k('Finished Nickel', 0, 'up', NOTA_INTERM), k('Copper Production', 0, 'up', NOTA_INTERM), k('Finished Nickel | Sales', 0), k('Copper Production | Sales', 0)], fin: FINANCEIRO },
-    vnl: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2), k('Copper Grade', 2),
+    vnl: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2), k('Copper Grade', 2),
       k('Finished Nickel', 1), k('Copper Production', 1), k('Finished Nickel | Sales', 1), k('Copper Production | Sales', 1)], fin: FINANCEIRO },
     // Produção da IR: cada card lê o site da refinaria (`filho`: prefixo do nome normalizado; ver IR_FILHOS)
     internationalrefineries: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 1, 'up', { filho: 'clydach' }),
       k('Matsuzaka Production', 1, 'up', { kpi: ['Matsusaka Production'], filho: 'mats' })], fin: FINANCEIRO },
-    manitoba: { prod: [k('Lateral Mine Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2),
+    manitoba: { prod: [k('Lateral Mine Development', 0), k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2),
       k('Ni Production', 2), k('Ni Production | Sales', 1)], fin: FINANCEIRO },
     coleman: MINA_ONTARIO, coppercliff: MINA_ONTARIO, creighton: MINA_ONTARIO, garson: MINA_ONTARIO, totten: MINA_ONTARIO, stobie: MINA_ONTARIO,
     easterndeeps: MINA_VNL, reidbrook: MINA_VNL, discoveryhill: MINA_VNL
@@ -1563,13 +1565,18 @@ window.VBMSetup = (function () {
     return l && l.CASA_DECIMAL != null ? l.CASA_DECIMAL : s.decPdf;
   }
 
-  // Nome do gráfico como na query, com exceções de apresentação por BU:
-  // "Ore Mined (Dry)" é "Ore Hoisted | Mined (Dry)" em Ontario, VNL (e as suas minas) e Manitoba
-  var BUS_ORE_HOISTED = ['ontario', 'vnl', 'manitoba'];
-  function nomeExibido(nome, site) {
-    var bu = normalizar(BU_DA_MINA[site] || site);
-    if (BUS_ORE_HOISTED.indexOf(bu) >= 0 && /^oremined(dry)?$/.test(normalizar(nome))) return 'Ore Hoisted | Mined (Dry)';
-    return nome;
+  // Ordem dos gráficos em cada painel: ID_ORDEM da query. A lista do PDF só diz quais gráficos
+  // entram e em qual painel; card com seletor usa a menor ordem das suas alternativas; card sem
+  // dados vai ao fim, na ordem do PDF
+  function ordenarCards(vs) {
+    vs.paineis.forEach(function (p) {
+      function ordem(c) {
+        var os = (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a].ordem; }) : [c.ordem]).filter(function (o) { return !isNaN(o); });
+        return os.length ? Math.min.apply(null, os) : Infinity;
+      }
+      var pdf = function (c) { return Number(String(c.id).slice(1)); };
+      p.cards.sort(function (a, b) { return (ordem(a) - ordem(b)) || (pdf(a) - pdf(b)); });
+    });
   }
 
   function preencher(vs, linhas, site) {
@@ -1600,14 +1607,14 @@ window.VBMSetup = (function () {
       return cands[0] || null;
     }
     function aplicar(s, chave) {
-      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; return; }
+      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; return; }
       usados[chave] = true; achados++;
       var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
       s.d = porKpi[chave].d;
       s.dec = casasDe(s, l);
       s.atual = null; s.ref = site ? site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null; // situação do ciclo: carregarAtualizacao
-      // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
-      s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nomeExibido(nome, vs.titulo);
+      s.t = nome; // nome do gráfico como vem da query
+      s.ordem = Number(l.ID_ORDEM); // ordem de apresentação (ordenarCards)
       s.u = l.SG_UNID || '';
     }
     // Indicadores do PDF na ordem do PDF (Production e depois Financial; alternativas do seletor em sequência)
@@ -1678,12 +1685,13 @@ window.VBMSetup = (function () {
         var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
         var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
           ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
-        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; return; }
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; return; }
         var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
         s.d = porKpi[chave].d;
         s.dec = casasDe(s, l);
         s.atual = null; s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null;
         s.t = nome; // nome do gráfico como vem da query
+        s.ordem = Number(l.ID_ORDEM);
         s.u = l.SG_UNID || '';
         achados++;
       });
@@ -1705,6 +1713,7 @@ window.VBMSetup = (function () {
     }).then(function (todas) {
       if (!todas || meu !== seqDados) return;
       var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas, resp.site) + preencherFilhos(vs, todas.slice(1)), dt = new Date(resp.geradoEm);
+      ordenarCards(vs);
       var bu = state.bu, mes = state.mes - 1, ano = state.ano;
       if (n) marcarStatus('ok', '', dt);
       else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
