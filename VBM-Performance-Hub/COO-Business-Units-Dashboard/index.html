@@ -147,6 +147,44 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 }
 
 /* Cabeçalho editorial + filtros */
+/* Sinal de ciclo (atualização dos dados): âmbar, fora do par verde/vermelho que já indica desempenho */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
+:root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }
+.card-unit:has(.cyc-chip) { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cyc-chip { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; overflow: hidden; padding: 0 7px 0 5px; border-radius: 999px; border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .62rem/1.55 var(--font-ui); white-space: nowrap; vertical-align: 1px; cursor: default; }
+.cyc-chip.late { background: var(--late-bg); color: var(--late); border-color: transparent; }
+.cyc-chip svg { width: 11px; height: 11px; flex-shrink: 0; }
+.cyc-chip span { overflow: hidden; text-overflow: ellipsis; }
+.cyc-chip:focus-visible, .cycle:focus-visible, .cyc-item:focus-visible, .cyc-foco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.b-ghost { fill: url(#hatch-wait); stroke: var(--wait-line); stroke-dasharray: 3 2.5; stroke-width: 1.2; }
+.b-ghost-txt { fill: var(--wait); font: 500 10px var(--font-ui); }
+.b-stale { opacity: .45; }
+.panel-meta { position: relative; }
+.cycle { display: inline-flex; align-items: center; gap: 8px; padding: 2px 10px 2px 7px; border-radius: 999px; border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--text); font: 500 .7rem var(--font-ui); cursor: pointer; }
+.cycle[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--wait-bg); }
+.cycle b { font-weight: 600; color: var(--wait); }
+.cycle-bar { display: inline-flex; gap: 2px; }
+.cycle-bar i { width: 4px; height: 11px; border-radius: 2px; background: var(--cyc-ok); opacity: .85; }
+.cycle-bar i.w { background: transparent; border: 1.3px dashed var(--wait); opacity: 1; }
+.cycle-bar i.l { background: var(--late-bg); opacity: 1; }
+.cycle-ok { font: italic 400 .7rem var(--font-display); color: var(--text-faint); }
+.cycle-pop { position: absolute; z-index: 70; top: calc(100% + 6px); right: 0; width: min(400px, calc(100vw - 32px)); max-height: min(60vh, 460px); overflow: auto; padding: 12px 12px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: var(--cyc-shadow); text-align: left; }
+.cycle-pop h4 { margin: 0 0 2px; font: 500 .84rem var(--font-ui); color: var(--text); }
+.cycle-pop > p { margin: 0 0 8px; font-size: .7rem; color: var(--text-soft); }
+.cyc-item { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 0 8px; width: 100%; padding: 7px 4px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; font: 400 .74rem var(--font-ui); cursor: pointer; }
+.cyc-item:hover { background: var(--wait-bg); }
+.cyc-item .dot { width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; border: 1.4px dashed var(--wait); }
+.cyc-item .dot.l { background: var(--late-bg); border: 0; }
+.cyc-item .sub { grid-column: 2; color: var(--text-faint); font-size: .68rem; font-variant-numeric: tabular-nums; }
+.cyc-foot { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); }
+.cyc-foco { border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); border-radius: 8px; padding: 4px 10px; font: 500 .7rem var(--font-ui); cursor: pointer; }
+.cyc-foco[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); border-color: transparent; }
+.card { transition: opacity .25s, filter .25s; }
+.foco-pendentes .card:not(.is-pend) { opacity: .28; filter: grayscale(1); }
+.card.cyc-flash { animation: cycflash 1.2s ease-out; }
+@keyframes cycflash { 0%, 40% { box-shadow: 0 0 0 3px var(--wait-line); border-radius: 10px; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card.cyc-flash { animation: none; } }
 .head { position: relative; flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 .title-block { min-width: 0; margin-bottom: -4px; position: relative; top: -7px; } /* título um pouco acima: centrado entre o topo e a linha do cabeçalho */
 .title-block h2 { margin: 0; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
@@ -475,6 +513,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     </linearGradient>
     <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
     <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
+    <pattern id="hatch-wait" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.4" height="6" fill="rgba(217,140,10,.18)"/></pattern>
     <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
   </defs>
 </svg>
@@ -605,6 +644,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
             <li id="legPlan" hidden><span class="swatch" style="background:var(--serie-p)"></span>Plan | Supply (P)</li>
             <li><span class="swatch" style="background:var(--serie-a)"></span>Forecast | Actual (F | A)</li>
           </ul>
+          <div id="cycleBox" hidden></div>
           <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
     </div>
   </div>
@@ -770,6 +810,9 @@ window.VBMSetup = (function () {
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
+      'c.pendente': 'Atualizações finais pendentes', 'c.atrasado': 'Atualização atrasada', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
+      'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
+      'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
       'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido',
       'p.mes': 'mês', 'p.tri': 'trimestre', 'p.ano': 'ano', 'g.semDado': 'sem dado', 'g.variacao': 'variação',
       'n.minas': 'Minas', 'n.voltar': 'Voltar para {bu}', 'n.minasDe': 'Minas de {bu}', 'n.anterior': 'Mina anterior', 'n.proxima': 'Próxima mina',
@@ -781,6 +824,9 @@ window.VBMSetup = (function () {
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
+      'c.pendente': 'Pending final updates', 'c.atrasado': 'Overdue update', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
+      'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
+      'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
       'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown',
       'p.mes': 'month', 'p.tri': 'quarter', 'p.ano': 'year', 'g.semDado': 'no data', 'g.variacao': 'variance',
       'n.minas': 'Mines', 'n.voltar': 'Back to {bu}', 'n.minasDe': 'Mines of {bu}', 'n.anterior': 'Previous mine', 'n.proxima': 'Next mine',
@@ -925,9 +971,9 @@ window.VBMSetup = (function () {
   }
 
   function view(ind) {
-    if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, pp: !!ind.pp, dec: ind.dec };
+    if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, pp: !!ind.pp, dec: ind.dec, at: ind.atual || null };
     var alt = ind.alt[selDe(ind)];
-    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: alt.dec != null ? alt.dec : ind.dec };
+    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: alt.dec != null ? alt.dec : ind.dec, at: alt.atual || null };
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
@@ -985,7 +1031,10 @@ window.VBMSetup = (function () {
     // Linha do eixo contínua sob os três períodos, com as mesmas pontas de antes (2 px das bordas)
     var dm0 = dom(all), yZero = MT + dm0[1] / (dm0[1] - dm0[0]) * (H - MT - MB);
     var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yZero + '" y2="' + yZero + '"/>';
-    v.d.forEach(function (pair, i) {
+    // Ciclo pendente: a barra A do mês fica tracejada, sem valor nem delta; trimestre e ano esmaecidos
+    var pend = pendente(v);
+    function grupo(pair, i) {
+      if (pend && i === 0) pair = [pair[0], null, pair[2]];
       var dm = dom(all); // escala única: as seis barras do gráfico na mesma régua
       var y = function (val) { return MT + (dm[1] - val) / (dm[1] - dm[0]) * (H - MT - MB); };
       // Com o Plan ligado, o mês tem três barras na ordem Budget, Plan, Actual/Forecast (trio centrado)
@@ -1004,6 +1053,11 @@ window.VBMSetup = (function () {
         label.push('Plan ' + fmt(pair[2], v.dec) + '.');
       }
       barras.forEach(function (bar) {
+        if (bar[1] === null && pend && i === 0 && bar[2] === 'g-a' && pair[0] !== null) {
+          var yg = y(pair[0]), tg = esc(bar[3] + ' · ' + T('c.mesVazio'));
+          out += '<rect class="b-ghost" x="' + (bar[0] + .6) + '" y="' + Math.min(yg, y0) + '" width="' + (BW - 1.2) + '" height="' + Math.max(Math.abs(y0 - yg), 6) + '" rx="3" data-tip="' + tg + '"/>';
+          out += '<text class="b-ghost-txt" x="' + (bar[0] + BW / 2) + '" y="' + (Math.min(yg, y0) - 6) + '" text-anchor="middle">—</text>';
+        }
         if (bar[1] === null) { out += '<text class="b-axis"' + stEixo + ' x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
         var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
         var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
@@ -1049,8 +1103,31 @@ window.VBMSetup = (function () {
       }
       if (bp) out += cota(xb, xp, pair[0], pair[2], dBP, yBP);
       if (pa) out += cota(xp, xa, pair[2], pair[1], dPA, yPA);
+    }
+    v.d.forEach(function (pair, i) {
+      var antes = out; out = '';
+      grupo(pair, i);
+      out = antes + (pend && i > 0 ? '<g class="b-stale">' + out + '</g>' : out);
     });
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // ── Sinal de ciclo: KPI que ainda não recebeu a atualização final do mês selecionado ──
+  function pendente(v) { return !!(v && v.d && v.at && v.at.status !== 'ok'); }
+  var ICO_RELOGIO = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.3 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  var ICO_ALERTA = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5v4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="11.2" r=".95" fill="currentColor"/></svg>';
+  // Data da carga como gravada no banco (o mssql entrega datetime como UTC)
+  function dataCarga(dt) {
+    var d = new Date(dt);
+    if (!dt || isNaN(d)) return null;
+    var l = VBMSetup.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l, { timeZone: 'UTC' }) + ' ' + d.toLocaleTimeString(l, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+  }
+  function textoCiclo(at) { return at.status === 'atrasado' ? T('c.atrasado') : T('c.pendente'); }
+  function detalheCiclo(at) { var dt = dataCarga(at.dt); return dt ? T('c.ultima', { dt: dt }) : T('c.nenhuma'); }
+  function seloCiclo(at) {
+    var late = at.status === 'atrasado', txt = textoCiclo(at), det = detalheCiclo(at);
+    return '<span class="cyc-chip' + (late ? ' late' : '') + '" tabindex="0" data-tip="' + esc(det) + '" aria-label="' + esc(txt + '. ' + det) + '">' + (late ? ICO_ALERTA : ICO_RELOGIO) + '<span>' + esc(txt) + '</span></span>';
   }
 
   function cardHtml(ind) {
@@ -1060,8 +1137,9 @@ window.VBMSetup = (function () {
         return '<button type="button" data-alt="' + k + '" data-for="' + ind.id + '" aria-pressed="' + (selDe(ind) === k) + '">' + esc(ind.alt[k].lbl) + '</button>';
       }).join('') + '</div>';
     }
-    return '<article class="card card-' + ind.id + '" id="card-' + ind.id + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
+    var pend = pendente(v);
+    return '<article class="card card-' + ind.id + (pend ? ' is-pend' : '') + '" id="card-' + ind.id + '">' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : (pend ? '' : '&nbsp;')) + (pend ? seloCiclo(v.at) : '') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
       '</article>';
   }
@@ -1174,9 +1252,77 @@ window.VBMSetup = (function () {
         '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
         (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(T(MSG_PAINEL)) + '</p>') + '</section>';
     }).join('');
+    renderCiclo();
     ajustarAltura();
     observeCharts();
   }
+
+  // ── Resumo do ciclo no cabeçalho: quantos gráficos aguardam a atualização final do mês ──
+  var cicloFoco = false;
+  function renderCiclo() {
+    var box = document.getElementById('cycleBox'), total = 0, pend = [], marcas = '';
+    visao().paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        var v = view(c);
+        if (!v.d || !v.at) return; // sem dados ou sem situação conhecida: fora da conta
+        total++;
+        var st = v.at.status;
+        marcas += '<i class="' + (st === 'atrasado' ? 'l' : st === 'ok' ? '' : 'w') + '"></i>';
+        if (st !== 'ok') pend.push({ id: c.id, t: v.t, at: v.at });
+      });
+    });
+    var mes = mesLongo(state.mes - 1);
+    if (!pend.length) cicloFoco = false;
+    document.getElementById('dash').classList.toggle('foco-pendentes', cicloFoco);
+    box.hidden = !total;
+    if (!total) { box.innerHTML = ''; return; }
+    if (!pend.length) { box.innerHTML = '<span class="cycle-ok">' + esc(T('c.tudoOk', { mes: mes })) + '</span>'; return; }
+    pend.sort(function (a, b) { return (a.at.status === 'atrasado' ? 0 : 1) - (b.at.status === 'atrasado' ? 0 : 1); });
+    var aberto = box.querySelector('.cycle-pop') && !box.querySelector('.cycle-pop').hidden;
+    box.innerHTML = '<button type="button" class="cycle" id="cycleBtn" aria-expanded="' + aberto + '" aria-controls="cyclePop">' +
+      '<span class="cycle-bar" aria-hidden="true">' + marcas + '</span><span><b>' + esc(T('c.resumo', { n: pend.length, total: total })) + '</b> ' + esc(T('c.resumoTxt')) + '</span></button>' +
+      '<div class="cycle-pop" id="cyclePop" role="dialog" aria-label="' + esc(T('c.titulo', { mes: mes, ano: state.ano })) + '"' + (aberto ? '' : ' hidden') + '>' +
+      '<h4>' + esc(T('c.titulo', { mes: mes, ano: state.ano })) + '</h4><p>' + esc(T('c.info')) + '</p>' +
+      pend.map(function (it) {
+        return '<button type="button" class="cyc-item" data-card="' + esc(it.id) + '"><span class="dot' + (it.at.status === 'atrasado' ? ' l' : '') + '" aria-hidden="true"></span>' +
+          '<span>' + esc(it.t) + '</span><span class="sub">' + esc(textoCiclo(it.at) + ' · ' + detalheCiclo(it.at)) + '</span></button>';
+      }).join('') +
+      '<div class="cyc-foot"><button type="button" class="cyc-foco" aria-pressed="' + cicloFoco + '">' + esc(T('c.destacar')) + '</button></div></div>';
+  }
+  function abrirCiclo(sim, devolverFoco) {
+    var pop = document.getElementById('cyclePop'), btn = document.getElementById('cycleBtn');
+    if (!pop || !btn) return;
+    pop.hidden = !sim;
+    btn.setAttribute('aria-expanded', String(sim));
+    if (!sim && devolverFoco) btn.focus();
+  }
+  document.getElementById('cycleBox').addEventListener('click', function (e) {
+    if (e.target.closest('#cycleBtn')) { abrirCiclo(document.getElementById('cyclePop').hidden); return; }
+    var foco = e.target.closest('.cyc-foco');
+    if (foco) {
+      cicloFoco = !cicloFoco;
+      foco.setAttribute('aria-pressed', String(cicloFoco));
+      document.getElementById('dash').classList.toggle('foco-pendentes', cicloFoco);
+      return;
+    }
+    var item = e.target.closest('.cyc-item');
+    if (item) {
+      var card = document.getElementById('card-' + item.getAttribute('data-card'));
+      abrirCiclo(false);
+      if (!card) return;
+      card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      card.classList.remove('cyc-flash'); void card.offsetWidth; card.classList.add('cyc-flash');
+      var selo = card.querySelector('.cyc-chip'); if (selo) selo.focus({ preventScroll: true });
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var pop = document.getElementById('cyclePop');
+    if (pop && !pop.hidden && !e.target.closest('#cycleBox')) abrirCiclo(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    var pop = document.getElementById('cyclePop');
+    if (e.key === 'Escape' && pop && !pop.hidden) abrirCiclo(false, true);
+  });
 
   // ── Navegação do PDF: BU → minas (Ontario 1/6 a 6/6, VNL) e volta para a BU ──
   function renderNav() {
@@ -1422,11 +1568,12 @@ window.VBMSetup = (function () {
       return cands[0] || null;
     }
     function aplicar(s, chave) {
-      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); return; }
+      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; return; }
       usados[chave] = true; achados++;
       var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
       s.d = porKpi[chave].d;
       s.dec = casasDe(s, l);
+      s.atual = l.ATUALIZACAO || null;
       // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
       s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nome;
       s.u = l.SG_UNID || '';
@@ -1499,10 +1646,11 @@ window.VBMSetup = (function () {
         var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
         var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
           ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
-        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); return; }
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; return; }
         var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
         s.d = porKpi[chave].d;
         s.dec = casasDe(s, l);
+        s.atual = l.ATUALIZACAO || null;
         s.t = normalizar(nome).indexOf(s.filho) === 0 ? nome : r.nome + ' · ' + nome;
         s.u = l.SG_UNID || '';
         achados++;
@@ -1572,6 +1720,7 @@ window.VBMSetup = (function () {
     var card = tmp.firstChild;
     card.classList.add('replay');
     document.getElementById('card-' + id).replaceWith(card);
+    renderCiclo(); // a alternativa escolhida pode ter outra situação de atualização
     ajustarAltura(); // o novo título pode mudar a altura do cabeçalho
     observeCharts();
     setTimeout(function () { card.classList.remove('replay'); }, 1500);

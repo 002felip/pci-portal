@@ -24,7 +24,9 @@
  *                                     do script: sites com dados, anos e meses, e o
  *                                     último mês realizado (Actual)
  *   GET /indicadores?site=&ano=&mes=  Budget e Actual/Forecast por KPI do site,
- *                                     no mês, no trimestre do mês e no ano
+ *                                     no mês, no trimestre do mês e no ano, com a
+ *                                     situação da atualização do ciclo (ATUALIZACAO)
+ *   GET /atualizacoes                 saída do script de atualização, linha a linha
  */
 const fs = require('fs');
 const path = require('path');
@@ -44,7 +46,36 @@ const CONSULTAS = [
     trocas: [{ de: 'DASH.ID_DASH = 15', para: 'DASH.ID_DASH = @idDash', ocorrencias: 3 }],
     falha: 'Failed to query the dashboard data.',
   },
+  {
+    rota: '/atualizacoes',
+    arquivo: 'coo_dashboard_atualizacao.sql', // situação de cada KPI no ciclo — "SQL - COO DASHBOARD ATUALIZACAO"
+    trocas: [{ de: 'DASH.ID_DASH = 15', para: 'DASH.ID_DASH = @idDash', ocorrencias: 1 }],
+    falha: 'Failed to query the data update status.',
+  },
 ];
+
+// Situação do KPI no ciclo (script de atualização): VALIDATE 1 = atualizado, 0 = aguardando a
+// atualização final. 2 fica reservado para "atrasado", regra que o time de dados ainda vai criar.
+function situacaoAtualizacao(l) {
+  const v = Number(l.VALIDATE);
+  const texto = String(l.DS_VALIDATE || '').trim();
+  return {
+    status: v === 1 ? 'ok' : v === 2 ? 'atrasado' : 'pendente',
+    texto: texto && texto !== '.' ? texto : null,
+    dt: l.DT_ATUALIZACAO || null,
+  };
+}
+
+// Linhas do script de atualização de um site/mês → situação por KPI (ID_OPERACAO|ID_KPI)
+function atualizacoesDoMes(linhas, { site, ano, mes }) {
+  const porKpi = new Map();
+  for (const l of linhas) {
+    if (Number(l.ID_SITE) !== site) continue;
+    const [a, m] = anoMes(l.DT_REF);
+    if (a === ano && m === mes) porKpi.set(`${l.ID_OPERACAO}|${l.ID_KPI}`, situacaoAtualizacao(l));
+  }
+  return porKpi;
+}
 
 // ORDEM_GRAFICO do script → janela e série do card
 //   0 = mês Budget · 1 = mês Plan (Supply; botão Plan da tela) · 2 = mês Act/Fcst
@@ -226,6 +257,10 @@ function criarCooRouter({ runQuery, idDash }) {
       try { unidades = await buscar('/unidades-kpi', UNIDADES_SQL); } catch (err) { console.error(`${TAG} unidades dos KPIs indisponíveis:`, err.message); }
       const unidade = new Map(unidades.map(u => [`${u.ID_SITE}|${u.ID_OPERACAO}|${u.ID_KPI}`, u.SG_UNID || null]));
       for (const l of linhas) l.SG_UNID = unidade.get(`${p.site}|${l.ID_OPERACAO}|${l.ID_KPI}`) || null;
+      // Situação da atualização do ciclo; se o script falhar, os cards seguem sem o selo
+      let atualizacao = new Map();
+      try { atualizacao = atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes']), p); } catch (err) { console.error(`${TAG} situação da atualização indisponível:`, err.message); }
+      for (const l of linhas) l.ATUALIZACAO = atualizacao.get(`${l.ID_OPERACAO}|${l.ID_KPI}`) || null;
       res.json({ ...p, geradoEm: new Date().toISOString(), linhas });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);
@@ -236,4 +271,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, CONSULTAS };
