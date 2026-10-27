@@ -1659,14 +1659,15 @@ window.VBMSetup = (function () {
           if (s.filho) return; // lido de outro site (refinarias da IR): preencherFilhos
           var chave = escolher({ t: s.tPdf, kpi: s.kpi, unid: s.unid });
           if (chave) usados[chave] = true;
-          seq.push({ s: s, chave: chave });
+          seq.push({ s: s, chave: chave, via: chave ? 'nome' : '', painel: p.titulo });
         });
       });
     });
     // Nome sem correspondência: ID_ORDEM, a ordem de apresentação do banco. Entre dois
     // indicadores reconhecidos pelo nome (âncoras), os KPIs do banco com ID_ORDEM no
-    // intervalo ocupam, na mesma ordem, os cards do PDF que ficaram sem par. Só quando
-    // o número de KPIs no intervalo é igual ao de cards; senão o card fica "Sem dados".
+    // intervalo ocupam, na mesma ordem, os cards do PDF que ficaram sem par (o que sobrar
+    // de card fica "Sem dados"). Depois da última âncora não há limite de cima: aí só
+    // quando os KPIs não passam do número de cards, para não puxar KPIs fora do PDF.
     var ordemDe = function (c) { return Number(porKpi[c].l.ID_ORDEM); };
     (function () {
       var i = 0;
@@ -1680,9 +1681,10 @@ window.VBMSetup = (function () {
             var o = ordemDe(c);
             return !usados[c] && !isNaN(o) && (antes === null || o > antes) && (depois === null || o < depois);
           }).sort(function (a, b) { return ordemDe(a) - ordemDe(b); });
-          if (cands.length === j - i) {
-            cands.forEach(function (c, n) { seq[i + n].chave = c; usados[c] = true; });
-          } else if (cands.length) {
+          if (depois !== null || cands.length <= j - i) {
+            cands.slice(0, j - i).forEach(function (c, n) { seq[i + n].chave = c; seq[i + n].via = 'ID_ORDEM'; usados[c] = true; });
+          }
+          if (cands.length && cands.length !== j - i) {
             console.info('[coo-dashboard] ' + vs.titulo + ': no name match for ' + seq.slice(i, j).map(function (it) { return it.s.tPdf; }).join(', ') +
               ' — database KPIs with ID_ORDEM in the range: ' + cands.map(function (c) { return porKpi[c].l.NM_KPI + ' (' + ordemDe(c) + ')'; }).join(', '));
           }
@@ -1692,6 +1694,17 @@ window.VBMSetup = (function () {
     })();
     usados = {};
     seq.forEach(function (it) { aplicar(it.s, it.chave); });
+    // Diagnóstico no console: de onde veio cada card (nome e unidade são sempre os da query)
+    if (window.console && console.table && (linhas || []).length) {
+      var semCard = Object.keys(porKpi).filter(function (c) { return !seq.some(function (it) { return it.chave === c; }); });
+      console.groupCollapsed('[coo-dashboard] ' + vs.titulo + ': cards × query (' + seq.filter(function (it) { return it.chave; }).length + '/' + seq.length + ')');
+      console.table(seq.map(function (it) {
+        var l = it.chave ? porKpi[it.chave].l : null;
+        return { panel: it.painel, pdf: it.s.tPdf, query_NM_KPI: l ? l.NM_KPI : '—', ID_ORDEM: l ? l.ID_ORDEM : '', SG_UNID: l ? l.SG_UNID : '', match: it.via || 'no data' };
+      }));
+      if (semCard.length) console.info('KPIs in the query without a card: ' + semCard.map(function (c) { return porKpi[c].l.NM_KPI + ' (' + porKpi[c].l.ID_ORDEM + ')'; }).join(', '));
+      console.groupEnd();
+    }
     vs.paineis.forEach(function (p) {
       p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[Object.keys(c.alt)[0]]; c.t = a0.t; c.u = a0.u; } });
     });
@@ -1750,10 +1763,13 @@ window.VBMSetup = (function () {
       var bu = state.bu, mes = state.mes - 1, ano = state.ano;
       if (n) marcarStatus('ok', '', dt);
       else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
-      render();
+      // Daqui em diante os dados da query já estão nos cards: um erro de desenho fica no console
+      // e NÃO cai no catch abaixo (que limparia os cards como se o banco tivesse falhado)
+      try { render(); } catch (e) { console.error('[coo-dashboard] render error:', e); }
       if (n) carregarAtualizacao(meu, [resp.site].concat(todas.slice(1).map(function (r) { return r.site; })));
     }).catch(function (e) {
       if (meu !== seqDados) return;
+      console.error('[coo-dashboard] failed to load indicators:', e);
       preencher(visao(), []);
       preencherFilhos(visao(), []);
       var msg = e.message;
@@ -1778,8 +1794,8 @@ window.VBMSetup = (function () {
           (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) { s.atual = s.ref ? mapa[s.ref] || null : null; });
         });
       });
-      render();
-    });
+      try { render(); } catch (e) { console.error('[coo-dashboard] render error (update status):', e); }
+    }).catch(function (e) { console.error('[coo-dashboard] update status:', e); });
   }
 
   function atualizar() {
