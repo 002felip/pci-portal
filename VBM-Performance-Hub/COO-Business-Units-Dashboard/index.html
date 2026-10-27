@@ -923,8 +923,9 @@ window.VBMSetup = (function () {
   function chartSvg(ind, W, H) {
     var v = view(ind), ax = axis();
     var showDelta = state.delta === 'on';
-    var MT = showDelta ? 46 : 20, MB = 16, PW = W / 3;
     var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
+    // Com o Plan, o mês tem duas cotas (B→P e P→A) com as pílulas em degraus: mais espaço no topo
+    var MT = showDelta ? (comPlan ? 66 : 46) : 20, MB = 16, PW = W / 3;
     // Sem o Plan: o layout padrão (B·A centrado em cada terço). Com o Plan: sete barras
     // (mês B·P·A, trimestre B·A, ano B·A) numa régua só, com a MESMA distância entre todas as colunas.
     var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
@@ -971,7 +972,7 @@ window.VBMSetup = (function () {
       var xp = POS ? POS[i].xp : xb, xa = POS ? POS[i].xa : xb + BW + GAP;
       var dl = delta(pair[0], pair[1], ind, v.dec);
       var semPar = pair[0] === null || pair[1] === null;
-      label.push(PER(i) + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
+      label.push(PER(i) + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar && !(comPlan && i === 0) ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
 
 
       var barras = [[xb, pair[0], 'g-b', ax[i][0], 'Budget'], [xa, pair[1], 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']];
@@ -990,24 +991,42 @@ window.VBMSetup = (function () {
         out += '<text class="b-val"' + stVal + ' x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
         out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
       });
-      if (!showDelta || semPar) return;
+      if (!showDelta) return;
 
-      // Cota de diferença do Performance Hub: nível B tracejado, nível A sólido, faixa, haste, fio guia e pílula.
-      // Delta = A/F − B; com o Plan no meio, a cota fica no vão entre o Plan e o Actual/Forecast
-      var x1 = (trio ? xp : xb) + BW, x2 = xa, cx = (x1 + x2) / 2, yb = y(pair[0]), ya = y(pair[1]);
-      var ytop = Math.min(yb, ya, y0), pillH = 17, pillW = Math.max(38, dl.txt.length * 5.8 + 14);
-      var pillY = Math.max(0, ytop - 22 - pillH), up = pair[1] >= pair[0];
-      out += '<g class="cota ' + dl.cls + '">';
-      out += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yb + '" y2="' + yb + '"/>';
-      out += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + ya + '" y2="' + ya + '"/>';
-      if (Math.abs(yb - ya) > 0.5) {
-        out += '<rect class="' + (up ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yb, ya) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yb - ya) + '"/>';
-        out += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yb + '" y2="' + ya + '"/>';
+      // Cota de diferença do Performance Hub: nível de referência tracejado, nível novo sólido, faixa,
+      // haste, fio guia e pílula. Sem o Plan: B → A/F. Com o Plan, no mês: B → P e P → A.
+      function cota(xEsq, xDir, vRef, vNovo, dlc, pillY) {
+        var x1 = xEsq + BW, x2 = xDir, cx = (x1 + x2) / 2, yr = y(vRef), yn = y(vNovo);
+        var ytop = Math.min(yr, yn, y0), pillH = 17, pillW = Math.max(38, dlc.txt.length * 5.8 + 14);
+        if (pillY == null) pillY = Math.max(0, ytop - 22 - pillH);
+        var g = '<g class="cota ' + dlc.cls + '">';
+        g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
+        g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
+        if (Math.abs(yr - yn) > 0.5) {
+          g += '<rect class="' + (vNovo >= vRef ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
+          g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
+        }
+        g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
+        g += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="8.5"/>';
+        g += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dlc.txt) + '</text>';
+        return g + '</g>';
       }
-      out += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
-      out += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="8.5"/>';
-      out += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dl.txt) + '</text>';
-      out += '</g>';
+      if (!trio) { if (!semPar) out += cota(xb, xa, pair[0], pair[1], dl); return; }
+
+      var bp = pair[0] !== null && pair[2] !== null, pa = pair[2] !== null && pair[1] !== null;
+      var dBP = bp && delta(pair[0], pair[2], ind, v.dec), dPA = pa && delta(pair[2], pair[1], ind, v.dec);
+      if (dBP) label.push('Budget → Plan: ' + dBP.txt + '.');
+      if (dPA) label.push('Plan → ' + (i === 2 ? 'Forecast' : 'Actual') + ': ' + dPA.txt + '.');
+      // As duas pílulas ficam a um passo de distância: se não couberem lado a lado, B→P sobe um degrau.
+      // P→A é desenhada depois, por cima do fio guia de B→P.
+      var topo = function (a, b) { return Math.max(0, Math.min(y(a), y(b), y0) - 39); };
+      var yPA = pa ? topo(pair[2], pair[1]) : null, yBP = bp ? topo(pair[0], pair[2]) : null;
+      if (bp && pa) {
+        var larg = function (d) { return Math.max(38, d.txt.length * 5.8 + 14); };
+        if (xa - xp < (larg(dBP) + larg(dPA)) / 2 + 4) yBP = Math.max(0, Math.min(yBP, yPA - 21));
+      }
+      if (bp) out += cota(xb, xp, pair[0], pair[2], dBP, yBP);
+      if (pa) out += cota(xp, xa, pair[2], pair[1], dPA, yPA);
     });
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
   }
