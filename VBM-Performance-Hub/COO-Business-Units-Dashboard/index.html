@@ -170,6 +170,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .site-row { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 24px; flex-wrap: wrap; margin-top: -2px; }
 .site-row .panel-meta { position: relative; top: 10px; }
 .site-id { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; min-width: 0; }
+.site-nav { display: inline-flex; align-items: center; gap: 8px; position: relative; top: 6px; }
+.site-nav[hidden] { display: none; }
+.pager { display: inline-flex; gap: 4px; }
+.nav-chip { min-height: 28px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.nav-chip:disabled { opacity: .4; cursor: default; }
+.pager .nav-chip { width: 28px; padding: 0; }
 .site { margin: 0; position: relative; top: 4px; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
 
 .filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
@@ -193,6 +200,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; }
 .unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
 .unit-list button .n { color: var(--text-faint); font-size: .68rem; }
+.unit-list button.sub { justify-content: flex-start; padding: 5px 10px 5px 22px; font-weight: 400; font-size: .72rem; color: var(--text-soft); }
+.unit-list button.sub::before { content: '›'; margin-right: 6px; color: var(--text-faint); }
 .unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
 .unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
 .unit-list button[data-site][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
@@ -237,8 +246,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* IR: só dois gráficos no painel; mais ar entre eles (vence o espaçamento comum calculado em ajustarAltura) */
 .dash--ir .panel-prod .panel-grid { row-gap: clamp(40px, 8vh, 90px) !important; }
 .panel-vazio { margin: auto; padding: 24px; font: italic 400 .95rem var(--font-display); color: var(--text-soft); text-align: center; }
-.panel-nota { flex-shrink: 0; margin: 0; font: italic 400 .66rem var(--font-display); color: var(--text-faint); }
-.card-title sup { font-size: .6em; margin-left: 1px; }
 .panel-sub { font: italic 400 .8rem var(--font-display); color: var(--text-faint); }
 
 /* Indicador: título + unidade, gráfico com altura contida, espaço livre abaixo */
@@ -432,6 +439,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <div class="site-row">
     <div class="site-id">
       <h3 class="site" id="buName">Sossego</h3>
+      <nav class="site-nav" id="siteNav" aria-label="Navegação entre BU e minas" hidden></nav>
     </div>
     <div class="panel-meta">
           <ul class="legend" aria-label="Legenda">
@@ -451,76 +459,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 (function () {
   'use strict';
 
-  // ── Modelos de layout por BU (organização do PDF COO – Business Units) ──
-  // Só ESTRUTURA: títulos, unidades, casas decimais, polaridade e seletores.
-  // Nenhum número fica no código: os valores vêm todos da consulta do dashboard
-  // (/api/indicadores). Card do modelo sem KPI no resultado mostra "Sem dados";
-  // KPI do resultado sem card no modelo ganha um card no fim do painel.
+  // ── Visão de cada site: cards montados SÓ com o resultado da consulta ──
+  // Título = NM_KPI (IBP.DASHBOARD.NM_KPIS_DASH), unidade = SG_UNID, ordem = ID_ORDEM.
+  // Nenhum número fica no código.
   var SEM_DADOS = 'Sem dados';
-  var NOTA_INTERM = 'The data presented in this chart includes intermediates production.';
-  function k(t, u, dec, pol, extra) {
-    var c = { t: t, u: u, dec: dec, pol: pol || 'up' };
-    for (var x in extra) c[x] = extra[x];
-    return c;
-  }
-  // Teor de cobre e ouro num card só, com seletor Cu/Au
-  var TEOR_CU_AU = k('Copper + Gold Feed Grade', '%', 2, 'up', { altLabel: 'Teor exibido', alt: {
-    cu: { lbl: 'Cu', t: 'Copper Feed Grade', u: '%' },
-    au: { lbl: 'Au', t: 'Gold Feed Grade', u: '%' }
-  } });
-  // All-in e componentes num card só, com seletor
-  function allIn(u) {
-    return k('All-in', u, 1, 'down', { altLabel: 'Componente exibido', alt: {
-      allin: { lbl: 'All-in', t: 'All-in', u: u },
-      byp: { lbl: 'By Product', t: 'All-in | By Product', u: u },
-      sus: { lbl: 'Sustaining', t: 'All-in | Sustaining', u: u },
-      cost: { lbl: 'Cost', t: 'All-in | Cost', u: u }
-    } });
-  }
-  function financeiro(uAllIn) {
-    return [k('Revenues', 'US$ M', 0), k('COGS', 'US$ M', 0, 'down'), k('EBITDA', 'US$ M', 0), k('CAPEX', 'US$ M', 0, 'down'),
-      k('Simple Cash Flow', 'US$ M', 0), allIn(uAllIn || 'US$ k/t')];
-  }
-  var COBRE = [k('Mine Movement', 'Mt', 0), k('Ore Milled | ROP (Dry)', 'Mt', 1), TEOR_CU_AU, k('Copper Recovery', '%', 2), k('Gold Recovery', '%', 2),
-    k('Copper Production', 'Kt', 0), k('By Product | Gold', 'KOz', 0), k('Copper Production | Sales', 'Kt', 0), k('By Product Gold | Sales', 'kOz', 0)];
-  // Chave = nome do site normalizado (ver normalizar)
-  var MODELOS = {
-    salobo: { prod: COBRE, fin: financeiro() },
-    sossego: { prod: COBRE, fin: financeiro() },
-    oncapuma: { prod: [k('Mine Movement', 'Mt', 1), k('Ore Milled | ROP', 'Mt', 1), k('Nickel Feed Grade', '%', 2), k('Nickel Recovery', '%', 2),
-      k('Nickel Grade in Ferro Nickel', '%', 1), k('Ferro Nickel', 'Kt', 0), k('Finished Nickel', 'Kt', 0, 'up', { nota: true }), k('Finished Nickel | Sales', 'Kt', 0)], fin: financeiro('US$ K/t') },
-    ontario: { prod: [k('Equivalent Total Development', 'Equivalent Meters - 4.8 x 4.8', 0), k('Ore Hoisted | Mined (Dry)', 'Kt', 0), k('Ore Milled | ROP (Dry)', 'Kt', 0),
-      k('Copper Grade', '%', 2), k('Nickel Grade', '%', 2), k('Finished Nickel', 'Kt', 0, 'up', { nota: true }), k('Copper Production', 'Kt', 0),
-      k('Finished Nickel | Sales', 'Kt', 0), k('Copper Production | Sales', 'kt', 0)], fin: financeiro() },
-    vnl: { prod: [k('Equivalent Total Development', 'Meters', 0), k('Ore Hoisted | Mined (Dry)', 'Kt', 0), k('Ore Milled | ROP (Dry)', 'Kt', 0),
-      k('Nickel Grade', '%', 2), k('Copper Grade', '%', 2), k('Finished Nickel', 'Kt', 1), k('Copper Production', 'Kt', 1),
-      k('Finished Nickel | Sales', 'Kt', 1), k('Copper Production | Sales', 'kt', 1)], fin: financeiro() },
-    internationalrefineries: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 'Kt', 1), k('Matsuzaka Production', 'Kt', 1)], fin: financeiro() },
-    manitoba: { prod: [k('Lateral Mine Development', 'Meters', 0), k('Ore Hoisted | Mined (Dry)', 'Kt', 0), k('Ore Milled | ROP (Dry)', 'Kt', 0),
-      k('Nickel Grade', '%', 2), k('Ni Production', 'Kt', 2), k('Ni Production | Sales', 'Kt', 1)], fin: financeiro() }
-  };
-
-  // Visão de um site: cópia do modelo da BU (ou painéis vazios, preenchidos pelos KPIs da consulta)
   function criarVisao(nome) {
-    var m = MODELOS[normalizar(nome)] || { prod: [], fin: [] }, n = 0;
-    function copiar(lista) {
-      return lista.map(function (c) {
-        var card = JSON.parse(JSON.stringify(c));
-        card.id = 'c' + (n++);
-        card.vazio = SEM_DADOS;
-        return card;
-      });
-    }
-    return { cls: m.cls || '', colsProd: m.colsProd || 3, rows: 3, titulo: nome, upd: '', paineis: [
-      { titulo: 'Production Drivers', cls: 'panel-prod', cards: copiar(m.prod) },
-      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: copiar(m.fin) }
+    return { cls: '', colsProd: 3, rows: 3, titulo: nome, paineis: [
+      { titulo: 'Production Drivers', cls: 'panel-prod', cards: [] },
+      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: [] }
     ] };
   }
   var VISOES = {}; // nome do site → visão (criada em aplicarFiltros, com os sites da consulta)
   var VAZIA = criarVisao('');
   function visao() { return VISOES[state.bu] || VAZIA; }
-  // Alternativa exibida num card com seletor (Cu/Au, All-in…): a escolhida ou a primeira
-  function selDe(ind) { return state.sel[ind.id] || Object.keys(ind.alt)[0]; }
+  // Alternativa exibida num card com seletor (teores, All-in…): a escolhida, se existir neste site, ou a primeira
+  function selDe(ind) { var k = state.sel[ind.id]; return ind.alt[k] ? k : Object.keys(ind.alt)[0]; }
   // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
   function normalizar(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
 
@@ -567,7 +520,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function view(ind) {
     if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, pp: !!ind.pp, dec: ind.dec };
     var alt = ind.alt[selDe(ind)];
-    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: ind.dec };
+    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: alt.dec != null ? alt.dec : ind.dec };
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
@@ -644,7 +597,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       }).join('') + '</div>';
     }
     return '<article class="card card-' + ind.id + '" id="card-' + ind.id + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + (ind.nota ? '<sup>1</sup>' : '') + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
       '</article>';
   }
@@ -718,27 +671,57 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
   function render() {
     var vs = visao(), dash = document.getElementById('dash');
-    document.getElementById('buName').textContent = state.bu || '—';
+    var bu = BU_DA_MINA[state.bu], irmas = bu ? MINAS[bu] : null;
+    document.getElementById('buName').textContent = !state.bu ? '—' : irmas && irmas.length > 1 ? state.bu + ' (' + (irmas.indexOf(state.bu) + 1) + '/' + irmas.length + ')' : state.bu;
     document.getElementById('unitPais').textContent = state.pais || '—';
-    var siteTxt = state.bu || '—';
+    var siteTxt = !state.bu ? '—' : bu ? bu + ' › ' + state.bu : state.bu;
     document.getElementById('unitSite').textContent = siteTxt;
     // nome longo (International Refineries): o botão mostra só o site, para não empurrar os filtros
     var longo = (state.pais + siteTxt).length > 30;
     document.getElementById('unitPais').hidden = longo;
     unitTrigger.querySelector('.unit-sep').hidden = longo;
     unitTrigger.title = state.pais + ' › ' + siteTxt;
+    renderNav();
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
     dash.style.setProperty('--rows', vs.rows);
     dash.innerHTML = vs.paineis.map(function (p, i) {
       return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
         '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
-        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(MSG_PAINEL) + '</p>') +
-        (p.cards.some(function (c) { return c.nota; }) ? '<p class="panel-nota"><sup>1</sup> ' + esc(NOTA_INTERM) + '</p>' : '') + '</section>';
+        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(MSG_PAINEL) + '</p>') + '</section>';
     }).join('');
     ajustarAltura();
     observeCharts();
   }
+
+  // ── Navegação do PDF: BU → minas (Ontario 1/6 a 6/6, VNL) e volta para a BU ──
+  function renderNav() {
+    var nav = document.getElementById('siteNav'), h = '', minas = MINAS[state.bu], bu = BU_DA_MINA[state.bu];
+    if (minas) {
+      h = '<button type="button" class="nav-chip" data-go="' + esc(minas[0]) + '">Minas' + (minas.length > 1 ? ' (' + minas.length + ')' : '') + ' <span aria-hidden="true">›</span></button>';
+    } else if (bu) {
+      var irmas = MINAS[bu], i = irmas.indexOf(state.bu), n = irmas.length;
+      h = '<button type="button" class="nav-chip" data-go="' + esc(bu) + '" aria-label="Voltar para ' + esc(bu) + '"><span aria-hidden="true">‹</span> ' + esc(bu) + '</button>';
+      if (n > 1) {
+        h += '<span class="pager" role="group" aria-label="Minas de ' + esc(bu) + '">' +
+          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.max(0, i - 1)]) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Mina anterior"><span aria-hidden="true">‹</span></button>' +
+          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.min(n - 1, i + 1)]) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Próxima mina"><span aria-hidden="true">›</span></button></span>';
+      }
+    }
+    nav.innerHTML = h;
+    nav.hidden = !h;
+  }
+  document.getElementById('siteNav').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-go]');
+    if (!b || b.disabled) return;
+    var lbl = b.getAttribute('aria-label');
+    state.bu = b.getAttribute('data-go');
+    atualizar();
+    // foco no botão equivalente da nova página (paginação contínua pelo teclado)
+    var nb = (lbl && document.querySelector('#siteNav button[aria-label="' + lbl + '"]:not([disabled])')) ||
+      document.querySelector('#siteNav .pager button:not([disabled])') || document.querySelector('#siteNav button');
+    if (nb) nb.focus();
+  });
 
   // ── Unidade: drill-down País → Site ──
   var unitTrigger = document.getElementById('unitTrigger'), unitPop = document.getElementById('unitPop');
@@ -748,9 +731,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       return '<button type="button" data-pais="' + esc(u.pais) + '" aria-current="' + (u.pais === paisNav) + '">' + esc(u.pais) + '<span class="n">' + u.sites.length + ' ›</span></button>';
     }).join('');
     var atual = UNIDADES.filter(function (u) { return u.pais === paisNav; })[0] || { sites: [] };
-    document.getElementById('unitSites').innerHTML = atual.sites.map(function (site) {
+    function botao(site, sub) {
       var on = site === state.bu && paisNav === state.pais;
-      return '<button type="button" data-site="' + esc(site) + '" aria-pressed="' + on + '">' + esc(site) + '</button>';
+      return '<button type="button" data-site="' + esc(site) + '"' + (sub ? ' class="sub"' : '') + ' aria-pressed="' + on + '">' + esc(site) + '</button>';
+    }
+    // BU selecionável e, logo abaixo, as suas minas (drill-through do PDF)
+    document.getElementById('unitSites').innerHTML = atual.sites.map(function (site) {
+      return botao(site) + (MINAS[site] || []).map(function (m) { return botao(m, true); }).join('');
     }).join('');
   }
   function abrirUnit(abrir) {
@@ -830,18 +817,35 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
 
   // ── Unidades e filtros: sites, anos e mês inicial vêm do resultado da consulta (/api/filtros) ──
-  // País dos sites conhecidos (a consulta não traz país); site novo vai para "Outros"
-  var PAIS_DO_SITE = { salobo: 'Brasil', sossego: 'Brasil', oncapuma: 'Brasil', ontario: 'Canadá', vnl: 'Canadá', manitoba: 'Canadá', thompson: 'Canadá',
-    longharbour: 'Canadá', internationalrefineries: 'IR', clydach: 'IR', matsusaka: 'IR', matsuzaka: 'IR', sorowako: 'Indonésia' };
-  var ORDEM_PAISES = ['Brasil', 'Canadá', 'IR', 'Indonésia', 'Outros'];
+  // País (a consulta não traz): IR agrupa as refinarias; Brasil, os sites brasileiros; o resto é Canadá
+  var SITES_IR = /^(internationalrefineries|ir|clydach|clydachcnr|matsusaka|matsuzaka|matsusakatonimet)$/;
+  var SITES_BRASIL = /^(salobo|sossego|oncapuma)$/;
+  function paisDo(nome) { var n = normalizar(nome); return SITES_IR.test(n) ? 'IR' : SITES_BRASIL.test(n) ? 'Brasil' : 'Canadá'; }
+  var ORDEM_PAISES = ['Brasil', 'Canadá', 'IR'];
+  // Minas de cada BU (navegação do PDF: BU → minas); só entram as que a consulta trouxer como site
+  var MINAS_DA_BU = {
+    ontario: ['coleman', 'coppercliff', 'creighton', 'garson', 'totten', 'stobie'],
+    vnl: ['easterndeeps', 'reidbrook', 'discoveryhill']
+  };
+  var MINAS = {}, BU_DA_MINA = {}; // nome da BU → nomes das minas; nome da mina → BU
 
   function aplicarFiltros(f) {
-    var grupos = {};
-    SITE_ID = {};
+    var grupos = {}, porChave = {};
+    SITE_ID = {}; MINAS = {}; BU_DA_MINA = {};
     (f.sites || []).forEach(function (st) {
       VISOES[st.nome] = VISOES[st.nome] || criarVisao(st.nome);
       SITE_ID[st.nome] = st.id;
-      var pais = PAIS_DO_SITE[normalizar(st.nome)] || 'Outros';
+      porChave[normalizar(st.nome)] = st.nome;
+    });
+    Object.keys(MINAS_DA_BU).forEach(function (bu) {
+      if (!porChave[bu]) return;
+      var minas = MINAS_DA_BU[bu].filter(function (m) { return porChave[m]; }).map(function (m) { return porChave[m]; });
+      if (minas.length) MINAS[porChave[bu]] = minas;
+      minas.forEach(function (m) { BU_DA_MINA[m] = porChave[bu]; });
+    });
+    (f.sites || []).forEach(function (st) {
+      if (BU_DA_MINA[st.nome]) return; // a mina aparece logo abaixo da sua BU
+      var pais = paisDo(st.nome);
       (grupos[pais] = grupos[pais] || []).push(st.nome);
     });
     UNIDADES = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
@@ -867,24 +871,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   var CUSTO = /cogs|capex|cost|custo|expense|despesa|all-?in|sustaining/i;
   var JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
 
-  // Cada série do modelo (o card ou cada alternativa: Cu/Au, All-in…) com os nomes que pode ter no banco
-  function series(vs) {
-    var lista = [];
-    vs.paineis.forEach(function (p) {
-      p.cards.forEach(function (c) {
-        (c.alt ? Object.keys(c.alt).map(function (k) { return c.alt[k]; }) : [c]).forEach(function (a) {
-          lista.push({ alvo: a, nomes: [a.kpi, a.t || c.t, a.lbl].filter(Boolean) });
-        });
-      });
-    });
-    return lista;
+  // Grupos que viram UM card com seletor quando a consulta traz dois ou mais KPIs do grupo
+  // (o mesmo arranjo aprovado no layout: teores Cu/Au e All-in | By Product/Sustaining/Cost)
+  var SIGLAS = { copper: 'Cu', gold: 'Au', nickel: 'Ni', cobalt: 'Co' };
+  var GRUPOS = [
+    { id: 'g-allin', teste: /^all[\s-]*in\b/i, nome: 'All-in', rotulo: function (n) { return n.replace(/^all[\s-]*in\s*[|:\-–]?\s*/i, '') || 'All-in'; } },
+    { id: 'g-teor', teste: /feed\s*grade/i, nome: 'Feed Grade', rotulo: function (n) { var w = n.split(/\s+/)[0]; return SIGLAS[w.toLowerCase()] || w; } }
+  ];
+
+  function casas(u, d) {
+    if (/%/.test(u || '')) return 2;
+    var maior = Math.max.apply(null, [].concat.apply([], d).map(function (x) { return Math.abs(x || 0); }));
+    return maior >= 10 ? 0 : maior >= 1 ? 1 : 2; // ex.: 135 · 9,4 · 0,74
   }
 
-  // Liga cada card ao KPI pelo nome cadastrado em IBP.DASHBOARD.NM_KPIS_DASH e
-  // acrescenta os KPIs da consulta que o modelo não tem. Devolve quantos têm dados.
   function preencher(vs, linhas) {
-    vs.paineis.forEach(function (p) { p.cards = p.cards.filter(function (c) { return !c.extra; }); });
-    var porKpi = {}, ordem = [], porNome = {}, letras = ['A', 'A', 'F'];
+    var porKpi = {}, ordem = [], letras = ['A', 'A', 'F'], repetidos = {};
     (linhas || []).forEach(function (l) {
       var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
       if (!porKpi[chave]) { porKpi[chave] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(chave); }
@@ -892,25 +894,40 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
     });
     ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); });
-    ordem.forEach(function (chave) { var n = normalizar(porKpi[chave].l.NM_KPI); (porNome[n] = porNome[n] || []).push(chave); });
-    var usados = {}, comDados = 0;
-    series(vs).forEach(function (s) {
-      var chave = null;
-      s.nomes.map(normalizar).some(function (n) { chave = (porNome[n] || []).filter(function (c) { return !usados[c]; })[0] || null; return chave; });
-      s.alvo.d = chave ? porKpi[chave].d : null;
-      if (chave) { usados[chave] = true; comDados++; }
+    ordem.forEach(function (c) { var n = normalizar(porKpi[c].l.NM_KPI); repetidos[n] = (repetidos[n] || 0) + 1; });
+    function serie(c) {
+      var it = porKpi[c], l = it.l, nome = String(l.NM_KPI || 'KPI ' + l.ID_KPI).trim(), u = l.SG_UNID || '';
+      // mesmo nome em mais de uma operação do site: a operação entra no título para não confundir
+      if (repetidos[normalizar(nome)] > 1) nome += ' · Op. ' + l.ID_OPERACAO;
+      return { t: nome, u: u, dec: casas(u, it.d), d: it.d };
+    }
+    var prod = [], fin = [], feitos = {};
+    ordem.forEach(function (c) {
+      if (feitos[c]) return;
+      var s = serie(c), card;
+      var g = GRUPOS.filter(function (gr) { return gr.teste.test(s.t); })[0];
+      var membros = g ? ordem.filter(function (o) { return g.teste.test(porKpi[o].l.NM_KPI || ''); }) : [];
+      if (membros.length > 1) {
+        var alt = {};
+        membros.forEach(function (o) { var m = serie(o); m.lbl = g.rotulo(m.t); alt[o] = m; feitos[o] = true; });
+        card = { id: g.id, t: s.t, u: s.u, dec: s.dec, altLabel: g.nome, alt: alt };
+      } else {
+        feitos[c] = true;
+        card = s;
+        card.id = 'x' + c;
+      }
+      card.pol = CUSTO.test(s.t) ? 'down' : 'up';
+      card.vazio = SEM_DADOS;
+      (FINANCEIRO.test(s.t) ? fin : prod).push(card);
     });
-    var prod = vs.paineis[0].cards, fin = vs.paineis[1].cards;
-    ordem.filter(function (c) { return !usados[c]; }).forEach(function (chave) {
-      var it = porKpi[chave], nome = it.l.NM_KPI || ('KPI ' + it.l.ID_KPI);
-      var maior = Math.max.apply(null, [].concat.apply([], it.d).map(function (x) { return Math.abs(x || 0); }));
-      (FINANCEIRO.test(nome) ? fin : prod).push({ id: 'x' + chave, extra: true, t: nome, u: '', dec: maior >= 100 ? 0 : maior >= 10 ? 1 : 2,
-        pol: CUSTO.test(nome) ? 'down' : 'up', d: it.d, vazio: SEM_DADOS });
-      comDados++;
-    });
+    vs.paineis[0].cards = prod;
+    vs.paineis[1].cards = fin;
+    // Poucos indicadores de produção e muitos financeiros (ex.: refinarias): painel de produção estreito
+    vs.cls = prod.length && prod.length <= 2 && fin.length >= 4 ? 'dash--ir' : '';
+    vs.colsProd = vs.cls ? 1 : 3;
     vs.rows = Math.max(1, Math.ceil(prod.length / vs.colsProd), Math.ceil(fin.length / 2));
     LETRAS_AF = letras;
-    return comDados;
+    return ordem.length;
   }
 
   // Busca os indicadores do site no mês escolhido; só a resposta mais recente é aplicada
