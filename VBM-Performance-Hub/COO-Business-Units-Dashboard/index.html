@@ -170,13 +170,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .site-row { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 24px; flex-wrap: wrap; margin-top: -2px; }
 .site-row .panel-meta { position: relative; top: 10px; }
 .site-id { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; min-width: 0; }
-.site-nav { display: inline-flex; align-items: center; gap: 8px; position: relative; top: 6px; }
-.site-nav[hidden] { display: none; }
-.pager { display: inline-flex; gap: 4px; }
-.nav-chip { min-height: 28px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
-.nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
-.nav-chip:disabled { opacity: .4; cursor: default; }
-.pager .nav-chip { width: 28px; padding: 0; }
 .site { margin: 0; position: relative; top: 4px; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
 
 .filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
@@ -201,8 +194,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
 .unit-list button .n { color: var(--text-faint); font-size: .68rem; }
 .unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
-.unit-list button.sub { justify-content: flex-start; padding: 5px 10px 5px 22px; font-weight: 400; font-size: .72rem; color: var(--text-soft); }
-.unit-list button.sub::before { content: '›'; margin-right: 6px; color: var(--text-faint); }
 .unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
 .unit-list button[data-site][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
 /* Delta: interruptor liga/desliga */
@@ -236,14 +227,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .panel-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); column-gap: 28px; row-gap: 8px; }
 .panel-prod .panel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .panel-fin .panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
-/* Visões de mina: Ontario (uma mina, Production 2×2) e VNL (uma coluna por mina) */
-.dash--mina .panel-prod .panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
-/* Minas de Ontario (2×2): bloco centralizado na altura, linhas mais próximas e gráficos no centro de cada coluna.
-   O mesmo espaçamento nos dois painéis mantém as linhas alinhadas (vence o cálculo de ajustarAltura) */
-.dash--mina .panel-grid { align-content: center; justify-items: center; row-gap: clamp(36px, 7vh, 76px) !important; }
-.dash--mina .panel .card { width: 100%; max-width: 380px; }
-.dash--minas { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-.dash--minas .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
 .dash--ir { grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); column-gap: 56px; }
 /* IR: colunas financeiras largas; cada card na largura do gráfico e centralizado, com o seletor do All-in junto ao título */
 .dash--ir .panel-fin .panel-grid { justify-items: center; }
@@ -253,6 +236,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .dash--ir .panel-prod .card { width: 100%; max-width: 380px; }
 /* IR: só dois gráficos no painel; mais ar entre eles (vence o espaçamento comum calculado em ajustarAltura) */
 .dash--ir .panel-prod .panel-grid { row-gap: clamp(40px, 8vh, 90px) !important; }
+.panel-vazio { margin: auto; padding: 24px; font: italic 400 .95rem var(--font-display); color: var(--text-soft); text-align: center; }
 .panel-nota { flex-shrink: 0; margin: 0; font: italic 400 .66rem var(--font-display); color: var(--text-faint); }
 .card-title sup { font-size: .6em; margin-left: 1px; }
 .panel-sub { font: italic 400 .8rem var(--font-display); color: var(--text-faint); }
@@ -308,7 +292,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .b-axis { fill: var(--ink-soft); font-size: 9.5px; }
 .b-base { stroke: var(--base-line); }
 .b-vazio { fill: var(--text-soft); font: italic 400 15px var(--font-display); }
-.b-vazio.is-pend { fill: var(--bad); }
 .cota { animation: fade .5s .6s ease-out both; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .is-static .card:not(.replay) .b-bar, .is-static .card:not(.replay) .cota { animation: none; }
@@ -449,14 +432,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <div class="site-row">
     <div class="site-id">
       <h3 class="site" id="buName">Sossego</h3>
-      <nav class="site-nav" id="siteNav" aria-label="Navegação entre BU e minas" hidden></nav>
     </div>
     <div class="panel-meta">
           <ul class="legend" aria-label="Legenda">
             <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
             <li><span class="swatch" style="background:var(--serie-a)"></span>Forecast | Actual (F | A)</li>
           </ul>
-          <p class="updated"><span class="demo" id="dataBadge" title="Valores do PDF COO – Business Units Dashboard (Plan, ago/2026).">dados de exemplo</span>Last updated: <span id="updTxt"></span></p>
+          <p class="updated"><span class="demo" id="dataBadge" hidden></span>Last updated: <span id="updTxt"></span></p>
     </div>
   </div>
 
@@ -469,192 +451,87 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 (function () {
   'use strict';
 
-  // ── Dados do PDF COO – Business Units Dashboard (Plan, ago/2026) ──
-  // Cada par: [Budget, Actual|Forecast] para [mês, trimestre, ano]; null = sem valor no PDF.
-  var PEND = 'Pending final updates', NA = 'Not applicable', UPD_ON = '20/10/2026 19:52:25';
+  // ── Modelos de layout por BU (organização do PDF COO – Business Units) ──
+  // Só ESTRUTURA: títulos, unidades, casas decimais, polaridade e seletores.
+  // Nenhum número fica no código: os valores vêm todos da consulta do dashboard
+  // (/api/indicadores). Card do modelo sem KPI no resultado mostra "Sem dados";
+  // KPI do resultado sem card no modelo ganha um card no fim do painel.
+  var SEM_DADOS = 'Sem dados';
   var NOTA_INTERM = 'The data presented in this chart includes intermediates production.';
-  function serie(id, t, u, dec, pol, d, vazio) { return { id: id, t: t, u: u, dec: dec, pol: pol, d: d || null, vazio: vazio || '' }; }
-  function comNota(c) { c.nota = true; return c; }
+  function k(t, u, dec, pol, extra) {
+    var c = { t: t, u: u, dec: dec, pol: pol || 'up' };
+    for (var x in extra) c[x] = extra[x];
+    return c;
+  }
   // Teor de cobre e ouro num card só, com seletor Cu/Au
-  function teorCuAu(p, cu, au) {
-    return { id: p + '-grade', t: 'Copper + Gold Feed Grade', u: '%', dec: 2, pol: 'up', altLabel: 'Teor exibido', alt: {
-      cu: { lbl: 'Cu', t: 'Copper Feed Grade', u: '%', d: cu },
-      au: { lbl: 'Au', t: 'Gold Feed Grade', u: '%', d: au }
-    } };
+  var TEOR_CU_AU = k('Copper + Gold Feed Grade', '%', 2, 'up', { altLabel: 'Teor exibido', alt: {
+    cu: { lbl: 'Cu', t: 'Copper Feed Grade', u: '%' },
+    au: { lbl: 'Au', t: 'Gold Feed Grade', u: '%' }
+  } });
+  // All-in e componentes num card só, com seletor
+  function allIn(u) {
+    return k('All-in', u, 1, 'down', { altLabel: 'Componente exibido', alt: {
+      allin: { lbl: 'All-in', t: 'All-in', u: u },
+      byp: { lbl: 'By Product', t: 'All-in | By Product', u: u },
+      sus: { lbl: 'Sustaining', t: 'All-in | Sustaining', u: u },
+      cost: { lbl: 'Cost', t: 'All-in | Cost', u: u }
+    } });
   }
-  // All-in e componentes (no PDF, a tabela abaixo do gráfico; aqui, seletor no card)
-  function allIn(p, u, a, byp, sus, cost) {
-    return { id: p + '-allin', t: 'All-in', u: u, dec: 1, pol: 'down', altLabel: 'Componente exibido', alt: {
-      allin: { lbl: 'All-in', t: 'All-in', u: u, d: a },
-      byp: { lbl: 'By Product', t: 'All-in | By Product', u: u, d: byp },
-      sus: { lbl: 'Sustaining', t: 'All-in | Sustaining', u: u, d: sus },
-      cost: { lbl: 'Cost', t: 'All-in | Cost', u: u, d: cost }
-    } };
+  function financeiro(uAllIn) {
+    return [k('Revenues', 'US$ M', 0), k('COGS', 'US$ M', 0, 'down'), k('EBITDA', 'US$ M', 0), k('CAPEX', 'US$ M', 0, 'down'),
+      k('Simple Cash Flow', 'US$ M', 0), allIn(uAllIn || 'US$ k/t')];
   }
-  function financeiro(p, rev, cogs, ebitda, capex, scf, allin) {
-    return { titulo: 'Financial Drivers', cls: 'panel-fin', cards: [
-      serie(p + '-rev', 'Revenues', 'US$ M', 0, 'up', rev),
-      serie(p + '-cogs', 'COGS', 'US$ M', 0, 'down', cogs),
-      serie(p + '-ebitda', 'EBITDA', 'US$ M', 0, 'up', ebitda),
-      serie(p + '-capex', 'CAPEX', 'US$ M', 0, 'down', capex),
-      serie(p + '-scf', 'Simple Cash Flow', 'US$ M', 0, 'up', scf),
-      allin
-    ] };
-  }
-  // Visão de Business Unit (págs. 1 a 7): Production Drivers + Financial Drivers
-  function bu(titulo, upd, prod, fin, extra) {
-    var v = { cls: '', rows: 3, titulo: titulo, upd: upd, paineis: [{ titulo: 'Production Drivers', cls: 'panel-prod', cards: prod }, fin] };
-    for (var k in extra) v[k] = extra[k];
-    return v;
-  }
-  // Minas de VNL (pág. 8): uma coluna por mina
-  function minaVnl(p, nome, tipo, etd, ore, ni, cu) {
-    return { titulo: nome, sub: tipo, cards: [
-      serie(p + '-etd', 'Equivalent Total Development', 'Meters', 0, 'up', etd, etd ? '' : PEND),
-      serie(p + '-ore', 'Ore Mined', 'Kt', 0, 'up', ore),
-      serie(p + '-ni', 'Nickel Grade', '%', 2, 'up', ni),
-      serie(p + '-cu', 'Copper Grade', '%', 1, 'up', cu)
-    ] };
-  }
-  // Minas de Ontario (págs. 9 a 14): Production 2×2; Financial 2×2 sem dados no PDF (na = "Not applicable")
-  function minaOnt(p, nome, n, ore, etd, ni, cu, na) {
-    na = na || {};
-    return { cls: 'dash--mina', rows: 2, titulo: nome + ' (' + n + '/6)', rotulo: nome, pai: 'Ontario', upd: UPD_ON, paineis: [
-      { titulo: 'Production Drivers', cls: 'panel-prod', cards: [
-        serie(p + '-ore', 'Ore Hoisted | Mined (Dry)', 'Kt', 0, 'up', ore),
-        serie(p + '-etd', 'Equivalent Total Development', 'Equivalent Meters | 4.8m x 4.8m', 0, 'up', etd, etd ? '' : NA),
-        serie(p + '-ni', 'Nickel Grade', '%', 2, 'up', ni),
-        serie(p + '-cu', 'Copper Grade', '%', 2, 'up', cu)
-      ] },
-      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: [
-        serie(p + '-c1', 'C1 unit cash cost', 'US$ / Milled Ni contained', 0, 'down', null, na.c1 && NA),
-        serie(p + '-capex', 'CAPEX (Cost)', 'US$ M | Without Corp Projects', 0, 'down', null, na.capex && NA),
-        serie(p + '-lat', 'Vale - Lateral Mine Development Cost', 'US$ CAPEX ACD/Eq M', 0, 'down', null, na.lat && NA),
-        serie(p + '-mpe', 'Mining Production Expenses', 'US$ / Ore Hoisted', 0, 'down', null, na.mpe && NA)
-      ] }
-    ] };
-  }
-
-  var MINAS_ONT = ['Coleman', 'Copper Cliff', 'Creighton', 'Garson', 'Totten', 'Stobie'];
-  var VISOES = {
-    'Salobo': bu('Salobo', '22/10/2026 20:28:51', [
-      serie('sal-mine', 'Mine Movement', 'Mt', 0, 'up', [[12, 11], [35, 34], [135, 135]]),
-      serie('sal-ore', 'Ore Milled | ROP (Dry)', 'Mt', 1, 'up', [[3.3, 3.0], [9.4, 8.8], [36.0, 36.0]]),
-      teorCuAu('sal', [[0.74, 0.75], [0.74, 0.75], [0.71, 0.71]], [[0.41, 0.41], [0.50, 0.42], [0.44, 0.43]]),
-      serie('sal-curec', 'Copper Recovery', '%', 2, 'up', [[86.14, 89.98], [86.12, 86.82], [85.99, 87.12]]),
-      serie('sal-aurec', 'Gold Recovery', '%', 2, 'up', [[74.08, 77.15], [77.68, 73.86], [75.72, 76.51]]),
-      serie('sal-cuprod', 'Copper Production', 'Kt', 0, 'up', [[21, 20], [60, 58], [220, 222]]),
-      serie('sal-auprod', 'By Product | Gold', 'KOz', 0, 'up', [[32, 31], [117, 88], [385, 380]]),
-      serie('sal-cusales', 'Copper Production | Sales', 'Kt', 0, 'up', [[20, 19], [57, 58], [212, 214]]),
-      serie('sal-ausales', 'By Product Gold | Sales', 'kOz', 0, 'up', [[30, 27], [111, 90], [367, 357]])
-    ], financeiro('sal', [[437, 411], [1377, 1304], [4793, 4768]], [[123, 115], [369, 378], [1410, 1393]], [[313, 294], [1004, 938], [3367, 3356]],
-      [[29, 22], [105, 73], [317, 300]], [[284, 271], [899, 866], [3049, 3057]],
-      allIn('sal', 'US$ k/t', [[0.6, 0.5], [-0.9, 0.0], [-0.2, -0.2]], [[-7.2, -7.1], [-9.0, -7.3], [-8.4, -8.1]], [[1.3, 1.0], [1.5, 1.0], [1.3, 1.2]], [[6.5, 6.5], [6.6, 6.4], [6.9, 6.8]]))),
-
-    'Sossego': bu('Sossego', '14/10/2026 08:58', [
-      serie('sos-mine', 'Mine Movement', 'Mt', 0, 'up', [[2, 2], [6, 6], [26, 28]]),
-      serie('sos-ore', 'Ore Milled | ROP (Dry)', 'Mt', 1, 'up', [[0.1, 0.2], [1.5, 1.5], [9.2, 10.1]]),
-      teorCuAu('sos', [[0.89, 0.81], [0.89, 0.84], [0.89, 0.86]], [[0.17, 0.17], [0.17, 0.19], [0.21, 0.21]]),
-      serie('sos-curec', 'Copper Recovery', '%', 2, 'up', [[82.60, 58.66], [89.08, 79.89], [90.60, 87.55]]),
-      serie('sos-aurec', 'Gold Recovery', '%', 2, 'up', [[72.28, 72.09], [71.17, 76.31], [76.01, 79.27]]),
-      serie('sos-cuprod', 'Copper Production', 'Kt', 0, 'up', [[1, 1], [12, 10], [74, 76]]),
-      serie('sos-auprod', 'By Product | Gold', 'KOz', 0, 'up', [[1, 1], [6, 7], [46, 53]]),
-      serie('sos-cusales', 'Copper Production | Sales', 'Kt', 0, 'up', [[4, 3], [15, 12], [70, 72]]),
-      serie('sos-ausales', 'By Product Gold | Sales', 'kOz', 0, 'up', [[2, 3], [7, 12], [42, 58]])
-    ], financeiro('sos', [[78, 55], [260, 237], [1188, 1296]], [[39, 27], [117, 90], [455, 473]], [[36, 25], [134, 138], [696, 782]],
-      [[7, 9], [20, 33], [108, 95]], [[29, 16], [114, 105], [588, 687]],
-      allIn('sos', 'US$ k/t', [[9.0, 10.4], [7.6, 6.6], [5.6, 4.5]], [[-2.0, -3.5], [-1.8, -4.0], [-2.8, -3.7]], [[1.4, 3.3], [1.3, 2.8], [1.5, 1.3]], [[9.6, 10.6], [8.1, 7.8], [6.9, 6.9]]))),
-
-    'Onça Puma': bu('Onça Puma', '14/10/2026 08:58', [
-      serie('op-mine', 'Mine Movement', 'Mt', 1, 'up', [[1.3, 1.2], [3.9, 3.3], [13.3, 11.0]]),
-      serie('op-ore', 'Ore Milled | ROP', 'Mt', 1, 'up', [[0.2, 0.2], [0.6, 0.5], [2.4, 2.3]]),
-      serie('op-nigrade', 'Nickel Feed Grade', '%', 2, 'up', [[2.06, 1.99], [2.06, 1.96], [2.01, 1.90]]),
-      serie('op-nirec', 'Nickel Recovery', '%', 2, 'up', [[86.50, 87.56], [86.50, 85.58], [86.50, 85.84]]),
-      serie('op-nife', 'Nickel Grade in Ferro Nickel', '%', 1, 'up', [[30.0, 28.6], [30.0, 29.6], [30.0, 30.0]]),
-      serie('op-feni', 'Ferro Nickel', 'Kt', 0, 'up', [[13, 11], [35, 29], [137, 124]]),
-      comNota(serie('op-fin', 'Finished Nickel', 'Kt', 0, 'up', [[4, 3], [10, 9], [41, 37]])),
-      serie('op-finsales', 'Finished Nickel | Sales', 'Kt', 0, 'up', [[4, 3], [10, 8], [41, 38]])
-    ], financeiro('op', [[52, 46], [149, 118], [604, 553]], [[36, 38], [107, 96], [421, 407]], [[16, 7], [43, 19], [187, 137]],
-      [[4, 4], [34, 14], [95, 84]], [[11, 4], [9, 5], [92, 53]],
-      allIn('op', 'US$ K/t', [[12.5, 14.9], [14.9, 15.4], [14.0, 14.8]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.6, 1.0], [2.7, 1.5], [1.6, 1.6]], [[11.9, 13.9], [12.2, 14.0], [12.3, 13.2]]))),
-
-    'Ontario': bu('Ontario', UPD_ON, [
-      serie('on-etd', 'Equivalent Total Development', 'Equivalent Meters - 4.8 x 4.8', 0, 'up', [[1580, 1173], [6510, 4254], [31077, 22547]]),
-      serie('on-hoist', 'Ore Hoisted | Mined (Dry)', 'Kt', 0, 'up', [[347, 371], [1289, 1175], [5947, 5568]]),
-      serie('on-ore', 'Ore Milled | ROP (Dry)', 'Kt', 0, 'up', [[78, 358], [1179, 1527], [6209, 6109]]),
-      serie('on-cu', 'Copper Grade', '%', 2, 'up', [[0.84, 0.82], [1.06, 0.93], [1.23, 1.61]]),
-      serie('on-ni', 'Nickel Grade', '%', 2, 'up', [[0.69, 0.56], [0.82, 0.78], [1.03, 1.20]]),
-      comNota(serie('on-fin', 'Finished Nickel', 'Kt', 0, 'up', [[6, 6], [16, 18], [59, 59]])),
-      serie('on-cuprod', 'Copper Production', 'Kt', 0, 'up', [[3, 3], [15, 15], [71, 67]]),
-      serie('on-finsales', 'Finished Nickel | Sales', 'Kt', 0, 'up', [[6, 6], [16, 16], [59, 58]]),
-      serie('on-cusales', 'Copper Production | Sales', 'kt', 0, 'up', [[2, 5], [15, 14], [69, 67]])
-    ], financeiro('on', [[177, 236], [685, 671], [2774, 2680]], [[136, 242], [501, 657], [1934, 2054]], [[39, -8], [177, 6], [812, 594]],
-      [[43, 34], [146, 102], [530, 510]], [[-4, -42], [31, -97], [282, 84]],
-      allIn('on', 'US$ k/t', [[17.2, 23.0], [14.5, 21.5], [11.5, 14.1]], [[-14.2, -24.7], [-24.8, -23.2], [-29.4, -28.8]], [[7.5, 4.9], [8.8, 5.2], [8.5, 7.7]], [[23.9, 42.8], [30.6, 39.4], [32.4, 35.3]])),
-      { minas: MINAS_ONT }),
-
-    'VNL': bu('VNL', UPD_ON, [
-      serie('vnl-etd', 'Equivalent Total Development', 'Meters', 0, 'up', [[1078, 911], [3186, 2834], [12658, 11826]]),
-      serie('vnl-hoist', 'Ore Hoisted | Mined (Dry)', 'Kt', 0, 'up', [[239, 217], [614, 554], [2783, 2653]]),
-      serie('vnl-ore', 'Ore Milled | ROP (Dry)', 'Kt', 0, 'up', [[239, 180], [614, 468], [2783, 2608]]),
-      serie('vnl-ni', 'Nickel Grade', '%', 2, 'up', [[1.73, 1.98], [1.86, 2.01], [1.98, 1.97]]),
-      serie('vnl-cu', 'Copper Grade', '%', 2, 'up', [[0.72, 0.87], [0.77, 0.86], [0.81, 0.85]]),
-      serie('vnl-fin', 'Finished Nickel', 'Kt', 1, 'up', [[4.4, 4.1], [12.6, 11.0], [48.0, 41.5]]),
-      serie('vnl-cuprod', 'Copper Production', 'Kt', 1, 'up', [[1.5, 1.2], [4.2, 3.2], [19.3, 19.8]]),
-      serie('vnl-finsales', 'Finished Nickel | Sales', 'Kt', 1, 'up', [[4.0, 6.0], [11.9, 13.8], [47.3, 47.2]]),
-      serie('vnl-cusales', 'Copper Production | Sales', 'kt', 1, 'up', [[1.5, 0.9], [4.1, 3.0], [18.7, 18.2]])
-    ], financeiro('vnl', [[104, 127], [313, 324], [1264, 1253]], [[76, 98], [227, 269], [910, 963]], [[30, 28], [90, 54], [369, 300]],
-      [[11, 7], [34, 21], [136, 130]], [[19, 21], [56, 34], [233, 170]],
-      allIn('vnl', 'US$ k/t', [[11.9, 13.2], [12.1, 14.4], [12.2, 13.6]], [[-9.0, -3.7], [-9.0, -6.2], [-9.1, -8.9]], [[2.7, 1.1], [2.9, 1.5], [2.9, 2.8]], [[18.2, 15.9], [18.3, 19.1], [18.5, 19.7]])),
-      { minas: ['VNL Minas'] }),
-
-    'International Refineries': bu('International Refineries', '22/10/2026 20:28:51', [
-      serie('ir-cly', 'Clydach Production', 'Kt', 1, 'up', [[3.6, 2.7], [8.6, 6.9], [34.1, 33.5]]),
-      serie('ir-mat', 'Matsuzaka Production', 'Kt', 1, 'up', [[1.9, 2.2], [4.0, 5.4], [16.4, 19.0]])
-    ], financeiro('ir', [[83, 63], [233, 209], [901, 931]], [[88, 68], [236, 218], [859, 865]], [[-6, -5], [-3, -9], [41, 60]],
-      [[4, 2], [10, 4], [24, 18]], [[-10, -7], [-13, -14], [17, 42]],
-      allIn('ir', 'US$ k/t', [[17.8, 18.0], [17.5, 17.7], [16.6, 16.1]], [[-0.1, -0.9], [-0.1, -0.1], [0.0, -0.1]], [[0.8, 0.6], [0.7, 0.4], [0.5, 0.4]], [[17.1, 18.2], [16.8, 17.4], [16.1, 15.8]])),
-      { cls: 'dash--ir' }),
-
-    'Manitoba': bu('Manitoba', '20/10/2026 19:52', [
-      serie('mb-lat', 'Lateral Mine Development', 'Meters', 0, 'up', [[270, 136], [1431, 874], [6688, 5083]]),
-      serie('mb-hoist', 'Ore Hoisted | Mined (Dry)', 'Kt', 0, 'up', [[47, 14], [205, 152], [857, 798]]),
-      serie('mb-ore', 'Ore Milled | ROP (Dry)', 'Kt', 0, 'up', [[17, null], [229, 206], [1028, 932]]),
-      serie('mb-ni', 'Nickel Grade', '%', 2, 'up', [[1.59, 1.89], [1.66, 2.05], [1.62, 2.03]]),
-      serie('mb-niprod', 'Ni Production', 'Kt', 2, 'up', [[0.22, null], [3.00, 2.95], [13.78, 13.60]]),
-      serie('mb-nisales', 'Ni Production | Sales', 'Kt', 1, 'up', [[0.2, 0.9], [2.3, 2.7], [10.8, 9.1]])
-    ], financeiro('mb', [[4, 19], [45, 50], [174, 179]], [[6, 15], [46, 49], [147, 176]], [[-2, 3], [-1, 0], [26, 2]],
-      [[4, 3], [13, 11], [48, 51]], [[-6, 0], [-14, -11], [-22, -49]],
-      allIn('mb', 'US$ k/t', [[57.1, 18.8], [23.0, 20.8], [15.8, 23.5]], [[-7.6, -2.8], [-2.4, -1.5], [-2.4, -1.6]], [[26.1, 4.0], [5.7, 4.0], [4.5, 5.6]], [[38.6, 17.6], [19.6, 18.3], [13.8, 19.5]]))),
-
-    // Drill-through das BUs para as minas (págs. 8 a 14)
-    'VNL Minas': { cls: 'dash--minas', rows: 4, titulo: 'VNL', rotulo: 'Minas', pai: 'VNL', upd: UPD_ON, paineis: [
-      minaVnl('ed', 'Eastern Deeps', 'UG Mines', [[528, 485], [1540, 1421], [6306, 6106]], [[124, 102], [316, 247], [1470, 1248]], [[2.23, 2.56], [2.36, 2.47], [2.44, 2.46]], [[0.9, 1.0], [0.9, 1.0], [0.9, 0.9]]),
-      minaVnl('rb', 'Reid Brook', 'UG Mines', [[550, 426], [1646, 1413], [6352, 5719]], [[85, 82], [230, 254], [973, 1057]], [[1.42, 1.69], [1.49, 1.77], [1.79, 1.64]], [[0.6, 0.7], [0.6, 0.7], [0.8, 0.7]]),
-      minaVnl('dh', 'Discovery Hill', 'Open Pit', null, [[null, 34], [null, 52], [null, 313]], [[null, 0.94], [null, 0.98], [null, 1.24]], [[null, 0.8], [null, 0.8], [null, 1.0]])
-    ].map(function (m, i) { m.cls = i === 1 ? 'panel-fin' : 'panel-prod'; return m; }) },
-    'Coleman': minaOnt('col', 'Coleman', 1, [[63, 61], [230, 185], [878, 849]], [[592, 234], [1607, 920], [5408, 4588]], [[0.97, 0.86], [0.91, 0.95], [0.89, 1.11]], [[1.60, 1.60], [1.92, 1.61], [2.44, 3.27]]),
-    'Copper Cliff': minaOnt('cc', 'Copper Cliff', 2, [[16, 56], [163, 206], [949, 1038]], [[215, 439], [2014, 1416], [10831, 7222]], [[0.90, 0.80], [1.04, 0.93], [0.89, 1.03]], [[1.32, 1.18], [1.47, 1.23], [1.22, 1.58]]),
-    'Creighton': minaOnt('cr', 'Creighton', 3, [[23, 25], [130, 169], [898, 842]], [[111, 172], [765, 844], [6118, 5037]], [[0.52, 0.71], [1.10, 1.44], [2.07, 2.20]], [[0.52, 0.62], [0.82, 1.20], [1.46, 1.68]]),
-    'Garson': minaOnt('ga', 'Garson', 4, [[40, 42], [153, 120], [783, 739]], [[370, 170], [1281, 671], [5292, 3765]], [[0.87, 0.86], [1.28, 1.04], [1.27, 1.57]], [[0.76, 0.81], [1.20, 0.87], [1.28, 1.75]]),
-    'Totten': minaOnt('to', 'Totten', 5, [[52, 43], [158, 113], [643, 585]], [[291, 158], [842, 403], [3427, 1934]], [[1.04, 0.58], [1.01, 0.72], [1.35, 1.54]], [[1.29, 1.20], [1.43, 1.11], [1.58, 1.88]]),
-    'Stobie': minaOnt('st', 'Stobie', 6, [[153, 144], [455, 382], [1796, 1515]], null, [[0.40, 0.22], [0.39, 0.26], [0.43, 0.49]], [[0.39, 0.27], [0.38, 0.28], [0.39, 0.47]], { capex: 1, lat: 1 })
+  var COBRE = [k('Mine Movement', 'Mt', 0), k('Ore Milled | ROP (Dry)', 'Mt', 1), TEOR_CU_AU, k('Copper Recovery', '%', 2), k('Gold Recovery', '%', 2),
+    k('Copper Production', 'Kt', 0), k('By Product | Gold', 'KOz', 0), k('Copper Production | Sales', 'Kt', 0), k('By Product Gold | Sales', 'kOz', 0)];
+  // Chave = nome do site normalizado (ver normalizar)
+  var MODELOS = {
+    salobo: { prod: COBRE, fin: financeiro() },
+    sossego: { prod: COBRE, fin: financeiro() },
+    oncapuma: { prod: [k('Mine Movement', 'Mt', 1), k('Ore Milled | ROP', 'Mt', 1), k('Nickel Feed Grade', '%', 2), k('Nickel Recovery', '%', 2),
+      k('Nickel Grade in Ferro Nickel', '%', 1), k('Ferro Nickel', 'Kt', 0), k('Finished Nickel', 'Kt', 0, 'up', { nota: true }), k('Finished Nickel | Sales', 'Kt', 0)], fin: financeiro('US$ K/t') },
+    ontario: { prod: [k('Equivalent Total Development', 'Equivalent Meters - 4.8 x 4.8', 0), k('Ore Hoisted | Mined (Dry)', 'Kt', 0), k('Ore Milled | ROP (Dry)', 'Kt', 0),
+      k('Copper Grade', '%', 2), k('Nickel Grade', '%', 2), k('Finished Nickel', 'Kt', 0, 'up', { nota: true }), k('Copper Production', 'Kt', 0),
+      k('Finished Nickel | Sales', 'Kt', 0), k('Copper Production | Sales', 'kt', 0)], fin: financeiro() },
+    vnl: { prod: [k('Equivalent Total Development', 'Meters', 0), k('Ore Hoisted | Mined (Dry)', 'Kt', 0), k('Ore Milled | ROP (Dry)', 'Kt', 0),
+      k('Nickel Grade', '%', 2), k('Copper Grade', '%', 2), k('Finished Nickel', 'Kt', 1), k('Copper Production', 'Kt', 1),
+      k('Finished Nickel | Sales', 'Kt', 1), k('Copper Production | Sales', 'kt', 1)], fin: financeiro() },
+    internationalrefineries: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 'Kt', 1), k('Matsuzaka Production', 'Kt', 1)], fin: financeiro() },
+    manitoba: { prod: [k('Lateral Mine Development', 'Meters', 0), k('Ore Hoisted | Mined (Dry)', 'Kt', 0), k('Ore Milled | ROP (Dry)', 'Kt', 0),
+      k('Nickel Grade', '%', 2), k('Ni Production', 'Kt', 2), k('Ni Production | Sales', 'Kt', 1)], fin: financeiro() }
   };
-  function visao() { return VISOES[state.bu] || VISOES.Sossego; }
+
+  // Visão de um site: cópia do modelo da BU (ou painéis vazios, preenchidos pelos KPIs da consulta)
+  function criarVisao(nome) {
+    var m = MODELOS[normalizar(nome)] || { prod: [], fin: [] }, n = 0;
+    function copiar(lista) {
+      return lista.map(function (c) {
+        var card = JSON.parse(JSON.stringify(c));
+        card.id = 'c' + (n++);
+        card.vazio = SEM_DADOS;
+        return card;
+      });
+    }
+    return { cls: m.cls || '', colsProd: m.colsProd || 3, rows: 3, titulo: nome, upd: '', paineis: [
+      { titulo: 'Production Drivers', cls: 'panel-prod', cards: copiar(m.prod) },
+      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: copiar(m.fin) }
+    ] };
+  }
+  var VISOES = {}; // nome do site → visão (criada em aplicarFiltros, com os sites da consulta)
+  var VAZIA = criarVisao('');
+  function visao() { return VISOES[state.bu] || VAZIA; }
   // Alternativa exibida num card com seletor (Cu/Au, All-in…): a escolhida ou a primeira
   function selDe(ind) { return state.sel[ind.id] || Object.keys(ind.alt)[0]; }
+  // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
+  function normalizar(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
 
   // ── Estado dos filtros ──
   var MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   var MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  // Unidades por país (exemplo; na integração vem do cadastro de sites)
-  var UNIDADES = [
-    { pais: 'Brasil', sites: ['Salobo', 'Sossego', 'Onça Puma'] },
-    { pais: 'Canadá', sites: ['Ontario', 'VNL', 'Manitoba'] },
-    { pais: 'IR', sites: ['International Refineries'] }
-  ];
-  var ANOS = [2025, 2026]; // com a API, os anos do resultado do SQL (ver aplicarFiltros)
-  var state = { pais: 'Brasil', bu: 'Sossego', visao: 'Plan', ano: 2026, tri: 3, mes: 8, delta: 'on', sel: {} };
+  // Unidades e anos: preenchidos com o resultado da consulta (aplicarFiltros)
+  var UNIDADES = [];
+  var hoje = new Date(), mesRef = hoje.getMonth() || 12; // até a consulta responder: mês anterior ao atual
+  var ANOS = [mesRef === 12 ? hoje.getFullYear() - 1 : hoje.getFullYear()];
+  var state = { pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', sel: {} };
   var OPTS = {
     visao: function () { return [['Plan', 'Plan']]; },
     ano: function () { return ANOS.map(function (a) { return [a, String(a)]; }); },
@@ -704,7 +581,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var yv0 = H - MB;
       return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + (ind.vazio || 'sem dados') + '.') + '">' +
         '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
-        (ind.vazio ? '<text class="b-vazio' + (ind.vazio === PEND ? ' is-pend' : '') + '" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(ind.vazio) + '</text>' : '') + '</svg>';
+        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(ind.vazio) + '</text>' : '') + '</svg>';
     }
     var all = [].concat.apply([], v.d).filter(function (x) { return x !== null; });
     var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
@@ -841,57 +718,27 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
   function render() {
     var vs = visao(), dash = document.getElementById('dash');
-    document.getElementById('buName').textContent = vs.titulo || state.bu;
-    document.getElementById('unitPais').textContent = state.pais;
-    var siteTxt = vs.pai ? vs.pai + ' › ' + (vs.rotulo || state.bu) : state.bu;
+    document.getElementById('buName').textContent = state.bu || '—';
+    document.getElementById('unitPais').textContent = state.pais || '—';
+    var siteTxt = state.bu || '—';
     document.getElementById('unitSite').textContent = siteTxt;
     // nome longo (International Refineries): o botão mostra só o site, para não empurrar os filtros
     var longo = (state.pais + siteTxt).length > 30;
     document.getElementById('unitPais').hidden = longo;
     unitTrigger.querySelector('.unit-sep').hidden = longo;
     unitTrigger.title = state.pais + ' › ' + siteTxt;
-    renderNav(); // "Last updated" e o selo de origem: marcarFonte(), a cada carga de dados
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
     dash.style.setProperty('--rows', vs.rows);
     dash.innerHTML = vs.paineis.map(function (p, i) {
       return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
         '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
-        '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' +
+        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(MSG_PAINEL) + '</p>') +
         (p.cards.some(function (c) { return c.nota; }) ? '<p class="panel-nota"><sup>1</sup> ' + esc(NOTA_INTERM) + '</p>' : '') + '</section>';
     }).join('');
     ajustarAltura();
     observeCharts();
   }
-
-  // ── Navegação do PDF: BU → minas (VNL: uma página; Ontario: 1/6 a 6/6) e volta para a BU ──
-  function renderNav() {
-    var vs = visao(), nav = document.getElementById('siteNav'), h = '';
-    if (vs.minas) {
-      h = '<button type="button" class="nav-chip" data-go="' + esc(vs.minas[0]) + '">Minas' + (vs.minas.length > 1 ? ' (' + vs.minas.length + ')' : '') + ' <span aria-hidden="true">›</span></button>';
-    } else if (vs.pai) {
-      var irmas = VISOES[vs.pai].minas, i = irmas.indexOf(state.bu), n = irmas.length;
-      h = '<button type="button" class="nav-chip" data-go="' + esc(vs.pai) + '" aria-label="Voltar para ' + esc(vs.pai) + '"><span aria-hidden="true">‹</span> ' + esc(vs.pai) + '</button>';
-      if (n > 1) {
-        h += '<span class="pager" role="group" aria-label="Minas de ' + esc(vs.pai) + '">' +
-          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.max(0, i - 1)]) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Mina anterior"><span aria-hidden="true">‹</span></button>' +
-          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.min(n - 1, i + 1)]) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Próxima mina"><span aria-hidden="true">›</span></button></span>';
-      }
-    }
-    nav.innerHTML = h;
-    nav.hidden = !h;
-  }
-  document.getElementById('siteNav').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-go]');
-    if (!b || b.disabled) return;
-    var lbl = b.getAttribute('aria-label');
-    state.bu = b.getAttribute('data-go');
-    atualizar();
-    // foco no botão equivalente da nova página (paginação contínua pelo teclado)
-    var nb = (lbl && document.querySelector('#siteNav button[aria-label="' + lbl + '"]:not([disabled])')) ||
-      document.querySelector('#siteNav .pager button:not([disabled])') || document.querySelector('#siteNav button');
-    if (nb) nb.focus();
-  });
 
   // ── Unidade: drill-down País → Site ──
   var unitTrigger = document.getElementById('unitTrigger'), unitPop = document.getElementById('unitPop');
@@ -900,15 +747,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     document.getElementById('unitPaises').innerHTML = UNIDADES.map(function (u) {
       return '<button type="button" data-pais="' + esc(u.pais) + '" aria-current="' + (u.pais === paisNav) + '">' + esc(u.pais) + '<span class="n">' + u.sites.length + ' ›</span></button>';
     }).join('');
-    var atual = UNIDADES.filter(function (u) { return u.pais === paisNav; })[0];
-    function botao(k, sub) {
-      var on = k === state.bu && paisNav === state.pais;
-      return '<button type="button" data-site="' + esc(k) + '"' + (sub ? ' class="sub"' : '') + ' aria-pressed="' + on + '">' + esc(sub ? (VISOES[k].rotulo || k) : k) + '</button>';
-    }
-    // BU selecionável e, logo abaixo, as suas minas (drill-through do PDF)
+    var atual = UNIDADES.filter(function (u) { return u.pais === paisNav; })[0] || { sites: [] };
     document.getElementById('unitSites').innerHTML = atual.sites.map(function (site) {
-      var minas = VISOES[site] && VISOES[site].minas;
-      return botao(site) + (minas ? minas.map(function (m) { return botao(m, true); }).join('') : '');
+      var on = site === state.bu && paisNav === state.pais;
+      return '<button type="button" data-site="' + esc(site) + '" aria-pressed="' + on + '">' + esc(site) + '</button>';
     }).join('');
   }
   function abrirUnit(abrir) {
@@ -954,12 +796,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     render();
   });
 
-  // ── Dados reais: API do COO Dashboard (coo-api.js), com os valores do PDF como reserva ──
+  // ── Dados: tudo vem da consulta do COO Dashboard (coo-api.js → database/coo_dashboard.sql) ──
   // De dentro do navegador não dá para saber se a página está no Portal
   // (/VBM-Performance-Hub/COO-Business-Units-Dashboard/) ou num app próprio:
   // tenta os caminhos na ordem e guarda o primeiro que responder.
   var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard/api/', '/COO-Business-Units-Dashboard/api/', '/api/'];
-  var apiBase = null, SITE_ID = null, seqDados = 0;
+  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null;
 
   function apiGet(recurso) {
     var bases = apiBase ? [apiBase] : API_BASES, i = 0;
@@ -976,105 +818,40 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return tentar();
   }
 
-  // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
-  function normalizar(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
-
-  // Séries de um card (o próprio card ou cada alternativa: Cu/Au, All-in…), guardando o valor de exemplo
-  function series(vs) {
-    var lista = [];
-    vs.paineis.forEach(function (p) {
-      p.cards.forEach(function (c) {
-        (c.alt ? Object.keys(c.alt).map(function (k) { return c.alt[k]; }) : [c]).forEach(function (a) {
-          if (!('_exemplo' in a)) a._exemplo = a.d;
-          lista.push({ alvo: a, nome: a.t || c.t, nomes: [a.kpi, a.t || c.t, a.lbl].filter(Boolean) });
-        });
-      });
-    });
-    return lista;
-  }
-
-  // Origem dos números, sempre visível: exemplo, parcial (indicador sem dado no banco) ou real
-  function marcarFonte(tipo, detalhe, upd) {
+  // Situação dos dados, sempre visível quando não há números: sem conexão ou sem dados no período
+  var MSG_PAINEL = 'Consultando o banco de dados…'; // painel sem cards (sem conexão ou sem dados)
+  function marcarStatus(tipo, detalhe, upd) {
     var b = document.getElementById('dataBadge');
-    b.hidden = tipo === 'real';
-    b.textContent = tipo === 'parcial' ? 'dados parciais' : tipo === 'vazio' ? 'sem dados' : 'dados de exemplo';
-    b.title = tipo === 'vazio' ? detalhe : tipo === 'parcial'
-      ? 'Sem dado no banco (exibindo o valor de exemplo do PDF): ' + detalhe
-      : 'Valores do PDF COO – Business Units Dashboard (Plan, ago/2026).' + (detalhe ? ' ' + detalhe : '');
-    document.getElementById('updTxt').textContent = upd || visao().upd;
+    MSG_PAINEL = tipo === 'erro' ? 'Sem conexão com o banco de dados.' : tipo === 'carregando' ? 'Consultando o banco de dados…' : 'A consulta não trouxe indicadores para este período.';
+    b.hidden = tipo === 'ok';
+    b.textContent = tipo === 'erro' ? 'sem conexão com o banco' : tipo === 'carregando' ? 'carregando…' : 'sem dados no período';
+    b.title = detalhe || '';
+    document.getElementById('updTxt').textContent = upd || '—';
   }
 
-  function usarExemplo(vs) {
-    LETRAS_AF = ['A', 'A', 'F'];
-    if (vs.generico) { vs.paineis.forEach(function (p) { p.cards = []; }); return; }
-    series(vs).forEach(function (s) { s.alvo.d = s.alvo._exemplo; });
-  }
-
-  // Liga cada card ao KPI pelo nome cadastrado em IBP.DASHBOARD.NM_KPIS_DASH
-  // (título do card, `kpi` quando o nome no banco for diferente, ou o rótulo da alternativa)
-  function aplicarIndicadores(vs, resp) {
-    var porNome = {}, letras = ['A', 'A', 'F'], JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
-    (resp.linhas || []).forEach(function (l) {
-      if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
-      var k = normalizar(l.NM_KPI);
-      (porNome[k] = porNome[k] || {})[l.CD_VISAO] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
-    });
-    var faltando = [], usados = {}, achados = 0;
-    series(vs).forEach(function (s) {
-      var chave = s.nomes.map(normalizar).filter(function (n) { return porNome[n]; })[0], m = chave && porNome[chave];
-      if (m && (m.MONTH || m.QUARTER || m.YEAR)) {
-        s.alvo.d = [m.MONTH || [null, null], m.QUARTER || [null, null], m.YEAR || [null, null]];
-        usados[chave] = true;
-        achados++;
-      } else {
-        s.alvo.d = s.alvo._exemplo;
-        faltando.push(s.nome);
-      }
-    });
-    var sobra = Object.keys(porNome).filter(function (k) { return !usados[k]; });
-    if (sobra.length) console.info('[coo-dashboard] KPIs do banco sem card nesta visão:', (resp.linhas || []).filter(function (l) { return sobra.indexOf(normalizar(l.NM_KPI)) >= 0; }).map(function (l) { return l.NM_KPI; }).filter(function (n, i, a) { return a.indexOf(n) === i; }));
-    LETRAS_AF = achados ? letras : ['A', 'A', 'F'];
-    var dt = new Date(resp.geradoEm), upd = isNaN(dt) ? null : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR');
-    if (!achados) marcarFonte('exemplo', 'Sem dados no banco para ' + state.bu + ' neste período.');
-    else marcarFonte(faltando.length ? 'parcial' : 'real', faltando.join(', '), upd);
-  }
-
-  // ── Unidades e filtros a partir do resultado do SQL (/api/filtros) ──
-  // País dos sites conhecidos (o SQL não traz país); site novo vai para "Outros"
+  // ── Unidades e filtros: sites, anos e mês inicial vêm do resultado da consulta (/api/filtros) ──
+  // País dos sites conhecidos (a consulta não traz país); site novo vai para "Outros"
   var PAIS_DO_SITE = { salobo: 'Brasil', sossego: 'Brasil', oncapuma: 'Brasil', ontario: 'Canadá', vnl: 'Canadá', manitoba: 'Canadá', thompson: 'Canadá',
     longharbour: 'Canadá', internationalrefineries: 'IR', clydach: 'IR', matsusaka: 'IR', matsuzaka: 'IR', sorowako: 'Indonésia' };
   var ORDEM_PAISES = ['Brasil', 'Canadá', 'IR', 'Indonésia', 'Outros'];
-  var filtrosPromessa = null;
-
-  // Site do banco sem layout do PDF: cards montados com os KPIs que o SQL trouxer
-  function visaoGenerica(nome) {
-    return { cls: '', rows: 3, titulo: nome, generico: true, upd: '', paineis: [
-      { titulo: 'Production Drivers', cls: 'panel-prod', cards: [] },
-      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: [] }
-    ] };
-  }
 
   function aplicarFiltros(f) {
-    SITE_ID = {};
     var grupos = {};
+    SITE_ID = {};
     (f.sites || []).forEach(function (st) {
-      var chave = normalizar(st.nome);
-      // nome do site = BU do PDF (Sossego, Ontario…): usa o layout aprovado; senão, layout montado pelos KPIs
-      var nome = Object.keys(VISOES).filter(function (k) { return !VISOES[k].pai && normalizar(k) === chave; })[0];
-      if (!nome) { nome = st.nome; VISOES[nome] = VISOES[nome] || visaoGenerica(nome); }
-      SITE_ID[normalizar(nome)] = st.id;
-      var pais = PAIS_DO_SITE[chave] || 'Outros';
-      (grupos[pais] = grupos[pais] || []).push(nome);
+      VISOES[st.nome] = VISOES[st.nome] || criarVisao(st.nome);
+      SITE_ID[st.nome] = st.id;
+      var pais = PAIS_DO_SITE[normalizar(st.nome)] || 'Outros';
+      (grupos[pais] = grupos[pais] || []).push(st.nome);
     });
-    var lista = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
-    if (!lista.length) throw new Error('O SQL não trouxe nenhum site com dados.');
-    UNIDADES = lista;
-    if (f.anos && f.anos.length) ANOS = f.anos;
-    var ult = f.ultimoRealizado; // abre no último mês realizado (o mesmo corte A/F do SQL)
-    if (ult && ANOS.indexOf(ult.ano) >= 0) { state.ano = ult.ano; state.mes = ult.mes; state.tri = Math.ceil(ult.mes / 3); }
+    UNIDADES = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
+    if (!UNIDADES.length) throw new Error('A consulta não trouxe nenhum site com dados.');
+    ANOS = f.anos && f.anos.length ? f.anos : [state.ano];
+    // abre no último mês realizado (o mesmo corte A/F da consulta)
+    var ult = f.ultimoRealizado;
+    if (ult) { state.ano = ult.ano; state.mes = ult.mes; state.tri = Math.ceil(ult.mes / 3); }
     else if (ANOS.indexOf(state.ano) < 0) state.ano = ANOS[ANOS.length - 1];
-    var atual = lista.filter(function (u) { return u.sites.indexOf(state.bu) >= 0 && u.pais === state.pais; })[0];
-    if (!atual) { state.pais = lista[0].pais; state.bu = lista[0].sites.indexOf('Sossego') >= 0 ? 'Sossego' : lista[0].sites[0]; }
+    if (!SITE_ID[state.bu]) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
     renderFilters();
   }
 
@@ -1085,53 +862,76 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return filtrosPromessa;
   }
 
-  // Monta os cards de um site sem layout do PDF: um card por KPI, na ordem de
-  // IBP.DASHBOARD.ID_ORDEM; financeiros pelo nome, o resto em Production Drivers
+  // ── Preenchimento dos cards com o resultado de /api/indicadores ──
   var FINANCEIRO = /revenue|receita|cogs|ebitda|capex|cash ?flow|all-?in|by product|sustaining|cost|custo|expense|despesa/i;
   var CUSTO = /cogs|capex|cost|custo|expense|despesa|all-?in|sustaining/i;
-  function montarGenerica(vs, resp) {
-    var porKpi = {}, ordem = [], JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
-    (resp.linhas || []).forEach(function (l) {
-      var k = l.ID_OPERACAO + '-' + l.ID_KPI;
-      if (!porKpi[k]) { porKpi[k] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(k); }
-      porKpi[k].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+  var JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
+
+  // Cada série do modelo (o card ou cada alternativa: Cu/Au, All-in…) com os nomes que pode ter no banco
+  function series(vs) {
+    var lista = [];
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        (c.alt ? Object.keys(c.alt).map(function (k) { return c.alt[k]; }) : [c]).forEach(function (a) {
+          lista.push({ alvo: a, nomes: [a.kpi, a.t || c.t, a.lbl].filter(Boolean) });
+        });
+      });
     });
-    var prod = [], fin = [];
-    ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); }).forEach(function (k) {
-      var it = porKpi[k], nome = it.l.NM_KPI || ('KPI ' + it.l.ID_KPI);
-      var maior = Math.max.apply(null, [].concat.apply([], it.d).map(function (x) { return Math.abs(x || 0); }));
-      var card = { id: 'g-' + k, t: nome, u: '', dec: maior >= 100 ? 0 : maior >= 10 ? 1 : 2, pol: CUSTO.test(nome) ? 'down' : 'up', d: it.d };
-      (FINANCEIRO.test(nome) ? fin : prod).push(card);
-    });
-    vs.paineis[0].cards = prod;
-    vs.paineis[1].cards = fin;
-    vs.rows = Math.max(1, Math.ceil(prod.length / 3), Math.ceil(fin.length / 2));
-    return prod.length + fin.length;
+    return lista;
   }
 
-  // Busca os indicadores da BU no mês escolhido; só a resposta mais recente é aplicada
+  // Liga cada card ao KPI pelo nome cadastrado em IBP.DASHBOARD.NM_KPIS_DASH e
+  // acrescenta os KPIs da consulta que o modelo não tem. Devolve quantos têm dados.
+  function preencher(vs, linhas) {
+    vs.paineis.forEach(function (p) { p.cards = p.cards.filter(function (c) { return !c.extra; }); });
+    var porKpi = {}, ordem = [], porNome = {}, letras = ['A', 'A', 'F'];
+    (linhas || []).forEach(function (l) {
+      var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
+      if (!porKpi[chave]) { porKpi[chave] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(chave); }
+      porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+      if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
+    });
+    ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); });
+    ordem.forEach(function (chave) { var n = normalizar(porKpi[chave].l.NM_KPI); (porNome[n] = porNome[n] || []).push(chave); });
+    var usados = {}, comDados = 0;
+    series(vs).forEach(function (s) {
+      var chave = null;
+      s.nomes.map(normalizar).some(function (n) { chave = (porNome[n] || []).filter(function (c) { return !usados[c]; })[0] || null; return chave; });
+      s.alvo.d = chave ? porKpi[chave].d : null;
+      if (chave) { usados[chave] = true; comDados++; }
+    });
+    var prod = vs.paineis[0].cards, fin = vs.paineis[1].cards;
+    ordem.filter(function (c) { return !usados[c]; }).forEach(function (chave) {
+      var it = porKpi[chave], nome = it.l.NM_KPI || ('KPI ' + it.l.ID_KPI);
+      var maior = Math.max.apply(null, [].concat.apply([], it.d).map(function (x) { return Math.abs(x || 0); }));
+      (FINANCEIRO.test(nome) ? fin : prod).push({ id: 'x' + chave, extra: true, t: nome, u: '', dec: maior >= 100 ? 0 : maior >= 10 ? 1 : 2,
+        pol: CUSTO.test(nome) ? 'down' : 'up', d: it.d, vazio: SEM_DADOS });
+      comDados++;
+    });
+    vs.rows = Math.max(1, Math.ceil(prod.length / vs.colsProd), Math.ceil(fin.length / 2));
+    LETRAS_AF = letras;
+    return comDados;
+  }
+
+  // Busca os indicadores do site no mês escolhido; só a resposta mais recente é aplicada
   function carregarIndicadores() {
-    var meu = ++seqDados, vs = visao(), bu = state.bu;
-    if (vs.pai) { usarExemplo(vs); marcarFonte('exemplo', 'As minas ainda não fazem parte da consulta do dashboard.'); return; }
+    var meu = ++seqDados;
+    marcarStatus('carregando', 'Consultando o banco de dados…');
     filtros().then(function () {
-      if (meu !== seqDados) return Promise.reject(null);
-      vs = visao(); bu = state.bu; // os filtros podem ter trocado a unidade e o mês iniciais
-      var id = SITE_ID[normalizar(vs.site || bu)];
-      if (!id) throw new Error('Site "' + bu + '" não cadastrado no dashboard (IBP.DASHBOARD).');
-      return apiGet('indicadores?site=' + id + '&ano=' + state.ano + '&mes=' + state.mes);
+      if (meu !== seqDados) return null;
+      render(); // os filtros podem ter definido o site e o mês iniciais
+      return apiGet('indicadores?site=' + SITE_ID[state.bu] + '&ano=' + state.ano + '&mes=' + state.mes);
     }).then(function (resp) {
-      if (meu !== seqDados) return;
-      if (vs.generico) {
-        var n = montarGenerica(vs, resp), dt = new Date(resp.geradoEm);
-        LETRAS_AF = ['A', 'A', 'F'];
-        (resp.linhas || []).forEach(function (l) { if (l.LETRA_AF) LETRAS_AF[{ MONTH: 0, QUARTER: 1, YEAR: 2 }[l.CD_VISAO]] = l.LETRA_AF; });
-        marcarFonte(n ? 'real' : 'vazio', 'Sem dados no banco para ' + bu + ' neste período.', isNaN(dt) ? null : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR'));
-      } else aplicarIndicadores(vs, resp);
+      if (!resp || meu !== seqDados) return;
+      var vs = visao(), n = preencher(vs, resp.linhas), dt = new Date(resp.geradoEm);
+      var upd = isNaN(dt) ? null : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR');
+      if (n) marcarStatus('ok', '', upd);
+      else marcarStatus('vazio', 'A consulta não trouxe valores para ' + state.bu + ' em ' + MESES_LONGOS[state.mes - 1] + '/' + state.ano + '.', upd);
       render();
     }).catch(function (e) {
-      if (e === null || meu !== seqDados) return;
-      usarExemplo(vs);
-      marcarFonte('exemplo', e.message);
+      if (meu !== seqDados) return;
+      preencher(visao(), []);
+      marcarStatus('erro', 'Não foi possível consultar o banco de dados (' + e.message + ').');
       render();
     });
   }
