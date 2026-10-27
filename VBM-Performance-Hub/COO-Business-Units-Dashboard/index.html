@@ -1563,6 +1563,15 @@ window.VBMSetup = (function () {
     return l && l.CASA_DECIMAL != null ? l.CASA_DECIMAL : s.decPdf;
   }
 
+  // Nome do gráfico como na query, com exceções de apresentação por BU:
+  // "Ore Mined (Dry)" é "Ore Hoisted | Mined (Dry)" em Ontario, VNL (e as suas minas) e Manitoba
+  var BUS_ORE_HOISTED = ['ontario', 'vnl', 'manitoba'];
+  function nomeExibido(nome, site) {
+    var bu = normalizar(BU_DA_MINA[site] || site);
+    if (BUS_ORE_HOISTED.indexOf(bu) >= 0 && /^oremined(dry)?$/.test(normalizar(nome))) return 'Ore Hoisted | Mined (Dry)';
+    return nome;
+  }
+
   function preencher(vs, linhas, site) {
     if (vs.semModelo && (linhas || []).length) {
       var m = modeloPorKpis(linhas);
@@ -1598,7 +1607,7 @@ window.VBMSetup = (function () {
       s.dec = casasDe(s, l);
       s.atual = null; s.ref = site ? site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null; // situação do ciclo: carregarAtualizacao
       // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
-      s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nome;
+      s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nomeExibido(nome, vs.titulo);
       s.u = l.SG_UNID || '';
     }
     // Indicadores do PDF na ordem do PDF (Production e depois Financial; alternativas do seletor em sequência)
