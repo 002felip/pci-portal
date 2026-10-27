@@ -155,15 +155,18 @@ function extrairFiltros(linhas, sites) {
   };
 }
 
-// Nomes dos sites do dashboard (mesma regra do /sites do VBM-Performance-Studio)
+// Nomes dos sites do dashboard (base: /sites do VBM-Performance-Studio), com os nomes curtos
+// de apresentação definidos para o COO
 const SITES_SQL = `
 SELECT DISTINCT
   S.ID_SITE,
   CASE LTRIM(RTRIM(S.NM_SITE))
-    WHEN 'VNL Operations'      THEN 'VNL'
-    WHEN 'Ontario Operations'  THEN 'Ontario'
-    WHEN 'Matsusaka | Tonimet' THEN 'Matsusaka'
-    WHEN 'Clydach | CNR'       THEN 'Clydach'
+    WHEN 'Ontario Operations'       THEN 'Ontario'
+    WHEN 'VNL Operations'           THEN 'VNL'
+    WHEN 'International Refineries' THEN 'IR'
+    WHEN 'Clydach | CNR'            THEN 'Clydach'
+    WHEN 'Matsusaka | Tonimet'      THEN 'Matsusaka'
+    WHEN 'Copper Cliff | CCNR'      THEN 'Copper Cliff'
     ELSE LTRIM(RTRIM(S.NM_SITE))
   END AS NM_SITE
 FROM IBP.SITES S

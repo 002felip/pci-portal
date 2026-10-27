@@ -894,13 +894,14 @@ window.VBMSetup = (function () {
     vnl: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2), k('Copper Grade', 2),
       k('Finished Nickel', 1), k('Copper Production', 1), k('Finished Nickel | Sales', 1), k('Copper Production | Sales', 1)], fin: FINANCEIRO },
     // Produção da IR: cada card lê o site da refinaria (`filho`: prefixo do nome normalizado; ver IR_FILHOS)
-    internationalrefineries: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 1, 'up', { filho: 'clydach' }),
+    ir: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 1, 'up', { filho: 'clydach' }),
       k('Matsuzaka Production', 1, 'up', { kpi: ['Matsusaka Production'], filho: 'mats' })], fin: FINANCEIRO },
     manitoba: { prod: [k('Lateral Mine Development', 0), k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2),
       k('Ni Production', 2), k('Ni Production | Sales', 1)], fin: FINANCEIRO },
     coleman: MINA_ONTARIO, coppercliff: MINA_ONTARIO, creighton: MINA_ONTARIO, garson: MINA_ONTARIO, totten: MINA_ONTARIO, stobie: MINA_ONTARIO,
     easterndeeps: MINA_VNL, reidbrook: MINA_VNL, discoveryhill: MINA_VNL
   };
+  MODELOS.internationalrefineries = MODELOS.ir; // nome completo, se a consulta trouxer
 
   // Visão de um site: cópia do modelo da BU. Site sem modelo (ex.: refinarias em
   // separado) usa o modelo de mesmo perfil pelos indicadores (ver modeloPorKpis).
@@ -1279,8 +1280,8 @@ window.VBMSetup = (function () {
     document.getElementById('unitPais').textContent = state.pais ? T('pais.' + state.pais) : '—';
     var siteTxt = !state.bu ? '—' : bu ? bu + ' › ' + state.bu : state.bu;
     document.getElementById('unitSite').textContent = siteTxt;
-    // nome longo (International Refineries): o botão mostra só o site, para não empurrar os filtros
-    var longo = (state.pais + siteTxt).length > 30;
+    // nome longo: o botão mostra só o site, para não empurrar os filtros
+    var longo = (state.pais + siteTxt).length > 30 || normalizar(T('pais.' + state.pais)) === normalizar(siteTxt); // ou igual ao país ("IR › IR")
     document.getElementById('unitPais').hidden = longo;
     unitTrigger.querySelector('.unit-sep').hidden = longo;
     unitTrigger.title = (state.pais ? T('pais.' + state.pais) : '—') + ' › ' + siteTxt;
@@ -1496,9 +1497,9 @@ window.VBMSetup = (function () {
   // ── Unidades e filtros: sites, anos e mês inicial vêm do resultado da consulta (/api/filtros) ──
   // País (a consulta não traz): IR agrupa as refinarias; Brasil, os sites brasileiros; o resto é Canadá
   var SITES_IR = /^(internationalrefineries|ir|clydach|clydachcnr|matsusaka|matsuzaka|matsusakatonimet)$/;
-  // IR no seletor é só "International Refineries"; Clydach | CNR (ID_SITE 16) e Matsusaka (ID_SITE 26)
+  // IR no seletor é só "IR" (International Refineries); Clydach | CNR (ID_SITE 16) e Matsusaka (ID_SITE 26)
   // alimentam os cards de produção dela e não aparecem como unidade
-  var IR_NOME = 'International Refineries', IR_IDS_FILHOS = [16, 26], IR_FILHOS = [];
+  var IR_NOME = 'IR', IR_IDS_FILHOS = [16, 26], IR_FILHOS = [];
   function ehFilhoIR(st) { var n = normalizar(st.nome); return IR_IDS_FILHOS.indexOf(Number(st.id)) >= 0 || /^(clydach|matsusaka|matsuzaka)/.test(n); }
   var SITES_BRASIL = /^(salobo|sossego|oncapuma)$/;
   function paisDo(nome) { var n = normalizar(nome); return SITES_IR.test(n) ? 'IR' : SITES_BRASIL.test(n) ? 'Brazil' : 'Canada'; }
@@ -1518,8 +1519,8 @@ window.VBMSetup = (function () {
     var porId = (f.sites || []).slice().sort(function (a, b) { return (a.id == null ? Infinity : a.id) - (b.id == null ? Infinity : b.id); });
     IR_FILHOS = porId.filter(ehFilhoIR);
     var sites = porId.filter(function (st) { return !ehFilhoIR(st); });
-    // refinarias com dados e sem o site "International Refineries": a IR entra mesmo assim
-    if (IR_FILHOS.length && !sites.some(function (st) { return normalizar(st.nome) === normalizar(IR_NOME); })) sites.push({ id: null, nome: IR_NOME });
+    // refinarias com dados e sem o site da IR: a IR entra mesmo assim
+    if (IR_FILHOS.length && !sites.some(function (st) { return SITES_IR.test(normalizar(st.nome)) && !ehFilhoIR(st); })) sites.push({ id: null, nome: IR_NOME });
     sites.forEach(function (st) {
       VISOES[st.nome] = VISOES[st.nome] || criarVisao(st.nome);
       SITE_ID[st.nome] = st.id;
@@ -1739,7 +1740,7 @@ window.VBMSetup = (function () {
       if (meu !== seqDados) return null;
       render(); // os filtros podem ter definido o site e o mês iniciais
       var periodo = '&ano=' + state.ano + '&mes=' + state.mes, id = SITE_ID[state.bu];
-      var filhos = normalizar(state.bu) === normalizar(IR_NOME) ? IR_FILHOS : [];
+      var filhos = paisDo(state.bu) === 'IR' && !BU_DA_MINA[state.bu] ? IR_FILHOS : [];
       return Promise.all([id ? apiGet('indicadores?site=' + id + periodo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
         filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
     }).then(function (todas) {
