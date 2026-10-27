@@ -1,0 +1,42 @@
+# Report Generator - Default Configuration
+# ==========================================
+# This file defines default parameters for the Multi-KPI PDF Report Generator.
+# CLI arguments override these values.
+#
+# Usage:
+#   python scripts/generate_multi_kpi_report.py --config config/report_config.yaml
+#   python scripts/generate_multi_kpi_report.py --bu Ontario  # Uses defaults below
+
+# Business Unit to generate report for
+# Available: Manitoba, Ontario, Onça Puma, Salobo, Sossego, VNL+IR
+business_unit: Ontario
+
+# Number of years to include (current year + N-1 previous)
+max_years: 3
+
+# Data file paths (relative to project root)
+data_file: data/Stable.xlsx
+kpi_list_file: data/kpi_list.xlsx
+images_dir: data/images
+
+# Output settings
+output:
+  base_dir: reports
+  log_dir: reports/logs
+
+# Page dimensions (452mm × 254mm @ 96 DPI)
+page:
+  width: 1707
+  height: 960
+  dpi: 96
+
+# Logging level: DEBUG, INFO, WARNING, ERROR
+log_level: INFO
+
+# Color scheme (optional override)
+# colors:
+#   budget: "#00afef"
+#   mean_bar: "#e8e8e8"
+#   mean_text: "#155f82"
+#   p75: "#9db0cf"
+#   best90: "#6e8db8"

@@ -1,0 +1,19 @@
+{
+  "name": "vbm-stable-and-capable",
+  "version": "1.0.0",
+  "description": "VBM Stable & Capable — gera os PDFs de estabilidade/capabilidade (SPC) por Business Unit para o período escolhido",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "start:local": "node --env-file=.env server.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "mssql": "^11.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
