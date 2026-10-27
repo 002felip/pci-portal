@@ -151,12 +151,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 :root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
 :root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }
-.card-unit:has(.cyc-chip) { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.cyc-chip { display: inline-flex; align-items: center; gap: 3px; min-width: 0; max-width: 100%; overflow: hidden; padding: 0; color: var(--wait); font: italic 400 .6rem/1.4 var(--font-ui); letter-spacing: .01em; white-space: nowrap; cursor: default; opacity: .92; }
-.cyc-chip.late { font-weight: 500; opacity: 1; }
-.cyc-chip svg { width: 9px; height: 9px; flex-shrink: 0; }
-.cyc-chip span { overflow: hidden; text-overflow: ellipsis; }
-.cyc-chip:focus-visible, .cycle:focus-visible, .cyc-item:focus-visible, .cyc-foco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.cyc-faixa rect { fill: var(--wait-bg); stroke: var(--wait-line); stroke-width: 1; }
+.cyc-faixa text { fill: var(--wait); font: italic 500 10.5px var(--font-ui); letter-spacing: .01em; }
+.cyc-faixa g { color: var(--wait); }
+.cyc-faixa.late rect { fill: var(--late-bg); stroke: none; }
+.cyc-faixa.late text { fill: var(--late); }
+.cyc-faixa.late g { color: var(--late); }
+.cyc-faixa { cursor: default; outline: none; }
+.cyc-faixa:focus-visible rect { stroke: var(--focus); stroke-width: 2; }
+.cycle:focus-visible, .cyc-item:focus-visible, .cyc-foco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .b-ghost { fill: url(#hatch-wait); stroke: var(--wait-line); stroke-dasharray: 3 2.5; stroke-width: 1.2; }
 .b-ghost-txt { fill: var(--wait); font: 500 10px var(--font-ui); }
 .b-stale { opacity: .45; }
@@ -985,6 +988,7 @@ window.VBMSetup = (function () {
     var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
     // Com o Plan, o mês tem duas cotas (B→P e P→A) com as pílulas em degraus: mais espaço no topo
     var MT = showDelta ? (comPlan ? 66 : 46) : 20, MB = 16, PW = W / 3;
+    if (pendente(v)) MT += 24; // faixa "Pending final updates" no alto do gráfico
     // Sem o Plan: o layout padrão (B·A centrado em cada terço). Com o Plan: sete barras
     // (mês B·P·A, trimestre B·A, ano B·A) numa régua só, com a MESMA distância entre todas as colunas.
     var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
@@ -1110,6 +1114,16 @@ window.VBMSetup = (function () {
       grupo(pair, i);
       out = antes + (pend && i > 0 ? '<g class="b-stale">' + out + '</g>' : out);
     });
+    // Faixa do ciclo pendente: no alto, alinhada à 1ª barra, sobre o mês e o trimestre (área livre reservada no MT)
+    if (pend) {
+      var txtC = textoCiclo(v.at), detC = detalheCiclo(v.at), late = v.at.status === 'atrasado';
+      var fx = Math.max(2, (POS ? POS[0].xb : PW / 2 - GAP / 2 - BW) - 2), fw = Math.min(W - fx - 2, txtC.length * 5.7 + 30);
+      label.unshift(txtC + '. ' + detC + '.');
+      out += '<g class="cyc-faixa' + (late ? ' late' : '') + '" tabindex="0" data-tip="' + esc(detC) + '" aria-label="' + esc(txtC + '. ' + detC) + '">' +
+        '<rect x="' + fx + '" y="2" width="' + fw + '" height="19" rx="9.5"/>' +
+        '<g fill="none" transform="translate(' + (fx + 7) + ' 5.5) scale(.75)">' + (late ? ICO_ALERTA : ICO_RELOGIO).replace(/^<svg[^>]*>|<\/svg>$/g, '') + '</g>' +
+        '<text x="' + (fx + 23) + '" y="15.2">' + esc(txtC) + '</text></g>';
+    }
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
   }
 
@@ -1126,10 +1140,6 @@ window.VBMSetup = (function () {
   }
   function textoCiclo(at) { return at.status === 'atrasado' ? T('c.atrasado') : T('c.pendente'); }
   function detalheCiclo(at) { var dt = dataCarga(at.dt); return dt ? T('c.ultima', { dt: dt }) : T('c.nenhuma'); }
-  function seloCiclo(at) {
-    var late = at.status === 'atrasado', txt = textoCiclo(at), det = detalheCiclo(at);
-    return '<span class="cyc-chip' + (late ? ' late' : '') + '" tabindex="0" data-tip="' + esc(det) + '" aria-label="' + esc(txt + '. ' + det) + '">' + (late ? ICO_ALERTA : ICO_RELOGIO) + '<span>' + esc(txt) + '</span></span>';
-  }
 
   function cardHtml(ind) {
     var v = view(ind), ctl = '';
@@ -1140,7 +1150,7 @@ window.VBMSetup = (function () {
     }
     var pend = pendente(v);
     return '<article class="card card-' + ind.id + (pend ? ' is-pend' : '') + '" id="card-' + ind.id + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : (pend ? '' : '&nbsp;')) + (pend ? seloCiclo(v.at) : '') + '</p></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
       '</article>';
   }
@@ -1313,7 +1323,7 @@ window.VBMSetup = (function () {
       if (!card) return;
       card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
       card.classList.remove('cyc-flash'); void card.offsetWidth; card.classList.add('cyc-flash');
-      var selo = card.querySelector('.cyc-chip'); if (selo) selo.focus({ preventScroll: true });
+      var selo = card.querySelector('.cyc-faixa'); if (selo) selo.focus({ preventScroll: true });
     }
   });
   document.addEventListener('click', function (e) {
