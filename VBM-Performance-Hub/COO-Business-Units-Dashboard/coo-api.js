@@ -82,10 +82,13 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
     // Um item por KPI cadastrado (operação + KPI) e janela
     const chave = `${l.ID_OPERACAO}|${l.ID_KPI}|${visao}`;
     if (!porKpi.has(chave)) {
-      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, VL_P: null, LETRA_AF: null });
+      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, VL_P: null, LETRA_AF: null, CASA_DECIMAL: null });
     }
     const item = porKpi.get(chave);
     const valor = l.VL_KPI == null ? 0 : Number(l.VL_KPI);
+    // Casas decimais do KPI (IBP.DASHBOARD.VL_CASADECIMAL): inteiro de 0 a 6; fora disso a página usa o padrão do card
+    const casas = Number(l.VL_CASADECIMAL);
+    if (l.VL_CASADECIMAL != null && Number.isInteger(casas) && casas >= 0 && casas <= 6) item.CASA_DECIMAL = casas;
     if (s === 'B') item.VL_B = (item.VL_B || 0) + valor;
     else if (s === 'P') item.VL_P = (item.VL_P || 0) + valor;
     else { item.VL_AF = (item.VL_AF || 0) + valor; item.LETRA_AF = letraAF(l.NM_VISAO) || item.LETRA_AF; }

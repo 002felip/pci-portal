@@ -1367,6 +1367,12 @@ window.VBMSetup = (function () {
 
   // Preenche os indicadores do PDF com o resultado da consulta: nome, unidade e valores do banco.
   // KPIs da consulta fora do PDF não entram na tela.
+  // Casas decimais vindas do banco (IBP.DASHBOARD.VL_CASADECIMAL, por KPI); sem valor, o padrão do card
+  function casasDe(s, l) {
+    if (!('decPdf' in s)) s.decPdf = s.dec;
+    return l && l.CASA_DECIMAL != null ? l.CASA_DECIMAL : s.decPdf;
+  }
+
   function preencher(vs, linhas) {
     if (vs.semModelo && (linhas || []).length) {
       var m = modeloPorKpis(linhas);
@@ -1395,10 +1401,11 @@ window.VBMSetup = (function () {
       return cands[0] || null;
     }
     function aplicar(s, chave) {
-      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; return; }
+      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); return; }
       usados[chave] = true; achados++;
       var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
       s.d = porKpi[chave].d;
+      s.dec = casasDe(s, l);
       // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
       s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nome;
       s.u = l.SG_UNID || '';
@@ -1471,9 +1478,10 @@ window.VBMSetup = (function () {
         var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
         var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
           ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
-        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; return; }
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); return; }
         var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
         s.d = porKpi[chave].d;
+        s.dec = casasDe(s, l);
         s.t = normalizar(nome).indexOf(s.filho) === 0 ? nome : r.nome + ' · ' + nome;
         s.u = l.SG_UNID || '';
         achados++;

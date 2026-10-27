@@ -48,6 +48,7 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 					--ELSE '1'
 					END AS 'NM_VISAO',
 
+		DASH.VL_CASADECIMAL,
 		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS VL_KPI
 
 
@@ -99,6 +100,7 @@ ORDEM_GRAFICO,
 ID_TYPE AS 'ID_TIPO_VISAO',
 NM_TYPE AS 'NM_TIPO_VISAO',
 [Type] AS 'NM_VISAO',
+VL_CASADECIMAL,
 [Value] AS 'VL_KPI'
 
 
@@ -157,7 +159,7 @@ FROM (
 					END AS 'Type',
 
 				
-		--UnpivotedData.Value,
+		DASH.VL_CASADECIMAL,
 		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS [Value]
 
 
@@ -233,7 +235,8 @@ SELECT
 				WHEN PVA.ANO < YEAR(@DT_REF)  THEN CONCAT(RIGHT(PVA.ANO,2),'A')
 	ELSE CONCAT(RIGHT(PVA.ANO,2),'F')
 	END AS 'NM_VISAO',
-		UnpivotedData.Value AS 'VL_KPI'
+	DASH.VL_CASADECIMAL,
+	UnpivotedData.Value AS 'VL_KPI'
 
 
 
