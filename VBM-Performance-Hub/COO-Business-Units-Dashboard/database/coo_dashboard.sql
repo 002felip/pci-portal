@@ -9,7 +9,6 @@ SET @DT_FIM = CAST(DATEADD(MONTH, 0, CONCAT(YEAR(DATEFROMPARTS(YEAR(DATEADD(MONT
 SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
 
 
---select @DT_INI, @DT_FIM, @DT_REF
 
 ----------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------
@@ -33,11 +32,11 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0
 					WHEN UnpivotedData.Type = 'Supply' THEN 2
-					ELSE 1 END AS 'ID_TYPE',
+					ELSE 1 END AS 'ID_TIPO_VISAO',
 
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
 					WHEN UnpivotedData.Type = 'Supply' THEN 'Plan'
-					ELSE 'Act/Fcst' END AS 'NM_TYPE',
+					ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
 
 
 		CASE WHEN UnpivotedData.Type = 'Budget'  THEN CONCAT(FORMAT(DT_REF, 'MMM'),' B')
@@ -47,14 +46,9 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 					WHEN UnpivotedData.Type = 'Forecast'  THEN CONCAT(FORMAT(DT_REF, 'MMM'),' F')
 					--ELSE CONCAT(FORMAT(DT_REF, 'MMM'),' A')
 					--ELSE '1'
-					END AS 'Type',
+					END AS 'NM_VISAO',
 
-
-
-		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS [Value],
-		(UnpivotedData.Value * 2.5) AS 'Range_Month',
-		NULL AS 'Range_Quarter',
-		NULL   AS 'Range_Year'
+		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS VL_KPI
 
 
 	FROM 
@@ -102,13 +96,10 @@ ID_KPI,
 NM_KPI,
 ID_ORDEM,
 ORDEM_GRAFICO,
-ID_TYPE,
-NM_TYPE,
-[Type],
-[Value],
-Range_Month,
-Range_Quarter,
-Range_Year
+ID_TYPE AS 'ID_TIPO_VISAO',
+NM_TYPE AS 'NM_TIPO_VISAO',
+[Type] AS 'NM_VISAO',
+[Value] AS 'VL_KPI'
 
 
 
@@ -167,10 +158,7 @@ FROM (
 
 				
 		--UnpivotedData.Value,
-		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS [Value],
-		NULL AS 'Range_Month',
-		(UnpivotedData.Value * 1.4) AS 'Range_Quarter',
-		NULL  AS 'Range_Year'
+		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS [Value]
 
 
 	FROM 
@@ -235,20 +223,18 @@ SELECT
 	DASH.NM_KPIS_DASH AS 'NM_KPI',
     DASH.ID_ORDEM,
 	CASE WHEN UnpivotedData.Type = 'Budget' THEN 6 ELSE 7 END AS 'ORDEM_GRAFICO',
-	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TYPE',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TIPO_VISAO',
 
 	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
 				WHEN UnpivotedData.Type = 'Supply' THEN 'Plan'
-				ELSE 'Act/Fcst' END AS 'NM_TYPE',
+				ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
 
     CASE WHEN UnpivotedData.Type = 'Budget' THEN  CONCAT(RIGHT(PVA.ANO,2),'B')
 				WHEN PVA.ANO < YEAR(@DT_REF)  THEN CONCAT(RIGHT(PVA.ANO,2),'A')
 	ELSE CONCAT(RIGHT(PVA.ANO,2),'F')
-	END AS 'Type',
-		UnpivotedData.Value,
-		NULL AS 'Range_Month',
-		NULL AS 'Range_Quarter',
-		(UnpivotedData.Value * 0.85) AS 'Range_Year'
+	END AS 'NM_VISAO',
+		UnpivotedData.Value AS 'VL_KPI'
+
 
 
 

@@ -85,9 +85,9 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
       porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, LETRA_AF: null });
     }
     const item = porKpi.get(chave);
-    const valor = l.Value == null ? 0 : Number(l.Value);
+    const valor = l.VL_KPI == null ? 0 : Number(l.VL_KPI);
     if (s === 'B') item.VL_B = (item.VL_B || 0) + valor;
-    else { item.VL_AF = (item.VL_AF || 0) + valor; item.LETRA_AF = letraAF(l.Type) || item.LETRA_AF; }
+    else { item.VL_AF = (item.VL_AF || 0) + valor; item.LETRA_AF = letraAF(l.NM_VISAO) || item.LETRA_AF; }
   }
   return [...porKpi.values()].sort((x, y) => (x.ID_ORDEM - y.ID_ORDEM) || x.CD_VISAO.localeCompare(y.CD_VISAO));
 }
@@ -103,7 +103,7 @@ function extrairFiltros(linhas, sites) {
     const [a, m] = anoMes(l.DT_REF);
     comDados.add(Number(l.ID_SITE));
     (meses[a] = meses[a] || new Set()).add(m);
-    if (l.ORDEM_GRAFICO === 2 && letraAF(l.Type) === 'A' && (!ultimo || a * 12 + m > ultimo.ano * 12 + ultimo.mes)) ultimo = { ano: a, mes: m };
+    if (l.ORDEM_GRAFICO === 2 && letraAF(l.NM_VISAO) === 'A' && (!ultimo || a * 12 + m > ultimo.ano * 12 + ultimo.mes)) ultimo = { ano: a, mes: m };
   }
   return {
     sites: [...comDados].map(id => ({ id, nome: nomes.get(id) || `Site ${id}` })).sort((x, y) => x.nome.localeCompare(y.nome)),
