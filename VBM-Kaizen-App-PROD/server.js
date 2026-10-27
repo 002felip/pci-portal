@@ -656,14 +656,27 @@ const ATIVO_ESTATICO = /\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|mp4|webm)
 // DENY BY DEFAULT: sem cabeçalho, e-mail sem correspondência no MDM,
 // tabela inacessível ou erro de consulta => acesso NEGADO. Nenhum
 // desses cenários "abre" a página.
+// ACESSO ABERTO (27/10/2026): o Kaizen não restringe quem entra. Início,
+// Biblioteca e Novo Kaizen abrem para QUALQUER pessoa que chega pelo
+// Databricks Apps, esteja ou não no MDM (antes exigiam "membro"). Seguem
+// restritas só as telas de PAPEL. Mesma regra do VBM-Kaizen-App-DEV.
 const PAGINAS_RESTRITAS = {
   "/admin.html": "admin",
   "/aprovacao.html": "aprovador",
-  "/": "membro",
-  "/index.html": "membro",
-  "/biblioteca.html": "membro",
-  "/kaizen-novo.html": "membro",
 };
+
+/* Caminho como o express.static vai RESOLVER: decodificado (%69 -> i),
+   minúsculo e sem barras repetidas. Sem isto, /%61dmin.html não casava
+   com "/admin.html" aqui, mas o express.static decodificava e entregava a
+   tela restrita sem passar pelo gate. Caminho indecodificável não é
+   página: devolve null e o express.static responde 400/404 sozinho. */
+function caminhoNormalizado(caminho) {
+  try {
+    return path.posix.normalize(decodeURIComponent(caminho)).replace(/\/+$/, "").toLowerCase() || "/";
+  } catch (e) {
+    return null;
+  }
+}
 
 // Perfil do usuário da requisição, em UMA consulta (MDM + os dois
 // vínculos de papel). Memorizado no próprio req: o gate da API e o
@@ -796,7 +809,7 @@ function paginaAcessoNegado(papel) {
 // sensível: nenhuma linha de log tem o corpo da resposta nem conteúdo
 // da tela, só a decisão de acesso.
 kaizenWeb.use(async (req, res, next) => {
-  const papel = PAGINAS_RESTRITAS[req.path.toLowerCase()];
+  const papel = PAGINAS_RESTRITAS[caminhoNormalizado(req.path)];
   if (!papel) return next();
 
   const perfil = await perfilDeAcesso(req);
@@ -898,6 +911,12 @@ const apiRouter = express.Router();
 // Faixa 1 — identidade. Devolve só quem está chamando.
 const ROTAS_API_PUBLICAS = new Set(["/me"]);
 
+// ACESSO ABERTO (27/10/2026): leitura e escrita do PRÓPRIO Kaizen não
+// exigem mais estar no MDM. Edição/exclusão seguem verificadas por linha
+// nas rotas; APROVADOR e ADMIN seguem exigindo o papel. Ver o mesmo
+// comentário no VBM-Kaizen-App-DEV. Para voltar a exigir o MDM: true.
+const ACESSO_EXIGE_MDM = false;
+
 // Faixa 1 — leitura do sistema, liberada a qualquer usuário autenticado.
 // São as consultas que a Biblioteca e o Novo Kaizen precisam para
 // funcionar. Nenhuma delas expõe dado de outra pessoa além do que já
@@ -945,16 +964,20 @@ apiRouter.use(async (req, res, next) => {
   const metodo = req.method.toUpperCase();
   if (ROTAS_API_PUBLICAS.has(caminho)) return next();
 
+  const ehLeitura = metodo === "GET" && casa(ROTAS_LEITURA_AUTENTICADA, metodo, caminho);
+  const ehEscritaPropria = casa(ROTAS_ESCRITA_AUTENTICADA, metodo, caminho);
+  if (!ACESSO_EXIGE_MDM && (ehLeitura || ehEscritaPropria)) return next();
+
   const perfil = await perfilDeAcesso(req);
 
-  // Sem correspondência no MDM não há identidade: nem a faixa mais
-  // aberta vale. perfilDeAcesso já registra o motivo no log.
+  // Sem correspondência no MDM não há identidade: as faixas de papel
+  // (aprovador/admin) nunca valem — e, com ACESSO_EXIGE_MDM, nem a mais
+  // aberta. perfilDeAcesso já registra o motivo no log.
   if (!perfil.idUsuario) {
     return res.status(403).json({ error: "Acesso não autorizado." });
   }
 
-  const ehLeitura = metodo === "GET" && casa(ROTAS_LEITURA_AUTENTICADA, metodo, caminho);
-  if (ehLeitura || casa(ROTAS_ESCRITA_AUTENTICADA, metodo, caminho)) return next();
+  if (ehLeitura || ehEscritaPropria) return next();
 
   if (casa(ROTAS_APROVADOR, metodo, caminho)) {
     // Admin também decide: ele é quem destrava a fila quando o aprovador
