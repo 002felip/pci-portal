@@ -114,10 +114,13 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
     // Um item por KPI cadastrado (operação + KPI) e janela
     const chave = `${l.ID_OPERACAO}|${l.ID_KPI}|${visao}`;
     if (!porKpi.has(chave)) {
-      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, VL_P: null, LETRA_AF: null, CASA_DECIMAL: null });
+      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, VL_P: null, LETRA_AF: null, CASA_DECIMAL: null, SG_UNID: null });
     }
     const item = porKpi.get(chave);
     const valor = l.VL_KPI == null ? 0 : Number(l.VL_KPI);
+    // Unidade de medida do KPI (IBP.DASHBOARD.SG_UNID, coluna da própria consulta)
+    const unid = String(l.SG_UNID == null ? '' : l.SG_UNID).trim();
+    if (unid && !item.SG_UNID) item.SG_UNID = unid;
     // Casas decimais do KPI (IBP.DASHBOARD.VL_CASADECIMAL): inteiro de 0 a 6; fora disso a página usa o padrão do card
     const casas = Number(l.VL_CASADECIMAL);
     if (l.VL_CASADECIMAL != null && Number.isInteger(casas) && casas >= 0 && casas <= 6) item.CASA_DECIMAL = casas;
@@ -149,13 +152,6 @@ function extrairFiltros(linhas, sites) {
     ultimoRealizado: ultimo,
   };
 }
-
-// Unidade de medida de cada KPI do dashboard (IBP.DASHBOARD.SG_UNID, a mesma coluna
-// que o VBM-Performance-Studio usa). Consulta à parte: o script do time de dados fica intacto.
-const UNIDADES_SQL = `
-SELECT DISTINCT DASH.ID_SITE, DASH.ID_OPERACAO, DASH.ID_KPI, LTRIM(RTRIM(DASH.SG_UNID)) AS SG_UNID
-FROM IBP.DASHBOARD DASH
-WHERE DASH.ID_DASH = @idDash`;
 
 // Nomes dos sites do dashboard (mesma regra do /sites do VBM-Performance-Studio)
 const SITES_SQL = `
@@ -261,11 +257,6 @@ function criarCooRouter({ runQuery, idDash }) {
     }
     try {
       const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data']), p);
-      // Unidade de medida por KPI; se a coluna não puder ser lida, os cards seguem sem unidade
-      let unidades = [];
-      try { unidades = await buscar('/unidades-kpi', UNIDADES_SQL); } catch (err) { console.error(`${TAG} unidades dos KPIs indisponíveis:`, err.message); }
-      const unidade = new Map(unidades.map(u => [`${u.ID_SITE}|${u.ID_OPERACAO}|${u.ID_KPI}`, u.SG_UNID || null]));
-      for (const l of linhas) l.SG_UNID = unidade.get(`${p.site}|${l.ID_OPERACAO}|${l.ID_KPI}`) || null;
       res.json({ ...p, geradoEm: new Date().toISOString(), linhas });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);

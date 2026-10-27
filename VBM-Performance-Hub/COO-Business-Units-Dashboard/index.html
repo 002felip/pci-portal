@@ -1158,7 +1158,7 @@ window.VBMSetup = (function () {
     }
     var pend = pendente(v);
     return '<article class="card card-' + ind.id + (pend ? ' is-pend' : '') + '" id="card-' + ind.id + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(String(v.u).replace(/^\s*\((.*)\)\s*$/, '$1')) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
       (ind.nota ? '<p class="card-nota"><sup>1</sup> ' + esc(T(ind.nota)) + '</p>' : '') +
       '</article>';
