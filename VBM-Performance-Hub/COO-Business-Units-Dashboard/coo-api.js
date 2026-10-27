@@ -135,7 +135,7 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
 }
 
 // Nome de site do dashboard sem nome em IBP.SITES (minas da VNL cadastradas no ID_DASH 15).
-// 36 e 37 conforme o mapeamento do VBM-Stable-and-Capable; 42 = Discovery Hill (a 3ª mina da VNL)
+// 36 e 37 conforme o mapeamento do VBM-Stable-and-Capable; 42 = Discovery Hill (confirmado pelo time)
 const NOMES_PADRAO = { 36: 'Reid Brook', 37: 'Eastern Deeps', 42: 'Discovery Hill' };
 
 // Filtros da tela a partir do resultado do script: sites que têm linhas, anos e
