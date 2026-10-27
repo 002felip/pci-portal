@@ -1525,9 +1525,12 @@ window.VBMSetup = (function () {
       SITE_ID[st.nome] = st.id;
       porChave[normalizar(st.nome)] = st.nome;
     });
-    Object.keys(MINAS_DA_BU).forEach(function (bu) {
-      if (!porChave[bu]) return;
-      var minas = MINAS_DA_BU[bu].map(function (m) {
+    if (f.semNome && f.semNome.length) console.warn('[coo-dashboard] ID_SITE with data but no name in IBP.SITES (left out of the menu): ' + f.semNome.join(', '));
+    Object.keys(MINAS_DA_BU).forEach(function (chaveBu) {
+      // BU pelo prefixo do nome normalizado ("Ontario", "Ontario Operations", "VNL | …")
+      var bu = porChave[chaveBu] ? chaveBu : Object.keys(porChave).filter(function (n) { return n.indexOf(chaveBu) === 0; })[0];
+      if (!bu) return;
+      var minas = MINAS_DA_BU[chaveBu].map(function (m) {
         var c = Object.keys(porChave).filter(function (n) { return n.indexOf(m) === 0; })[0];
         return c && porChave[c];
       }).filter(Boolean).sort(function (a, b) { return SITE_ID[a] - SITE_ID[b]; });

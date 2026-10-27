@@ -145,8 +145,10 @@ function extrairFiltros(linhas, sites) {
     if (l.ORDEM_GRAFICO === 2 && letraAF(l.NM_VISAO) === 'A' && (!ultimo || a * 12 + m > ultimo.ano * 12 + ultimo.mes)) ultimo = { ano: a, mes: m };
   }
   return {
-    // Ordem de apresentação das unidades: ID_SITE (ordem padrão do filtro)
-    sites: [...comDados].sort((x, y) => x - y).map(id => ({ id, nome: nomes.get(id) || `Site ${id}` })),
+    // Ordem de apresentação das unidades: ID_SITE (ordem padrão do filtro). Site sem nome em
+    // IBP.SITES não entra no menu (não há como identificá-lo); o ID vai em semNome para diagnóstico
+    sites: [...comDados].filter(id => nomes.has(id)).sort((x, y) => x - y).map(id => ({ id, nome: nomes.get(id) })),
+    semNome: [...comDados].filter(id => !nomes.has(id)).sort((x, y) => x - y),
     anos: Object.keys(meses).map(Number).sort(),
     meses: Object.fromEntries(Object.entries(meses).map(([a, ms]) => [a, [...ms].sort((x, y) => x - y)])),
     ultimoRealizado: ultimo,
