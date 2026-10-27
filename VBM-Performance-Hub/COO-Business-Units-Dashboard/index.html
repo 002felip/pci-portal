@@ -134,25 +134,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-/* ── Topnav do Performance Hub (mais baixo, para dar a altura aos gráficos) ── */
-.topnav {
-  flex-shrink: 0; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 100;
-  min-height: 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
-  padding-block: 6px;
-  padding-left: max(20px, env(safe-area-inset-left, 0px));
-  padding-right: max(20px, env(safe-area-inset-right, 0px));
-  background: var(--nav-bg); box-shadow: 0 2px 20px rgba(13,38,64,.18);
-}
-.topnav-logo { display: flex; align-items: center; }
-.topnav-logo svg { height: 24px; width: auto; display: block; }
-.topnav-brand { margin: 0; font: 300 .98rem var(--font-ui); letter-spacing: .08em; color: rgba(255,255,255,.88); position: relative; padding-bottom: 5px; white-space: nowrap; }
-.topnav-brand::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(60,181,229,.15), #3CB5E5, rgba(60,181,229,.15)); }
-.topnav-actions { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
-.nav-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(125,211,240,.45); background: rgba(255,255,255,.04); color: #fff; font: 500 .76rem var(--font-ui); cursor: pointer; white-space: nowrap; }
-.nav-btn:hover { background: rgba(60,181,229,.16); }
-.nav-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; border: 0; background: transparent; color: #fff; cursor: pointer; }
-.nav-icon:hover { background: rgba(255,255,255,.08); }
-
 /* ── Página ── */
 .page {
   flex: 1 1 auto; min-height: 0; width: 100%;
@@ -281,12 +262,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ico-exit { display: none; }
 .is-fs .ico-exit { display: block; }
 .is-fs .ico-enter { display: none; }
-.topnav { display: none; } /* a página abre como na tela cheia, sem a barra azul */
 .is-fs .fs-tools { display: flex; }
 .page { padding-top: 22px; }
 .is-fs .card { justify-content: flex-start; }
 @media (display-mode: fullscreen) {
-  .topnav { display: none; }
   .fs-tools { display: flex; }
   .page { padding-top: 22px; }
   .card { justify-content: flex-start; }
@@ -361,14 +340,111 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .panel-prod .panel-grid, .panel-fin .panel-grid, .dash .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
   .panel-prod { padding: 14px; }
-  .topnav { grid-template-columns: auto 1fr auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .topnav-brand { font-size: .8rem; justify-self: center; }
-  .nav-btn .lbl { display: none; }
-  .nav-btn { padding: 5px 10px; }
   .panel-meta { align-items: flex-start; }
 }
-@media (max-width: 420px) { .topnav-brand { display: none; } }
 @media (prefers-reduced-motion: reduce) { .b-bar, .cota, .cota * { animation: none !important; } }
+
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
+:root {
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.topnav {
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
+.topnav-logo svg { height: 26px; width: auto; display: block; }
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
+.topnav-user[hidden] { display: none; }
+.topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
+
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
+.settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
+.settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* ═══ fim Setup Dashboards ═══ */
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -385,59 +461,117 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   </defs>
 </svg>
 
-<header class="topnav">
-  <a class="topnav-logo" href="#" aria-label="Vale">
-    <svg viewBox="0 0 71 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"/>
-      <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"/>
-      <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"/>
-      <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"/>
-      <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"/>
-      <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"/>
-    </svg>
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Trocar COO Business Units Dashboard pelo nome do dashboard (ex.: "COO Business Units Dashboard").
+     Logo: "../" volta ao Hub; ajuste se o dashboard morar em outro lugar. -->
+<nav class="topnav" id="topnav">
+  <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
   </a>
-  <h1 class="topnav-brand">VBM Performance Hub</h1>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">COO Business Units Dashboard</span></h1>
   <div class="topnav-actions">
-    <button type="button" class="nav-btn" id="btnDash" aria-label="Select dashboard (current: COO · Business Units)">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.5" y="2" width="13" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 2v12" stroke="currentColor" stroke-width="1.4"/></svg>
-      <span class="lbl">COO · Business Units</span>
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
     </button>
-    <button type="button" class="nav-icon js-full" id="btnFull" aria-label="Full screen" title="Full screen (F11)">
-      <svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <button type="button" class="nav-icon js-theme" id="btnTheme" aria-label="Toggle light/dark theme">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
     </button>
   </div>
-</header>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
 
 <main class="page">
-  <section class="head" aria-label="Dashboard and filters">
+  <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
     <div class="title-block">
       <h2>COO – Business Units Dashboard</h2>
     </div>
     <div class="filters">
-      <div class="filter"><span class="filter-label" id="lblBu">Unit:</span>
+      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Unit:</span>
         <div class="unit">
           <button type="button" class="unit-trigger" id="unitTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="unitPop" aria-describedby="lblBu">
             <span class="unit-pais" id="unitPais">—</span><span class="unit-sep" aria-hidden="true">›</span><span class="unit-site" id="unitSite">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <div class="unit-pop" id="unitPop" role="dialog" aria-label="Select unit: country and site" hidden>
-            <div class="unit-col"><span class="unit-h" id="unitHPais">Country</span><div class="unit-list" id="unitPaises" role="group" aria-labelledby="unitHPais"></div></div>
+          <div class="unit-pop" id="unitPop" role="dialog" aria-label="Select unit: country and site" data-i18n-aria="a.unidade" hidden>
+            <div class="unit-col"><span class="unit-h" id="unitHPais" data-i18n="u.pais">Country</span><div class="unit-list" id="unitPaises" role="group" aria-labelledby="unitHPais"></div></div>
             <div class="unit-col"><span class="unit-h" id="unitHSite">Site</span><div class="unit-list" id="unitSites" role="group" aria-labelledby="unitHSite"></div></div>
           </div>
         </div>
       </div>
-      <div class="filter"><span class="filter-label" id="lblVisao">View:</span><div class="seg" role="group" aria-labelledby="lblVisao" data-filter="visao"></div></div>
-      <div class="filter"><span class="filter-label" id="lblAno">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
-      <div class="filter"><span class="filter-label" id="lblTri">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
-      <div class="filter"><span class="filter-label" id="lblMes">Month:</span><div class="seg" role="group" aria-labelledby="lblMes" data-filter="mes"></div></div>
+      <div class="filter"><span class="filter-label" id="lblVisao" data-i18n="f.view">View:</span><div class="seg" role="group" aria-labelledby="lblVisao" data-filter="visao"></div></div>
+      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
+      <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
+      <div class="filter"><span class="filter-label" id="lblMes" data-i18n="f.month">Month:</span><div class="seg" role="group" aria-labelledby="lblMes" data-filter="mes"></div></div>
       <div class="filter"><span class="filter-label" id="lblDelta">Delta:</span>
         <button type="button" class="switch" id="deltaSwitch" role="switch" aria-checked="true" aria-labelledby="lblDelta"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
       </div>
-      <div class="fs-tools" aria-label="Full screen actions">
-      <button type="button" class="fs-btn js-full" aria-label="Full screen" title="Full screen (F11)"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <button type="button" class="fs-btn js-theme" aria-label="Toggle light/dark theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+      <div class="fs-tools" aria-label="Full screen actions" data-i18n-aria="a.fs">
+      <button type="button" class="fs-btn js-full" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
   </section>
@@ -445,14 +579,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <div class="site-row">
     <div class="site-id">
       <h3 class="site" id="buName">—</h3>
-      <nav class="site-nav" id="siteNav" aria-label="Navigation between BU and mines" hidden></nav>
+      <nav class="site-nav" id="siteNav" aria-label="Navigation between BU and mines" data-i18n-aria="a.nav" hidden></nav>
     </div>
     <div class="panel-meta">
-          <ul class="legend" aria-label="Legend">
+          <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
             <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
             <li><span class="swatch" style="background:var(--serie-a)"></span>Forecast | Actual (F | A)</li>
           </ul>
-          <p class="updated"><span class="demo" id="dataBadge" hidden></span>Last updated: <span id="updTxt"></span></p>
+          <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
     </div>
   </div>
 
@@ -461,9 +595,182 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 <div class="tip" id="tip" hidden></div>
 
+<script>window.VBM_SETUP = { idiomaPadrao: 'en' }; /* COO: inglês até a pessoa escolher outro idioma */</script>
+<script>
+/* ═══ Setup Dashboards — barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Colar num <script> logo depois da marcação (setup-dashboards.html), ANTES do script do dashboard.
+   Configuração opcional, declarada antes deste script:
+     window.VBM_SETUP = {
+       idiomaPadrao: 'pt-BR' | 'en',          // sem escolha salva; padrão 'pt-BR'
+       numeroPadrao: 'pt-BR' | 'en-CA',       // sem escolha salva; padrão: pelo idioma do navegador
+       urlUsuario: '/api/me'                  // { nome, email, cargo } — rota do Portal (Kaizen)
+     };
+   Preferências por pessoa no navegador, com as MESMAS chaves do Kaizen e do Studio,
+   para valerem em todas as aplicações do Portal: vdt-theme, vdt-lang, vdt-num.
+   API para o dashboard (window.VBMSetup):
+     t(chave, vars)         texto no idioma atual ('Olá {nome}' + { nome: 'Ana' })
+     registrar(dic)         { 'pt-BR': { chave: texto }, en: { … } } — textos do dashboard
+     traduzir(raiz?)        aplica data-i18n / -aria / -title / -ph em raiz (padrão: document)
+     fmt(valor, casas)      número no formato escolhido (Brasil 1.234,56 · Canadá 1,234.56)
+     dataHora(data)         data e hora no idioma escolhido
+     on('tema'|'idioma'|'numero', fn)   redesenhar o que o JS monta
+     tema / idioma / numero (leitura) */
+window.VBMSetup = (function () {
+  'use strict';
+  var CFG = window.VBM_SETUP || {};
+  var CHAVES = { tema: 'vdt-theme', idioma: 'vdt-lang', numero: 'vdt-num' };
+  var IDIOMAS = ['pt-BR', 'en'], NUMEROS = ['pt-BR', 'en-CA'];
+  var DIC = {
+    'pt-BR': { 'sd.menu': 'Menu', 'sd.configuracoes': 'Configurações', 'sd.fechar': 'Fechar', 'sd.tema': 'Tema', 'sd.claro': 'Claro', 'sd.escuro': 'Escuro',
+      'sd.idioma': 'Idioma', 'sd.idiomaInfo': 'Idioma da interface', 'sd.numero': 'Formato numérico', 'sd.numeroInfo': 'Separador decimal e de milhar dos gráficos',
+      'sd.numeroBR': 'Brasil — 1.234,56', 'sd.numeroCA': 'Canadá — 1,234.56' },
+    en: { 'sd.menu': 'Menu', 'sd.configuracoes': 'Settings', 'sd.fechar': 'Close', 'sd.tema': 'Theme', 'sd.claro': 'Light', 'sd.escuro': 'Dark',
+      'sd.idioma': 'Language', 'sd.idiomaInfo': 'Interface language', 'sd.numero': 'Number format', 'sd.numeroInfo': 'Decimal and thousands separators in charts',
+      'sd.numeroBR': 'Brazil — 1.234,56', 'sd.numeroCA': 'Canada — 1,234.56' }
+  };
+  var ouvintes = { tema: [], idioma: [], numero: [] };
+  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* só nesta sessão */ } }
+  function avisar(evt) { ouvintes[evt].forEach(function (fn) { try { fn(estado[evt]); } catch (e) { console.error('[setup-dashboards]', e); } }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  var estado = {
+    tema: ler(CHAVES.tema) === 'dark' ? 'dark' : 'light',
+    idioma: IDIOMAS.indexOf(ler(CHAVES.idioma)) >= 0 ? ler(CHAVES.idioma) : (IDIOMAS.indexOf(CFG.idiomaPadrao) >= 0 ? CFG.idiomaPadrao : 'pt-BR'),
+    numero: NUMEROS.indexOf(ler(CHAVES.numero)) >= 0 ? ler(CHAVES.numero)
+      : NUMEROS.indexOf(CFG.numeroPadrao) >= 0 ? CFG.numeroPadrao : (/^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR')
+  };
+
+  function t(chave, vars) {
+    var s = (DIC[estado.idioma] || {})[chave];
+    if (s == null) s = DIC['pt-BR'][chave];
+    if (s == null) return chave;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : s;
+  }
+  function registrar(dic) {
+    Object.keys(dic || {}).forEach(function (l) { DIC[l] = DIC[l] || {}; for (var k in dic[l]) DIC[l][k] = dic[l][k]; });
+  }
+  function traduzir(raiz) {
+    raiz = raiz || document;
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+    });
+  }
+  function fmt(v, casas) {
+    return Number(v).toLocaleString(estado.numero, { minimumFractionDigits: casas, maximumFractionDigits: casas }).replace('-', '−');
+  }
+  function dataHora(d) {
+    var l = estado.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l) + ' ' + d.toLocaleTimeString(l);
+  }
+
+  // ── Tema: data-bg (barra e painel) + data-theme (tokens do dashboard) ──
+  function aplicarTema(tema, salvar) {
+    estado.tema = tema === 'dark' ? 'dark' : 'light';
+    var html = document.documentElement;
+    html.setAttribute('data-bg', estado.tema);
+    html.setAttribute('data-theme', estado.tema);
+    if ($('btnWhite')) $('btnWhite').classList.toggle('active', estado.tema === 'light');
+    if ($('btnBusiness')) $('btnBusiness').classList.toggle('active', estado.tema === 'dark');
+    if (salvar) { gravar(CHAVES.tema, estado.tema); avisar('tema'); }
+  }
+  function aplicarIdioma(l, salvar) {
+    estado.idioma = IDIOMAS.indexOf(l) >= 0 ? l : 'pt-BR';
+    document.documentElement.lang = estado.idioma;
+    if ($('langSelect')) $('langSelect').value = estado.idioma;
+    traduzir();
+    if (salvar) { gravar(CHAVES.idioma, estado.idioma); avisar('idioma'); }
+  }
+  function aplicarNumero(n, salvar) {
+    estado.numero = NUMEROS.indexOf(n) >= 0 ? n : 'pt-BR';
+    if ($('numSelect')) $('numSelect').value = estado.numero;
+    if (salvar) { gravar(CHAVES.numero, estado.numero); avisar('numero'); }
+  }
+
+  // ── Painel de Configurações (engrenagem) ──
+  var btn = $('settingsBtn'), painel = $('settingsPanel'), fundo = $('settingsBackdrop');
+  function abrir(sim) {
+    if (!painel) return;
+    painel.classList.toggle('open', sim); fundo.classList.toggle('open', sim);
+    btn.setAttribute('aria-expanded', String(sim)); painel.setAttribute('aria-hidden', String(!sim));
+    if (sim) { var f = painel.querySelector('.theme-toggle-btn.active') || painel.querySelector('button'); if (f) f.focus(); } else btn.focus();
+  }
+  if (btn && painel && fundo) {
+    btn.addEventListener('click', function () { abrir(!painel.classList.contains('open')); });
+    $('settingsClose').addEventListener('click', function () { abrir(false); });
+    fundo.addEventListener('click', function () { abrir(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && painel.classList.contains('open')) abrir(false); });
+    $('btnWhite').addEventListener('click', function () { aplicarTema('light', true); });
+    $('btnBusiness').addEventListener('click', function () { aplicarTema('dark', true); });
+    $('langSelect').addEventListener('change', function (e) { aplicarIdioma(e.target.value, true); });
+    $('numSelect').addEventListener('change', function (e) { aplicarNumero(e.target.value, true); });
+  }
+
+  // ── Tela cheia: html.is-fs (a barra superior sai de cena pelo CSS) ──
+  document.addEventListener('fullscreenchange', function () {
+    document.documentElement.classList.toggle('is-fs', !!document.fullscreenElement);
+    if (document.fullscreenElement) abrir(false);
+  });
+
+  // ── Usuário logado: nome, cargo e iniciais (rota do Portal) ──
+  fetch(CFG.urlUsuario || '/api/me', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (me) {
+      if (!me || !$('topnavUser')) return;
+      var nome = String(me.nome || me.email || '').trim();
+      if (!nome) return;
+      var partes = nome.split(/\s+/);
+      $('topnavUserName').textContent = nome;
+      $('topnavUserRole').textContent = me.cargo || '';
+      $('topnavUserAvatar').textContent = ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+      $('topnavUserAvatar').title = nome;
+      $('topnavUser').hidden = false;
+    })
+    .catch(function () { /* sem a rota (ex.: fora do Portal): a barra fica sem o usuário */ });
+
+  aplicarTema(estado.tema, false);
+  aplicarNumero(estado.numero, false);
+  aplicarIdioma(estado.idioma, false);
+
+  return {
+    t: t, registrar: registrar, traduzir: traduzir, fmt: fmt, dataHora: dataHora,
+    on: function (evt, fn) { if (ouvintes[evt]) ouvintes[evt].push(fn); },
+    get tema() { return estado.tema; }, get idioma() { return estado.idioma; }, get numero() { return estado.numero; }
+  };
+})();
+/* ═══ fim Setup Dashboards ═══ */
+</script>
 <script>
 (function () {
   'use strict';
+  // ── Textos do dashboard nos dois idiomas (Setup Dashboards: VBMSetup) ──
+  var T = VBMSetup.t;
+  VBMSetup.registrar({
+    'pt-BR': { 'f.unit': 'Unidade:', 'f.view': 'Visão:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+      'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
+      'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
+      'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
+      'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido',
+      'p.mes': 'mês', 'p.tri': 'trimestre', 'p.ano': 'ano', 'g.semDado': 'sem dado', 'g.variacao': 'variação',
+      'n.minas': 'Minas', 'n.voltar': 'Voltar para {bu}', 'n.minasDe': 'Minas de {bu}', 'n.anterior': 'Mina anterior', 'n.proxima': 'Próxima mina',
+      'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
+      's.consultando': 'Consultando o banco de dados…', 's.semConexao': 'Sem conexão com o banco de dados.', 's.semIndicadores': 'A consulta não trouxe indicadores para este período.',
+      's.semValores': 'A consulta não trouxe valores para {bu} em {mes} de {ano}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).',
+      'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados no período' },
+    en: { 'f.unit': 'Unit:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+      'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
+      'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
+      'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
+      'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown',
+      'p.mes': 'month', 'p.tri': 'quarter', 'p.ano': 'year', 'g.semDado': 'no data', 'g.variacao': 'variance',
+      'n.minas': 'Mines', 'n.voltar': 'Back to {bu}', 'n.minasDe': 'Mines of {bu}', 'n.anterior': 'Previous mine', 'n.proxima': 'Next mine',
+      'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
+      's.consultando': 'Querying the database…', 's.semConexao': 'No connection to the database.', 's.semIndicadores': 'The query returned no indicators for this period.',
+      's.semValores': 'The query returned no values for {bu} in {mes} {ano}.', 's.erro': 'Could not query the database ({msg}).',
+      'b.erro': 'no database connection', 'b.carregando': 'loading…', 'b.vazio': 'no data for this period' }
+  });
+  VBMSetup.traduzir();
 
   // ── Indicadores de cada BU: o conjunto e a ordem do PDF COO – Business Units ──
   // O PDF define QUAIS indicadores aparecem e ONDE; o banco dá o nome (NM_KPI),
@@ -471,19 +778,19 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   // indicador pode estar cadastrado em IBP.DASHBOARD.NM_KPIS_DASH; `unid`:
   // preferência quando o mesmo nome existe com unidades diferentes no site.
   // Nenhum número fica no código; indicador do PDF sem dado no banco mostra "Sem dados".
-  var SEM_DADOS = 'No data';
+  var SEM_DADOS = 'c.semDados'; // chave do texto (VBMSetup.t)
   function k(t, dec, pol, extra) {
     var c = { t: t, dec: dec, pol: pol || 'up' };
     for (var x in extra) c[x] = extra[x];
     return c;
   }
-  var TEOR_CU_AU = k('Copper + Gold Feed Grade', 2, 'up', { altLabel: 'Grade shown', alt: {
+  var TEOR_CU_AU = k('Copper + Gold Feed Grade', 2, 'up', { altLabel: 'c.teor', alt: {
     cu: { lbl: 'Cu', t: 'Copper Feed Grade' },
     au: { lbl: 'Au', t: 'Gold Feed Grade' }
   } });
   // All-in e componentes (no PDF, a tabela abaixo do gráfico; aqui, seletor no card).
   // Os componentes são valores por tonelada: na dúvida entre homônimos, o de unidade em "k".
-  var ALL_IN = k('All-in', 1, 'down', { altLabel: 'Component shown', alt: {
+  var ALL_IN = k('All-in', 1, 'down', { altLabel: 'c.componente', alt: {
     allin: { lbl: 'All-in', t: 'All-in', unid: /k/i },
     byp: { lbl: 'By Product', t: 'All-in | By Product', kpi: ['By Product'], unid: /k/i },
     sus: { lbl: 'Sustaining', t: 'All-in | Sustaining', kpi: ['Sustaining'], unid: /k/i },
@@ -553,8 +860,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function normalizar(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
 
   // ── Estado dos filtros ──
-  var MESES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var MESES_LONGOS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  // Meses no idioma escolhido (Configurações)
+  var MESES_IDIOMA = {
+    'pt-BR': [['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+      ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']],
+    en: [['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']]
+  };
+  function mesCurto(i) { return (MESES_IDIOMA[VBMSetup.idioma] || MESES_IDIOMA.en)[0][i]; }
+  function mesLongo(i) { return (MESES_IDIOMA[VBMSetup.idioma] || MESES_IDIOMA.en)[1][i]; }
   // Unidades e anos: preenchidos com o resultado da consulta (aplicarFiltros)
   var UNIDADES = [];
   var hoje = new Date(), mesRef = hoje.getMonth() || 12; // até a consulta responder: mês anterior ao atual
@@ -566,7 +880,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     tri: function () { return [[1, 'Q1'], [2, 'Q2'], [3, 'Q3'], [4, 'Q4']]; },
     mes: function () {
       var first = (state.tri - 1) * 3;
-      return [0, 1, 2].map(function (i) { return [first + i + 1, MESES_LONGOS[first + i]]; });
+      return [0, 1, 2].map(function (i) { return [first + i + 1, mesLongo(first + i)]; });
     }
   };
 
@@ -574,14 +888,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   // Rótulos do eixo no padrão do print: "Set B", "Q3A", "26F"
   var LETRAS_AF = ['A', 'A', 'F']; // Actual ou Forecast por janela; com dados reais, vem do script (coluna Type)
   function axis() {
-    var m = MESES[state.mes - 1], q = 'Q' + state.tri, y = yy();
+    var m = mesCurto(state.mes - 1), q = 'Q' + state.tri, y = yy();
     return [[m + ' B', m + ' ' + LETRAS_AF[0]], [q + 'B', q + LETRAS_AF[1]], [y + 'B', y + LETRAS_AF[2]]];
   }
-  var PER = ['month', 'quarter', 'year'];
+  function PER(i) { return T(['p.mes', 'p.tri', 'p.ano'][i]); }
 
-  function fmt(v, dec) {
-    return v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }).replace('-', '−');
-  }
+  // Formato numérico escolhido nas Configurações (Brasil 1.234,56 · Canadá 1,234.56)
+  function fmt(v, dec) { return VBMSetup.fmt(v, dec); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   // Delta = A/F − B, na unidade e com as casas decimais do próprio indicador (sem % nem p.p.).
@@ -607,9 +920,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
     if (!v.d) { // sem dados: só a linha de base e, quando houver, o aviso (Pending / Not applicable)
       var yv0 = H - MB;
-      return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + (ind.vazio || 'no data') + '.') + '">' +
+      return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
         '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
-        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(ind.vazio) + '</text>' : '') + '</svg>';
+        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(T(ind.vazio)) + '</text>' : '') + '</svg>';
     }
     var all = [].concat.apply([], v.d).filter(function (x) { return x !== null; });
     var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
@@ -630,7 +943,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var xb = cx - GAP / 2 - BW, xa = cx + GAP / 2, y0 = y(0);
       var dl = delta(pair[0], pair[1], ind, v.dec);
       var semPar = pair[0] === null || pair[1] === null;
-      label.push(PER[i] + ': Budget ' + (pair[0] === null ? 'no data' : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? 'no data' : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', variance ' + dl.txt : '') + '.');
+      label.push(PER(i) + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
 
 
       [[xb, pair[0], 'g-b', ax[i][0], 'Budget'], [xa, pair[1], 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']].forEach(function (bar) {
@@ -667,7 +980,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function cardHtml(ind) {
     var v = view(ind), ctl = '';
     if (ind.alt) {
-      ctl = '<div class="seg" role="group" aria-label="' + esc(ind.altLabel) + '">' + Object.keys(ind.alt).map(function (k) {
+      ctl = '<div class="seg" role="group" aria-label="' + esc(T(ind.altLabel)) + '">' + Object.keys(ind.alt).map(function (k) {
         return '<button type="button" data-alt="' + k + '" data-for="' + ind.id + '" aria-pressed="' + (selDe(ind) === k) + '">' + esc(ind.alt[k].lbl) + '</button>';
       }).join('') + '</div>';
     }
@@ -748,14 +1061,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var vs = visao(), dash = document.getElementById('dash');
     var bu = BU_DA_MINA[state.bu], irmas = bu ? MINAS[bu] : null;
     document.getElementById('buName').textContent = !state.bu ? '—' : irmas && irmas.length > 1 ? state.bu + ' (' + (irmas.indexOf(state.bu) + 1) + '/' + irmas.length + ')' : state.bu;
-    document.getElementById('unitPais').textContent = state.pais || '—';
+    document.getElementById('unitPais').textContent = state.pais ? T('pais.' + state.pais) : '—';
     var siteTxt = !state.bu ? '—' : bu ? bu + ' › ' + state.bu : state.bu;
     document.getElementById('unitSite').textContent = siteTxt;
     // nome longo (International Refineries): o botão mostra só o site, para não empurrar os filtros
     var longo = (state.pais + siteTxt).length > 30;
     document.getElementById('unitPais').hidden = longo;
     unitTrigger.querySelector('.unit-sep').hidden = longo;
-    unitTrigger.title = state.pais + ' › ' + siteTxt;
+    unitTrigger.title = (state.pais ? T('pais.' + state.pais) : '—') + ' › ' + siteTxt;
     renderNav();
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
@@ -763,7 +1076,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     dash.innerHTML = vs.paineis.map(function (p, i) {
       return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
         '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
-        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(MSG_PAINEL) + '</p>') + '</section>';
+        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(T(MSG_PAINEL)) + '</p>') + '</section>';
     }).join('');
     ajustarAltura();
     observeCharts();
@@ -773,14 +1086,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function renderNav() {
     var nav = document.getElementById('siteNav'), h = '', minas = MINAS[state.bu], bu = BU_DA_MINA[state.bu];
     if (minas) {
-      h = '<button type="button" class="nav-chip" data-go="' + esc(minas[0]) + '">Mines' + (minas.length > 1 ? ' (' + minas.length + ')' : '') + ' <span aria-hidden="true">›</span></button>';
+      h = '<button type="button" class="nav-chip" data-go="' + esc(minas[0]) + '">' + esc(T('n.minas')) + (minas.length > 1 ? ' (' + minas.length + ')' : '') + ' <span aria-hidden="true">›</span></button>';
     } else if (bu) {
       var irmas = MINAS[bu], i = irmas.indexOf(state.bu), n = irmas.length;
-      h = '<button type="button" class="nav-chip" data-go="' + esc(bu) + '" aria-label="Back to ' + esc(bu) + '"><span aria-hidden="true">‹</span> ' + esc(bu) + '</button>';
+      h = '<button type="button" class="nav-chip" data-go="' + esc(bu) + '" aria-label="' + esc(T('n.voltar', { bu: bu })) + '"><span aria-hidden="true">‹</span> ' + esc(bu) + '</button>';
       if (n > 1) {
-        h += '<span class="pager" role="group" aria-label="Mines of ' + esc(bu) + '">' +
-          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.max(0, i - 1)]) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Previous mine"><span aria-hidden="true">‹</span></button>' +
-          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.min(n - 1, i + 1)]) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Next mine"><span aria-hidden="true">›</span></button></span>';
+        h += '<span class="pager" role="group" aria-label="' + esc(T('n.minasDe', { bu: bu })) + '">' +
+          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.max(0, i - 1)]) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + esc(T('n.anterior')) + '"><span aria-hidden="true">‹</span></button>' +
+          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.min(n - 1, i + 1)]) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="' + esc(T('n.proxima')) + '"><span aria-hidden="true">›</span></button></span>';
       }
     }
     nav.innerHTML = h;
@@ -803,7 +1116,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   var paisNav = state.pais; // país sendo navegado no painel (ainda não aplicado)
   function renderUnit() {
     document.getElementById('unitPaises').innerHTML = UNIDADES.map(function (u) {
-      return '<button type="button" data-pais="' + esc(u.pais) + '" aria-current="' + (u.pais === paisNav) + '">' + esc(u.pais) + '<span class="n">' + u.sites.length + ' ›</span></button>';
+      return '<button type="button" data-pais="' + esc(u.pais) + '" aria-current="' + (u.pais === paisNav) + '">' + esc(T('pais.' + u.pais)) + '<span class="n">' + u.sites.length + ' ›</span></button>';
     }).join('');
     var atual = UNIDADES.filter(function (u) { return u.pais === paisNav; })[0] || { sites: [] };
     function botao(site, sub) {
@@ -881,12 +1194,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
 
   // Situação dos dados, sempre visível quando não há números: sem conexão ou sem dados no período
-  var MSG_PAINEL = 'Querying the database…'; // painel sem cards (sem conexão ou sem dados)
+  var MSG_PAINEL = 's.consultando', ultimoStatus = null; // painel sem cards (sem conexão ou sem dados)
+  // detalhe: função que monta o texto (refeita ao trocar de idioma); upd: Date da consulta
   function marcarStatus(tipo, detalhe, upd) {
+    ultimoStatus = [tipo, detalhe, upd];
+    if (typeof detalhe === 'function') detalhe = detalhe();
+    if (upd instanceof Date) upd = isNaN(upd) ? null : VBMSetup.dataHora(upd);
     var b = document.getElementById('dataBadge');
-    MSG_PAINEL = tipo === 'erro' ? 'No connection to the database.' : tipo === 'carregando' ? 'Querying the database…' : 'The query returned no indicators for this period.';
+    MSG_PAINEL = tipo === 'erro' ? 's.semConexao' : tipo === 'carregando' ? 's.consultando' : 's.semIndicadores';
     b.hidden = tipo === 'ok';
-    b.textContent = tipo === 'erro' ? 'no database connection' : tipo === 'carregando' ? 'loading…' : 'no data for this period';
+    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'carregando' ? 'b.carregando' : 'b.vazio');
     b.title = detalhe || '';
     document.getElementById('updTxt').textContent = upd || '—';
   }
@@ -1093,7 +1410,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   // Busca os indicadores do site no mês escolhido; só a resposta mais recente é aplicada
   function carregarIndicadores() {
     var meu = ++seqDados;
-    marcarStatus('carregando', 'Querying the database…');
+    marcarStatus('carregando', function () { return T('s.consultando'); });
     filtros().then(function () {
       if (meu !== seqDados) return null;
       render(); // os filtros podem ter definido o site e o mês iniciais
@@ -1104,15 +1421,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     }).then(function (todas) {
       if (!todas || meu !== seqDados) return;
       var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas) + preencherFilhos(vs, todas.slice(1)), dt = new Date(resp.geradoEm);
-      var upd = isNaN(dt) ? null : dt.toLocaleDateString('en-US') + ' ' + dt.toLocaleTimeString('en-US');
-      if (n) marcarStatus('ok', '', upd);
-      else marcarStatus('vazio', 'The query returned no values for ' + state.bu + ' in ' + MESES_LONGOS[state.mes - 1] + ' ' + state.ano + '.', upd);
+      var bu = state.bu, mes = state.mes - 1, ano = state.ano;
+      if (n) marcarStatus('ok', '', dt);
+      else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
       render();
     }).catch(function (e) {
       if (meu !== seqDados) return;
       preencher(visao(), []);
       preencherFilhos(visao(), []);
-      marcarStatus('erro', 'Could not query the database (' + e.message + ').');
+      var msg = e.message;
+      marcarStatus('erro', function () { return T('s.erro', { msg: msg }); });
       render();
     });
   }
@@ -1161,14 +1479,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     tip.style.top = (e.clientY - 34) + 'px';
   });
 
-  document.querySelectorAll('.js-theme').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var root = document.documentElement;
-      var cur = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
-    });
-  });
-
   // Tela cheia: alterna; navegadores ou janelas que bloqueiam a API ficam com o F11
   // (o F11 é tratado no CSS por display-mode: fullscreen)
   document.querySelectorAll('.js-full').forEach(function (b) {
@@ -1183,10 +1493,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var on = !!document.fullscreenElement;
     document.documentElement.classList.toggle('is-fs', on);
     document.querySelectorAll('.js-full').forEach(function (b) {
-      b.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
-      b.title = on ? 'Exit full screen (Esc)' : 'Full screen (F11)';
+      b.setAttribute('aria-label', T(on ? 'fs.off' : 'fs.on'));
+      b.title = T(on ? 'fs.offTitle' : 'fs.onTitle');
     });
   });
+
+  VBMSetup.on('idioma', function () {
+    renderFilters();
+    if (ultimoStatus) marcarStatus.apply(null, ultimoStatus);
+    if (!unitPop.hidden) renderUnit();
+    var fs = !!document.fullscreenElement;
+    document.querySelectorAll('.js-full').forEach(function (b) { b.setAttribute('aria-label', T(fs ? 'fs.off' : 'fs.on')); b.title = T(fs ? 'fs.offTitle' : 'fs.onTitle'); });
+    render();
+  });
+  VBMSetup.on('numero', function () { render(); });
+  VBMSetup.on('tema', function () { render(); });
 
   renderFilters();
   atualizar();
