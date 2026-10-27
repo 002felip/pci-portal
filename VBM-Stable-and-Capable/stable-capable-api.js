@@ -128,9 +128,18 @@ function arquivosFaltando() {
     .filter((f) => !fs.existsSync(f)).map((f) => path.relative(RAIZ, f));
 }
 
+// O Databricks Apps põe entradas RELATIVAS no PATH (ex.: ".venv/bin"), que só
+// valem a partir da raiz do app (process.cwd()). Como os processos Python rodam
+// com cwd no temp, toda entrada relativa vira absoluta aqui.
+const absolutoDoApp = (p) => (path.isAbsolute(p) ? p : path.resolve(process.cwd(), p));
+function pathAbsoluto() {
+  return String(process.env.PATH || '').split(path.delimiter).filter(Boolean).map(absolutoDoApp).join(path.delimiter);
+}
+
 function envPython(libdir = ambiente.libdir) {
   return {
     ...process.env,
+    PATH: pathAbsoluto(),
     PYTHONIOENCODING: 'utf-8',
     PYTHONUNBUFFERED: '1',
     MPLBACKEND: 'Agg',
@@ -160,9 +169,13 @@ async function prepararAmbienteAgora() {
   for (const c of [...new Set(nomes)]) {
     const r = await rodar(c, ['-c', 'import sys; print(sys.executable); print(sys.version.split()[0])']);
     if (r.ok) {
-      const [exe, ver] = r.stdout.trim().split('\n');
-      // Daqui em diante, sempre o caminho ABSOLUTO (não depende do PATH)
-      if (exe && !pythons.some((p) => p.cmd === exe)) pythons.push({ cmd: exe, nome: c, versao: 'Python ' + ver });
+      const [exeInformado, ver] = r.stdout.trim().split('\n');
+      // Daqui em diante, sempre o caminho ABSOLUTO (não depende do PATH nem do cwd).
+      // sys.executable pode vir RELATIVO: no Databricks Apps veio ".venv/bin/python",
+      // porque o PATH do app tem ".venv/bin". Relativo à raiz do app = process.cwd(),
+      // de onde este teste rodou.
+      const exe = exeInformado && absolutoDoApp(exeInformado.trim());
+      if (exe && fs.existsSync(exe) && !pythons.some((p) => p.cmd === exe)) pythons.push({ cmd: exe, nome: c, versao: 'Python ' + ver });
     }
   }
   if (!pythons.length) throw new Error('Python não encontrado (tentado: ' + nomes.join(', ') + ').');
