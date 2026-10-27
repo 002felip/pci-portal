@@ -299,6 +299,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
    do título do painel e a última junto à base. A altura dos gráficos (--chart-h, até 190 px, sem esticar)
    é calculada em ajustarAltura() para as três linhas caberem no painel */
 .panel-grid { grid-template-rows: repeat(var(--rows, 3), auto); align-content: start; row-gap: 10px; }
+.card-nota { flex-shrink: 0; margin: 2px 0 0; font: italic 400 .66rem/1.35 var(--font-display); color: var(--text-soft); }
+.card-nota sup { font-size: .85em; line-height: 0; }
 .card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
 /* Tela cheia (botão ou F11): sem o cabeçalho azul; tela cheia e tema descem para o canto direito */
 .fs-tools { display: flex; align-self: flex-end; gap: 4px; margin-left: 4px; }
@@ -378,7 +380,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   html, body { height: auto; }
   body { display: block; }
   .dash { grid-template-columns: minmax(0, 1fr); }
-  .panel-grid { grid-template-rows: none; grid-auto-rows: 210px; align-content: start; }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; } /* cresce com a nota de rodapé */
   .chart { height: 150px; }
 }
 @media (max-width: 720px) {
@@ -814,6 +816,7 @@ window.VBMSetup = (function () {
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
+      'c.notaInterm': 'Os dados apresentados neste gráfico incluem a produção de intermediários.',
       'c.pendente': 'Atualizações finais pendentes', 'c.atrasado': 'Atualização atrasada', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
       'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
       'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
@@ -828,6 +831,7 @@ window.VBMSetup = (function () {
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
+      'c.notaInterm': 'The data presented in this chart includes intermediates production.',
       'c.pendente': 'Pending final updates', 'c.atrasado': 'Overdue update', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
       'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
       'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
@@ -875,14 +879,16 @@ window.VBMSetup = (function () {
       k('Mining Production Expenses', 0, 'down')] };
   var MINA_VNL = { cls: 'dash--mina', colsProd: 2, rows: 2,
     prod: [k('Equivalent Total Development', 0), k('Ore Mined', 0, 'up', { kpi: ['Ore Hoisted | Mined (Dry)'] }), k('Nickel Grade', 2), k('Copper Grade', 1)], fin: [] };
+  // Nota de rodapé do PDF (Onça Puma: Finished Nickel; Ontario: Finished Nickel e Copper Production)
+  var NOTA_INTERM = { nota: 'c.notaInterm' };
   // Chave = nome do site normalizado (ver normalizar)
   var MODELOS = {
     salobo: { prod: COBRE, fin: FINANCEIRO },
     sossego: { prod: COBRE, fin: FINANCEIRO },
     oncapuma: { prod: [k('Mine Movement', 1), k('Ore Milled | ROP', 1, 'up', { kpi: ['Ore Milled | ROP (Dry)'] }), k('Nickel Feed Grade', 2), k('Nickel Recovery', 2),
-      k('Nickel Grade in Ferro Nickel', 1), k('Ferro Nickel', 0), k('Finished Nickel', 0), k('Finished Nickel | Sales', 0)], fin: FINANCEIRO },
+      k('Nickel Grade in Ferro Nickel', 1), k('Ferro Nickel', 0), k('Finished Nickel', 0, 'up', NOTA_INTERM), k('Finished Nickel | Sales', 0)], fin: FINANCEIRO },
     ontario: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Copper Grade', 2), k('Nickel Grade', 2),
-      k('Finished Nickel', 0), k('Copper Production', 0), k('Finished Nickel | Sales', 0), k('Copper Production | Sales', 0)], fin: FINANCEIRO },
+      k('Finished Nickel', 0, 'up', NOTA_INTERM), k('Copper Production', 0, 'up', NOTA_INTERM), k('Finished Nickel | Sales', 0), k('Copper Production | Sales', 0)], fin: FINANCEIRO },
     vnl: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2), k('Copper Grade', 2),
       k('Finished Nickel', 1), k('Copper Production', 1), k('Finished Nickel | Sales', 1), k('Copper Production | Sales', 1)], fin: FINANCEIRO },
     // Produção da IR: cada card lê o site da refinaria (`filho`: prefixo do nome normalizado; ver IR_FILHOS)
@@ -1152,6 +1158,7 @@ window.VBMSetup = (function () {
     return '<article class="card card-' + ind.id + (pend ? ' is-pend' : '') + '" id="card-' + ind.id + '">' +
       '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
+      (ind.nota ? '<p class="card-nota"><sup>1</sup> ' + esc(T(ind.nota)) + '</p>' : '') +
       '</article>';
   }
 
@@ -1190,6 +1197,9 @@ window.VBMSetup = (function () {
     document.documentElement.style.setProperty('--head-h', '0px');
     document.documentElement.style.setProperty('--head-h', maiorCabeca(document) + 'px');
     // altura única dos gráficos, pelo cabeçalho de card mais alto da página (ex.: seletor do All-in quebrando linha)
+    // nota de rodapé (alguns cards): reserva a mesma altura em todas as linhas
+    var notas = [].map.call(document.querySelectorAll('#dash .card-nota'), function (n) { return n.offsetHeight + 6; });
+    extra += notas.length ? Math.max.apply(null, notas) : 0;
     var livre = (gProd.clientHeight - (N - 1) * GAP_MIN) / N - (maiorCabeca(document) + extra);
     var h = Math.max(90, Math.min(MAX_H, Math.floor(livre)));
     document.documentElement.style.setProperty('--chart-h', h + 'px');
@@ -1664,7 +1674,7 @@ window.VBMSetup = (function () {
         s.d = porKpi[chave].d;
         s.dec = casasDe(s, l);
         s.atual = null; s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null;
-        s.t = normalizar(nome).indexOf(s.filho) === 0 ? nome : r.nome + ' · ' + nome;
+        s.t = nome; // nome do gráfico como vem da query
         s.u = l.SG_UNID || '';
         achados++;
       });
