@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Performance &amp; Continuous Improvement — Vale Base Metals</title>
-<!-- Portal do Databricks App: só navegação entre as duas aplicações.
+<!-- Portal do Databricks App: só navegação entre as aplicações.
      Arquivos próprios do portal em assets/ (independente das aplicações). -->
 <link rel="stylesheet" href="assets/css/poppins.css"/>
 <style>
@@ -301,7 +301,7 @@
   .subtitulo { font-size: clamp(.85rem, .95vw, .9375rem); color: var(--texto-suave); margin-bottom: clamp(1.5rem, 3.5vh, 2rem); }
   .cards {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 300px));
+    grid-template-columns: repeat(3, minmax(0, 300px));
     gap: 1.25rem;
     width: 100%;
     justify-content: center;
@@ -345,6 +345,10 @@
   /* Monitores grandes: só um pouco mais de respiro, sem crescer junto com a tela */
   @media (min-width: 1600px) {
     .cards { gap: 1.5rem; }
+  }
+  /* 3 cards não cabem lado a lado em tela média: 2 por linha */
+  @media (max-width: 1000px) and (min-width: 721px) {
+    .cards { grid-template-columns: repeat(2, minmax(0, 300px)); }
   }
   @media (max-width: 720px) {
     .topo { padding: 0 1rem; }
@@ -469,6 +473,16 @@
         <p data-i18n="portal.performanceHubDesc">Plataforma corporativa para acompanhamento de desempenho, análise de resultados e geração de insights estratégicos.</p>
         <span class="acessar"><span data-i18n="portal.open">Acessar</span> <span aria-hidden="true">→</span></span>
       </a>
+
+      <a class="card" href="/VBM-Stable-and-Capable/">
+        <span class="icone" aria-hidden="true">
+          <!-- carta de controle (SPC): limites + linha central + pontos -->
+          <svg viewBox="0 0 512 512"><path d="M32 64h448c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96s14.3-32 32-32zm0 320h448c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32zM16 256c0-8.8 7.2-16 16-16h448c8.8 0 16 7.2 16 16s-7.2 16-16 16H32c-8.8 0-16-7.2-16-16zm88-40a40 40 0 1 1 0 80 40 40 0 1 1 0-80zm112-40a40 40 0 1 1 0 80 40 40 0 1 1 0-80zm112 80a40 40 0 1 1 0 80 40 40 0 1 1 0-80zm112-60a40 40 0 1 1 0 80 40 40 0 1 1 0-80z"/></svg>
+        </span>
+        <h2>VBM - Stable &amp; Capable</h2>
+        <p data-i18n="portal.stableDesc">Relatórios de estabilidade e capabilidade (SPC) por Business Unit, gerados para o período escolhido.</p>
+        <span class="acessar"><span data-i18n="portal.open">Acessar</span> <span aria-hidden="true">→</span></span>
+      </a>
     </nav>
   </main>
 
@@ -559,11 +573,13 @@
       'pt-BR': { 'settings.btnTitle': 'Configurações', 'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'settings.languageInfo': 'Idioma da interface', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
         'portal.subtitle': 'Selecione a aplicação desejada', 'portal.apps': 'Aplicações', 'portal.open': 'Acessar',
         'portal.kaizenDesc': 'Gestão do Programa Kaizen, cadastro, aprovação, biblioteca e indicadores.',
-        'portal.performanceHubDesc': 'Acompanhamento de indicadores e dashboards estratégicos.' },
+        'portal.performanceHubDesc': 'Acompanhamento de indicadores e dashboards estratégicos.',
+        'portal.stableDesc': 'Relatórios de estabilidade e capabilidade (SPC) por Business Unit, gerados para o período escolhido.' },
       'en': { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
         'portal.subtitle': 'Select the application', 'portal.apps': 'Applications', 'portal.open': 'Open',
         'portal.kaizenDesc': 'Kaizen Program management: registration, approval, library and indicators.',
-        'portal.performanceHubDesc': 'Tracking of indicators and strategic dashboards.' }
+        'portal.performanceHubDesc': 'Tracking of indicators and strategic dashboards.',
+        'portal.stableDesc': 'Stability and capability (SPC) reports per Business Unit, generated for the chosen period.' }
     };
     var ALVOS = [['data-i18n', null], ['data-i18n-title', 'title'], ['data-i18n-aria', 'aria-label']];
     var select = document.getElementById('langSelect');

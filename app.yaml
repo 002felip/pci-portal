@@ -114,6 +114,19 @@ env:
   - name: 'AZURE_STORAGE_SAS_TOKEN'
     value: 'sp=racw&st=2026-09-02T13:37:52Z&se=2030-01-18T21:52:52Z&spr=https&sv=2026-02-06&sr=c&sig=8gEPo1jtLiz1wbdSW7EVlOl0su8Tj5%2FqJDYe7I%2B%2BOHI%3D'
 
+  # ── VBM-Stable-and-Capable (pasta da raiz, /VBM-Stable-and-Capable/) ──
+  # NADA obrigatório: usa o MESMO banco do Kaizen (KAIZEN_AZURE_SQL_DATABASE,
+  # mesmo servidor/login acima) e o MESMO Blob (AZURE_STORAGE_* acima). Os
+  # PDFs vão para "<AZURE_STORAGE_CONTAINER>/01 - Imagens/Stable & Capable/".
+  # As bibliotecas Python vêm do requirements.txt da raiz (instalado no deploy).
+  # Opcionais — só declare para mudar o padrão:
+  #   STABLECAPABLE_AZURE_SQL_DATABASE  outro banco só para esta aplicação
+  #   STABLECAPABLE_BLOB_PASTA          outra pasta no Blob
+  #   STABLECAPABLE_PYTHON              executável Python (padrão: python3/python)
+  #
+  #   - name: 'STABLECAPABLE_BLOB_PASTA'
+  #     value: '06 - Stable & Capable'
+
 
   # ── Avisos por e-mail das decisões de aprovação ──
   # NADA de credencial aqui. O e-mail é enviado pelo NAVEGADOR, com o
