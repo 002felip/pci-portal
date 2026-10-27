@@ -134,10 +134,15 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
   return [...porKpi.values()].sort((x, y) => (x.ID_ORDEM - y.ID_ORDEM) || x.CD_VISAO.localeCompare(y.CD_VISAO));
 }
 
+// Nome de site do dashboard sem nome em IBP.SITES (minas da VNL cadastradas no ID_DASH 15).
+// 36 e 37 conforme o mapeamento do VBM-Stable-and-Capable; 42 = Discovery Hill (a 3ª mina da VNL)
+const NOMES_PADRAO = { 36: 'Reid Brook', 37: 'Eastern Deeps', 42: 'Discovery Hill' };
+
 // Filtros da tela a partir do resultado do script: sites que têm linhas, anos e
 // meses de referência (DT_REF) e o último mês realizado (mês com Actual 'A')
 function extrairFiltros(linhas, sites) {
-  const nomes = new Map(sites.map(s => [Number(s.ID_SITE), s.NM_SITE]));
+  const nomes = new Map(Object.entries(NOMES_PADRAO).map(([id, nome]) => [Number(id), nome]));
+  for (const s of sites) nomes.set(Number(s.ID_SITE), s.NM_SITE); // o nome do banco vence o padrão
   const comDados = new Set(), meses = {};
   let ultimo = null;
   for (const l of linhas) {

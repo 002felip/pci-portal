@@ -275,6 +275,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .dash--ir .panel-prod .card { width: 100%; max-width: 380px; }
 /* IR: só dois gráficos no painel; mais ar entre eles (vence o espaçamento comum calculado em ajustarAltura) */
 .dash--ir .panel-prod .panel-grid { row-gap: clamp(40px, 8vh, 90px) !important; }
+/* Minas em colunas (VNL Mines): uma coluna por mina, gráficos empilhados na ordem do ID_ORDEM */
+.dash--colunas { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); column-gap: 24px; }
+.dash--colunas .panel { padding-inline: 22px; }
+.dash--colunas .panel .panel-grid { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.dash--colunas .panel .card { width: 100%; max-width: 380px; }
 .panel-vazio { margin: auto; padding: 24px; font: italic 400 .95rem var(--font-display); color: var(--text-soft); text-align: center; }
 .panel-sub { font: italic 400 .8rem var(--font-display); color: var(--text-faint); }
 
@@ -1301,6 +1306,7 @@ window.VBMSetup = (function () {
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
     dash.style.setProperty('--rows', vs.rows);
+    dash.style.setProperty('--cols', vs.paineis.length);
     dash.innerHTML = vs.paineis.map(function (p, i) {
       return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
         '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
@@ -1518,9 +1524,17 @@ window.VBMSetup = (function () {
   // Minas de cada BU (navegação do PDF: BU → minas); só entram as que a consulta trouxer como site.
   // Prefixo do nome normalizado: aceita variações como "Copper Cliff Mine" ou "Copper Clif"
   var MINAS_DA_BU = {
-    ontario: ['coleman', 'coppercli', 'creighton', 'garson', 'totten', 'stobie'],
-    vnl: ['easterndeep', 'reidbrook', 'discoveryhill']
+    ontario: ['coleman', 'coppercli', 'creighton', 'garson', 'totten', 'stobie']
   };
+  // Minas numa página só, uma coluna por mina (modelo do PDF "VNL Mines"), na ordem do PDF.
+  // Cada coluna mostra todos os KPIs da query daquela mina, na ordem do ID_ORDEM
+  var MINAS_EM_COLUNAS = {
+    vnl: { nome: 'VNL Mines', minas: [{ m: 'easterndeep', sub: 'UG Mines' }, { m: 'reidbrook', sub: 'UG Mines' }, { m: 'discoveryhill', sub: 'Open Pit' }] }
+  };
+  function visaoColunas(nome, minas) {
+    return { cls: 'dash--colunas', colsProd: 1, rows: 4, titulo: nome, colunas: minas.map(function (m) { return { id: m.id, nome: m.nome }; }),
+      paineis: minas.map(function (m, i) { return { titulo: m.nome, sub: m.sub, cls: i % 2 ? 'panel-fin' : 'panel-prod', site: m.id, cards: [] }; }) };
+  }
   var MINAS = {}, BU_DA_MINA = {}; // nome da BU → nomes das minas; nome da mina → BU
 
   function aplicarFiltros(f) {
@@ -1537,6 +1551,21 @@ window.VBMSetup = (function () {
       SITE_ID[st.nome] = st.id;
       porChave[normalizar(st.nome)] = st.nome;
     });
+    var ocultos = {}; // minas que só aparecem dentro da página em colunas
+    Object.keys(MINAS_EM_COLUNAS).forEach(function (chaveBu) {
+      var cfg = MINAS_EM_COLUNAS[chaveBu];
+      var minas = cfg.minas.map(function (mc) {
+        var c = Object.keys(porChave).filter(function (n) { return n.indexOf(mc.m) === 0; })[0];
+        return c && { id: SITE_ID[porChave[c]], nome: porChave[c], sub: mc.sub };
+      }).filter(Boolean);
+      if (!minas.length) return;
+      minas.forEach(function (m) { ocultos[m.nome] = true; });
+      VISOES[cfg.nome] = visaoColunas(cfg.nome, minas);
+      SITE_ID[cfg.nome] = null;
+      var bu = porChave[chaveBu] ? chaveBu : Object.keys(porChave).filter(function (n) { return n.indexOf(chaveBu) === 0; })[0];
+      if (bu) { MINAS[porChave[bu]] = [cfg.nome]; BU_DA_MINA[cfg.nome] = porChave[bu]; }
+      else sites.push({ id: null, nome: cfg.nome }); // sem a BU no menu: a página entra solta
+    });
     if (f.semNome && f.semNome.length) console.warn('[coo-dashboard] ID_SITE with data but no name in IBP.SITES (left out of the menu): ' + f.semNome.join(', '));
     Object.keys(MINAS_DA_BU).forEach(function (chaveBu) {
       // BU pelo prefixo do nome normalizado ("Ontario", "Ontario Operations", "VNL | …")
@@ -1550,7 +1579,7 @@ window.VBMSetup = (function () {
       minas.forEach(function (m) { BU_DA_MINA[m] = porChave[bu]; });
     });
     sites.forEach(function (st) {
-      if (BU_DA_MINA[st.nome]) return; // a mina aparece logo abaixo da sua BU
+      if (BU_DA_MINA[st.nome] || ocultos[st.nome]) return; // a mina aparece logo abaixo da sua BU
       var pais = paisDo(st.nome);
       (grupos[pais] = grupos[pais] || []).push(st.nome);
     });
@@ -1726,6 +1755,33 @@ window.VBMSetup = (function () {
 
   // Cards lidos de outro site (produção de cada refinaria na IR): o KPI de mesmo nome,
   // senão o de produção, senão o primeiro pelo ID_ORDEM. Devolve quantos têm dados.
+  // Página em colunas: cada mina recebe um card por KPI da query, na ordem do ID_ORDEM, com
+  // nome, unidade e casas decimais do banco. Devolve quantos cards têm dados.
+  function preencherColunas(vs, respostas) {
+    var achados = 0, letras = ['A', 'A', 'F'], maior = 1;
+    vs.paineis.forEach(function (p, i) {
+      var r = respostas.filter(function (x) { return Number(x.site) === Number(p.site); })[0];
+      var porKpi = {}, ordem = [];
+      ((r && r.linhas) || []).forEach(function (l) {
+        var ch = l.ID_OPERACAO + '-' + l.ID_KPI;
+        if (!porKpi[ch]) { porKpi[ch] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(ch); }
+        porKpi[ch].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
+        if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
+      });
+      ordem.sort(function (a, b) { return (Number(porKpi[a].l.ID_ORDEM) || 0) - (Number(porKpi[b].l.ID_ORDEM) || 0); });
+      p.cards = ordem.map(function (ch, j) {
+        var l = porKpi[ch].l;
+        achados++;
+        return { id: 'm' + i + 'k' + j, t: String(l.NM_KPI).trim(), tPdf: String(l.NM_KPI).trim(), u: l.SG_UNID || '', dec: l.CASA_DECIMAL != null ? l.CASA_DECIMAL : 1,
+          pol: 'up', d: porKpi[ch].d, ordem: Number(l.ID_ORDEM), ref: p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI, atual: null, vazio: SEM_DADOS };
+      });
+      maior = Math.max(maior, p.cards.length);
+    });
+    vs.rows = maior;
+    LETRAS_AF = letras;
+    return achados;
+  }
+
   function preencherFilhos(vs, respostas) {
     var achados = 0;
     vs.paineis.forEach(function (p) {
@@ -1765,13 +1821,14 @@ window.VBMSetup = (function () {
       if (meu !== seqDados) return null;
       render(); // os filtros podem ter definido o site e o mês iniciais
       var periodo = '&ano=' + state.ano + '&mes=' + state.mes, id = SITE_ID[state.bu];
-      var filhos = paisDo(state.bu) === 'IR' && !BU_DA_MINA[state.bu] ? IR_FILHOS : [];
+      var filhos = visao().colunas || (paisDo(state.bu) === 'IR' && !BU_DA_MINA[state.bu] ? IR_FILHOS : []);
       return Promise.all([id ? apiGet('indicadores?site=' + id + periodo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
         filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
     }).then(function (todas) {
       if (!todas || meu !== seqDados) return;
-      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas, resp.site) + preencherFilhos(vs, todas.slice(1)), dt = new Date(resp.geradoEm);
-      ordenarCards(vs);
+      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas, resp.site) + (vs.colunas ? preencherColunas(vs, todas.slice(1)) : preencherFilhos(vs, todas.slice(1))), dt = new Date(resp.geradoEm);
+      if (!vs.colunas) ordenarCards(vs);
+      if (vs.colunas && todas[1]) dt = new Date(todas[1].geradoEm);
       var bu = state.bu, mes = state.mes - 1, ano = state.ano;
       if (n) marcarStatus('ok', '', dt);
       else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
@@ -1783,7 +1840,7 @@ window.VBMSetup = (function () {
       if (meu !== seqDados) return;
       console.error('[coo-dashboard] failed to load indicators:', e);
       preencher(visao(), []);
-      preencherFilhos(visao(), []);
+      if (visao().colunas) preencherColunas(visao(), []); else preencherFilhos(visao(), []);
       var msg = e.message;
       marcarStatus('erro', function () { return T('s.erro', { msg: msg }); });
       render();
