@@ -263,7 +263,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .card-head:has(.seg) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; align-items: start; align-content: start; column-gap: 8px; row-gap: 1px; }
 .card-head:has(.seg) .card-name { display: contents; }
 .card-head:has(.seg) .card-title { grid-area: 1 / 1; white-space: normal; }
-.card-head:has(.seg) .seg { grid-area: 1 / 2 / 4 / 3; display: grid; grid-template-columns: repeat(2, auto); } /* 2×2 com 4 opções */
+.card-head:has(.seg) .seg { grid-area: 1 / 2 / 4 / 3; display: inline-flex; flex-wrap: nowrap; } /* sempre em uma linha */
+.card-head:has(.seg) .seg button { min-height: 20px; padding: 1px 6px; font-size: .62rem; }
 .card-head:has(.seg) .card-unit { grid-area: 2 / 1; }
 /* Cabeçalhos com a mesma altura na página (ajustarAltura): os gráficos de uma linha começam na mesma altura */
 .card-head { min-height: var(--head-h, 0px); }
@@ -333,6 +334,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .card-title { font-size: .88rem; }
   .card .seg { gap: 1px; }
   .card .seg button { padding: 1px 5px; font-size: .62rem; }
+  .card-head:has(.seg) .seg button { padding: 1px 4px; font-size: .58rem; }
   .card-head { column-gap: 4px; }
   .title-block h2 { font-size: 1.75rem; }
   .site { font-size: 1.7rem; }
@@ -507,7 +509,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       k('Finished Nickel', 0), k('Copper Production', 0), k('Finished Nickel | Sales', 0), k('Copper Production | Sales', 0)], fin: FINANCEIRO },
     vnl: { prod: [k('Equivalent Total Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2), k('Copper Grade', 2),
       k('Finished Nickel', 1), k('Copper Production', 1), k('Finished Nickel | Sales', 1), k('Copper Production | Sales', 1)], fin: FINANCEIRO },
-    internationalrefineries: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 1), k('Matsuzaka Production', 1, 'up', { kpi: ['Matsusaka Production'] })], fin: FINANCEIRO },
+    // Produção da IR: cada card lê o site da refinaria (`filho`: prefixo do nome normalizado; ver IR_FILHOS)
+    internationalrefineries: { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 1, 'up', { filho: 'clydach' }),
+      k('Matsuzaka Production', 1, 'up', { kpi: ['Matsusaka Production'], filho: 'mats' })], fin: FINANCEIRO },
     manitoba: { prod: [k('Lateral Mine Development', 0), k('Ore Hoisted | Mined (Dry)', 0), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2),
       k('Ni Production', 2), k('Ni Production | Sales', 1)], fin: FINANCEIRO },
     coleman: MINA_ONTARIO, coppercliff: MINA_ONTARIO, creighton: MINA_ONTARIO, garson: MINA_ONTARIO, totten: MINA_ONTARIO, stobie: MINA_ONTARIO,
@@ -526,9 +530,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       return card;
     });
   }
+  // Modelo pelo nome do site: igual ou começando pela chave (ex.: "Copper Cliff Mine" → coppercliff)
+  function modeloDe(nome) {
+    var n = normalizar(nome);
+    if (MODELOS[n]) return MODELOS[n];
+    var chave = Object.keys(MODELOS).filter(function (c) { return c.length >= 5 && n.indexOf(c) === 0; })[0];
+    return chave ? MODELOS[chave] : null;
+  }
   function criarVisao(nome, modelo) {
-    var m = modelo || MODELOS[normalizar(nome)] || { prod: [], fin: [] };
-    return { cls: m.cls || '', colsProd: m.colsProd || 3, rows: m.rows || 3, titulo: nome, semModelo: !modelo && !MODELOS[normalizar(nome)], paineis: [
+    var m = modelo || modeloDe(nome) || { prod: [], fin: [] };
+    return { cls: m.cls || '', colsProd: m.colsProd || 3, rows: m.rows || 3, titulo: nome, semModelo: !modelo && !modeloDe(nome), paineis: [
       { titulo: 'Production Drivers', cls: 'panel-prod', cards: copiarCards(m.prod, 'p') },
       { titulo: 'Financial Drivers', cls: 'panel-fin', cards: copiarCards(m.fin, 'f') }
     ] };
@@ -883,31 +894,43 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   // ── Unidades e filtros: sites, anos e mês inicial vêm do resultado da consulta (/api/filtros) ──
   // País (a consulta não traz): IR agrupa as refinarias; Brasil, os sites brasileiros; o resto é Canadá
   var SITES_IR = /^(internationalrefineries|ir|clydach|clydachcnr|matsusaka|matsuzaka|matsusakatonimet)$/;
+  // IR no seletor é só "International Refineries"; Clydach | CNR (ID_SITE 16) e Matsusaka (ID_SITE 26)
+  // alimentam os cards de produção dela e não aparecem como unidade
+  var IR_NOME = 'International Refineries', IR_IDS_FILHOS = [16, 26], IR_FILHOS = [];
+  function ehFilhoIR(st) { var n = normalizar(st.nome); return IR_IDS_FILHOS.indexOf(Number(st.id)) >= 0 || /^(clydach|matsusaka|matsuzaka)/.test(n); }
   var SITES_BRASIL = /^(salobo|sossego|oncapuma)$/;
   function paisDo(nome) { var n = normalizar(nome); return SITES_IR.test(n) ? 'IR' : SITES_BRASIL.test(n) ? 'Brazil' : 'Canada'; }
   var ORDEM_PAISES = ['Brazil', 'Canada', 'IR'];
-  // Minas de cada BU (navegação do PDF: BU → minas); só entram as que a consulta trouxer como site
+  // Minas de cada BU (navegação do PDF: BU → minas); só entram as que a consulta trouxer como site.
+  // Prefixo do nome normalizado: aceita variações como "Copper Cliff Mine" ou "Copper Clif"
   var MINAS_DA_BU = {
-    ontario: ['coleman', 'coppercliff', 'creighton', 'garson', 'totten', 'stobie'],
-    vnl: ['easterndeeps', 'reidbrook', 'discoveryhill']
+    ontario: ['coleman', 'coppercli', 'creighton', 'garson', 'totten', 'stobie'],
+    vnl: ['easterndeep', 'reidbrook', 'discoveryhill']
   };
   var MINAS = {}, BU_DA_MINA = {}; // nome da BU → nomes das minas; nome da mina → BU
 
   function aplicarFiltros(f) {
     var grupos = {}, porChave = {};
     SITE_ID = {}; MINAS = {}; BU_DA_MINA = {};
-    (f.sites || []).forEach(function (st) {
+    IR_FILHOS = (f.sites || []).filter(ehFilhoIR);
+    var sites = (f.sites || []).filter(function (st) { return !ehFilhoIR(st); });
+    // refinarias com dados e sem o site "International Refineries": a IR entra mesmo assim
+    if (IR_FILHOS.length && !sites.some(function (st) { return normalizar(st.nome) === normalizar(IR_NOME); })) sites.push({ id: null, nome: IR_NOME });
+    sites.forEach(function (st) {
       VISOES[st.nome] = VISOES[st.nome] || criarVisao(st.nome);
       SITE_ID[st.nome] = st.id;
       porChave[normalizar(st.nome)] = st.nome;
     });
     Object.keys(MINAS_DA_BU).forEach(function (bu) {
       if (!porChave[bu]) return;
-      var minas = MINAS_DA_BU[bu].filter(function (m) { return porChave[m]; }).map(function (m) { return porChave[m]; });
+      var minas = MINAS_DA_BU[bu].map(function (m) {
+        var c = Object.keys(porChave).filter(function (n) { return n.indexOf(m) === 0; })[0];
+        return c && porChave[c];
+      }).filter(Boolean);
       if (minas.length) MINAS[porChave[bu]] = minas;
       minas.forEach(function (m) { BU_DA_MINA[m] = porChave[bu]; });
     });
-    (f.sites || []).forEach(function (st) {
+    sites.forEach(function (st) {
       if (BU_DA_MINA[st.nome]) return; // a mina aparece logo abaixo da sua BU
       var pais = paisDo(st.nome);
       (grupos[pais] = grupos[pais] || []).push(st.nome);
@@ -919,7 +942,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var ult = f.ultimoRealizado;
     if (ult) { state.ano = ult.ano; state.mes = ult.mes; state.tri = Math.ceil(ult.mes / 3); }
     else if (ANOS.indexOf(state.ano) < 0) state.ano = ANOS[ANOS.length - 1];
-    if (!SITE_ID[state.bu]) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
+    if (!(state.bu in SITE_ID)) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
     renderFilters();
   }
 
@@ -994,6 +1017,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       p.cards.forEach(function (c) {
         (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) {
           if (!s.tPdf) s.tPdf = s.t;
+          if (s.filho) return; // lido de outro site (refinarias da IR): preencherFilhos
           var chave = escolher({ t: s.tPdf, kpi: s.kpi, unid: s.unid });
           if (chave) usados[chave] = true;
           seq.push({ s: s, chave: chave });
@@ -1036,6 +1060,36 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return achados;
   }
 
+  // Cards lidos de outro site (produção de cada refinaria na IR): o KPI de mesmo nome,
+  // senão o de produção, senão o primeiro pelo ID_ORDEM. Devolve quantos têm dados.
+  function preencherFilhos(vs, respostas) {
+    var achados = 0;
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (s) {
+        if (!s.filho) return;
+        if (!s.tPdf) s.tPdf = s.t;
+        var r = respostas.filter(function (x) { return normalizar(x.nome).indexOf(s.filho) === 0; })[0];
+        var porKpi = {}, ordem = [];
+        ((r && r.linhas) || []).forEach(function (l) {
+          var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
+          if (!porKpi[chave]) { porKpi[chave] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(chave); }
+          porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+        });
+        ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); });
+        var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
+        var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
+          ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; return; }
+        var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
+        s.d = porKpi[chave].d;
+        s.t = normalizar(nome).indexOf(s.filho) === 0 ? nome : r.nome + ' · ' + nome;
+        s.u = l.SG_UNID || '';
+        achados++;
+      });
+    });
+    return achados;
+  }
+
   // Busca os indicadores do site no mês escolhido; só a resposta mais recente é aplicada
   function carregarIndicadores() {
     var meu = ++seqDados;
@@ -1043,10 +1097,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     filtros().then(function () {
       if (meu !== seqDados) return null;
       render(); // os filtros podem ter definido o site e o mês iniciais
-      return apiGet('indicadores?site=' + SITE_ID[state.bu] + '&ano=' + state.ano + '&mes=' + state.mes);
-    }).then(function (resp) {
-      if (!resp || meu !== seqDados) return;
-      var vs = visao(), n = preencher(vs, resp.linhas), dt = new Date(resp.geradoEm);
+      var periodo = '&ano=' + state.ano + '&mes=' + state.mes, id = SITE_ID[state.bu];
+      var filhos = normalizar(state.bu) === normalizar(IR_NOME) ? IR_FILHOS : [];
+      return Promise.all([id ? apiGet('indicadores?site=' + id + periodo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
+        filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
+    }).then(function (todas) {
+      if (!todas || meu !== seqDados) return;
+      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas) + preencherFilhos(vs, todas.slice(1)), dt = new Date(resp.geradoEm);
       var upd = isNaN(dt) ? null : dt.toLocaleDateString('en-US') + ' ' + dt.toLocaleTimeString('en-US');
       if (n) marcarStatus('ok', '', upd);
       else marcarStatus('vazio', 'The query returned no values for ' + state.bu + ' in ' + MESES_LONGOS[state.mes - 1] + ' ' + state.ano + '.', upd);
@@ -1054,6 +1111,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     }).catch(function (e) {
       if (meu !== seqDados) return;
       preencher(visao(), []);
+      preencherFilhos(visao(), []);
       marcarStatus('erro', 'Could not query the database (' + e.message + ').');
       render();
     });
