@@ -24,8 +24,9 @@
  *                                     do script: sites com dados, anos e meses, e o
  *                                     último mês realizado (Actual)
  *   GET /indicadores?site=&ano=&mes=  Budget e Actual/Forecast por KPI do site,
- *                                     no mês, no trimestre do mês e no ano, com a
- *                                     situação da atualização do ciclo (ATUALIZACAO)
+ *                                     no mês, no trimestre do mês e no ano
+ *   GET /atualizacao?site=&ano=&mes=  situação da atualização do ciclo por KPI do site
+ *                                     no mês (consulta à parte: não atrasa os gráficos)
  *   GET /atualizacoes                 saída do script de atualização, linha a linha
  */
 const fs = require('fs');
@@ -203,12 +204,19 @@ function criarCooRouter({ runQuery, idDash }) {
   const router = express.Router();
   const cache = new Map();
 
-  async function comCache(chave, buscar) {
+  // Pedidos simultâneos da mesma consulta esperam a MESMA ida ao banco (o pool do Portal
+  // tem poucas conexões; consultas pesadas em paralelo travariam as demais). Falha não fica no cache.
+  const emAndamento = new Map();
+  function comCache(chave, buscar) {
     const item = cache.get(chave);
-    if (item && item.expiraEm > Date.now()) return item.dados;
-    const dados = await buscar();
-    cache.set(chave, { dados, expiraEm: Date.now() + CACHE_TTL_MS });
-    return dados;
+    if (item && item.expiraEm > Date.now()) return Promise.resolve(item.dados);
+    if (emAndamento.has(chave)) return emAndamento.get(chave);
+    const p = Promise.resolve().then(buscar).then(dados => {
+      cache.set(chave, { dados, expiraEm: Date.now() + CACHE_TTL_MS });
+      return dados;
+    }).finally(() => emAndamento.delete(chave));
+    emAndamento.set(chave, p);
+    return p;
   }
 
   // Erro do banco fica no log do servidor; a tela recebe só uma mensagem genérica
@@ -257,14 +265,26 @@ function criarCooRouter({ runQuery, idDash }) {
       try { unidades = await buscar('/unidades-kpi', UNIDADES_SQL); } catch (err) { console.error(`${TAG} unidades dos KPIs indisponíveis:`, err.message); }
       const unidade = new Map(unidades.map(u => [`${u.ID_SITE}|${u.ID_OPERACAO}|${u.ID_KPI}`, u.SG_UNID || null]));
       for (const l of linhas) l.SG_UNID = unidade.get(`${p.site}|${l.ID_OPERACAO}|${l.ID_KPI}`) || null;
-      // Situação da atualização do ciclo; se o script falhar, os cards seguem sem o selo
-      let atualizacao = new Map();
-      try { atualizacao = atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes']), p); } catch (err) { console.error(`${TAG} situação da atualização indisponível:`, err.message); }
-      for (const l of linhas) l.ATUALIZACAO = atualizacao.get(`${l.ID_OPERACAO}|${l.ID_KPI}`) || null;
       res.json({ ...p, geradoEm: new Date().toISOString(), linhas });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);
       res.status(500).json({ error: 'Failed to query the dashboard indicators.', codigo: 'ERRO_BANCO' });
+    }
+  });
+
+  // Situação da atualização do ciclo, à parte dos indicadores: a tela desenha os gráficos
+  // primeiro e acrescenta o aviso quando esta resposta chega (ou fica sem ele, se falhar)
+  router.get('/atualizacao', async (req, res) => {
+    const p = { site: inteiro(req.query.site, 1, 2147483647), ano: inteiro(req.query.ano, 2000, 2100), mes: inteiro(req.query.mes, 1, 12) };
+    if (!p.site || !p.ano || !p.mes) {
+      return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
+    }
+    try {
+      const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes']), p));
+      res.json({ ...p, kpis });
+    } catch (err) {
+      console.error(`${TAG} erro em /atualizacao:`, err.message);
+      res.status(500).json({ error: 'Failed to query the data update status.', codigo: 'ERRO_BANCO' });
     }
   });
 

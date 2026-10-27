@@ -1541,7 +1541,7 @@ window.VBMSetup = (function () {
     return l && l.CASA_DECIMAL != null ? l.CASA_DECIMAL : s.decPdf;
   }
 
-  function preencher(vs, linhas) {
+  function preencher(vs, linhas, site) {
     if (vs.semModelo && (linhas || []).length) {
       var m = modeloPorKpis(linhas);
       if (m) { var nova = criarVisao(vs.titulo, m); for (var x in nova) vs[x] = nova[x]; vs.semModelo = false; }
@@ -1569,12 +1569,12 @@ window.VBMSetup = (function () {
       return cands[0] || null;
     }
     function aplicar(s, chave) {
-      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; return; }
+      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; return; }
       usados[chave] = true; achados++;
       var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
       s.d = porKpi[chave].d;
       s.dec = casasDe(s, l);
-      s.atual = l.ATUALIZACAO || null;
+      s.atual = null; s.ref = site ? site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null; // situação do ciclo: carregarAtualizacao
       // componente do All-in cadastrado só como "By Product"/"Cost": o card mostra "All-in | <nome>"
       s.t = /^all/i.test(s.tPdf) && !/^all/i.test(nome) ? 'All-in | ' + nome : nome;
       s.u = l.SG_UNID || '';
@@ -1647,11 +1647,11 @@ window.VBMSetup = (function () {
         var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
         var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
           ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
-        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; return; }
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; return; }
         var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
         s.d = porKpi[chave].d;
         s.dec = casasDe(s, l);
-        s.atual = l.ATUALIZACAO || null;
+        s.atual = null; s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null;
         s.t = normalizar(nome).indexOf(s.filho) === 0 ? nome : r.nome + ' · ' + nome;
         s.u = l.SG_UNID || '';
         achados++;
@@ -1673,17 +1673,38 @@ window.VBMSetup = (function () {
         filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
     }).then(function (todas) {
       if (!todas || meu !== seqDados) return;
-      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas) + preencherFilhos(vs, todas.slice(1)), dt = new Date(resp.geradoEm);
+      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas, resp.site) + preencherFilhos(vs, todas.slice(1)), dt = new Date(resp.geradoEm);
       var bu = state.bu, mes = state.mes - 1, ano = state.ano;
       if (n) marcarStatus('ok', '', dt);
       else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
       render();
+      if (n) carregarAtualizacao(meu, [resp.site].concat(todas.slice(1).map(function (r) { return r.site; })));
     }).catch(function (e) {
       if (meu !== seqDados) return;
       preencher(visao(), []);
       preencherFilhos(visao(), []);
       var msg = e.message;
       marcarStatus('erro', function () { return T('s.erro', { msg: msg }); });
+      render();
+    });
+  }
+
+  // Situação da atualização do ciclo (consulta à parte): chega depois dos gráficos e só acrescenta
+  // o aviso; se falhar ou demorar, os gráficos continuam como estão
+  function carregarAtualizacao(meu, sites) {
+    var periodo = '&ano=' + state.ano + '&mes=' + state.mes;
+    Promise.all(sites.filter(Boolean).map(function (id) {
+      return apiGet('atualizacao?site=' + id + periodo).catch(function (e) { console.warn('[coo-dashboard] update status unavailable:', e.message); return null; });
+    })).then(function (resps) {
+      if (meu !== seqDados) return;
+      var mapa = {};
+      resps.forEach(function (r) { if (r && r.kpis) Object.keys(r.kpis).forEach(function (k) { mapa[r.site + '|' + k] = r.kpis[k]; }); });
+      if (!Object.keys(mapa).length) return;
+      visao().paineis.forEach(function (p) {
+        p.cards.forEach(function (c) {
+          (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) { s.atual = s.ref ? mapa[s.ref] || null : null; });
+        });
+      });
       render();
     });
   }
