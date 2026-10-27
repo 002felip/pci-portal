@@ -455,7 +455,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
             <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
             <li><span class="swatch" style="background:var(--serie-a)"></span>Forecast | Actual (F | A)</li>
           </ul>
-          <p class="updated"><span class="demo" title="Valores do PDF COO – Business Units Dashboard (Plan, ago/2026). Trocar o período só muda a seleção; na integração, cada troca refaz a consulta de chart-data.">dados de exemplo</span>Last updated: <span id="updTxt"></span></p>
+          <p class="updated"><span class="demo" id="dataBadge" title="Valores do PDF COO – Business Units Dashboard (Plan, ago/2026).">dados de exemplo</span>Last updated: <span id="updTxt"></span></p>
     </div>
   </div>
 
@@ -665,9 +665,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
   function yy() { return String(state.ano).slice(2); }
   // Rótulos do eixo no padrão do print: "Set B", "Q3A", "26F"
+  var LETRAS_AF = ['A', 'A', 'F']; // Actual ou Forecast por janela; com dados reais, vem do script (coluna Type)
   function axis() {
     var m = MESES[state.mes - 1], q = 'Q' + state.tri, y = yy();
-    return [[m + ' B', m + ' A'], [q + 'B', q + 'A'], [y + 'B', y + 'F']];
+    return [[m + ' B', m + ' ' + LETRAS_AF[0]], [q + 'B', q + LETRAS_AF[1]], [y + 'B', y + LETRAS_AF[2]]];
   }
   var PER = ['mês', 'trimestre', 'ano'];
 
@@ -847,8 +848,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     document.getElementById('unitPais').hidden = longo;
     unitTrigger.querySelector('.unit-sep').hidden = longo;
     unitTrigger.title = state.pais + ' › ' + siteTxt;
-    document.getElementById('updTxt').textContent = vs.upd;
-    renderNav();
+    renderNav(); // "Last updated" e o selo de origem: marcarFonte(), a cada carga de dados
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
     dash.style.setProperty('--rows', vs.rows);
@@ -884,7 +884,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!b || b.disabled) return;
     var lbl = b.getAttribute('aria-label');
     state.bu = b.getAttribute('data-go');
-    render();
+    atualizar();
     // foco no botão equivalente da nova página (paginação contínua pelo teclado)
     var nb = (lbl && document.querySelector('#siteNav button[aria-label="' + lbl + '"]:not([disabled])')) ||
       document.querySelector('#siteNav .pager button:not([disabled])') || document.querySelector('#siteNav button');
@@ -935,7 +935,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       state.bu = sb.getAttribute('data-site');
       abrirUnit(false);
       unitTrigger.focus();
-      render();
+      atualizar();
     }
   });
   document.addEventListener('click', function (e) {
@@ -952,6 +952,125 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     render();
   });
 
+  // ── Dados reais: API do COO Dashboard (coo-api.js), com os valores do PDF como reserva ──
+  // De dentro do navegador não dá para saber se a página está no Portal
+  // (/VBM-Performance-Hub/COO-Business-Units-Dashboard/) ou num app próprio:
+  // tenta os caminhos na ordem e guarda o primeiro que responder.
+  var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard/api/', '/COO-Business-Units-Dashboard/api/', '/api/'];
+  var apiBase = null, SITE_ID = null, seqDados = 0;
+
+  function apiGet(recurso) {
+    var bases = apiBase ? [apiBase] : API_BASES, i = 0;
+    function tentar() {
+      if (i >= bases.length) return Promise.reject(new Error('API indisponível'));
+      var b = bases[i++];
+      return fetch(new URL(recurso, new URL(b, location.href)), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then(function (r) {
+          if (!r.ok) throw new Error(recurso + ' → ' + r.status);
+          return r.json().then(function (j) { apiBase = b; return j; });
+        })
+        .catch(tentar);
+    }
+    return tentar();
+  }
+
+  // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
+  function normalizar(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+
+  // Séries de um card (o próprio card ou cada alternativa: Cu/Au, All-in…), guardando o valor de exemplo
+  function series(vs) {
+    var lista = [];
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        (c.alt ? Object.keys(c.alt).map(function (k) { return c.alt[k]; }) : [c]).forEach(function (a) {
+          if (!('_exemplo' in a)) a._exemplo = a.d;
+          lista.push({ alvo: a, nome: a.t || c.t, nomes: [a.kpi, a.t || c.t, a.lbl].filter(Boolean) });
+        });
+      });
+    });
+    return lista;
+  }
+
+  // Origem dos números, sempre visível: exemplo, parcial (indicador sem dado no banco) ou real
+  function marcarFonte(tipo, detalhe, upd) {
+    var b = document.getElementById('dataBadge');
+    b.hidden = tipo === 'real';
+    b.textContent = tipo === 'parcial' ? 'dados parciais' : 'dados de exemplo';
+    b.title = tipo === 'parcial'
+      ? 'Sem dado no banco (exibindo o valor de exemplo do PDF): ' + detalhe
+      : 'Valores do PDF COO – Business Units Dashboard (Plan, ago/2026).' + (detalhe ? ' ' + detalhe : '');
+    document.getElementById('updTxt').textContent = upd || visao().upd;
+  }
+
+  function usarExemplo(vs) {
+    LETRAS_AF = ['A', 'A', 'F'];
+    series(vs).forEach(function (s) { s.alvo.d = s.alvo._exemplo; });
+  }
+
+  // Liga cada card ao KPI pelo nome cadastrado em IBP.DASHBOARD.NM_KPIS_DASH
+  // (título do card, `kpi` quando o nome no banco for diferente, ou o rótulo da alternativa)
+  function aplicarIndicadores(vs, resp) {
+    var porNome = {}, letras = ['A', 'A', 'F'], JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
+    (resp.linhas || []).forEach(function (l) {
+      if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
+      var k = normalizar(l.NM_KPI);
+      (porNome[k] = porNome[k] || {})[l.CD_VISAO] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+    });
+    var faltando = [], usados = {}, achados = 0;
+    series(vs).forEach(function (s) {
+      var chave = s.nomes.map(normalizar).filter(function (n) { return porNome[n]; })[0], m = chave && porNome[chave];
+      if (m && (m.MONTH || m.QUARTER || m.YEAR)) {
+        s.alvo.d = [m.MONTH || [null, null], m.QUARTER || [null, null], m.YEAR || [null, null]];
+        usados[chave] = true;
+        achados++;
+      } else {
+        s.alvo.d = s.alvo._exemplo;
+        faltando.push(s.nome);
+      }
+    });
+    var sobra = Object.keys(porNome).filter(function (k) { return !usados[k]; });
+    if (sobra.length) console.info('[coo-dashboard] KPIs do banco sem card nesta visão:', (resp.linhas || []).filter(function (l) { return sobra.indexOf(normalizar(l.NM_KPI)) >= 0; }).map(function (l) { return l.NM_KPI; }).filter(function (n, i, a) { return a.indexOf(n) === i; }));
+    LETRAS_AF = achados ? letras : ['A', 'A', 'F'];
+    var dt = new Date(resp.geradoEm), upd = isNaN(dt) ? null : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR');
+    if (!achados) marcarFonte('exemplo', 'Sem dados no banco para ' + state.bu + ' neste período.');
+    else marcarFonte(faltando.length ? 'parcial' : 'real', faltando.join(', '), upd);
+  }
+
+  // Sites do dashboard (IBP.SITES): nome normalizado → ID_SITE, buscado uma vez
+  function sites() {
+    if (SITE_ID) return Promise.resolve(SITE_ID);
+    return apiGet('sites').then(function (lista) {
+      SITE_ID = {};
+      (lista || []).forEach(function (l) { SITE_ID[normalizar(l.NM_SITE)] = l.ID_SITE; });
+      return SITE_ID;
+    });
+  }
+
+  // Busca os indicadores da BU no mês escolhido; só a resposta mais recente é aplicada
+  function carregarIndicadores() {
+    var meu = ++seqDados, vs = visao(), bu = state.bu;
+    if (vs.pai) { usarExemplo(vs); marcarFonte('exemplo', 'As minas ainda não fazem parte da consulta do dashboard.'); return; }
+    sites().then(function (ids) {
+      var id = ids[normalizar(vs.site || bu)];
+      if (!id) throw new Error('Site "' + bu + '" não cadastrado no dashboard (IBP.DASHBOARD).');
+      return apiGet('indicadores?site=' + id + '&ano=' + state.ano + '&mes=' + state.mes);
+    }).then(function (resp) {
+      if (meu !== seqDados) return;
+      aplicarIndicadores(vs, resp);
+      render();
+    }).catch(function (e) {
+      if (meu !== seqDados) return;
+      usarExemplo(vs);
+      marcarFonte('exemplo', e.message);
+      render();
+    });
+  }
+
+  function atualizar() {
+    render();
+    carregarIndicadores();
+  }
+
   // ── Eventos ──
   document.querySelector('.filters').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-v]');
@@ -960,7 +1079,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     state[k] = isNaN(Number(raw)) ? raw : Number(raw);
     if (k === 'tri') state.mes = (state.tri - 1) * 3 + 3; // cascata: último mês do trimestre
     renderFilters();
-    render();
+    atualizar();
   });
 
   document.addEventListener('click', function (e) {
@@ -1019,7 +1138,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   });
 
   renderFilters();
-  render();
+  atualizar();
 })();
 </script>
 </body></html>
