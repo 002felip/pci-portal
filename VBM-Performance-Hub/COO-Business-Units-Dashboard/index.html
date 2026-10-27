@@ -926,8 +926,21 @@ window.VBMSetup = (function () {
     var showDelta = state.delta === 'on';
     var MT = showDelta ? 46 : 20, MB = 16, PW = W / 3;
     var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
-    var BW = comPlan ? Math.max(12, Math.min(26, PW * 0.22)) : Math.max(16, Math.min(30, PW * 0.3));
-    var GAP = comPlan ? Math.max(10, Math.min(18, PW * 0.15)) : Math.max(14, Math.min(24, PW * 0.2));
+    var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
+    // Com o Plan: sete barras (mês B·P·A, trimestre B·A, ano B·A) na mesma régua — mesma largura,
+    // mesmo espaço dentro do grupo (g) e mesmo espaço entre grupos (G), conjunto centrado
+    var POS = null;
+    if (comPlan) {
+      BW = Math.min(26, W / 13); // 7 barras + 4 espaços de grupo + 2 entre grupos + margem lateral de ~0,7 barra
+      GAP = BW * 0.45;
+      var G = BW * 1.35, total = 7 * BW + 4 * GAP + 2 * G, x = (W - total) / 2;
+      POS = [0, 1, 2].map(function (i) {
+        var n = i === 0 ? 3 : 2, xs = [];
+        for (var j = 0; j < n; j++) xs.push(x + j * (BW + GAP));
+        x += n * BW + (n - 1) * GAP + G;
+        return i === 0 ? { xb: xs[0], xp: xs[1], xa: xs[2] } : { xb: xs[0], xp: xs[0], xa: xs[1] };
+      });
+    }
     if (!v.d) { // sem dados: só a linha de base e, quando houver, o aviso (Pending / Not applicable)
       var yv0 = H - MB;
       return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
@@ -952,8 +965,8 @@ window.VBMSetup = (function () {
       var y = function (val) { return MT + (dm[1] - val) / (dm[1] - dm[0]) * (H - MT - MB); };
       // Com o Plan ligado, o mês tem três barras na ordem Budget, Plan, Actual/Forecast (trio centrado)
       var trio = comPlan && i === 0, x0 = i * PW, y0 = y(0);
-      var xb = trio ? x0 + PW / 2 - (3 * BW + 2 * GAP) / 2 : x0 + PW / 2 - GAP / 2 - BW;
-      var xp = xb + BW + GAP, xa = trio ? xp + BW + GAP : xb + BW + GAP;
+      var xb = POS ? POS[i].xb : x0 + PW / 2 - GAP / 2 - BW;
+      var xp = POS ? POS[i].xp : xb, xa = POS ? POS[i].xa : xb + BW + GAP;
       var dl = delta(pair[0], pair[1], ind, v.dec);
       var semPar = pair[0] === null || pair[1] === null;
       label.push(PER(i) + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
@@ -967,14 +980,14 @@ window.VBMSetup = (function () {
         label.push('Plan ' + fmt(pair[2], v.dec) + '.');
       }
       barras.forEach(function (bar) {
-        if (bar[1] === null) { out += '<text class="b-axis' + (trio ? ' b-axis-sm' : '') + '" x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
+        if (bar[1] === null) { out += '<text class="b-axis' + (comPlan ? ' b-axis-sm' : '') + '" x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
         var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
         var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
         var bx = bar[0] + BW / 2;
         out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + bar[0] + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + tip + '"/>';
         // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
         out += '<text class="b-val" x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
-        out += '<text class="b-axis' + (trio ? ' b-axis-sm' : '') + '" x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
+        out += '<text class="b-axis' + (comPlan ? ' b-axis-sm' : '') + '" x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
       });
       if (!showDelta || semPar) return;
 
