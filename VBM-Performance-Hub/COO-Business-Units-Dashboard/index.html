@@ -1565,7 +1565,8 @@ window.VBMSetup = (function () {
 
   function filtros() {
     if (!filtrosPromessa) {
-      filtrosPromessa = apiGet('filtros').then(aplicarFiltros).catch(function (e) { filtrosPromessa = null; throw e; });
+      // 1ª carga da página (refresh): pede ao servidor para reler o banco (ver FRESCO_MS em coo-api.js)
+      filtrosPromessa = apiGet('filtros?fresco=1').then(aplicarFiltros).catch(function (e) { filtrosPromessa = null; throw e; });
     }
     return filtrosPromessa;
   }
@@ -1780,8 +1781,10 @@ window.VBMSetup = (function () {
 
   // Situação da atualização do ciclo (consulta à parte): chega depois dos gráficos e só acrescenta
   // o aviso; se falhar ou demorar, os gráficos continuam como estão
+  var atualizacaoFresca = false; // só a 1ª da carga da página relê o banco
   function carregarAtualizacao(meu, sites) {
-    var periodo = '&ano=' + state.ano + '&mes=' + state.mes;
+    var periodo = '&ano=' + state.ano + '&mes=' + state.mes + (atualizacaoFresca ? '' : '&fresco=1');
+    atualizacaoFresca = true;
     Promise.all(sites.filter(Boolean).map(function (id) {
       return apiGet('atualizacao?site=' + id + periodo).catch(function (e) { console.warn('[coo-dashboard] update status unavailable:', e.message); return null; });
     })).then(function (resps) {

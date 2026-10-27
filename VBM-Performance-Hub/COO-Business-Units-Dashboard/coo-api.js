@@ -36,6 +36,9 @@ const sql = require('mssql');
 
 const TAG = '[coo-dashboard]';
 const CACHE_TTL_MS = 5 * 60 * 1000;
+// Refresh da página (?fresco=1 no 1º pedido da carga): lê o banco de novo se o resultado guardado
+// tiver mais que isto — alteração no banco aparece no refresh, sem martelar o banco a cada F5
+const FRESCO_MS = 15 * 1000;
 const ID_DASH_PADRAO = 15; // IBP.DASHBOARD.ID_DASH do COO Dashboard
 
 // Scripts de database/ servidos pela API. `trocas`: texto fixo do script →
@@ -209,12 +212,13 @@ function criarCooRouter({ runQuery, idDash }) {
   // Pedidos simultâneos da mesma consulta esperam a MESMA ida ao banco (o pool do Portal
   // tem poucas conexões; consultas pesadas em paralelo travariam as demais). Falha não fica no cache.
   const emAndamento = new Map();
-  function comCache(chave, buscar) {
+  function comCache(chave, buscar, fresco) {
     const item = cache.get(chave);
-    if (item && item.expiraEm > Date.now()) return Promise.resolve(item.dados);
+    const valido = item && item.expiraEm > Date.now() && !(fresco && Date.now() - item.lidoEm > FRESCO_MS);
+    if (valido) return Promise.resolve(item.dados);
     if (emAndamento.has(chave)) return emAndamento.get(chave);
     const p = Promise.resolve().then(buscar).then(dados => {
-      cache.set(chave, { dados, expiraEm: Date.now() + CACHE_TTL_MS });
+      cache.set(chave, { dados, lidoEm: Date.now(), expiraEm: Date.now() + CACHE_TTL_MS });
       return dados;
     }).finally(() => emAndamento.delete(chave));
     emAndamento.set(chave, p);
@@ -222,7 +226,10 @@ function criarCooRouter({ runQuery, idDash }) {
   }
 
   // Erro do banco fica no log do servidor; a tela recebe só uma mensagem genérica
-  const buscar = (caminho, consulta) => comCache(caminho, async () => (await runQuery(consulta, { idDash: [sql.Int, ID_DASH] })).recordset);
+  const buscar = (caminho, consulta, fresco) => comCache(caminho, async () => (await runQuery(consulta, { idDash: [sql.Int, ID_DASH] })).recordset, fresco);
+  const fresco = req => req.query.fresco === '1';
+  // Hora em que o banco foi lido (para o "Last updated" da tela)
+  const lidoEm = caminho => { const item = cache.get(caminho); return new Date(item ? item.lidoEm : Date.now()).toISOString(); };
   function rota(caminho, consulta, falha) {
     router.get(caminho, async (req, res) => {
       try {
@@ -244,7 +251,7 @@ function criarCooRouter({ runQuery, idDash }) {
 
   router.get('/filtros', async (req, res) => {
     try {
-      const [linhas, sites] = await Promise.all([buscar('/chart-data', SQL['/chart-data']), buscar('/sites', SITES_SQL)]);
+      const [linhas, sites] = await Promise.all([buscar('/chart-data', SQL['/chart-data'], fresco(req)), buscar('/sites', SITES_SQL, fresco(req))]);
       res.json(extrairFiltros(linhas, sites));
     } catch (err) {
       console.error(`${TAG} erro em /filtros:`, err.message);
@@ -261,8 +268,8 @@ function criarCooRouter({ runQuery, idDash }) {
       return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
-      const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data']), p);
-      res.json({ ...p, geradoEm: new Date().toISOString(), linhas });
+      const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data'], fresco(req)), p);
+      res.json({ ...p, geradoEm: lidoEm('/chart-data'), linhas });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);
       res.status(500).json({ error: 'Failed to query the dashboard indicators.', codigo: 'ERRO_BANCO' });
@@ -277,7 +284,7 @@ function criarCooRouter({ runQuery, idDash }) {
       return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
-      const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes']), p));
+      const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes'], fresco(req)), p));
       res.json({ ...p, kpis });
     } catch (err) {
       console.error(`${TAG} erro em /atualizacao:`, err.message);
