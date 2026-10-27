@@ -4572,7 +4572,17 @@ function alternarMultiSel(c) {
   if (multiSel.size > 1) mostrarAviso(tx('ui.n_selecionados', { n: multiSel.size }));
 }
 let ultimoArraste = 0; // fim de um arraste real: o clique que vem junto não abre o painel
-function drag(el, onMove, onEnd) {
+// Arrastando perto da borda de baixo (ou do topo, logo abaixo do header) a página rola junto,
+// mais rápido quanto mais perto da borda; rolar com a roda do mouse também move o gráfico
+const ROLAGEM_BORDA = 56, ROLAGEM_MAX = 18;
+function velocidadeRolagem(y) {
+  const topo = document.getElementById('topnav').getBoundingClientRect().bottom;
+  const baixo = y - (innerHeight - ROLAGEM_BORDA), cima = topo + ROLAGEM_BORDA - y;
+  if (baixo > 0) return Math.ceil(ROLAGEM_MAX * Math.min(1, baixo / ROLAGEM_BORDA));
+  if (cima > 0 && scrollY > 0) return -Math.ceil(ROLAGEM_MAX * Math.min(1, cima / ROLAGEM_BORDA));
+  return 0;
+}
+function drag(el, onMove, onEnd, rolarJunto = false) {
   el.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || board.classList.contains('is-fluxo')) return; // grade fluida: sem mover/redimensionar
     e.preventDefault();
@@ -4580,16 +4590,21 @@ function drag(el, onMove, onEnd) {
     el.setPointerCapture(e.pointerId);
     const start = onMove(null, e);
     const x0 = e.clientX, y0 = e.clientY;
-    const move = ev => { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) ultimoArraste = Date.now(); onMove(start, ev); };
+    let ultimo = e, raf = 0;
+    const move = ev => { ultimo = ev; if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) ultimoArraste = Date.now(); onMove(start, ev); };
+    const rolou = () => onMove(start, ultimo);
+    const rolar = () => { const v = velocidadeRolagem(ultimo.clientY); if (v) window.scrollBy(0, v); raf = requestAnimationFrame(rolar); };
     const up = () => {
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
+      if (rolarJunto) { cancelAnimationFrame(raf); window.removeEventListener('scroll', rolou); }
       onEnd();
     };
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
+    if (rolarJunto) { window.addEventListener('scroll', rolou, { passive: true }); raf = requestAnimationFrame(rolar); }
   });
 }
 
@@ -4629,27 +4644,29 @@ function attachMoveResize(c) {
     if (!s) {
       // Gráfico do grupo selecionado: todos andam juntos, com o mesmo deslocamento
       const grupo = multiSel.size > 1 && multiSel.has(c) ? charts.filter(o => multiSel.has(o)) : [c];
-      const k = escalaQuadro(), topo = board.getBoundingClientRect().top;
+      const k = escalaQuadro();
       const ini = grupo.map(o => ({ o, x: o.pos.x * k, y: o.pos.y, w: o.el.offsetWidth, h: o.el.offsetHeight }));
       grupo.forEach(o => { o.el.classList.add('is-dragging'); trazerParaFrente(o); });
-      // Limites do deslocamento: o grupo inteiro fica dentro do quadro e da área visível
+      // Limites do deslocamento: o grupo fica dentro da largura e abaixo do topo do quadro;
+      // para baixo não há limite (a página rola junto e o quadro cresce)
       const lim = {
         dxMin: Math.max(...ini.map(m => BOARD_M - m.x)),
         dxMax: Math.min(...ini.map(m => board.clientWidth - BOARD_M - m.w - m.x)),
-        dyMin: Math.max(...ini.map(m => Math.max(BOARD_M, -topo + BOARD_M) - m.y)),
-        dyMax: Math.min(...ini.map(m => innerHeight - topo - BOARD_M - m.h - m.y))
+        dyMin: Math.max(...ini.map(m => BOARD_M - m.y)),
+        dyMax: Infinity
       };
-      return { k, x0: e.clientX, y0: e.clientY, px: c.pos.x * k, py: c.pos.y, w: c.el.offsetWidth, h: c.el.offsetHeight, ini, lim, others: startArrange(grupo, k) };
+      return { k, x0: e.clientX, y0: e.clientY, sy0: scrollY, px: c.pos.x * k, py: c.pos.y, w: c.el.offsetWidth, h: c.el.offsetHeight, ini, lim, others: startArrange(grupo, k) };
     }
-    let dx = clamp(e.clientX - s.x0, s.lim.dxMin, s.lim.dxMax), dy = clamp(e.clientY - s.y0, s.lim.dyMin, s.lim.dyMax);
+    let dx = clamp(e.clientX - s.x0, s.lim.dxMin, s.lim.dxMax), dy = clamp(e.clientY - s.y0 + scrollY - s.sy0, s.lim.dyMin, s.lim.dyMax);
     const px = s.px + dx, py = s.py + dy;
     const sx = nearest([px, px + s.w / 2, px + s.w], s.others.flatMap(o => [o.l, o.l + o.w / 2, o.l + o.w]));
     const sy = nearest([py, py + s.h / 2, py + s.h], s.others.flatMap(o => [o.t, o.t + o.h / 2, o.t + o.h]));
     if (sx) dx += sx.d;
     if (sy) dy += sy.d;
     s.ini.forEach(m => { m.o.pos = { x: (m.x + dx) / s.k, y: m.y + dy }; applyChartLayout(m.o); }); // guarda sem a escala do painel
+    updateBoardHeight(); // quadro cresce junto: a página pode continuar rolando para baixo
     showGuides(sx && sx.line, sy && sy.line);
-  }, () => { charts.forEach(o => o.el.classList.remove('is-dragging')); endArrange(); relayoutSeMudou(); saveCharts(); });
+  }, () => { charts.forEach(o => o.el.classList.remove('is-dragging')); endArrange(); relayoutSeMudou(); saveCharts(); }, true);
 
   drag(c.el.querySelector('.chart-resize-handle'), (s, e) => {
     if (!s) {
