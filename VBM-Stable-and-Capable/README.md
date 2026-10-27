@@ -57,12 +57,22 @@ Nada é obrigatório além do que o Portal já tem:
 | `STABLECAPABLE_BLOB_PASTA` | `01 - Imagens/Stable & Capable` |
 | `STABLECAPABLE_PYTHON` | `python3`, depois `python` |
 
-As bibliotecas Python estão no **`requirements.txt` da raiz do Portal**. O Databricks Apps instala esse arquivo no deploy, junto com o `package.json`.
+### Bibliotecas Python
+
+A aplicação **não depende** do deploy ter instalado as bibliotecas no Python que o Node usa. No primeiro teste no Databricks Apps deu `No module named 'pandas'`. Por isso, na subida, ela faz o seguinte:
+
+1. Procura um Python (`STABLECAPABLE_PYTHON`, `python3`, `python`…) que já importe tudo.
+2. Se nenhum importar, instala `python/requirements.txt` com `pip install --target` numa pasta própria: `STABLECAPABLE_PYLIBS`, senão `VBM-Stable-and-Capable/.pylibs`, senão o temp do sistema.
+3. Passa essa pasta no `PYTHONPATH` do gerador.
+
+Na primeira subida após o deploy isso leva alguns minutos (a tela mostra um aviso no topo, e uma execução iniciada nesse meio-tempo começa sozinha quando termina). Nas subidas seguintes, a pasta já existe e o app fica pronto na hora.
+
+O `requirements.txt` usa **faixas de versão**, não versões fixas, para o pip achar pacotes prontos para o Python do ambiente. Testado com Python 3.12 (versões do projeto original) e 3.13 (numpy 2.5, pandas 2.3): os PDFs saem iguais.
 
 ## Diagnóstico
 
 - `api/health`: conexão com o banco.
-- `api/diagnostico`: Python encontrado e bibliotecas importáveis. Se falhar, a tela mostra um aviso no rodapé.
+- `api/diagnostico`: Python usado, pasta das bibliotecas e estado (`verificando`, `instalando`, `pronto` ou `erro`, com a mensagem). Se não estiver pronto, a tela mostra um aviso no topo.
 - `execucao.log` de cada execução, baixável no histórico.
 
 ## Testar localmente sem banco

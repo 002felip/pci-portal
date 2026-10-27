@@ -301,8 +301,11 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .arq.log { color: var(--texto-suave); }
 .historico-vazio { padding: 1.4rem; text-align: center; font-size: .78rem; color: var(--texto-fraco); }
 
-.diag { margin-top: 1rem; font-size: .7rem; color: var(--texto-fraco); }
-.diag.alerta { color: var(--alerta); }
+.diag:empty { display: none; }
+.diag {
+  margin: -.25rem 0 1.25rem; padding: .7rem .9rem; border-radius: 10px; font-size: .76rem; line-height: 1.5;
+  color: var(--alerta); background: var(--alerta-bg); border: 1px solid color-mix(in srgb, var(--alerta) 30%, transparent);
+}
 
 @media (max-width: 960px) {
   .grade { grid-template-columns: 1fr; }
@@ -402,6 +405,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     <p data-i18n="page.intro">Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.</p>
   </header>
 
+  <p class="diag" id="diag" role="status"></p>
   <div class="grade">
     <!-- ═══ Nova execução ═══ -->
     <section class="painel" aria-labelledby="tNova">
@@ -461,7 +465,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </table>
     </div>
   </section>
-  <p class="diag" id="diag"></p>
 </main>
 
 <script>
@@ -488,10 +491,11 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'etapa.consulta': 'Consulta ao banco', 'etapa.pdfs': 'PDFs por BU', 'etapa.blob': 'Salvo no Blob',
       'exec.cancel': 'Cancelar', 'exec.log': 'Log da execução', 'exec.ultima': 'Última execução', 'exec.openPdfs': 'Abrir PDFs',
       'bu.aguardando': 'Aguardando', 'bu.gerando': 'Gerando…', 'bu.paginas': 'Página {a} de {t}', 'bu.ok': 'PDF pronto', 'bu.erro': 'Erro', 'bu.sem-dados': 'Sem dados no período', 'bu.cancelada': 'Cancelada', 'bu.nao-gerada': 'Não gerada',
-      'st.consultando': 'Consultando', 'st.gerando': 'Gerando', 'st.concluida': 'Concluída', 'st.concluida-com-erros': 'Concluída com erros', 'st.erro': 'Erro', 'st.cancelada': 'Cancelada',
+      'st.preparando': 'Preparando ambiente', 'st.consultando': 'Consultando', 'st.gerando': 'Gerando', 'st.concluida': 'Concluída', 'st.concluida-com-erros': 'Concluída com erros', 'st.erro': 'Erro', 'st.cancelada': 'Cancelada',
       'hist.title': 'Histórico', 'hist.when': 'Gerado em', 'hist.period': 'Período', 'hist.by': 'Por', 'hist.status': 'Status', 'hist.files': 'Arquivos',
       'hist.vazio': 'Nenhum relatório gerado ainda.', 'hist.pasta': 'Blob: {p}', 'hist.local': 'Armazenamento local (Blob não configurado)',
-      'diag.falha': 'Ambiente Python do app: {m}', 'confirm.cancel': 'Cancelar a execução em andamento?'
+      'diag.falha': 'Ambiente Python do app: {m}', 'confirm.cancel': 'Cancelar a execução em andamento?',
+      'diag.instalando': 'Preparando o ambiente Python do app (só na primeira vez após o deploy, alguns minutos). Você já pode iniciar uma execução — ela começa assim que terminar.'
     },
     'en': {
       'ui.menu': 'Back to Portal', 'ui.loading': 'Loading…',
@@ -511,10 +515,11 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'etapa.consulta': 'Database query', 'etapa.pdfs': 'PDFs per BU', 'etapa.blob': 'Saved to Blob',
       'exec.cancel': 'Cancel', 'exec.log': 'Run log', 'exec.ultima': 'Last run', 'exec.openPdfs': 'Open PDFs',
       'bu.aguardando': 'Waiting', 'bu.gerando': 'Generating…', 'bu.paginas': 'Page {a} of {t}', 'bu.ok': 'PDF ready', 'bu.erro': 'Error', 'bu.sem-dados': 'No data in period', 'bu.cancelada': 'Cancelled', 'bu.nao-gerada': 'Not generated',
-      'st.consultando': 'Querying', 'st.gerando': 'Generating', 'st.concluida': 'Completed', 'st.concluida-com-erros': 'Completed with errors', 'st.erro': 'Error', 'st.cancelada': 'Cancelled',
+      'st.preparando': 'Preparing environment', 'st.consultando': 'Querying', 'st.gerando': 'Generating', 'st.concluida': 'Completed', 'st.concluida-com-erros': 'Completed with errors', 'st.erro': 'Error', 'st.cancelada': 'Cancelled',
       'hist.title': 'History', 'hist.when': 'Generated', 'hist.period': 'Period', 'hist.by': 'By', 'hist.status': 'Status', 'hist.files': 'Files',
       'hist.vazio': 'No reports generated yet.', 'hist.pasta': 'Blob: {p}', 'hist.local': 'Local storage (Blob not configured)',
-      'diag.falha': 'App Python environment: {m}', 'confirm.cancel': 'Cancel the run in progress?'
+      'diag.falha': 'App Python environment: {m}', 'confirm.cancel': 'Cancel the run in progress?',
+      'diag.instalando': 'Setting up the app Python environment (first time after deploy only, a few minutes). You can start a run now — it begins as soon as this finishes.'
     }
   };
   var lang = 'pt-BR';
@@ -620,9 +625,9 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   }
 
   // ─── Execução ───
-  var ORDEM_ETAPA = { consultando: 0, gerando: 1, concluida: 3, 'concluida-com-erros': 3, erro: -1, cancelada: -1 };
+  var ORDEM_ETAPA = { preparando: 0, consultando: 0, gerando: 1, concluida: 3, 'concluida-com-erros': 3, erro: -1, cancelada: -1 };
   function pill(status) {
-    var cls = { consultando: 'ativo', gerando: 'ativo', concluida: 'ok', 'concluida-com-erros': 'alerta', erro: 'erro', cancelada: 'neutro' }[status] || 'neutro';
+    var cls = { preparando: 'ativo', consultando: 'ativo', gerando: 'ativo', concluida: 'ok', 'concluida-com-erros': 'alerta', erro: 'erro', cancelada: 'neutro' }[status] || 'neutro';
     return '<span class="pill ' + cls + '">' + esc(t('st.' + status)) + '</span>';
   }
   function linkArquivo(ex, a, rotulo) {
@@ -777,16 +782,23 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     $('dtInicio').value = c.periodoSugerido.inicio; $('dtFim').value = c.periodoSugerido.fim;
     $('dtFim').max = isoLocal(new Date());
     if (c.emExecucao) estado.atual = c.emExecucao;
+    mostrarAmbiente(c.ambiente);
     desenharChips(); rodapeDestino(); desenharExecucao();
     carregarHistorico().catch(function () {}).then(atualizar);
   }).catch(function () {
     $('mensagem').hidden = false; $('mensagem').textContent = t('erro.rede');
     $('histCorpo').innerHTML = '<tr><td colspan="5" class="historico-vazio">—</td></tr>';
   });
-  api('diagnostico').catch(function (e) {
-    var d = e.dados || {};
-    if (d.bibliotecas || d.python) { $('diag').className = 'diag alerta'; $('diag').textContent = t('diag.falha', { m: (d.python || '') + ' · ' + (d.bibliotecas || '') }); }
-  });
+  // Estado do ambiente Python (instalando na 1ª subida, ou erro)
+  function mostrarAmbiente(a) {
+    var el = $('diag');
+    var estadoA = a && a.estado;
+    el.textContent = estadoA === 'instalando' ? t('diag.instalando') : (estadoA === 'erro' ? t('diag.falha', { m: a.mensagem || '' }) : '');
+    // Enquanto não estiver pronto (verificando/instalando), continua acompanhando.
+    if (estadoA === 'verificando' || estadoA === 'instalando') {
+      setTimeout(function () { api('config').then(function (c) { mostrarAmbiente(c.ambiente); }).catch(function () {}); }, estadoA === 'verificando' ? 3000 : 15000);
+    }
+  }
 })();
 </script>
 </body>
