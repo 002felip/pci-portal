@@ -20,6 +20,9 @@
  *   GET /ping                         diagnóstico sem banco
  *   GET /chart-data                   saída do script, linha a linha (todas as BUs)
  *   GET /sites                        ID_SITE e nome dos sites do dashboard
+ *   GET /filtros                      o que a tela pode filtrar, tirado do resultado
+ *                                     do script: sites com dados, anos e meses, e o
+ *                                     último mês realizado (Actual)
  *   GET /indicadores?site=&ano=&mes=  Budget e Actual/Forecast por KPI do site,
  *                                     no mês, no trimestre do mês e no ano
  */
@@ -76,9 +79,10 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
     const [a, m] = anoMes(l.DT_REF);
     if (a !== ano || m !== mes) continue;
     const [visao, s] = serie;
-    const chave = `${l.ID_KPI}|${visao}`;
+    // Um item por KPI cadastrado (operação + KPI) e janela
+    const chave = `${l.ID_OPERACAO}|${l.ID_KPI}|${visao}`;
     if (!porKpi.has(chave)) {
-      porKpi.set(chave, { ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, LETRA_AF: null });
+      porKpi.set(chave, { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, CD_VISAO: visao, VL_B: null, VL_AF: null, LETRA_AF: null });
     }
     const item = porKpi.get(chave);
     const valor = l.Value == null ? 0 : Number(l.Value);
@@ -86,6 +90,27 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
     else { item.VL_AF = (item.VL_AF || 0) + valor; item.LETRA_AF = letraAF(l.Type) || item.LETRA_AF; }
   }
   return [...porKpi.values()].sort((x, y) => (x.ID_ORDEM - y.ID_ORDEM) || x.CD_VISAO.localeCompare(y.CD_VISAO));
+}
+
+// Filtros da tela a partir do resultado do script: sites que têm linhas, anos e
+// meses de referência (DT_REF) e o último mês realizado (mês com Actual 'A')
+function extrairFiltros(linhas, sites) {
+  const nomes = new Map(sites.map(s => [Number(s.ID_SITE), s.NM_SITE]));
+  const comDados = new Set(), meses = {};
+  let ultimo = null;
+  for (const l of linhas) {
+    if (!SERIE_POR_ORDEM[l.ORDEM_GRAFICO]) continue;
+    const [a, m] = anoMes(l.DT_REF);
+    comDados.add(Number(l.ID_SITE));
+    (meses[a] = meses[a] || new Set()).add(m);
+    if (l.ORDEM_GRAFICO === 2 && letraAF(l.Type) === 'A' && (!ultimo || a * 12 + m > ultimo.ano * 12 + ultimo.mes)) ultimo = { ano: a, mes: m };
+  }
+  return {
+    sites: [...comDados].map(id => ({ id, nome: nomes.get(id) || `Site ${id}` })).sort((x, y) => x.nome.localeCompare(y.nome)),
+    anos: Object.keys(meses).map(Number).sort(),
+    meses: Object.fromEntries(Object.entries(meses).map(([a, ms]) => [a, [...ms].sort((x, y) => x - y)])),
+    ultimoRealizado: ultimo,
+  };
 }
 
 // Nomes dos sites do dashboard (mesma regra do /sites do VBM-Performance-Studio)
@@ -165,6 +190,16 @@ function criarCooRouter({ runQuery, idDash }) {
   for (const c of CONSULTAS) rota(c.rota, SQL[c.rota] = carregarSql(c.arquivo, c.trocas), c.falha);
   rota('/sites', SITES_SQL, 'Falha ao consultar os sites do dashboard.');
 
+  router.get('/filtros', async (req, res) => {
+    try {
+      const [linhas, sites] = await Promise.all([buscar('/chart-data', SQL['/chart-data']), buscar('/sites', SITES_SQL)]);
+      res.json(extrairFiltros(linhas, sites));
+    } catch (err) {
+      console.error(`${TAG} erro em /filtros:`, err.message);
+      res.status(500).json({ error: 'Falha ao consultar os filtros do dashboard.', codigo: 'ERRO_BANCO' });
+    }
+  });
+
   // Indicadores de um site no mês escolhido: o script devolve, para cada mês
   // (DT_REF), as linhas do mês, do trimestre daquele mês e do ano — o filtro
   // pelo mês já traz as três janelas do card. Usa o mesmo cache do /chart-data.
@@ -185,4 +220,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, CONSULTAS };

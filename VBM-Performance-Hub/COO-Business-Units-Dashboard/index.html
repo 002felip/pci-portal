@@ -200,6 +200,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; }
 .unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
 .unit-list button .n { color: var(--text-faint); font-size: .68rem; }
+.unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
 .unit-list button.sub { justify-content: flex-start; padding: 5px 10px 5px 22px; font-weight: 400; font-size: .72rem; color: var(--text-soft); }
 .unit-list button.sub::before { content: '›'; margin-right: 6px; color: var(--text-faint); }
 .unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
@@ -652,10 +653,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     { pais: 'Canadá', sites: ['Ontario', 'VNL', 'Manitoba'] },
     { pais: 'IR', sites: ['International Refineries'] }
   ];
+  var ANOS = [2025, 2026]; // com a API, os anos do resultado do SQL (ver aplicarFiltros)
   var state = { pais: 'Brasil', bu: 'Sossego', visao: 'Plan', ano: 2026, tri: 3, mes: 8, delta: 'on', sel: {} };
   var OPTS = {
     visao: function () { return [['Plan', 'Plan']]; },
-    ano: function () { return [[2025, '2025'], [2026, '2026']]; },
+    ano: function () { return ANOS.map(function (a) { return [a, String(a)]; }); },
     tri: function () { return [[1, 'Q1'], [2, 'Q2'], [3, 'Q3'], [4, 'Q4']]; },
     mes: function () {
       var first = (state.tri - 1) * 3;
@@ -765,7 +767,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       }).join('') + '</div>';
     }
     return '<article class="card card-' + ind.id + '" id="card-' + ind.id + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + (ind.nota ? '<sup>1</sup>' : '') + '</h4><p class="card-unit">(' + esc(v.u) + ')</p></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + (ind.nota ? '<sup>1</sup>' : '') + '</h4><p class="card-unit">' + (v.u ? '(' + esc(v.u) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
       '</article>';
   }
@@ -995,8 +997,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function marcarFonte(tipo, detalhe, upd) {
     var b = document.getElementById('dataBadge');
     b.hidden = tipo === 'real';
-    b.textContent = tipo === 'parcial' ? 'dados parciais' : 'dados de exemplo';
-    b.title = tipo === 'parcial'
+    b.textContent = tipo === 'parcial' ? 'dados parciais' : tipo === 'vazio' ? 'sem dados' : 'dados de exemplo';
+    b.title = tipo === 'vazio' ? detalhe : tipo === 'parcial'
       ? 'Sem dado no banco (exibindo o valor de exemplo do PDF): ' + detalhe
       : 'Valores do PDF COO – Business Units Dashboard (Plan, ago/2026).' + (detalhe ? ' ' + detalhe : '');
     document.getElementById('updTxt').textContent = upd || visao().upd;
@@ -1004,6 +1006,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
   function usarExemplo(vs) {
     LETRAS_AF = ['A', 'A', 'F'];
+    if (vs.generico) { vs.paineis.forEach(function (p) { p.cards = []; }); return; }
     series(vs).forEach(function (s) { s.alvo.d = s.alvo._exemplo; });
   }
 
@@ -1036,30 +1039,97 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     else marcarFonte(faltando.length ? 'parcial' : 'real', faltando.join(', '), upd);
   }
 
-  // Sites do dashboard (IBP.SITES): nome normalizado → ID_SITE, buscado uma vez
-  function sites() {
-    if (SITE_ID) return Promise.resolve(SITE_ID);
-    return apiGet('sites').then(function (lista) {
-      SITE_ID = {};
-      (lista || []).forEach(function (l) { SITE_ID[normalizar(l.NM_SITE)] = l.ID_SITE; });
-      return SITE_ID;
+  // ── Unidades e filtros a partir do resultado do SQL (/api/filtros) ──
+  // País dos sites conhecidos (o SQL não traz país); site novo vai para "Outros"
+  var PAIS_DO_SITE = { salobo: 'Brasil', sossego: 'Brasil', oncapuma: 'Brasil', ontario: 'Canadá', vnl: 'Canadá', manitoba: 'Canadá', thompson: 'Canadá',
+    longharbour: 'Canadá', internationalrefineries: 'IR', clydach: 'IR', matsusaka: 'IR', matsuzaka: 'IR', sorowako: 'Indonésia' };
+  var ORDEM_PAISES = ['Brasil', 'Canadá', 'IR', 'Indonésia', 'Outros'];
+  var filtrosPromessa = null;
+
+  // Site do banco sem layout do PDF: cards montados com os KPIs que o SQL trouxer
+  function visaoGenerica(nome) {
+    return { cls: '', rows: 3, titulo: nome, generico: true, upd: '', paineis: [
+      { titulo: 'Production Drivers', cls: 'panel-prod', cards: [] },
+      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: [] }
+    ] };
+  }
+
+  function aplicarFiltros(f) {
+    SITE_ID = {};
+    var grupos = {};
+    (f.sites || []).forEach(function (st) {
+      var chave = normalizar(st.nome);
+      // nome do site = BU do PDF (Sossego, Ontario…): usa o layout aprovado; senão, layout montado pelos KPIs
+      var nome = Object.keys(VISOES).filter(function (k) { return !VISOES[k].pai && normalizar(k) === chave; })[0];
+      if (!nome) { nome = st.nome; VISOES[nome] = VISOES[nome] || visaoGenerica(nome); }
+      SITE_ID[normalizar(nome)] = st.id;
+      var pais = PAIS_DO_SITE[chave] || 'Outros';
+      (grupos[pais] = grupos[pais] || []).push(nome);
     });
+    var lista = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
+    if (!lista.length) throw new Error('O SQL não trouxe nenhum site com dados.');
+    UNIDADES = lista;
+    if (f.anos && f.anos.length) ANOS = f.anos;
+    var ult = f.ultimoRealizado; // abre no último mês realizado (o mesmo corte A/F do SQL)
+    if (ult && ANOS.indexOf(ult.ano) >= 0) { state.ano = ult.ano; state.mes = ult.mes; state.tri = Math.ceil(ult.mes / 3); }
+    else if (ANOS.indexOf(state.ano) < 0) state.ano = ANOS[ANOS.length - 1];
+    var atual = lista.filter(function (u) { return u.sites.indexOf(state.bu) >= 0 && u.pais === state.pais; })[0];
+    if (!atual) { state.pais = lista[0].pais; state.bu = lista[0].sites.indexOf('Sossego') >= 0 ? 'Sossego' : lista[0].sites[0]; }
+    renderFilters();
+  }
+
+  function filtros() {
+    if (!filtrosPromessa) {
+      filtrosPromessa = apiGet('filtros').then(aplicarFiltros).catch(function (e) { filtrosPromessa = null; throw e; });
+    }
+    return filtrosPromessa;
+  }
+
+  // Monta os cards de um site sem layout do PDF: um card por KPI, na ordem de
+  // IBP.DASHBOARD.ID_ORDEM; financeiros pelo nome, o resto em Production Drivers
+  var FINANCEIRO = /revenue|receita|cogs|ebitda|capex|cash ?flow|all-?in|by product|sustaining|cost|custo|expense|despesa/i;
+  var CUSTO = /cogs|capex|cost|custo|expense|despesa|all-?in|sustaining/i;
+  function montarGenerica(vs, resp) {
+    var porKpi = {}, ordem = [], JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
+    (resp.linhas || []).forEach(function (l) {
+      var k = l.ID_OPERACAO + '-' + l.ID_KPI;
+      if (!porKpi[k]) { porKpi[k] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(k); }
+      porKpi[k].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF)];
+    });
+    var prod = [], fin = [];
+    ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); }).forEach(function (k) {
+      var it = porKpi[k], nome = it.l.NM_KPI || ('KPI ' + it.l.ID_KPI);
+      var maior = Math.max.apply(null, [].concat.apply([], it.d).map(function (x) { return Math.abs(x || 0); }));
+      var card = { id: 'g-' + k, t: nome, u: '', dec: maior >= 100 ? 0 : maior >= 10 ? 1 : 2, pol: CUSTO.test(nome) ? 'down' : 'up', d: it.d };
+      (FINANCEIRO.test(nome) ? fin : prod).push(card);
+    });
+    vs.paineis[0].cards = prod;
+    vs.paineis[1].cards = fin;
+    vs.rows = Math.max(1, Math.ceil(prod.length / 3), Math.ceil(fin.length / 2));
+    return prod.length + fin.length;
   }
 
   // Busca os indicadores da BU no mês escolhido; só a resposta mais recente é aplicada
   function carregarIndicadores() {
     var meu = ++seqDados, vs = visao(), bu = state.bu;
     if (vs.pai) { usarExemplo(vs); marcarFonte('exemplo', 'As minas ainda não fazem parte da consulta do dashboard.'); return; }
-    sites().then(function (ids) {
-      var id = ids[normalizar(vs.site || bu)];
+    filtros().then(function () {
+      if (meu !== seqDados) return Promise.reject(null);
+      vs = visao(); bu = state.bu; // os filtros podem ter trocado a unidade e o mês iniciais
+      var id = SITE_ID[normalizar(vs.site || bu)];
       if (!id) throw new Error('Site "' + bu + '" não cadastrado no dashboard (IBP.DASHBOARD).');
       return apiGet('indicadores?site=' + id + '&ano=' + state.ano + '&mes=' + state.mes);
     }).then(function (resp) {
       if (meu !== seqDados) return;
-      aplicarIndicadores(vs, resp);
+      if (vs.generico) {
+        var n = montarGenerica(vs, resp), dt = new Date(resp.geradoEm);
+        LETRAS_AF = ['A', 'A', 'F'];
+        (resp.linhas || []).forEach(function (l) { if (l.LETRA_AF) LETRAS_AF[{ MONTH: 0, QUARTER: 1, YEAR: 2 }[l.CD_VISAO]] = l.LETRA_AF; });
+        marcarFonte(n ? 'real' : 'vazio', 'Sem dados no banco para ' + bu + ' neste período.', isNaN(dt) ? null : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR'));
+      } else aplicarIndicadores(vs, resp);
       render();
     }).catch(function (e) {
-      if (meu !== seqDados) return;
+      if (e === null || meu !== seqDados) return;
       usarExemplo(vs);
       marcarFonte('exemplo', e.message);
       render();
