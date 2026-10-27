@@ -731,15 +731,19 @@ const ATIVO_ESTATICO = /\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|mp4|webm)
 // ------------------------------------------------------------------
 // Controle de acesso (kzn_admin / kzn_aprovador / MDM)
 // ------------------------------------------------------------------
-// Páginas restritas e o critério de cada uma, sempre pelo CADASTRO no
-// banco, pelo ID_USUARIO do MDM:
+// ACESSO ABERTO (27/10/2026): o Kaizen não restringe quem entra. Início,
+// Biblioteca, Novo Kaizen e Dashboard abrem para QUALQUER pessoa que chega
+// pelo Databricks Apps, esteja ou não no MDM (antes exigiam o e-mail em
+// kzn_mdm_hierarquia — o critério "membro" descrito abaixo).
+//
+// Continuam restritas só as duas telas de PAPEL, pelo cadastro no banco
+// (ID_USUARIO do MDM):
 //
 //   admin.html                             -> kzn_admin    (SG_ATIVO='S')
 //   aprovacao.html                         -> kzn_aprovador (SG_ATIVO='S')
-//   /, index.html, biblioteca.html,
-//   kaizen-novo.html                       -> "membro": só precisa
-//                                              EXISTIR no MDM (mesma
-//                                              tabela, sem exigir papel).
+//
+// O papel "membro" segue no código (paginaAcessoNegado, gate) para voltar
+// a exigir o MDM numa tela basta listá-la abaixo com "membro".
 //
 // "Membro" não é KZN_KAIZEN_HIERARQUIA: aquela tabela é uma FOTOGRAFIA
 // por KAIZEN (1 linha por ID_KAIZEN, os 8 níveis do líder no momento da
@@ -764,14 +768,20 @@ const ATIVO_ESTATICO = /\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|mp4|webm)
 const PAGINAS_RESTRITAS = {
   "/admin.html": "admin",
   "/aprovacao.html": "aprovador",
-  "/": "membro",
-  "/index.html": "membro",
-  "/biblioteca.html": "membro",
-  "/kaizen-novo.html": "membro",
-  // Mesma regra da Biblioteca: o dashboard mostra os mesmos Kaizens que
-  // ela lista, só que agregados.
-  "/dashboard.html": "membro",
 };
+
+/* Caminho como o express.static vai RESOLVER: decodificado (%69 -> i),
+   minúsculo e sem barras repetidas. Sem isto, /%61dmin.html não casava
+   com "/admin.html" aqui, mas o express.static decodificava e entregava a
+   tela restrita sem passar pelo gate. Caminho indecodificável não é
+   página: devolve null e o express.static responde 400/404 sozinho. */
+function caminhoNormalizado(caminho) {
+  try {
+    return path.posix.normalize(decodeURIComponent(caminho)).replace(/\/+$/, "").toLowerCase() || "/";
+  } catch (e) {
+    return null;
+  }
+}
 
 // Perfil do usuário da requisição, em UMA consulta (MDM + os dois
 // vínculos de papel). Memorizado no próprio req: o gate da API e o
@@ -904,7 +914,7 @@ function paginaAcessoNegado(papel) {
 // sensível: nenhuma linha de log tem o corpo da resposta nem conteúdo
 // da tela, só a decisão de acesso.
 kaizenWeb.use(async (req, res, next) => {
-  const papel = PAGINAS_RESTRITAS[req.path.toLowerCase()];
+  const papel = PAGINAS_RESTRITAS[caminhoNormalizado(req.path)];
   if (!papel) return next();
 
   const perfil = await perfilDeAcesso(req);
@@ -1006,6 +1016,17 @@ const apiRouter = express.Router();
 // Faixa 1 — identidade. Devolve só quem está chamando.
 const ROTAS_API_PUBLICAS = new Set(["/me"]);
 
+// ACESSO ABERTO (27/10/2026): as faixas de LEITURA e de ESCRITA DO PRÓPRIO
+// Kaizen (abaixo) não exigem mais estar no MDM — qualquer pessoa que chega
+// pelo Databricks Apps usa a Biblioteca, o Dashboard e o Novo Kaizen. O que
+// protege os dados continua igual, nas próprias rotas: o líder e o aprovador
+// do cadastro são validados (ehValeAtivo / kzn_aprovador), e editar/excluir
+// só vale para o dono do Kaizen ou kzn_admin (contextoDeEdicao /
+// podeEditarKaizen / podeExcluirKaizen — sem MDM, idUsuarioLogado = -1 e
+// nenhuma linha de outra pessoa casa). APROVADOR e ADMIN seguem exigindo o
+// papel no banco. Para voltar a exigir o MDM em tudo: ACESSO_EXIGE_MDM = true.
+const ACESSO_EXIGE_MDM = false;
+
 // Faixa 1 — leitura do sistema, liberada a qualquer usuário autenticado.
 // São as consultas que a Biblioteca e o Novo Kaizen precisam para
 // funcionar. Nenhuma delas expõe dado de outra pessoa além do que já
@@ -1062,16 +1083,20 @@ apiRouter.use(async (req, res, next) => {
   const metodo = req.method.toUpperCase();
   if (ROTAS_API_PUBLICAS.has(caminho)) return next();
 
+  const ehLeitura = metodo === "GET" && casa(ROTAS_LEITURA_AUTENTICADA, metodo, caminho);
+  const ehEscritaPropria = casa(ROTAS_ESCRITA_AUTENTICADA, metodo, caminho);
+  if (!ACESSO_EXIGE_MDM && (ehLeitura || ehEscritaPropria)) return next();
+
   const perfil = await perfilDeAcesso(req);
 
-  // Sem correspondência no MDM não há identidade: nem a faixa mais
-  // aberta vale. perfilDeAcesso já registra o motivo no log.
+  // Sem correspondência no MDM não há identidade: as faixas de papel
+  // (aprovador/admin) nunca valem — e, com ACESSO_EXIGE_MDM, nem a mais
+  // aberta. perfilDeAcesso já registra o motivo no log.
   if (!perfil.idUsuario) {
     return res.status(403).json({ error: "Acesso não autorizado." });
   }
 
-  const ehLeitura = metodo === "GET" && casa(ROTAS_LEITURA_AUTENTICADA, metodo, caminho);
-  if (ehLeitura || casa(ROTAS_ESCRITA_AUTENTICADA, metodo, caminho)) return next();
+  if (ehLeitura || ehEscritaPropria) return next();
 
   if (casa(ROTAS_APROVADOR, metodo, caminho)) {
     // Admin também decide: ele é quem destrava a fila quando o aprovador
