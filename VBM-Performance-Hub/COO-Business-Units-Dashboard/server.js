@@ -132,10 +132,10 @@ for (const base of BASES_API) {
   app.use(base, (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, router);
 }
 
-app.use((req, res) => res.status(404).json({ error: 'Não encontrado' }));
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => {
   console.error('[erro]', err);
-  res.status(500).json({ error: 'Erro interno do servidor' });
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // ── Start / shutdown ────────────────────────────────────────────────

@@ -42,7 +42,7 @@ const CONSULTAS = [
     rota: '/chart-data',
     arquivo: 'coo_dashboard.sql', // MONTH, QUARTER e YEAR (UNION ALL) — "SQL - COO DASHBOARD.txt"
     trocas: [{ de: 'DASH.ID_DASH = 15', para: 'DASH.ID_DASH = @idDash', ocorrencias: 3 }],
-    falha: 'Falha ao consultar os dados do dashboard.',
+    falha: 'Failed to query the dashboard data.',
   },
 ];
 
@@ -195,7 +195,7 @@ function criarCooRouter({ runQuery, idDash }) {
 
   const SQL = {};
   for (const c of CONSULTAS) rota(c.rota, SQL[c.rota] = carregarSql(c.arquivo, c.trocas), c.falha);
-  rota('/sites', SITES_SQL, 'Falha ao consultar os sites do dashboard.');
+  rota('/sites', SITES_SQL, 'Failed to query the dashboard sites.');
 
   router.get('/filtros', async (req, res) => {
     try {
@@ -203,7 +203,7 @@ function criarCooRouter({ runQuery, idDash }) {
       res.json(extrairFiltros(linhas, sites));
     } catch (err) {
       console.error(`${TAG} erro em /filtros:`, err.message);
-      res.status(500).json({ error: 'Falha ao consultar os filtros do dashboard.', codigo: 'ERRO_BANCO' });
+      res.status(500).json({ error: 'Failed to query the dashboard filters.', codigo: 'ERRO_BANCO' });
     }
   });
 
@@ -213,7 +213,7 @@ function criarCooRouter({ runQuery, idDash }) {
   router.get('/indicadores', async (req, res) => {
     const p = { site: inteiro(req.query.site, 1, 2147483647), ano: inteiro(req.query.ano, 2000, 2100), mes: inteiro(req.query.mes, 1, 12) };
     if (!p.site || !p.ano || !p.mes) {
-      return res.status(400).json({ error: 'Parâmetros inválidos: use site (id numérico), ano (2000–2100) e mes (1–12).', codigo: 'PARAMETRO' });
+      return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
       const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data']), p);
@@ -225,7 +225,7 @@ function criarCooRouter({ runQuery, idDash }) {
       res.json({ ...p, geradoEm: new Date().toISOString(), linhas });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);
-      res.status(500).json({ error: 'Falha ao consultar os indicadores do dashboard.', codigo: 'ERRO_BANCO' });
+      res.status(500).json({ error: 'Failed to query the dashboard indicators.', codigo: 'ERRO_BANCO' });
     }
   });
 

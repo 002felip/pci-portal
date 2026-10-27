@@ -100,7 +100,7 @@ module.exports = function montarCooDashboardNoPortal(app) {
   app.use(BASE, (req, res, next) => {
     const caminho = req.originalUrl.split('?')[0];
     if (PUBLICO.test(caminho) && !/\.\.|%2e|%5c|\\/i.test(caminho)) return next();
-    res.status(404).set('Cache-Control', 'no-store').json({ error: 'Não encontrado.' });
+    res.status(404).set('Cache-Control', 'no-store').json({ error: 'Not found.' });
   });
 
   console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database}`);
