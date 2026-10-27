@@ -931,8 +931,9 @@ window.VBMSetup = (function () {
     var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
     var POS = null, stVal = '', stEixo = '';
     if (comPlan) {
-      var passo = Math.min(44, W / 7.4);
-      BW = Math.min(30, passo * 0.62); GAP = passo - BW;
+      // passo proporcional à largura do card: todos os gráficos ocupam o card na mesma proporção
+      var passo = W / 7.4;
+      BW = passo * 0.62; GAP = passo - BW;
       var x = (W - (6 * passo + BW)) / 2;
       POS = [0, 1, 2].map(function (i) {
         var n = i === 0 ? 3 : 2, xs = [];
