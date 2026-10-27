@@ -951,6 +951,25 @@ window.VBMSetup = (function () {
   var hoje = new Date(), mesRef = hoje.getMonth() || 12; // até a consulta responder: mês anterior ao atual
   var ANOS = [mesRef === 12 ? hoje.getFullYear() - 1 : hoje.getFullYear()];
   var state = { pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', plan: false, sel: {} };
+  // ── Navegação no endereço (?site=&ano=&mes=&plan=&delta=): o refresh volta à mesma tela e o link
+  // pode ser compartilhado. Lida uma vez na carga e validada contra os filtros da consulta (aplicarFiltros)
+  var URL_INI = (function () {
+    try {
+      var q = new URLSearchParams(location.search);
+      return q.has('site') || q.has('ano') ? { site: q.get('site'), ano: Number(q.get('ano')), mes: Number(q.get('mes')), plan: q.get('plan') === '1', delta: q.get('delta') !== 'off' } : null;
+    } catch (e) { return null; }
+  })();
+  function salvarUrl() {
+    if (!state.bu) return; // ainda carregando: não apaga o endereço recebido
+    try {
+      var q = new URLSearchParams(location.search);
+      q.set('site', state.bu); q.set('ano', state.ano); q.set('mes', state.mes);
+      if (state.plan) q.set('plan', '1'); else q.delete('plan');
+      if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
+      var novo = location.pathname + '?' + q.toString() + location.hash;
+      if (novo !== location.pathname + location.search + location.hash) history.replaceState(null, '', novo);
+    } catch (e) { /* sem History API: segue sem guardar */ }
+  }
   var OPTS = {
     visao: function () { return [['Plan', 'Plan']]; },
     ano: function () { return ANOS.map(function (a) { return [a, String(a)]; }); },
@@ -1278,6 +1297,7 @@ window.VBMSetup = (function () {
     renderCiclo();
     ajustarAltura();
     observeCharts();
+    salvarUrl();
   }
 
   // ── Resumo do ciclo no cabeçalho: quantos gráficos aguardam a atualização final do mês ──
@@ -1526,6 +1546,15 @@ window.VBMSetup = (function () {
     var ult = f.ultimoRealizado;
     if (ult) { state.ano = ult.ano; state.mes = ult.mes; state.tri = Math.ceil(ult.mes / 3); }
     else if (ANOS.indexOf(state.ano) < 0) state.ano = ANOS[ANOS.length - 1];
+    if (URL_INI) { // tela do endereço (refresh ou link), só com valores que a consulta tem
+      var u = URL_INI; URL_INI = null;
+      if (u.site && u.site in SITE_ID) { state.bu = u.site; state.pais = paisDo(BU_DA_MINA[u.site] || u.site); }
+      var mesesDoAno = (f.meses || {})[u.ano];
+      if (ANOS.indexOf(u.ano) >= 0 && mesesDoAno && mesesDoAno.indexOf(u.mes) >= 0) { state.ano = u.ano; state.mes = u.mes; state.tri = Math.ceil(u.mes / 3); }
+      state.plan = u.plan;
+      state.delta = u.delta ? 'on' : 'off';
+      document.getElementById('deltaSwitch').setAttribute('aria-checked', String(state.delta === 'on'));
+    }
     if (!(state.bu in SITE_ID)) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
     renderFilters();
   }
