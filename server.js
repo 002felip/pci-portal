@@ -12,6 +12,8 @@
  *     .../COO-Business-Units-Dashboard/             (API em <pasta>/api, banco PRD) —
  *     .../COO-Business-Units-Dashboard-Historical/  lista em VBM-Performance-Hub/portal.js
  *     .../VBM-Health-of-the-Business/
+ *   /VBM-Stable-and-Capable/  VBM-Stable-and-Capable/portal.js  (API em <pasta>/api,
+ *                             banco do Kaizen, PDFs no Azure Blob, gerador Python)
  *
  * Nova aplicação = nova pasta + uma linha de montagem abaixo.
  */
@@ -67,13 +69,14 @@ portal.get(["/admin.html", "/aprovacao.html", "/biblioteca.html", "/kaizen-novo.
 
 // ── Controle de acesso do Portal ──
 // Usuário em IBP.USERS com CD_MATRICULA preenchido (ver portal-acesso.js).
-// Vale para o Portal e o Performance Hub; o VBM-Kaizen-App é aberto (validação própria).
+// Vale para o Portal, o Performance Hub e o Stable & Capable; o VBM-Kaizen-App é aberto (validação própria).
 // Registrado ANTES das rotas do Performance Hub.
 let acesso = null;
 const aguardarAcesso = (fn) => (req, res, next) => (acesso ? acesso[fn](req, res, next) : res.status(503).json({ error: "Portal iniciando." }));
 portal.get("/portal/acesso", aguardarAcesso("rotaStatus"));
 portal.use("/VBM-Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/Performance-Hub", aguardarAcesso("exigir"));
+portal.use("/VBM-Stable-and-Capable", aguardarAcesso("exigir"));
 
 // ── VBM-Performance-Hub ──
 // API (/VBM-Performance-Hub/api) + bloqueio dos arquivos internos da pasta.
@@ -91,6 +94,17 @@ portal.use("/VBM-Performance-Hub", express.static(path.join(__dirname, "VBM-Perf
 portal.use("/Performance-Hub", (req, res) => res.redirect(301, "/VBM-Performance-Hub" + req.url));
 // Links salvos do Studio na raiz: o Studio agora fica dentro do Hub.
 portal.use("/VBM-Performance-Studio", (req, res) => res.redirect(301, "/VBM-Performance-Hub/VBM-Performance-Studio" + req.url));
+
+// ── VBM-Stable-and-Capable ──
+// API (/VBM-Stable-and-Capable/api) + bloqueio dos arquivos internos da pasta
+// (python/, database/, *.js). Uma falha ao montar não derruba o Portal.
+try {
+  require("./VBM-Stable-and-Capable/portal")(portal);
+} catch (err) {
+  console.error("[portal] falha ao montar VBM-Stable-and-Capable:", err.message);
+}
+portal.get("/VBM-Stable-and-Capable", exigirBarraFinal());
+portal.use("/VBM-Stable-and-Capable", express.static(path.join(__dirname, "VBM-Stable-and-Capable"), { index: "index.html", dotfiles: "ignore" }));
 
 // ── Portal ──
 portal.use("/assets", express.static(path.join(__dirname, "assets"), { dotfiles: "ignore" }));
