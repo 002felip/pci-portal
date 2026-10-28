@@ -98,6 +98,17 @@ function linhasDe(linhas, { site, ano, mes }) {
   return idx.get(`${site}|${ano}|${mes}`) || [];
 }
 
+// Mês do ciclo: o último mês realizado (Actual) no resultado da query principal — o mesmo corte
+// A/F do script. Meses depois dele são projeção e seguem a situação do mês do ciclo.
+const ciclos = new WeakMap();
+function mesDoCiclo(linhas) {
+  if (!ciclos.has(linhas)) ciclos.set(linhas, extrairFiltros(linhas, []).ultimoRealizado);
+  return ciclos.get(linhas);
+}
+function periodoDaSituacao(p, ciclo) {
+  return ciclo && p.ano * 12 + p.mes > ciclo.ano * 12 + ciclo.mes ? { site: p.site, ano: ciclo.ano, mes: ciclo.mes } : p;
+}
+
 // Linhas do script de atualização de um site/mês → situação por KPI (ID_OPERACAO|ID_KPI)
 function atualizacoesDoMes(linhas, p) {
   const porKpi = new Map();
@@ -364,8 +375,11 @@ function criarCooRouter({ runQuery, idDash }) {
       return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
-      const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes'], fresco(req)), p));
-      res.json({ ...p, kpis });
+      // Mês depois do ciclo (projeção): vale a situação do mês do ciclo
+      const ciclo = mesDoCiclo(await buscar('/chart-data', SQL['/chart-data']));
+      const ref = periodoDaSituacao(p, ciclo);
+      const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes'], fresco(req)), ref));
+      res.json({ ...p, kpis, situacaoDe: { ano: ref.ano, mes: ref.mes } });
     } catch (err) {
       console.error(`${TAG} erro em /atualizacao:`, err.message);
       res.status(500).json({ error: 'Failed to query the data update status.', codigo: 'ERRO_BANCO' });
@@ -375,4 +389,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, CONSULTAS };

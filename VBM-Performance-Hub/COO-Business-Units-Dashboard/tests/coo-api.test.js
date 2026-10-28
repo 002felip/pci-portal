@@ -151,3 +151,12 @@ test('cadastroDoSite: KPIs cadastrados do site, na ordem do ID_ORDEM, casas inv�
   ], 42);
   assert.deepStrictEqual(c.map((x) => [x.NM_KPI, x.CASA_DECIMAL]), [['Equivalent Total Development', null], ['Ore Mined (Dry)', 0]]);
 });
+
+test('situação de mês projetado segue o mês do ciclo (último realizado)', () => {
+  const { periodoDaSituacao } = require('../coo-api');
+  const ciclo = { ano: 2026, mes: 9 };
+  assert.deepStrictEqual(periodoDaSituacao({ site: 6, ano: 2026, mes: 12 }, ciclo), { site: 6, ano: 2026, mes: 9 });
+  assert.deepStrictEqual(periodoDaSituacao({ site: 6, ano: 2026, mes: 9 }, ciclo), { site: 6, ano: 2026, mes: 9 });
+  assert.deepStrictEqual(periodoDaSituacao({ site: 6, ano: 2026, mes: 3 }, ciclo), { site: 6, ano: 2026, mes: 3 });
+  assert.deepStrictEqual(periodoDaSituacao({ site: 6, ano: 2027, mes: 1 }, ciclo), { site: 6, ano: 2026, mes: 9 });
+});
