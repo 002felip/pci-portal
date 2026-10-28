@@ -286,6 +286,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* Indicador: título + unidade, gráfico com altura contida, espaço livre abaixo */
 /* Título + gráfico centralizados na faixa da linha: em telas altas a sobra se divide acima e abaixo,
    e o bloco desce em direção à base sem aumentar os gráficos */
+#dash .panel-grid { justify-items: center; }
+#dash .card { width: 100%; max-width: var(--chart-w, none); }
 .card { min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; padding-top: 16px; }
 .card-head { flex-shrink: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 4px 8px; }
 .card-name { flex: 1 0 auto; max-width: 100%; min-width: 0; }
@@ -1241,8 +1243,22 @@ window.VBMSetup = (function () {
   }
 
   // Altura dos gráficos: até 190 px, o quanto couber para as três linhas ocuparem o painel
+  // Largura única dos gráficos: a coluna mais estreita entre todos os painéis (até MAX_W). Cards em
+  // colunas mais largas ficam com essa largura, centralizados — mesmo tamanho de barra e mesmo
+  // espaçamento entre mês, trimestre e ano em todos os gráficos da página
+  function igualarLarguras(grids) {
+    var menor = Infinity;
+    grids.forEach(function (g) {
+      getComputedStyle(g).gridTemplateColumns.split(' ').forEach(function (t) { var n = parseFloat(t); if (n > 0) menor = Math.min(menor, n); });
+    });
+    var dash = document.getElementById('dash');
+    if (isFinite(menor)) dash.style.setProperty('--chart-w', Math.min(MAX_W, Math.floor(menor)) + 'px');
+    else dash.style.removeProperty('--chart-w');
+  }
+
   function ajustarAltura() {
     var grids = [].slice.call(document.querySelectorAll('#dash .panel-grid')), N = visao().rows;
+    igualarLarguras(grids);
     var gProd = grids[0], card = gProd && gProd.querySelector('.card');
     if (!card) return;
     // Telas estreitas ou baixas: painéis empilhados com altura fixa por linha (CSS). O cálculo abaixo
