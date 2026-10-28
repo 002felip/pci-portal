@@ -221,6 +221,11 @@ def ensure_schema() -> None:
     blocks until the winner's transaction commits, then reflects a schema that
     already exists and creates nothing.
 
+    `create_all` never adds a column to a table that already exists, so a
+    database seeded before a column was declared would 500 on every query
+    that selects it. `_add_missing_columns` closes that gap for nullable
+    columns, under the same lock.
+
     This is the single implementation behind both the app's startup self-heal
     (main.py's lifespan) and `make migrate`, so the manual and automatic paths
     cannot drift apart.
@@ -234,6 +239,40 @@ def ensure_schema() -> None:
         conn.execute(text("select pg_advisory_xact_lock(:key)"),
                     {"key": _SCHEMA_LOCK_KEY})
         Base.metadata.create_all(bind=conn, checkfirst=True)
+        _add_missing_columns(conn, Base.metadata)
+
+
+def _add_missing_columns(conn, metadata) -> None:  # noqa: ANN001
+    """
+    Additive-only column sync: `ADD COLUMN` for every declared column the live
+    table lacks. Only nullable (or server-defaulted) columns are added -- a
+    NOT NULL column without a server default cannot be backfilled
+    automatically, so it is logged for a hand-written migration instead.
+    Never drops, renames or retypes anything.
+    """
+    from sqlalchemy import inspect, text
+
+    insp = inspect(conn)
+    for table in metadata.sorted_tables:
+        if not insp.has_table(table.name):
+            continue
+        present = {c["name"] for c in insp.get_columns(table.name)}
+        for col in table.columns:
+            if col.name in present:
+                continue
+            if not col.nullable and col.server_default is None:
+                log.warning("Schema drift: %s.%s is NOT NULL with no server "
+                            "default -- add it by hand.", table.name, col.name)
+                continue
+            ddl = f"{col.type.compile(dialect=conn.dialect)}"
+            if col.server_default is not None:
+                arg = col.server_default.arg
+                ddl += " default " + (
+                    "'" + arg.replace("'", "''") + "'" if isinstance(arg, str)
+                    else str(arg.compile(dialect=conn.dialect)))
+            conn.execute(text(f'alter table "{table.name}" '
+                              f'add column if not exists "{col.name}" {ddl}'))
+            log.info("Schema drift: added %s.%s (%s).", table.name, col.name, ddl)
 
 
 @contextmanager

@@ -17,6 +17,7 @@
   --ink: #1B2733;
   --ink-2: #46586B;
   --muted: #8A94A2;
+  --panel-bg:#f4f5f6 ;
   --line: #E4E8EE;
   --line-2: #D8DEE6;
   --bg: #F5F7FA;
@@ -233,6 +234,9 @@ button.iconbtn[aria-disabled="true"]:hover { background: none; color: var(--mute
 /* Case 2: PrintSection IS the panel (id="kpis") — reserve it on the panel itself */
 [data-print-section].panel { padding-top: 44px; }
 
+/* Case 3: PrintSection wraps a Panel — keep the header's actions clear of it */
+[data-print-section] > .panel > .panel-head { padding-right: 56px; }
+
 .print-include:hover {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
@@ -322,10 +326,10 @@ button.iconbtn[aria-disabled="true"]:hover { background: none; color: var(--mute
 .dctree { display: flex; align-items: flex-start; gap: 10px; padding: 2px 0 6px; }
 
 .dc-col {
-  flex: 0 0 190px; display: flex; flex-direction: column; gap: 6px;
+  flex: 0 0 236px; display: flex; flex-direction: column; gap: 8px;
   min-width: 0;
 }
-.dc-col.dc-root { flex-basis: 170px; }
+.dc-col.dc-root { flex-basis: 220px; }
 
 .dc-colhead {
   display: flex; align-items: center; gap: 4px; min-height: 26px;
@@ -354,7 +358,7 @@ button.iconbtn[aria-disabled="true"]:hover { background: none; color: var(--mute
    every rule here has to reset button chrome as well as paint the card. */
 .dc-node {
   position: relative;   /* anchors .dn-chev */
-  display: block; width: 100%; padding: 7px 9px; text-align: left;
+  display: block; width: 100%; padding: 10px 12px; text-align: left;
   font: inherit; color: var(--ink); background: var(--panel);
   border: 1px solid var(--line); border-radius: var(--radius);
   cursor: pointer; transition: border-color .12s, box-shadow .12s, transform .12s;
@@ -363,34 +367,53 @@ button.iconbtn[aria-disabled="true"]:hover { background: none; color: var(--mute
 .dc-node:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .dc-node.active {
   border-color: var(--accent); border-left: 3px solid var(--accent);
-  padding-left: 7px;
+  padding-left: 10px;
   background: #F2F7FB;
 }
 .dc-root .dc-node { cursor: default; transform: none; }
 
 .dn-name {
-  display: block; margin-bottom: 2px; font-size: 12px; font-weight: 600;
+  display: block; font-size: 13px; font-weight: 600; color: var(--ink);
   line-height: 1.3; overflow-wrap: anywhere;
 }
-.dn-row { display: flex; align-items: baseline; gap: 6px; }
-.dn-count { font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
-.dn-share { font-size: 10px; color: var(--muted); }
-.dn-bar {
-  display: block; height: 4px; margin: 5px 0 4px;
-  background: var(--line); border-radius: 2px; overflow: hidden;
+/* Initiative count: the node's headline figure, read right after the name. */
+.dn-total { display: flex; align-items: baseline; gap: 5px; margin-top: 3px; }
+.dn-count {
+  font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; color: var(--ink);
 }
-.dn-bar i { display: block; height: 100%; border-radius: 2px; }
-.dn-value { display: block; font-size: 11px; color: var(--ink-2); }
+.dn-unit { font-size: 11.5px; color: var(--muted); }
+
+/* Metrics tier, set off from the headline by a hairline. */
+.dn-metrics {
+  display: grid; gap: 8px;
+  margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line);
+}
+.dn-metric { display: grid; gap: 4px; }
+.dn-mhead {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-size: 11px; line-height: 1.2;
+}
+.dn-ml { color: var(--ink-2); font-weight: 500; white-space: nowrap; }
+.dn-fig {
+  color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.dn-fig b { margin-left: 6px; color: var(--ink); font-weight: 700; }
+.dn-bar {
+  display: block; height: 6px;
+  background: var(--line); border-radius: 3px; overflow: hidden;
+}
+.dn-bar i { display: block; height: 100%; border-radius: 3px; }
 
 /* Drill affordance: a chevron on the node's trailing edge, pointing the way the
    next column will open. Which dimension that is belongs in the column header
    and the hover card, not repeated on every node. */
 .dn-chev {
-  position: absolute; top: 50%; right: 7px; transform: translateY(-50%);
+  position: absolute; top: 9px; right: 9px;
   font-size: 17px; font-style: normal; line-height: 1; color: var(--line-2);
   transition: color .12s;
 }
-.dc-node.drillable { padding-right: 22px; }
+.dc-node.drillable .dn-name { padding-right: 18px; }
 .dc-node.drillable:hover .dn-chev { color: var(--accent); }
 .dc-node.active .dn-chev { color: var(--accent); }
 
@@ -406,6 +429,12 @@ button.iconbtn[aria-disabled="true"]:hover { background: none; color: var(--mute
 .tt-head { display: flex; align-items: center; gap: 6px; }
 .tt-title { font-weight: 600; }
 .tt-sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.tt-sub { margin-top: 1px; font-size: 11px; color: var(--muted); }
+.tt-sec {
+  font-size: 9.5px; font-weight: 600; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--muted);
+}
+.tt-rows + .tt-rows { margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); }
 .tt-rows { margin-top: 5px; display: grid; gap: 2px; }
 .tt-row { display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); }
 .tt-row--muted { opacity: .3; }
@@ -420,14 +449,14 @@ button.iconbtn[aria-disabled="true"]:hover { background: none; color: var(--mute
 table.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.grid th, table.grid td {
   padding: 7px 10px; text-align: center; border-bottom: 1px solid var(--line);
-  white-space: nowrap;
+  white-space: nowrap; 
 }
 table.grid.dense th, table.grid.dense td { padding: 5px 8px; font-size: 12px; }
 table.grid thead th {
   font-weight: 600; color: var(--ink-2); font-size: 11px;
   text-transform: uppercase; letter-spacing: .04em;
   border-bottom: 1px solid var(--line-2); position: sticky; top: 0;
-  background: var(--panel); z-index: 1;
+  background: var(--panel-bg); z-index: 1;
 }
 table.grid thead th.sortable { cursor: pointer; user-select: none; }
 table.grid thead th.sortable:hover { color: var(--accent); }
@@ -468,6 +497,37 @@ table.grid.heat td .sub { font-weight: 400; opacity: .8; font-size: 10px; }
 }
 /* Reference reading rather than a decision -- needs room for a table. */
 .modal.wide { width: min(760px, 94vw); }
+/* A field × stage matrix: one column per stage. */
+.modal.xwide { width: min(1080px, 96vw); }
+
+table.grid.reqmatrix td, table.grid.reqmatrix thead th:not(:first-child) { text-align: center; }
+table.grid.reqmatrix tr.section th, table.grid.reqmatrix tr.section td {
+  background: #F2F5F8; font-weight: 600;
+}
+table.grid.reqmatrix td.changed { background: #FDF6E8; }
+/* The wrapper is the scroll box on both axes, so the sticky header row and
+   the sticky field column stay in view while the matrix scrolls. */
+.reqmatrix-wrap { max-height: 60vh; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+table.grid.reqmatrix th:first-child {
+  position: sticky; left: 0; text-align: left; background: var(--panel);
+}
+table.grid.reqmatrix thead th:first-child { z-index: 2; background: var(--panel-bg); }
+table.grid.reqmatrix tr.section th:first-child { background: #F2F5F8; }
+/* Select-all controls: the "All fields" row and "All stages" column. */
+table.grid.reqmatrix tr.all th, table.grid.reqmatrix tr.all td,
+table.grid.reqmatrix .all, table.grid.reqmatrix tr.section td.all {
+  background: #E8F1F8; color: var(--accent); font-weight: 600;
+}
+table.grid.reqmatrix tr.all th, table.grid.reqmatrix tr.all td {
+  border-bottom: 2px solid var(--accent);
+}
+table.grid.reqmatrix th.all, table.grid.reqmatrix td.all {
+  border-right: 2px solid var(--accent);
+}
+table.grid.reqmatrix tr.all .muted, table.grid.reqmatrix th.all .muted {
+  color: var(--accent); opacity: .75; font-weight: 400;
+}
+table.grid.reqmatrix tr.all input, table.grid.reqmatrix .all input { accent-color: var(--accent); }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
 
 .manual h4 {
@@ -535,6 +595,9 @@ details { margin-top: 8px; }
 /* ------------------------------------------------------------- print --- */
 @media print {
   .tabs, .periodbar, .panel-actions, .pager, .filterbar, .print-include { display: none !important; }
+  /* The narrowing stays on paper so the page says what it was filtered to;
+     the controls that change it do not. */
+  #gap-detail .sec-actions, .dq-chipx, .dq-activefilters .linkbtn { display: none !important; }
   .panel { break-inside: avoid; box-shadow: none; }
   body { background: #fff; }
 }
@@ -545,10 +608,149 @@ details { margin-top: 8px; }
 .tm-group { border: 1px solid rgba(255,255,255,.35); border-radius: 5px; background: rgba(27,39,51,.06); }
 .tm-cap { position: absolute; top: 0; left: 0; right: 0; font-size: 10.5px; font-weight: 700; letter-spacing: .3px; padding: 3px 7px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; background: rgba(27,39,51,.62); }
 .tm-leaf { border: 1px solid rgba(12,15,20,.55); border-radius: 4px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; cursor: default; }
+.tm-cap { cursor: default; }
 .tm-leaf:hover { outline: 2px solid var(--accent); z-index: 6; }
+.tm-leaf.tm-tiny { padding: 0; }
+.tm-leaf.tm-sliver { border-width: 0; }
 .tm-leaf .lf-name { font-size: 11px; font-weight: 700; color: #0c0f14; line-height: 1.15; overflow: hidden; }
 .tm-leaf .lf-stat { font-size: 10px; font-weight: 800; color: #0c0f14; }
 .tm-bar { height: 6px; background: rgba(0,0,0,.30); border-radius: 4px; overflow: hidden; margin-top: 3px; }
 .tm-bar i { display: block; height: 100%; background: #0c0f14; opacity: .55; }
 .tm-legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--muted, #8A94A2); margin-top: 11px; }
 .tm-legend .grad { flex: 0 0 180px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, var(--bad), var(--warn), var(--good)); }
+.tm-legend .swatch { flex: 0 0 9px; width: 9px; height: 9px; border-radius: 2px; margin-left: 10px; }
+
+/* ---------------- register cells (reference styling) ---------------- */
+.idlink { color: var(--accent); font-weight: 700; font-family: Consolas, monospace; }
+.mono { font-family: Consolas, monospace; color: #0F6E9E; font-weight: 600; }
+table.grid td .namecell { display: block; max-width: 280px; white-space: normal; text-align: left; }
+table.grid td .namecell b { font-weight: 600; }
+table.grid td .namecell span, table.grid td .kcell span { display: block; color: var(--muted); font-size: 11px; }
+table.grid td .kcell { display: block; max-width: 150px; text-align: left; }
+table.grid td .kcell b { font-weight: 600; font-size: 12px; }
+table.grid td .notecell {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  white-space: normal; min-width: 170px; max-width: 250px; font-size: 11.5px;
+  color: var(--ink-2); text-align: left;
+}
+.st { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; }
+.s-EVALUATING { background: rgba(107,119,133,.16); color: #6B7785; }
+.s-IMPLEMENTING { background: rgba(44,127,184,.14); color: #2C7FB8; }
+.s-CASH_FLOWING { background: rgba(31,169,113,.14); color: #6ee0a6; }
+.s-LOCKED_IN { background: rgba(126,90,166,.14); color: #7E5AA6; }
+.s-ON_HOLD { background: rgba(232,169,60,.18); color: #b97c12; }
+.s-CANCELLED { background: rgba(224,62,45,.14); color: #E03E2D; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.t-ON { background: rgba(31,169,113,.14); color: #168a5c; }
+.t-OFF { background: rgba(224,62,45,.14); color: #E03E2D; }
+.t-AT_RISK { background: rgba(232,169,60,.18); color: #b97c12; }
+.t-UNKNOWN { background: rgba(138,148,162,.18); color: #6B7785; }
+.prog { display: inline-block; width: 88px; height: 7px; background: var(--line); border-radius: 5px; overflow: hidden; vertical-align: middle; }
+.prog i { display: block; height: 100%; background: linear-gradient(90deg, #3CB5E5, #0F6E9E); }
+table.grid tbody tr.row-branch { box-shadow: inset 3px 0 0 var(--warn); }
+.dc-toolbar { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.dc-toolbar .on-lbl { color: var(--accent); font-weight: 700; }
+.switch { position: relative; display: inline-block; width: 42px; height: 23px; flex: 0 0 auto; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .sl { position: absolute; inset: 0; background: var(--bg); border: 1px solid var(--line-2); border-radius: 22px; cursor: pointer; transition: .18s; }
+.switch .sl:before { content: ''; position: absolute; width: 17px; height: 17px; left: 2px; top: 2px; background: var(--muted); border-radius: 50%; transition: .18s; }
+.switch input:checked + .sl { background: rgba(44,110,155,.18); border-color: var(--accent); }
+.switch input:checked + .sl:before { transform: translateX(19px); background: var(--accent); }
+.syncbar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+  padding: 8px 13px; font-size: 12.5px; border-radius: 9px;
+  background: rgba(232,169,60,.09); border: 1px solid rgba(232,169,60,.35);
+}
+.syncbar button { margin-left: auto; }
+
+/* ------------------------------------------------------ data quality --- */
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; }
+.grid2 > [data-print-section] > .card { height: calc(100% - 16px); }
+
+/* Segmented control: a two-way choice reads better as buttons than a select. */
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; }
+.seg button { border: none; border-radius: 0; background: #fff; color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button.on, .seg button.on:hover:not(:disabled) { background: var(--accent); color: #fff; }
+
+/* Toned meter: the register's .prog bar, recoloured on the page's thresholds. */
+.dq-meter { display: inline-flex; align-items: center; gap: 8px; }
+.dq-meter .prog { width: 64px; height: 6px; }
+.dq-meter b { min-width: 34px; text-align: right; font-weight: 600; }
+.prog.good i { background: var(--good); }
+.prog.warn i { background: var(--warn); }
+.prog.bad i  { background: var(--bad); }
+
+.dq-kpi-field {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+table.grid .left { text-align: left; }
+table.grid.dq-matrix tbody tr.clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+table.grid.dq-matrix tbody tr.on { box-shadow: inset 3px 0 0 var(--accent); background: #F2F7FB; }
+table.grid.dq-matrix tbody tr.on th { color: var(--accent); font-weight: 600; }
+table.grid.dq-matrix td { font-weight: 500; }
+/* Nine section columns: let the headers wrap and the % cells stay narrow so
+   the matrix fits the page instead of scrolling sideways. */
+table.grid.dq-matrix thead th { white-space: normal; vertical-align: top; line-height: 1.25; }
+table.grid.dq-matrix thead th.sec {
+  min-width: 58px; max-width: 96px; padding: 6px 5px;
+  text-transform: none; letter-spacing: 0; font-size: 11px;
+}
+/* Section number as a small badge on its own line, apart from the name. */
+table.grid.dq-matrix .dq-secno {
+  display: block; width: fit-content; margin: 0 auto 4px; padding: 0 6px;
+  border-radius: 8px; background: #E9EEF3; color: var(--ink-2);
+  font-size: 10px; font-weight: 700; line-height: 16px; font-variant-numeric: tabular-nums;
+}
+table.grid.dq-matrix td { min-width: 0; padding: 7px 5px; }
+
+.dq-legend { margin: 10px 0 0; }
+.dq-legend i { border: 1px solid var(--line-2); vertical-align: -1px; }
+.dq-legend i.dq-sw-changed { background: #FDF6E8; }
+
+/* Ranked field list: full labels wrap instead of being clipped by an axis. */
+.dq-fields { list-style: none; margin: 0 0 6px; padding: 0; }
+.dq-fields button {
+  display: grid; grid-template-columns: 22px minmax(120px, 1.3fr) 1fr 92px;
+  align-items: center; gap: 10px; width: 100%; padding: 6px 8px;
+  border: 1px solid transparent; border-radius: 6px; background: none; text-align: left;
+}
+.dq-fields li + li button { border-top-color: var(--line); border-radius: 0; }
+.dq-fields button:hover:not(:disabled) { background: #F7F9FB; }
+.dq-fields button.on, .dq-fields button.on:hover:not(:disabled) {
+  background: #F2F7FB; border-color: var(--accent); border-radius: 6px;
+}
+.dq-rank { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.dq-flabel { font-size: 12.5px; line-height: 1.3; }
+.dq-fbar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.dq-fbar i { display: block; height: 100%; background: var(--bad); border-radius: 4px; }
+.dq-fval { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.dq-fval b { font-variant-numeric: tabular-nums; }
+
+/* Distribution: one clickable column per band, toned like the rest. */
+.dq-bands { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; height: 230px; }
+.dq-band {
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  padding: 6px 4px; border: 1px solid transparent; background: none;
+}
+.dq-band.on, .dq-band.on:hover:not(:disabled) { border-color: var(--accent); background: #F2F7FB; }
+.dq-bcount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.dq-bcol {
+  flex: 1; display: flex; align-items: flex-end;
+  border-bottom: 1px solid var(--line-2);
+}
+.dq-bcol i { display: block; width: 100%; min-height: 2px; border-radius: 3px 3px 0 0; background: var(--line-2); }
+.dq-band.bad  .dq-bcol i { background: var(--bad); }
+.dq-band.warn .dq-bcol i { background: var(--warn); }
+.dq-band.good .dq-bcol i { background: var(--good); }
+.dq-blabel { font-size: 11px; color: var(--muted); }
+
+.dq-activefilters { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.dq-activefilters .chip { cursor: default; display: inline-flex; align-items: center; gap: 4px; }
+button.dq-chipx {
+  border: none; background: none; color: inherit; padding: 0 2px;
+  font-size: 13px; line-height: 1; opacity: .8;
+}
+button.dq-chipx:hover:not(:disabled) { background: none; opacity: 1; }
+.chip.more { cursor: help; }

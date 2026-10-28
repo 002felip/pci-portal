@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:portal": "tsc -b && vite build --base=/VBM-Cockpit/",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

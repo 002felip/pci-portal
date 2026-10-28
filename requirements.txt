@@ -21,3 +21,16 @@ openpyxl>=3.1,<4
 reportlab>=4.0,<5
 pillow>=10.4,<12
 pyyaml>=6.0,<7
+
+# ── VBM-Vdt e VBM-Cockpit (FastAPI), processos filhos do Portal ──
+# Cópia das faixas de VBM-Vdt/requirements.txt e VBM-Cockpit/requirements.txt.
+# Se faltarem no Python do app, cada aplicação instala o próprio arquivo em
+# <pasta>/.pylibs (ver apps-python.js) — então manter os dois em dia basta.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pydantic>=2.8
+pydantic-settings>=2.4
+SQLAlchemy>=2.0.30
+psycopg[binary]>=3.2
+databricks-sdk>=0.89.0

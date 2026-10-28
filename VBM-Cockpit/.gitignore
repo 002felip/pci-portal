@@ -8,3 +8,6 @@ wheels/
 **/node_modules*
 # Virtual environments
 .venv
+*.xlsx
+# Portal PCI: bibliotecas instaladas pelo próprio Portal
+.pylibs/

@@ -1,0 +1,17 @@
+[project]
+name = "cockpit-v2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ThalesMansur", email = "thales.mansur@br.ey.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+cockpit-v2 = "cockpit_v2:main"
+
+[build-system]
+requires = ["uv_build>=0.12.11,<0.13.0"]
+build-backend = "uv_build"

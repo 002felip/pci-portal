@@ -22,14 +22,15 @@
  * the next Excel load leaves it alone — curation survives ingestion.
  */
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import {
-  useCreateInitiative, useDeleteInitiative, useInitiatives, useMeta,
+  buildTree, useCreateInitiative, useDeleteInitiative, useInitiatives, useMeta,
   usePatchInitiative, type FieldSpec, type Initiative, type Registry,
 } from "../api";
 import { PageHead } from "../App";
+import { DecompositionTree } from "../charts";
 import {
   DataTable, Loading, Panel, Problem, Select, WhenReady, display, usePeriod,
 } from "../ui";
@@ -39,7 +40,9 @@ export default function InitiativesPage() {
 }
 
 function Body() {
-  const { snapshot } = usePeriod();
+  const { snapshot, options } = usePeriod();
+  const snapInfo = options?.snapshots.find((x) => x.id === snapshot);
+  const cutoff = snapInfo ? periodEndMonth(snapInfo.period_type, snapInfo.period_ordinal) : 12;
   const { data: meta } = useMeta();
   const registry = meta?.registry;
 
@@ -49,35 +52,150 @@ function Body() {
   const [creating, setCreating] = useState(false);
 
   const { data, isLoading, error } = useInitiatives({
-    snapshot, filters, search: search || undefined, limit: 5000,
+    snapshot, filters, search: search || undefined, include_metrics: true, limit: 5000,
   });
+
+  /* ---- decomposition tree, built from the page's own filtered rows ---- */
+  const [dcLevels, setDcLevels] = useState<string[]>(["bu_code", "stage_code"]);
+  const [dcPath, setDcPath] = useState<string[]>([]);
+  const [sync, setSync] = useState(true);
+  const treeRef = useRef<HTMLDivElement>(null);
+
+  const items = data?.items ?? [];
+  const onTrackCode = registry?.stage_semantics.on_track ?? "ON";
+  const treeNodes = useMemo(() => buildTree(items, dcLevels, onTrackCode),
+    [items, dcLevels, onTrackCode]);
+  const treeOnTrack = items.filter((r) => r.track_code === onTrackCode).length;
+  const treeValue = items.reduce((s, r) => s + Number(r.value_target_cy ?? 0), 0) / 1e6;
+  const treeActualYtd = items.reduce((s, r) => s + Number(r.value_actual_ytd ?? 0), 0) / 1e6;
+  const treeActualFy = items.reduce((s, r) => s + Number(r.value_actual_fy ?? 0), 0) / 1e6;
+
+  const dimOptions = (registry?.groupable ?? []).map((c) => ({
+    value: c, label: registry?.fields.find((f) => f.column === c)?.label ?? c,
+  }));
+  const labelOf = (c: string) => dimOptions.find((o) => o.value === c)?.label ?? c;
+  const keyOf = (r: Initiative, dim: string) => String(r[dim] ?? "") || "—";
+
+  const selection = dcPath.map((val, i) => ({ dim: dcLevels[i], val }));
+  const inBranch = (r: Initiative) => selection.every((s) => keyOf(r, s.dim) === s.val);
+  const tableRows = sync && selection.length ? items.filter(inBranch) : items;
+
+  // Filters/search can remove the selected branch: cut the path back to what still exists.
+  useEffect(() => {
+    if (!dcPath.length) return;
+    let pool = items, keep = 0;
+    for (let i = 0; i < dcPath.length; i++) {
+      pool = pool.filter((r) => keyOf(r, dcLevels[i]) === dcPath[i]);
+      if (!pool.length) break;
+      keep = i + 1;
+    }
+    if (keep < dcPath.length) setDcPath(dcPath.slice(0, keep));
+  }, [items, dcLevels, dcPath]);
+
+  const drillTo = (row: Initiative) => {
+    setDcPath(dcLevels.map((d) => keyOf(row, d)));
+    treeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const columns = useMemo<ColumnDef<Initiative, any>[]>(() => {
     if (!registry) return [];
-    const specs = registry.fields.filter((f) => f.grid);
+    const lbl = (c: string) => registry.fields.find((f) => f.column === c)?.label ?? c;
+    const wrap = (row: Initiative, column: string, node: ReactNode, cls = "") => {
+      const isEdited = edited(row, column);
+      const isStale = needsReview(row, column);
+      const className = `${cls} ${!isEdited ? "cell" : isStale ? "cell edited stale" : "cell edited"}`.trim();
+      const title = isStale
+        ? "Carried from a prior period; the source workbook has since changed."
+        : isEdited ? "Hand-edited — the next Excel load will not overwrite this." : undefined;
+      return <span className={className} title={title}>{node}</span>;
+    };
+    const col = (column: string, render: (row: Initiative, v: any) => ReactNode,
+      opts: { header?: string; sort?: "basic" | "alphanumeric"; cls?: string } = {}):
+      ColumnDef<Initiative, any> => ({
+      id: column,
+      accessorFn: (row: Initiative) => row[column],
+      header: opts.header ?? lbl(column),
+      sortingFn: opts.sort ?? "alphanumeric",
+      cell: (ctx: any) => wrap(ctx.row.original, column,
+        render(ctx.row.original, ctx.getValue()), opts.cls),
+    });
+    const text = (column: string, opts: Parameters<typeof col>[2] = {}) =>
+      col(column, (_r, v) => display(registry, column, v), opts);
+    const musd = (v: unknown) => (Number(v) ? (Number(v) / 1e6).toFixed(1) : "—");
+    const compact = (v: unknown) => {
+      if (v === null || v === undefined || v === "") return "—";
+      const x = Number(v), a = Math.abs(x);
+      return a === 0 ? "0" : a < 1 ? String(+x.toFixed(2)) : a < 100 ? String(+x.toFixed(1))
+        : Math.round(x).toLocaleString("en-US");
+    };
+    const clip = (v: unknown, n: number) => {
+      const t = String(v ?? ""); return t.length > n ? t.slice(0, n - 2) + "…" : t;
+    };
     return [
-      ...specs.map((f) => ({
-        id: f.column,
-        accessorFn: (row: Initiative) => row[f.column],
-        header: f.label,
-        size: f.kind === "longtext" ? 280 : undefined,
-        sortingFn: numericKinds.has(f.kind) ? "basic" as const : "alphanumeric" as const,
+      col("source_initiative_id", (_r, v) => String(v ?? "—"), { cls: "idlink" }),
+      col("name", (r, v) => (
+        <span className="namecell"><b>{String(v ?? "—")}</b>
+          <span>{[r.site, r.program].filter(Boolean).join(" · ")}</span></span>
+      ), { header: "Initiative" }),
+      text("bu_code"),
+      col("stage_code", (_r, v) => (
+        <span className={`st s-${String(v)}`}>{display(registry, "stage_code", v)}</span>
+      )),
+      col("track_code", (_r, v) => (
+        <span className={`tag t-${String(v ?? "UNKNOWN")}`}>{display(registry, "track_code", v)}</span>
+      )),
+      {
+        id: "milestones", header: "Milestones",
+        accessorFn: (r: Initiative) => Number(r.actions_total)
+          ? Number(r.actions_done ?? 0) / Number(r.actions_total) : -1,
         cell: (ctx: any) => {
-          const isEdited = edited(ctx.row.original, f.column);
-          const isStale = needsReview(ctx.row.original, f.column);
-          const className = !isEdited ? "cell" : isStale ? "cell edited stale" : "cell edited";
-          const title = isStale
-            ? `Carried from a prior period; the source workbook has since changed.`
-            : isEdited
-              ? "Hand-edited — the next Excel load will not overwrite this."
-              : undefined;
+          const r = ctx.row.original, tot = Number(r.actions_total);
+          if (!tot) return <span className="muted">—</span>;
+          const pct = Math.round(100 * Number(r.actions_done ?? 0) / tot);
           return (
-            <span className={className} title={title}>
-              {display(registry, f.column, ctx.getValue())}
-            </span>
+            <span><span className="prog"><i style={{ width: `${Math.min(pct, 100)}%` }} /></span>
+              {" "}<span className="mono">{pct}%</span></span>
           );
         },
-      })),
+      },
+      col("value_target_cy", (_r, v) => <span className="mono">{musd(v)}</span>,
+        { header: "CY $M", sort: "basic" }),
+      /* Derived from the monthly actuals, so read-only and not registry
+         columns: to the period end, and with the forecast months. */
+      ...([["value_actual_ytd", "Act. YTD $M", "Actuals YTD: monthly financial actuals to the snapshot's period end"],
+        ["value_actual_fy", "A+F $M", "Actuals + forecast: monthly financial actuals through December"]] as const)
+        .map(([key, header, title]): ColumnDef<Initiative, any> => ({
+          id: key, header: () => <span title={title}>{header}</span>, sortingFn: "basic",
+          accessorFn: (r: Initiative) => Number(r[key] ?? 0),
+          cell: (ctx: any) => <span className="mono">{musd(ctx.getValue())}</span>,
+        })),
+      col("value_target_ny", (_r, v) => <span className="mono">{musd(v)}</span>,
+        { header: "NY $M", sort: "basic" }),
+      text("confidence_code", { header: "Conf." }),
+      text("owner", { header: "Owner"}),
+      col("kpi_name", (r, v) => v ? (
+        <span className="kcell"><b title={String(v)}>{clip(v, 20)}</b>
+          {r.kpi_uom ? <span>{String(r.kpi_uom)}</span> : null}</span>
+      ) : <span className="muted">—</span>, { header: "KPI" }),
+      {
+        id: "kpi_target", header: "Target", sortingFn: "basic",
+        accessorFn: (r: Initiative) => kpiAt(r, "TARGET", cutoff) ?? num(r.kpi_target_cy) ?? -Infinity,
+        cell: (ctx: any) => {
+          const r = ctx.row.original;
+          const fy = num(r.kpi_target_cy);
+          return wrap(r, "kpi_target_cy",
+            <span className="mono" title={fy == null ? undefined : `FY target: ${compact(fy)}`}>
+              {compact(kpiAt(r, "TARGET", cutoff) ?? fy)}</span>);
+        },
+      },
+      {
+        id: "kpi_value", header: "Value", sortingFn: "basic",
+        accessorFn: (r: Initiative) => kpiAt(r, "ACTUAL", cutoff) ?? -Infinity,
+        cell: (ctx: any) => <span className="mono">{compact(kpiAt(ctx.row.original, "ACTUAL", cutoff))}</span>,
+      },
+      col("notes", (_r, v) => v
+        ? <span className="notecell" title={String(v)}>{String(v)}</span>
+        : <span className="muted">—</span>),
       {
         id: "__actions",
         header: "",
@@ -91,9 +209,11 @@ function Body() {
         ),
       },
     ];
-  }, [registry]);
+  }, [registry, cutoff]);
 
   if (error) return <Problem error={error} />;
+
+  const crumbs = selection.map((s) => `${labelOf(s.dim)}: ${display(registry, s.dim, s.val)}`);
 
   return (
     <>
@@ -102,8 +222,49 @@ function Body() {
         <button className="primary" onClick={() => setCreating(true)}>+ New</button>
       </PageHead>
 
+      <Panel title="Decomposition tree">
+        <div className="dc-toolbar">
+          <label className="switch">
+            <input type="checkbox" checked={sync}
+              onChange={(e) => setSync(e.target.checked)} />
+            <span className="sl" />
+          </label>
+          <span>Sync register table to selected branch <b className="on-lbl">{sync ? "On" : "Off"}</b></span>
+          <span className="muted sm">
+            — when on, clicking a node filters the register below to that path
+          </span>
+        </div>
+        <div ref={treeRef} className="tablewrap">
+          {isLoading && !data ? <Loading what="the tree" /> : (
+            <DecompositionTree
+              levels={dcLevels} path={dcPath} nodes={treeNodes}
+              total={items.length} onTrack={treeOnTrack} valueMusd={treeValue}
+              actualYtdMusd={treeActualYtd} actualFyMusd={treeActualFy}
+              dimensions={dimOptions}
+              labelFor={(dim, code) => display(registry, dim, code)}
+              onLevelChange={(i, dim) => {
+                const next = [...dcLevels]; next[i] = dim;
+                setDcLevels(next); setDcPath(dcPath.slice(0, i));
+              }}
+              onRemoveLevel={(i) => {
+                setDcLevels(dcLevels.slice(0, i).concat(dcLevels.slice(i + 1)));
+                setDcPath(dcPath.slice(0, i));
+              }}
+              onAddLevel={(dim) => setDcLevels([...dcLevels, dim])}
+              onSelect={(i, value) => {
+                const next = dcPath.slice(0, i);
+                if (dcPath[i] !== value) next[i] = value;   // same node again = deselect
+                setDcPath(next);
+              }}
+            />
+          )}
+        </div>
+      </Panel>
+
       <Panel
-        title={`Register · ${data?.total ?? 0} initiatives`}
+        title={sync && selection.length
+          ? `Register · ${tableRows.length} of ${items.length} initiatives`
+          : `Register · ${data?.total ?? 0} initiatives`}
         actions={
           <div className="filterbar">
             {registry?.fields.filter((f) => f.filterable).map((f) => (
@@ -125,9 +286,22 @@ function Body() {
             </label>
           </div>
         }>
+        {sync && (
+          <div className="syncbar">
+            <span>🔗 Synced to {crumbs.length ? crumbs.join(" › ")
+              : "all initiatives — click a tree node to narrow"}</span>
+            <span className="muted">{tableRows.length} of {items.length} shown</span>
+            {selection.length > 0 && (
+              <button className="sm" onClick={() => setDcPath([])}>Clear branch</button>
+            )}
+          </div>
+        )}
         {isLoading && !data ? <Loading what="initiatives" />
-          : <DataTable data={data?.items ?? []} columns={columns} dense
-            pageSize={25} onRowClick={setEditing}
+          : <DataTable data={tableRows} columns={columns} dense
+            pageSize={25}
+            onRowClick={sync ? drillTo : setEditing}
+            rowClassName={sync && selection.length
+              ? (r) => (inBranch(r) ? "row-branch" : undefined) : undefined}
             initialSort={[{ id: "value_target_cy", desc: true }]} />}
       </Panel>
 
@@ -142,7 +316,32 @@ function Body() {
   );
 }
 
-const numericKinds = new Set(["int", "number", "money"]);
+const num = (v: unknown) =>
+  v === null || v === undefined || v === "" || isNaN(Number(v)) ? null : Number(v);
+
+/** Last calendar month a period covers: M05 -> 5, Q3 -> 9, H1 -> 6, FY -> 12 (mirrors backend). */
+function periodEndMonth(type: string, ordinal: number | null): number {
+  const n = ordinal ?? 0;
+  if (type === "M") return Math.min(Math.max(n, 1), 12);
+  if (type === "Q") return Math.min(Math.max(n, 1), 4) * 3;
+  if (type === "H") return Math.min(Math.max(n, 1), 2) * 6;
+  return 12;
+}
+
+/**
+ * Monthly KPI figure at the snapshot cutoff -- latest non-null month on or
+ * before it, else the latest available. Target and Value are compared
+ * month-for-month, so rate and cumulative KPIs read like-for-like.
+ */
+function kpiAt(row: Initiative, scenario: "TARGET" | "ACTUAL", cutoff: number): number | null {
+  const pts = (row.metrics ?? [])
+    .filter((m) => m.metric_code === "KPI" && m.scenario_code === scenario && m.value != null)
+    .map((m) => ({ month: Number(m.period_month.slice(5, 7)), value: m.value as number }))
+    .sort((a, b) => a.month - b.month);
+  if (!pts.length) return null;
+  const upTo = pts.filter((p) => p.month <= cutoff);
+  return (upTo.length ? upTo : pts)[(upTo.length ? upTo : pts).length - 1].value;
+}
 
 function edited(row: Initiative, column: string): boolean {
   return Boolean(row.edited_fields?.[column]);

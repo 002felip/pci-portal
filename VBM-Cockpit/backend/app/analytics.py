@@ -65,70 +65,77 @@ def _bu_codes(*maps: dict[str, list[dict]]) -> list[str]:
     return sorted(codes, key=lambda c: (BU_ORDER.get(c, 999), c))
 
 
+# ============================================================== actuals ===
+def _ytd_at(points: dict[int, float], month: int) -> float:
+    """Last YTD value on or before `month` (1-12): gaps carry forward."""
+    return next((points[m] for m in range(month, 0, -1) if m in points), 0.0)
+
+
+def annotate_actuals(rows: list[dict], year: int, cutoff_month: int) -> list[dict]:
+    """
+    Per-row financial actuals from the monthly ACTUAL block (7C), in USD:
+      value_actual_ytd  the YTD figure at the snapshot's period end
+      value_actual_fy   the December figure -- months past the period end are
+                        the BU's forecast, so this is actuals + forecast
+    The block is already year-to-date, so neither is ever re-accumulated.
+    Rows need their `metrics`; without them both figures are 0.
+    """
+    for r in rows:
+        points: dict[int, float] = {}
+        for m in r.get("metrics") or []:
+            if m.get("metric_code") != "FINANCIAL_VALUE" or m.get("scenario_code") != "ACTUAL":
+                continue
+            pm = m.get("period_month")
+            if isinstance(pm, str):
+                pm = date.fromisoformat(pm[:10])
+            if pm is None or pm.year != year or m.get("value") is None:
+                continue
+            points[pm.month] = float(m["value"])
+        r["value_actual_ytd"] = _ytd_at(points, min(max(cutoff_month, 1), 12))
+        r["value_actual_fy"] = _ytd_at(points, 12)
+    return rows
+
+
 # ============================================== snapshot A vs snapshot B ===
 def _metrics_for(rows: Iterable[dict]) -> CompareMetrics:
-    total = in_exec = prio = 0
-    value = 0.0
+    total = in_exec = 0
+    value = ytd = fy = 0.0
     for r in rows:
         total += 1
         if (r.get("stage_code") or "") in IN_EXECUTION_STAGES:
             in_exec += 1
-        if r.get("aligned_lobp") and r.get("bottleneck_uplift"):
-            prio += 1
         value += float(r.get("value_target_cy") or 0.0)
-    return CompareMetrics(total=total, in_execution=in_exec, prioritized=prio,
-                          value_musd=round(value / 1_000_000.0, 1))
-
-
-def _apply_override(m: CompareMetrics, ov: dict) -> CompareMetrics:
-    return CompareMetrics(
-        total=float(ov.get("total", m.total)),
-        in_execution=float(ov.get("in_execution", m.in_execution)),
-        prioritized=float(ov.get("prioritized", m.prioritized)),
-        value_musd=float(ov.get("value_musd", m.value_musd)))
+        ytd += float(r.get("value_actual_ytd") or 0.0)
+        fy += float(r.get("value_actual_fy") or 0.0)
+    return CompareMetrics(total=total, in_execution=in_exec,
+                          value_musd=round(value / 1_000_000.0, 1),
+                          actual_ytd_musd=round(ytd / 1_000_000.0, 1),
+                          actual_fy_musd=round(fy / 1_000_000.0, 1))
 
 
 def _delta(a: CompareMetrics, b: CompareMetrics) -> CompareMetrics:
     return CompareMetrics(total=b.total - a.total,
                           in_execution=b.in_execution - a.in_execution,
-                          prioritized=b.prioritized - a.prioritized,
-                          value_musd=round(b.value_musd - a.value_musd, 1))
+                          value_musd=round(b.value_musd - a.value_musd, 1),
+                          actual_ytd_musd=round(b.actual_ytd_musd - a.actual_ytd_musd, 1),
+                          actual_fy_musd=round(b.actual_fy_musd - a.actual_fy_musd, 1))
 
 
 def build_compare(rows_a: list[dict], rows_b: list[dict],
-                  snapshot_a: str, snapshot_b: str,
-                  overrides_a: dict[str, dict] | None = None,
-                  overrides_b: dict[str, dict] | None = None) -> CompareOut:
-    """
-    Any two snapshots, in any order. `overrides_*` pin a BU's headline numbers
-    for either side.
-
-    Pinning exists because a period is often *reported* before its full register
-    lands -- a signed-off summary with only Top-N detail behind it. Pinning keeps
-    the headline table faithful to what was signed off while the initiative-level
-    views stay driven by whatever rows exist. Override scopes are derived
-    from the snapshot id (`summary:<ID>`), so a new period needs no new
-    scope name.
-    """
-    overrides_a, overrides_b = overrides_a or {}, overrides_b or {}
+                  snapshot_a: str, snapshot_b: str) -> CompareOut:
+    """Any two snapshots, in any order. Figures come straight from the rows."""
     by_a, by_b = _by_bu(rows_a), _by_bu(rows_b)
 
     out_rows: list[CompareRow] = []
     for code in _bu_codes(by_a, by_b):
         a, b = _metrics_for(by_a.get(code, [])), _metrics_for(by_b.get(code, []))
-        ova, ovb = overrides_a.get(code) or {}, overrides_b.get(code) or {}
-        if ova:
-            a = _apply_override(a, ova)
-        if ovb:
-            b = _apply_override(b, ovb)
         out_rows.append(CompareRow(bu_code=code, bu_label=_bu_label(code), a=a, b=b,
                                    delta=_delta(a, b),
-                                   is_overridden=bool(ova or ovb),
                                    a_present=code in by_a, b_present=code in by_b))
 
     matched = [r for r in out_rows if r.a_present and r.b_present]
     unmatched_count = len(out_rows) - len(matched)
-    metric_keys = ("total", "in_execution", "prioritized", "value_musd")
+    metric_keys = ("total", "in_execution", "value_musd", "actual_ytd_musd", "actual_fy_musd")
 
     def _sum(attr: str, side: str, rows: list[CompareRow]) -> float:
         return round(sum(getattr(getattr(r, side), attr) for r in rows), 1)
@@ -148,25 +155,44 @@ def build_compare(rows_a: list[dict], rows_b: list[dict],
 
 
 # ================================================================= top N ===
-def _rank(rows: list[dict], limit: int) -> list[TopItem]:
-    ordered = sorted(rows, key=lambda r: float(r.get("value_target_cy") or 0),
-                     reverse=True)
-    non_zero = [r for r in ordered if float(r.get("value_target_cy") or 0) > 50_000]
+def _top_key(r: dict) -> str:
+    """Identity within a BU. Names repeat across initiatives and change across
+    quarters; the Initiative ID does neither. Curated override items may carry
+    only a name, so those fall back to it."""
+    sid = r.get("source_initiative_id")
+    return f"id:{sid}" if sid not in (None, "") else f"name:{_norm_name(r.get('name'))}"
+
+
+# What the ranking and the $M on each side are read from.
+TOP_BASIS_FIELD = {"target": "value_target_cy", "actual_ytd": "value_actual_ytd",
+                   "actual_fy": "value_actual_fy"}
+
+
+def _rank(rows: list[dict], limit: int, field: str = "value_target_cy") -> list[TopItem]:
+    ordered = sorted(rows, key=lambda r: float(r.get(field) or 0), reverse=True)
+    non_zero = [r for r in ordered if float(r.get(field) or 0) > 50_000]
     chosen = non_zero[:limit] if len(non_zero) >= limit else ordered[:limit]
-    return [TopItem(rank=i + 1, key=_norm_name(r.get("name")), name=r.get("name") or "—",
-                    value_musd=_musd(r.get("value_target_cy")),
+    return [TopItem(rank=i + 1, key=_top_key(r), name=r.get("name") or "—",
+                    value_musd=_musd(r.get(field)),
                     source_initiative_id=r.get("source_initiative_id"))
             for i, r in enumerate(chosen)]
 
 
 def build_top(rows_a: list[dict], rows_b: list[dict], snapshot_a: str,
               snapshot_b: str, limit: int = 10,
-              overrides: dict[str, dict] | None = None) -> TopOut:
+              overrides: dict[str, dict] | None = None,
+              basis: str = "target") -> TopOut:
     """
-    Movement between any two snapshots. Status is derived by name match:
+    Movement between any two snapshots. Status is derived by Initiative ID
+    match within the BU (a renamed initiative is still `carried`):
       carried | new | fell_out (still registered, out of the top N) | discontinued
+
+    `basis` picks what is ranked and summed: CY target, actuals YTD or actuals
+    + forecast. Curated overrides carry hand-picked target values, so they
+    only apply to `target`.
     """
-    overrides = overrides or {}
+    field = TOP_BASIS_FIELD[basis]
+    overrides = (overrides or {}) if basis == "target" else {}
     by_a, by_b = _by_bu(rows_a), _by_bu(rows_b)
     bus: list[TopBU] = []
 
@@ -174,17 +200,18 @@ def build_top(rows_a: list[dict], rows_b: list[dict], snapshot_a: str,
         ov = overrides.get(code) or {}
         if ov.get("a_items") or ov.get("b_items"):
             def _items(key: str) -> list[TopItem]:
-                return [TopItem(rank=i + 1, key=_norm_name(x.get("name")),
+                return [TopItem(rank=i + 1, key=_top_key(x),
                                 name=x.get("name", "—"),
-                                value_musd=float(x.get("value_musd") or 0))
+                                value_musd=float(x.get("value_musd") or 0),
+                                source_initiative_id=x.get("source_initiative_id"))
                         for i, x in enumerate(ov.get(key, []))]
             a_items, b_items, overridden = _items("a_items"), _items("b_items"), True
         else:
-            a_items = _rank(by_a.get(code, []), limit)
-            b_items = _rank(by_b.get(code, []), limit)
+            a_items = _rank(by_a.get(code, []), limit, field)
+            b_items = _rank(by_b.get(code, []), limit, field)
             overridden = False
 
-        b_all = {_norm_name(r.get("name")) for r in by_b.get(code, [])}
+        b_all = {_top_key(r) for r in by_b.get(code, [])}
         b_rank = {it.key: it for it in b_items}
         a_keys = {it.key for it in a_items}
 
@@ -192,16 +219,20 @@ def build_top(rows_a: list[dict], rows_b: list[dict], snapshot_a: str,
         for it in a_items:
             match = b_rank.get(it.key)
             if match:
+                renamed = _norm_name(it.name) != _norm_name(match.name)
                 movements.append(TopMovement(
-                    name=it.name, status="carried", a_rank=it.rank, b_rank=match.rank,
+                    name=match.name, status="carried", a_rank=it.rank, b_rank=match.rank,
+                    source_initiative_id=match.source_initiative_id,
+                    renamed=renamed, prev_name=it.name if renamed else None,
                     a_value_musd=it.value_musd, b_value_musd=match.value_musd,
                     delta_musd=round(match.value_musd - it.value_musd, 1)))
             else:
                 movements.append(TopMovement(
-                    name=it.name,
+                    name=it.name, source_initiative_id=it.source_initiative_id,
                     status="fell_out" if it.key in b_all else "discontinued",
                     a_rank=it.rank, a_value_musd=it.value_musd))
         movements += [TopMovement(name=it.name, status="new", b_rank=it.rank,
+                                  source_initiative_id=it.source_initiative_id,
                                   b_value_musd=it.value_musd)
                       for it in b_items if it.key not in a_keys]
 
@@ -224,7 +255,7 @@ def build_top(rows_a: list[dict], rows_b: list[dict], snapshot_a: str,
     totals["delta_musd"] = round(totals["b_total_musd"] - totals["a_total_musd"], 1)
 
     return TopOut(snapshot_a=snapshot_a, snapshot_b=snapshot_b, limit=limit,
-                  business_units=bus, totals=totals)
+                  basis=basis, business_units=bus, totals=totals)
 
 
 # ======================================================== monthly phasing ===
@@ -232,11 +263,12 @@ def build_monthly(rows: list[dict], year: int,
                   cutoff_month: int | None = None) -> MonthlySeries:
     """
     Cumulative financial target vs realized ($M) for ANY year present in the
-    facts, plus KPI attainment.
+    facts, plus KPI attainment and cumulative milestones planned vs completed.
 
     The register's financial monthly blocks (7A/7C) are ALREADY year-to-date,
     so each row's series is carried forward across gaps and summed across rows;
-    it is never accumulated again.
+    it is never accumulated again. The milestone blocks (8.) are YTD too and
+    are treated the same way.
 
     KPI direction matters: for the levers listed in
     `registry.LOWER_IS_BETTER_LEVERS` a lower actual beats the target, so
@@ -248,6 +280,7 @@ def build_monthly(rows: list[dict], year: int,
     `cutoff_month` it falls back to the last month with any actuals.
     """
     fin_t, fin_a = [0.0] * 12, [0.0] * 12
+    ms_t, ms_a = [0.0] * 12, [0.0] * 12
     kpi_hit, kpi_tot = [0] * 12, [0] * 12
     last_actual = -1
 
@@ -257,6 +290,8 @@ def build_monthly(rows: list[dict], year: int,
         ka: dict[int, float] = {}
         ft: dict[int, float] = {}
         fa: dict[int, float] = {}
+        mt: dict[int, float] = {}
+        ma: dict[int, float] = {}
         for m in r.get("metrics") or []:
             pm = m.get("period_month")
             if isinstance(pm, str):
@@ -275,8 +310,15 @@ def build_monthly(rows: list[dict], year: int,
                         last_actual = max(last_actual, idx)
             elif code == "KPI":
                 (kt if scen == "TARGET" else ka)[idx] = val
+            elif code == "MILESTONES":
+                if scen == "TARGET":
+                    mt[idx] = val
+                elif scen == "ACTUAL":
+                    ma[idx] = val
+                    if val:
+                        last_actual = max(last_actual, idx)
 
-        for series, into in ((ft, fin_t), (fa, fin_a)):
+        for series, into in ((ft, fin_t), (fa, fin_a), (mt, ms_t), (ma, ms_a)):
             carried = 0.0
             for idx in range(12):
                 carried = series.get(idx, carried)
@@ -302,6 +344,8 @@ def build_monthly(rows: list[dict], year: int,
         kpi_attainment_pct=[round(100 * kpi_hit[i] / kpi_tot[i], 1)
                             if kpi_tot[i] else None for i in range(12)],
         kpi_sample=kpi_tot,
+        milestones_target_cum=[round(v, 1) for v in ms_t],
+        milestones_actual_cum=[round(v, 1) for v in ms_a],
         cutoff_index=last_actual if last_actual >= 0 else None)
 
 
@@ -338,28 +382,34 @@ def build_quarters(rows: list[dict], stack_by: str) -> QuarterOut:
 def build_stage_matrix(rows: list[dict]) -> StageMatrixOut:
     """BU x Value Lever grid, each cell split by stage; plus the stage funnel."""
     cells: dict[tuple[str, str], dict[str, dict[str, float]]] = defaultdict(
-        lambda: defaultdict(lambda: {"count": 0.0, "value_musd": 0.0}))
+        lambda: defaultdict(lambda: {"count": 0.0, "value_musd": 0.0,
+                                     "actual_ytd_musd": 0.0, "actual_fy_musd": 0.0}))
     funnel: dict[str, dict[str, float]] = defaultdict(
-        lambda: {"count": 0.0, "value_musd": 0.0})
+        lambda: {"count": 0.0, "value_musd": 0.0, "actual_ytd_musd": 0.0, "actual_fy_musd": 0.0})
 
     for r in rows:
         bu, lever, stage = r.get("bu_code"), r.get("lever_code"), r.get("stage_code")
         if not (bu and lever and stage):
             continue
-        v = _musd(r.get("value_target_cy"))
-        cells[(bu, lever)][stage]["count"] += 1
-        cells[(bu, lever)][stage]["value_musd"] += v
-        funnel[stage]["count"] += 1
-        funnel[stage]["value_musd"] += v
+        add = {"count": 1, "value_musd": _musd(r.get("value_target_cy")),
+               "actual_ytd_musd": _musd(r.get("value_actual_ytd")),
+               "actual_fy_musd": _musd(r.get("value_actual_fy"))}
+        for into in (cells[(bu, lever)][stage], funnel[stage]):
+            for k, v in add.items():
+                into[k] += v
 
     out_cells = [StageMatrixCell(bu_code=bu, lever_code=lever, stage_code=stage,
                                  count=int(v["count"]),
-                                 value_musd=round(v["value_musd"], 1))
+                                 value_musd=round(v["value_musd"], 1),
+                                 actual_ytd_musd=round(v["actual_ytd_musd"], 1),
+                                 actual_fy_musd=round(v["actual_fy_musd"], 1))
                  for (bu, lever), stages in cells.items()
                  for stage, v in stages.items()]
     return StageMatrixOut(
         cells=out_cells,
-        funnel={s: {"count": int(v["count"]), "value_musd": round(v["value_musd"], 1)}
+        funnel={s: {"count": int(v["count"]),
+                    **{k: round(v[k], 1)
+                       for k in ("value_musd", "actual_ytd_musd", "actual_fy_musd")}}
                 for s, v in funnel.items()},
         mapped=sum(c.count for c in out_cells), total=len(rows))
 
@@ -379,6 +429,8 @@ def build_tree(rows: list[dict], levels: list[str]) -> list[TreeNode]:
             name=name, dimension=dim, count=len(arr),
             on_track=sum(1 for x in arr if x.get("track_code") == ON_TRACK_CODE),
             value_musd=round(sum(_musd(x.get("value_target_cy")) for x in arr), 1),
+            actual_ytd_musd=round(sum(_musd(x.get("value_actual_ytd")) for x in arr), 1),
+            actual_fy_musd=round(sum(_musd(x.get("value_actual_fy")) for x in arr), 1),
             children=group(arr, depth + 1) or None)
             for name, arr in buckets.items()]
         nodes.sort(key=lambda n: (-n.count, n.name))
@@ -388,18 +440,25 @@ def build_tree(rows: list[dict], levels: list[str]) -> list[TreeNode]:
 
 
 # =========================================================== completeness ===
-def build_completeness(rows: list[dict], scope: str = "required") -> CompletenessOut:
+def build_completeness(rows: list[dict], scope: str = "required",
+                       required_by_stage: dict[str, list[str]] | None = None,
+                       ) -> CompletenessOut:
     """
     Field completeness by BU, section, field and initiative.
 
     The field list, the sections and what counts as "answered" all come from
     registry.py -- this function contains no column names. `scope='required'`
-    scores only fields the registry marks required; `scope='all'` scores every
-    canonical field. A deliberate value always counts as answered; a no-data
-    placeholder ('Unknown' track, 'Not set' confidence) does not.
+    scores, per initiative, the keys `required_by_stage` lists for its stage
+    (falling back to the registry's `required` flags for an unlisted stage);
+    `scope='all'` scores every canonical field. A deliberate value always
+    counts as answered; a no-data placeholder ('Unknown' track, 'Not set'
+    confidence) does not.
     """
-    fields = scored_fields(scope)
-    n_fields = len(fields)
+    all_fields = scored_fields("all")
+    base_fields = scored_fields(scope)
+    by_stage = {stage: [f for f in all_fields if f[0] in set(keys)]
+                for stage, keys in (required_by_stage or {}).items()} \
+        if scope == "required" else {}
     all_sections = sections()
 
     by_bu: dict[str, dict[str, float]] = defaultdict(
@@ -407,14 +466,18 @@ def build_completeness(rows: list[dict], scope: str = "required") -> Completenes
     by_section: dict[tuple[str, str], dict[str, float]] = defaultdict(
         lambda: {"filled": 0, "total": 0})
     gaps: dict[tuple[str, str], int] = defaultdict(int)
+    scored: dict[tuple[str, str], int] = defaultdict(int)
     per_init: list[dict] = []
 
     for r in rows:
         bu = r.get("bu_code") or "—"
+        fields = by_stage.get(r.get("stage_code") or "", base_fields)
+        n_fields = len(fields)
         filled = 0
         missing: list[str] = []
         for column, label, section in fields:
             ok = has_value(r, column)
+            scored[(column, label)] += 1
             by_bu[bu]["total"] += 1
             by_section[(bu, section)]["total"] += 1
             if ok:
@@ -448,7 +511,7 @@ def build_completeness(rows: list[dict], scope: str = "required") -> Completenes
 
     field_gaps = sorted(
         [FieldGap(field=f, label=label, missing=n,
-                  pct=round(100 * n / len(rows), 1) if rows else 0.0)
+                  pct=round(100 * n / scored[(f, label)], 1))
          for (f, label), n in gaps.items()], key=lambda g: -g.missing)
 
     bands = ["0–20", "20–40", "40–60", "60–80", "80–<100", "100"]
@@ -458,27 +521,25 @@ def build_completeness(rows: list[dict], scope: str = "required") -> Completenes
         dist["100" if v >= 100 else "80–<100" if v >= 80 else "60–80" if v >= 60
              else "40–60" if v >= 40 else "20–40" if v >= 20 else "0–20"] += 1
 
+    # Portfolio-wide per-section score: the BU cells above, summed across BUs
+    # so the matrix's total row is cell-weighted rather than an average of %.
+    sec_tot: dict[str, dict[str, float]] = defaultdict(lambda: {"filled": 0, "total": 0})
+    for (_bu, sec), v in by_section.items():
+        sec_tot[sec]["filled"] += v["filled"]
+        sec_tot[sec]["total"] += v["total"]
+    section_pct = {sec: round(100 * sec_tot[sec]["filled"] / sec_tot[sec]["total"], 1)
+                   for sec in all_sections if sec_tot.get(sec, {}).get("total")}
+
     total_cells = sum(v["total"] for v in by_bu.values())
     total_filled = sum(v["filled"] for v in by_bu.values())
 
     return CompletenessOut(
-        scope=scope, fields_scored=n_fields, initiatives=len(rows),
+        scope=scope, fields_scored=len(scored) or len(base_fields),
+        initiatives=len(rows),
         filled=int(total_filled), total=int(total_cells),
         pct=round(100 * total_filled / total_cells, 1) if total_cells else 0.0,
         fully_complete=sum(int(v["full"]) for v in by_bu.values()),
-        sections=all_sections, by_bu=bu_rows, field_gaps=field_gaps,
+        sections=all_sections, section_pct=section_pct, by_bu=bu_rows,
+        field_gaps=field_gaps,
         distribution=dist,
         initiatives_detail=sorted(per_init, key=lambda p: -p["missing_count"]))
-
-
-def summary_scope(snapshot_id: str) -> str:
-    """
-    Override scope for a snapshot's pinned headline figures.
-
-    Was `q1_summary` / `q2_summary` -- two literals that would have needed a
-    third, then a fourth. Derived now, so a new period works the day it
-    exists. Colon-joined, not slash-joined: `/overrides/{scope}/{scope_key}`
-    matches `scope` as a single path segment, so a `/` inside the scope
-    string (a slash-joined `summary/<id>`) fails to route at all.
-    """
-    return f"summary:{snapshot_id}"
