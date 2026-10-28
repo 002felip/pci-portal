@@ -1393,6 +1393,7 @@ window.VBMSetup = (function () {
         if (st !== 'ok') pend.push({ id: c.id, t: v.t, at: v.at });
       });
     });
+    if (!total && (carregandoDados || aguardandoSituacao)) return; // carregando: o resumo anterior fica até a resposta chegar
     var mes = mesLongo(state.mes - 1);
     if (!pend.length) cicloFoco = false;
     document.getElementById('dash').classList.toggle('foco-pendentes', cicloFoco);
@@ -1601,10 +1602,11 @@ window.VBMSetup = (function () {
   }
 
   // Situação dos dados, sempre visível quando não há números: sem conexão ou sem dados no período
-  var MSG_PAINEL = 's.consultando', ultimoStatus = null; // painel sem cards (sem conexão ou sem dados)
+  var MSG_PAINEL = 's.consultando', ultimoStatus = null, carregandoDados = false, aguardandoSituacao = false; // painel sem cards (sem conexão ou sem dados)
   // detalhe: função que monta o texto (refeita ao trocar de idioma); upd: Date da consulta
   function marcarStatus(tipo, detalhe, upd) {
     ultimoStatus = [tipo, detalhe, upd];
+    carregandoDados = tipo === 'carregando';
     if (typeof detalhe === 'function') detalhe = detalhe();
     if (upd instanceof Date) upd = isNaN(upd) ? null : VBMSetup.dataHora(upd);
     var b = document.getElementById('dataBadge');
@@ -1788,7 +1790,7 @@ window.VBMSetup = (function () {
       s.t = x.t; s.tPdf = x.t; s.u = x.u; s.ordem = x.ordem; s.via = 'nome';
       s.dec = x.casas != null && !isNaN(x.casas) ? Number(x.casas) : CASAS_PADRAO;
       s.d = porKpi[x.chave] || null;
-      s.atual = null; s.ref = site ? site + '|' + x.op + '|' + x.id : null; // situação do ciclo: carregarAtualizacao
+      s.ref = site ? site + '|' + x.op + '|' + x.id : null; s.atual = atualDe(s.ref); // situação do ciclo: já recebida ou aplicarAtualizacao
       s.falta = { kpi: false, unid: !x.u, dec: x.casas == null };
       if (s.d) achados++;
     }
@@ -1892,7 +1894,7 @@ window.VBMSetup = (function () {
         if (item && item.d) achados++;
         return { id: 'm' + i + 'k' + j, t: String(base.NM_KPI || '').trim(), tPdf: String(base.NM_KPI || '').trim(), u: base.SG_UNID || '',
           dec: base.CASA_DECIMAL != null ? Number(base.CASA_DECIMAL) : CASAS_PADRAO, pol: MENOR_MELHOR.indexOf(lk.ch) >= 0 ? 'down' : 'up',
-          d: item ? item.d : null, ordem: lk.ordem, ref: l ? p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null, atual: null, vazio: SEM_DADOS,
+          d: item ? item.d : null, ordem: lk.ordem, ref: l ? p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null, atual: l ? atualDe(p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI) : null, vazio: SEM_DADOS,
           falta: l ? faltaNaQuery(l) : { kpi: true }, via: 'nome' };
       });
     });
@@ -1924,7 +1926,7 @@ window.VBMSetup = (function () {
         s.via = nomes.indexOf(normalizar(nome)) >= 0 ? (normalizar(nome) === normalizar(s.tPdf) ? 'nome' : 'apelido') : 'regra IR';
         s.d = porKpi[chave].d;
         s.dec = casasDe(s, l);
-        s.atual = null; s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null;
+        s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null; s.atual = atualDe(s.ref);
         s.t = nome; // nome do gráfico como vem da query
         s.ordem = Number(l.ID_ORDEM);
         s.u = l.SG_UNID || '';
@@ -1936,13 +1938,16 @@ window.VBMSetup = (function () {
 
   // Busca os indicadores do site no mês escolhido; só a resposta mais recente é aplicada
   function carregarIndicadores() {
-    var meu = ++seqDados;
+    var meu = ++seqDados, situacao = null;
+    aguardandoSituacao = true;
     marcarStatus('carregando', function () { return T('s.consultando'); });
     filtros().then(function () {
       if (meu !== seqDados) return null;
       render(); // os filtros podem ter definido o site e o mês iniciais
       var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo, id = SITE_ID[state.bu];
       var filhos = visao().colunas || (paisDo(state.bu) === 'IR' && !BU_DA_MINA[state.bu] ? IR_FILHOS : []);
+      // situação da atualização em paralelo com os indicadores (aplicada quando os cards estiverem prontos)
+      situacao = pedirAtualizacao([id].concat(filhos.map(function (f) { return f.id; })));
       return Promise.all([id ? apiGet('indicadores?site=' + id + periodo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
         filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
     }).then(function (todas) {
@@ -1956,38 +1961,56 @@ window.VBMSetup = (function () {
       // Daqui em diante os dados da query já estão nos cards: um erro de desenho fica no console
       // e NÃO cai no catch abaixo (que limparia os cards como se o banco tivesse falhado)
       try { render(); } catch (e) { console.error('[coo-dashboard] render error:', e); }
-      if (n) carregarAtualizacao(meu, [resp.site].concat(todas.slice(1).map(function (r) { return r.site; })));
+      if (n && situacao) situacao.then(function (mapa) { aplicarAtualizacao(meu, mapa); });
+      else { aguardandoSituacao = false; renderCiclo(); }
     }).catch(function (e) {
       if (meu !== seqDados) return;
       console.error('[coo-dashboard] failed to load indicators:', e);
       preencher(visao(), []);
       if (visao().colunas) preencherColunas(visao(), []); else preencherFilhos(visao(), []);
       var msg = e.message;
+      aguardandoSituacao = false;
       marcarStatus('erro', function () { return T('s.erro', { msg: msg }); });
       render();
     });
   }
 
+  // Situação da atualização já recebida, por ciclo|ano|mês|site|operação|KPI: os cards (e o resumo
+  // "Todos os gráficos atualizados…") já nascem com ela ao voltar a uma tela; só mudam se a resposta mudar
+  var ATUAL = {};
+  function prefixoAtual() { return state.ciclo + '|' + state.ano + '|' + state.mes + '|'; }
+  function atualDe(ref) { return ref ? ATUAL[prefixoAtual() + ref] || null : null; }
   // Situação da atualização do ciclo (consulta à parte): chega depois dos gráficos e só acrescenta
   // o aviso; se falhar ou demorar, os gráficos continuam como estão
   var atualizacaoFresca = false; // só a 1ª da carga da página relê o banco
-  function carregarAtualizacao(meu, sites) {
-    var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo + (atualizacaoFresca ? '' : '&fresco=1');
+  function pedirAtualizacao(sites) {
+    var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo + (atualizacaoFresca ? '' : '&fresco=1'), pref = prefixoAtual();
     atualizacaoFresca = true;
-    Promise.all(sites.filter(Boolean).map(function (id) {
+    return Promise.all(sites.filter(Boolean).map(function (id) {
       return apiGet('atualizacao?site=' + id + periodo).catch(function (e) { console.warn('[coo-dashboard] update status unavailable:', e.message); return null; });
     })).then(function (resps) {
-      if (meu !== seqDados) return;
       var mapa = {};
-      resps.forEach(function (r) { if (r && r.kpis) Object.keys(r.kpis).forEach(function (k) { mapa[r.site + '|' + k] = r.kpis[k]; }); });
-      if (!Object.keys(mapa).length) return;
-      visao().paineis.forEach(function (p) {
-        p.cards.forEach(function (c) {
-          (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) { s.atual = s.ref ? mapa[s.ref] || null : null; });
+      resps.forEach(function (r) { if (r && r.kpis) Object.keys(r.kpis).forEach(function (k) { mapa[r.site + '|' + k] = r.kpis[k]; ATUAL[pref + r.site + '|' + k] = r.kpis[k]; }); });
+      return mapa;
+    }, function (e) { console.error('[coo-dashboard] update status:', e); return {}; });
+  }
+  // Só redesenha se a situação recebida for diferente da que os cards já mostram
+  function aplicarAtualizacao(meu, mapa) {
+    if (meu !== seqDados) return;
+    aguardandoSituacao = false;
+    if (!Object.keys(mapa).length) { renderCiclo(); return; } // sem resposta: fica a situação já conhecida
+    var mudou = false, chave = function (a) { return a ? a.status + '|' + (a.texto || '') + '|' + (a.dt || '') : ''; };
+    visao().paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) {
+          var novo = s.ref ? mapa[s.ref] || null : null;
+          if (chave(novo) !== chave(s.atual)) mudou = true;
+          s.atual = novo;
         });
       });
-      try { render(); } catch (e) { console.error('[coo-dashboard] render error (update status):', e); }
-    }).catch(function (e) { console.error('[coo-dashboard] update status:', e); });
+    });
+    if (!mudou) { renderCiclo(); return; }
+    try { render(); } catch (e) { console.error('[coo-dashboard] render error (update status):', e); }
   }
 
   function atualizar() {
