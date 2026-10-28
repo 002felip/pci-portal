@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "start:local": "node --env-file=.env server.js"
+    "start:local": "node --env-file=.env server.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "compression": "^1.8.1",

@@ -85,10 +85,10 @@ module.exports = function montarCooDashboardNoPortal(app) {
   app.get(BASE + '/api/health', semCache, async (req, res) => {
     try {
       await runQuery('SELECT 1 AS ok');
-      res.json({ status: 'healthy', database: DB.database, server: DB.server });
+      res.json({ status: 'healthy' }); // servidor e base ficam só no log (não vão para o navegador)
     } catch (err) {
       console.error(TAG + ' health:', err.message);
-      res.status(503).json({ status: 'unhealthy', database: DB.database });
+      res.status(503).json({ status: 'unhealthy' });
     }
   });
   app.use(BASE + '/api', semCache, criarCooRouter({ runQuery, idDash: env.COO_ID_DASH }));
@@ -104,5 +104,8 @@ module.exports = function montarCooDashboardNoPortal(app) {
   });
 
   console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database}`);
+  if (!env.PERFORMANCEHUB_SQL_SERVER || !(env.PERFORMANCEHUB_AZURE_SQL_DATABASE || env.PERFORMANCEHUB_SQL_DATABASE)) {
+    console.warn(`${TAG} ATENÇÃO: servidor/base não definidos por variável — usando o padrão de PRODUÇÃO (${PRD_SERVER}/${PRD_DATABASE}). Em DEV/HML defina PERFORMANCEHUB_SQL_SERVER e PERFORMANCEHUB_AZURE_SQL_DATABASE.`);
+  }
   return { runQuery };
 };

@@ -28,6 +28,9 @@
  *   GET /atualizacao?site=&ano=&mes=  situação da atualização do ciclo por KPI do site
  *                                     no mês (consulta à parte: não atrasa os gráficos)
  *   GET /atualizacoes                 saída do script de atualização, linha a linha
+ *
+ * /chart-data, /atualizacoes e /sites devolvem o resultado inteiro (todas as BUs) e a
+ * página não as usa: só respondem com COO_DIAGNOSTICO=1 (diagnóstico pontual).
  */
 const fs = require('fs');
 const path = require('path');
@@ -35,10 +38,17 @@ const express = require('express');
 const sql = require('mssql');
 
 const TAG = '[coo-dashboard]';
-const CACHE_TTL_MS = 5 * 60 * 1000;
+// Segundos de env (inteiro positivo) ou o padrão
+function segundos(valor, padrao) { const n = Number(valor); return Number.isInteger(n) && n > 0 ? n * 1000 : padrao * 1000; }
+// Resultado das consultas em memória (COO_CACHE_TTL_S, padrão 5 min)
+const CACHE_TTL_MS = segundos(process.env.COO_CACHE_TTL_S, 300);
 // Refresh da página (?fresco=1 no 1º pedido da carga): lê o banco de novo se o resultado guardado
-// tiver mais que isto — alteração no banco aparece no refresh, sem martelar o banco a cada F5
-const FRESCO_MS = 15 * 1000;
+// tiver mais que isto (COO_FRESCO_S, padrão 15 s) — alteração no banco aparece no refresh, sem martelar o banco a cada F5
+const FRESCO_MS = segundos(process.env.COO_FRESCO_S, 15);
+// Banco fora: a página continua com o último resultado lido até este limite (marcado como desatualizado)
+const DESATUALIZADO_MAX_MS = segundos(process.env.COO_DESATUALIZADO_MAX_S, 2 * 3600);
+// Limite de pedidos por usuário por minuto nas rotas da API (proteção contra abuso; a navegação normal fica muito abaixo)
+const LIMITE_POR_MINUTO = 240;
 const ID_DASH_PADRAO = 15; // IBP.DASHBOARD.ID_DASH do COO Dashboard
 
 // Scripts de database/ servidos pela API. `trocas`: texto fixo do script →
@@ -70,14 +80,28 @@ function situacaoAtualizacao(l) {
   };
 }
 
-// Linhas do script de atualização de um site/mês → situação por KPI (ID_OPERACAO|ID_KPI)
-function atualizacoesDoMes(linhas, { site, ano, mes }) {
-  const porKpi = new Map();
-  for (const l of linhas) {
-    if (Number(l.ID_SITE) !== site) continue;
-    const [a, m] = anoMes(l.DT_REF);
-    if (a === ano && m === mes) porKpi.set(`${l.ID_OPERACAO}|${l.ID_KPI}`, situacaoAtualizacao(l));
+// Linhas de um resultado agrupadas por site|ano|mês, montado uma vez por leitura do banco
+// (o resultado em cache é o mesmo array até a próxima leitura)
+const indices = new WeakMap();
+function linhasDe(linhas, { site, ano, mes }) {
+  let idx = indices.get(linhas);
+  if (!idx) {
+    idx = new Map();
+    for (const l of linhas) {
+      const [a, m] = anoMes(l.DT_REF);
+      const k = `${Number(l.ID_SITE)}|${a}|${m}`;
+      if (!idx.has(k)) idx.set(k, []);
+      idx.get(k).push(l);
+    }
+    indices.set(linhas, idx);
   }
+  return idx.get(`${site}|${ano}|${mes}`) || [];
+}
+
+// Linhas do script de atualização de um site/mês → situação por KPI (ID_OPERACAO|ID_KPI)
+function atualizacoesDoMes(linhas, p) {
+  const porKpi = new Map();
+  for (const l of linhasDe(linhas, p)) porKpi.set(`${l.ID_OPERACAO}|${l.ID_KPI}`, situacaoAtualizacao(l));
   return porKpi;
 }
 
@@ -106,14 +130,16 @@ function letraAF(tipo) {
 }
 
 // Linhas do script de um site/mês → um item por KPI e janela, com B, A/F e a letra do script
-function agregarIndicadores(linhas, { site, ano, mes }) {
-  const porKpi = new Map();
-  for (const l of linhas) {
+function agregarIndicadores(linhas, p) {
+  const porKpi = new Map(), vistas = new Set();
+  let repetidas = 0;
+  for (const l of linhasDe(linhas, p)) {
     const serie = SERIE_POR_ORDEM[l.ORDEM_GRAFICO];
-    if (!serie || Number(l.ID_SITE) !== site) continue;
-    const [a, m] = anoMes(l.DT_REF);
-    if (a !== ano || m !== mes) continue;
+    if (!serie) continue;
     const [visao, s] = serie;
+    // Mesma série do mesmo KPI duas vezes no mês = cadastro duplicado (os valores seriam somados)
+    const unica = `${l.ID_OPERACAO}|${l.ID_KPI}|${l.ORDEM_GRAFICO}`;
+    if (vistas.has(unica)) repetidas++; else vistas.add(unica);
     // Um item por KPI cadastrado (operação + KPI) e janela
     const chave = `${l.ID_OPERACAO}|${l.ID_KPI}|${visao}`;
     if (!porKpi.has(chave)) {
@@ -131,6 +157,7 @@ function agregarIndicadores(linhas, { site, ano, mes }) {
     else if (s === 'P') item.VL_P = (item.VL_P || 0) + valor;
     else { item.VL_AF = (item.VL_AF || 0) + valor; item.LETRA_AF = letraAF(l.NM_VISAO) || item.LETRA_AF; }
   }
+  if (repetidas) console.warn(`${TAG} site ${p.site} ${p.mes}/${p.ano}: ${repetidas} linha(s) repetida(s) para a mesma série do mesmo KPI — valores somados; verifique duplicidade em IBP.DASHBOARD (ID_DASH do COO)`);
   return [...porKpi.values()].sort((x, y) => (x.ID_ORDEM - y.ID_ORDEM) || x.CD_VISAO.localeCompare(y.CD_VISAO));
 }
 
@@ -216,15 +243,27 @@ function criarCooRouter({ runQuery, idDash }) {
 
   // Pedidos simultâneos da mesma consulta esperam a MESMA ida ao banco (o pool do Portal
   // tem poucas conexões; consultas pesadas em paralelo travariam as demais). Falha não fica no cache.
+  // Se a releitura falhar e houver resultado anterior (até DESATUALIZADO_MAX_MS), ele continua
+  // sendo servido, marcado como desatualizado — a página não fica vazia por uma queda do banco.
   const emAndamento = new Map();
   function comCache(chave, buscar, fresco) {
     const item = cache.get(chave);
     const valido = item && item.expiraEm > Date.now() && !(fresco && Date.now() - item.lidoEm > FRESCO_MS);
     if (valido) return Promise.resolve(item.dados);
     if (emAndamento.has(chave)) return emAndamento.get(chave);
+    const inicio = Date.now();
     const p = Promise.resolve().then(buscar).then(dados => {
-      cache.set(chave, { dados, lidoEm: Date.now(), expiraEm: Date.now() + CACHE_TTL_MS });
+      cache.set(chave, { dados, lidoEm: Date.now(), expiraEm: Date.now() + CACHE_TTL_MS, desatualizado: false });
+      console.log(`${TAG} leitura ${chave}: ${(dados || []).length} linhas em ${Date.now() - inicio} ms${fresco ? ' (refresh)' : ''}`);
       return dados;
+    }, err => {
+      if (item && Date.now() - item.lidoEm < DESATUALIZADO_MAX_MS) {
+        console.error(`${TAG} leitura ${chave} falhou (${err.message}); servindo o resultado de ${new Date(item.lidoEm).toISOString()}`);
+        item.desatualizado = true;
+        item.expiraEm = Date.now() + Math.min(CACHE_TTL_MS, 60 * 1000); // tenta o banco de novo em até 1 min
+        return item.dados;
+      }
+      throw err;
     }).finally(() => emAndamento.delete(chave));
     emAndamento.set(chave, p);
     return p;
@@ -235,6 +274,19 @@ function criarCooRouter({ runQuery, idDash }) {
   const fresco = req => req.query.fresco === '1';
   // Hora em que o banco foi lido (para o "Last updated" da tela)
   const lidoEm = caminho => { const item = cache.get(caminho); return new Date(item ? item.lidoEm : Date.now()).toISOString(); };
+  const desatualizado = caminho => !!(cache.get(caminho) || {}).desatualizado;
+
+  // Limite de pedidos por usuário (X-Forwarded-Email do proxy; sem ele, o IP) por minuto
+  const contagem = new Map();
+  let janela = Date.now();
+  router.use((req, res, next) => {
+    if (Date.now() - janela > 60 * 1000) { contagem.clear(); janela = Date.now(); }
+    const quem = String(req.get('X-Forwarded-Email') || req.ip || '').toLowerCase();
+    const n = (contagem.get(quem) || 0) + 1;
+    contagem.set(quem, n);
+    if (n > LIMITE_POR_MINUTO) return res.status(429).json({ error: 'Too many requests. Try again in a minute.', codigo: 'LIMITE' });
+    next();
+  });
   function rota(caminho, consulta, falha) {
     router.get(caminho, async (req, res) => {
       try {
@@ -251,8 +303,12 @@ function criarCooRouter({ runQuery, idDash }) {
   router.get('/ping', (req, res) => res.json({ ok: true, idDash: ID_DASH }));
 
   const SQL = {};
-  for (const c of CONSULTAS) rota(c.rota, SQL[c.rota] = carregarSql(c.arquivo, c.trocas), c.falha);
-  rota('/sites', SITES_SQL, 'Failed to query the dashboard sites.');
+  const diagnostico = process.env.COO_DIAGNOSTICO === '1';
+  for (const c of CONSULTAS) {
+    SQL[c.rota] = carregarSql(c.arquivo, c.trocas);
+    if (diagnostico) rota(c.rota, SQL[c.rota], c.falha);
+  }
+  if (diagnostico) rota('/sites', SITES_SQL, 'Failed to query the dashboard sites.');
 
   router.get('/filtros', async (req, res) => {
     try {
@@ -274,7 +330,7 @@ function criarCooRouter({ runQuery, idDash }) {
     }
     try {
       const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data'], fresco(req)), p);
-      res.json({ ...p, geradoEm: lidoEm('/chart-data'), linhas });
+      res.json({ ...p, geradoEm: lidoEm('/chart-data'), desatualizado: desatualizado('/chart-data'), linhas });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);
       res.status(500).json({ error: 'Failed to query the dashboard indicators.', codigo: 'ERRO_BANCO' });
@@ -300,4 +356,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, CONSULTAS };

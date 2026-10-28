@@ -12,8 +12,9 @@
  *   AZURE_SQL_SERVER, AZURE_SQL_DATABASE, AZURE_SQL_PORT
  *   AZURE_SQL_USER, AZURE_SQL_PASSWORD   ← secrets (valueFrom), nunca em texto puro
  *   COO_ID_DASH                          ← opcional (padrão 15)
- *   COO_ACESSO_LOCAL_EMAIL               ← só fora do Databricks: simula o
- *                                          X-Forwarded-Email para testar localmente
+ *   COO_ACESSO_LOCAL_EMAIL               ← só com NODE_ENV=development e fora do
+ *                                          Databricks: simula o X-Forwarded-Email
+ *   COO_CACHE_TTL_S / COO_FRESCO_S / COO_DESATUALIZADO_MAX_S / COO_DIAGNOSTICO ← ver coo-api.js
  */
 const path = require('path');
 const express = require('express');
@@ -37,8 +38,8 @@ function configAusente() {
 }
 
 // ── Pool (criado na 1ª consulta; recriado se cair) ──────────────────
-// Sem banco configurado o servidor SOBE mesmo assim: a página abre com os
-// dados de exemplo, em vez de derrubar o app inteiro.
+// Sem banco configurado o servidor SOBE mesmo assim: a página abre e mostra
+// que não há conexão, em vez de derrubar o app inteiro.
 let poolPromise = null;
 // Falha recente de conexão é reaproveitada por 30 s (evita esperar o timeout a cada rota)
 let ultimaFalha = null;
@@ -100,17 +101,20 @@ async function health(req, res) {
   res.set('Cache-Control', 'no-store');
   try {
     await runQuery('SELECT 1 AS ok');
-    res.json({ status: 'healthy', database: DB.database, server: DB.server });
+    res.json({ status: 'healthy' }); // fora do controle de acesso: sem servidor nem base na resposta
   } catch (err) {
     console.error('[sql] health:', err.message);
-    res.status(503).json({ status: 'unhealthy', database: DB.database || null });
+    res.status(503).json({ status: 'unhealthy' });
   }
 }
 const BASES_API = ['/api', '/COO-Business-Units-Dashboard/api'];
 for (const base of BASES_API) app.get(`${base}/health`, health);
 
 // Controle de acesso: o mesmo módulo e a mesma regra do Portal
-const LOCAL = !process.env.DATABRICKS_APP_PORT && process.env.COO_ACESSO_LOCAL_EMAIL;
+// Só em desenvolvimento explícito (NODE_ENV=development) e fora do Databricks: publicado em outro
+// lugar com a variável esquecida, todo visitante entraria com esse e-mail
+const LOCAL = process.env.NODE_ENV === 'development' && !process.env.DATABRICKS_APP_PORT && process.env.COO_ACESSO_LOCAL_EMAIL;
+if (!LOCAL && process.env.COO_ACESSO_LOCAL_EMAIL) console.warn('[coo-dashboard] COO_ACESSO_LOCAL_EMAIL ignorado: só vale com NODE_ENV=development e fora do Databricks');
 if (LOCAL) {
   console.warn(`[coo-dashboard] ATENÇÃO: X-Forwarded-Email simulado (${LOCAL}) — use só em desenvolvimento`);
   app.use((req, res, next) => { req.headers['x-forwarded-email'] = LOCAL; next(); });

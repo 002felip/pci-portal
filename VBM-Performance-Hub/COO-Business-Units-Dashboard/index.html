@@ -831,7 +831,8 @@ window.VBMSetup = (function () {
       'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
       's.consultando': 'Consultando o banco de dados…', 's.semConexao': 'Sem conexão com o banco de dados.', 's.semIndicadores': 'A consulta não trouxe indicadores para este período.',
       's.semValores': 'A consulta não trouxe valores para {bu} em {mes} de {ano}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).',
-      'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados no período' },
+      'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados no período',
+      'b.desatualizado': 'banco indisponível: últimos dados lidos', 's.desatualizado': 'O banco não respondeu; estes são os últimos dados lidos (veja a hora em Última atualização).' },
     en: { 'f.unit': 'Unit:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
@@ -846,7 +847,8 @@ window.VBMSetup = (function () {
       'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
       's.consultando': 'Querying the database…', 's.semConexao': 'No connection to the database.', 's.semIndicadores': 'The query returned no indicators for this period.',
       's.semValores': 'The query returned no values for {bu} in {mes} {ano}.', 's.erro': 'Could not query the database ({msg}).',
-      'b.erro': 'no database connection', 'b.carregando': 'loading…', 'b.vazio': 'no data for this period' }
+      'b.erro': 'no database connection', 'b.carregando': 'loading…', 'b.vazio': 'no data for this period',
+      'b.desatualizado': 'database unavailable: last data read', 's.desatualizado': 'The database did not respond; these are the last data read (see the time in Last updated).' }
   });
   VBMSetup.traduzir();
 
@@ -890,8 +892,6 @@ window.VBMSetup = (function () {
     prod: [k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Equivalent Total Development', 0), k('Nickel Grade', 2), k('Copper Grade', 2)],
     fin: [k('C1 unit cash cost', 0, 'down'), CAPEX_MINA, k('Vale - Lateral Mine Development Cost', 0, 'down', { kpi: ['Lateral Mine Development Cost'] }),
       k('Mining Production Expenses', 0, 'down')] };
-  var MINA_VNL = { cls: 'dash--mina', colsProd: 2, rows: 2,
-    prod: [k('Equivalent Total Development', 0), k('Ore Mined', 0, 'up', { kpi: ['Ore Hoisted | Mined (Dry)'] }), k('Nickel Grade', 2), k('Copper Grade', 1)], fin: [] };
   // Nota de rodapé do PDF (Onça Puma: Finished Nickel; Ontario: Finished Nickel e Copper Production)
   var NOTA_INTERM = { nota: 'c.notaInterm' };
   // Chave = nome do site normalizado (ver normalizar)
@@ -909,8 +909,7 @@ window.VBMSetup = (function () {
       k('Matsuzaka Production', 1, 'up', { kpi: ['Matsusaka Production'], filho: 'mats' })], fin: FINANCEIRO },
     manitoba: { prod: [k('Lateral Mine Development', 0), k('Ore Hoisted | Mined (Dry)', 0, 'up', ORE_MINED), k('Ore Milled | ROP (Dry)', 0), k('Nickel Grade', 2),
       k('Ni Production', 2), k('Ni Production | Sales', 1)], fin: FINANCEIRO },
-    coleman: MINA_ONTARIO, coppercliff: MINA_ONTARIO, creighton: MINA_ONTARIO, garson: MINA_ONTARIO, totten: MINA_ONTARIO, stobie: MINA_ONTARIO,
-    easterndeeps: MINA_VNL, reidbrook: MINA_VNL, discoveryhill: MINA_VNL
+    coleman: MINA_ONTARIO, coppercliff: MINA_ONTARIO, creighton: MINA_ONTARIO, garson: MINA_ONTARIO, totten: MINA_ONTARIO, stobie: MINA_ONTARIO
   };
   MODELOS.internationalrefineries = MODELOS.ir; // nome completo, se a consulta trouxer
 
@@ -973,7 +972,7 @@ window.VBMSetup = (function () {
   var URL_INI = (function () {
     try {
       var q = new URLSearchParams(location.search);
-      return q.has('site') || q.has('ano') ? { site: q.get('site'), ano: Number(q.get('ano')), mes: Number(q.get('mes')), plan: q.get('plan') === '1', delta: q.get('delta') !== 'off' } : null;
+      return q.has('site') || q.has('ano') ? { site: q.get('site'), ano: Number(q.get('ano')), mes: Number(q.get('mes')), plan: q.get('plan') === '1', delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
     } catch (e) { return null; }
   })();
   function salvarUrl() {
@@ -983,6 +982,8 @@ window.VBMSetup = (function () {
       q.set('site', state.bu); q.set('ano', state.ano); q.set('mes', state.mes);
       if (state.plan) q.set('plan', '1'); else q.delete('plan');
       if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
+      var sel = Object.keys(state.sel).filter(function (k) { return state.sel[k]; }).map(function (k) { return k + '.' + state.sel[k]; }).join(',');
+      if (sel) q.set('sel', sel); else q.delete('sel');
       var novo = location.pathname + '?' + q.toString() + location.hash;
       if (novo !== location.pathname + location.search + location.hash) history.replaceState(null, '', novo);
     } catch (e) { /* sem History API: segue sem guardar */ }
@@ -1478,20 +1479,30 @@ window.VBMSetup = (function () {
   // De dentro do navegador não dá para saber se a página está no Portal
   // (/VBM-Performance-Hub/COO-Business-Units-Dashboard/) ou num app próprio:
   // tenta os caminhos na ordem e guarda o primeiro que responder.
-  var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard/api/', '/COO-Business-Units-Dashboard/api/', '/api/'];
+  // Só caminhos do COO: '/api/' na raiz do Portal é a API de OUTRA aplicação (Kaizen)
+  var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard/api/', '/COO-Business-Units-Dashboard/api/'];
+  var API_TIMEOUT_MS = 75000; // acima do requestTimeout do banco (60 s): o servidor responde antes
   var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null;
 
+  // Próximo caminho só quando este não existe (404) ou a rede falhou; erro do servidor (5xx, 403,
+  // 429) é a resposta certa e não se repete — senão uma queda do banco viraria várias consultas
   function apiGet(recurso) {
     var bases = apiBase ? [apiBase] : API_BASES, i = 0;
     function tentar() {
       if (i >= bases.length) return Promise.reject(new Error('API unavailable'));
-      var b = bases[i++];
-      return fetch(new URL(recurso, new URL(b, location.href)), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      var b = bases[i++], ctrl = window.AbortController ? new AbortController() : null;
+      var limite = ctrl ? setTimeout(function () { ctrl.abort(); }, API_TIMEOUT_MS) : null;
+      return fetch(new URL(recurso, new URL(b, location.href)), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
         .then(function (r) {
-          if (!r.ok) throw new Error(recurso + ' → ' + r.status);
+          clearTimeout(limite);
+          if (r.status === 404 && !apiBase) return tentar();
+          if (!r.ok) { var e = new Error(recurso + ' → ' + r.status); e.final = true; throw e; }
           return r.json().then(function (j) { apiBase = b; return j; });
-        })
-        .catch(tentar);
+        }, function (err) {
+          clearTimeout(limite);
+          if (err && err.name === 'AbortError') { var t = new Error(recurso + ' → timeout'); t.final = true; throw t; }
+          return tentar(); // rede: tenta o próximo caminho
+        });
     }
     return tentar();
   }
@@ -1506,7 +1517,7 @@ window.VBMSetup = (function () {
     var b = document.getElementById('dataBadge');
     MSG_PAINEL = tipo === 'erro' ? 's.semConexao' : tipo === 'carregando' ? 's.consultando' : 's.semIndicadores';
     b.hidden = tipo === 'ok';
-    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'carregando' ? 'b.carregando' : 'b.vazio');
+    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'carregando' ? 'b.carregando' : tipo === 'desatualizado' ? 'b.desatualizado' : 'b.vazio');
     b.title = detalhe || '';
     document.getElementById('updTxt').textContent = upd || '—';
   }
@@ -1531,6 +1542,7 @@ window.VBMSetup = (function () {
   var MINAS_EM_COLUNAS = {
     vnl: { nome: 'VNL Mines', minas: [{ m: 'easterndeep', sub: 'UG Mines' }, { m: 'reidbrook', sub: 'UG Mines' }, { m: 'discoveryhill', sub: 'Open Pit' }] }
   };
+  var VNL_MINAS_DE = {}; // nome da mina → página em colunas que a mostra
   function visaoColunas(nome, minas) {
     return { cls: 'dash--colunas', colsProd: 1, rows: 4, titulo: nome, colunas: minas.map(function (m) { return { id: m.id, nome: m.nome }; }),
       paineis: minas.map(function (m, i) { return { titulo: m.nome, sub: m.sub, cls: i % 2 ? 'panel-fin' : 'panel-prod', site: m.id, cards: [] }; }) };
@@ -1551,7 +1563,7 @@ window.VBMSetup = (function () {
       SITE_ID[st.nome] = st.id;
       porChave[normalizar(st.nome)] = st.nome;
     });
-    var ocultos = {}; // minas que só aparecem dentro da página em colunas
+    var ocultos = {}; VNL_MINAS_DE = {}; // minas que só aparecem dentro da página em colunas
     Object.keys(MINAS_EM_COLUNAS).forEach(function (chaveBu) {
       var cfg = MINAS_EM_COLUNAS[chaveBu];
       var minas = cfg.minas.map(function (mc) {
@@ -1559,7 +1571,7 @@ window.VBMSetup = (function () {
         return c && { id: SITE_ID[porChave[c]], nome: porChave[c], sub: mc.sub };
       }).filter(Boolean);
       if (!minas.length) return;
-      minas.forEach(function (m) { ocultos[m.nome] = true; });
+      minas.forEach(function (m) { ocultos[m.nome] = true; VNL_MINAS_DE[m.nome] = cfg.nome; });
       VISOES[cfg.nome] = visaoColunas(cfg.nome, minas);
       SITE_ID[cfg.nome] = null;
       var bu = porChave[chaveBu] ? chaveBu : Object.keys(porChave).filter(function (n) { return n.indexOf(chaveBu) === 0; })[0];
@@ -1592,7 +1604,10 @@ window.VBMSetup = (function () {
     else if (ANOS.indexOf(state.ano) < 0) state.ano = ANOS[ANOS.length - 1];
     if (URL_INI) { // tela do endereço (refresh ou link), só com valores que a consulta tem
       var u = URL_INI; URL_INI = null;
+      if (u.site && ocultos[u.site] && VNL_MINAS_DE[u.site]) u.site = VNL_MINAS_DE[u.site]; // link antigo de uma mina → página em colunas
       if (u.site && u.site in SITE_ID) { state.bu = u.site; state.pais = paisDo(BU_DA_MINA[u.site] || u.site); }
+      // seletores dos cards (All-in, CAPEX, Cu/Au): "id.opção" separados por vírgula; opção inválida é ignorada em selDe
+      u.sel.split(',').forEach(function (par) { var m = /^([a-z]\d+)\.([a-z]+)$/.exec(par); if (m) state.sel[m[1]] = m[2]; });
       var mesesDoAno = (f.meses || {})[u.ano];
       if (ANOS.indexOf(u.ano) >= 0 && mesesDoAno && mesesDoAno.indexOf(u.mes) >= 0) { state.ano = u.ano; state.mes = u.mes; state.tri = Math.ceil(u.mes / 3); }
       state.plan = u.plan;
@@ -1830,7 +1845,7 @@ window.VBMSetup = (function () {
       if (!vs.colunas) ordenarCards(vs);
       if (vs.colunas && todas[1]) dt = new Date(todas[1].geradoEm);
       var bu = state.bu, mes = state.mes - 1, ano = state.ano;
-      if (n) marcarStatus('ok', '', dt);
+      if (n) marcarStatus(resp.desatualizado ? 'desatualizado' : 'ok', resp.desatualizado ? function () { return T('s.desatualizado'); } : '', dt);
       else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
       // Daqui em diante os dados da query já estão nos cards: um erro de desenho fica no console
       // e NÃO cai no catch abaixo (que limparia os cards como se o banco tivesse falhado)
@@ -1897,6 +1912,7 @@ window.VBMSetup = (function () {
     var id = g.getAttribute('data-for'), k = g.getAttribute('data-alt');
     if (state.sel[id] === k) return;
     state.sel[id] = k;
+    salvarUrl();
     var tmp = document.createElement('div');
     tmp.innerHTML = cardHtml(byId(id));
     var card = tmp.firstChild;
