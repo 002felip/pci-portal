@@ -1759,6 +1759,7 @@ window.VBMSetup = (function () {
   }
 
   function preencher(vs, linhas, site, cadastro) {
+    if (vs.colunas) return 0; // página em colunas (VNL Mines): preencherColunas
     var porKpi = {}, letras = ['A', 'A', 'F'], kpis = {}, achados = 0;
     // KPIs do site: o cadastro (também os sem valor no período) e os que vieram na consulta
     function kpi(l) {
@@ -1827,10 +1828,14 @@ window.VBMSetup = (function () {
     fin.forEach(function (c, i) { c.id = 'f' + i; });
     vs.paineis[0].cards = cardsProd;
     vs.paineis[1].cards = fin;
-    // Disposição: até 4 gráficos de produção em 2 colunas (página de mina); acima, 3 colunas.
-    // Linhas = as do painel mais alto (financeiro em 2 colunas)
-    if (!vs.ir) { vs.colsProd = prod.length <= 4 ? 2 : 3; vs.cls = prod.length && prod.length <= 4 ? 'dash--mina' : ''; }
-    vs.rows = Math.max(1, Math.ceil(cardsProd.length / vs.colsProd), Math.ceil(fin.length / 2));
+    // Disposição fixa, igual à de Salobo: BU com produção em 3 colunas e financeiro em 2, sempre com
+    // 3 linhas (mesma posição, tamanho e distância entre os gráficos, mesmo com menos cards).
+    // Mina de uma BU: 2 colunas e 2 linhas. Mais cards que isso: novas linhas abaixo.
+    if (!vs.ir) {
+      var mina = !!BU_DA_MINA[vs.titulo];
+      vs.colsProd = mina ? 2 : 3; vs.cls = mina ? 'dash--mina' : '';
+      vs.rows = Math.max(mina ? 2 : 3, Math.ceil(cardsProd.length / vs.colsProd), Math.ceil(fin.length / 2));
+    } else vs.rows = Math.max(1, cardsProd.length, Math.ceil(fin.length / 2));
     vs.paineis.forEach(function (p) {
       p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[altChaves(c)[0]]; c.t = a0.t; c.u = a0.u; } });
     });
@@ -1847,33 +1852,47 @@ window.VBMSetup = (function () {
   // senão o de produção, senão o primeiro pelo ID_ORDEM. Devolve quantos têm dados.
   // Página em colunas: cada mina recebe um card por KPI da query, na ordem do ID_ORDEM, com
   // nome, unidade e casas decimais do banco. Devolve quantos cards têm dados.
+  // Página em colunas (VNL Mines): uma coluna por mina com os KPIs de produção, na vertical. As linhas
+  // são as mesmas em todas as minas (um KPI por linha, na ordem do ID_ORDEM): KPI sem valor numa mina
+  // fica com o card vazio na mesma linha. Nome, unidade e casas decimais do banco (vazio = 0).
   function preencherColunas(vs, respostas) {
-    var achados = 0, letras = ['A', 'A', 'F'], maior = 1;
+    var achados = 0, letras = ['A', 'A', 'F'], linhasKpi = {}, porMina = [];
+    function chaveDe(l) { return normalizar(l.NM_KPI); }
     vs.paineis.forEach(function (p, i) {
-      var r = respostas.filter(function (x) { return Number(x.site) === Number(p.site); })[0];
-      var porKpi = {}, ordem = [];
+      var r = respostas.filter(function (x) { return Number(x.site) === Number(p.site); })[0], porKpi = {};
+      function guardar(l, d) {
+        if (Number(l.ID_OPERACAO) === OPERACAO_FINANCEIRA || !String(l.NM_KPI || '').trim()) return null;
+        var ch = chaveDe(l);
+        if (!porKpi[ch]) porKpi[ch] = { l: l, d: d };
+        var o = Number(l.ID_ORDEM), atual = linhasKpi[ch];
+        if (!atual) linhasKpi[ch] = { ch: ch, ordem: isNaN(o) ? Infinity : o };
+        else if (!isNaN(o) && o < atual.ordem) atual.ordem = o;
+        return porKpi[ch];
+      }
       ((r && r.linhas) || []).forEach(function (l) {
-        var ch = l.ID_OPERACAO + '-' + l.ID_KPI;
-        if (!porKpi[ch]) { porKpi[ch] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(ch); }
-        porKpi[ch].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
+        var k0 = guardar(l, null);
+        if (!k0) return;
+        if (!k0.d) k0.d = [[null, null], [null, null], [null, null]];
+        k0.d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
         if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
       });
-      // KPI cadastrado no dashboard sem linha no mês: card vazio (nome, unidade e casas do cadastro)
-      ((r && r.cadastro) || []).forEach(function (l) {
-        var ch = l.ID_OPERACAO + '-' + l.ID_KPI;
-        if (!porKpi[ch]) { porKpi[ch] = { l: l, d: null }; ordem.push(ch); }
-      });
-      ordem.sort(function (a, b) { return (Number(porKpi[a].l.ID_ORDEM) || 0) - (Number(porKpi[b].l.ID_ORDEM) || 0); });
-      p.cards = ordem.map(function (ch, j) {
-        var l = porKpi[ch].l;
-        if (porKpi[ch].d) achados++;
-        return { id: 'm' + i + 'k' + j, t: String(l.NM_KPI).trim(), tPdf: String(l.NM_KPI).trim(), u: l.SG_UNID || '', dec: l.CASA_DECIMAL != null ? l.CASA_DECIMAL : 1,
-          pol: 'up', d: porKpi[ch].d, ordem: Number(l.ID_ORDEM), ref: p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI, atual: null, vazio: SEM_DADOS,
-          falta: faltaNaQuery(l), via: 'nome' };
-      });
-      maior = Math.max(maior, p.cards.length);
+      ((r && r.cadastro) || []).forEach(function (l) { guardar(l, null); }); // cadastrado sem linha no mês
+      porMina[i] = porKpi;
     });
-    vs.rows = maior;
+    var ordem = Object.keys(linhasKpi).map(function (ch) { return linhasKpi[ch]; }).sort(function (a, b) { return a.ordem - b.ordem; });
+    vs.paineis.forEach(function (p, i) {
+      var porKpi = porMina[i] || {};
+      p.cards = ordem.map(function (lk, j) {
+        var item = porKpi[lk.ch], l = item ? item.l : null;
+        var base = l || (function () { for (var m = 0; m < porMina.length; m++) if (porMina[m] && porMina[m][lk.ch]) return porMina[m][lk.ch].l; return {}; })();
+        if (item && item.d) achados++;
+        return { id: 'm' + i + 'k' + j, t: String(base.NM_KPI || '').trim(), tPdf: String(base.NM_KPI || '').trim(), u: base.SG_UNID || '',
+          dec: base.CASA_DECIMAL != null ? Number(base.CASA_DECIMAL) : CASAS_PADRAO, pol: MENOR_MELHOR.indexOf(lk.ch) >= 0 ? 'down' : 'up',
+          d: item ? item.d : null, ordem: lk.ordem, ref: l ? p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null, atual: null, vazio: SEM_DADOS,
+          falta: l ? faltaNaQuery(l) : { kpi: true }, via: 'nome' };
+      });
+    });
+    vs.rows = Math.max(1, ordem.length);
     LETRAS_AF = letras;
     return achados;
   }
