@@ -29,12 +29,14 @@ CTE AS (
         DASH.NM_KPIS_DASH,
         CASE 
             WHEN LPVC.DT_ATUALIZACAO IS NULL THEN 0  -- sem atualização
+            WHEN PVC.VL_REAL IS NULL THEN 0  -- mês sem Actual carregado: pendente
             WHEN PVC.DT_REF < @DT_REF THEN 1
             WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), 1) >= @DT_REF THEN 1 
             ELSE 0 
         END AS VALIDATE,
         CASE 
             WHEN LPVC.DT_ATUALIZACAO IS NULL THEN 'Pending final updates'  -- <<<<< regra principal
+            WHEN PVC.VL_REAL IS NULL THEN 'Pending final updates'
             WHEN PVC.DT_REF < @DT_REF THEN '.'
             WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), 1) >= @DT_REF THEN '.' 
             ELSE 'Pending final updates'
