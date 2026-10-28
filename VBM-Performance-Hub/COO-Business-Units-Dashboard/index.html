@@ -1643,10 +1643,11 @@ window.VBMSetup = (function () {
     if (upd instanceof Date) upd = isNaN(upd) ? null : VBMSetup.dataHora(upd);
     var b = document.getElementById('dataBadge');
     MSG_PAINEL = tipo === 'erro' ? 's.semConexao' : tipo === 'carregando' ? 's.consultando' : 's.semIndicadores';
-    b.hidden = tipo === 'ok';
-    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'carregando' ? 'b.carregando' : tipo === 'desatualizado' ? 'b.desatualizado' : 'b.vazio');
+    // Carregando: sem selo e a data anterior fica até a resposta chegar (troca de filtro sem "piscar")
+    b.hidden = tipo === 'ok' || tipo === 'carregando';
+    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'desatualizado' ? 'b.desatualizado' : 'b.vazio');
     b.title = detalhe || '';
-    document.getElementById('updTxt').textContent = upd || '—';
+    if (tipo !== 'carregando') document.getElementById('updTxt').textContent = upd || '—';
   }
 
   // ── Unidades e filtros: sites, anos e mês inicial vêm do resultado da consulta (/api/filtros) ──
