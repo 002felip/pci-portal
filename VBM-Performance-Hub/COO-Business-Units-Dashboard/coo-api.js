@@ -98,12 +98,12 @@ function linhasDe(linhas, { site, ano, mes }) {
   return idx.get(`${site}|${ano}|${mes}`) || [];
 }
 
-// Mês do ciclo: o último mês realizado (Actual) no resultado da query principal — o mesmo corte
-// A/F do script. Meses depois dele são projeção e seguem a situação do mês do ciclo.
-const ciclos = new WeakMap();
-function mesDoCiclo(linhas) {
-  if (!ciclos.has(linhas)) ciclos.set(linhas, extrairFiltros(linhas, []).ultimoRealizado);
-  return ciclos.get(linhas);
+// Mês do ciclo: o mês anterior ao atual (em outubro, setembro; em novembro, outubro). Meses depois
+// dele são projeção e seguem a situação do mês do ciclo: ciclo atualizado → projeções atualizadas;
+// KPI pendente no ciclo → pendente também nas projeções.
+function mesDoCiclo(hoje = new Date()) {
+  const m = hoje.getMonth(); // 0-11: o mês anterior em 1-12 é o próprio índice (janeiro → dezembro do ano anterior)
+  return m === 0 ? { ano: hoje.getFullYear() - 1, mes: 12 } : { ano: hoje.getFullYear(), mes: m };
 }
 function periodoDaSituacao(p, ciclo) {
   return ciclo && p.ano * 12 + p.mes > ciclo.ano * 12 + ciclo.mes ? { site: p.site, ano: ciclo.ano, mes: ciclo.mes } : p;
@@ -376,8 +376,7 @@ function criarCooRouter({ runQuery, idDash }) {
     }
     try {
       // Mês depois do ciclo (projeção): vale a situação do mês do ciclo
-      const ciclo = mesDoCiclo(await buscar('/chart-data', SQL['/chart-data']));
-      const ref = periodoDaSituacao(p, ciclo);
+      const ref = periodoDaSituacao(p, mesDoCiclo());
       const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes'], fresco(req)), ref));
       res.json({ ...p, kpis, situacaoDe: { ano: ref.ano, mes: ref.mes } });
     } catch (err) {
@@ -389,4 +388,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, CONSULTAS };

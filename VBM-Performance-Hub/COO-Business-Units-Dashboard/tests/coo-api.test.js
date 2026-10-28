@@ -160,3 +160,10 @@ test('situação de mês projetado segue o mês do ciclo (último realizado)', (
   assert.deepStrictEqual(periodoDaSituacao({ site: 6, ano: 2026, mes: 3 }, ciclo), { site: 6, ano: 2026, mes: 3 });
   assert.deepStrictEqual(periodoDaSituacao({ site: 6, ano: 2027, mes: 1 }, ciclo), { site: 6, ano: 2026, mes: 9 });
 });
+
+test('mês do ciclo = mês anterior ao atual', () => {
+  const { mesDoCiclo } = require('../coo-api');
+  assert.deepStrictEqual(mesDoCiclo(new Date(2026, 9, 28)), { ano: 2026, mes: 9 });  // outubro → setembro
+  assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 3)), { ano: 2026, mes: 10 }); // novembro → outubro
+  assert.deepStrictEqual(mesDoCiclo(new Date(2027, 0, 10)), { ano: 2026, mes: 12 }); // janeiro → dezembro anterior
+});
