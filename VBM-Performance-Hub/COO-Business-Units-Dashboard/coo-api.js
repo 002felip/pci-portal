@@ -16,17 +16,21 @@
  *
  * Nova consulta = novo script em database/ + uma entrada em CONSULTAS.
  *
- * Rotas:
+ * Fonte dos gráficos: as cargas gravadas em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH do COO) por
+ * database/003_carga_mensal_coo.sql. Cada carga é um ciclo (DT_REF, dia 1 do mês; ex.: 2026-10-01 =
+ * realizado até setembro). Sem carga gravada não há dados na tela: não há consulta ao vivo de reserva.
+ *
+ * Rotas (ciclo = AAAA-MM de uma carga gravada; sem ele, a carga mais recente):
  *   GET /ping                         diagnóstico sem banco
- *   GET /chart-data                   saída do script, linha a linha (todas as BUs)
+ *   GET /ciclos                       cargas gravadas (DT_REF), da mais recente para a mais antiga
+ *   GET /chart-data                   saída do script ao vivo, linha a linha (todas as BUs)
  *   GET /sites                        ID_SITE e nome dos sites do dashboard
- *   GET /filtros                      o que a tela pode filtrar, tirado do resultado
- *                                     do script: sites com dados, anos e meses, e o
- *                                     último mês realizado (Actual)
- *   GET /indicadores?site=&ano=&mes=  Budget e Actual/Forecast por KPI do site,
- *                                     no mês, no trimestre do mês e no ano
- *   GET /atualizacao?site=&ano=&mes=  situação da atualização do ciclo por KPI do site
- *                                     no mês (consulta à parte: não atrasa os gráficos)
+ *   GET /filtros?ciclo=               o que a tela pode filtrar na carga: sites com dados,
+ *                                     anos e meses, e o último mês realizado (Actual)
+ *   GET /indicadores?site=&ano=&mes=&ciclo=  Budget e Actual/Forecast por KPI do site,
+ *                                     no mês, no trimestre do mês e no ano, da carga
+ *   GET /atualizacao?site=&ano=&mes=&ciclo=  situação da atualização por KPI do site no mês
+ *                                     (consulta à parte: não atrasa os gráficos)
  *   GET /atualizacoes                 saída do script de atualização, linha a linha
  *
  * /chart-data, /atualizacoes e /sites devolvem o resultado inteiro (todas as BUs) e a
@@ -67,6 +71,50 @@ const CONSULTAS = [
     falha: 'Failed to query the data update status.',
   },
 ];
+
+// Cargas do COO em IBP.PHUB_PERFORMANCESTUDIO (uma por DT_REF), com a hora da gravação
+const CICLOS_SQL = `
+SELECT R.DT_REF, MAX(R.DT_ATUALIZACAO) AS DT_CARGA
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+WHERE R.ID_DASH = @idDash
+GROUP BY R.DT_REF
+ORDER BY R.DT_REF DESC`;
+
+// Uma carga do COO com as mesmas colunas da query ao vivo (coo_dashboard.sql), para o restante
+// do módulo não mudar: DT_REF = mês da linha (DT_IND), ORDEM_GRAFICO refeito a partir do período
+// e da série do VBM; nome, ordem, unidade e casas decimais do KPI vêm de IBP.DASHBOARD.
+const SNAPSHOT_SQL = `
+SELECT
+  R.DT_IND AS DT_REF, R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  DASH.NM_KPIS_DASH AS NM_KPI, DASH.ID_ORDEM, DASH.SG_UNID, DASH.VL_CASADECIMAL,
+  CASE R.CD_PERIODO
+    WHEN 'MONTH'   THEN CASE R.ID_TIPO_VISAO WHEN 1 THEN 0 WHEN 2 THEN 1 ELSE 2 END
+    WHEN 'QUARTER' THEN CASE R.ID_TIPO_VISAO WHEN 1 THEN 3 ELSE 4 END
+    WHEN 'YEAR'    THEN CASE R.ID_TIPO_VISAO WHEN 1 THEN 6 ELSE 7 END
+  END AS ORDEM_GRAFICO,
+  R.NM_TIPO_VISAO, R.NM_VISAO, R.VL_KPI
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+INNER JOIN IBP.DASHBOARD DASH
+  ON DASH.ID_DASH = R.ID_DASH
+  AND R.ID_SISTEMA = DASH.ID_SISTEMA
+  AND CONCAT(R.ID_SITE, '|', R.ID_OPERACAO, '|', R.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
+WHERE R.ID_DASH = @idDash
+  AND R.DT_REF = @dtRef`;
+
+// ?ciclo=AAAA-MM (ou AAAA-MM-01) → 'AAAA-MM'; vazio → null; inválido → undefined
+function lerCiclo(valor) {
+  if (valor === undefined || valor === '') return null;
+  const m = typeof valor === 'string' && /^(\d{4})-(0[1-9]|1[0-2])(?:-01)?$/.exec(valor);
+  if (!m || +m[1] < 2000 || +m[1] > 2100) return undefined;
+  return `${m[1]}-${m[2]}`;
+}
+// DT_REF da carga → 'AAAA-MM'
+function cicloDe(dt) { const [a, m] = anoMes(dt); return `${a}-${String(m).padStart(2, '0')}`; }
+// Mês do ciclo de uma carga: o mês anterior ao DT_REF (carga 2026-10 → realizado até 09/2026)
+function mesDoCicloDaCarga(ciclo) {
+  const [a, m] = ciclo.split('-').map(Number);
+  return m === 1 ? { ano: a - 1, mes: 12 } : { ano: a, mes: m - 1 };
+}
 
 // Situação do KPI no ciclo (script de atualização): VALIDATE 1 = atualizado, 0 = aguardando a
 // atualização final. 2 fica reservado para "atrasado", regra que o time de dados ainda vai criar.
@@ -300,6 +348,27 @@ function criarCooRouter({ runQuery, idDash }) {
 
   // Erro do banco fica no log do servidor; a tela recebe só uma mensagem genérica
   const buscar = (caminho, consulta, fresco) => comCache(caminho, async () => (await runQuery(consulta, { idDash: [sql.Int, ID_DASH] })).recordset, fresco);
+  // Uma carga gravada (ciclo 'AAAA-MM'); cada ciclo tem o seu lugar no cache
+  const buscarCarga = (ciclo, fresco) => comCache(`/carga:${ciclo}`, async () => (await runQuery(SNAPSHOT_SQL, {
+    idDash: [sql.Int, ID_DASH], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)],
+  })).recordset, fresco);
+  const buscarCiclos = async (fresco) => (await buscar('/ciclos', CICLOS_SQL, fresco)).map(l => ({ ciclo: cicloDe(l.DT_REF), carregadoEm: l.DT_CARGA || null }));
+  // Ciclo pedido (ou o mais recente) entre as cargas gravadas; erro com status para a rota responder
+  async function resolverCiclo(req) {
+    const pedido = lerCiclo(req.query.ciclo);
+    if (pedido === undefined) throw Object.assign(new Error('Invalid ciclo: use AAAA-MM.'), { status: 400, codigo: 'PARAMETRO' });
+    const ciclos = await buscarCiclos(fresco(req));
+    if (!ciclos.length) throw Object.assign(new Error('No cycle loaded in IBP.PHUB_PERFORMANCESTUDIO for this dashboard.'), { status: 404, codigo: 'SEM_CICLO' });
+    const achado = pedido ? ciclos.find(c => c.ciclo === pedido) : ciclos[0];
+    if (!achado) throw Object.assign(new Error(`Cycle ${pedido} is not loaded.`), { status: 404, codigo: 'CICLO' });
+    return achado;
+  }
+  // Erro de parâmetro/ciclo vai para a tela como está; erro do banco fica no log e a tela recebe mensagem genérica
+  function responderErro(res, rotaNome, err, falha) {
+    if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
+    console.error(`${TAG} erro em ${rotaNome}:`, err.message);
+    res.status(500).json({ error: falha, codigo: 'ERRO_BANCO' });
+  }
   const fresco = req => req.query.fresco === '1';
   // Hora em que o banco foi lido (para o "Last updated" da tela)
   const lidoEm = caminho => { const item = cache.get(caminho); return new Date(item ? item.lidoEm : Date.now()).toISOString(); };
@@ -339,13 +408,21 @@ function criarCooRouter({ runQuery, idDash }) {
   }
   if (diagnostico) rota('/sites', SITES_SQL, 'Failed to query the dashboard sites.');
 
+  router.get('/ciclos', async (req, res) => {
+    try {
+      res.json({ ciclos: await buscarCiclos(fresco(req)) });
+    } catch (err) {
+      responderErro(res, '/ciclos', err, 'Failed to query the loaded cycles.');
+    }
+  });
+
   router.get('/filtros', async (req, res) => {
     try {
-      const [linhas, sites] = await Promise.all([buscar('/chart-data', SQL['/chart-data'], fresco(req)), buscar('/sites', SITES_SQL, fresco(req))]);
-      res.json(extrairFiltros(linhas, sites));
+      const c = await resolverCiclo(req);
+      const [linhas, sites] = await Promise.all([buscarCarga(c.ciclo, fresco(req)), buscar('/sites', SITES_SQL, fresco(req))]);
+      res.json({ ciclo: c.ciclo, ...extrairFiltros(linhas, sites) });
     } catch (err) {
-      console.error(`${TAG} erro em /filtros:`, err.message);
-      res.status(500).json({ error: 'Failed to query the dashboard filters.', codigo: 'ERRO_BANCO' });
+      responderErro(res, '/filtros', err, 'Failed to query the dashboard filters.');
     }
   });
 
@@ -358,14 +435,16 @@ function criarCooRouter({ runQuery, idDash }) {
       return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
-      const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data'], fresco(req)), p);
+      const c = await resolverCiclo(req);
+      const linhas = agregarIndicadores(await buscarCarga(c.ciclo, fresco(req)), p);
       // Cadastro do site (KPIs sem valor no mês também); se falhar, segue sem ele
       let cadastro = [];
       try { cadastro = cadastroDoSite(await buscar('/cadastro', CADASTRO_SQL, fresco(req)), p.site); } catch (err) { console.error(`${TAG} cadastro indisponível:`, err.message); }
-      res.json({ ...p, geradoEm: lidoEm('/chart-data'), desatualizado: desatualizado('/chart-data'), linhas, cadastro });
+      // "Última atualização" = hora em que a carga foi gravada (sem ela, a hora da leitura)
+      const geradoEm = c.carregadoEm ? new Date(c.carregadoEm).toISOString() : lidoEm(`/carga:${c.ciclo}`);
+      res.json({ ...p, ciclo: c.ciclo, geradoEm, desatualizado: desatualizado(`/carga:${c.ciclo}`), linhas, cadastro });
     } catch (err) {
-      console.error(`${TAG} erro em /indicadores:`, err.message);
-      res.status(500).json({ error: 'Failed to query the dashboard indicators.', codigo: 'ERRO_BANCO' });
+      responderErro(res, '/indicadores', err, 'Failed to query the dashboard indicators.');
     }
   });
 
@@ -377,17 +456,19 @@ function criarCooRouter({ runQuery, idDash }) {
       return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
-      // Mês depois do ciclo (projeção): vale a situação do mês do ciclo
-      const ref = periodoDaSituacao(p, mesDoCiclo());
+      // Mês depois do ciclo (projeção): vale a situação do mês do ciclo da carga escolhida
+      // (sem ciclo, o mês do ciclo de hoje)
+      const pedido = lerCiclo(req.query.ciclo);
+      if (pedido === undefined) return res.status(400).json({ error: 'Invalid ciclo: use AAAA-MM.', codigo: 'PARAMETRO' });
+      const ref = periodoDaSituacao(p, pedido ? mesDoCicloDaCarga(pedido) : mesDoCiclo());
       const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes'], fresco(req)), ref));
       res.json({ ...p, kpis, situacaoDe: { ano: ref.ano, mes: ref.mes } });
     } catch (err) {
-      console.error(`${TAG} erro em /atualizacao:`, err.message);
-      res.status(500).json({ error: 'Failed to query the data update status.', codigo: 'ERRO_BANCO' });
+      responderErro(res, '/atualizacao', err, 'Failed to query the data update status.');
     }
   });
 
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, mesDoCicloDaCarga, lerCiclo, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL };

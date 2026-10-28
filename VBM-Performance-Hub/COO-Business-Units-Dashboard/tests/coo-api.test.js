@@ -7,7 +7,7 @@ const assert = require('node:assert');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, CONSULTAS } = require('../coo-api');
+const { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, mesDoCicloDaCarga, lerCiclo, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL } = require('../coo-api');
 
 const AGO = new Date(Date.UTC(2026, 7, 1));
 const linha = (o) => Object.assign({ DT_REF: AGO, ID_SITE: 6, ID_OPERACAO: 1, ID_KPI: 10, NM_KPI: 'Mine Movement', ID_ORDEM: 1, SG_UNID: 'Mt', VL_CASADECIMAL: 1 }, o);
@@ -74,6 +74,11 @@ function servidor(runQuery) {
 }
 const get = (s, url, h) => fetch(`http://127.0.0.1:${s.address().port}${url}`, { headers: h }).then(async (r) => { const t = await r.text(); let json = null; try { json = JSON.parse(t); } catch (e) { /* 404 do Express em HTML */ } return { status: r.status, json }; });
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+// Cargas gravadas em IBP.PHUB_PERFORMANCESTUDIO (mais recente primeiro) e o banco simulado: /ciclos → CICLOS, carga → DADOS
+const CARGA_OUT = new Date(Date.UTC(2026, 9, 28, 10, 0, 0));
+const CICLOS = [{ DT_REF: new Date(Date.UTC(2026, 9, 1)), DT_CARGA: CARGA_OUT }, { DT_REF: new Date(Date.UTC(2026, 8, 1)), DT_CARGA: null }];
+const ehCarga = (q) => q === SNAPSHOT_SQL;
+const banco = (dados = DADOS, ciclos = CICLOS) => async (q) => ({ recordset: q === CICLOS_SQL ? ciclos : dados });
 
 test('parâmetros inválidos → 400; rotas brutas fechadas sem COO_DIAGNOSTICO', async () => {
   const s = await servidor(async () => ({ recordset: DADOS }));
@@ -87,7 +92,7 @@ test('parâmetros inválidos → 400; rotas brutas fechadas sem COO_DIAGNOSTICO'
 
 test('pedidos simultâneos usam uma única leitura do banco', async () => {
   let leituras = 0;
-  const s = await servidor(async (q) => { if (/PEDRAVISAO/.test(q)) leituras++; await espera(50); return { recordset: DADOS }; });
+  const s = await servidor(async (q, p) => { if (ehCarga(q)) leituras++; await espera(50); return banco()(q, p); });
   try {
     const rs = await Promise.all(Array.from({ length: 10 }, () => get(s, '/api/indicadores?site=6&ano=2026&mes=8')));
     assert.ok(rs.every((r) => r.status === 200));
@@ -97,7 +102,7 @@ test('pedidos simultâneos usam uma única leitura do banco', async () => {
 
 test('banco fora após uma leitura: serve o último resultado marcado como desatualizado', async () => {
   let falhar = false;
-  const s = await servidor(async () => { if (falhar) throw new Error('Login failed'); return { recordset: DADOS }; });
+  const s = await servidor(async (q, p) => { if (falhar) throw new Error('Login failed'); return banco()(q, p); });
   try {
     assert.strictEqual((await get(s, '/api/indicadores?site=6&ano=2026&mes=8')).json.desatualizado, false);
     falhar = true;
@@ -120,7 +125,7 @@ test('banco fora sem leitura anterior: 500 com mensagem genérica (sem detalhe d
 
 test('refresh (?fresco=1) relê o banco quando o resultado passou do limite', async () => {
   let leituras = 0;
-  const s = await servidor(async (q) => { if (/PEDRAVISAO/.test(q)) leituras++; return { recordset: DADOS }; });
+  const s = await servidor(async (q, p) => { if (ehCarga(q)) leituras++; return banco()(q, p); });
   try {
     await get(s, '/api/indicadores?site=6&ano=2026&mes=8');
     await get(s, '/api/indicadores?site=6&ano=2026&mes=8&fresco=1');
@@ -198,4 +203,62 @@ test('carga do COO na tabela do VBM: query original + campos do VBM, só o dashb
   assert.strictEqual(deletes.length, 1);
   assert.match(deletes[0], /DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH/);
   assert.strictEqual((ativo.match(/AS 'ID_TIPO_VISAO_VBM'/g) || []).length, 3);
+});
+
+test('lerCiclo e mês do ciclo da carga (2026-10 = realizado até setembro; janeiro → dezembro anterior)', () => {
+  assert.strictEqual(lerCiclo('2026-10'), '2026-10');
+  assert.strictEqual(lerCiclo('2026-10-01'), '2026-10');
+  assert.strictEqual(lerCiclo(''), null);
+  for (const v of ['2026-13', '26-10', '2026-10-02', ['2026-10', '2026-09']]) assert.strictEqual(lerCiclo(v), undefined, String(v));
+  assert.deepStrictEqual(mesDoCicloDaCarga('2026-10'), { ano: 2026, mes: 9 });
+  assert.deepStrictEqual(mesDoCicloDaCarga('2027-01'), { ano: 2026, mes: 12 });
+});
+
+test('leitura da carga: só a tabela do VBM, filtrada por dashboard e DT_REF, ORDEM_GRAFICO refeito do período e da série', () => {
+  assert.match(SNAPSHOT_SQL, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
+  assert.match(SNAPSHOT_SQL, /R\.ID_DASH = @idDash\s+AND R\.DT_REF = @dtRef/);
+  assert.doesNotMatch(SNAPSHOT_SQL, /PEDRAVISAO/);
+  assert.match(SNAPSHOT_SQL, /'MONTH'\s+THEN CASE R\.ID_TIPO_VISAO WHEN 1 THEN 0 WHEN 2 THEN 1 ELSE 2 END/);
+  assert.match(SNAPSHOT_SQL, /'QUARTER' THEN CASE R\.ID_TIPO_VISAO WHEN 1 THEN 3 ELSE 4 END/);
+  assert.match(SNAPSHOT_SQL, /'YEAR'\s+THEN CASE R\.ID_TIPO_VISAO WHEN 1 THEN 6 ELSE 7 END/);
+});
+
+test('/ciclos lista as cargas; /indicadores usa o ciclo pedido (ou o mais recente) com a hora da carga', async () => {
+  const pedidos = [];
+  const s = await servidor(async (q, p) => { if (ehCarga(q)) pedidos.push(p.dtRef[1].toISOString().slice(0, 10)); return banco()(q, p); });
+  try {
+    assert.deepStrictEqual((await get(s, '/api/ciclos')).json.ciclos.map((c) => c.ciclo), ['2026-10', '2026-09']);
+    const r = await get(s, '/api/indicadores?site=6&ano=2026&mes=8');
+    assert.strictEqual(r.json.ciclo, '2026-10');
+    assert.strictEqual(r.json.geradoEm, CARGA_OUT.toISOString());
+    assert.strictEqual(r.json.linhas.length, 3);
+    assert.strictEqual((await get(s, '/api/filtros?ciclo=2026-09')).json.ciclo, '2026-09');
+    assert.deepStrictEqual(pedidos, ['2026-10-01', '2026-09-01']); // um cache por ciclo
+  } finally { s.close(); }
+});
+
+test('ciclo inválido → 400; ciclo sem carga → 404; nenhuma carga → 404 sem consulta ao vivo', async () => {
+  let aoVivo = 0;
+  const s = await servidor(async (q, p) => { if (/PEDRAVISAO/.test(q)) aoVivo++; return banco()(q, p); });
+  const vazio = await servidor(async (q, p) => { if (/PEDRAVISAO/.test(q)) aoVivo++; return banco(DADOS, [])(q, p); });
+  try {
+    assert.strictEqual((await get(s, '/api/indicadores?site=6&ano=2026&mes=8&ciclo=2026-13')).status, 400);
+    assert.strictEqual((await get(s, '/api/atualizacao?site=6&ano=2026&mes=8&ciclo=x')).status, 400);
+    const r = await get(s, '/api/filtros?ciclo=2025-01');
+    assert.deepStrictEqual([r.status, r.json.codigo], [404, 'CICLO']);
+    const v = await get(vazio, '/api/filtros');
+    assert.deepStrictEqual([v.status, v.json.codigo], [404, 'SEM_CICLO']);
+    assert.strictEqual(aoVivo, 0);
+  } finally { s.close(); vazio.close(); }
+});
+
+test('/atualizacao: mês projetado segue o mês do ciclo da carga escolhida', async () => {
+  const set = new Date(Date.UTC(2026, 8, 1)), out = new Date(Date.UTC(2026, 9, 1));
+  const l = (dt, v) => ({ DT_REF: dt, ID_SITE: 6, ID_OPERACAO: 1, ID_KPI: 10, VALIDATE: v, DS_VALIDATE: v ? '.' : 'Pending final updates', DT_ATUALIZACAO: null });
+  const s = await servidor(async () => ({ recordset: [l(set, 0), l(out, 1)] }));
+  try {
+    const r = await get(s, '/api/atualizacao?site=6&ano=2026&mes=12&ciclo=2026-10');
+    assert.deepStrictEqual(r.json.situacaoDe, { ano: 2026, mes: 9 });
+    assert.strictEqual(r.json.kpis['1|10'].status, 'pendente');
+  } finally { s.close(); }
 });

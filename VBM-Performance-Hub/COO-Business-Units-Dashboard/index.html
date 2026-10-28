@@ -231,6 +231,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
 .unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
 .unit-list button[data-site][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+/* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro */
+.ciclo-pop { width: auto; min-width: 120px; grid-template-columns: 1fr; }
+.ciclo-pop .unit-list { max-height: min(60vh, 360px); overflow-y: auto; }
+.unit-list button[data-ciclo][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
 /* Delta: interruptor liga/desliga */
 .switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
 .switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
@@ -624,6 +628,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <h2>COO – Business Units Dashboard</h2>
     </div>
     <div class="filters">
+      <div class="filter"><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span>
+        <div class="unit ciclo">
+          <button type="button" class="unit-trigger" id="cicloTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="cicloPop" aria-describedby="lblCiclo">
+            <span id="cicloTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop ciclo-pop" id="cicloPop" hidden><div class="unit-list" id="cicloLista" role="group" aria-labelledby="lblCiclo"></div></div>
+        </div>
+      </div>
       <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Unit:</span>
         <div class="unit">
           <button type="button" class="unit-trigger" id="unitTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="unitPop" aria-describedby="lblBu">
@@ -821,7 +833,7 @@ window.VBMSetup = (function () {
   // ── Textos do dashboard nos dois idiomas (Setup Dashboards: VBMSetup) ──
   var T = VBMSetup.t;
   VBMSetup.registrar({
-    'pt-BR': { 'f.unit': 'Unidade:', 'f.view': 'Visão:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+    'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Unidade:', 'f.view': 'Visão:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
@@ -839,7 +851,7 @@ window.VBMSetup = (function () {
       's.semValores': 'A consulta não trouxe valores para {bu} em {mes} de {ano}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).',
       'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados no período',
       'b.desatualizado': 'banco indisponível: últimos dados lidos', 's.desatualizado': 'O banco não respondeu; estes são os últimos dados lidos (veja a hora em Última atualização).' },
-    en: { 'f.unit': 'Unit:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+    en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Unit:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
@@ -974,9 +986,13 @@ window.VBMSetup = (function () {
   var UNIDADES = [];
   var hoje = new Date(), mesRef = hoje.getMonth() || 12; // até a consulta responder: mês anterior ao atual
   var ANOS = [mesRef === 12 ? hoje.getFullYear() - 1 : hoje.getFullYear()];
-  var state = { pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', plan: false, sel: {} };
+  var state = { ciclo: '', pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', plan: false, sel: {} };
   // ── Navegação no endereço (?site=&ano=&mes=&plan=&delta=): o refresh volta à mesma tela e o link
   // pode ser compartilhado. Lida uma vez na carga e validada contra os filtros da consulta (aplicarFiltros)
+  // Ciclo = carga gravada em IBP.PHUB_PERFORMANCESTUDIO (DT_REF 'AAAA-MM'), a mais recente primeiro
+  var CICLOS = [], CICLO_URL = (function () { try { return new URLSearchParams(location.search).get('ciclo') || ''; } catch (e) { return ''; } })();
+  // "Out/26" no idioma escolhido (mês do DT_REF da carga)
+  function rotuloCiclo(c) { var p = String(c || '').split('-'); return p.length === 2 ? mesCurto(Number(p[1]) - 1) + '/' + p[0].slice(2) : '—'; }
   var URL_INI = (function () {
     try {
       var q = new URLSearchParams(location.search);
@@ -987,6 +1003,7 @@ window.VBMSetup = (function () {
     if (!state.bu) return; // ainda carregando: não apaga o endereço recebido
     try {
       var q = new URLSearchParams(location.search);
+      if (state.ciclo) q.set('ciclo', state.ciclo);
       q.set('site', state.bu); q.set('ano', state.ano); q.set('mes', state.mes);
       if (state.plan) q.set('plan', '1'); else q.delete('plan');
       if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
@@ -1312,6 +1329,13 @@ window.VBMSetup = (function () {
       }).join('');
     });
     larguraMeses();
+    renderCicloSel();
+  }
+  function renderCicloSel() {
+    document.getElementById('cicloTxt').textContent = rotuloCiclo(state.ciclo);
+    document.getElementById('cicloLista').innerHTML = CICLOS.map(function (c) {
+      return '<button type="button" data-ciclo="' + esc(c) + '" aria-pressed="' + (c === state.ciclo) + '">' + esc(rotuloCiclo(c)) + '</button>';
+    }).join('');
   }
 
   // Botões de mês com largura única: cabe o nome de mês mais longo do idioma (ex.: "September",
@@ -1503,10 +1527,43 @@ window.VBMSetup = (function () {
     }
   });
   document.addEventListener('click', function (e) {
-    if (!unitPop.hidden && !e.target.closest('.unit')) abrirUnit(false);
+    if (!unitPop.hidden && !e.target.closest('.unit:not(.ciclo)')) abrirUnit(false);
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !unitPop.hidden) { abrirUnit(false); unitTrigger.focus(); }
+  });
+
+  // ── Ciclo: carga gravada (DT_REF). Trocar o ciclo relê os filtros e os indicadores daquela carga;
+  // a unidade escolhida continua quando existir no ciclo, e o mês volta ao último realizado dele
+  var cicloTrigger = document.getElementById('cicloTrigger'), cicloPop = document.getElementById('cicloPop');
+  function abrirCicloSel(abrir) {
+    cicloPop.hidden = !abrir;
+    cicloTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) {
+      renderCicloSel();
+      var sel = cicloPop.querySelector('button[aria-pressed="true"]') || cicloPop.querySelector('button');
+      if (sel) sel.focus();
+    }
+  }
+  cicloTrigger.addEventListener('click', function () { abrirCicloSel(cicloPop.hidden && CICLOS.length > 0); });
+  cicloPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var b = e.target.closest('button[data-ciclo]');
+    if (!b) return;
+    var c = b.getAttribute('data-ciclo');
+    abrirCicloSel(false);
+    cicloTrigger.focus();
+    if (c === state.ciclo) return;
+    state.ciclo = c;
+    filtrosPromessa = null;
+    renderCicloSel();
+    atualizar();
+  });
+  document.addEventListener('click', function (e) {
+    if (!cicloPop.hidden && !e.target.closest('.ciclo')) abrirCicloSel(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !cicloPop.hidden) { abrirCicloSel(false); cicloTrigger.focus(); }
   });
 
   // ── Delta: interruptor liga/desliga ──
@@ -1523,7 +1580,7 @@ window.VBMSetup = (function () {
   // Só caminhos do COO: '/api/' na raiz do Portal é a API de OUTRA aplicação (Kaizen)
   var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard/api/', '/COO-Business-Units-Dashboard/api/'];
   var API_TIMEOUT_MS = 75000; // acima do requestTimeout do banco (60 s): o servidor responde antes
-  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null;
+  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null, filtrosFresco = true;
 
   // Próximo caminho só quando este não existe (404) ou a rede falhou; erro do servidor (5xx, 403,
   // 429) é a resposta certa e não se repete — senão uma queda do banco viraria várias consultas
@@ -1663,7 +1720,17 @@ window.VBMSetup = (function () {
   function filtros() {
     if (!filtrosPromessa) {
       // 1ª carga da página (refresh): pede ao servidor para reler o banco (ver FRESCO_MS em coo-api.js)
-      filtrosPromessa = apiGet('filtros?fresco=1').then(aplicarFiltros).catch(function (e) { filtrosPromessa = null; throw e; });
+      // Ciclos gravados (uma vez); depois os filtros da carga escolhida. Sem carga gravada não há dados.
+      var fresco = filtrosFresco ? '&fresco=1' : '';
+      filtrosPromessa = (CICLOS.length ? Promise.resolve() : apiGet('ciclos?fresco=1').then(function (r) {
+        CICLOS = ((r && r.ciclos) || []).map(function (c) { return c.ciclo; });
+        if (!CICLOS.length) throw new Error(T('s.semCiclo'));
+        if (CICLOS.indexOf(state.ciclo) < 0) state.ciclo = CICLOS.indexOf(CICLO_URL) >= 0 ? CICLO_URL : CICLOS[0];
+        renderCicloSel();
+      })).then(function () { return apiGet('filtros?ciclo=' + state.ciclo + fresco); }).then(function (f) {
+        filtrosFresco = false;
+        aplicarFiltros(f);
+      }).catch(function (e) { filtrosPromessa = null; throw e; });
     }
     return filtrosPromessa;
   }
@@ -1886,7 +1953,7 @@ window.VBMSetup = (function () {
     filtros().then(function () {
       if (meu !== seqDados) return null;
       render(); // os filtros podem ter definido o site e o mês iniciais
-      var periodo = '&ano=' + state.ano + '&mes=' + state.mes, id = SITE_ID[state.bu];
+      var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo, id = SITE_ID[state.bu];
       var filhos = visao().colunas || (paisDo(state.bu) === 'IR' && !BU_DA_MINA[state.bu] ? IR_FILHOS : []);
       return Promise.all([id ? apiGet('indicadores?site=' + id + periodo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
         filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
@@ -1917,7 +1984,7 @@ window.VBMSetup = (function () {
   // o aviso; se falhar ou demorar, os gráficos continuam como estão
   var atualizacaoFresca = false; // só a 1ª da carga da página relê o banco
   function carregarAtualizacao(meu, sites) {
-    var periodo = '&ano=' + state.ano + '&mes=' + state.mes + (atualizacaoFresca ? '' : '&fresco=1');
+    var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo + (atualizacaoFresca ? '' : '&fresco=1');
     atualizacaoFresca = true;
     Promise.all(sites.filter(Boolean).map(function (id) {
       return apiGet('atualizacao?site=' + id + periodo).catch(function (e) { console.warn('[coo-dashboard] update status unavailable:', e.message); return null; });
