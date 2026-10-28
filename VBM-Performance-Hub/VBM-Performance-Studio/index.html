@@ -195,6 +195,9 @@ html[data-bg="light"] .dash-titulo-nome { color: #0B3A50; }
 /* Salvar no banco / desfazer alterações não salvas (mesmo visual do botão de exportar) */
 .dash-acoes { position: absolute; right: 16px; top: 12px; display: flex; gap: 8px; }
 .dash-acoes[hidden], .dash-acao[hidden] { display: none; }
+/* Tela cheia: sem o topo (logo, nome do app e usuário) */
+html:fullscreen .topnav { display: none; }
+html:-webkit-full-screen .topnav { display: none; }
 .dash-acao { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; border: 1px solid rgba(15,23,42,.12); background: rgba(255,255,255,.92); color: #0B6E99; cursor: pointer; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
 .dash-acao:hover:not(:disabled) { background: #0B6E99; color: #fff; border-color: #0B6E99; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
@@ -6395,6 +6398,7 @@ function iniciarTelaCheia() {
     btn.title = txt;
     btn.dataset.i18nAria = btn.dataset.i18nTitle = ligada ? 'ui.sair_tela_cheia' : 'ui.tela_cheia';
     btn.querySelector('i').className = `fa-solid ${ligada ? 'fa-compress' : 'fa-expand'}`;
+    updateEditorTop(); // paleta lateral sobe/desce com o topo
   };
   btn.addEventListener('click', () => {
     const p = atual() ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
