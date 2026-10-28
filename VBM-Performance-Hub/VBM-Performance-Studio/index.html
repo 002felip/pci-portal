@@ -181,7 +181,7 @@ body {
 }
 
 /* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
-.dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 104px 4px; }
+.dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 146px 4px; } /* espaço dos 3 ícones à direita */
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
   font: 300 1.1rem/1.2 'Poppins', 'Segoe UI', sans-serif; letter-spacing: .08em; color: rgba(255,255,255,.88);
@@ -194,13 +194,13 @@ body {
 html[data-bg="light"] .dash-titulo-nome { color: #0B3A50; }
 /* Salvar no banco / desfazer alterações não salvas (mesmo visual do botão de exportar) */
 .dash-acoes { position: absolute; right: 16px; top: 12px; display: flex; gap: 8px; }
-.dash-acoes[hidden] { display: none; }
+.dash-acoes[hidden], .dash-acao[hidden] { display: none; }
 .dash-acao { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; border: 1px solid rgba(15,23,42,.12); background: rgba(255,255,255,.92); color: #0B6E99; cursor: pointer; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
 .dash-acao:hover:not(:disabled) { background: #0B6E99; color: #fff; border-color: #0B6E99; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-acao:disabled { opacity: .45; cursor: not-allowed; }
 .dash-acao.is-pendente { background: #0B6E99; color: #fff; border-color: #0B6E99; }
-@media (max-width: 760px) { .dash-titulo { padding: 12px 96px 4px 16px; } .dash-titulo-nome { font-size: .92rem; } }
+@media (max-width: 760px) { .dash-titulo { padding: 12px 136px 4px 16px; } .dash-titulo-nome { font-size: .92rem; } }
 .settings-btn {
   display: flex;
   align-items: center;
@@ -2077,9 +2077,10 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 <main class="app-main">
 <div class="dash-titulo">
   <h2 class="dash-titulo-nome" id="dashTituloNome" hidden></h2>
-  <div class="dash-acoes" id="dashAcoes" hidden>
+  <div class="dash-acoes" id="dashAcoes">
     <button type="button" class="dash-acao" id="dashSalvar" aria-label="Salvar dashboard no banco" title="Salvar dashboard no banco" data-i18n-aria="ui.dash_salvar" data-i18n-title="ui.dash_salvar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashDesfazer" aria-label="Desfazer alterações não salvas" title="Desfazer alterações não salvas" data-i18n-aria="ui.dash_desfazer" data-i18n-title="ui.dash_desfazer"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+    <button type="button" class="dash-acao" id="dashTelaCheia" aria-pressed="false" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.tela_cheia" data-i18n-title="ui.tela_cheia"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
   </div>
 </div>
 <div class="page-content">
@@ -2365,6 +2366,8 @@ const I18N_UI = {
   'ui.board_sem_dashboard': ['Selecione um dashboard ou crie um novo em Dashboards.', 'Select a dashboard or create a new one in Dashboards.'],
   'ui.dash_salvar': ['Salvar dashboard no banco', 'Save dashboard to the database'],
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
+  'ui.tela_cheia': ['Tela cheia', 'Full screen'],
+  'ui.sair_tela_cheia': ['Sair da tela cheia', 'Exit full screen'],
   'ui.dash_desfazer_confirma': ['Clique de novo em desfazer para descartar as alterações de “{nome}”.', 'Click undo again to discard the changes to “{nome}”.'],
   'ui.dash_desfeito': ['“{nome}” voltou à última versão salva.', '“{nome}” is back to its last saved version.'],
   'ui.dash_salvo': ['Dashboard “{nome}” salvo no banco.', 'Dashboard “{nome}” saved to the database.'],
@@ -6372,12 +6375,35 @@ function gravarLayoutDashboard() {
   atualizarEstadoDash();
 }
 // Ícones salvar/desfazer: só para dono e editor; ativos quando há alteração não salva
+// (tela cheia fica sempre disponível, inclusive para quem só visualiza)
 function atualizarEstadoDash() {
   const a = dash.atual, pendente = dashPendente(a), acoes = $qe('dashAcoes');
   if (!acoes) return;
-  acoes.hidden = !podeAlterar(a);
+  $qe('dashSalvar').hidden = $qe('dashDesfazer').hidden = !podeAlterar(a);
   $qe('dashSalvar').disabled = $qe('dashDesfazer').disabled = !pendente || dash.gravando;
   $qe('dashSalvar').classList.toggle('is-pendente', pendente);
+}
+// Tela cheia da aplicação (Esc ou o mesmo botão saem); some se o navegador não permitir
+function iniciarTelaCheia() {
+  const btn = $qe('dashTelaCheia'), raiz = document.documentElement;
+  const atual = () => document.fullscreenElement || document.webkitFullscreenElement;
+  if (!(raiz.requestFullscreen || raiz.webkitRequestFullscreen) || document.fullscreenEnabled === false) { btn.hidden = true; return; }
+  const sinc = () => {
+    const ligada = !!atual(), txt = tx(ligada ? 'ui.sair_tela_cheia' : 'ui.tela_cheia');
+    btn.setAttribute('aria-pressed', String(ligada));
+    btn.setAttribute('aria-label', txt);
+    btn.title = txt;
+    btn.dataset.i18nAria = btn.dataset.i18nTitle = ligada ? 'ui.sair_tela_cheia' : 'ui.tela_cheia';
+    btn.querySelector('i').className = `fa-solid ${ligada ? 'fa-compress' : 'fa-expand'}`;
+  };
+  btn.addEventListener('click', () => {
+    const p = atual() ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+      : (raiz.requestFullscreen || raiz.webkitRequestFullscreen).call(raiz);
+    if (p && p.catch) p.catch(() => mostrarAviso('Não foi possível alternar a tela cheia neste navegador.'));
+  });
+  document.addEventListener('fullscreenchange', sinc);
+  document.addEventListener('webkitfullscreenchange', sinc);
+  sinc();
 }
 async function salvarDashboardNoBanco() {
   const d = dash.atual;
@@ -6845,6 +6871,7 @@ function initDashboards() {
   });
   $qe('dashSalvar').addEventListener('click', salvarDashboardNoBanco);
   $qe('dashDesfazer').addEventListener('click', desfazerAlteracoesDash);
+  iniciarTelaCheia();
   renderDash();
   // Nenhum dashboard abre sozinho: a lista fica pronta para o usuário escolher ou criar
   carregarDashboards().then(renderDash);
