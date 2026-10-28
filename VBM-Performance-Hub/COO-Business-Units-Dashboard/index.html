@@ -314,6 +314,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .card-chk { margin: 2px 0 0; font: italic 500 .6rem/1.3 var(--font-ui); color: var(--wait); white-space: normal; }
 .card-nota { flex-shrink: 0; margin: 2px 0 0; font: italic 400 .56rem/1.3 var(--font-display); letter-spacing: -.005em; color: var(--text-soft); }
 .card-nota sup { font-size: .85em; line-height: 0; }
+/* Tela larga: a nota de rodapé fica no espaço abaixo do card e não muda a grade — os gráficos ficam
+   nas mesmas posições de uma BU sem nota (Salobo). Telas estreitas/baixas: nota no fluxo do card */
+@media (min-width: 1181px) and (min-height: 701px) {
+  #dash .card:has(.card-nota) { position: relative; }
+  #dash .card-nota { position: absolute; left: 0; right: 0; top: 100%; }
+}
 .card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
 /* Tela cheia (botão ou F11): sem o cabeçalho azul; tela cheia e tema descem para o canto direito */
 .fs-tools { display: flex; align-self: flex-end; gap: 4px; margin-left: 4px; }
@@ -1285,9 +1291,7 @@ window.VBMSetup = (function () {
     document.documentElement.style.setProperty('--head-h', '0px');
     document.documentElement.style.setProperty('--head-h', maiorCabeca(document) + 'px');
     // altura única dos gráficos, pelo cabeçalho de card mais alto da página (ex.: seletor do All-in quebrando linha)
-    // nota de rodapé (alguns cards): reserva a mesma altura em todas as linhas
-    var notas = [].map.call(document.querySelectorAll('#dash .card-nota'), function (n) { return n.offsetHeight + 6; });
-    extra += notas.length ? Math.max.apply(null, notas) : 0;
+    // nota de rodapé (alguns cards): fica abaixo do card, fora da grade (CSS), sem mudar a altura dos gráficos
     var livre = (gProd.clientHeight - (N - 1) * GAP_MIN) / N - (maiorCabeca(document) + extra);
     var h = Math.max(90, Math.min(MAX_H, Math.floor(livre)));
     document.documentElement.style.setProperty('--chart-h', h + 'px');
