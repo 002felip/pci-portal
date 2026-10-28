@@ -642,7 +642,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
           <div class="unit-pop ciclo-pop" id="cicloPop" hidden><div class="unit-list" id="cicloLista" role="group" aria-labelledby="lblCiclo"></div></div>
         </div>
       </div>
-      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Unit:</span>
+      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span>
         <div class="unit">
           <button type="button" class="unit-trigger" id="unitTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="unitPop" aria-describedby="lblBu">
             <span class="unit-pais" id="unitPais">—</span><span class="unit-sep" aria-hidden="true">›</span><span class="unit-site" id="unitSite">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -839,7 +839,7 @@ window.VBMSetup = (function () {
   // ── Textos do dashboard nos dois idiomas (Setup Dashboards: VBMSetup) ──
   var T = VBMSetup.t;
   VBMSetup.registrar({
-    'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Unidade:', 'f.view': 'Visão:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+    'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Unidade de Negócio:', 'f.view': 'Visão:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
@@ -857,7 +857,7 @@ window.VBMSetup = (function () {
       's.semValores': 'A consulta não trouxe valores para {bu} em {mes} de {ano}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).',
       'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados no período',
       'b.desatualizado': 'banco indisponível: últimos dados lidos', 's.desatualizado': 'O banco não respondeu; estes são os últimos dados lidos (veja a hora em Última atualização).' },
-    en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Unit:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+    en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Business Units:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
