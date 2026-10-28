@@ -22,14 +22,14 @@ SET @DT_REF =  DATEADD(MONTH, -1, GETDATE()-2)  --(SELECT DATEADD(MONTH, -1, DT_
 -- INSERT em IBP.PHUB_PERFORMANCESTUDIO (tabela do VBM Performance Studio)
 -- A query do COO abaixo é a original; só foram incluídos os campos
 -- ID_TIPO_VISAO_VBM, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO e ORDEM_PERIODO.
---   DT_REF (tabela) = mês em aberto da carga = mês de @DT_REF + 1 (como no VBM)
+--   DT_REF (tabela) = mês de GETDATE()-2, no dia 1 (ANO-MES-01)
 --   DT_IND (tabela) = DT_REF da linha da query do COO
 --   Rodar de novo no mesmo mês apaga e regrava só DT_REF + ID_DASH 15.
 -- ════════════════════════════════════════════════════════════════════
 SET XACT_ABORT ON;
 
 DECLARE @ID_DASH  INT  = 15;
-DECLARE @DT_CARGA DATE = DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1));
+DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);  -- ex.: 28/10/2026 → 2026-10-01
 
 BEGIN TRANSACTION;
 
