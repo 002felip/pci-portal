@@ -102,8 +102,10 @@ function linhasDe(linhas, { site, ano, mes }) {
 // dele são projeção e seguem a situação do mês do ciclo: ciclo atualizado → projeções atualizadas;
 // KPI pendente no ciclo → pendente também nas projeções.
 function mesDoCiclo(hoje = new Date()) {
-  const m = hoje.getMonth(); // 0-11: o mês anterior em 1-12 é o próprio índice (janeiro → dezembro do ano anterior)
-  return m === 0 ? { ano: hoje.getFullYear() - 1, mes: 12 } : { ano: hoje.getFullYear(), mes: m };
+  // mesmo corte das queries: @DT_REF = DATEADD(MONTH, -1, GETDATE()-2)
+  const d = new Date(hoje.getTime() - 2 * 24 * 3600 * 1000);
+  const m = d.getMonth(); // 0-11: o mês anterior em 1-12 é o próprio índice (janeiro → dezembro do ano anterior)
+  return m === 0 ? { ano: d.getFullYear() - 1, mes: 12 } : { ano: d.getFullYear(), mes: m };
 }
 function periodoDaSituacao(p, ciclo) {
   return ciclo && p.ano * 12 + p.mes > ciclo.ano * 12 + ciclo.mes ? { site: p.site, ano: ciclo.ano, mes: ciclo.mes } : p;

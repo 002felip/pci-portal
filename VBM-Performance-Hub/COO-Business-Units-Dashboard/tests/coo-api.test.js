@@ -174,3 +174,9 @@ test('consultas sem SELECT de depuração ativo (um 2º resultado esvaziaria o d
     assert.ok(!ativas.some((l) => /^\s*select\s+@\w+\s*$/i.test(l)), arq);
   }
 });
+
+test('mês do ciclo acompanha o GETDATE()-2 das queries (dias 1 e 2 ainda no ciclo anterior)', () => {
+  const { mesDoCiclo } = require('../coo-api');
+  assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 1, 12)), { ano: 2026, mes: 9 });  // 1/nov → setembro
+  assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 3, 12)), { ano: 2026, mes: 10 }); // 3/nov → outubro
+});
