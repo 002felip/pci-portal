@@ -1,0 +1,26 @@
+{
+  "funnel.stages": {
+    "payload": {
+      "order": [
+        "NOT STARTED",
+        "EVALUATING",
+        "IMPLEMENTING",
+        "CASH_FLOWING",
+        "LOCKED_IN",
+        "ON_HOLD",
+        "CLOSED"
+      ],
+      "track": {
+        "EVALUATING": "funnel",
+        "IMPLEMENTING": "funnel",
+        "CASH_FLOWING": "funnel",
+        "LOCKED_IN": "funnel",
+        "ON_HOLD": "side",
+        "CLOSED": "side",
+        "NOT STARTED": "funnel"
+      },
+      "labels": {}
+    },
+    "updated_at": "2026-09-17T17:20:33.687763+00:00"
+  }
+}

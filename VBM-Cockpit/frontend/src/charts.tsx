@@ -33,7 +33,7 @@
  *   and per-node figures were squeezed into label text. It is now a grid of
  *   HTML buttons -- one column per dimension -- where clicking a node filters
  *   everything to its right and each node carries its own count, on-track bar
- *   and value. No tree-layout algorithm is involved, so no library helps; the
+ *   and actuals-vs-target value bar. No tree-layout algorithm is involved, so no library helps; the
  *   hover detail comes from ChartTooltip.tsx, since Recharts' <Tooltip/> only
  *   works inside a Recharts container.
  *
@@ -53,7 +53,7 @@ import {
   fmt, type Registry, type TopItem, type TopMovement, type TreeNode,
 } from "./api";
 import { TooltipRow, useChartTooltip } from "./ChartTooltip";
-import { display } from "./ui";
+import { ACTUALS_LABEL, actualKey, display, type ActualsBasis } from "./ui";
 
 export const PALETTE = ["#2C6E9B", "#3E9E74", "#C77D28", "#7E5AA6", "#C0574E",
   "#6B7785", "#2C7FB8", "#1FA971", "#E8A93C", "#E03E2D", "#8A94A2", "#4B6A88"];
@@ -239,9 +239,12 @@ function companionShape(
  * filled inside from the segment's own leading edge -- so the shortfall is the
  * literal white space, not something the viewer subtracts. `keyFor` maps a
  * main series key to the data key holding its companion value.
+ *
+ * `signed` is for deltas: the value axis spans zero in both directions (the
+ * default floors it at 0, which would hide every decline) with a zero line.
  */
 export function Bars({ data, xKey, series, height = 260, stacked, horizontal,
-  colourOf, valueFormat, reference, companion }: {
+  colourOf, valueFormat, reference, companion, signed }: {
   data: Record<string, any>[];
   xKey: string;
   series: { key: string; label?: string }[];
@@ -252,7 +255,11 @@ export function Bars({ data, xKey, series, height = 260, stacked, horizontal,
   valueFormat?: (v: number) => string;
   reference?: { value: number; label: string };
   companion?: CompanionSpec;
+  signed?: boolean;
 }) {
+  const valueDomain: [any, any] = signed
+    ? [(min: number) => Math.min(0, min * 1.05), (max: number) => Math.max(0, max * 1.05)]
+    : [0, (max: number) => max * 1.02];
   const colour = colourOf ?? ((_k: string, i: number) => PALETTE[i % PALETTE.length]);
   const [focus, setFocus] = useState<string | null>(null);
   const focusable = series.length > 1 && Boolean(companion);
@@ -270,11 +277,14 @@ export function Bars({ data, xKey, series, height = 260, stacked, horizontal,
         <CartesianGrid {...GRID} vertical={Boolean(horizontal)} />
         {horizontal
           ? <><XAxis type="number" {...AXIS} tickFormatter={valueFormat}
-            domain={[0, (max: number) => max * 1.02]} />
-            <YAxis type="category" dataKey={xKey} {...AXIS} width={96} /></>
+            domain={valueDomain} />
+            <YAxis type="category" dataKey={xKey} {...AXIS} width={96} interval={0} /></>
           : <><XAxis dataKey={xKey} {...AXIS} interval={0} />
             <YAxis {...AXIS} tickFormatter={valueFormat}
-              domain={[0, (max: number) => max * 1.02]} /></>}
+              domain={valueDomain} /></>}
+        {signed && (
+          <ReferenceLine {...(horizontal ? { x: 0 } : { y: 0 })} stroke="#8A94A2" />
+        )}
         {companion
           ? <Tooltip {...TIP} cursor={{ fill: "rgba(20,30,45,.05)" }} content={() => null} />
           : <Tooltip {...TIP} formatter={(v: number, n: string) =>
@@ -325,7 +335,7 @@ export function Bars({ data, xKey, series, height = 260, stacked, horizontal,
                 focus !== null && focus !== s.key,
               )
               : undefined}
-            radius={!companion && !stacked ? [3, 3, 0, 0] : 0} />
+            radius={!companion && !stacked && !signed ? [3, 3, 0, 0] : 0} />
         ))}
       </BarChart>
     </ResponsiveContainer>
@@ -363,32 +373,41 @@ export function Donut({ data, height = 220, total, unit = "" }: {
  * simpler than the old manual path splitting, and the legend explains itself.
  */
 export function CumulativeLines({ months, target, actual, cutoffIndex,
-  height = 300, unit = "$M" }: {
+  height = 300, unit = "$M", labels }: {
   months: string[];
   target: number[];
   actual: number[];
   cutoffIndex: number | null;
   height?: number;
+  /** "$M", "%" or a count noun such as "actions" */
   unit?: string;
+  /** legend/tooltip names; defaults to Target / Realized */
+  labels?: { target: string; actual: string };
 }) {
+  const T = labels?.target ?? "Target";
+  const A = labels?.actual ?? "Realized";
   const data = useMemo(() => months.map((m, i) => ({
     month: m.slice(5),
-    Target: target[i],
-    Realized: cutoffIndex == null || i <= cutoffIndex ? actual[i] : null,
+    [T]: target[i],
+    [A]: cutoffIndex == null || i <= cutoffIndex ? actual[i] : null,
     Forecast: cutoffIndex != null && i >= cutoffIndex ? actual[i] : null,
-  })), [months, target, actual, cutoffIndex]);
+  })), [months, target, actual, cutoffIndex, T, A]);
+  const money = unit === "$M";
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
         <CartesianGrid {...GRID} />
         <XAxis dataKey="month" {...AXIS} />
-        <YAxis {...AXIS} tickFormatter={(v) => `${v}${unit === "%" ? "%" : ""}`} />
+        <YAxis {...AXIS} allowDecimals={money}
+          tickFormatter={(v) => `${v}${unit === "%" ? "%" : ""}`} />
         <Tooltip {...TIP} formatter={(v: number) =>
-          unit === "%" ? `${v?.toFixed(1)}%` : `$${v?.toFixed(1)}M`} />
+          unit === "%" ? `${v?.toFixed(1)}%`
+            : money ? `$${v?.toFixed(1)}M`
+            : `${v?.toLocaleString("en-US", { maximumFractionDigits: 1 })} ${unit}`} />
         <Legend wrapperStyle={{ fontSize: 11 }} />
-        <Line type="monotone" dataKey="Target" stroke="#2C6E9B" strokeWidth={2}
+        <Line type="monotone" dataKey={T} stroke="#2C6E9B" strokeWidth={2}
           dot={false} />
-        <Line type="monotone" dataKey="Realized" stroke="#1FA971" strokeWidth={2.5}
+        <Line type="monotone" dataKey={A} stroke="#1FA971" strokeWidth={2.5}
           dot={{ r: 2 }} connectNulls={false} />
         <Line type="monotone" dataKey="Forecast" stroke="#1FA971" strokeWidth={1.5}
           strokeDasharray="5 4" dot={false} connectNulls />
@@ -424,7 +443,11 @@ export function AttainmentLine({ months, pct, sample, height = 260 }: {
 }
 
 /* ============================================================ stage funnel = */
-export type Stage = { code: string; count: number; value_musd: number };
+export type Stage = {
+  code: string; count: number; value_musd: number;
+  /** the selected actuals figure ($M), shown on hover and on off-funnel cards */
+  actual_musd?: number;
+};
 export type StageTrack = "funnel" | "side";
 
 export type FunnelConfig = {
@@ -539,6 +562,7 @@ export function FunnelBars({
   onSave,
   onReset,
   saving = false,
+  actualsLabel = ACTUALS_LABEL.ytd,
 }: {
   stages: Stage[];
   registry?: Registry;
@@ -560,6 +584,8 @@ export function FunnelBars({
   /** clears the persisted config so the built-in default applies again */
   onReset?: () => void;
   saving?: boolean;
+  /** names `actual_musd` in the hover card */
+  actualsLabel?: string;
 }) {
   const [internal, setInternal] = useState<FunnelConfig>(
     () => configProp ?? buildFunnelConfig(stages));
@@ -782,7 +808,13 @@ export function FunnelBars({
               }}>
                 <strong>{d.label}</strong>
                 <br />
-                {d.count} initiatives · {fmt.musd(d.value_musd)}
+                {d.count} initiatives · {fmt.musd(d.value_musd)} target
+                {d.actual_musd != null && (
+                  <>
+                    <br />
+                    {fmt.musd(d.actual_musd)} {actualsLabel.toLowerCase()}
+                  </>
+                )}
                 {i > 0 && (
                   <>
                     <br />
@@ -813,6 +845,7 @@ export function FunnelBars({
                 </div>
                 <div style={{ fontSize: 11, color: INK.muted }}>
                   {fmt.musd(d.value_musd)}
+                  {d.actual_musd != null && ` · ${fmt.musd(d.actual_musd)} act.`}
                 </div>
               </div>
             ))}
@@ -848,15 +881,39 @@ const SIDE_CARD: CSSProperties = {
 };
 
 /* =============================================================== treemap = */
+/** What a tile's area stands for. Colour follows: on-track share for `count`,
+ *  value attainment (actuals / CY target) for either financial measure. */
+export type TreemapMeasure = "count" | "target" | "actual";
+
+type ValueFigures = Pick<TreeNode, "value_musd" | "actual_ytd_musd" | "actual_fy_musd">;
+/** The node's actuals on the selected basis, in $M. */
+const actualOf = (n: ValueFigures, basis: ActualsBasis) => n[actualKey(basis)];
+
+const sizeFor = (m: TreemapMeasure, basis: ActualsBasis) => (n: TreeNode): number =>
+  m === "count" ? n.count : m === "target" ? n.value_musd : actualOf(n, basis);
+
+/** Actuals / target, or null when there is no target to measure against. */
+function attainment(targetMusd: number, actualMusd: number): number | null {
+  return targetMusd > 0 ? actualMusd / targetMusd : null;
+}
+
+/** Fill for an attainment ratio. Over-delivery saturates at green; a missing
+ *  target gets a neutral grey so it never reads as "0% achieved". */
+const NO_TARGET = "#C9D0D9";
+function attainmentColour(att: number | null): string {
+  return att == null ? NO_TARGET : ratioColour(Math.min(Math.max(att, 0), 1));
+}
+
 interface TmRect { n: TreeNode; x: number; y: number; w: number; h: number }
 
-/** Squarified layout (Bruls et al.); items are sized by `count`. */
-function squarify(nodes: TreeNode[], x: number, y: number, w: number, h: number): TmRect[] {
-  const items = nodes.filter((n) => n.count > 0);
-  const total = items.reduce((a, n) => a + n.count, 0);
+/** Squarified layout (Bruls et al.); items are sized by `sizeOf`. */
+function squarify(nodes: TreeNode[], x: number, y: number, w: number, h: number,
+  sizeOf: (n: TreeNode) => number): TmRect[] {
+  const items = nodes.filter((n) => sizeOf(n) > 0);
+  const total = items.reduce((a, n) => a + sizeOf(n), 0);
   const out: TmRect[] = [];
   if (total <= 0 || w <= 0 || h <= 0) return out;
-  const queue = items.map((n) => ({ n, area: (n.count / total) * w * h }));
+  const queue = items.map((n) => ({ n, area: (sizeOf(n) / total) * w * h }));
   let rx = x, ry = y, rw = w, rh = h;
   const worst = (row: typeof queue, len: number) => {
     const s = row.reduce((a, r) => a + r.area, 0);
@@ -889,14 +946,90 @@ function squarify(nodes: TreeNode[], x: number, y: number, w: number, h: number)
   return out;
 }
 
-function drawTreemap(nodes: TreeNode[], x: number, y: number, w: number, h: number,
-  registry: Registry | undefined): React.ReactNode[] {
-  const out: React.ReactNode[] = [];
-  for (const c of squarify(nodes, x, y, w, h)) {
-    const n = c.n;
+/** Per-tile figures for the active measure: fill, bar width, caption, stat. */
+function tileFigures(n: TreeNode, measure: TreemapMeasure, basis: ActualsBasis) {
+  if (measure === "count") {
     const ratio = n.count ? n.on_track / n.count : 0;
+    return {
+      fill: ratioColour(ratio), bar: ratio,
+      caption: `${n.on_track}/${n.count}`,
+      stat: `${n.on_track}/${n.count} on track`,
+    };
+  }
+  const actual = actualOf(n, basis);
+  const att = attainment(n.value_musd, actual);
+  return {
+    fill: attainmentColour(att), bar: Math.min(Math.max(att ?? 0, 0), 1),
+    caption: `${fmt.musd(actual)} / ${fmt.musd(n.value_musd)}`,
+    stat: att == null ? "no target" : `${Math.round(att * 100)}% of target`,
+  };
+}
+
+/**
+ * Hover card shared by treemap tiles and decomposition-tree nodes. Two titled
+ * blocks -- Delivery (on track) and Value (actuals vs target). `lead` puts
+ * one first; on the treemap that's whatever the toggle shows, so switching it
+ * never hides information, only reorders it. The leading figure of each block
+ * carries a swatch in the same colour as the bar it explains. Both actuals
+ * figures are listed; the one `basis` doesn't select is muted.
+ */
+function nodeCard(n: Pick<TreeNode, "count" | "on_track"> & ValueFigures,
+  label: string, trail: string[], lead: "delivery" | "value", basis: ActualsBasis,
+  hint?: string) {
+  const ratio = n.count ? n.on_track / n.count : 0;
+  const actual = actualOf(n, basis);
+  const att = attainment(n.value_musd, actual);
+  const gap = actual - n.value_musd;
+  const value = (
+    <div className="tt-rows" key="value">
+      <div className="tt-sec">Value</div>
+      <TooltipRow color={attainmentColour(att)} label="% of CY target"
+        value={att == null ? "no target" : fmt.pct(100 * att, 0)} />
+      <TooltipRow label={ACTUALS_LABEL.ytd} value={fmt.musd(n.actual_ytd_musd)}
+        muted={basis !== "ytd"} />
+      <TooltipRow label={ACTUALS_LABEL.fy} value={fmt.musd(n.actual_fy_musd)}
+        muted={basis !== "fy"} />
+      <TooltipRow label="CY target" value={fmt.musd(n.value_musd)} />
+      {att != null && (
+        <TooltipRow label={gap >= 0 ? "Above target" : "Gap to target"}
+          value={fmt.musd(Math.abs(gap))} />
+      )}
+    </div>
+  );
+  const delivery = (
+    <div className="tt-rows" key="delivery">
+      <div className="tt-sec">Delivery</div>
+      <TooltipRow color={ratioColour(ratio)} label="On track"
+        value={`${n.on_track} of ${n.count} (${Math.round(ratio * 100)}%)`} />
+      <TooltipRow label="Initiatives" value={fmt.int(n.count)} />
+    </div>
+  );
+  return (
+    <div className="tt-card">
+      <div className="tt-head"><span className="tt-title">{label}</span></div>
+      {trail.length > 0 && <div className="tt-sub">{trail.join(" \u203A ")}</div>}
+      {lead === "delivery" ? [delivery, value] : [value, delivery]}
+      {hint && <div className="tt-foot">{hint}</div>}
+    </div>
+  );
+}
+
+type TooltipApi = ReturnType<typeof useChartTooltip>;
+
+function drawTreemap(nodes: TreeNode[], x: number, y: number, w: number, h: number,
+  registry: Registry | undefined, measure: TreemapMeasure, basis: ActualsBasis,
+  tooltip: TooltipApi, trail: string[] = []): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  for (const c of squarify(nodes, x, y, w, h, sizeFor(measure, basis))) {
+    const n = c.n;
     const label = display(registry, n.dimension, n.name);
-    const tip = `${label} \u2014 ${n.on_track} of ${n.count} on track (${Math.round(ratio * 100)}%)`;
+    const f = tileFigures(n, measure, basis);
+    const hover = {
+      onMouseEnter: (e: React.MouseEvent) => tooltip.show(e,
+        nodeCard(n, label, trail, measure === "count" ? "delivery" : "value", basis)),
+      onMouseMove: tooltip.move,
+      onMouseLeave: tooltip.hide,
+    };
     const key = `${n.dimension}:${n.name}:${Math.round(c.x)}:${Math.round(c.y)}`;
     if (n.children?.length) {
       const cap = Math.min(20, Math.max(0, c.h * 0.42));
@@ -904,23 +1037,30 @@ function drawTreemap(nodes: TreeNode[], x: number, y: number, w: number, h: numb
         <div key={key} className="tm-node tm-group"
           style={{ left: c.x, top: c.y, width: c.w, height: c.h }}>
           {c.h > 16 && c.w > 26 && (
-            <div className="tm-cap" style={{ height: cap }} title={tip}>
-              {label} · {n.on_track}/{n.count}
+            <div className="tm-cap" style={{ height: cap }} {...hover}>
+              {label} · {f.caption}
             </div>
           )}
         </div>,
       );
       if (c.h > cap + 10 && c.w > 10)
-        out.push(...drawTreemap(n.children, c.x + 1, c.y + cap + 1, c.w - 2, c.h - cap - 2, registry));
+        out.push(...drawTreemap(n.children, c.x + 1, c.y + cap + 1, c.w - 2, c.h - cap - 2,
+          registry, measure, basis, tooltip, [...trail, label]));
     } else {
+      // A border-box can't shrink below its padding + border (~14px), so a
+      // sliver tile would render taller than its slot and spill past the
+      // group's edge. Drop the padding (and, below 3px, the border) instead.
+      const tiny = c.h < 16 || c.w < 16;
+      const sliver = c.h < 3 || c.w < 3;
       out.push(
-        <div key={key} className="tm-node tm-leaf" title={tip}
-          style={{ left: c.x, top: c.y, width: c.w, height: c.h, background: ratioColour(ratio) }}>
+        <div key={key} className={`tm-node tm-leaf${tiny ? " tm-tiny" : ""}${sliver ? " tm-sliver" : ""}`}
+          {...hover}
+          style={{ left: c.x, top: c.y, width: c.w, height: c.h, background: f.fill }}>
           {c.h > 30 && c.w > 46 && <div className="lf-name">{label}</div>}
           {c.h > 52 && c.w > 46 && (
             <div>
-              <div className="lf-stat">{n.on_track}/{n.count} on track</div>
-              <div className="tm-bar"><i style={{ width: `${Math.round(ratio * 100)}%` }} /></div>
+              <div className="lf-stat">{f.stat}</div>
+              <div className="tm-bar"><i style={{ width: `${Math.round(f.bar * 100)}%` }} /></div>
             </div>
           )}
         </div>,
@@ -930,11 +1070,27 @@ function drawTreemap(nodes: TreeNode[], x: number, y: number, w: number, h: numb
   return out;
 }
 
-/** Nested status treemap: size = initiative count, colour = share on track. */
-export function StatusTreemap({ nodes, registry, height = 580 }: {
-  nodes: TreeNode[]; registry?: Registry; height?: number;
+/** Top-level groups with nothing to draw under `measure` (no target, no
+ *  actuals) -- their initiatives are left off the map, so say how many. */
+function omittedCount(nodes: TreeNode[], measure: TreemapMeasure, basis: ActualsBasis): number {
+  const size = sizeFor(measure, basis);
+  return nodes.reduce((a, n) => a + (size(n) > 0
+    ? (n.children?.length ? omittedCount(n.children, measure, basis) : 0)
+    : n.count), 0);
+}
+
+/**
+ * Nested status treemap. `count`: size = initiative count, colour = share on
+ * track. `target` / `actual`: size = that $ value, colour = actuals (on the
+ * `actuals` basis) as a share of CY target (grey where a group has no target).
+ */
+export function StatusTreemap({ nodes, registry, measure = "count", actuals = "ytd",
+  height = 580 }: {
+  nodes: TreeNode[]; registry?: Registry; measure?: TreemapMeasure;
+  actuals?: ActualsBasis; height?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const tooltip = useChartTooltip();
   const [width, setWidth] = useState(0);
   useEffect(() => {
     const el = ref.current;
@@ -945,19 +1101,45 @@ export function StatusTreemap({ nodes, registry, height = 580 }: {
     return () => ro.disconnect();
   }, []);
   const tiles = useMemo(
-    () => (width ? drawTreemap(nodes, 0, 0, width, height, registry) : []),
-    [nodes, registry, width, height]);
+    () => (width ? drawTreemap(nodes, 0, 0, width, height, registry, measure, actuals,
+      tooltip) : []),
+    [nodes, registry, width, height, measure, actuals, tooltip]);
+  const omitted = useMemo(() => omittedCount(nodes, measure, actuals),
+    [nodes, measure, actuals]);
+  const money = measure !== "count";
+  const what = measure === "target" ? "target" : ACTUALS_LABEL[actuals].toLowerCase();
   return (
     <>
       <div ref={ref} className="treemap" style={{ height }}>
         {tiles.length ? tiles
-          : width > 0 && <div style={{ padding: 22, color: INK.muted }}>No initiatives match the current filters.</div>}
+          : width > 0 && <div style={{ padding: 22, color: INK.muted }}>
+            {money ? `No initiatives carry ${what} under the current filters.`
+              : "No initiatives match the current filters."}
+          </div>}
       </div>
       <div className="tm-legend">
-        <span>On-track share</span>
-        <span>0% (all off-track)</span><span className="grad" /><span>100% (all on-track)</span><span style={{ flex: 1 }} />
-        <span style={{ marginLeft: 14 }}>Caption shows <b>on-track / total</b> per group</span>
+        {money ? (
+          <>
+            <span>Value attainment ({ACTUALS_LABEL[actuals].toLowerCase()} ÷ CY target)</span>
+            <span>0%</span><span className="grad" /><span>≥100%</span>
+            <span className="swatch" style={{ background: NO_TARGET }} /><span>no target</span>
+            <span style={{ flex: 1 }} />
+            <span style={{ marginLeft: 14 }}>Caption shows <b>actuals / target</b> per group</span>
+          </>
+        ) : (
+          <>
+            <span>On-track share</span>
+            <span>0% (all off-track)</span><span className="grad" /><span>100% (all on-track)</span><span style={{ flex: 1 }} />
+            <span style={{ marginLeft: 14 }}>Caption shows <b>on-track / total</b> per group</span>
+          </>
+        )}
       </div>
+      {money && omitted > 0 && (
+        <div className="tm-legend">
+          {fmt.int(omitted)} initiative{omitted === 1 ? "" : "s"} with no {what}
+          {" "}{omitted === 1 ? "is" : "are"} not drawn.
+        </div>
+      )}
     </>
   );
 }
@@ -968,7 +1150,9 @@ export function StatusTreemap({ nodes, registry, height = 580 }: {
  *
  * Columns are dimensions; nodes are values. Clicking a node filters everything
  * to its right, so you can walk "BU -> Stage -> Lever" and watch the on-track
- * share collapse at each step. Depth grows by drilling: clicking a node in the
+ * share and value attainment collapse at each step. Both sit on every node
+ * rather than behind a toggle: the point is comparing along a path, and a
+ * toggle would mean walking it twice. Depth grows by drilling: clicking a node in the
  * deepest column also appends the next unused dimension, so the path extends as
  * far as you keep clicking. Each level's dimension can then be swapped or the
  * level removed from its column header. The parent owns all of that state.
@@ -1004,44 +1188,58 @@ function ratioColour(p: number): string {
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
-/** The count / on-track bar / value readout shared by the root and every node. */
-function NodeBody({ name, count, onTrack, valueMusd, accent }: {
-  name: string; count: number; onTrack: number; valueMusd: number; accent?: boolean;
+/**
+ * The readout shared by the root and every node, in three tiers:
+ *   1. name, with the initiative count as the headline figure under it;
+ *   2. a hairline;
+ *   3. one metric per measure -- label and figures on one line, a full-width
+ *      bar beneath. Bars span the card so every node in a column draws them
+ *      at the same length, and the label is what tells the two apart.
+ */
+function NodeBody({ name, count, onTrack, valueMusd, actualMusd, accent }: {
+  name: string; count: number; onTrack: number; valueMusd: number;
+  /** actuals YTD; the hover card adds actuals + forecast */
+  actualMusd: number; accent?: boolean;
 }) {
   const ratio = count ? onTrack / count : 0;
+  const att = attainment(valueMusd, actualMusd);
+  const width = (v: number) => `${Math.round(Math.min(Math.max(v, 0), 1) * 100)}%`;
   return (
     <>
       <span className={accent ? "dn-name accent" : "dn-name"}>{name}</span>
-      <span className="dn-row">
-        <span className="dn-count">{count}</span>
-        <span className="dn-share">{onTrack}/{count} on track</span>
+      <span className="dn-total">
+        <span className="dn-count">{fmt.int(count)}</span>
+        <span className="dn-unit">initiative{count === 1 ? "" : "s"}</span>
       </span>
-      <span className="dn-bar">
-        <i style={{ width: `${Math.round(ratio * 100)}%`, background: ratioColour(ratio) }} />
+      <span className="dn-metrics">
+        <span className="dn-metric">
+          <span className="dn-mhead">
+            <span className="dn-ml">On track</span>
+            <span className="dn-fig">{onTrack}/{count}<b>{Math.round(ratio * 100)}%</b></span>
+          </span>
+          <span className="dn-bar"><i style={{ width: width(ratio), background: ratioColour(ratio) }} /></span>
+        </span>
+        <span className="dn-metric">
+          <span className="dn-mhead">
+            <span className="dn-ml" title={`${ACTUALS_LABEL.ytd} / CY target`}>Value</span>
+            <span className="dn-fig">
+              {att == null
+                ? <>{fmt.musd(actualMusd)}<b>no target</b></>
+                : <>{fmt.musd(actualMusd)} / {fmt.musd(valueMusd)}<b>{Math.round(att * 100)}%</b></>}
+            </span>
+          </span>
+          <span className="dn-bar"><i style={{ width: width(att ?? 0), background: attainmentColour(att) }} /></span>
+        </span>
       </span>
-      <span className="dn-value">{fmt.musd(valueMusd)}</span>
     </>
   );
 }
 
-function nodeTooltip(label: string, count: number, onTrack: number,
-  valueMusd: number, hint?: string) {
-  const pct = count ? Math.round(100 * onTrack / count) : 0;
-  return (
-    <div className="tt-card">
-      <div className="tt-head"><span className="tt-title">{label}</span></div>
-      <div className="tt-rows">
-        <TooltipRow label="On track" value={`${onTrack} of ${count} (${pct}%)`} />
-        <TooltipRow label="Value" value={fmt.musd(valueMusd)} />
-      </div>
-      {hint && <div className="tt-foot">{hint}</div>}
-    </div>
-  );
-}
-
-function Node({ node, active, drillLabel, onClick, labelFor }: {
+function Node({ node, active, drillLabel, onClick, labelFor, trail }: {
   node: TreeNode;
   active: boolean;
+  /** Labels of the selected nodes above this one, for the hover card. */
+  trail: string[];
   /** Label of the dimension this node breaks down into; absent = leaf. */
   drillLabel: string | undefined;
   onClick: () => void;
@@ -1057,12 +1255,12 @@ function Node({ node, active, drillLabel, onClick, labelFor }: {
       className={`dc-node${active ? " active" : ""}${drillLabel ? " drillable" : ""}`}
       aria-expanded={drillLabel ? active : undefined}
       onClick={onClick}
-      onMouseEnter={(e) => tooltip.show(e, nodeTooltip(label, node.count, node.on_track, node.value_musd, hint))}
+      onMouseEnter={(e) => tooltip.show(e, nodeCard(node, label, trail, "delivery", "ytd", hint))}
       onMouseMove={tooltip.move}
       onMouseLeave={tooltip.hide}
     >
       <NodeBody name={label} count={node.count} onTrack={node.on_track}
-        valueMusd={node.value_musd} />
+        valueMusd={node.value_musd} actualMusd={node.actual_ytd_musd} />
       {drillLabel && (
         <i className="dn-chev" aria-hidden="true">{active ? "‹" : "›"}</i>
       )}
@@ -1074,7 +1272,8 @@ function Node({ node, active, drillLabel, onClick, labelFor }: {
 const MAX_LEVELS = 5;
 
 export function DecompositionTree({
-  levels, path, nodes, total, onTrack, valueMusd, dimensions, labelFor,
+  levels, path, nodes, total, onTrack, valueMusd, actualYtdMusd, actualFyMusd,
+  dimensions, labelFor,
   onLevelChange, onRemoveLevel, onAddLevel, onSelect,
 }: {
   levels: string[];
@@ -1083,6 +1282,8 @@ export function DecompositionTree({
   total: number;
   onTrack: number;
   valueMusd: number;
+  actualYtdMusd: number;
+  actualFyMusd: number;
   dimensions: DimOption[];
   labelFor: (dim: string, code: string) => string;
   onLevelChange: (index: number, dim: string) => void;
@@ -1110,6 +1311,10 @@ export function DecompositionTree({
      one go. A trailing "add level" select couldn't work here -- a level with no
      selection above it has nothing to show, so appending one rendered nothing
      until you happened to click the right node anyway. */
+  // Column i's nodes sit under the selections in columns 0..i-1.
+  const trails = columns.map((_, i) =>
+    columns.slice(0, i).map((c, j) => labelFor(levels[j], c.active ?? "")));
+
   const spawnDim = levels.length < MAX_LEVELS
     ? dimensions.find((d) => !levels.includes(d.value))?.value
     : undefined;
@@ -1125,12 +1330,15 @@ export function DecompositionTree({
         <div
           className="dc-node active"
           aria-current="true"
-          onMouseEnter={(e) => tooltip.show(e, nodeTooltip("All initiatives", total, onTrack, valueMusd))}
+          onMouseEnter={(e) => tooltip.show(e, nodeCard(
+            { count: total, on_track: onTrack, value_musd: valueMusd,
+              actual_ytd_musd: actualYtdMusd, actual_fy_musd: actualFyMusd },
+            "All initiatives", [], "delivery", "ytd"))}
           onMouseMove={tooltip.move}
           onMouseLeave={tooltip.hide}
         >
           <NodeBody name="All initiatives" count={total} onTrack={onTrack}
-            valueMusd={valueMusd} accent />
+            valueMusd={valueMusd} actualMusd={actualYtdMusd} accent />
         </div>
       </div>
 
@@ -1162,7 +1370,7 @@ export function DecompositionTree({
               const active = col.active === n.name;
               return (
                 <Node key={n.name} node={n} active={active} labelFor={labelFor}
-                  drillLabel={drillLabel}
+                  drillLabel={drillLabel} trail={trails[i]}
                   onClick={() => {
                     onSelect(i, n.name);
                     if (!active && last && spawnDim) onAddLevel(spawnDim);
@@ -1243,8 +1451,8 @@ export function SlopeChart({ aItems, bItems, movements, labelA, labelB }: {
   const rightX = SVG_W - 6 - NODE_W;
   const cy = (i: number) => PAD_TOP + i * ROW_H + NODE_H / 2;
 
-  // Keyed on rank, not name: two initiatives in a BU can share a name, and
-  // build_top emits at most one movement per rank on each side.
+  // Keyed on rank: build_top matches by Initiative ID and emits at most one
+  // movement per rank on each side.
   const byA = new Map(movements.filter((m) => m.a_rank != null)
     .map((m) => [m.a_rank, m]));
   const byB = new Map(movements.filter((m) => m.b_rank != null)
@@ -1255,6 +1463,12 @@ export function SlopeChart({ aItems, bItems, movements, labelA, labelB }: {
       ? byA.get(item.rank)?.status ?? "carried"
       : byB.get(item.rank)?.status === "new" ? "new" : "carried";
     const colour = STATUS_COLOUR[status] ?? INK.muted;
+    const mv = side === "a" ? byA.get(item.rank) : byB.get(item.rank);
+    const renamed = side === "b" && Boolean(mv?.renamed);
+    const sub = [
+      item.source_initiative_id,
+      status !== "carried" ? STATUS_LABEL[status] : renamed ? "Renamed" : null,
+    ].filter(Boolean).join(" · ");
     return (
       <g key={`${side}-${item.rank}`}
         transform={`translate(${x},${PAD_TOP + i * ROW_H})`}>
@@ -1266,12 +1480,16 @@ export function SlopeChart({ aItems, bItems, movements, labelA, labelB }: {
           {item.rank}
         </text>
         <text x={33} y={NODE_H / 2 - 1} fontSize={11} fill={INK.strong}>
-          <title>{item.name}</title>
+          <title>
+            {[item.source_initiative_id, item.name].filter(Boolean).join(" · ")}
+            {renamed && mv?.prev_name ? `\nPreviously: ${mv.prev_name}` : ""}
+          </title>
           {clip(item.name, 32)}
         </text>
-        {status !== "carried" && (
-          <text x={33} y={NODE_H - 5} fontSize={9} fill={colour}>
-            {STATUS_LABEL[status]}
+        {sub && (
+          <text x={33} y={NODE_H - 5} fontSize={9}
+            fill={status !== "carried" ? colour : INK.muted}>
+            {sub}
           </text>
         )}
         <text x={NODE_W - 8} y={NODE_H / 2 + 4} textAnchor="end" fontSize={11}
@@ -1363,4 +1581,18 @@ export function heat(value: number, max: number): { background: string; color: s
     background: `rgba(44,110,155,${(0.08 + t * 0.72).toFixed(3)})`,
     color: t > 0.55 ? "#fff" : "#1B2733",
   };
+}
+
+/**
+ * Colour for a completeness cell, the inverse emphasis of `heat()`: a complete
+ * cell stays quiet and a gap gets the colour, so the eye lands on what needs
+ * chasing. Bands match `toneOf` on the Data quality page (≥90 / ≥75); below
+ * 75 the red deepens as the score falls.
+ */
+export function gapHeat(pct: number | undefined): { background: string; color: string } {
+  if (pct === undefined) return { background: "transparent", color: "#8A94A2" };
+  if (pct >= 90) return { background: "transparent", color: "#1B2733" };
+  if (pct >= 75) return { background: "rgba(232,169,60,.20)", color: "#8A6410" };
+  const t = Math.min((75 - pct) / 75, 1);
+  return { background: `rgba(224,62,45,${(0.14 + t * 0.4).toFixed(3)})`, color: "#8E2419" };
 }

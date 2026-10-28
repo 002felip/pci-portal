@@ -66,6 +66,9 @@ InitiativeOut = _build(
         "updated_by": (Optional[str], None),
         "edited_fields": (Optional[dict[str, Any]], None),
         "metrics": (list[MonthlyPoint], Field(default_factory=list)),
+        # Derived from the monthly ACTUAL block, see analytics.annotate_actuals.
+        "value_actual_ytd": (Optional[float], None),
+        "value_actual_fy": (Optional[float], None),
     },
 )
 
@@ -185,6 +188,9 @@ class TopItem(BaseModel):
 class TopMovement(BaseModel):
     name: str
     status: Literal["carried", "new", "fell_out", "discontinued"]
+    source_initiative_id: str | None = None
+    renamed: bool = False                # carried under the same ID, new name
+    prev_name: str | None = None
     a_rank: int | None = None
     b_rank: int | None = None
     a_value_musd: float | None = None
@@ -210,6 +216,7 @@ class TopOut(BaseModel):
     snapshot_a: str
     snapshot_b: str
     limit: int
+    basis: Literal["target", "actual_ytd", "actual_fy"] = "target"
     business_units: list[TopBU]
     totals: dict[str, float]
 
@@ -218,8 +225,9 @@ class TopOut(BaseModel):
 class CompareMetrics(BaseModel):
     total: float = 0
     in_execution: float = 0
-    prioritized: float = 0
     value_musd: float = 0
+    actual_ytd_musd: float = 0          # actuals to the period end
+    actual_fy_musd: float = 0           # actuals + forecast, through December
 
 
 class CompareRow(BaseModel):
@@ -228,7 +236,6 @@ class CompareRow(BaseModel):
     a: CompareMetrics
     b: CompareMetrics
     delta: CompareMetrics
-    is_overridden: bool = False
     # A BU absent from one side (a reorg, not a real change) renders that
     # side as "--" with an unmatched pill instead of a delta.
     a_present: bool = True
@@ -254,6 +261,8 @@ class MonthlySeries(BaseModel):
     financial_actual_cum_musd: list[float]
     kpi_attainment_pct: list[float | None]
     kpi_sample: list[int]
+    milestones_target_cum: list[float]
+    milestones_actual_cum: list[float]
     cutoff_index: int | None = None
 
 
@@ -284,6 +293,8 @@ class StageMatrixCell(BaseModel):
     stage_code: str
     count: int
     value_musd: float
+    actual_ytd_musd: float = 0
+    actual_fy_musd: float = 0
 
 
 class StageMatrixOut(BaseModel):
@@ -300,6 +311,8 @@ class TreeNode(BaseModel):
     count: int
     on_track: int
     value_musd: float
+    actual_ytd_musd: float = 0
+    actual_fy_musd: float = 0
     children: list["TreeNode"] | None = None
 
 
@@ -311,6 +324,8 @@ class TreeOut(BaseModel):
     total: int
     on_track: int
     value_musd: float
+    actual_ytd_musd: float = 0
+    actual_fy_musd: float = 0
     nodes: list[TreeNode]
 
 
@@ -342,6 +357,7 @@ class CompletenessOut(BaseModel):
     pct: float
     fully_complete: int
     sections: list[str]
+    section_pct: dict[str, float] = {}
     by_bu: list[CompletenessRow]
     field_gaps: list[FieldGap]
     distribution: dict[str, int]
@@ -369,6 +385,9 @@ class UploadReport(BaseModel):
     warnings: list[dict[str, Any]] = Field(default_factory=list)
     errors: list[dict[str, Any]] = Field(default_factory=list)
     message: str | None = None
+    # Cross-period Initiative ID findings (id_check.IdCheck). Unconfirmed
+    # `conflict` entries are also in `errors` and block the load.
+    id_checks: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class SnapshotResolveOut(BaseModel):

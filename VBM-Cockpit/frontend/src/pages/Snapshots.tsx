@@ -25,11 +25,12 @@ import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import {
-  fmt, useAllSnapshots, useArchiveSnapshot, useClearPlanBaseline, useCloseSnapshot,
+  fmt, idCheckKey, TEMPLATE_URL, useAllSnapshots, useArchiveSnapshot, useClearPlanBaseline, useCloseSnapshot,
   useMeta, usePatchSnapshot, usePublishSnapshot, useReopenSnapshot,
   useResolvePeriod, useRestoreSnapshot,
   useSetPlanBaseline, useUploadExcel,
-  type PeriodType, type SnapshotInfo, type SnapshotPatch, type UploadReport,
+  type IdCheck, type PeriodType, type SnapshotInfo, type SnapshotPatch,
+  type UploadReport,
 } from "../api";
 import { PageHead } from "../App";
 import { useChartTooltip } from "../ChartTooltip";
@@ -789,11 +790,22 @@ function Upload() {
   const [dryRun, setDryRun] = useState(true);
   const [force, setForce] = useState(false);
   const [report, setReport] = useState<UploadReport | null>(null);
+  // "BU|ID" of reused IDs the uploader has confirmed are the same initiative.
+  const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
 
   const onDrop = useCallback((accepted: File[]) => {
     setFile(accepted[0] ?? null);
     setReport(null);
+    setConfirmed(new Set());
   }, []);
+
+  const toggleConfirmed = (key: string) => setConfirmed((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const unconfirmed = (report?.id_checks ?? [])
+    .filter((c) => c.status === "conflict" && !confirmed.has(idCheckKey(c)));
 
   // react-dropzone replaces ~60 lines of dragenter/dragover/drop bookkeeping,
   // and gets keyboard activation and file-type rejection for free.
@@ -847,13 +859,16 @@ function Upload() {
   if (!file) missing.push("workbook file");
   if (periodType !== "FY" && periodOrdinal == null) missing.push("period");
   if (needsReason && !reason.trim()) missing.push("reason for the revision");
+  if (!dryRun && unconfirmed.length) {
+    missing.push(`confirmation of ${unconfirmed.length} reused Initiative ID(s) below`);
+  }
 
   const run = () => {
     if (missing.length) return;
     upload.mutate({
       file: file!, fiscalYear, periodType, periodOrdinal,
       label: effectiveLabel || undefined, reason: needsReason ? reason.trim() : undefined,
-      dryRun, force,
+      dryRun, force, confirmedIds: [...confirmed],
     }, { onSuccess: setReport });
   };
 
@@ -938,6 +953,12 @@ function Upload() {
             : <span className="muted">Drop the register workbook here, or click to choose
               a .xlsx / .xlsm file.</span>}
         </div>
+        <p className="muted sm">
+          Starting from scratch?{" "}
+          <a href={TEMPLATE_URL} download>Download the import template</a>
+          {" "}— the exact register layout, with dropdowns and the Initiative IDs
+          already in use per BU.
+        </p>
       </fieldset>
 
       <fieldset>
@@ -967,7 +988,8 @@ function Upload() {
           </p>
         )}
         {upload.error && <Problem error={upload.error} />}
-        {report && <Report report={report} />}
+        {report && <Report report={report} confirmed={confirmed}
+          onToggle={toggleConfirmed} />}
       </fieldset>
 
       <fieldset>
@@ -1017,7 +1039,9 @@ function PlanBaseline({ fiscalYear, snapshots }: {
   );
 }
 
-function Report({ report }: { report: UploadReport }) {
+function Report({ report, confirmed, onToggle }: {
+  report: UploadReport; confirmed: Set<string>; onToggle: (key: string) => void;
+}) {
   const { set } = usePeriod();
   const navigate = useNavigate();
   const publish = usePublishSnapshot();
@@ -1064,6 +1088,9 @@ function Report({ report }: { report: UploadReport }) {
       <p className="muted sm">
         Batch {report.batch_id || "—"} · sha256 {report.content_sha256.slice(0, 16)}…
       </p>
+      {report.id_checks.length > 0 && (
+        <IdChecks checks={report.id_checks} confirmed={confirmed} onToggle={onToggle} />
+      )}
       {report.errors.length > 0 && (
         <Issues title={`${report.errors.length} blocking error(s)`}
           items={report.errors} tone="bad" />
@@ -1082,6 +1109,105 @@ function Report({ report }: { report: UploadReport }) {
           </button>
         </p>
       )}
+    </div>
+  );
+}
+
+const ID_GROUPS: { status: IdCheck["status"]; title: string; tone: string; help: string }[] = [
+  { status: "conflict", title: "Initiative ID reused for a different initiative?", tone: "bad",
+    help: "These IDs belonged to an initiative with a clearly different name. Tick the ones "
+      + "that are the same initiative (renamed or re-scoped); for the rest, give the row a "
+      + "new ID in the workbook and upload again." },
+  { status: "recoded", title: "Initiative possibly moved to a new ID", tone: "warn",
+    help: "The name matches an earlier initiative whose ID is missing from this file. "
+      + "Keep the old ID to preserve its history across periods." },
+  { status: "renamed", title: "Renamed since the last period", tone: "good",
+    help: "Same ID, similar name or same site/owner/KPI: treated as the same initiative." },
+  { status: "assigned", title: "Initiative IDs assigned", tone: "warn",
+    help: "These rows had no Initiative ID. Copy the assigned IDs into your workbook so "
+      + "future quarters match." },
+];
+
+function IdChecks({ checks, confirmed, onToggle }: {
+  checks: IdCheck[]; confirmed: Set<string>; onToggle: (key: string) => void;
+}) {
+  const usd = (v: number | null) => fmt.musd(v == null ? null : v / 1e6);
+  const score = (v: number | null) => v == null ? "—" : `${Math.round(v * 100)}%`;
+  // Highlight what changed, so "renamed" vs "different initiative" is a glance.
+  const diff = (a: unknown, b: unknown) =>
+    String(a ?? "").trim().toLowerCase() !== String(b ?? "").trim().toLowerCase();
+  const pair = (a: string | null, b: string | null, show = (x: string | null) => x ?? "—") => (
+    <td>
+      <div className="muted sm">{show(a)}</div>
+      <div>{diff(a, b) ? <b>{show(b)}</b> : show(b)}</div>
+    </td>
+  );
+
+  return (
+    <div className="idchecks">
+      <h4>Initiative ID check</h4>
+      {ID_GROUPS.map((g) => {
+        const items = checks.filter((c) => c.status === g.status);
+        if (!items.length) return null;
+        const comparing = g.status !== "assigned";
+        return (
+          <details key={g.status} open={g.status === "conflict" || g.status === "recoded"}>
+            <summary className={g.tone}>{items.length} · {g.title}</summary>
+            <p className="muted sm">{g.help}</p>
+            <div className="tablewrap">
+              <table className="grid dense">
+                <thead>
+                  <tr>
+                    {g.status === "conflict" && <th>Same initiative?</th>}
+                    <th>Row</th><th>BU</th><th>Initiative ID</th>
+                    {comparing
+                      ? <><th>Name<div className="muted sm">earlier → this file</div></th>
+                        <th>Site</th><th>Owner</th><th>KPI</th><th>Target CY</th>
+                        <th>Earlier period</th><th>Name match</th><th>Attr. match</th></>
+                      : <th>Name</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((c) => {
+                    const key = idCheckKey(c);
+                    return (
+                      <tr key={`${key}-${c.row}`}>
+                        {g.status === "conflict" && (
+                          <td>
+                            <input type="checkbox" aria-label={`Same initiative: ${key}`}
+                              checked={confirmed.has(key) || c.confirmed}
+                              disabled={c.confirmed}
+                              onChange={() => onToggle(key)} />
+                          </td>
+                        )}
+                        <td>{c.row ?? "—"}</td>
+                        <td>{c.bu_code}</td>
+                        <td>
+                          {c.prev_id && <div className="muted sm">{c.prev_id}</div>}
+                          <b>{c.source_initiative_id}</b>
+                        </td>
+                        {comparing ? <>
+                          {pair(c.prev_name, c.new_name)}
+                          {pair(c.prev_site, c.new_site)}
+                          {pair(c.prev_owner, c.new_owner)}
+                          {pair(c.prev_kpi, c.new_kpi)}
+                          <td>
+                            <div className="muted sm">{usd(c.prev_value)}</div>
+                            <div>{usd(c.new_value)}</div>
+                          </td>
+                          <td>{c.prev_period ?? "—"}</td>
+                          <td>{score(c.name_score)}</td>
+                          <td>{score(c.attr_score)}</td>
+                        </> : <td>{c.new_name ?? "—"}</td>}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }

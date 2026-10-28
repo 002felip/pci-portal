@@ -6,9 +6,10 @@ WHY A STANDALONE SCRIPT
 ------------------------
 There is no Alembic in this repo (see models.py's docstring): schema changes
 go through `Base.metadata.create_all(checkfirst=True)`, which creates missing
-*tables* but never adds a column to a table that already exists. So `make
-migrate` will not apply this one, and the Snapshots page would 500 on a
-database seeded before the columns were declared.
+*tables* but never adds a column to a table that already exists. On the SQL
+backend `core.ensure_schema` (app startup and `make migrate`) now adds missing
+nullable columns itself, so this script is only needed for the JSON seed or
+to apply the change ahead of a deploy.
 
 USAGE
 -----

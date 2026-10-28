@@ -17,7 +17,7 @@ TWO STRUCTURAL CHANGES OVER THE PREVIOUS BUILD
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import (
     APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile,
@@ -27,9 +27,12 @@ from fastapi import (
 from .core import get_settings
 from .periods import (
     NoPeriodsError, PeriodResolution, PeriodSelection, UnknownPeriodError,
-    period_end_month, resolve_period,
+    resolve_period,
 )
-from .registry import describe, groupable_dimensions
+from .registry import (
+    COMPLETENESS_SETTING_KEY, VOCAB, default_required_by_stage, describe,
+    groupable_dimensions, scored_fields,
+)
 from .repositories import get_repository
 from .schemas import (
     CompareOut, CompletenessOut, InitiativeCreate, InitiativeListOut,
@@ -138,6 +141,29 @@ def _resolve(repo, fiscal_year: int, period_type: str,
 
 
 # ------------------------------------------------------------------ meta ----
+def _parse_filters(filter_: list[str] | None) -> dict[str, list[str]]:
+    """`["bu_code:SSG", ...]` -> `{"bu_code": ["SSG"]}`, rejecting unknown columns."""
+    known = {f["column"] for f in describe()["fields"]}
+    parsed: dict[str, list[str]] = {}
+    for item in filter_ or []:
+        column, _, value = item.partition(":")
+        if column not in known:
+            raise HTTPException(400, f"Unknown filter field '{column}'.")
+        parsed.setdefault(column, []).append(value)
+    return parsed
+
+
+def _scope(filter_: list[str] | None, search: str | None) -> InitiativeQuery | None:
+    """The Portfolio filter bar, applied to an analytic. None = whole snapshot."""
+    filters = _parse_filters(filter_)
+    if not filters and not search:
+        return None
+    return InitiativeQuery(filters=filters, search=search)
+
+
+Filter = Annotated[list[str] | None, Query(alias="filter")]
+
+
 @router.get("/health")
 def health(repo: Repo) -> dict[str, Any]:
     s = get_settings()
@@ -225,14 +251,8 @@ def list_initiatives(
     the UI. Now `filterable` in the registry is the only switch.
     """
     sel = _select(repo, snapshot, actor=actor)
-    parsed: dict[str, list[str]] = {}
-    for item in filter_ or []:
-        column, _, value = item.partition(":")
-        if column not in {f["column"] for f in describe()["fields"]}:
-            raise HTTPException(400, f"Unknown filter field '{column}'.")
-        parsed.setdefault(column, []).append(value)
     return repo.list_initiatives(InitiativeQuery(
-        snapshot=sel.snapshot, filters=parsed, search=search,
+        snapshot=sel.snapshot, filters=_parse_filters(filter_), search=search,
         include_metrics=include_metrics, limit=limit, offset=offset))
 
 
@@ -282,26 +302,33 @@ def delete_initiative(repo: Repo, initiative_id: str) -> dict[str, bool]:
 # -------------------------------------------------------------- analytics ---
 @router.get("/analytics/compare", response_model=CompareOut)
 def compare(repo: Repo, snapshot: str | None = None,
-            baseline: str | None = None, actor: Actor = None) -> CompareOut:
-    """Any two snapshots. `baseline` defaults to the one before `snapshot`."""
+            baseline: str | None = None, filter_: Filter = None,
+            search: str | None = None, actor: Actor = None) -> CompareOut:
+    """Any two snapshots. `baseline` defaults to the one before `snapshot`.
+    The filter bar narrows both sides alike."""
     sel = _select(repo, snapshot, baseline, actor=actor)
     if sel.baseline is None:
         raise HTTPException(409, f"Only one snapshot ({sel.snapshot}) is loaded; "
                                  f"there is nothing to compare it with.")
-    return repo.compare(*sel.pair)
+    return repo.compare(*sel.pair, _scope(filter_, search))
 
 
 @router.get("/analytics/top", response_model=TopOut)
 def top(repo: Repo, snapshot: str | None = None, baseline: str | None = None,
-        limit: int = Query(default=10, ge=3, le=25), actor: Actor = None) -> TopOut:
+        limit: int = Query(default=10, ge=3, le=25),
+        basis: Literal["target", "actual_ytd", "actual_fy"] = "target",
+        filter_: Filter = None, search: str | None = None,
+        actor: Actor = None) -> TopOut:
+    """`basis` ranks by CY target (default), actuals YTD or actuals + forecast."""
     sel = _select(repo, snapshot, baseline, actor=actor)
     if sel.baseline is None:
         raise HTTPException(409, "Need two snapshots to show movement.")
-    return repo.top(*sel.pair, limit)
+    return repo.top(*sel.pair, limit, basis, _scope(filter_, search))
 
 
 @router.get("/analytics/monthly", response_model=MonthlySeries)
 def monthly(repo: Repo, snapshot: str | None = None,
+            filter_: Filter = None, search: str | None = None,
             actor: Actor = None) -> MonthlySeries:
     """
     YTD financial target vs realized ($M) + KPI attainment. The year and the
@@ -309,44 +336,84 @@ def monthly(repo: Repo, snapshot: str | None = None,
     month its period covers (M05 -> May, Q3 -> September).
     """
     sel = _select(repo, snapshot, actor=actor)
-    snap = next(s for s in repo.list_snapshots() if s.id == sel.snapshot)
-    return repo.monthly(sel.snapshot, snap.fiscal_year,
-                        period_end_month(snap.period_type, snap.period_ordinal))
+    year, cutoff = repo.window(sel.snapshot)
+    return repo.monthly(sel.snapshot, year, cutoff, _scope(filter_, search))
 
 
 @router.get("/analytics/quarters", response_model=QuarterOut)
 def quarters(repo: Repo, snapshot: str | None = None,
-             stack_by: str = "stage_code", actor: Actor = None) -> QuarterOut:
+             stack_by: str = "stage_code", filter_: Filter = None,
+             search: str | None = None, actor: Actor = None) -> QuarterOut:
     sel = _select(repo, snapshot, actor=actor)
-    return repo.quarters(sel.snapshot, _dimension(stack_by, allow_none=True))
+    return repo.quarters(sel.snapshot, _dimension(stack_by, allow_none=True),
+                         _scope(filter_, search))
 
 
 @router.get("/analytics/stage-matrix", response_model=StageMatrixOut)
 def stage_matrix(repo: Repo, snapshot: str | None = None,
+                 filter_: Filter = None, search: str | None = None,
                  actor: Actor = None) -> StageMatrixOut:
-    return repo.stage_matrix(_select(repo, snapshot, actor=actor).snapshot)
+    return repo.stage_matrix(_select(repo, snapshot, actor=actor).snapshot,
+                             _scope(filter_, search))
 
 
 @router.get("/analytics/tree", response_model=TreeOut)
 def tree(repo: Repo, snapshot: str | None = None,
          levels: list[str] = Query(default=["bu_code", "stage_code"]),
+         filter_: Filter = None, search: str | None = None,
          actor: Actor = None) -> TreeOut:
     """Powers the treemap AND the decomposition tree -- one grouping engine."""
     if not 1 <= len(levels) <= 5:
         raise HTTPException(400, "Provide between 1 and 5 levels.")
     return repo.tree(_select(repo, snapshot, actor=actor).snapshot,
-                     [_dimension(l) for l in levels])
+                     [_dimension(l) for l in levels], _scope(filter_, search))
 
 
 @router.get("/analytics/completeness", response_model=CompletenessOut)
 def completeness(repo: Repo, snapshot: str | None = None,
                  scope: str = Query(default="required",
                                     pattern="^(required|all)$"),
+                 filter_: Filter = None, search: str | None = None,
                  actor: Actor = None) -> CompletenessOut:
-    return repo.completeness(_select(repo, snapshot, actor=actor).snapshot, scope)
+    return repo.completeness(_select(repo, snapshot, actor=actor).snapshot, scope,
+                             _scope(filter_, search))
+
+
+@router.get("/analytics/completeness/rules")
+def completeness_rules(repo: Repo) -> dict[str, Any]:
+    """What `scope=required` expects per stage, plus everything the settings
+    editor needs to change it. Saved via PUT /settings/completeness.required
+    as {"by_stage": {stage_code: [key, ...]}}; DELETE restores the defaults."""
+    return {
+        "setting_key": COMPLETENESS_SETTING_KEY,
+        "fields": [{"key": k, "label": l, "section": s}
+                   for k, l, s in scored_fields("all")],
+        "stages": [{"code": c, "label": l}
+                   for c, l, _o, _col in sorted(VOCAB["stage"].terms,
+                                                key=lambda t: t[2])],
+        "defaults": default_required_by_stage(),
+        "rules": repo.required_by_stage(),
+        "customised": repo.get_setting(COMPLETENESS_SETTING_KEY) is not None,
+    }
 
 
 # ----------------------------------------------------------------- upload ---
+@router.get("/uploads/template")
+def upload_template(repo: Repo):
+    """Blank mass-import workbook in the exact layout the parser reads, plus
+    the Initiative IDs already in use and the next free one per BU."""
+    from fastapi.responses import Response
+
+    from .id_check import initiative_history
+    from .template import build_template
+
+    return Response(
+        build_template(initiative_history(repo)),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition":
+                 'attachment; filename="VBM_Initiative_Register_Template.xlsx"'})
+
+
 @router.post("/uploads/excel", response_model=UploadReport)
 async def upload_excel(repo: Repo, file: UploadFile = File(...),
                        fiscal_year: int = Form(...),
@@ -357,6 +424,7 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
                        period_key: str | None = Form(default=None),
                        dry_run: bool = Form(default=False),
                        force: bool = Form(default=False),
+                       confirmed_ids: str | None = Form(default=None),
                        actor: Actor = None) -> UploadReport:
     """
     Server-side parse + validation + idempotent load. The browser never
@@ -368,6 +436,10 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
     Identity is resolved before anything is parsed: a period that already has
     a published/locked snapshot becomes a revision (which requires `reason`);
     an existing draft is reloaded in place; anything else mints a new id.
+
+    Initiative IDs are checked against earlier periods (id_check). An ID that
+    used to belong to a clearly different initiative blocks the load unless
+    it is listed in `confirmed_ids` (JSON list of "BU|ID").
     """
     if period_key is not None:
         raise HTTPException(400, "period_key is derived server-side; do not send it.")
@@ -417,6 +489,23 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
     except Exception as exc:                          # noqa: BLE001
         raise HTTPException(422, f"Could not parse workbook: {exc}") from exc
 
+    import json
+
+    from .etl import ParseIssue
+    from .id_check import (
+        assign_missing_ids, check_ids, initiative_history, issues_for,
+    )
+    try:
+        confirmed = {tuple(str(k).split("|", 1)) for k in json.loads(confirmed_ids or "[]")}
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(400, "confirmed_ids must be a JSON list of 'BU|ID'.") from exc
+    history = initiative_history(repo, exclude_snapshot=snapshot_id)
+    checks = assign_missing_ids(parsed.records, history)
+    checks += check_ids(parsed.records, history, confirmed)
+    for severity, row, message in issues_for(checks, actor):
+        parsed.issues.append(ParseIssue(severity, row, "source_initiative_id", message))
+    id_checks = [c.as_dict() for c in checks]
+
     name = file.filename or "upload.xlsx"
 
     if s.data_backend == "sql":
@@ -426,6 +515,7 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
                                        source_name=name, snapshot_id=snapshot_id,
                                        dry_run=dry_run, force=force,
                                        snapshot_identity=identity)
+        report.id_checks = id_checks
         return UploadReport(**report.as_dict())
 
     digest = sha256_bytes(raw)
@@ -435,7 +525,8 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
                   revision=identity.get("revision", 1), state=identity.get("state"),
                   stored_filename=identity.get("stored_filename"),
                   original_filename=identity.get("original_filename"),
-                  source_name=name, content_sha256=digest, warnings=warnings, errors=errors)
+                  source_name=name, content_sha256=digest, warnings=warnings, errors=errors,
+                  id_checks=id_checks)
 
     if errors:
         return UploadReport(**LoadReport(

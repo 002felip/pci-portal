@@ -19,30 +19,55 @@
  */
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import {
   fmt, useCompleteness, useInitiatives, useMeta, useMonthly, useQuarters,
-  useStageMatrix, useTree, type Initiative, type Registry,
+  useStageMatrix, useTree, type Initiative, type MonthlySeries, type Registry,
+  type StageMatrixOut,
 } from "../api";
 import { PageHead } from "../App";
 import {
-  AttainmentLine, Bars, CumulativeLines, DecompositionTree, Donut, FunnelBars,
-  DEFAULT_ORDER, StatusTreemap, chartColour, type Stage,
+  AttainmentLine, Bars, CumulativeLines, Donut, FunnelBars,
+  DEFAULT_ORDER, StatusTreemap, chartColour, type Stage, type TreemapMeasure,
 } from "../charts";
 import { useFunnelConfig } from "../funnelConfig";
 import {
-  DataTable, Empty, Kpi, Loading, Panel, PrintSection, Select, WhenReady,
-  display, usePeriod,
+  ACTUALS_LABEL, Empty, FilterBar, Kpi, Loading, Panel, PrintSection, Section, Select,
+  WhenReady, actualField, actualKey, display, useFilters, usePeriod, type ActualsBasis,
 } from "../ui";
 
 const TOTAL = "__total__";        // sentinel series when nothing is stacked
-/** Data key holding the realized value that pairs with target series `k`. */
-const realizedKey = (k: string) => `__realized\u0000${k}`;
 
-/** Current-year realized value, in $M -- the same unit as the target measure. */
-const realizedOf = (r: Initiative) => Number(r.value_realized_cy ?? 0) / 1e6;
+/** Treemap measure toggle: label, and the blurb that explains the encoding. */
+const TM_MEASURES: [TreemapMeasure, string, string][] = [
+  ["count", "Initiatives", "Tile size = number of initiatives; colour and inner bar = share on track."],
+  ["target", "Target $", "Tile size = current-year value target; colour and inner bar = actuals as a share of that target."],
+  ["actual", "Actuals $", "Tile size = current-year actuals (YTD, or with forecast per the Actuals toggle); colour and inner bar = actuals as a share of target."],
+];
+/** Data key holding the actuals that pair with target series `k`. */
+const companionKey = (k: string) => `__actual\u0000${k}`;
+
+/** Current-year actuals on the selected basis, in $M -- the target's unit. */
+const actualOf = (basis: ActualsBasis) => (r: Initiative) =>
+  Number(r[actualField(basis)] ?? 0) / 1e6;
 const SEP = " \u25B8 ";           // "▸" joins composite x-axis labels
+
+type PhasingMode = "financial" | "kpi" | "milestones";
+/** Section note + how-it's-calculated blurb for each monthly phasing measure. */
+const PHASING_TEXT: Record<PhasingMode, { note: string; blurb: string }> = {
+  financial: {
+    note: "cumulative target vs realized",
+    blurb: "Cumulative year-to-date value across the filtered initiatives. Target sums each initiative's monthly value target; Realized sums its monthly actuals. Past the snapshot's period end the line turns dashed (forecast). \u201C% of full-year target\u201D = realized to date \u00F7 full-year target.",
+  },
+  kpi: {
+    note: "KPI attainment",
+    blurb: "Share of initiatives meeting their KPI target each month. An initiative counts in a month only when it has both a KPI target and an actual. It meets target when actual \u2265 target— or actual \u2264 target for cost and working-capital levers, where lower is better (0.1% tolerance). Attainment = initiatives meeting target \u00F7 initiatives with readings (the Sample). The dashed line marks 80%.",
+  },
+  milestones: {
+    note: "cumulative planned vs completed",
+    blurb: "Cumulative count of actions/milestones across the filtered initiatives. Planned sums each initiative's monthly milestone targets; Completed sums its actuals, which become forecast past the period end. \u201COn plan\u201D = completed \u00F7 planned to date.",
+  },
+};
 
 export default function PortfolioPage() {
   return <WhenReady><Body /></WhenReady>;
@@ -55,32 +80,31 @@ function Body() {
 
   const [stackBy, setStackBy] = useState("stage_code");
   const [drill, setDrill] = useState<string[]>(["bu_code", "stage_code"]);
-  const [mode, setMode] = useState<"financial" | "kpi">("financial");
+  const [tmMeasure, setTmMeasure] = useState<TreemapMeasure>("count");
+  const [vmxMeasure, setVmxMeasure] = useState<VmxMeasure>("count");
+  const [mode, setMode] = useState<PhasingMode>("financial");
 
-  /* The decomposition tree edits its own levels from inside the tree, and
-     carries a selected path down them, so it keeps its own state and its own
-     query rather than sharing the treemap's `drill`. */
-  const [dcLevels, setDcLevels] = useState<string[]>(["bu_code", "stage_code"]);
-  const [dcPath, setDcPath] = useState<string[]>([]);
+  /* The filter bar is shared with the Comparison tab, Actuals toggle included. */
+  const { filters, search, scope, actuals, reset: resetFilters } = useFilters();
+  const actualsLabel = ACTUALS_LABEL[actuals];
 
   const initiatives = useInitiatives({ snapshot, limit: 5000 });
-  const monthly = useMonthly(snapshot);
-  const quarters = useQuarters(snapshot, stackBy);
-  const matrix = useStageMatrix(snapshot);
-  const tree = useTree(snapshot, drill);
-  const decomp = useTree(snapshot, dcLevels);
-  const gaps = useCompleteness(snapshot);
+  const monthly = useMonthly(snapshot, scope);
+  const quarters = useQuarters(snapshot, stackBy, scope);
+  const pipeline = useStageMatrix(snapshot, scope);
+  const matrix = useStageMatrix(snapshot);       // BU × lever ignores the filters
+  const tree = useTree(snapshot, drill, scope);
+  const gaps = useCompleteness(snapshot, "required", scope);
 
-  const funnelStages: Stage[] = useMemo(() => matrix.data
-    ? Object.entries(matrix.data.funnel)
-      .map(([code, v]) => ({ code, count: v.count, value_musd: v.value_musd }))
-    : [], [matrix.data]);
+  const funnelStages: Stage[] = useMemo(() => pipeline.data
+    ? Object.entries(pipeline.data.funnel)
+      .map(([code, v]) => ({
+        code, count: v.count, value_musd: v.value_musd, actual_musd: v[actualKey(actuals)],
+      }))
+    : [], [pipeline.data, actuals]);
   const funnel = useFunnelConfig(funnelStages);
 
   const allRows = initiatives.data?.items ?? [];
-
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [search, setSearch] = useState("");
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -97,6 +121,11 @@ function Body() {
     });
   }, [allRows, filters, search]);
 
+  /** The filter bar excludes everything: each visual says so instead of
+   *  rendering empty axes. */
+  const noMatch = rows.length === 0 && allRows.length > 0;
+  const none = (what: string) => <NoMatch what={what} onReset={resetFilters} />;
+
   const dimOptions = (registry?.groupable ?? []).map((c) => ({
     value: c,
     label: registry?.fields.find((f) => f.column === c)?.label ?? c,
@@ -111,9 +140,12 @@ function Body() {
     const realized = new Set(registry?.stage_semantics.realized ?? []);
     const onTrack = registry?.stage_semantics.on_track ?? "ON";
     const musd = (r: Initiative) => Number(r.value_target_cy ?? 0) / 1e6;
+    const sum = (f: (r: Initiative) => number) => rows.reduce((s, r) => s + f(r), 0);
     return {
       count: rows.length,
-      value: rows.reduce((s, r) => s + musd(r), 0),
+      value: sum(musd),
+      actualYtd: sum(actualOf("ytd")),
+      actualFy: sum(actualOf("fy")),
       inExecution: rows.filter((r) => inExec.has(String(r.stage_code))).length,
       realized: rows.filter((r) => realized.has(String(r.stage_code)))
         .reduce((s, r) => s + musd(r), 0),
@@ -140,7 +172,7 @@ function Body() {
 
   /* ------------------------------------- value by N editable split levels */
   const [splits, setSplits] = useState<string[]>(["bu_code", "stage_code"]);
-  const split = useSplitAggregate(rows, registry, splits);
+  const split = useSplitAggregate(rows, registry, splits, actualOf(actuals), actuals);
 
   /* --------------------------------------------- per-section aggregates */
   const mixStats = useMemo(() => {
@@ -151,17 +183,6 @@ function Body() {
     return { dominant };
   }, [rows, registry]);
 
-  const registerColumns = useMemo<ColumnDef<Initiative, any>[]>(() => {
-    const wanted = ["source_initiative_id", "name", "bu_code", "stage_code",
-      "track_code", "lever_code", "value_target_cy", "confidence_code"];
-    return wanted.map((column) => ({
-      id: column,
-      accessorFn: (r: Initiative) => r[column],
-      header: registry?.fields.find((f) => f.column === column)?.label ?? column,
-      cell: (ctx: any) => display(registry, column, ctx.getValue()),
-    }));
-  }, [registry]);
-
   if (initiatives.isLoading && !initiatives.data) return <Loading what="the register" />;
 
   return (
@@ -169,34 +190,7 @@ function Body() {
       <PageHead title="Portfolio"
         blurb="Headline position for the selected snapshot. Monthly phasing follows the snapshot's fiscal year and stops at its period end." />
 
-      <div className="panel filterbar-panel">
-        <div className="filterbar">
-          {registry?.fields.filter((f) => f.filterable).map((f) => (
-            <Select key={f.column} label={f.label}
-              value={filters[f.column] ?? ""}
-              onChange={(v) => setFilters((prev) => {
-                const next = { ...prev };
-                if (v) next[f.column] = v; else delete next[f.column];
-                return next;
-              })}
-              options={[{ value: "", label: "All" },
-                ...(f.vocab ? registry.vocab[f.vocab].terms.map((t) => ({
-                  value: t.code, label: t.label })) : [])]} />
-          ))}
-          <label className="field grow">
-            <span className="sm muted">Search</span>
-            <input value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="ID, name, owner, KPI…" />
-          </label>
-          <button type="button" className="ghost"
-            onClick={() => { setFilters({}); setSearch(""); }}>
-            Reset
-          </button>
-        </div>
-        <p className="muted sm filter-count">
-          <b>{rows.length}</b> of {allRows.length} shown
-        </p>
-      </div>
+      <FilterBar count={<><b>{rows.length}</b> of {allRows.length} shown</>} />
 
       <PrintSection id="kpis" label="Headline KPIs" className="panel">
         <div className="kpirow tight">
@@ -204,6 +198,10 @@ function Body() {
             sub={`${kpis.inExecution} in execution`} />
           <Kpi label="Current-year value target" value={fmt.musd(kpis.value)}
             sub={`${fmt.musd(kpis.realized)} at cash-flowing or locked-in`} />
+          <Kpi label={ACTUALS_LABEL.ytd} value={fmt.musd(kpis.actualYtd)}
+            tone={kpis.value && kpis.actualFy / kpis.value >= 0.9 ? "good" : "warn"}
+            sub={`${fmt.musd(kpis.actualFy)} with forecast · `
+              + `${fmt.pct(kpis.value ? 100 * kpis.actualFy / kpis.value : 0, 0)} of CY target`} />
           <Kpi label="On track" value={fmt.int(kpis.onTrack)}
             tone={kpis.onTrack / Math.max(kpis.count, 1) > 0.7 ? "good" : "warn"}
             sub={fmt.pct(100 * kpis.onTrack / Math.max(kpis.count, 1), 0)} />
@@ -217,47 +215,53 @@ function Body() {
       </PrintSection>
 
       <Section id="pipeline" title="Stage-gate pipeline"
-        note="count · current-year value target per stage"
+        note={`count · current-year value target per stage · hover for ${actualsLabel.toLowerCase()}`}
         blurb="Live view of where initiatives sit in the maturity funnel. Value is incremental FCF impact, not gross revenue.">
-        {matrix.data ? (
-          <>
-            <Stats items={funnelStats(matrix.data, registry)} />
-            <FunnelBars registry={registry} stages={funnelStages}
-              config={funnel.config} saving={funnel.saving}
-              onSave={funnel.save} onReset={funnel.reset} />
-          </>
+        {noMatch ? none("in the funnel") : pipeline.data ? (
+          funnelStages.some((st) => st.count) ? (
+            <>
+              <Stats items={funnelStats(pipeline.data, registry, actuals)} />
+              <FunnelBars registry={registry} stages={funnelStages} actualsLabel={actualsLabel}
+                config={funnel.config} saving={funnel.saving}
+                onSave={funnel.save} onReset={funnel.reset} />
+            </>
+          ) : <Empty>None of the {rows.length} matching initiatives has a stage.</Empty>
         ) : <Loading what="the funnel" />}
       </Section>
 
       <Section id="mix" title="Portfolio mix"
         blurb="Distribution of the filtered portfolio across delivery track, business unit and value-realization confidence. Each ring counts initiatives, not value.">
-        <Stats items={[
-          { label: "Initiatives", value: fmt.int(rows.length) },
-          { label: "Leading track", value: mixStats.dominant("track_code"), tone: "good" },
-          { label: "Leading BU", value: mixStats.dominant("bu_code") },
-          { label: "Leading confidence", value: mixStats.dominant("confidence_code") },
-        ]} />
-        <div className="grid3">
-          <Panel title="By track" flush><Donut data={donut("track_code")} /></Panel>
-          <Panel title="By business unit" flush><Donut data={donut("bu_code")} /></Panel>
-          <Panel title="By confidence" flush><Donut data={donut("confidence_code")} /></Panel>
-        </div>
+        {noMatch ? none("in the portfolio mix") : (
+          <>
+            <Stats items={[
+              { label: "Initiatives", value: fmt.int(rows.length) },
+              { label: "Leading track", value: mixStats.dominant("track_code"), tone: "good" },
+              { label: "Leading BU", value: mixStats.dominant("bu_code") },
+              { label: "Leading confidence", value: mixStats.dominant("confidence_code") },
+            ]} />
+            <div className="grid3">
+              <Panel title="By track" flush><Donut data={donut("track_code")} /></Panel>
+              <Panel title="By business unit" flush><Donut data={donut("bu_code")} /></Panel>
+              <Panel title="By confidence" flush><Donut data={donut("confidence_code")} /></Panel>
+            </div>
+          </>
+        )}
       </Section>
 
       <Section id="bu-stage" title={`Value by ${splits.map(labelOf).join(" \u203A ")}`}
-        note="current-year value target vs realized"
+        note={`current-year value target vs ${actualsLabel.toLowerCase()}`}
         blurb="Split the bars by any dimension — or stack several splits (e.g. BU > Stage) to nest the breakdown. Everything but the last split forms the x-axis grouping; the last becomes the stacked series."
         actions={<SplitPicker value={splits} onChange={setSplits}
           options={dimOptions} min={1} max={3} />}>
-        {split.data.length ? (
+        {noMatch ? none("in the value split") : split.data.length ? (
           <>
             <Stats items={[
-              { label: "Realized", value: fmt.musd(split.realized), tone: "good" },
+              { label: actualsLabel, value: fmt.musd(split.actual), tone: "good" },
               { label: "Target", value: fmt.musd(split.target) },
               {
-                label: "Realization",
-                value: fmt.pct(split.target ? 100 * split.realized / split.target : 0, 0),
-                tone: split.target && split.realized / split.target > 0.5 ? "good" : "warn",
+                label: "% of target",
+                value: fmt.pct(split.target ? 100 * split.actual / split.target : 0, 0),
+                tone: split.target && split.actual / split.target > 0.5 ? "good" : "warn",
               },
               { label: "Combinations", value: fmt.int(split.data.length) },
             ]} />
@@ -267,7 +271,7 @@ function Body() {
               series={split.series.map((s) => ({ key: s.key, label: s.label }))}
               colourOf={(k, i) => split.colourOf(k, i)}
               companion={{
-                label: "Realized", mainLabel: "Target", keyFor: realizedKey,
+                label: actualsLabel, mainLabel: "Target", keyFor: companionKey,
               }} />
             <p className="muted sm">
               {split.stacked
@@ -275,25 +279,33 @@ function Body() {
                   + `split by ${labelOf(split.stackKey!)}.`
                 : "One bar pair per group."}{" "}
               Each bar's outline is its current-year value target; the solid
-              fill is realized value, split the same way. Hover for the
-              target-vs-realized comparison at every level.
+              fill is {actualsLabel.toLowerCase()}, split the same way. Hover for the
+              target-vs-actuals comparison at every level.
               {split.untargeted > 0 && ` ${split.untargeted} segment${split.untargeted === 1 ? "" : "s"} `
-                + "with realized value but no target are omitted from the bars."}
+                + "with actuals but no target are omitted from the bars."}
             </p>
           </>
         ) : <Empty>No initiative carries the selected dimensions.</Empty>}
       </Section>
 
       <Section id="monthly" title={`Monthly phasing · ${monthly.data?.year ?? ""}`}
-        note={mode === "financial" ? "cumulative target vs realized" : "KPI attainment"}
-        blurb="KPI attainment is direction-aware: for cost and working-capital levers a lower actual counts as meeting the target."
+        note={PHASING_TEXT[mode].note}
+        blurb={PHASING_TEXT[mode].blurb}
         actions={
           <Select label="Measure" value={mode}
-            onChange={(v) => setMode(v as "financial" | "kpi")}
+            onChange={(v) => setMode(v as PhasingMode)}
             options={[{ value: "financial", label: "Financial ($M)" },
-              { value: "kpi", label: "KPI attainment (%)" }]} />
+              { value: "kpi", label: "KPI attainment (%)" },
+              { value: "milestones", label: "Milestones (# actions)" }]} />
         }>
-        {!monthly.data ? <Loading what="phasing" /> : (
+        {noMatch ? none("in the monthly phasing") : !monthly.data ? <Loading what="phasing" />
+          : !hasPhasing(monthly.data, mode) ? (
+            <Empty>
+              None of the {rows.length} matching initiatives carries
+              {{ financial: " monthly financial phasing", kpi: " KPI readings",
+                milestones: " monthly milestone phasing" }[mode]} for {monthly.data.year}.
+            </Empty>
+          ) : (
           <>
             <Stats items={monthlyStats(monthly.data, mode)} />
             {mode === "financial"
@@ -301,6 +313,12 @@ function Body() {
                 target={monthly.data.financial_target_cum_musd}
                 actual={monthly.data.financial_actual_cum_musd}
                 cutoffIndex={monthly.data.cutoff_index} />
+              : mode === "milestones"
+              ? <CumulativeLines months={monthly.data.months}
+                target={monthly.data.milestones_target_cum}
+                actual={monthly.data.milestones_actual_cum}
+                cutoffIndex={monthly.data.cutoff_index} unit="actions"
+                labels={{ target: "Planned", actual: "Completed" }} />
               : <AttainmentLine months={monthly.data.months}
                 pct={monthly.data.kpi_attainment_pct}
                 sample={monthly.data.kpi_sample} />}
@@ -312,7 +330,7 @@ function Body() {
         blurb="Each initiative sits in the quarter its value is planned to land. Initiatives with no planned end date are grouped as unscheduled."
         actions={<Select label="Stack by" value={stackBy} onChange={setStackBy}
           options={dimOptions} />}>
-        {quarters.data ? (
+        {noMatch ? none("by landing quarter") : quarters.data ? (
           <>
             <Stats items={[
               { label: "Scheduled", value: fmt.int(quarters.data.scheduled), tone: "good" },
@@ -332,126 +350,74 @@ function Body() {
         ) : <Loading what="quarters" />}
       </Section>
 
-      <Section id="treemap" title="Portfolio status treemap \u2014 on-track by hierarchy"
-        blurb="Tile size = number of initiatives; colour and inner bar = share on track. Add, remove or reorder levels to re-cut the hierarchy."
-        actions={<SplitPicker value={drill} onChange={setDrill}
-          options={dimOptions} min={1} max={4} labels={["Level 1", "Level"]} />}>
-        {tree.data ? (
+      <Section id="treemap" title="Portfolio status treemap"
+        note={tmMeasure === "count" ? "on-track by hierarchy" : "value attainment by hierarchy"}
+        blurb={`${TM_MEASURES.find(([m]) => m === tmMeasure)![2]} Add, remove or reorder levels to re-cut the hierarchy.`}
+        actions={<TreemapControls measure={tmMeasure} onMeasure={setTmMeasure}
+          levels={drill} onLevels={setDrill} options={dimOptions} />}>
+        {noMatch ? none("in the treemap") : tree.data ? (
           <>
-            <Stats items={[
+            <Stats items={tmMeasure === "count" ? [
               { label: "Initiatives", value: fmt.int(tree.data.nodes.reduce((a, n) => a + n.count, 0)) },
               { label: "On track", value: fmt.int(tree.data.nodes.reduce((a, n) => a + n.on_track, 0)) },
               { label: "Drill path", value: drill.map(labelOf).join(SEP) },
+            ] : [
+              { label: "CY target", value: fmt.musd(tree.data.value_musd) },
+              { label: ACTUALS_LABEL.ytd, value: fmt.musd(tree.data.actual_ytd_musd),
+                tone: actuals === "ytd" ? "good" : undefined },
+              { label: ACTUALS_LABEL.fy, value: fmt.musd(tree.data.actual_fy_musd),
+                tone: actuals === "fy" ? "good" : undefined },
+              (() => {
+                const att = tree.data.value_musd
+                  ? tree.data[actualKey(actuals)] / tree.data.value_musd : null;
+                return {
+                  label: "% of target",
+                  value: att == null ? "—" : fmt.pct(100 * att, 0),
+                  tone: att != null && att > 0.5 ? "good" : "warn",
+                } as Stat;
+              })(),
+              { label: "Drill path", value: drill.map(labelOf).join(SEP) },
             ]} />
-            <StatusTreemap nodes={tree.data.nodes} registry={registry} />
+            <StatusTreemap nodes={tree.data.nodes} registry={registry} measure={tmMeasure}
+              actuals={actuals} />
           </>
         ) : <Loading what="the treemap" />}
       </Section>
 
       <Section id="matrix" title="BU × value lever"
-        note="initiatives per stage, by BU and lever"
-        blurb="Only initiatives carrying BU, lever and stage together appear here \u2014 the footnote reports the mapped share.">
-        {matrix.data ? <Matrix data={matrix.data} registry={registry} />
+        note={`${VMX_NOTES[vmxMeasure]} per stage, by BU and lever`}
+        blurb="Always the whole snapshot— the filters above do not apply here, though the Actuals toggle does. Only initiatives carrying BU, lever and stage together appear— the footnote reports the mapped share. Switch the measure to read each stage chip as its current-year actuals against its value target."
+        actions={<div className="tm-controls">
+          <MeasureToggle measure={vmxMeasure} onMeasure={setVmxMeasure} options={VMX_MEASURES}
+            label="Matrix measure" />
+        </div>}>
+        {matrix.data ? <Matrix data={matrix.data} registry={registry} measure={vmxMeasure}
+          actuals={actuals} />
           : <Loading what="the matrix" />}
-      </Section>
-
-      <Section id="tree" title="Decomposition"
-        blurb="Click a node to break it down by the field; keep clicking to go deeper. Swap or drop a level from its column header. Big number = initiatives, bar = share on track.">
-        {decomp.data ? (
-          <>
-            <Stats items={[
-              { label: "In scope", value: fmt.int(decomp.data.total) },
-              {
-                label: "On track",
-                value: `${fmt.int(decomp.data.on_track)} · ${fmt.pct(
-                  decomp.data.total ? 100 * decomp.data.on_track / decomp.data.total : 0, 0)}`,
-              },
-              { label: "Value", value: fmt.musd(decomp.data.value_musd) },
-              {
-                label: "Selection",
-                value: dcPath.length
-                  ? dcPath.map((v, i) => display(registry, dcLevels[i], v)).join(SEP)
-                  : "All initiatives",
-              },
-            ]} />
-            <div className="tablewrap">
-              <DecompositionTree
-                levels={dcLevels}
-                path={dcPath}
-                nodes={decomp.data.nodes}
-                total={decomp.data.total}
-                onTrack={decomp.data.on_track}
-                valueMusd={decomp.data.value_musd}
-                dimensions={dimOptions}
-                labelFor={(dim, code) => display(registry, dim, code)}
-                onLevelChange={(i, dim) => {
-                  const next = [...dcLevels];
-                  next[i] = dim;
-                  setDcLevels(next);
-                  setDcPath(dcPath.slice(0, i));
-                }}
-                onRemoveLevel={(i) => {
-                  setDcLevels(dcLevels.slice(0, i).concat(dcLevels.slice(i + 1)));
-                  setDcPath(dcPath.slice(0, i));
-                }}
-                onAddLevel={(dim) => setDcLevels([...dcLevels, dim])}
-                onSelect={(i, value) => {
-                  const next = dcPath.slice(0, i);
-                  if (dcPath[i] !== value) next[i] = value;   // same node again = deselect
-                  setDcPath(next);
-                }}
-              />
-            </div>
-          </>
-        ) : <Loading what="the tree" />}
-      </Section>
-
-      <Section id="register" title="Initiative register"
-        blurb="Everything in the filtered snapshot. Editing lives on the Initiatives tab."
-        defaultOpen={false}>
-        <DataTable data={rows} columns={registerColumns} dense pageSize={20}
-          initialSort={[{ id: "value_target_cy", desc: true }]} />
       </Section>
     </>
   );
 }
 
-/* ============================================================== section = */
-/**
- * Collapsible card: chevron heading, optional note, sub-headline blurb and a
- * right-aligned actions slot. Wraps PrintSection so print pagination still
- * treats the whole block as one unit.
- */
-function Section({
-  id, title, note, blurb, actions, children, defaultOpen = true,
-}: {
-  id: string;
-  title: string;
-  note?: string;
-  blurb?: string;
-  actions?: ReactNode;
-  children: ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+/* ============================================================ no match = */
+/** Shown in place of a visual when the filter bar leaves nothing to plot. */
+function NoMatch({ what, onReset }: { what: string; onReset: () => void }) {
   return (
-    <PrintSection id={id} label={title}>
-      <div className={`card js-collapse${open ? "" : " collapsed"}`}>
-        <div className="sec-bar">
-          <h3 className="sec-head" onClick={() => setOpen((o) => !o)}
-            role="button" tabIndex={0}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen((o) => !o); }}>
-            <span className="chev">{"\u25BE"}</span>
-            {title}
-            {note && <span className="sec-note">{`\u2014 ${note}`}</span>}
-          </h3>
-          {open && actions && <div className="sec-actions">{actions}</div>}
-        </div>
-        {blurb && <div className="hint">{blurb}</div>}
-        <div className="collapse-body">{children}</div>
-      </div>
-    </PrintSection>
+    <Empty>
+      No initiatives match the current filters, so there is nothing to
+      show {what}.{" "}
+      <button type="button" className="linkbtn" onClick={onReset}>Reset filters</button>
+    </Empty>
   );
+}
+
+/** Whether a monthly series has anything to draw for the chosen measure. */
+function hasPhasing(data: MonthlySeries, mode: PhasingMode) {
+  if (mode === "kpi") return data.kpi_sample.some((n) => n > 0);
+  return (mode === "milestones"
+    ? [...data.milestones_target_cum, ...data.milestones_actual_cum]
+    : [...data.financial_target_cum_musd, ...data.financial_actual_cum_musd])
+    .some((v) => v);
 }
 
 /* ================================================================ stats = */
@@ -472,20 +438,23 @@ function Stats({ items }: { items: Stat[] }) {
   );
 }
 
-function funnelStats(data: any, registry?: Registry): Stat[] {
-  const entries = Object.entries(data.funnel) as [string, any][];
+function funnelStats(data: StageMatrixOut, registry: Registry | undefined,
+  actuals: ActualsBasis): Stat[] {
+  const entries = Object.entries(data.funnel);
   if (!entries.length) return [];
   const total = entries.reduce((a, [, v]) => a + v.count, 0);
   const value = entries.reduce((a, [, v]) => a + v.value_musd, 0);
+  const actual = entries.reduce((a, [, v]) => a + v[actualKey(actuals)], 0);
   const peak = [...entries].sort((a, b) => b[1].count - a[1].count)[0];
   return [
     { label: "In funnel", value: fmt.int(total) },
     { label: "Value", value: fmt.musd(value) },
+    { label: ACTUALS_LABEL[actuals], value: fmt.musd(actual), tone: "good" },
     { label: "Largest stage", value: `${display(registry, "stage_code", peak[0])} · ${peak[1].count}` },
   ];
 }
 
-function monthlyStats(data: any, mode: "financial" | "kpi"): Stat[] {
+function monthlyStats(data: any, mode: PhasingMode): Stat[] {
   const i = data.cutoff_index ?? data.months.length - 1;
   const last = (arr: number[]) => arr?.[arr.length - 1] ?? 0;
   if (mode === "kpi") {
@@ -494,13 +463,24 @@ function monthlyStats(data: any, mode: "financial" | "kpi"): Stat[] {
       { label: "Sample", value: fmt.int(data.kpi_sample?.[i] ?? 0) },
     ];
   }
+  if (mode === "milestones") {
+    const done = data.milestones_actual_cum?.[i] ?? 0;
+    const planned = data.milestones_target_cum?.[i] ?? 0;
+    const ratio = planned ? done / planned : 0;
+    return [
+      { label: `Completed to ${data.months[i]}`, value: fmt.int(done), tone: "good" },
+      { label: `Planned to ${data.months[i]}`, value: fmt.int(planned) },
+      { label: "Full-year plan", value: fmt.int(last(data.milestones_target_cum)) },
+      { label: "On plan", value: fmt.pct(100 * ratio, 0), tone: ratio >= 0.9 ? "good" : "warn" },
+    ];
+  }
   const realized = data.financial_actual_cum_musd?.[i] ?? 0;
   const target = last(data.financial_target_cum_musd);
   return [
     { label: `Realized to ${data.months[i]}`, value: fmt.musd(realized), tone: "good" },
     { label: "Full-year target", value: fmt.musd(target) },
     {
-      label: "Attainment",
+      label: "% of full-year target",
       value: fmt.pct(target ? 100 * realized / target : 0, 0),
       tone: target && realized / target > 0.7 ? "good" : "warn",
     },
@@ -516,6 +496,9 @@ function useSplitAggregate(
   rows: Initiative[],
   registry: Registry | undefined,
   splits: string[],
+  actualOf: (r: Initiative) => number,
+  /** the actuals basis `actualOf` reads -- the memo's dependency */
+  basis: ActualsBasis,
   measure: (r: Initiative) => number = (r) => Number(r.value_target_cy ?? 0) / 1e6,
 ) {
   return useMemo(() => {
@@ -533,7 +516,7 @@ function useSplitAggregate(
     const zero = () =>
       Object.fromEntries(keys.map((k) => [k, 0])) as Record<string, number>;
 
-    /* Realized is accumulated per stack segment, not just per group, so the
+    /* Actuals are accumulated per stack segment, not just per group, so the
        last split applies to both measures and the two bars stay comparable
        level by level. */
     const byGroup = new Map<string, {
@@ -547,7 +530,7 @@ function useSplitAggregate(
       const slot = byGroup.get(id) ?? { path, vals: zero(), reals: zero() };
       const s = stackKey ? cell(r, stackKey) : TOTAL;
       slot.vals[s] = (slot.vals[s] ?? 0) + measure(r);
-      slot.reals[s] = (slot.reals[s] ?? 0) + realizedOf(r);
+      slot.reals[s] = (slot.reals[s] ?? 0) + actualOf(r);
       byGroup.set(id, slot);
     });
 
@@ -556,7 +539,7 @@ function useSplitAggregate(
         group: path.map((v, i) => display(registry, groupKeys[i], v)).join(SEP),
         _total: Object.values(vals).reduce((a, b) => a + b, 0),
         ...vals,
-        ...Object.fromEntries(Object.entries(reals).map(([k, v]) => [realizedKey(k), v])),
+        ...Object.fromEntries(Object.entries(reals).map(([k, v]) => [companionKey(k), v])),
       }))
       .sort((a, b) => b._total - a._total);
 
@@ -567,14 +550,14 @@ function useSplitAggregate(
     }));
 
     const target = rows.reduce((a, r) => a + measure(r), 0);
-    const realized = rows.reduce((a, r) => a + realizedOf(r), 0);
+    const actual = rows.reduce((a, r) => a + actualOf(r), 0);
 
     /* Segments with target === 0 get zero width from the Recharts layout
-       engine, so the bullet shape never gets room to draw realized value.
+       engine, so the bullet shape never gets room to draw the actuals.
        Counted here so the caption can flag what's hidden rather than let it
        silently vanish. */
     const untargeted = data.reduce((count, row: Record<string, any>) =>
-      count + keys.filter((k) => !row[k] && Number(row[realizedKey(k)] ?? 0) > 0).length, 0);
+      count + keys.filter((k) => !row[k] && Number(row[companionKey(k)] ?? 0) > 0).length, 0);
 
     return {
       data,
@@ -583,13 +566,92 @@ function useSplitAggregate(
       groupKeys,
       stackKey,
       target,
-      realized,
+      actual,
       untargeted,
       colourOf: (k: string, i: number) =>
         series.find((s) => s.key === k)?.colour
         ?? chartColour(registry, stackKey ?? groupKeys[0], k, i),
     };
-  }, [rows, registry, splits]);
+  }, [rows, registry, splits, basis]);
+}
+
+/* ===================================================== treemap controls = */
+/**
+ * The treemap's header: what tiles measure, then the hierarchy they nest by.
+ * Two labelled groups on one baseline, the levels drawn as a path
+ * (BU › Stage › …) since that is what they are -- order matters, unlike the
+ * value chart's splits, so this doesn't reuse SplitPicker.
+ */
+function TreemapControls({ measure, onMeasure, levels, onLevels, options, max = 4 }: {
+  measure: TreemapMeasure;
+  onMeasure: (m: TreemapMeasure) => void;
+  levels: string[];
+  onLevels: (next: string[]) => void;
+  options: { value: string; label: string }[];
+  max?: number;
+}) {
+  const free = (self?: string) =>
+    options.filter((o) => o.value === self || !levels.includes(o.value));
+  const next = free()[0]?.value;
+  return (
+    <div className="tm-controls">
+      <MeasureToggle measure={measure} onMeasure={onMeasure} options={TM_MEASURES}
+        label="Treemap measure" />
+      <div className="tm-controls-sep" aria-hidden="true" />
+      <div className="field">
+        <span>Hierarchy</span>
+        <div className="tm-path">
+          {levels.map((dim, i) => (
+            <Fragment key={`${dim}-${i}`}>
+              {i > 0 && <span className="tm-path-arrow" aria-hidden="true">{"\u203A"}</span>}
+              <span className="tm-level">
+                <select value={dim} aria-label={`Level ${i + 1}`}
+                  onChange={(e) => onLevels(levels.map((d, j) => (j === i ? e.target.value : d)))}>
+                  {free(dim).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                {levels.length > 1 && (
+                  <button type="button" className="tm-level-x" aria-label={`Remove level ${i + 1}`}
+                    title="Remove this level"
+                    onClick={() => onLevels(levels.filter((_, j) => j !== i))}>
+                    &times;
+                  </button>
+                )}
+              </span>
+            </Fragment>
+          ))}
+          {levels.length < max && next && (
+            <button type="button" className="linkbtn tm-path-add"
+              onClick={() => onLevels([...levels, next])}>
+              + Level
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Measure segmented control, shared by the treemap and the BU × lever matrix. */
+function MeasureToggle<M extends string>({ measure, onMeasure, options, label }: {
+  measure: M;
+  onMeasure: (m: M) => void;
+  options: readonly (readonly [M, string, ...unknown[]])[];
+  label: string;
+}) {
+  return (
+    <div className="field">
+      <span>Measure</span>
+      <div className="seg" role="group" aria-label={label}>
+        {options.map(([m, l]) => (
+          <button key={m} type="button" aria-pressed={measure === m}
+            className={measure === m ? "on" : undefined}
+            onClick={() => onMeasure(m)}>
+            {l}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /* ========================================================== split picker = */
@@ -642,31 +704,62 @@ const VMX_CHIP: Record<string, { bg: string; fg: string; border?: string }> = {
   LOCKED_IN: { bg: "#00A651", fg: "#fff" },
 };
 const STAGE_SHORT: Record<string, string> = { CASH_FLOWING: "Cash" };
+/* The matrix has no tile size to drive, so target and actuals share one
+ * "Value" view: each chip reads actuals (per the toggle) against its target. */
+type VmxMeasure = "count" | "value";
+const VMX_MEASURES: [VmxMeasure, string][] = [["count", "Initiatives"], ["value", "Value $"]];
+const VMX_NOTES: Record<VmxMeasure, string> = {
+  count: "initiatives", value: "current-year actuals vs target",
+};
+type VmxFigures = { count: number; value: number; actual: number };
+const pctOf = (c: VmxFigures) => (c.value ? fmt.pct(100 * c.actual / c.value, 0) : "no target");
 
-function Matrix({ data, registry }: { data: any; registry?: Registry }) {
+function Matrix({ data, registry, measure, actuals }: {
+  data: StageMatrixOut; registry?: Registry; measure: VmxMeasure; actuals: ActualsBasis;
+}) {
+  const actualsLabel = ACTUALS_LABEL[actuals].toLowerCase();
   const order = (col: string, codes: string[]) => {
     const spec = registry?.fields.find((f) => f.column === col);
     const terms = (spec?.vocab && registry?.vocab[spec.vocab]?.terms.map((t) => t.code)) || [];
     const rank = (c: string) => { const i = terms.indexOf(c); return i < 0 ? 999 : i; };
     return [...codes].sort((x, y) => rank(x) - rank(y));
   };
-  const bus = order("bu_code", [...new Set(data.cells.map((c: any) => c.bu_code))] as string[]);
-  const levers = order("lever_code", [...new Set(data.cells.map((c: any) => c.lever_code))] as string[]);
+  const bus = order("bu_code", [...new Set(data.cells.map((c) => c.bu_code))]);
+  const levers = order("lever_code", [...new Set(data.cells.map((c) => c.lever_code))]);
   const stageRank = (c: string) => {
     const i = DEFAULT_ORDER.indexOf(c.toUpperCase()); return i < 0 ? 999 : i;
   };
-  const lookup = new Map<string, { stage: string; count: number; value: number }[]>();
-  data.cells.forEach((c: any) => {
+  const lookup = new Map<string, { stage: string; count: number; value: number; actual: number }[]>();
+  data.cells.forEach((c) => {
     const k = `${c.bu_code}|${c.lever_code}`;
     lookup.set(k, [...(lookup.get(k) ?? []),
-      { stage: c.stage_code, count: c.count, value: c.value_musd }]);
+      { stage: c.stage_code, count: c.count, value: c.value_musd, actual: c[actualKey(actuals)] ?? 0 }]);
   });
+  /* Chip body for the active measure; tooltips always carry every figure. */
+  const figures = (c: VmxFigures) => measure === "count" ? c.count : (
+    <>
+      {fmt.musd(c.actual)}
+      <small className="vmx-of">{c.value ? `of ${fmt.musd(c.value)}` : "no target"}</small>
+      {c.value > 0 && (
+        <span className="vmx-bar">
+          <i style={{ width: `${Math.min(Math.max(c.actual / c.value, 0), 1) * 100}%` }} />
+        </span>
+      )}
+    </>
+  );
+  const detail = (c: VmxFigures) =>
+    `${c.count} initiatives · ${fmt.musd(c.actual)} ${actualsLabel} of ${fmt.musd(c.value)} target (${pctOf(c)})`;
 
   if (!bus.length) return <Empty>No initiative carries BU, lever and stage together.</Empty>;
 
   return (
     <div className="tablewrap">
       <div className="vmx">
+        {measure === "value" && (
+          <p className="vmx-key">
+            Big figure = CY {actualsLabel} · small = CY target · bar = % of target achieved
+          </p>
+        )}
         <div className="vmx-grid" style={{ gridTemplateColumns: `200px repeat(${bus.length}, minmax(110px, 1fr))` }}>
           <div />
           {bus.map((bu) => (
@@ -678,21 +771,21 @@ function Matrix({ data, registry }: { data: any; registry?: Registry }) {
               {bus.map((bu) => {
                 const chips = (lookup.get(`${bu}|${l}`) ?? [])
                   .sort((x, y) => stageRank(x.stage) - stageRank(y.stage));
-                const n = chips.reduce((a, c) => a + c.count, 0);
-                const v = chips.reduce((a, c) => a + c.value, 0);
+                const sum = (k: "count" | "value" | "actual") => chips.reduce((a, c) => a + c[k], 0);
+                const n = sum("count");
                 return (
                   <div key={bu} className={`vmx-c ${n ? "has" : "empty"}`}
-                    title={`${bu} · ${display(registry, "lever_code", l)} — ${n} initiatives · ${fmt.musd(v)}`}>
+                    title={`${bu} · ${display(registry, "lever_code", l)} — ${detail({ count: n, value: sum("value"), actual: sum("actual") })}`}>
                     {n ? chips.map((c, i) => {
                       const st = VMX_CHIP[c.stage.toUpperCase()] ?? {
                         bg: chartColour(registry, "stage_code", c.stage, i), fg: "#fff" };
                       const label = display(registry, "stage_code", c.stage);
                       return (
-                        <div key={c.stage} className="vmx-chip"
+                        <div key={c.stage} className={`vmx-chip${measure === "count" ? "" : " money"}`}
                           style={{ background: st.bg, color: st.fg,
                             border: st.border ? `1.5px solid ${st.border}` : undefined }}
-                          title={`${bu} · ${display(registry, "lever_code", l)} · ${label}: ${c.count} initiatives · ${fmt.musd(c.value)}`}>
-                          {c.count}
+                          title={`${bu} · ${display(registry, "lever_code", l)} · ${label}: ${detail(c)}`}>
+                          {figures(c)}
                           <small>{STAGE_SHORT[c.stage.toUpperCase()] ?? label.split(" ")[0]}</small>
                         </div>
                       );

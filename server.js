@@ -15,6 +15,9 @@
  *   /VBM-Stable-and-Capable/  VBM-Stable-and-Capable/portal.js  (API em <pasta>/api,
  *                             banco do Kaizen, PDFs no Azure Blob, gerador Python)
  *
+ *   /VBM-Vdt/       VBM-Vdt/      (Python/FastAPI)  processos filhos em portas
+ *   /VBM-Cockpit/   VBM-Cockpit/  (Python/FastAPI)  internas — ver apps-python.js
+ *
  * Nova aplicação = nova pasta + uma linha de montagem abaixo.
  */
 const fs = require("fs");
@@ -77,6 +80,8 @@ portal.get("/portal/acesso", aguardarAcesso("rotaStatus"));
 portal.use("/VBM-Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/VBM-Stable-and-Capable", aguardarAcesso("exigir"));
+portal.use("/VBM-Vdt", aguardarAcesso("exigir"));
+portal.use("/VBM-Cockpit", aguardarAcesso("exigir"));
 
 // ── VBM-Performance-Hub ──
 // API (/VBM-Performance-Hub/api) + bloqueio dos arquivos internos da pasta.
@@ -105,6 +110,63 @@ try {
 }
 portal.get("/VBM-Stable-and-Capable", exigirBarraFinal());
 portal.use("/VBM-Stable-and-Capable", express.static(path.join(__dirname, "VBM-Stable-and-Capable"), { index: "index.html", dotfiles: "ignore" }));
+
+// ── Aplicações Python: VBM-Vdt e VBM-Cockpit ──
+// Cada uma roda como processo filho numa porta interna; o Portal encaminha
+// /<pasta>/... para ela (apps-python.js). Uma aplicação que não sobe responde
+// 503 na própria rota e não derruba o Portal.
+const montarAppPython = require("./apps-python");
+const absDaPasta = (pasta, valor) => (path.isAbsolute(valor) ? valor : path.join(pasta, valor));
+try {
+  montarAppPython(portal, {
+    pasta: "VBM-Vdt",
+    titulo: "VBM - Value Driver Tree",
+    porta: 8101,
+    variavelPorta: "VDT_PORTA_INTERNA",
+    // mesmo comando do app.yaml standalone do VDT
+    args: (porta) => ["-m", "uvicorn", "app.main:create_app", "--factory", "--host", "127.0.0.1", "--port", String(porta)],
+    env: (pasta) => ({
+      // SQLite do VDT. Relativo = dentro da pasta. Fica no disco do app:
+      // um deploy novo volta ao vdt.db publicado (igual ao app standalone).
+      VDT_DB_PATH: absDaPasta(pasta, process.env.VDT_DB_PATH || "vdt.db"),
+      ...(process.env.VDT_ARCHIVE_DIR ? { VDT_ARCHIVE_DIR: absDaPasta(pasta, process.env.VDT_ARCHIVE_DIR) } : {}),
+    }),
+    saude: "/api/health",
+    testeImport: "import fastapi, uvicorn, openpyxl, multipart",
+    reescrever: true, // frontend compilado com /assets e /api absolutos
+  });
+} catch (err) {
+  console.error("[portal] falha ao montar VBM-Vdt:", err.message);
+}
+try {
+  montarAppPython(portal, {
+    pasta: "VBM-Cockpit",
+    titulo: "VBM - Strategic Cockpit",
+    porta: 8102,
+    variavelPorta: "COCKPIT_PORTA_INTERNA",
+    // O app_entry.py do standalone escuta em 0.0.0.0; aqui uvicorn direto, só interno.
+    args: (porta) => ["-m", "uvicorn", "backend.app.main:app", "--host", "127.0.0.1", "--port", String(porta),
+      "--workers", String(process.env.COCKPIT_WEB_CONCURRENCY || 1)],
+    env: () => {
+      // Variáveis do Cockpit no app.yaml do Portal levam o prefixo COCKPIT_
+      // (COCKPIT_ENVIRONMENT -> ENVIRONMENT), para não colidir com as do Portal.
+      const proprias = {};
+      for (const [k, v] of Object.entries(process.env)) if (k.startsWith("COCKPIT_")) proprias[k.slice(8)] = v;
+      return {
+        ENVIRONMENT: "prod",
+        DATA_BACKEND: "sql",
+        ...proprias,
+        // Papel do Postgres no Lakebase = service principal do app (o que o app_entry.py fazia)
+        ...((process.env.PGUSER || process.env.DATABRICKS_CLIENT_ID) ? { PGUSER: process.env.PGUSER || process.env.DATABRICKS_CLIENT_ID } : {}),
+      };
+    },
+    saude: "/api/health",
+    testeImport: "import fastapi, uvicorn, pydantic_settings, sqlalchemy, psycopg, databricks.sdk, multipart, openpyxl",
+    reescrever: false, // build já sai com o prefixo (npm run build:portal)
+  });
+} catch (err) {
+  console.error("[portal] falha ao montar VBM-Cockpit:", err.message);
+}
 
 // ── Portal ──
 portal.use("/assets", express.static(path.join(__dirname, "assets"), { dotfiles: "ignore" }));

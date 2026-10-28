@@ -210,7 +210,7 @@ VOCAB: dict[str, VocabDomain] = {
 LOWER_IS_BETTER_LEVERS: frozenset[str] = frozenset({"COST", "WORKING_CAPITAL"})
 
 # Stage semantics, declared once, consumed by analytics.
-IN_EXECUTION_STAGES: frozenset[str] = frozenset({"IMPLEMENTING", "CASH_FLOWING"})
+IN_EXECUTION_STAGES: frozenset[str] = frozenset({"IMPLEMENTING", "CASH_FLOWING", "LOCKED_IN"})
 REALIZED_STAGES: frozenset[str] = frozenset({"CASH_FLOWING", "LOCKED_IN"})
 ON_TRACK_CODE = "ON"
 
@@ -224,7 +224,7 @@ S_ALIGN = "2 · Strategic Alignment"
 S_PMO = "3 · PMO Rigour"
 S_KPI = "4 · KPI & Value Quantification"
 S_FIN = "5 · Financial Value"
-S_NOTES = "8 · Notes"
+S_NOTES = "9 · Notes"
 
 INITIATIVE_FIELDS: tuple[FieldSpec, ...] = (
     # -- identity ---------------------------------------------------------
@@ -280,7 +280,8 @@ INITIATIVE_FIELDS: tuple[FieldSpec, ...] = (
     FieldSpec("actions_total", "Total Actions / Milestones", Kind.INT, S_KPI,
               required=True, excel=("totalactions", "actionsmilestones")),
     FieldSpec("actions_done", "Actions Completed", Kind.INT, S_KPI,
-              required=True, excel=("actionscompleted",)),
+              required=True,
+              excel=("actionscompleted", "actionsmilestonescompleted")),
 
     # -- financial --------------------------------------------------------
     FieldSpec("value_target_cy", "Current Year Value Target", Kind.MONEY, S_FIN,
@@ -317,7 +318,9 @@ class MetricBlock:
     A wide monthly block in the workbook -> narrow rows in the warehouse.
 
     `banner` is the section marker on row 0 of the sheet ("6A", "7C", ...).
-    Adding 2028 is one line here. It is never a schema migration, because
+    `keyword`, when set, must also appear in the normalised banner text -- the
+    template numbers both milestone blocks *and* Notes as "8.", so the code
+    alone cannot tell them apart. Adding 2028 is one line here. It is never a schema migration, because
     `initiative_metric_monthly` is keyed (initiative, metric, scenario, month).
     """
 
@@ -325,6 +328,11 @@ class MetricBlock:
     metric_code: str
     scenario_code: str
     year_offset: int = 0        # 0 = current year, 1 = next year
+    keyword: str | None = None  # normalised banner substring, see above
+
+    def matches(self, code: str | None, banner: str) -> bool:
+        return code == self.banner and (
+            self.keyword is None or self.keyword in normalise(banner))
 
 
 METRIC_BLOCKS: tuple[MetricBlock, ...] = (
@@ -334,6 +342,8 @@ METRIC_BLOCKS: tuple[MetricBlock, ...] = (
     MetricBlock("6D", "KPI", "ACTUAL", 1),
     MetricBlock("7A", "FINANCIAL_VALUE", "TARGET", 0),
     MetricBlock("7C", "FINANCIAL_VALUE", "ACTUAL", 0),
+    MetricBlock("8", "MILESTONES", "TARGET", 0, keyword="target"),
+    MetricBlock("8", "MILESTONES", "ACTUAL", 0, keyword="actual"),
 )
 
 # Monthly coverage is scored for completeness like any other field, but it is
@@ -344,10 +354,30 @@ MONTHLY_COMPLETENESS: tuple[tuple[str, str, str, str, bool], ...] = (
     ("__kpi_actual", "KPI monthly actual", "KPI", "ACTUAL", True),
     ("__fin_target", "Financial monthly target", "FINANCIAL_VALUE", "TARGET", False),
     ("__fin_actual", "Financial monthly actual", "FINANCIAL_VALUE", "ACTUAL", False),
+    ("__ms_target", "Milestones monthly target", "MILESTONES", "TARGET", False),
+    ("__ms_actual", "Milestones monthly actual", "MILESTONES", "ACTUAL", False),
 )
 S_KPI_MONTHLY = "6 · KPI Monthly"
 S_FIN_MONTHLY = "7 · Financial Monthly"
-MONTHLY_SECTION = {"KPI": S_KPI_MONTHLY, "FINANCIAL_VALUE": S_FIN_MONTHLY}
+S_MS_MONTHLY = "8 · Milestones Monthly"
+MONTHLY_SECTION = {"KPI": S_KPI_MONTHLY, "FINANCIAL_VALUE": S_FIN_MONTHLY,
+                   "MILESTONES": S_MS_MONTHLY}
+
+# What `scope=required` does NOT expect yet, per stage. Each entry drops whole
+# sections and/or single fields from the registry's `required` set; a stage
+# not listed scores every required field. These are only the defaults -- the
+# Data quality page's settings (setting key `completeness.required`) override
+# them per stage.
+COMPLETENESS_STAGE_EXCLUSIONS: dict[str, dict[str, frozenset[str]]] = {
+    "NOT STARTED": {
+        "sections": frozenset({S_KPI, S_FIN, S_KPI_MONTHLY, S_FIN_MONTHLY}),
+    },
+    "EVALUATING": {
+        "sections": frozenset({S_FIN, S_FIN_MONTHLY}),
+        "fields": frozenset({"actions_done", "__kpi_actual"}),
+    },
+}
+COMPLETENESS_SETTING_KEY = "completeness.required"
 
 
 # ================================================================ helpers ====
@@ -407,12 +437,12 @@ def match_header(spec: FieldSpec, header_norm: str) -> bool:
 
 
 def sections() -> list[str]:
-    """Ordered section names, scalar sections plus the two monthly ones."""
+    """Ordered section names, scalar sections plus the monthly ones."""
     out: list[str] = []
     for f in INITIATIVE_FIELDS:
         if f.section not in out:
             out.append(f.section)
-    out.extend([S_KPI_MONTHLY, S_FIN_MONTHLY])
+    out.extend([S_KPI_MONTHLY, S_FIN_MONTHLY, S_MS_MONTHLY])
     return sorted(out)
 
 
@@ -423,6 +453,30 @@ def scored_fields(scope: str = "required") -> list[tuple[str, str, str]]:
     out += [(pseudo, label, MONTHLY_SECTION[metric])
             for pseudo, label, metric, _scn, req in MONTHLY_COMPLETENESS
             if scope == "all" or req]
+    return out
+
+
+def default_required_by_stage() -> dict[str, list[str]]:
+    """Every stage code -> the scored keys `scope=required` expects of it."""
+    required = scored_fields("required")
+    out: dict[str, list[str]] = {}
+    for code, _l, _o, _c in VOCAB["stage"].terms:
+        ex = COMPLETENESS_STAGE_EXCLUSIONS.get(code, {})
+        drop_sec, drop_fld = ex.get("sections", frozenset()), ex.get("fields", frozenset())
+        out[code] = [key for key, _label, sec in required
+                     if sec not in drop_sec and key not in drop_fld]
+    return out
+
+
+def resolve_required_by_stage(payload: dict | None) -> dict[str, list[str]]:
+    """Saved per-stage rules merged over the defaults. Unknown stages and
+    keys are dropped, so a renamed field can never break scoring."""
+    out = default_required_by_stage()
+    known = [key for key, _l, _s in scored_fields("all")]
+    for stage, keys in ((payload or {}).get("by_stage") or {}).items():
+        if stage in out and isinstance(keys, list):
+            chosen = set(keys)
+            out[stage] = [k for k in known if k in chosen]
     return out
 
 

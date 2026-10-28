@@ -1,0 +1,4 @@
+command: ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "$DATABRICKS_APP_PORT"]
+env:
+  - name: VDT_DB_PATH
+    value: "vdt.db"

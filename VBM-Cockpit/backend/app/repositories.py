@@ -14,7 +14,7 @@ It is split into four narrow roles:
     PeriodSource     what periods exist          (periods.py depends on this)
     ReadRepository   query the register          (analytics routes)
     WriteRepository  create/patch/delete rows    (the Initiatives editor)
-    OverrideStore    pinned headline figures     (the compare editor)
+    OverrideStore    curated Top-N figures
 
 `FullRepository` is the union, and is what the two concrete classes satisfy.
 Routers depend on the narrowest role they actually need (DIP), which is what
@@ -38,12 +38,17 @@ from pathlib import Path
 from typing import Any, Protocol, Sequence, runtime_checkable
 
 from .analytics import (
-    build_compare, build_completeness, build_monthly, build_quarters,
-    build_stage_matrix, build_top, build_tree, summary_scope,
+    annotate_actuals, build_compare, build_completeness, build_monthly, build_quarters,
+    build_stage_matrix, build_top, build_tree,
 )
 from .core import DEFAULT_SEED_DIR, get_settings, resolve_under_repo
-from .periods import PeriodResolver, enrich_snapshot, years_from_metrics
-from .registry import INITIATIVE_FIELDS, BY_COLUMN, Kind, coerce
+from .periods import (
+    PeriodResolver, enrich_snapshot, period_end_month, years_from_metrics,
+)
+from .registry import (
+    BY_COLUMN, COMPLETENESS_SETTING_KEY, INITIATIVE_FIELDS, Kind, coerce,
+    resolve_required_by_stage,
+)
 from .schemas import (
     CompareOut, CompletenessOut, InitiativeListOut, InitiativeOut, MonthlySeries,
     OverrideOut, QuarterOut, SettingOut, SnapshotOut, StageMatrixOut, TopOut, TreeOut,
@@ -120,38 +125,66 @@ class AnalyticsMixin:
         return PeriodResolver(self.list_snapshots(), self.distinct_years(),
                               s.pinned_snapshot, s.pinned_year, current_user)
 
-    def compare(self, snapshot_a: str, snapshot_b: str) -> CompareOut:
-        return build_compare(
-            self.rows(snapshot_a), self.rows(snapshot_b), snapshot_a, snapshot_b,
-            self.override_map(summary_scope(snapshot_a)),
-            self.override_map(summary_scope(snapshot_b)))
+    def window(self, snapshot: str) -> tuple[int, int] | None:
+        """(fiscal year, period-end month) of a snapshot -- where actuals stop."""
+        snap = next((s for s in self.list_snapshots() if s.id == snapshot), None)
+        return (snap.fiscal_year, period_end_month(snap.period_type, snap.period_ordinal)) \
+            if snap else None
 
-    def top(self, snapshot_a: str, snapshot_b: str, limit: int) -> TopOut:
-        return build_top(self.rows(snapshot_a), self.rows(snapshot_b),
+    def with_actuals(self, snapshot: str, rows: list[dict]) -> list[dict]:
+        """Rows (with metrics) annotated with the snapshot's own actuals."""
+        win = self.window(snapshot)
+        return annotate_actuals(rows, *win) if win else rows
+
+    def compare(self, snapshot_a: str, snapshot_b: str, query=None) -> CompareOut:
+        return build_compare(self._rows(snapshot_a, query), self._rows(snapshot_b, query),
+                             snapshot_a, snapshot_b)
+
+    def top(self, snapshot_a: str, snapshot_b: str, limit: int,
+            basis: str = "target", query=None) -> TopOut:
+        return build_top(self._rows(snapshot_a, query), self._rows(snapshot_b, query),
                          snapshot_a, snapshot_b, limit,
                          self.override_map(f"top:{snapshot_a}>{snapshot_b}")
-                         or self.override_map("top10"))
+                         or self.override_map("top10"), basis)
+
+    def _rows(self, snapshot: str, query=None) -> list[dict]:
+        """`rows()` narrowed by the filter bar, when one is given, with every
+        row's metrics and its derived actuals. Copies, so annotating never
+        touches the store."""
+        rows = [dict(r) for r in self.rows(snapshot, with_metrics=True)
+                if not query or matches(r, query)]
+        return self.with_actuals(snapshot, rows)
 
     def monthly(self, snapshot: str, year: int,
-                cutoff_month: int | None = None) -> MonthlySeries:
-        return build_monthly(self.rows(snapshot, with_metrics=True), year, cutoff_month)
+                cutoff_month: int | None = None, query=None) -> MonthlySeries:
+        return build_monthly(self._rows(snapshot, query), year, cutoff_month)
 
-    def quarters(self, snapshot: str, stack_by: str) -> QuarterOut:
-        return build_quarters(self.rows(snapshot), stack_by)
+    def quarters(self, snapshot: str, stack_by: str, query=None) -> QuarterOut:
+        return build_quarters(self._rows(snapshot, query), stack_by)
 
-    def stage_matrix(self, snapshot: str) -> StageMatrixOut:
-        return build_stage_matrix(self.rows(snapshot))
+    def stage_matrix(self, snapshot: str, query=None) -> StageMatrixOut:
+        return build_stage_matrix(self._rows(snapshot, query))
 
-    def tree(self, snapshot: str, levels: list[str]) -> TreeOut:
-        rows = self.rows(snapshot)
+    def tree(self, snapshot: str, levels: list[str], query=None) -> TreeOut:
+        rows = self._rows(snapshot, query)
         return TreeOut(levels=levels, total=len(rows),
                        on_track=sum(1 for r in rows if r.get("track_code") == "ON"),
                        value_musd=round(sum(float(r.get("value_target_cy") or 0)
                                             for r in rows) / 1e6, 1),
+                       actual_ytd_musd=round(sum(float(r.get("value_actual_ytd") or 0)
+                                                 for r in rows) / 1e6, 1),
+                       actual_fy_musd=round(sum(float(r.get("value_actual_fy") or 0)
+                                                for r in rows) / 1e6, 1),
                        nodes=build_tree(rows, levels))
 
-    def completeness(self, snapshot: str, scope: str) -> CompletenessOut:
-        return build_completeness(self.rows(snapshot, with_metrics=True), scope)
+    def required_by_stage(self) -> dict[str, list[str]]:
+        """Per-stage required fields: the saved setting over registry defaults."""
+        saved = self.get_setting(COMPLETENESS_SETTING_KEY)
+        return resolve_required_by_stage(saved.payload if saved else None)
+
+    def completeness(self, snapshot: str, scope: str, query=None) -> CompletenessOut:
+        return build_completeness(self._rows(snapshot, query), scope,
+                                  self.required_by_stage())
 
 
 # ================================================================== helpers ==
@@ -286,10 +319,10 @@ class JsonRepository(AnalyticsMixin):
 
     def list_initiatives(self, query) -> InitiativeListOut:
         filtered = [r for r in self.rows(query.snapshot) if matches(r, query)]
-        page = filtered[query.offset: query.offset + query.limit]
+        page = self.with_actuals(query.snapshot, [
+            dict(r) for r in filtered[query.offset: query.offset + query.limit]])
         items = []
-        for r in page:
-            payload = dict(r)
+        for payload in page:
             payload["id"] = str(payload.get("id"))
             if not query.include_metrics:
                 payload["metrics"] = []
@@ -667,15 +700,19 @@ class SqlRepository(AnalyticsMixin):
                 | func.lower(func.coalesce(Initiative.kpi_name, "")).like(like))
 
         total = self.session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+        # Metrics are always loaded: the derived actuals are read from them.
         stmt = (stmt.order_by(Initiative.bu_code, Initiative.source_initiative_id)
-                .offset(query.offset).limit(query.limit))
-        if query.include_metrics:
-            stmt = stmt.options(selectinload(Initiative.metrics))
+                .offset(query.offset).limit(query.limit)
+                .options(selectinload(Initiative.metrics)))
 
-        items = [InitiativeOut(**{k: v for k, v in
-                                  self._to_dict(r, query.include_metrics).items()
-                                  if k in InitiativeOut.model_fields})
-                 for r in self.session.scalars(stmt).all()]
+        rows = self.with_actuals(query.snapshot, [
+            self._to_dict(r, with_metrics=True) for r in self.session.scalars(stmt).all()])
+        items = []
+        for payload in rows:
+            if not query.include_metrics:
+                payload["metrics"] = []
+            items.append(InitiativeOut(**{k: v for k, v in payload.items()
+                                          if k in InitiativeOut.model_fields}))
         return InitiativeListOut(total=total, items=items)
 
     # -------------------------------------------------------------- write --

@@ -67,6 +67,9 @@ class InitiativeRecord:
     extra: dict[str, Any] = field(default_factory=dict)
     metrics: list[MetricPoint] = field(default_factory=list)
     row_number: int = 0
+    # The sheet cell was blank and `source_initiative_id` is a placeholder;
+    # id_check.assign_missing_ids replaces it before anything is stored.
+    id_was_blank: bool = False
 
     def __getitem__(self, key: str) -> Any:
         return self.values.get(key)
@@ -120,6 +123,7 @@ class LoadReport:
     warnings: list[dict] = field(default_factory=list)
     errors: list[dict] = field(default_factory=list)
     message: str | None = None
+    id_checks: list[dict] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -215,10 +219,9 @@ def parse_workbook(stream: BinaryIO, snapshot_id: str,
 
     # ---- locate monthly blocks, by banner --------------------------------
     monthly: list[tuple[int, str, str, dt.date]] = []
-    blocks = {b.banner: b for b in METRIC_BLOCKS}
     for idx, banner in enumerate(banners):
         code = _banner_code(banner)
-        block = blocks.get(code or "")
+        block = next((b for b in METRIC_BLOCKS if b.matches(code, banner)), None)
         if not block:
             continue
         month = _month_of(raw_headers[idx])
@@ -268,6 +271,7 @@ def parse_workbook(stream: BinaryIO, snapshot_id: str,
             else:
                 values[spec.column] = coerce(spec, raw)
 
+        id_was_blank = not values.get("source_initiative_id")
         sid = values.get("source_initiative_id") or f"{bu_code}-R{excel_row}"
         key = (bu_code, str(sid))
         if key in seen:
@@ -299,7 +303,7 @@ def parse_workbook(stream: BinaryIO, snapshot_id: str,
                  and i < len(row) and row[i] not in (None, "")}
 
         rec = InitiativeRecord(values=values, extra=extra, metrics=points,
-                               row_number=excel_row)
+                               row_number=excel_row, id_was_blank=id_was_blank)
         _reconcile_phasing(rec, year, issues)
         records.append(rec)
 

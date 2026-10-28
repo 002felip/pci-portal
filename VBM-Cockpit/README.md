@@ -185,8 +185,6 @@ Two smaller ones, both per-field `if` ladders in v1:
   `registry.filterable`. v1 had one query parameter per dimension, so a new
   filterable field meant editing the route signature, the query model, both
   repositories and the UI.
-- **Override scopes** are derived: `summary:<SNAPSHOT>`. v1 hard-coded
-  `q1_summary` and `q2_summary`, so Q3 needed a third constant in three places.
 
 ---
 
@@ -313,13 +311,6 @@ All 9 TS/TSX files parse clean under the TypeScript parser.
   exercised and both share `AnalyticsMixin`, so the analytics are proven; the
   SQL-specific surface is `rows()`, the CRUD methods and `distinct_years()`.
   `docker compose up -d && make migrate` will exercise it locally.
-- **Migrating your existing override rows.** Scopes moved from `q1_summary` /
-  `q2_summary` to `summary:Q1` / `summary:Q2`. For Lakebase that's one
-  statement:
-  ```sql
-  UPDATE override SET scope = 'summary:' || upper(replace(scope, '_summary', ''))
-  WHERE scope LIKE '%\_summary';
-  ```
 
 ---
 
