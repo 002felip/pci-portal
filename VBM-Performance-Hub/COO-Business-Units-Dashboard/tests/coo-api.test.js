@@ -180,3 +180,15 @@ test('mês do ciclo acompanha o GETDATE()-2 das queries (dias 1 e 2 ainda no cic
   assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 1, 12)), { ano: 2026, mes: 9 });  // 1/nov → setembro
   assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 3, 12)), { ano: 2026, mes: 10 }); // 3/nov → outubro
 });
+
+test('carga do COO na tabela do VBM: só o dashboard 15, apaga só o próprio mês, junções com separador', () => {
+  const s = fs.readFileSync(path.join(__dirname, '..', 'database', '003_carga_mensal_coo.sql'), 'utf8');
+  const ativo = s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+  assert.match(ativo, /DECLARE @ID_DASH\s+INT\s+=\s+15;/);
+  assert.doesNotMatch(ativo, /\b21\b/);
+  const deletes = ativo.match(/DELETE FROM IBP\.PHUB_PERFORMANCESTUDIO\s+WHERE[^;]*;/g) || [];
+  assert.strictEqual(deletes.length, 1);
+  assert.match(deletes[0], /DT_REF = @DT_REF AND ID_DASH = @ID_DASH/);
+  for (const c of ativo.match(/CONCAT\([^)]*ID_SITE[^)]*\)/g) || []) assert.match(c, /'\|'/);
+  assert.doesNotMatch(ativo, /GETDATE\(\)/);
+});
