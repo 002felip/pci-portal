@@ -1182,6 +1182,12 @@ body.is-somente-leitura .qe-toolbar .qe-tool:not(#qeDash):not(#qeFiltrosBtn) { o
 .qe-dash-topo .qe-btn { width: 100%; }
 #qeViewDash [hidden] { display: none !important; }
 .qe-dash-acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+/* Vários gráficos selecionados: aplica a configuração do gráfico em edição aos demais */
+.qe-lote { margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--qe-line); border-radius: 10px; background: var(--qe-surface-alt); }
+.qe-lote[hidden] { display: none; }
+.qe-lote-tit { margin: 0 0 8px; font: 600 .74rem 'Poppins', sans-serif; color: var(--qe-strong); }
+.qe-lote-acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qe-lote .qe-hint { margin-top: 8px; }
 .qe-dash-acoes .qe-dash-largo { grid-column: 1 / -1; }
 .qe-dash-confirma { margin: 10px 0 0; }
 .qe-dash-confirma p { margin: 0; }
@@ -1820,6 +1826,14 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
   <form class="qe-form" id="qeForm" novalidate hidden>
     <div class="qe-body">
+      <div class="qe-lote" id="qeLote" role="group" aria-labelledby="qeLoteTit" hidden>
+        <p class="qe-lote-tit" id="qeLoteTit"></p>
+        <div class="qe-lote-acoes">
+          <button type="button" class="qe-btn" id="qeLoteSecao">Aplicar esta seção</button>
+          <button type="button" class="qe-btn" id="qeLoteTudo">Aplicar todas</button>
+        </div>
+        <p class="qe-hint">Copia a configuração do gráfico em edição (selo “Editando”, o último clicado) para os demais selecionados com Ctrl/Shift + clique. Gráficos vinculados ao banco são gravados na hora.</p>
+      </div>
       <section class="qe-sec" data-sec="tipo" hidden>
         <div class="qe-sec-body">
           <div class="qe-field">
@@ -1975,7 +1989,8 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <div class="qe-sec-body">
           <div class="qe-field">
             <label class="qe-label" for="qeUnidade" data-i18n="ui.unidade">Unidade</label>
-            <select class="qe-select" id="qeUnidade"></select>
+            <select class="qe-select" id="qeUnidade" aria-describedby="qeUnidadeDados"></select>
+            <p class="qe-hint" id="qeUnidadeDados" aria-live="polite"></p>
           </div>
           <div class="qe-field" data-show="unidade-custom">
             <label class="qe-label" for="qeUnidadeCustom" data-i18n="ui.unidade_personalizada">Unidade personalizada</label>
@@ -4496,6 +4511,7 @@ function marcarMultiSel() {
   const grupo = multiSel.size > 1;
   charts.forEach(c => c.el.classList.toggle('is-multisel', grupo && multiSel.has(c)));
   board.classList.toggle('has-multisel', grupo);
+  if (editorReady) atualizarLote();
 }
 function limparMultiSel() {
   if (!multiSel.size) return;
@@ -5215,6 +5231,7 @@ function renderEditor() {
   $qe('qeForm').hidden = !has;
   renderEditorTarget();
   renderDbStatus();
+  atualizarLote();
   if (!has) return;
   const { cfg } = editor.draft;
   $qe('qeNome').maxLength = chartNameMax;
@@ -5290,6 +5307,7 @@ function refreshEditorDerived() {
   });
   $qe('qeForm').querySelectorAll('[data-tipo-grupo]').forEach(g => { g.hidden = g.dataset.tipoGrupo !== cfg.tipoGrafico; });
   renderModoCor();
+  renderUnidadeDados();
   const titulo = composeChartTitle(cfg);
   const prev = $qe('qePreview');
   prev.textContent = titulo || 'Sem título (nenhum Product selecionado)';
@@ -5395,10 +5413,31 @@ function aplicarCoresAoVivo() {
 // Unidade ↔ escala: mesma família (toneladas, dólares) → fator = base dos dados ÷ unidade escolhida
 const UNIDADE_MULT = { t: ['t', 1], kt: ['t', 1e3], mt: ['t', 1e6], 'us$': ['usd', 1], usd: ['usd', 1], kusd: ['usd', 1e3], musd: ['usd', 1e6], busd: ['usd', 1e9] };
 const multDe = u => UNIDADE_MULT[String(u || '').trim().toLowerCase()] || null;
+// Unidade(s) identificada(s) nos dados do gráfico (SG_UNID das linhas filtradas, como o subtítulo)
+function unidadesDosDados(c) {
+  const rows = c === activeChart ? getFilteredRows() : allRows.filter(x => x.NM_KPI === (c && c.filters && c.filters.product));
+  return [...new Set(rows.map(r => String(r.SG_UNID == null ? '' : r.SG_UNID).trim()).filter(Boolean))];
+}
 function unidadeDosDados(c) {
-  const prod = c === activeChart ? filterState.product : c && c.filters && c.filters.product;
-  const r = allRows.find(x => x.NM_KPI === prod && x.SG_UNID);
-  return r ? r.SG_UNID : '';
+  const un = unidadesDosDados(c);
+  return un.length === 1 ? un[0] : '';
+}
+// Mostra no painel a unidade dos dados e relaciona as opções: as da mesma grandeza convertem a escala
+function renderUnidadeDados() {
+  const un = unidadesDosDados(editor.chart), base = un.length === 1 ? multDe(un[0]) : null;
+  const conv = o => { const m = multDe(o.v); return !!(base && m && m[0] === base[0]); };
+  [...$qe('qeUnidade').options].forEach(o => {
+    const def = UNIT_OPTIONS.find(x => x.v === o.value);
+    const igual = conv(def) && multDe(def.v)[1] === base[1];
+    o.textContent = o.value === '' && un.length === 1 ? `Automática (${un[0]})` : def.label + (igual ? ' · unidade dos dados' : conv(def) ? ` · converte de ${un[0]}` : '');
+  });
+  const escolhida = editor.draft.cfg.unidade.valor, alvo = UNIT_OPTIONS.find(o => o.v === escolhida);
+  let txt = !un.length ? 'Unidade dos dados: não identificada (sem SG_UNID nos dados filtrados).'
+    : un.length > 1 ? `Unidade dos dados: mais de uma (${un.join(', ')}). Verifique o cadastro do indicador.`
+    : base ? `Unidade dos dados: ${un[0]}. ${UNIT_OPTIONS.filter(conv).map(o => o.v).join(', ')} convertem a escala automaticamente.`
+    : `Unidade dos dados: ${un[0]}. Sem conversão automática: ajuste a escala dos valores, se precisar.`;
+  if (base && alvo && escolhida && escolhida !== 'custom' && escolhida !== '%' && !conv(alvo)) txt += ` ${escolhida} não é da mesma grandeza de ${un[0]}: só o rótulo muda.`;
+  $qe('qeUnidadeDados').textContent = txt;
 }
 function sincronizarEscala(origem) {
   const base = multDe(unidadeDosDados(editor.chart));
@@ -5810,6 +5849,69 @@ function setEditorSaving(on) {
   if (!on) renderSavedList();
 }
 
+// Grava a configuração do gráfico c no banco (cria ou atualiza o registro) e atualiza a lista local
+async function gravarConfigBanco(c) {
+  const r = await editorApi('config-graficos', { method: 'PUT', body: { id: c.cfg.idConfig, nome: c.cfg.nome, config: configForDb(c) } });
+  if (r.ok && Number.isInteger(r.corpo.id)) {
+    c.cfg = { ...c.cfg, idConfig: r.corpo.id, nome: r.corpo.nome };
+    const item = { id: r.corpo.id, nome: r.corpo.nome, config: configForDb(c), atualizadoEm: r.corpo.atualizadoEm };
+    editor.db.itens = [...editor.db.itens.filter(i => i.id !== item.id), item].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    editor.db = { ...editor.db, ok: true, carregando: false, erro: '' };
+  }
+  return r;
+}
+
+// ── Aplicar em lote: a configuração do gráfico em edição vai para os demais selecionados ──
+// O que cada seção copia (Identificação e Persistência são de cada gráfico: não entram)
+const LOTE_CHAVES = {
+  tipo: ['tipoGrafico', 'exibirDelta', 'linhas'], titulo: ['titulo'], fontes: ['fontes'], numeros: ['decBar', 'decDelta'],
+  unidade: ['unidade'], colunas: ['ordemColunas', 'deltasManuais'], cores: ['modoCor', 'paletaColunas']
+};
+const alvosDoLote = () => (multiSel.size > 1 && multiSel.has(editor.chart) ? charts.filter(c => multiSel.has(c) && c !== editor.chart) : []);
+function atualizarLote() {
+  const n = alvosDoLote().length, secao = !!LOTE_CHAVES[editor.secao];
+  $qe('qeLote').hidden = !(n && editor.view === 'editar' && editor.draft);
+  $qe('qeLoteTit').textContent = `${n + 1} gráficos selecionados: aplicar a configuração deste aos outros ${n}`;
+  $qe('qeLoteSecao').disabled = !secao || editor.saving;
+  $qe('qeLoteSecao').textContent = secao ? `Aplicar “${SECOES_EDITOR[editor.secao]}”` : 'Aplicar esta seção';
+  $qe('qeLoteTudo').disabled = editor.saving;
+}
+async function aplicarEmLote(todas) {
+  const alvos = alvosDoLote();
+  if (!alvos.length || !editor.draft || editor.saving) return;
+  readEditorForm();
+  if (!validateDraft(false)) { editorMsg('Corrija os campos destacados.', 'err'); return; }
+  const secoes = todas ? Object.keys(LOTE_CHAVES) : [editor.secao].filter(s => LOTE_CHAVES[s]);
+  if (!secoes.length) return;
+  aplicarRascunhoAoVivo(); // o gráfico em edição também fica com o que está no painel
+  const d = JSON.parse(JSON.stringify(editor.draft));
+  stashActive();
+  alvos.forEach(c => {
+    const cfg = { ...c.cfg };
+    secoes.forEach(s => LOTE_CHAVES[s].forEach(k => { cfg[k] = JSON.parse(JSON.stringify(d.cfg[k])); }));
+    c.cfg = normalizeChartCfg(cfg);
+    if (secoes.includes('cores')) setChartColors(c, { ...d.colors });
+  });
+  renderSemAnimacao = true;
+  try { renderAllCharts(); } finally { renderSemAnimacao = false; }
+  saveCharts();
+  labelCharts();
+  // Vinculados ao banco: o banco prevalece ao abrir, então gravam agora
+  const vinculados = alvos.filter(c => c.cfg.idConfig);
+  let falhas = 0;
+  if (vinculados.length) {
+    setEditorSaving(true);
+    editorMsg(`Gravando ${vinculados.length} gráfico(s) no banco…`, 'info');
+    try { for (const c of vinculados) { const r = await gravarConfigBanco(c); if (!r.ok) falhas++; } } finally { setEditorSaving(false); }
+    saveCharts();
+    renderDbStatus();
+  }
+  const oQue = todas ? 'Todas as configurações' : `“${SECOES_EDITOR[secoes[0]]}”`;
+  editorMsg(falhas ? `${oQue} aplicada(s) a ${alvos.length} gráfico(s), mas ${falhas} não foram gravados no banco: tente de novo.`
+    : `${oQue} aplicada(s) a ${alvos.length} gráfico(s)${vinculados.length ? `; ${vinculados.length} gravado(s) no banco` : ''}.`, falhas ? 'err' : 'ok');
+  atualizarLote();
+}
+
 async function salvarEditor() {
   if (!editor.draft || editor.saving) return; // evita envio duplicado
   readEditorForm();
@@ -5819,12 +5921,8 @@ async function salvarEditor() {
   setEditorSaving(true);
   editorMsg('Salvando no banco…', 'info');
   try {
-    const r = await editorApi('config-graficos', { method: 'PUT', body: { id: c.cfg.idConfig, nome: c.cfg.nome, config: configForDb(c) } });
+    const r = await gravarConfigBanco(c);
     if (r.ok && Number.isInteger(r.corpo.id)) {
-      c.cfg = { ...c.cfg, idConfig: r.corpo.id, nome: r.corpo.nome };
-      const item = { id: r.corpo.id, nome: r.corpo.nome, config: configForDb(c), atualizadoEm: r.corpo.atualizadoEm };
-      editor.db.itens = [...editor.db.itens.filter(i => i.id !== item.id), item].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-      editor.db = { ...editor.db, ok: true, carregando: false, erro: '' };
       saveCharts();
       labelCharts();
       if (editor.chart === c) {
@@ -5990,6 +6088,7 @@ function irParaSecao(sec) {
   $qe('qeForm').querySelectorAll('.qe-sec').forEach(d => { d.hidden = d.dataset.sec !== sec; });
   $qe('qeForm').querySelector('.qe-body').scrollTop = 0;
   $qe('qeHeading').textContent = SECOES_EDITOR[sec]; // o selo "Editando" já diz o modo
+  atualizarLote();
   // O destaque acompanha a seção (ex.: erro de validação leva para outra)
   const btn = $qe('qeToolbar').querySelector(`[data-qe-go="${sec}"]`);
   if (editor.view === 'editar' && btn) { editor.tool = btn; marcarFerramenta(); }
@@ -7311,6 +7410,8 @@ function initEditor() {
     if (cor) (cor.dataset.col !== undefined ? pickColunaCor(cor) : pickColor(cor));
   });
   $qe('qeSalvar').addEventListener('click', salvarEditor);
+  $qe('qeLoteSecao').addEventListener('click', () => aplicarEmLote(false));
+  $qe('qeLoteTudo').addEventListener('click', () => aplicarEmLote(true));
   $qe('qeCancelar').addEventListener('click', cancelarEditor);
   $qe('qeRestaurar').addEventListener('click', restaurarPadraoEditor);
   $qe('qeCoresPadrao').addEventListener('click', restaurarCoresEditor);
