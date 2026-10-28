@@ -31,7 +31,7 @@ test('carregarSql troca o ID_DASH fixo pelo parâmetro nas duas consultas, na qu
 });
 
 test('junções das consultas usam separador (sem colisão de CONCAT entre site/operação/KPI)', () => {
-  for (const arq of ['coo_dashboard.sql', 'coo_dashboard_atualizacao.sql']) {
+  for (const arq of ['001_coo_dashboard.sql', '002_coo_dashboard_atualizacao.sql']) {
     const ativas = fs.readFileSync(path.join(__dirname, '..', 'database', arq), 'utf8').split('\n').filter((l) => !l.trim().startsWith('--'));
     for (const l of ativas) if (/CONCAT\([^)]*ID_SITE/.test(l)) assert.match(l, /'\|'/, `${arq}: ${l.trim()}`);
   }
@@ -174,7 +174,7 @@ test('mês do ciclo = mês anterior ao atual', () => {
 });
 
 test('consultas sem SELECT de depuração ativo (um 2º resultado esvaziaria o dashboard)', () => {
-  for (const arq of ['coo_dashboard.sql', 'coo_dashboard_atualizacao.sql']) {
+  for (const arq of ['001_coo_dashboard.sql', '002_coo_dashboard_atualizacao.sql']) {
     const ativas = fs.readFileSync(path.join(__dirname, '..', 'database', arq), 'utf8').split(/\r?\n/).filter((l) => !l.trim().startsWith('--'));
     assert.ok(!ativas.some((l) => /^\s*select\s+@\w+\s*$/i.test(l)), arq);
   }
@@ -192,7 +192,7 @@ test('carga do COO na tabela do VBM: query original + campos do VBM, só o dashb
   // toda linha da query original continua lá, na mesma ordem (só ganhou vírgula no fim, quando um campo foi incluído depois)
   const linhas = carga.split('\n').map((l) => l.trim());
   let j = 0;
-  for (const o of ler('coo_dashboard.sql').split('\n').map((l) => l.trim()).filter(Boolean)) {
+  for (const o of ler('001_coo_dashboard.sql').split('\n').map((l) => l.trim()).filter(Boolean)) {
     while (j < linhas.length && linhas[j] !== o && linhas[j] !== o + ',') j++;
     assert.ok(j < linhas.length, `linha da query original ausente ou fora de ordem: ${o}`);
     j++;

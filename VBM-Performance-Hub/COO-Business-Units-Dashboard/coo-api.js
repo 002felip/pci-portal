@@ -62,13 +62,13 @@ const ID_DASH_PADRAO = 15; // IBP.DASHBOARD.ID_DASH do COO Dashboard
 const CONSULTAS = [
   {
     rota: '/chart-data',
-    arquivo: 'coo_dashboard.sql', // MONTH, QUARTER e YEAR (UNION ALL) — "SQL - COO DASHBOARD.txt"
+    arquivo: '001_coo_dashboard.sql', // MONTH, QUARTER e YEAR (UNION ALL) — "SQL - COO DASHBOARD.txt"
     trocas: [{ de: 'DASH.ID_DASH = 15', para: 'DASH.ID_DASH = @idDash', ocorrencias: 3 }],
     falha: 'Failed to query the dashboard data.',
   },
   {
     rota: '/atualizacoes',
-    arquivo: 'coo_dashboard_atualizacao.sql', // situação de cada KPI no ciclo — "SQL - COO DASHBOARD ATUALIZACAO"
+    arquivo: '002_coo_dashboard_atualizacao.sql', // situação de cada KPI no ciclo — "SQL - COO DASHBOARD ATUALIZACAO"
     trocas: [{ de: 'DASH.ID_DASH = 15', para: 'DASH.ID_DASH = @idDash', ocorrencias: 1 }],
     falha: 'Failed to query the data update status.',
   },
@@ -83,7 +83,7 @@ WHERE R.ID_DASH = @idDash
 GROUP BY R.DT_REF
 ORDER BY R.DT_REF DESC`;
 
-// Uma carga do COO com as mesmas colunas da query ao vivo (coo_dashboard.sql), para o restante
+// Uma carga do COO com as mesmas colunas da query ao vivo (001_coo_dashboard.sql), para o restante
 // do módulo não mudar: DT_REF = mês da linha (DT_IND), ORDEM_GRAFICO refeito a partir do período
 // e da série do VBM; nome, ordem, unidade e casas decimais do KPI vêm de IBP.DASHBOARD.
 const SNAPSHOT_SQL = `

@@ -14,7 +14,7 @@
      mês de (DT_ATUALIZACAO - 1 mês) >= mês de @DT_REF        → 'S'
      demais                                                   → 'N'
    @DT_REF = DATEADD(MONTH, -1, GETDATE()-2), no 1º dia do mês (como no
-   coo_dashboard_atualizacao.sql em produção): o mês do ciclo só conta como
+   002_coo_dashboard_atualizacao.sql em produção): o mês do ciclo só conta como
    atualizado com atualização no mês seguinte.
 
    Pré-requisitos na tabela: coluna SG_STATUS CHAR(1) NULL e DT_ATUALIZACAO

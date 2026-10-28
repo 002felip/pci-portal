@@ -129,6 +129,9 @@ const enviarPagina = (req, res) => { res.set('Cache-Control', 'no-store'); res.s
 for (const rota of ['/', '/index.html', '/COO-Business-Units-Dashboard', '/COO-Business-Units-Dashboard/', '/COO-Business-Units-Dashboard/index.html']) {
   app.get(rota, enviarPagina);
 }
+const assets = express.static(path.join(__dirname, 'assets'), { index: false, maxAge: '1d' });
+app.use('/assets', assets);
+app.use('/COO-Business-Units-Dashboard/assets', assets);
 
 // A MESMA instância do router em todos os caminhos compartilha o cache de 5 min
 const router = criarCooRouter({ runQuery, idDash: process.env.COO_ID_DASH });
