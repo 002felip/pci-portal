@@ -181,14 +181,21 @@ test('mês do ciclo acompanha o GETDATE()-2 das queries (dias 1 e 2 ainda no cic
   assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 3, 12)), { ano: 2026, mes: 10 }); // 3/nov → outubro
 });
 
-test('carga do COO na tabela do VBM: só o dashboard 15, apaga só o próprio mês, junções com separador', () => {
-  const s = fs.readFileSync(path.join(__dirname, '..', 'database', '003_carga_mensal_coo.sql'), 'utf8');
-  const ativo = s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+test('carga do COO na tabela do VBM: query original + campos do VBM, só o dashboard 15 e o próprio mês', () => {
+  const ler = (f) => fs.readFileSync(path.join(__dirname, '..', 'database', f), 'utf8').replace(/\r/g, '');
+  const carga = ler('003_carga_mensal_coo.sql');
+  // toda linha da query original continua lá, na mesma ordem (só ganhou vírgula no fim, quando um campo foi incluído depois)
+  const linhas = carga.split('\n').map((l) => l.trim());
+  let j = 0;
+  for (const o of ler('coo_dashboard.sql').split('\n').map((l) => l.trim()).filter(Boolean)) {
+    while (j < linhas.length && linhas[j] !== o && linhas[j] !== o + ',') j++;
+    assert.ok(j < linhas.length, `linha da query original ausente ou fora de ordem: ${o}`);
+    j++;
+  }
+  const ativo = carga.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   assert.match(ativo, /DECLARE @ID_DASH\s+INT\s+=\s+15;/);
-  assert.doesNotMatch(ativo, /\b21\b/);
   const deletes = ativo.match(/DELETE FROM IBP\.PHUB_PERFORMANCESTUDIO\s+WHERE[^;]*;/g) || [];
   assert.strictEqual(deletes.length, 1);
-  assert.match(deletes[0], /DT_REF = @DT_REF AND ID_DASH = @ID_DASH/);
-  for (const c of ativo.match(/CONCAT\([^)]*ID_SITE[^)]*\)/g) || []) assert.match(c, /'\|'/);
-  assert.doesNotMatch(ativo, /GETDATE\(\)/);
+  assert.match(deletes[0], /DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH/);
+  assert.strictEqual((ativo.match(/AS 'ID_TIPO_VISAO_VBM'/g) || []).length, 3);
 });
