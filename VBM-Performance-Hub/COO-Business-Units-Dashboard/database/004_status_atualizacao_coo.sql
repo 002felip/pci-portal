@@ -1,0 +1,84 @@
+/* ════════════════════════════════════════════════════════════════════
+   COO Business Units Dashboard — situação de atualização dos KPIs na carga do ciclo
+   Banco: BDIBPBMSA_PRD · agendar no Data Factory depois de 003_carga_mensal_coo.sql
+
+   Atualiza, nas linhas do ciclo atual do COO em IBP.PHUB_PERFORMANCESTUDIO
+   (ID_DASH 15, DT_REF = mês de GETDATE()-2, dia 1):
+     DT_ATUALIZACAO = última atualização do KPI em IBP.LOG_PEDRAVISAOCONSOLIDADA
+                      (NULL quando o KPI não tem linha no mês ou não tem log)
+     SG_STATUS      = 'S' atualizado | 'N' pendente
+
+   Regra = SQL - COO DASHBOARD ATUALIZACAO (por KPI e DT_IND):
+     sem linha em PEDRAVISAOCONSOLIDADA no DT_IND ou sem log  → 'N'
+     DT_IND anterior ao mês de @DT_REF                        → 'S'
+     mês de (DT_ATUALIZACAO - 1 mês) >= mês de @DT_REF        → 'S'
+     demais                                                   → 'N'
+   @DT_REF = DATEADD(MONTH, -1, GETDATE()-2), no 1º dia do mês (como no
+   coo_dashboard_atualizacao.sql em produção): o mês do ciclo só conta como
+   atualizado com atualização no mês seguinte.
+
+   Pré-requisitos na tabela: coluna SG_STATUS CHAR(1) NULL e DT_ATUALIZACAO
+   aceitando NULL (hoje é NOT NULL com padrão SYSUTCDATETIME()):
+     ALTER TABLE IBP.PHUB_PERFORMANCESTUDIO ADD SG_STATUS CHAR(1) NULL;
+     ALTER TABLE IBP.PHUB_PERFORMANCESTUDIO ALTER COLUMN DT_ATUALIZACAO DATETIME2(0) NULL;
+   ════════════════════════════════════════════════════════════════════ */
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+
+DECLARE @ID_DASH  INT  = 15;
+DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, GETDATE() - 2);
+SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
+DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);
+
+-- Última atualização por KPI e DT_IND (KPI com linha no mês em PEDRAVISAOCONSOLIDADA)
+IF OBJECT_ID('tempdb..#A') IS NOT NULL DROP TABLE #A;
+
+SELECT
+  R.DT_IND, R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  MAX(CASE WHEN PVC.DT_REF IS NOT NULL THEN L.DT_ATUALIZACAO END) AS DT_ATUALIZACAO
+INTO #A
+FROM (
+  SELECT DISTINCT DT_IND, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
+  FROM IBP.PHUB_PERFORMANCESTUDIO
+  WHERE ID_DASH = @ID_DASH AND DT_REF = @DT_CARGA
+) R
+LEFT JOIN IBP.PEDRAVISAOCONSOLIDADA PVC
+  ON PVC.ID_SISTEMA = R.ID_SISTEMA AND PVC.ID_SITE = R.ID_SITE
+  AND PVC.ID_OPERACAO = R.ID_OPERACAO AND PVC.ID_KPI = R.ID_KPI
+  AND PVC.DT_REF = R.DT_IND
+LEFT JOIN (
+  SELECT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, MAX(DT_ATUALIZACAO) AS DT_ATUALIZACAO
+  FROM IBP.LOG_PEDRAVISAOCONSOLIDADA
+  GROUP BY ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
+) L
+  ON L.ID_SISTEMA = R.ID_SISTEMA AND L.ID_SITE = R.ID_SITE
+  AND L.ID_OPERACAO = R.ID_OPERACAO AND L.ID_KPI = R.ID_KPI
+GROUP BY R.DT_IND, R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI;
+
+BEGIN TRANSACTION;
+
+UPDATE R
+SET
+  R.DT_ATUALIZACAO = A.DT_ATUALIZACAO,
+  R.SG_STATUS = CASE
+    WHEN A.DT_ATUALIZACAO IS NULL THEN 'N'
+    WHEN R.DT_IND < @DT_REF THEN 'S'
+    WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, A.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, A.DT_ATUALIZACAO)), 1) >= @DT_REF THEN 'S'
+    ELSE 'N'
+  END
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+INNER JOIN #A A
+  ON A.DT_IND = R.DT_IND AND A.ID_SISTEMA = R.ID_SISTEMA AND A.ID_SITE = R.ID_SITE
+  AND A.ID_OPERACAO = R.ID_OPERACAO AND A.ID_KPI = R.ID_KPI
+WHERE R.ID_DASH = @ID_DASH
+  AND R.DT_REF = @DT_CARGA;
+
+COMMIT TRANSACTION;
+
+-- Resumo (linhas por situação)
+SELECT @DT_CARGA AS DT_REF, @DT_REF AS MES_CICLO, SG_STATUS, COUNT(*) AS LINHAS
+FROM IBP.PHUB_PERFORMANCESTUDIO
+WHERE ID_DASH = @ID_DASH AND DT_REF = @DT_CARGA
+GROUP BY SG_STATUS;
+
+DROP TABLE #A;
