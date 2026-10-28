@@ -167,3 +167,10 @@ test('mês do ciclo = mês anterior ao atual', () => {
   assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 3)), { ano: 2026, mes: 10 }); // novembro → outubro
   assert.deepStrictEqual(mesDoCiclo(new Date(2027, 0, 10)), { ano: 2026, mes: 12 }); // janeiro → dezembro anterior
 });
+
+test('consultas sem SELECT de depuração ativo (um 2º resultado esvaziaria o dashboard)', () => {
+  for (const arq of ['coo_dashboard.sql', 'coo_dashboard_atualizacao.sql']) {
+    const ativas = fs.readFileSync(path.join(__dirname, '..', 'database', arq), 'utf8').split(/\r?\n/).filter((l) => !l.trim().startsWith('--'));
+    assert.ok(!ativas.some((l) => /^\s*select\s+@\w+\s*$/i.test(l)), arq);
+  }
+});
