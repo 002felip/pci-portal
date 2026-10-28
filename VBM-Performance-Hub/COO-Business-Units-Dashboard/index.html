@@ -193,8 +193,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .title-block { min-width: 0; margin-bottom: -4px; position: relative; top: -7px; } /* título um pouco acima: centrado entre o topo e a linha do cabeçalho */
 .title-block h2 { margin: 0; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
 /* Unidade em linha própria (como no print), legenda e atualização alinhadas à direita */
-.site-row { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 24px; flex-wrap: wrap; margin-top: -2px; }
-.site-row .panel-meta { position: relative; top: 10px; }
+/* Nome do site centralizado entre a linha do cabeçalho e o topo dos painéis: o mesmo espaço acima e abaixo (gap da página) */
+.site-row { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; }
 .site-id { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; min-width: 0; }
 .site-nav { display: inline-flex; align-items: center; gap: 8px; position: relative; top: 6px; }
 .site-nav[hidden] { display: none; }
@@ -203,7 +203,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
 .nav-chip:disabled { opacity: .4; cursor: default; }
 .pager .nav-chip { width: 28px; padding: 0; }
-.site { margin: 0; position: relative; top: 4px; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
+.site { margin: 0; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
 
 .filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
 .filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
@@ -244,7 +244,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
 
 /* Painéis */
-.dash { flex: 1 1 auto; min-height: 0; margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 32px; }
+.dash { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 32px; }
 .panel { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
 .panel-prod { background: var(--panel); border-radius: 20px; padding: 16px 22px 14px; }
 .panel-fin { padding: 16px 4px 14px; }
