@@ -29,8 +29,9 @@
  *                                     anos e meses, e o último mês realizado (Actual)
  *   GET /indicadores?site=&ano=&mes=&ciclo=  Budget e Actual/Forecast por KPI do site,
  *                                     no mês, no trimestre do mês e no ano, da carga
- *   GET /atualizacao?site=&ano=&mes=&ciclo=  situação da atualização por KPI do site no mês
- *                                     (consulta à parte: não atrasa os gráficos)
+ *   GET /atualizacao?site=&ano=&mes=&ciclo=  situação da atualização por KPI do site no mês,
+ *                                     gravada na carga (SG_STATUS/DT_ATUALIZACAO; consulta à
+ *                                     parte: não atrasa os gráficos)
  *   GET /atualizacoes                 saída do script de atualização, linha a linha
  *
  * /chart-data, /atualizacoes e /sites devolvem o resultado inteiro (todas as BUs) e a
@@ -73,6 +74,7 @@ const CONSULTAS = [
 ];
 
 // Cargas do COO em IBP.PHUB_PERFORMANCESTUDIO (uma por DT_REF), com a hora da gravação
+// DT_CARGA: atualização de KPI mais recente gravada no ciclo (DT_ATUALIZACAO, preenchida pelo 004)
 const CICLOS_SQL = `
 SELECT R.DT_REF, MAX(R.DT_ATUALIZACAO) AS DT_CARGA
 FROM IBP.PHUB_PERFORMANCESTUDIO R
@@ -100,6 +102,26 @@ INNER JOIN IBP.DASHBOARD DASH
   AND CONCAT(R.ID_SITE, '|', R.ID_OPERACAO, '|', R.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
 WHERE R.ID_DASH = @idDash
   AND R.DT_REF = @dtRef`;
+
+// Situação de atualização gravada na carga (SG_STATUS 'S'/'N' e DT_ATUALIZACAO do KPI,
+// preenchidos por database/004_status_atualizacao_coo.sql, agendado no Data Factory).
+// Uma linha por KPI e mês (DT_IND); linhas ainda sem situação (SG_STATUS NULL) não entram.
+const STATUS_SQL = `
+SELECT
+  R.DT_IND AS DT_REF, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+WHERE R.ID_DASH = @idDash
+  AND R.DT_REF = @dtRef
+  AND R.CD_PERIODO = 'MONTH'
+  AND R.SG_STATUS IS NOT NULL
+GROUP BY R.DT_IND, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+// Linha da tabela → formato do script de atualização (VALIDATE 1/0, DS_VALIDATE)
+function statusDaTabela(l) {
+  const ok = String(l.SG_STATUS).trim().toUpperCase() === 'S';
+  return { DT_REF: l.DT_REF, ID_SITE: l.ID_SITE, ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI,
+    VALIDATE: ok ? 1 : 0, DS_VALIDATE: ok ? '.' : 'Pending final updates', DT_ATUALIZACAO: l.DT_ATUALIZACAO || null };
+}
 
 // ?ciclo=AAAA-MM (ou AAAA-MM-01) → 'AAAA-MM'; vazio → null; inválido → undefined
 function lerCiclo(valor) {
@@ -352,6 +374,9 @@ function criarCooRouter({ runQuery, idDash }) {
   const buscarCarga = (ciclo, fresco) => comCache(`/carga:${ciclo}`, async () => (await runQuery(SNAPSHOT_SQL, {
     idDash: [sql.Int, ID_DASH], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)],
   })).recordset, fresco);
+  const buscarStatus = (ciclo, fresco) => comCache(`/status:${ciclo}`, async () => (await runQuery(STATUS_SQL, {
+    idDash: [sql.Int, ID_DASH], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)],
+  })).recordset.map(statusDaTabela), fresco);
   const buscarCiclos = async (fresco) => (await buscar('/ciclos', CICLOS_SQL, fresco)).map(l => ({ ciclo: cicloDe(l.DT_REF), carregadoEm: l.DT_CARGA || null }));
   // Ciclo pedido (ou o mais recente) entre as cargas gravadas; erro com status para a rota responder
   async function resolverCiclo(req) {
@@ -456,13 +481,12 @@ function criarCooRouter({ runQuery, idDash }) {
       return res.status(400).json({ error: 'Invalid parameters: use site (numeric id), ano (2000–2100) and mes (1–12).', codigo: 'PARAMETRO' });
     }
     try {
-      // Mês depois do ciclo (projeção): vale a situação do mês do ciclo da carga escolhida
-      // (sem ciclo, o mês do ciclo de hoje)
-      const pedido = lerCiclo(req.query.ciclo);
-      if (pedido === undefined) return res.status(400).json({ error: 'Invalid ciclo: use AAAA-MM.', codigo: 'PARAMETRO' });
-      const ref = periodoDaSituacao(p, pedido ? mesDoCicloDaCarga(pedido) : mesDoCiclo());
-      const kpis = Object.fromEntries(atualizacoesDoMes(await buscar('/atualizacoes', SQL['/atualizacoes'], fresco(req)), ref));
-      res.json({ ...p, kpis, situacaoDe: { ano: ref.ano, mes: ref.mes } });
+      // Situação gravada na carga do ciclo (IBP.PHUB_PERFORMANCESTUDIO). Mês depois do ciclo
+      // (projeção): vale a situação do mês do ciclo da carga (carga 2026-10 → setembro)
+      const c = await resolverCiclo(req);
+      const ref = periodoDaSituacao(p, mesDoCicloDaCarga(c.ciclo));
+      const kpis = Object.fromEntries(atualizacoesDoMes(await buscarStatus(c.ciclo, fresco(req)), ref));
+      res.json({ ...p, ciclo: c.ciclo, kpis, situacaoDe: { ano: ref.ano, mes: ref.mes } });
     } catch (err) {
       responderErro(res, '/atualizacao', err, 'Failed to query the data update status.');
     }
@@ -471,4 +495,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, mesDoCicloDaCarga, lerCiclo, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, mesDoCicloDaCarga, lerCiclo, statusDaTabela, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL, STATUS_SQL };

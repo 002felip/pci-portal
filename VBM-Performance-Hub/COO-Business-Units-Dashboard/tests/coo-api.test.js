@@ -7,7 +7,7 @@ const assert = require('node:assert');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, mesDoCicloDaCarga, lerCiclo, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL } = require('../coo-api');
+const { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, mesDoCicloDaCarga, lerCiclo, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL, STATUS_SQL } = require('../coo-api');
 
 const AGO = new Date(Date.UTC(2026, 7, 1));
 const linha = (o) => Object.assign({ DT_REF: AGO, ID_SITE: 6, ID_OPERACAO: 1, ID_KPI: 10, NM_KPI: 'Mine Movement', ID_ORDEM: 1, SG_UNID: 'Mt', VL_CASADECIMAL: 1 }, o);
@@ -252,13 +252,30 @@ test('ciclo inválido → 400; ciclo sem carga → 404; nenhuma carga → 404 se
   } finally { s.close(); vazio.close(); }
 });
 
-test('/atualizacao: mês projetado segue o mês do ciclo da carga escolhida', async () => {
-  const set = new Date(Date.UTC(2026, 8, 1)), out = new Date(Date.UTC(2026, 9, 1));
-  const l = (dt, v) => ({ DT_REF: dt, ID_SITE: 6, ID_OPERACAO: 1, ID_KPI: 10, VALIDATE: v, DS_VALIDATE: v ? '.' : 'Pending final updates', DT_ATUALIZACAO: null });
-  const s = await servidor(async () => ({ recordset: [l(set, 0), l(out, 1)] }));
+test('/atualizacao: situação lida da carga (SG_STATUS), mês projetado segue o mês do ciclo, sem consulta ao vivo', async () => {
+  const set = new Date(Date.UTC(2026, 8, 1)), out = new Date(Date.UTC(2026, 9, 1)), dt = new Date(Date.UTC(2026, 9, 5));
+  const l = (d, kpi, st) => ({ DT_REF: d, ID_SITE: 6, ID_OPERACAO: 1, ID_KPI: kpi, SG_STATUS: st, DT_ATUALIZACAO: dt });
+  let aoVivo = 0, pedido = null;
+  const s = await servidor(async (q, p) => {
+    if (/LOG_PEDRAVISAO|PEDRAVISAO/.test(q)) aoVivo++;
+    if (q === STATUS_SQL) { pedido = p.dtRef[1].toISOString().slice(0, 10); return { recordset: [l(set, 10, 'N'), l(set, 11, 'S'), l(out, 10, 'S')] }; }
+    return banco()(q, p);
+  });
   try {
     const r = await get(s, '/api/atualizacao?site=6&ano=2026&mes=12&ciclo=2026-10');
     assert.deepStrictEqual(r.json.situacaoDe, { ano: 2026, mes: 9 });
     assert.strictEqual(r.json.kpis['1|10'].status, 'pendente');
+    assert.strictEqual(r.json.kpis['1|10'].texto, 'Pending final updates');
+    assert.strictEqual(r.json.kpis['1|11'].status, 'ok');
+    assert.strictEqual(new Date(r.json.kpis['1|11'].dt).toISOString(), dt.toISOString());
+    assert.strictEqual(pedido, '2026-10-01');
+    assert.strictEqual((await get(s, '/api/atualizacao?site=6&ano=2026&mes=9&ciclo=2025-01')).status, 404);
+    assert.strictEqual(aoVivo, 0);
   } finally { s.close(); }
+});
+
+test('leitura da situação: só a carga do ciclo, por mês, sem linhas ainda sem situação', () => {
+  assert.match(STATUS_SQL, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
+  assert.match(STATUS_SQL, /R\.ID_DASH = @idDash\s+AND R\.DT_REF = @dtRef\s+AND R\.CD_PERIODO = 'MONTH'\s+AND R\.SG_STATUS IS NOT NULL/);
+  assert.doesNotMatch(STATUS_SQL, /PEDRAVISAO/);
 });
