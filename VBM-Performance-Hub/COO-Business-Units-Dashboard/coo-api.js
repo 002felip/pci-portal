@@ -23,6 +23,7 @@
  * Rotas (ciclo = AAAA-MM de uma carga gravada; sem ele, a carga mais recente):
  *   GET /ping                         diagnóstico sem banco
  *   GET /ciclos                       cargas gravadas (DT_REF), da mais recente para a mais antiga
+ *   GET /config                       seletores e apelidos de KPI (JSON em IBP.PHUB_PS_SETUP)
  *   GET /chart-data                   saída do script ao vivo, linha a linha (todas as BUs)
  *   GET /sites                        ID_SITE e nome dos sites do dashboard
  *   GET /filtros?ciclo=               o que a tela pode filtrar na carga: sites com dados,
@@ -121,6 +122,37 @@ function statusDaTabela(l) {
   const ok = String(l.SG_STATUS).trim().toUpperCase() === 'S';
   return { DT_REF: l.DT_REF, ID_SITE: l.ID_SITE, ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI,
     VALIDATE: ok ? 1 : 0, DS_VALIDATE: ok ? '.' : 'Pending final updates', DT_ATUALIZACAO: l.DT_ATUALIZACAO || null };
+}
+
+// Configuração da tela em JSON, no mesmo cadastro de dashboards do VBM Performance Studio
+// (IBP.PHUB_PS_SETUP.DS_LAYOUT, CD_VISAO 'COO_BUSINESS_UNITS', inativo e com dono técnico: não
+// aparece na lista do Studio). Gravada por database/005_config_coo.sql. Hoje: seletores dos cards
+// (CAPEX, All-in, Cu/Au) e apelidos de KPI (nome do card → nomes em IBP.DASHBOARD).
+const CONFIG_VISAO = 'COO_BUSINESS_UNITS';
+const CONFIG_SQL = `
+SELECT TOP 1 S.DS_LAYOUT
+FROM IBP.PHUB_PS_SETUP S
+WHERE S.CD_VISAO = @visao
+ORDER BY S.DT_ATUALIZACAO DESC`;
+const texto = (v, max) => (typeof v === 'string' && v.trim() && v.length <= max ? v.trim() : null);
+const nomes = (v) => (Array.isArray(v) ? v.map(n => texto(n, 200)).filter(Boolean).slice(0, 20) : []);
+// Só o formato esperado passa para a tela; o resto é descartado
+function normalizarConfigCoo(json) {
+  let c;
+  try { c = typeof json === 'string' ? JSON.parse(json) : json; } catch (e) { return null; }
+  if (!c || typeof c !== 'object') return null;
+  const seletores = {}, apelidos = {};
+  for (const [cod, sel] of Object.entries(c.seletores || {})) {
+    if (!/^[A-Z][A-Z0-9_]{0,39}$/.test(cod) || !sel || !Array.isArray(sel.opcoes)) continue;
+    const opcoes = sel.opcoes.map(o => o && /^[a-z][a-z0-9]{0,19}$/.test(o.chave) && texto(o.lbl, 40) && texto(o.titulo, 200)
+      ? { chave: o.chave, lbl: texto(o.lbl, 40), titulo: texto(o.titulo, 200), kpi: nomes(o.kpi), unid: texto(o.unid, 20) } : null).filter(Boolean);
+    if (opcoes.length) seletores[cod] = { opcoes };
+  }
+  for (const [card, lista] of Object.entries(c.apelidos || {})) {
+    const n = nomes(lista);
+    if (texto(card, 200) && n.length) apelidos[card.trim()] = n;
+  }
+  return { seletores, apelidos };
 }
 
 // ?ciclo=AAAA-MM (ou AAAA-MM-01) → 'AAAA-MM'; vazio → null; inválido → undefined
@@ -433,6 +465,18 @@ function criarCooRouter({ runQuery, idDash }) {
   }
   if (diagnostico) rota('/sites', SITES_SQL, 'Failed to query the dashboard sites.');
 
+  // Configuração da tela (seletores e apelidos). Sem configuração gravada, sem tabela ou com erro,
+  // responde { config: null } e a tela segue com o padrão do código — nunca bloqueia os gráficos.
+  router.get('/config', async (req, res) => {
+    try {
+      const linhas = await comCache('/config', async () => (await runQuery(CONFIG_SQL, { visao: [sql.VarChar(40), CONFIG_VISAO] })).recordset, fresco(req));
+      res.json({ config: linhas.length ? normalizarConfigCoo(linhas[0].DS_LAYOUT) : null });
+    } catch (err) {
+      console.error(`${TAG} configuração indisponível (usando o padrão do código):`, err.message);
+      res.json({ config: null });
+    }
+  });
+
   router.get('/ciclos', async (req, res) => {
     try {
       res.json({ ciclos: await buscarCiclos(fresco(req)) });
@@ -495,4 +539,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, mesDoCicloDaCarga, lerCiclo, statusDaTabela, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL, STATUS_SQL };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, periodoDaSituacao, mesDoCiclo, mesDoCicloDaCarga, lerCiclo, statusDaTabela, normalizarConfigCoo, CONFIG_SQL, CONSULTAS, CICLOS_SQL, SNAPSHOT_SQL, STATUS_SQL };

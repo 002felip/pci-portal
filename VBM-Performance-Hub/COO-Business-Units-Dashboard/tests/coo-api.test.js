@@ -279,3 +279,24 @@ test('leitura da situação: só a carga do ciclo, por mês, sem linhas ainda se
   assert.match(STATUS_SQL, /R\.ID_DASH = @idDash\s+AND R\.DT_REF = @dtRef\s+AND R\.CD_PERIODO = 'MONTH'\s+AND R\.SG_STATUS IS NOT NULL/);
   assert.doesNotMatch(STATUS_SQL, /PEDRAVISAO/);
 });
+
+test('configuração (PHUB_PS_SETUP): só o formato esperado passa; sem registro ou com erro → null sem bloquear', async () => {
+  const { normalizarConfigCoo, CONFIG_SQL } = require('../coo-api');
+  const c = normalizarConfigCoo(JSON.stringify({
+    seletores: { CAPEX_MINA: { opcoes: [{ chave: 'cost', lbl: 'Cost', titulo: 'CAPEX (Cost)', kpi: ['CAPEX', 5] }, { chave: 'Bad Key', lbl: 'x', titulo: 'y' }] }, 'ruim-codigo': { opcoes: [] } },
+    apelidos: { Revenues: ['Net Revenue'], Vazio: [] },
+  }));
+  assert.deepStrictEqual(c.seletores, { CAPEX_MINA: { opcoes: [{ chave: 'cost', lbl: 'Cost', titulo: 'CAPEX (Cost)', kpi: ['CAPEX'], unid: null }] } });
+  assert.deepStrictEqual(c.apelidos, { Revenues: ['Net Revenue'] });
+  assert.strictEqual(normalizarConfigCoo('{x'), null);
+  assert.match(CONFIG_SQL, /FROM IBP\.PHUB_PS_SETUP S\s+WHERE S\.CD_VISAO = @visao/);
+  const ok = await servidor(async (q, p) => (q === CONFIG_SQL ? { recordset: [{ DS_LAYOUT: '{"apelidos":{"Revenues":["Net Revenue"]}}' }] } : banco()(q, p)));
+  const vazio = await servidor(async (q, p) => (q === CONFIG_SQL ? { recordset: [] } : banco()(q, p)));
+  const erro = await servidor(async (q, p) => { if (q === CONFIG_SQL) throw new Error('Invalid object name'); return banco()(q, p); });
+  try {
+    assert.deepStrictEqual((await get(ok, '/api/config')).json.config.apelidos, { Revenues: ['Net Revenue'] });
+    assert.deepStrictEqual((await get(vazio, '/api/config')).json, { config: null });
+    const r = await get(erro, '/api/config');
+    assert.deepStrictEqual([r.status, r.json], [200, { config: null }]);
+  } finally { ok.close(); vazio.close(); erro.close(); }
+});

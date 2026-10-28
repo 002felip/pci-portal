@@ -884,13 +884,13 @@ window.VBMSetup = (function () {
     for (var x in extra) c[x] = extra[x];
     return c;
   }
-  var TEOR_CU_AU = k('Copper + Gold Feed Grade', 2, 'up', { altLabel: 'c.teor', alt: {
+  var TEOR_CU_AU = k('Copper + Gold Feed Grade', 2, 'up', { seletor: 'TEOR_CU_AU', altLabel: 'c.teor', alt: {
     cu: { lbl: 'Cu', t: 'Copper Feed Grade' },
     au: { lbl: 'Au', t: 'Gold Feed Grade' }
   } });
   // All-in e componentes (no PDF, a tabela abaixo do gráfico; aqui, seletor no card).
   // Os componentes são valores por tonelada: na dúvida entre homônimos, o de unidade em "k".
-  var ALL_IN = k('All-in', 1, 'down', { altLabel: 'c.componente', alt: {
+  var ALL_IN = k('All-in', 1, 'down', { seletor: 'ALL_IN', altLabel: 'c.componente', alt: {
     allin: { lbl: 'All-in', t: 'All-in', unid: /k/i },
     byp: { lbl: 'By Product', t: 'All-in | By Product', kpi: ['By Product'], unid: /k/i },
     sus: { lbl: 'Sustaining', t: 'All-in | Sustaining', kpi: ['Sustaining'], unid: /k/i },
@@ -903,7 +903,7 @@ window.VBMSetup = (function () {
   // Nome antigo na query (só para encontrar o KPI; o título vem da query)
   var ORE_MINED = { kpi: ['Ore Mined (Dry)', 'Ore Mined'] };
   // CAPEX das minas: seletor no card, como o All-in (opções na ordem do ID_ORDEM da query)
-  var CAPEX_MINA = k('CAPEX (Cost)', 0, 'down', { altLabel: 'c.capex', alt: {
+  var CAPEX_MINA = k('CAPEX (Cost)', 0, 'down', { seletor: 'CAPEX_MINA', altLabel: 'c.capex', alt: {
     cost: { lbl: 'Cost', t: 'CAPEX (Cost)', kpi: ['CAPEX'] },
     sus: { lbl: 'Sustaining', t: 'CAPEX (sustaining)', kpi: ['CAPEX Sustaining'] },
     gcap: { lbl: 'G Cap Rep', t: 'CAPEX (G Cap Rep)', kpi: ['CAPEX G Cap Rep'] }
@@ -958,6 +958,35 @@ window.VBMSetup = (function () {
       { titulo: 'Production Drivers', cls: 'panel-prod', cards: copiarCards(m.prod, 'p') },
       { titulo: 'Financial Drivers', cls: 'panel-fin', cards: copiarCards(m.fin, 'f') }
     ] };
+  }
+  // Configuração gravada no banco (GET config → IBP.PHUB_PS_SETUP): substitui as opções dos
+  // seletores (pelo código do seletor) e os apelidos de KPI (pelo nome do card ou da opção).
+  // Aplicada uma vez, antes de montar as telas; sem configuração, valem as definições acima.
+  function aplicarConfig(cfg) {
+    if (!cfg) return;
+    var sels = cfg.seletores || {}, apel = cfg.apelidos || {}, vistos = [];
+    function apelidos(s) { if (apel[s.t]) s.kpi = apel[s.t].slice(); }
+    Object.keys(MODELOS).forEach(function (m) {
+      [].concat(MODELOS[m].prod || [], MODELOS[m].fin || []).forEach(function (c) {
+        if (vistos.indexOf(c) >= 0) return;
+        vistos.push(c);
+        var sel = c.seletor && sels[c.seletor];
+        if (sel) {
+          var antigo = c.alt || {}, alt = {};
+          sel.opcoes.forEach(function (o) {
+            var a = { lbl: o.lbl, t: o.titulo };
+            if (o.kpi.length) a.kpi = o.kpi.slice();
+            if (o.unid) a.unid = new RegExp(o.unid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            else if (antigo[o.chave] && antigo[o.chave].unid) a.unid = antigo[o.chave].unid;
+            alt[o.chave] = a;
+          });
+          c.alt = alt;
+          c.t = sel.opcoes[0].titulo;
+        }
+        apelidos(c);
+        if (c.alt) Object.keys(c.alt).forEach(function (k) { apelidos(c.alt[k]); });
+      });
+    });
   }
   var VISOES = {}; // nome do site → visão (criada em aplicarFiltros, com os sites da consulta)
   var VAZIA = criarVisao('');
@@ -1580,7 +1609,7 @@ window.VBMSetup = (function () {
   // Só caminhos do COO: '/api/' na raiz do Portal é a API de OUTRA aplicação (Kaizen)
   var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard/api/', '/COO-Business-Units-Dashboard/api/'];
   var API_TIMEOUT_MS = 75000; // acima do requestTimeout do banco (60 s): o servidor responde antes
-  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null, filtrosFresco = true;
+  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null, filtrosFresco = true, configPromessa = null;
 
   // Próximo caminho só quando este não existe (404) ou a rede falhou; erro do servidor (5xx, 403,
   // 429) é a resposta certa e não se repete — senão uma queda do banco viraria várias consultas
@@ -1722,12 +1751,18 @@ window.VBMSetup = (function () {
       // 1ª carga da página (refresh): pede ao servidor para reler o banco (ver FRESCO_MS em coo-api.js)
       // Ciclos gravados (uma vez); depois os filtros da carga escolhida. Sem carga gravada não há dados.
       var fresco = filtrosFresco ? '&fresco=1' : '';
-      filtrosPromessa = (CICLOS.length ? Promise.resolve() : apiGet('ciclos?fresco=1').then(function (r) {
+      // Configuração do banco (seletores e apelidos): uma vez, antes da 1ª montagem; falha não bloqueia
+      var cfg = configPromessa || (configPromessa = apiGet('config?fresco=1').then(function (r) { aplicarConfig(r && r.config); }, function (e) {
+        console.warn('[coo-dashboard] screen configuration unavailable (using defaults):', e.message);
+      }));
+      filtrosPromessa = Promise.all([cfg, CICLOS.length ? null : apiGet('ciclos?fresco=1')]).then(function (rs) {
+        var r = rs[1];
+        if (!r) return;
         CICLOS = ((r && r.ciclos) || []).map(function (c) { return c.ciclo; });
         if (!CICLOS.length) throw new Error(T('s.semCiclo'));
         if (CICLOS.indexOf(state.ciclo) < 0) state.ciclo = CICLOS.indexOf(CICLO_URL) >= 0 ? CICLO_URL : CICLOS[0];
         renderCicloSel();
-      })).then(function () { return apiGet('filtros?ciclo=' + state.ciclo + fresco); }).then(function (f) {
+      }).then(function () { return apiGet('filtros?ciclo=' + state.ciclo + fresco); }).then(function (f) {
         filtrosFresco = false;
         aplicarFiltros(f);
       }).catch(function (e) { filtrosPromessa = null; throw e; });
