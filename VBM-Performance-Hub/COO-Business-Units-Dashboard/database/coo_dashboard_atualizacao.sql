@@ -6,6 +6,7 @@ DECLARE
 SET @DT_INI = '2025-01-01';
 SET @DT_FIM = CAST(DATEADD(MONTH, 0, CONCAT(YEAR(DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, GETDATE()-1)), MONTH(DATEADD(MONTH, -1, GETDATE()-1)), 1)), '-12-01')) AS DATE);
 SET @DT_REF =  DATEADD(MONTH, -1, GETDATE()-2)  --(SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
+SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);  -- 1º dia do mês: o mês de referência só conta como atualizado com carga no mês seguinte
 
 
 
@@ -29,14 +30,12 @@ CTE AS (
         DASH.NM_KPIS_DASH,
         CASE 
             WHEN LPVC.DT_ATUALIZACAO IS NULL THEN 0  -- sem atualização
-            WHEN PVC.VL_REAL IS NULL THEN 0  -- mês sem Actual carregado: pendente
             WHEN PVC.DT_REF < @DT_REF THEN 1
             WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), 1) >= @DT_REF THEN 1 
             ELSE 0 
         END AS VALIDATE,
         CASE 
             WHEN LPVC.DT_ATUALIZACAO IS NULL THEN 'Pending final updates'  -- <<<<< regra principal
-            WHEN PVC.VL_REAL IS NULL THEN 'Pending final updates'
             WHEN PVC.DT_REF < @DT_REF THEN '.'
             WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, LPVC.DT_ATUALIZACAO)), 1) >= @DT_REF THEN '.' 
             ELSE 'Pending final updates'
