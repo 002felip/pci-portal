@@ -7,7 +7,7 @@ Endereço: `/VBM-Cockpit/` (card na página inicial do Portal). O resto desta pa
 O Portal é um único processo Node (Databricks App). Ao subir, ele inicia o Cockpit como **processo filho**, com o mesmo `backend.app.main:app`, na porta interna `127.0.0.1:8102`. Depois encaminha `/VBM-Cockpit/...` para lá, tirando o prefixo. Ver `apps-python.js` e `server.js` na raiz.
 
 - O `app.yaml` e o `app_entry.py` desta pasta continuam valendo só para o **app standalone**. Dentro do Portal, quem manda é o `app.yaml` da raiz.
-- O acesso segue a regra do Portal: usuário em `IBP.USERS` com matrícula. O `X-Forwarded-Email` chega ao Cockpit normalmente (usado pelo `UNLOCK_ADMINS`).
+- **Acesso aberto:** qualquer pessoa que chega pelo Databricks Apps pode usar, sem a regra do Portal (`IBP.USERS`). O `X-Forwarded-Email` chega ao Cockpit normalmente; a única restrição continua sendo a do próprio Cockpit: só quem está em `UNLOCK_ADMINS` reabre um período travado.
 
 ## Frontend: build com o prefixo
 

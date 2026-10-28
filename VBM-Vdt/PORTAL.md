@@ -6,7 +6,7 @@ Endereço: `/VBM-Vdt/` (card na página inicial do Portal). O resto desta pasta 
 
 O Portal é um único processo Node (Databricks App). Ao subir, ele inicia o VDT como **processo filho**, com o mesmo comando do `app.yaml` standalone (`uvicorn app.main:create_app --factory`), na porta interna `127.0.0.1:8101`. Depois encaminha `/VBM-Vdt/...` para lá, tirando o prefixo. Ver `apps-python.js` e `server.js` na raiz.
 
-- O acesso segue a regra do Portal: usuário em `IBP.USERS` com matrícula.
+- **Acesso aberto:** qualquer pessoa que chega pelo Databricks Apps pode usar, sem a regra do Portal (`IBP.USERS`).
 - **Caminhos absolutos:** o frontend compilado pede `/assets/...` e `/api/...`, que no Portal pertencem ao próprio Portal e ao Kaizen. Ao entregar HTML, CSS e JS do VDT, o Portal troca esses caminhos por `/VBM-Vdt/assets/...` e `/VBM-Vdt/api/...`. Não é preciso recompilar nada.
 
 ## Atualizar o VDT no Portal

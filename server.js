@@ -72,7 +72,8 @@ portal.get(["/admin.html", "/aprovacao.html", "/biblioteca.html", "/kaizen-novo.
 
 // ── Controle de acesso do Portal ──
 // Usuário em IBP.USERS com CD_MATRICULA preenchido (ver portal-acesso.js).
-// Vale para o Portal, o Performance Hub e o Stable & Capable; o VBM-Kaizen-App é aberto (validação própria).
+// Vale para o Portal, o Performance Hub e o Stable & Capable. Abertos a todos: VBM-Kaizen-App
+// (validação própria), VBM-Vdt e VBM-Cockpit (sem restrição de acesso, por decisão do negócio).
 // Registrado ANTES das rotas do Performance Hub.
 let acesso = null;
 const aguardarAcesso = (fn) => (req, res, next) => (acesso ? acesso[fn](req, res, next) : res.status(503).json({ error: "Portal iniciando." }));
@@ -80,8 +81,6 @@ portal.get("/portal/acesso", aguardarAcesso("rotaStatus"));
 portal.use("/VBM-Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/VBM-Stable-and-Capable", aguardarAcesso("exigir"));
-portal.use("/VBM-Vdt", aguardarAcesso("exigir"));
-portal.use("/VBM-Cockpit", aguardarAcesso("exigir"));
 
 // ── VBM-Performance-Hub ──
 // API (/VBM-Performance-Hub/api) + bloqueio dos arquivos internos da pasta.
