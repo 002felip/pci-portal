@@ -266,7 +266,7 @@ class AppSetting(Base):
     Shared UI/presentation configuration -- how the portfolio is DISPLAYED.
 
     Deliberately separate from `Override`, which curates the FIGURES. Mixing the
-    two would mean a stage rename and a pinned headline number share a uniqueness
+    two would mean a stage rename and a curated figure share a uniqueness
     constraint and an audit trail that mean different things.
     """
 

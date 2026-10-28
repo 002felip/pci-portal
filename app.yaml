@@ -127,6 +127,39 @@ env:
   #   - name: 'STABLECAPABLE_BLOB_PASTA'
   #     value: '06 - Stable & Capable'
 
+  # ── VBM-Vdt e VBM-Cockpit (aplicações Python, /VBM-Vdt/ e /VBM-Cockpit/) ──
+  # Rodam como processos filhos do Portal (apps-python.js). As bibliotecas
+  # vêm do requirements.txt da raiz; se faltarem no Python do app, cada uma
+  # instala o próprio requirements.txt em <pasta>/.pylibs na 1ª subida.
+  #
+  # VDT: nada obrigatório. Banco SQLite em VBM-Vdt/vdt.db (relativo à pasta).
+  #   VDT_DB_PATH / VDT_ARCHIVE_DIR  opcionais, mesmos nomes do app standalone.
+  #
+  # COCKPIT: variáveis próprias levam o prefixo COCKPIT_ e chegam ao Cockpit
+  # SEM o prefixo (COCKPIT_ENVIRONMENT -> ENVIRONMENT), para não colidir com
+  # as do Portal. Padrão já aplicado no código: ENVIRONMENT=prod, DATA_BACKEND=sql.
+  #
+  # O Cockpit precisa de DOIS RESOURCES NESTE APP (App resources > + Add resource),
+  # com estas chaves EXATAS — os mesmos que o app standalone do Cockpit tinha:
+  #   'database'       Lakebase (Postgres) do Cockpit — injeta PGHOST/PGPORT/
+  #                    PGDATABASE/PGUSER/PGSSLMODE
+  #   'sql-warehouse'  SQL Warehouse
+  # Sem eles, as variáveis abaixo ficam vazias: o Cockpit abre, mas sem dados
+  # (o resto do Portal não é afetado). E o service principal DESTE app precisa
+  # de permissão nas tabelas do Lakebase — ver VBM-Cockpit/PORTAL.md.
+  - name: 'COCKPIT_UNLOCK_ADMINS'
+    value: 'david.chen@vale.com'
+  - name: 'LAKEBASE_INSTANCE_NAME'
+    valueFrom: database
+  - name: 'LAKEBASE_ENDPOINT'
+    valueFrom: database
+  - name: 'DATABRICKS_WAREHOUSE_ID'
+    valueFrom: sql-warehouse
+  - name: 'DB_POOL_RECYCLE_SECONDS'
+    value: '1800'
+  - name: 'LAKEBASE_TOKEN_REFRESH_MARGIN_SECONDS'
+    value: '600'
+
 
   # ── Avisos por e-mail das decisões de aprovação ──
   # NADA de credencial aqui. O e-mail é enviado pelo NAVEGADOR, com o
