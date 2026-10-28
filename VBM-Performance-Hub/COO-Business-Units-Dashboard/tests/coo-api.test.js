@@ -87,7 +87,7 @@ test('parâmetros inválidos → 400; rotas brutas fechadas sem COO_DIAGNOSTICO'
 
 test('pedidos simultâneos usam uma única leitura do banco', async () => {
   let leituras = 0;
-  const s = await servidor(async () => { leituras++; await espera(50); return { recordset: DADOS }; });
+  const s = await servidor(async (q) => { if (/PEDRAVISAO/.test(q)) leituras++; await espera(50); return { recordset: DADOS }; });
   try {
     const rs = await Promise.all(Array.from({ length: 10 }, () => get(s, '/api/indicadores?site=6&ano=2026&mes=8')));
     assert.ok(rs.every((r) => r.status === 200));
@@ -120,7 +120,7 @@ test('banco fora sem leitura anterior: 500 com mensagem genérica (sem detalhe d
 
 test('refresh (?fresco=1) relê o banco quando o resultado passou do limite', async () => {
   let leituras = 0;
-  const s = await servidor(async () => { leituras++; return { recordset: DADOS }; });
+  const s = await servidor(async (q) => { if (/PEDRAVISAO/.test(q)) leituras++; return { recordset: DADOS }; });
   try {
     await get(s, '/api/indicadores?site=6&ano=2026&mes=8');
     await get(s, '/api/indicadores?site=6&ano=2026&mes=8&fresco=1');
@@ -140,4 +140,14 @@ test('limite de pedidos por usuário → 429', async () => {
     assert.strictEqual(ultimo.status, 429);
     assert.strictEqual((await get(s, '/api/ping', { 'X-Forwarded-Email': 'outro@vale.com' })).status, 200);
   } finally { s.close(); }
+});
+
+test('cadastroDoSite: KPIs cadastrados do site, na ordem do ID_ORDEM, casas inválidas nulas', () => {
+  const { cadastroDoSite } = require('../coo-api');
+  const c = cadastroDoSite([
+    { ID_SITE: 42, ID_OPERACAO: 1, ID_KPI: 4, NM_KPI: ' Ore Mined (Dry) ', ID_ORDEM: 2, SG_UNID: 'Kt', VL_CASADECIMAL: 0 },
+    { ID_SITE: 42, ID_OPERACAO: 1, ID_KPI: 15, NM_KPI: 'Equivalent Total Development', ID_ORDEM: 1, SG_UNID: 'Meters', VL_CASADECIMAL: 'x' },
+    { ID_SITE: 36, ID_OPERACAO: 1, ID_KPI: 15, NM_KPI: 'Outro site', ID_ORDEM: 1 },
+  ], 42);
+  assert.deepStrictEqual(c.map((x) => [x.NM_KPI, x.CASA_DECIMAL]), [['Equivalent Total Development', null], ['Ore Mined (Dry)', 0]]);
 });

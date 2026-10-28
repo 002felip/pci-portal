@@ -198,7 +198,6 @@ SELECT DISTINCT
   CASE LTRIM(RTRIM(S.NM_SITE))
     WHEN 'Ontario Operations'       THEN 'Ontario'
     WHEN 'VNL Operations'           THEN 'VNL'
-    WHEN 'International Refineries' THEN 'IR'
     WHEN 'Clydach | CNR'            THEN 'Clydach'
     WHEN 'Matsusaka | Tonimet'      THEN 'Matsusaka'
     WHEN 'Copper Cliff | CCNR'      THEN 'Copper Cliff'
@@ -211,6 +210,23 @@ WHERE D.ID_DASH = @idDash
   AND S.NM_SITE IS NOT NULL
   AND LTRIM(RTRIM(S.NM_SITE)) <> ''
 ORDER BY NM_SITE`;
+
+// KPIs cadastrados no dashboard (IBP.DASHBOARD): a lista vale mesmo para KPI sem valor no mês
+// (a query de valores só traz KPI com linha em PEDRAVISAO*) — usada nas páginas que mostram
+// todos os KPIs da query (VNL Mines)
+const CADASTRO_SQL = `
+SELECT DISTINCT DASH.ID_SITE, DASH.ID_OPERACAO, DASH.ID_KPI, LTRIM(RTRIM(DASH.NM_KPIS_DASH)) AS NM_KPI,
+  DASH.ID_ORDEM, LTRIM(RTRIM(DASH.SG_UNID)) AS SG_UNID, DASH.VL_CASADECIMAL
+FROM IBP.DASHBOARD DASH
+WHERE DASH.ID_DASH = @idDash`;
+
+function cadastroDoSite(linhas, site) {
+  return linhas.filter(l => Number(l.ID_SITE) === site).map(l => {
+    const casas = Number(l.VL_CASADECIMAL);
+    return { ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI, NM_KPI: String(l.NM_KPI || '').trim(), ID_ORDEM: l.ID_ORDEM, SG_UNID: l.SG_UNID || null,
+      CASA_DECIMAL: l.VL_CASADECIMAL != null && Number.isInteger(casas) && casas >= 0 && casas <= 6 ? casas : null };
+  }).sort((a, b) => a.ID_ORDEM - b.ID_ORDEM);
+}
 
 // Lê o script e aplica as trocas; falha se alguma não bater com o esperado
 function carregarSql(arquivo, trocas) {
@@ -330,7 +346,10 @@ function criarCooRouter({ runQuery, idDash }) {
     }
     try {
       const linhas = agregarIndicadores(await buscar('/chart-data', SQL['/chart-data'], fresco(req)), p);
-      res.json({ ...p, geradoEm: lidoEm('/chart-data'), desatualizado: desatualizado('/chart-data'), linhas });
+      // Cadastro do site (KPIs sem valor no mês também); se falhar, segue sem ele
+      let cadastro = [];
+      try { cadastro = cadastroDoSite(await buscar('/cadastro', CADASTRO_SQL, fresco(req)), p.site); } catch (err) { console.error(`${TAG} cadastro indisponível:`, err.message); }
+      res.json({ ...p, geradoEm: lidoEm('/chart-data'), desatualizado: desatualizado('/chart-data'), linhas, cadastro });
     } catch (err) {
       console.error(`${TAG} erro em /indicadores:`, err.message);
       res.status(500).json({ error: 'Failed to query the dashboard indicators.', codigo: 'ERRO_BANCO' });
@@ -356,4 +375,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, CONSULTAS };
+module.exports = { criarCooRouter, carregarSql, agregarIndicadores, extrairFiltros, atualizacoesDoMes, situacaoAtualizacao, cadastroDoSite, CONSULTAS };
