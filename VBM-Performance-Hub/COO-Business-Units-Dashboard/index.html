@@ -304,6 +304,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
    do título do painel e a última junto à base. A altura dos gráficos (--chart-h, até 190 px, sem esticar)
    é calculada em ajustarAltura() para as três linhas caberem no painel */
 .panel-grid { grid-template-rows: repeat(var(--rows, 3), auto); align-content: start; row-gap: 10px; }
+.card-head:has(.seg) .card-chk { grid-area: 3 / 1 / 4 / 3; }
+.card-chk { margin: 2px 0 0; font: italic 500 .6rem/1.3 var(--font-ui); color: var(--wait); white-space: normal; }
 .card-nota { flex-shrink: 0; margin: 2px 0 0; font: italic 400 .56rem/1.3 var(--font-display); letter-spacing: -.005em; color: var(--text-soft); }
 .card-nota sup { font-size: .85em; line-height: 0; }
 .card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
@@ -821,6 +823,8 @@ window.VBMSetup = (function () {
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
+      'q.semKpi': 'KPI não retornado pela query (layout: {nome})', 'q.semUnid': 'unidade ausente na query (SG_UNID)', 'q.semDec': 'casas decimais ausentes na query (VL_CASADECIMAL) — usando {n}',
+      'q.via': 'ligado por {via} ao card "{nome}"', 'q.viaApelido': 'apelido do código', 'q.viaOrdem': 'ID_ORDEM (nome diferente do layout)', 'q.viaRegra': 'regra do IR', 'q.vazio': 'Não retornado pela query',
       'c.notaInterm': 'Os dados apresentados neste gráfico incluem a produção de intermediários.',
       'c.pendente': 'Atualizações finais pendentes', 'c.atrasado': 'Atualização atrasada', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
       'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
@@ -837,6 +841,8 @@ window.VBMSetup = (function () {
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
+      'q.semKpi': 'KPI not returned by the query (layout: {nome})', 'q.semUnid': 'unit missing in the query (SG_UNID)', 'q.semDec': 'decimals missing in the query (VL_CASADECIMAL) — using {n}',
+      'q.via': 'linked by {via} to card "{nome}"', 'q.viaApelido': 'code alias', 'q.viaOrdem': 'ID_ORDEM (name differs from layout)', 'q.viaRegra': 'IR rule', 'q.vazio': 'Not returned by the query',
       'c.notaInterm': 'The data presented in this chart includes intermediates production.',
       'c.pendente': 'Pending final updates', 'c.atrasado': 'Overdue update', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
       'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
@@ -984,6 +990,7 @@ window.VBMSetup = (function () {
       if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
       var sel = Object.keys(state.sel).filter(function (k) { return state.sel[k]; }).map(function (k) { return k + '.' + state.sel[k]; }).join(',');
       if (sel) q.set('sel', sel); else q.delete('sel');
+      // ?verificar=1 é preservado (o URLSearchParams parte do endereço atual)
       var novo = location.pathname + '?' + q.toString() + location.hash;
       if (novo !== location.pathname + location.search + location.hash) history.replaceState(null, '', novo);
     } catch (e) { /* sem History API: segue sem guardar */ }
@@ -1020,9 +1027,22 @@ window.VBMSetup = (function () {
   }
 
   function view(ind) {
-    if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, pp: !!ind.pp, dec: ind.dec, at: ind.atual || null };
+    if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, pp: !!ind.pp, dec: ind.dec, at: ind.atual || null, falta: ind.falta || null, via: ind.via || '', tPdf: ind.tPdf || ind.t };
     var alt = ind.alt[selDe(ind)];
-    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: alt.dec != null ? alt.dec : ind.dec, at: alt.atual || null };
+    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: alt.dec != null ? alt.dec : ind.dec, at: alt.atual || null, falta: alt.falta || null, via: alt.via || '', tPdf: alt.tPdf || alt.t };
+  }
+
+  // ── Conferência com a query: o que o card mostra sem vir do banco ──
+  // Sempre visível: KPI não retornado, unidade (SG_UNID) e casas decimais (VL_CASADECIMAL) ausentes.
+  // Com ?verificar=1: também como o card foi ligado ao KPI quando não foi pelo nome exato.
+  var VERIFICAR = (function () { try { return new URLSearchParams(location.search).get('verificar') === '1'; } catch (e) { return false; } })();
+  function faltaNaQuery(l) { return { kpi: false, unid: !String(l.SG_UNID || '').trim(), dec: l.CASA_DECIMAL == null }; }
+  function avisosQuery(v) {
+    var f = v.falta, a = [];
+    if (f && f.kpi) a.push(T('q.semKpi', { nome: v.tPdf }));
+    else if (f) { if (f.unid) a.push(T('q.semUnid')); if (f.dec) a.push(T('q.semDec', { n: v.dec })); }
+    if (VERIFICAR && v.d && v.via && v.via !== 'nome') a.push(T('q.via', { via: v.via === 'apelido' ? T('q.viaApelido') : v.via === 'ID_ORDEM' ? T('q.viaOrdem') : T('q.viaRegra'), nome: v.tPdf }));
+    return a;
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
@@ -1066,7 +1086,7 @@ window.VBMSetup = (function () {
       var yv0 = H - MB;
       return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
         '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
-        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(T(ind.vazio)) + '</text>' : '') + '</svg>';
+        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(T(v.falta && v.falta.kpi ? 'q.vazio' : ind.vazio)) + '</text>' : '') + '</svg>';
     }
     // escala: B e A/F das três janelas e, com o botão Plan, o Plan do mês
     var all = [].concat.apply([], v.d.map(function (p, i) { return comPlan && i === 0 ? p : p.slice(0, 2); })).filter(function (x) { return x !== null && x !== undefined; });
@@ -1195,7 +1215,8 @@ window.VBMSetup = (function () {
     }
     var pend = pendente(v);
     return '<article class="card card-' + ind.id + (pend ? ' is-pend' : '') + '" id="card-' + ind.id + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(String(v.u).replace(/^\s*\((.*)\)\s*$/, '$1')) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(String(v.u).replace(/^\s*\((.*)\)\s*$/, '$1')) + ')' : '&nbsp;') + '</p>' +
+      (function (a) { return a.length ? '<p class="card-chk" title="' + esc(a.join(' · ')) + '">⚠ ' + esc(a.join(' · ')) + '</p>' : ''; })(avisosQuery(v)) + '</div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
       (ind.nota ? '<p class="card-nota"><sup>1</sup> ' + esc(T(ind.nota)) + '</p>' : '') +
       '</article>';
@@ -1696,7 +1717,7 @@ window.VBMSetup = (function () {
       return cands[0] || null;
     }
     function aplicar(s, chave) {
-      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; return; }
+      if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; s.falta = { kpi: true }; return; }
       usados[chave] = true; achados++;
       var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
       s.d = porKpi[chave].d;
@@ -1705,6 +1726,7 @@ window.VBMSetup = (function () {
       s.t = nome; // nome do gráfico como vem da query
       s.ordem = Number(l.ID_ORDEM); // ordem de apresentação (ordenarCards)
       s.u = l.SG_UNID || '';
+      s.falta = faltaNaQuery(l);
     }
     // Indicadores do PDF na ordem do PDF (Production e depois Financial; alternativas do seletor em sequência)
     var seq = [];
@@ -1715,7 +1737,7 @@ window.VBMSetup = (function () {
           if (s.filho) return; // lido de outro site (refinarias da IR): preencherFilhos
           var chave = escolher({ t: s.tPdf, kpi: s.kpi, unid: s.unid });
           if (chave) usados[chave] = true;
-          seq.push({ s: s, chave: chave, via: chave ? 'nome' : '', painel: p.titulo });
+          seq.push({ s: s, chave: chave, via: !chave ? '' : normalizar(porKpi[chave].l.NM_KPI) === normalizar(s.tPdf) ? 'nome' : 'apelido', painel: p.titulo });
         });
       });
     });
@@ -1749,7 +1771,7 @@ window.VBMSetup = (function () {
       }
     })();
     usados = {};
-    seq.forEach(function (it) { aplicar(it.s, it.chave); });
+    seq.forEach(function (it) { aplicar(it.s, it.chave); it.s.via = it.via || ''; });
     // Diagnóstico no console: de onde veio cada card (nome e unidade são sempre os da query)
     if (window.console && console.table && (linhas || []).length) {
       var semCard = Object.keys(porKpi).filter(function (c) { return !seq.some(function (it) { return it.chave === c; }); });
@@ -1788,7 +1810,8 @@ window.VBMSetup = (function () {
         var l = porKpi[ch].l;
         achados++;
         return { id: 'm' + i + 'k' + j, t: String(l.NM_KPI).trim(), tPdf: String(l.NM_KPI).trim(), u: l.SG_UNID || '', dec: l.CASA_DECIMAL != null ? l.CASA_DECIMAL : 1,
-          pol: 'up', d: porKpi[ch].d, ordem: Number(l.ID_ORDEM), ref: p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI, atual: null, vazio: SEM_DADOS };
+          pol: 'up', d: porKpi[ch].d, ordem: Number(l.ID_ORDEM), ref: p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI, atual: null, vazio: SEM_DADOS,
+          falta: faltaNaQuery(l), via: 'nome' };
       });
       maior = Math.max(maior, p.cards.length);
     });
@@ -1814,8 +1837,10 @@ window.VBMSetup = (function () {
         var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
         var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
           ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
-        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; return; }
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; s.falta = { kpi: true }; s.via = ''; return; }
         var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
+        s.falta = faltaNaQuery(l);
+        s.via = nomes.indexOf(normalizar(nome)) >= 0 ? (normalizar(nome) === normalizar(s.tPdf) ? 'nome' : 'apelido') : 'regra IR';
         s.d = porKpi[chave].d;
         s.dec = casasDe(s, l);
         s.atual = null; s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null;
