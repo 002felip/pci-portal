@@ -1096,6 +1096,10 @@ window.VBMSetup = (function () {
       var fsAtual = stVal ? parseFloat(stVal.replace(/[^\d.]/g, '')) : 11;
       if (cabe < fsAtual) stVal = ' style="font-size:' + Math.max(7, cabe).toFixed(1) + 'px"';
     }
+    // Deltas: mesma regra dos valores das barras — quando a fonte dos valores encolhe, o texto do delta
+    // (10,5 px) e a pílula encolhem na mesma proporção, sem ficar abaixo de 7 px
+    var escDelta = stVal ? Math.max(7, 10.5 * parseFloat(stVal.replace(/[^\d.]/g, '')) / 11) / 10.5 : 1;
+    var stDelta = escDelta < 1 ? ' style="font-size:' + (10.5 * escDelta).toFixed(1) + 'px"' : '';
     if (!v.d) { // sem dados: só a linha de base e, quando houver, o aviso (Pending / Not applicable)
       var yv0 = H - MB;
       return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
@@ -1158,7 +1162,7 @@ window.VBMSetup = (function () {
       // haste, fio guia e pílula. Sem o Plan: B → A/F. Com o Plan, no mês: B → P e P → A.
       function cota(xEsq, xDir, vRef, vNovo, dlc, pillY) {
         var x1 = xEsq + BW, x2 = xDir, cx = (x1 + x2) / 2, yr = y(vRef), yn = y(vNovo);
-        var ytop = Math.min(yr, yn, y0), pillH = 17, pillW = Math.max(38, dlc.txt.length * 5.8 + 14);
+        var ytop = Math.min(yr, yn, y0), pillH = 17 * escDelta, pillW = Math.max(38 * escDelta, (dlc.txt.length * 5.8 + 14) * escDelta);
         if (pillY == null) pillY = Math.max(0, ytop - 22 - pillH);
         var g = '<g class="cota ' + dlc.cls + '">';
         g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
@@ -1168,8 +1172,8 @@ window.VBMSetup = (function () {
           g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
         }
         g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
-        g += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="8.5"/>';
-        g += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dlc.txt) + '</text>';
+        g += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="' + (pillH / 2) + '"/>';
+        g += '<text class="d-txt"' + stDelta + ' x="' + cx + '" y="' + (pillY + 12 * escDelta) + '" text-anchor="middle">' + esc(dlc.txt) + '</text>';
         return g + '</g>';
       }
       if (!trio) { if (!semPar) out += cota(xb, xa, pair[0], pair[1], dl); return; }
@@ -1183,8 +1187,8 @@ window.VBMSetup = (function () {
       var topo = function (a, b) { return Math.max(0, Math.min(y(a), y(b), y0) - 39); };
       var yPA = pa ? topo(pair[2], pair[1]) : null, yBP = bp ? topo(pair[0], pair[2]) : null;
       if (bp && pa) {
-        var larg = function (d) { return Math.max(38, d.txt.length * 5.8 + 14); };
-        if (xa - xp < (larg(dBP) + larg(dPA)) / 2 + 4) yBP = Math.max(0, Math.min(yBP, yPA - 21));
+        var larg = function (d) { return Math.max(38, d.txt.length * 5.8 + 14) * escDelta; };
+        if (xa - xp < (larg(dBP) + larg(dPA)) / 2 + 4) yBP = Math.max(0, Math.min(yBP, yPA - 21 * escDelta));
       }
       if (bp) out += cota(xb, xp, pair[0], pair[2], dBP, yBP);
       if (pa) out += cota(xp, xa, pair[2], pair[1], dPA, yPA);
