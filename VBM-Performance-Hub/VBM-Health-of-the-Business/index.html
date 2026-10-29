@@ -137,7 +137,10 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .page { flex: 1 1 auto; min-height: 0; padding-block: clamp(14px, 2vh, 26px) clamp(14px, 2.2vh, 30px); gap: clamp(10px, 1.6vh, 20px); }
   .head, .sub-row { flex-shrink: 0; }
   .dash { flex: 1 1 auto; min-height: 0; grid-template-rows: repeat(3, minmax(0, 1fr)); row-gap: clamp(20px, 3.4vh, 52px); }
-  .card { min-height: 0; gap: clamp(4px, .8vh, 12px); }
+  /* Respiro lateral: colunas mais afastadas e cada card um pouco recuado das bordas (gráficos ~8-10% mais
+     estreitos em telas grandes), para o olho percorrer um gráfico de cada vez */
+  .dash { column-gap: clamp(56px, 6vw, 120px); }
+  .card { min-height: 0; gap: clamp(4px, .8vh, 12px); padding-inline: clamp(0px, 1.8vw, 36px); }
   .chart { flex: 1 1 0; min-height: 110px; height: auto; }
   .chart svg { position: absolute; inset: 0; }
 }
