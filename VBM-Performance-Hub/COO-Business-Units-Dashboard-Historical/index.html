@@ -299,6 +299,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .cores-reset { margin-top: 2px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--ctl-border); background: transparent; color: var(--ctl-text); font: 500 .7rem var(--font-ui); cursor: pointer; }
 .cores-reset:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
 .cores-reset:disabled { opacity: .45; cursor: default; }
+.cores-pop { max-height: min(78vh, 620px); overflow-y: auto; }
+.cores-sub { font: 500 .66rem var(--font-ui); color: var(--text-soft); }
+.cores-modo { display: grid; grid-template-columns: 1fr 1fr; }
+.cores-sel { width: 100%; min-height: 32px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .72rem var(--font-ui); }
+.cores-sel option { background: var(--page); color: var(--text); }
+.cores-cols { display: flex; flex-direction: column; gap: 6px; }
+.cor-acoes { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.cor-limpar { width: 26px; height: 26px; padding: 0; border-radius: 7px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font-size: .8rem; line-height: 1; cursor: pointer; }
+.cor-limpar:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.cor-limpar:disabled { opacity: .35; cursor: default; }
 /* Paleta de cores — a mesma do VBM Performance Studio (.color-palette) */
 .color-palette { position: fixed; z-index: 9999; display: none; grid-template-columns: repeat(6, 24px); gap: 6px; padding: 10px; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.20); }
 .color-palette.active { display: grid; }
@@ -827,7 +837,10 @@ window.VBMSetup = (function () {
       'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido', 'c.capex': 'CAPEX exibido',
       'g.semDado': 'sem dado', 'g.variacao': 'variação',
       'k.abrir': 'Cores das barras', 'k.titulo': 'Cores das barras', 'k.b': 'Budget (B)', 'k.af': 'Actual | Forecast (A | F)',
-      'k.padrao': 'padrão', 'k.restaurar': 'Restaurar cores padrão', 'k.paleta': 'Paleta de cores', 'k.escolher': 'Escolher a cor de {serie}',
+      'k.padrao': 'padrão', 'k.restaurar': 'Restaurar cores padrão', 'k.paleta': 'Paleta', 'k.escolher': 'Escolher a cor de {serie}',
+      'k.modo': 'Modo de coloração', 'k.grupo': 'Por grupo', 'k.coluna': 'Por coluna', 'k.colunas': 'Cores das colunas', 'k.limpar': 'Voltar {serie} à cor da paleta',
+      'k.tagPaleta': 'paleta', 'k.porValor': 'por valor', 'k.pNenhuma': 'Nenhuma', 'k.pVale': 'Paleta VBM', 'k.pExecutiva': 'Paleta Executiva',
+      'k.grade': 'Paleta de cores', 'k.pAzul': 'Azul Monocromático', 'k.pVerde': 'Verde Monocromático', 'k.pPerformance': 'Escala de Performance', 'k.pGradiente': 'Escala Gradiente',
       'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
       's.consultando': 'Consultando o banco de dados…', 's.semConexao': 'Sem conexão com o banco de dados.', 's.semIndicadores': 'A consulta não trouxe indicadores anuais.',
       's.semValores': 'A consulta não trouxe valores anuais para {bu}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).', 's.semSites': 'A consulta não trouxe Business Units com dados anuais.',
@@ -844,7 +857,10 @@ window.VBMSetup = (function () {
       'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown', 'c.capex': 'CAPEX shown',
       'g.semDado': 'no data', 'g.variacao': 'variance',
       'k.abrir': 'Bar colors', 'k.titulo': 'Bar colors', 'k.b': 'Budget (B)', 'k.af': 'Actual | Forecast (A | F)',
-      'k.padrao': 'default', 'k.restaurar': 'Restore default colors', 'k.paleta': 'Color palette', 'k.escolher': 'Choose the color of {serie}',
+      'k.padrao': 'default', 'k.restaurar': 'Restore default colors', 'k.paleta': 'Palette', 'k.escolher': 'Choose the color of {serie}',
+      'k.modo': 'Coloring mode', 'k.grupo': 'By group', 'k.coluna': 'By column', 'k.colunas': 'Column colors', 'k.limpar': 'Return {serie} to the palette color',
+      'k.tagPaleta': 'palette', 'k.porValor': 'by value', 'k.pNenhuma': 'None', 'k.pVale': 'VBM palette', 'k.pExecutiva': 'Executive palette',
+      'k.grade': 'Color palette', 'k.pAzul': 'Monochrome blue', 'k.pVerde': 'Monochrome green', 'k.pPerformance': 'Performance scale', 'k.pGradiente': 'Gradient scale',
       'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
       's.consultando': 'Querying the database…', 's.semConexao': 'No connection to the database.', 's.semIndicadores': 'The query returned no annual indicators.',
       's.semValores': 'The query returned no annual values for {bu}.', 's.erro': 'Could not query the database ({msg}).', 's.semSites': 'The query returned no Business Units with annual data.',
@@ -1019,6 +1035,9 @@ window.VBMSetup = (function () {
     var MT = showDelta ? 46 : 20, MB = 16, PW = W / N;
     var BW = Math.max(12, Math.min(30, PW * 0.3)), GAP = Math.max(6, Math.min(24, PW * 0.2));
     var pares = anos.map(function (a) { return v.d && v.d[a] ? v.d[a] : [null, null, null]; });
+    // Colunas do gráfico na ordem (ano: Budget, Actual/Forecast), com o valor — cores Por Coluna
+    var colunas = [];
+    pares.forEach(function (p, i) { colunas.push({ k: chaveColuna(anos[i], 'B'), v: p[0] }, { k: chaveColuna(anos[i], 'AF'), v: p[1] }); });
     var temDado = pares.some(function (p) { return p[0] != null || p[1] != null; });
     if (!temDado) { // sem dados: só a linha de base e o aviso
       var yv0 = H - MB;
@@ -1070,7 +1089,8 @@ window.VBMSetup = (function () {
       var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
       var dl = delta(pair[0], pair[1], ind, v.dec), semPar = pair[0] === null || pair[1] === null;
       label.push(ano + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + nomeAF + ' ' + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
-      [[xb, pair[0], 'g-b', yy + 'B', 'Budget'], [xa, pair[1], 'g-a', yy + letra, nomeAF]].forEach(function (bar) {
+      [[xb, pair[0], degradeDe(corDaColuna(colunas, 2 * i, ind.pol), 'g-b'), yy + 'B', 'Budget'],
+        [xa, pair[1], degradeDe(corDaColuna(colunas, 2 * i + 1, ind.pol), 'g-a'), yy + letra, nomeAF]].forEach(function (bar) {
         if (bar[1] === null) { out += '<text class="b-axis"' + stEixo + ' x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
         var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
         var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
@@ -1286,25 +1306,77 @@ window.VBMSetup = (function () {
     render();
   });
 
-  // ── Cores das barras: botão compacto ao lado da tela cheia, com a paleta do VBM Performance Studio ──
-  // (PALETTE_COLORS, openChartPalette e o seletor .color-palette vêm de lá; aqui só as duas séries
-  // do gráfico anual). Preferência de cada pessoa, no navegador; sem escolha, as cores do COO.
+  // ── Cores das barras: botão compacto ao lado da tela cheia, no modelo do painel de Cores do VBM
+  // Performance Studio — Modo de Coloração Por Grupo (Budget · Actual/Forecast) ou Por Coluna (cada
+  // coluna do ano: paleta pré-definida e/ou cor manual). PALETTE_COLORS, PALETAS_COLUNAS, corDaPaleta e
+  // a prioridade "manual > paleta > grupo" vêm de lá. Preferência de cada pessoa, no navegador.
   var PALETTE_COLORS = ['#FFFFFF', '#F6F6F6', '#E6E7E8', '#D9ECEB', '#D8F0FA', '#BCBEC0', '#7FBEBC', '#9DDAF2', '#3CB5E5', '#00B0F0', '#6E8CBA',
     '#747678', '#555555', '#007E7A', '#034944', '#1B5E80', '#3A4A6B', '#2626D1', '#DC2626'];
+  // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas. Monocromáticas e gradiente:
+  // do mais claro ao mais escuro. Performance: pelo valor da coluna no gráfico (pior = vermelho, melhor = verde)
+  var PALETAS_COLUNAS = [
+    { id: 'vale', lbl: 'k.pVale', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
+    { id: 'executiva', lbl: 'k.pExecutiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#747678', '#C5D0E3'] },
+    { id: 'azul', lbl: 'k.pAzul', de: '#5FB4DC', ate: '#0F3F5C' },
+    { id: 'verde', lbl: 'k.pVerde', de: '#6FAFAC', ate: '#023832' },
+    { id: 'performance', lbl: 'k.pPerformance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
+    { id: 'gradiente', lbl: 'k.pGradiente', de: '#5FB4DC', ate: '#023832' }
+  ];
   var CORES_PADRAO = { b: '#BCBEC0', af: '#3CB5E5' };
   // Degradê de cada barra (topo, meio, base): o padrão é o do COO; cor escolhida → o mesmo desenho
   var DEGRADE_PADRAO = { b: ['#CBCDCF', '#BCBEC0', '#B2B4B6'], af: ['#62C6EC', '#3CB5E5', '#36A9D8'] };
-  var CORES_CHAVE = 'coo-historical-bar-colors', HEX = /^#[0-9A-F]{6}$/;
+  var CORES_CHAVE = 'coo-historical-bar-colors', HEX = /^#[0-9A-F]{6}$/, COLUNA = /^\d{2}(B|AF)$/;
+  var hexOk = function (v) { v = String(v || '').toUpperCase(); return HEX.test(v) ? v : null; };
+  var misturarHex = function (a, b, t) { return '#' + [1, 3, 5].map(function (i) { return Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0'); }).join('').toUpperCase(); };
+  function coresPadrao() { return { modo: 'grupo', b: CORES_PADRAO.b, af: CORES_PADRAO.af, paleta: '', col: {} }; }
   var cores = (function () {
-    var c = { b: CORES_PADRAO.b, af: CORES_PADRAO.af };
+    var c = coresPadrao();
     try {
-      var s = JSON.parse(localStorage.getItem(CORES_CHAVE) || 'null');
-      if (s && HEX.test(String(s.b).toUpperCase())) c.b = String(s.b).toUpperCase();
-      if (s && HEX.test(String(s.af).toUpperCase())) c.af = String(s.af).toUpperCase();
+      var s = JSON.parse(localStorage.getItem(CORES_CHAVE) || 'null') || {};
+      c.modo = s.modo === 'coluna' ? 'coluna' : 'grupo';
+      c.b = hexOk(s.b) || c.b; c.af = hexOk(s.af) || c.af;
+      c.paleta = PALETAS_COLUNAS.some(function (p) { return p.id === s.paleta; }) ? s.paleta : '';
+      Object.keys(s.col || {}).forEach(function (k) { if (COLUNA.test(k) && hexOk(s.col[k])) c.col[k] = hexOk(s.col[k]); });
     } catch (e) { /* sem localStorage: cores padrão */ }
     return c;
   })();
-  var misturarHex = function (a, b, t) { return '#' + [1, 3, 5].map(function (i) { return Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0'); }).join('').toUpperCase(); };
+  // Coluna = ano + série: '25B', '25AF' (a cor manual vale também quando o Forecast vira Actual)
+  function chaveColuna(ano, serie) { return String(ano).slice(2) + serie; }
+  function rotuloColuna(k) { var yy = k.slice(0, 2), ano = 2000 + Number(yy); return /B$/.test(k) ? yy + 'B' : yy + letraPadrao(ano); }
+  // Cor da paleta para a coluna i de cols ([{ k, v }]); performance usa o valor (polaridade do KPI: custo menor = verde)
+  function corDaPaleta(id, i, cols, pol) {
+    var p = PALETAS_COLUNAS.filter(function (x) { return x.id === id; })[0];
+    if (!p || i < 0) return null;
+    if (p.cores) return p.cores[i % p.cores.length];
+    var t = cols.length > 1 ? i / (cols.length - 1) : 0;
+    if (p.escala) {
+      var vs = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null && isFinite(x); });
+      var min = Math.min.apply(null, vs), max = Math.max.apply(null, vs);
+      t = cols[i].v != null && max > min ? (cols[i].v - min) / (max - min) : 0.5;
+      if (pol === 'down') t = 1 - t;
+      return t <= 0.5 ? misturarHex(p.escala[0], p.escala[1], t * 2) : misturarHex(p.escala[1], p.escala[2], (t - 0.5) * 2);
+    }
+    return misturarHex(p.de, p.ate, t);
+  }
+  // Cor própria da coluna (manual > paleta) ou null = cor do grupo
+  function corDaColuna(cols, i, pol) {
+    if (cores.modo !== 'coluna') return null;
+    return cores.col[cols[i].k] || (cores.paleta ? corDaPaleta(cores.paleta, i, cols, pol) : null);
+  }
+  // Degradê da barra: o do grupo (#g-b / #g-a) ou um por cor, criado uma vez nas <defs> da página
+  function degradeDe(cor, padrao) {
+    if (!cor) return padrao;
+    var id = 'gc-' + cor.slice(1);
+    if (!document.getElementById(id)) {
+      var NS = 'http://www.w3.org/2000/svg', g = document.createElementNS(NS, 'linearGradient');
+      g.setAttribute('id', id); g.setAttribute('x1', '0'); g.setAttribute('y1', '0'); g.setAttribute('x2', '0'); g.setAttribute('y2', '1');
+      [[0, misturarHex(cor, '#FFFFFF', .2)], [.42, cor], [1, misturarHex(cor, '#000000', .06)]].forEach(function (st) {
+        var s = document.createElementNS(NS, 'stop'); s.setAttribute('offset', st[0]); s.setAttribute('stop-color', st[1]); g.appendChild(s);
+      });
+      document.getElementById('g-b').parentNode.appendChild(g);
+    }
+    return id;
+  }
   function aplicarCores() {
     var raiz = document.documentElement;
     [['b', 'g-b', '--serie-b'], ['af', 'g-a', '--serie-a']].forEach(function (s) {
@@ -1315,59 +1387,106 @@ window.VBMSetup = (function () {
       if (padrao) raiz.style.removeProperty(s[2]); else raiz.style.setProperty(s[2], c);
     });
   }
+  function ehPadrao(c) { return c.modo === 'grupo' && c.b === CORES_PADRAO.b && c.af === CORES_PADRAO.af && !c.paleta && !Object.keys(c.col).length; }
   function salvarCores() {
     try {
-      if (cores.b === CORES_PADRAO.b && cores.af === CORES_PADRAO.af) localStorage.removeItem(CORES_CHAVE);
+      if (ehPadrao(cores)) localStorage.removeItem(CORES_CHAVE);
       else localStorage.setItem(CORES_CHAVE, JSON.stringify(cores));
     } catch (e) { /* só nesta sessão */ }
   }
   var coresBtn = document.getElementById('coresBtn'), coresPop = document.getElementById('coresPop');
-  function renderCores() {
-    var linha = function (k, rotulo) {
-      var atual = cores[k], padrao = atual === CORES_PADRAO[k];
-      return '<div class="cor-row"><span id="corLbl-' + k + '">' + esc(T(rotulo)) + '</span>' +
-        '<button type="button" class="cor-btn" data-cor="' + k + '" aria-haspopup="listbox" aria-labelledby="corLbl-' + k + ' corVal-' + k + '" title="' + esc(T('k.escolher', { serie: T(rotulo) })) + '">' +
-        '<span class="cor-sw" style="background:' + atual + '" aria-hidden="true"></span><span id="corVal-' + k + '">' + atual + '</span>' + (padrao ? '<span class="cor-tag">' + esc(T('k.padrao')) + '</span>' : '') + '</button></div>';
-    };
-    coresPop.innerHTML = '<h4>' + esc(T('k.titulo')) + '</h4>' + linha('b', 'k.b') + linha('af', 'k.af') +
-      '<button type="button" class="cores-reset"' + (cores.b === CORES_PADRAO.b && cores.af === CORES_PADRAO.af ? ' disabled' : '') + '>' + esc(T('k.restaurar')) + '</button>';
+  // Colunas exibidas nos gráficos (anos visíveis × Budget, Actual/Forecast), na ordem do gráfico
+  function colunasVisiveis() {
+    var cols = [];
+    anosVisiveis().forEach(function (a) { cols.push({ k: chaveColuna(a, 'B'), v: null }, { k: chaveColuna(a, 'AF'), v: null }); });
+    return cols;
   }
+  function botaoCor(attr, atual, tag, idRot, idVal, titulo) {
+    return '<button type="button" class="cor-btn" ' + attr + ' aria-haspopup="listbox" aria-labelledby="' + idRot + ' ' + idVal + '" title="' + esc(titulo) + '">' +
+      '<span class="cor-sw" style="background:' + atual + '" aria-hidden="true"></span><span id="' + idVal + '">' + esc(atual.charAt(0) === '#' ? atual : '') + '</span>' +
+      (tag ? '<span class="cor-tag">' + esc(tag) + '</span>' : '') + '</button>';
+  }
+  function renderCores() {
+    var coluna = cores.modo === 'coluna';
+    var h = '<h4>' + esc(T('k.titulo')) + '</h4>' +
+      '<span class="cores-sub" id="corModoLbl">' + esc(T('k.modo')) + '</span>' +
+      '<div class="seg cores-modo" role="group" aria-labelledby="corModoLbl">' +
+      '<button type="button" data-modo="grupo" aria-pressed="' + !coluna + '">' + esc(T('k.grupo')) + '</button>' +
+      '<button type="button" data-modo="coluna" aria-pressed="' + coluna + '">' + esc(T('k.coluna')) + '</button></div>';
+    if (!coluna) {
+      h += [['b', 'k.b'], ['af', 'k.af']].map(function (s) {
+        var atual = cores[s[0]];
+        return '<div class="cor-row"><span id="corLbl-' + s[0] + '">' + esc(T(s[1])) + '</span>' +
+          botaoCor('data-cor="' + s[0] + '"', atual, atual === CORES_PADRAO[s[0]] ? T('k.padrao') : '', 'corLbl-' + s[0], 'corVal-' + s[0], T('k.escolher', { serie: T(s[1]) })) + '</div>';
+      }).join('');
+    } else {
+      var cols = colunasVisiveis(), perf = cores.paleta === 'performance';
+      h += '<label class="cores-sub" for="corPaleta">' + esc(T('k.paleta')) + '</label>' +
+        '<select class="cores-sel" id="corPaleta"><option value="">' + esc(T('k.pNenhuma')) + '</option>' +
+        PALETAS_COLUNAS.map(function (p) { return '<option value="' + p.id + '"' + (p.id === cores.paleta ? ' selected' : '') + '>' + esc(T(p.lbl)) + '</option>'; }).join('') + '</select>' +
+        '<div class="cores-cols" role="group" aria-label="' + esc(T('k.colunas')) + '">' + cols.map(function (c, i) {
+          var manual = cores.col[c.k], grupo = /B$/.test(c.k) ? cores.b : cores.af, rot = rotuloColuna(c.k);
+          // performance: a cor depende do valor de cada gráfico — o menu mostra a escala
+          var atual = manual || (perf ? 'linear-gradient(90deg,#DC2626,#BCBEC0,#007E7A)' : cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
+          var tag = manual ? '' : perf ? T('k.porValor') : cores.paleta ? T('k.tagPaleta') : T('k.padrao');
+          return '<div class="cor-row"><span id="colLbl-' + c.k + '">' + esc(rot) + '</span><span class="cor-acoes">' +
+            botaoCor('data-col="' + c.k + '"', atual, tag, 'colLbl-' + c.k, 'colVal-' + c.k, T('k.escolher', { serie: rot })) +
+            '<button type="button" class="cor-limpar" data-limpar="' + c.k + '"' + (manual ? '' : ' disabled') + ' aria-label="' + esc(T('k.limpar', { serie: rot })) + '" title="' + esc(T('k.limpar', { serie: rot })) + '">↺</button></span></div>';
+        }).join('') + '</div>';
+    }
+    h += '<button type="button" class="cores-reset"' + (ehPadrao(cores) ? ' disabled' : '') + '>' + esc(T('k.restaurar')) + '</button>';
+    coresPop.innerHTML = h;
+    posicionarCores();
+  }
+  // Ancorado à direita do botão; perto da borda esquerda (filtros quebrando linha no celular), abre para a direita
+  function posicionarCores() {
+    if (coresPop.hidden) return;
+    coresPop.style.left = ''; coresPop.style.right = '';
+    if (coresPop.getBoundingClientRect().left < 8) { coresPop.style.left = '0'; coresPop.style.right = 'auto'; }
+  }
+  window.addEventListener('resize', posicionarCores);
   function abrirCores(abrir) {
     coresPop.hidden = !abrir;
     coresBtn.setAttribute('aria-expanded', String(abrir));
     if (!abrir) { closeChartPalette(); return; }
     renderCores();
-    // perto da borda esquerda (filtros quebrando linha no celular): abre para a direita
-    coresPop.style.left = ''; coresPop.style.right = '';
-    if (coresPop.getBoundingClientRect().left < 8) { coresPop.style.left = '0'; coresPop.style.right = 'auto'; }
-    var b = coresPop.querySelector('.cor-btn');
+    var b = coresPop.querySelector('.cores-modo button[aria-pressed="true"]');
     if (b) b.focus();
   }
-  function mudarCores(novas) {
-    cores = novas;
+  // Troca de cor: grava, atualiza os degradês do grupo e redesenha os gráficos (cores por coluna)
+  function mudarCores(foco) {
     salvarCores();
     aplicarCores();
     renderCores();
-    // os gráficos usam url(#g-b)/url(#g-a): a troca da cor do degradê já vale nas barras desenhadas
+    render();
+    var f = foco && coresPop.querySelector(foco);
+    if (f) f.focus();
   }
   coresBtn.addEventListener('click', function () { abrirCores(coresPop.hidden); });
+  coresPop.addEventListener('change', function (e) {
+    if (e.target.id !== 'corPaleta') return;
+    cores.paleta = e.target.value;
+    mudarCores('#corPaleta');
+  });
   coresPop.addEventListener('click', function (e) {
     e.stopPropagation();
+    var m = e.target.closest('button[data-modo]');
+    if (m) { cores.modo = m.getAttribute('data-modo'); mudarCores('button[data-modo="' + cores.modo + '"]'); return; }
+    var lp = e.target.closest('button[data-limpar]');
+    if (lp && !lp.disabled) { delete cores.col[lp.getAttribute('data-limpar')]; mudarCores('.cor-btn[data-col="' + lp.getAttribute('data-limpar') + '"]'); return; }
     var b = e.target.closest('.cor-btn');
     if (b) {
-      var k = b.getAttribute('data-cor'), r = b.getBoundingClientRect();
-      openChartPalette(cores[k], r.left, r.bottom, function (cor) {
-        var n = { b: cores.b, af: cores.af }; n[k] = cor.toUpperCase();
-        mudarCores(n);
-        var nb = coresPop.querySelector('.cor-btn[data-cor="' + k + '"]');
-        if (nb) nb.focus();
+      var k = b.getAttribute('data-cor'), col = b.getAttribute('data-col'), r = b.getBoundingClientRect();
+      var atual = k ? cores[k] : cores.col[col];
+      openChartPalette(atual, r.left, r.bottom, function (cor) {
+        if (k) cores[k] = cor.toUpperCase(); else cores.col[col] = cor.toUpperCase();
+        mudarCores(k ? '.cor-btn[data-cor="' + k + '"]' : '.cor-btn[data-col="' + col + '"]');
       }, b);
       return;
     }
     if (e.target.closest('.cores-reset')) {
-      mudarCores({ b: CORES_PADRAO.b, af: CORES_PADRAO.af });
-      var p = coresPop.querySelector('.cor-btn');
-      if (p) p.focus();
+      cores = coresPadrao();
+      mudarCores('.cores-modo button[aria-pressed="true"]');
     }
   });
 
@@ -1392,7 +1511,7 @@ window.VBMSetup = (function () {
   // current: cor atual (marcada); onPick(cor) recebe a escolha; origem recebe o foco de volta
   function openChartPalette(current, x, y, onPick, origem) {
     var atual = String(current || '').toUpperCase();
-    chartPalette.setAttribute('aria-label', T('k.paleta'));
+    chartPalette.setAttribute('aria-label', T('k.grade'));
     chartPalette.innerHTML = PALETTE_COLORS.map(function (c) {
       var on = c.toUpperCase() === atual;
       return '<div class="palette-color' + (on ? ' active' : '') + '" data-color="' + c + '" data-hex="' + c + '" role="option" tabindex="0" aria-selected="' + on + '" aria-label="' + c + '" style="background-color:' + c + ';"></div>';
