@@ -25,7 +25,7 @@
     for (var m = 0; m < 12; m++) {
       var v = base * (semSaz ? 1 : SAZ[m]) * (1 + (rnd() - 0.5) * 0.06);
       b.push(v);
-      a.push(v * (1 + (rnd() - 0.5) * vol));
+      a.push(v * (1 + (rnd() - 0.38) * vol)); // leve viés, para o Delta aparecer na demo
     }
     return { b: b, a: a };
   }

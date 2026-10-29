@@ -12,24 +12,28 @@ Endereço: `/VBM-Performance-Hub/VBM-Health-of-the-Business/` (já listado em `A
 
 ## Vale Base Metals | Consolidated View
 
+Os gráficos usam o mesmo modelo do COO: barras em degradê, valores acima das barras, fontes e tamanhos do COO e cota de diferença com o interruptor **Delta** (ligado ou desligado) nos filtros.
+
 | Antes (PDF) | Proposta |
 |---|---|
-| EBITDA (US$ bn): só Copper + Nickel empilhados | **Seletor no card** no padrão do All-in do COO: `VBM` (Copper + Nickel empilhados, com a tabela de Other Segment) · `Copper` · `Nickel` · `Others` |
+| EBITDA (US$ bn): Copper + Nickel empilhados, com tabela de Other Segment | Barras B × A\|F com Delta e **seletor no card** (mesma estratégia do All-in do COO): `VBM` · `Copper` · `Nickel` · `Others`. **Sem tabela**: o seletor escolhe o que o gráfico mostra |
 | Catalyst Savings 2025F (US$ M) | **Descontinuado (removido)** |
-| Capex \| S Curve na coluna esquerda | Sobe para a **coluna direita, no lugar do Catalyst**, abaixo da ponte do EBITDA |
-| — | O **EBITDA passa a ocupar a altura das duas linhas** na coluna esquerda e ganha espaço para o seletor e a tabela |
-| 2026 EBITDA YEAR (ponte) | Mantido, à direita no alto |
+| Capex \| S Curve na metade esquerda | **Largura toda** (12 meses + 26B/26F com Delta). O espaço do Catalyst e da tabela foi redistribuído assim |
+| 2026 EBITDA YEAR (ponte) | Mantido, ao lado do EBITDA, na 1ª linha |
 | FCF YEAR (ponte) | Mantido, na largura toda, embaixo |
 
 ```
 ┌──────────────────────────┬──────────────────────────┐
 │ EBITDA (US$ bn)          │ 2026 EBITDA YEAR (ponte) │
-│ [VBM|Copper|Nickel|Oth.] ├──────────────────────────┤
-│ + tabela Other Segment   │ Capex | S Curve          │
+│ [VBM|Copper|Nickel|Oth.] │                          │
 ├──────────────────────────┴──────────────────────────┤
+│ Capex | S Curve (meses + 26B/26F)                   │
+├─────────────────────────────────────────────────────┤
 │ FCF YEAR (ponte)                                    │
 └─────────────────────────────────────────────────────┘
 ```
+
+Prévia sem servidor: `docs/preview-tela1-consolidated.html` (arquivo único, abre direto no navegador).
 
 ## Copper Business / Nickel Business
 
