@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head>
+<body>
+<title>COO Business Units Historical</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="assets/css/poppins.css"/>
+<style>
+/* COO Business Units Dashboard Historical — mesmo layout do COO Business Units Dashboard, com
+   os gráficos na evolução ANUAL (um par Budget · Actual/Forecast por ano).
+   Layout: tela única com o ritmo do print original — título editorial em itálico,
+   painel cinza de Produção (3×3) e Financeiro solto
+   na página (2×3). Gráficos com altura contida e barras estreitas; o espaço
+   em branco entre as linhas é parte do desenho. Padrão de séries e cota de
+   diferença do VBM Performance Hub. */
+:root {
+  --page: #FFFFFF;
+  --text: #1F2937;
+  --text-soft: #6B7280;
+  --text-faint: #9CA3AF;
+  --line: #E5E7EB;
+  --accent: #1E8FC4;          /* títulos grandes (3,9:1 em branco, uso só em ≥24px) */
+  --accent-strong: #0B6E99;
+  --panel: #F3F4F5;
+  --chart-title: #1B7F7B;
+  --ink-strong: #111827;
+  --ink-soft: #6B7280;
+  --base-line: #D1D5DB;
+  --pill-bg: #FFFFFF;
+  --pill-line: rgba(15,23,42,.06);
+  --d-stroke: rgba(116,118,120,.45);
+  --d-hair: rgba(116,118,120,.30);
+  --badge-bg: rgba(31,41,55,.58);
+  --badge-text: #FFFFFF;
+  --serie-b: #BCBEC0;
+  --serie-a: #3CB5E5;
+  --good: #007E7A;
+  --good-bg: rgba(0,126,122,.10);
+  --bad: #B91C1C;
+  --bad-bg: rgba(220,38,38,.09);
+  --flat: #5B5E61;
+  --flat-bg: rgba(116,118,120,.12);
+  --ctl-bg: #FFFFFF;
+  --ctl-border: rgba(13,38,64,.16);
+  --ctl-text: #1F2937;
+  --ctl-on-bg: #0B6E99;
+  --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --nav-bg: linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%);
+  --table-head: #0B6E99;
+
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B;
+    --text: #E8EEF5;
+    --text-soft: rgba(232,238,245,.66);
+    --text-faint: rgba(232,238,245,.42);
+    --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE;
+    --accent-strong: #7DD3F0;
+    --panel: #0C2438;
+    --chart-title: #5FD0C9;
+    --ink-strong: #F1F5F9;
+    --ink-soft: rgba(241,245,249,.62);
+    --base-line: rgba(255,255,255,.22);
+    --pill-bg: #0F2C44;
+    --pill-line: rgba(255,255,255,.10);
+    --d-stroke: rgba(226,232,240,.45);
+    --d-hair: rgba(226,232,240,.28);
+    --badge-bg: rgba(2,10,20,.55);
+    --serie-b: #8E949B;
+    --good: #34C3B8;
+    --good-bg: rgba(52,195,184,.14);
+    --bad: #F87171;
+    --bad-bg: rgba(248,113,113,.14);
+    --flat: #B0B5BA;
+    --flat-bg: rgba(176,181,186,.14);
+    --ctl-bg: rgba(255,255,255,.05);
+    --ctl-border: rgba(255,255,255,.16);
+    --ctl-text: #E5EDF5;
+    --ctl-on-bg: #3CB5E5;
+    --ctl-on-text: #02101c;
+    --focus: #7DD3F0;
+    --table-head: #11577A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B;
+  --text: #E8EEF5;
+  --text-soft: rgba(232,238,245,.66);
+  --text-faint: rgba(232,238,245,.42);
+  --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE;
+  --accent-strong: #7DD3F0;
+  --panel: #0C2438;
+  --chart-title: #5FD0C9;
+  --ink-strong: #F1F5F9;
+  --ink-soft: rgba(241,245,249,.62);
+  --base-line: rgba(255,255,255,.22);
+  --pill-bg: #0F2C44;
+  --pill-line: rgba(255,255,255,.10);
+  --d-stroke: rgba(226,232,240,.45);
+  --d-hair: rgba(226,232,240,.28);
+  --badge-bg: rgba(2,10,20,.55);
+  --serie-b: #8E949B;
+  --good: #34C3B8;
+  --good-bg: rgba(52,195,184,.14);
+  --bad: #F87171;
+  --bad-bg: rgba(248,113,113,.14);
+  --flat: #B0B5BA;
+  --flat-bg: rgba(176,181,186,.14);
+  --ctl-bg: rgba(255,255,255,.05);
+  --ctl-border: rgba(255,255,255,.16);
+  --ctl-text: #E5EDF5;
+  --ctl-on-bg: #3CB5E5;
+  --ctl-on-text: #02101c;
+  --focus: #7DD3F0;
+  --table-head: #11577A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; display: flex; flex-direction: column; min-height: 0;
+  background: var(--page); color: var(--text);
+  font-family: var(--font-display); font-size: 14px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 110; background: #041523; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ── Página ── */
+.page {
+  flex: 1 1 auto; min-height: 0; width: 100%;
+  padding-block: 12px 16px;
+  padding-left: max(28px, env(safe-area-inset-left, 0px));
+  padding-right: max(28px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* Cabeçalho editorial + filtros */
+/* Aviso de conferência com a query (card-chk): âmbar, fora do par verde/vermelho do desempenho */
+:root { --wait: #9A5B00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; } }
+:root[data-theme="dark"] { --wait: #F5B94A; }
+.head { position: relative; flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.title-block { min-width: 0; margin-bottom: -4px; position: relative; top: -7px; } /* título um pouco acima: centrado entre o topo e a linha do cabeçalho */
+.title-block h2 { margin: 0; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
+/* Unidade em linha própria (como no print), legenda e atualização alinhadas à direita */
+/* Nome do site centralizado entre a linha do cabeçalho e o topo dos painéis: o mesmo espaço acima e abaixo (gap da página) */
+.site-row { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; }
+.site-id { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; min-width: 0; }
+.site { margin: 0; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+/* Unidade: drill-down País → Site */
+.unit { position: relative; }
+.unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.unit-trigger:hover, .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.unit-pais { color: var(--text-soft); }
+.unit-sep { color: var(--text-faint); }
+.unit-site { color: var(--ctl-on-bg); font-weight: 600; }
+.unit-caret { color: var(--text-soft); transition: transform .18s ease; }
+.unit-trigger[aria-expanded="true"] .unit-caret { transform: rotate(180deg); }
+.unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: min(360px, calc(100vw - 32px)); display: grid; grid-template-columns: 1fr 1.15fr; gap: 0; padding: 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: 0 14px 34px rgba(15,23,42,.16); }
+.unit-pop[hidden] { display: none; } /* fechado de verdade também fora do visualizador */
+.unit-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; }
+.unit-col + .unit-col { border-left: 1px solid var(--line); padding-left: 10px; }
+.unit-h { font: 600 .62rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); padding: 2px 8px 4px; }
+.unit-list { display: flex; flex-direction: column; gap: 2px; }
+.unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; }
+.unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.unit-list button .n { color: var(--text-faint); font-size: .68rem; }
+.unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
+.unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
+.unit-list button[data-site][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+/* Anos: lista suspensa com os anos da série (mostrar/ocultar) e atalhos */
+.anos-pop { width: min(264px, calc(100vw - 32px)); grid-template-columns: 1fr; gap: 6px; padding: 10px; }
+.anos-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.anos-grid button, .anos-acoes button { min-height: 28px; padding: 2px 6px; border-radius: 7px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .72rem var(--font-ui); font-variant-numeric: tabular-nums; cursor: pointer; }
+.anos-grid button[aria-pressed="true"] { background: var(--ctl-on-bg); border-color: transparent; color: var(--ctl-on-text); }
+.anos-grid button:hover, .anos-acoes button:hover { border-color: var(--ctl-on-bg); }
+.anos-acoes { display: flex; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+.anos-acoes button { flex: 1; }
+@media (pointer: coarse) { .anos-grid button, .anos-acoes button { min-height: 44px; } }
+/* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro */
+.ciclo-pop { width: auto; min-width: 120px; grid-template-columns: 1fr; }
+.ciclo-pop .unit-list { max-height: min(60vh, 360px); overflow-y: auto; }
+.unit-list button[data-ciclo][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+/* Delta: interruptor liga/desliga */
+.switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+@media (prefers-reduced-motion: reduce) { .switch-track, .switch-thumb, .unit-caret { transition: none; } }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+
+/* Painéis */
+.dash { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 32px; }
+.panel { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.panel-prod { background: var(--panel); border-radius: 20px; padding: 16px 22px 14px; }
+.panel-fin { padding: 16px 4px 14px; }
+.panel-head { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.panel-title { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--text); }
+.panel-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: .74rem; color: var(--text-soft); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.swatch { width: 14px; height: 9px; border-radius: 2px; }
+.updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.demo { font-style: normal; margin-right: 6px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(245,158,11,.6); color: #B45309; }
+:root[data-theme="dark"] .demo { color: #FCD34D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .demo { color: #FCD34D; } }
+
+.panel-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); column-gap: 28px; row-gap: 8px; }
+.panel-prod .panel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.panel-fin .panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
+.dash--ir { grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); column-gap: 56px; }
+/* IR: colunas financeiras largas; cada card na largura do gráfico e centralizado, com o seletor do All-in junto ao título */
+.dash--ir .panel-fin .panel-grid { justify-items: center; }
+.dash--ir .panel-fin .card { width: 100%; max-width: 380px; }
+.dash--ir .panel-prod .panel-grid { grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; }
+/* IR: os dois gráficos centralizados no painel, na largura máxima do gráfico (título alinhado à barra) */
+.dash--ir .panel-prod .card { width: 100%; max-width: 380px; }
+/* IR: só dois gráficos no painel; mais ar entre eles (vence o espaçamento comum calculado em ajustarAltura) */
+.dash--ir .panel-prod .panel-grid { row-gap: clamp(40px, 8vh, 90px) !important; }
+.panel-vazio { margin: auto; padding: 24px; font: italic 400 .95rem var(--font-display); color: var(--text-soft); text-align: center; }
+
+/* Indicador: título + unidade, gráfico com altura contida, espaço livre abaixo */
+/* Título + gráfico centralizados na faixa da linha: em telas altas a sobra se divide acima e abaixo,
+   e o bloco desce em direção à base sem aumentar os gráficos */
+#dash .panel-grid { justify-items: center; }
+#dash .card { width: 100%; max-width: var(--chart-w, none); }
+.card { min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; padding-top: 16px; }
+.card-head { flex-shrink: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 4px 8px; }
+.card-name { flex: 1 0 auto; max-width: 100%; min-width: 0; }
+/* Card com seletor (Cu/Au, All-in…): seletor na linha do título, à direita; sem espaço, o título
+   ("All-in | By Product") quebra em duas linhas em vez de empurrar o seletor para baixo */
+.card-head:has(.seg) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; align-items: start; align-content: start; column-gap: 8px; row-gap: 1px; }
+.card-head:has(.seg) .card-name { display: contents; }
+.card-head:has(.seg) .card-title { grid-area: 1 / 1; white-space: normal; }
+.card-head:has(.seg) .seg { grid-area: 1 / 2 / 4 / 3; display: inline-flex; flex-wrap: nowrap; } /* sempre em uma linha */
+.card-head:has(.seg) .seg button { min-height: 20px; padding: 1px 6px; font-size: .62rem; }
+.card-head:has(.seg) .card-unit { grid-area: 2 / 1; }
+/* [RESPONSIVO] card estreito (notebook, colunas financeiras): o seletor desce para baixo do título,
+   em vez de espremer o título ("All-in") até virar reticências */
+.card { container: card / inline-size; }
+@container card (max-width: 300px) {
+  .card-head:has(.seg) { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .card-head:has(.seg) .card-title, .card-head:has(.seg) .card-unit, .card-head:has(.seg) .card-chk { grid-area: auto; }
+  .card-head:has(.seg) .seg { grid-area: auto; justify-self: start; margin-top: 3px; }
+}
+/* Cabeçalhos com a mesma altura na página (ajustarAltura): os gráficos de uma linha começam na mesma altura */
+.card-head { min-height: var(--head-h, 0px); }
+.card-title { margin: 0; font: 400 1rem/1.2 var(--font-display); color: var(--chart-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Mesmo arranjo no modo normal e em tela cheia: cada linha tem a altura do conteúdo, a 1ª logo abaixo
+   do título do painel e a última junto à base. A altura dos gráficos (--chart-h, até 190 px, sem esticar)
+   é calculada em ajustarAltura() para as três linhas caberem no painel */
+.panel-grid { grid-template-rows: repeat(var(--rows, 3), auto); align-content: start; row-gap: 10px; }
+.card-head:has(.seg) .card-chk { grid-area: 3 / 1 / 4 / 3; }
+.card-chk { margin: 2px 0 0; font: italic 500 .6rem/1.3 var(--font-ui); color: var(--wait); white-space: normal; }
+.card-nota { flex-shrink: 0; margin: 2px 0 0; font: italic 400 .56rem/1.3 var(--font-display); letter-spacing: -.005em; color: var(--text-soft); }
+.card-nota sup { font-size: .85em; line-height: 0; }
+/* Tela larga: a nota de rodapé fica no espaço abaixo do card e não muda a grade — os gráficos ficam
+   nas mesmas posições de uma BU sem nota (Salobo). Telas estreitas/baixas: nota no fluxo do card */
+@media (min-width: 1181px) and (min-height: 701px) {
+  #dash .card:has(.card-nota) { position: relative; }
+  #dash .card-nota { position: absolute; left: 0; right: 0; top: 100%; }
+}
+.card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
+/* Tela cheia (botão ou F11): sem o cabeçalho azul; tela cheia e tema descem para o canto direito */
+.fs-tools { display: flex; align-self: flex-end; gap: 4px; margin-left: 4px; }
+.fs-btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--text-soft); cursor: pointer; }
+.fs-btn:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
+.ico-exit { display: none; }
+.is-fs .ico-exit { display: block; }
+.is-fs .ico-enter { display: none; }
+.is-fs .fs-tools { display: flex; }
+.page { padding-top: 22px; }
+.is-fs .card { justify-content: flex-start; }
+@media (display-mode: fullscreen) {
+  .fs-tools { display: flex; }
+  .page { padding-top: 22px; }
+  .card { justify-content: flex-start; }
+}
+/* Cores das barras: botão compacto junto da tela cheia; o menu abre só quando pedido */
+.cores { position: relative; display: flex; }
+.fs-btn[aria-expanded="true"] { color: var(--accent-strong); border-color: var(--accent-strong); }
+.cores-pop { position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; width: min(304px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: 0 14px 34px rgba(15,23,42,.16); }
+.cores-pop[hidden] { display: none; }
+.cores-pop h4 { margin: 0 0 2px; font: 600 .62rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); }
+.cor-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 500 .72rem var(--font-ui); color: var(--ctl-text); }
+.cor-row > span { min-width: 0; }
+.cor-btn { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; width: 132px; padding: 4px 8px 4px 4px; border: 1px solid var(--ctl-border); border-radius: 8px; background: var(--ctl-bg); color: var(--ctl-text); font: 600 .64rem var(--font-ui); font-variant-numeric: tabular-nums; cursor: pointer; }
+.cor-btn:hover { border-color: var(--ctl-on-bg); }
+.cor-sw { width: 20px; height: 20px; flex-shrink: 0; border-radius: 5px; border: 1px solid rgba(0,0,0,.18); }
+.cor-tag { margin-left: auto; font-size: .56rem; font-weight: 500; color: var(--text-faint); }
+.cores-reset { margin-top: 2px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--ctl-border); background: transparent; color: var(--ctl-text); font: 500 .7rem var(--font-ui); cursor: pointer; }
+.cores-reset:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.cores-reset:disabled { opacity: .45; cursor: default; }
+.cores-pop { max-height: min(78vh, 620px); overflow-y: auto; }
+.cores-sub { font: 500 .66rem var(--font-ui); color: var(--text-soft); }
+.cores-modo { display: grid; grid-template-columns: 1fr 1fr; }
+.cores-sel { width: 100%; min-height: 32px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .72rem var(--font-ui); }
+.cores-sel option { background: var(--page); color: var(--text); }
+.cores-cols { display: flex; flex-direction: column; gap: 6px; }
+.cores-box { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--panel) 60%, transparent); }
+.cores-box-tit { margin: 0; font: 700 .6rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); }
+.cor-sw.vazio { border-style: dashed; }
+.cor-acoes { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.cor-limpar { width: 26px; height: 26px; padding: 0; border-radius: 7px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font-size: .8rem; line-height: 1; cursor: pointer; }
+.cor-limpar:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.cor-limpar:disabled { opacity: .35; cursor: default; }
+/* Paleta de cores — a mesma do VBM Performance Studio (.color-palette) */
+.color-palette { position: fixed; z-index: 9999; display: none; grid-template-columns: repeat(6, 24px); gap: 6px; padding: 10px; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.20); }
+.color-palette.active { display: grid; }
+[data-bg="dark"] .color-palette { background: rgba(20,32,48,.96); border-color: rgba(255,255,255,.14); box-shadow: 0 8px 24px rgba(0,0,0,.40); }
+.palette-color { width: 24px; height: 24px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.palette-color:hover, .palette-color:focus-visible { transform: scale(1.1); outline: none; }
+.palette-color.active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1B40BF; }
+[data-bg="dark"] .palette-color.active { box-shadow: 0 0 0 2px rgba(20,32,48,1), 0 0 0 4px #fff; }
+.palette-tip { position: absolute; bottom: calc(100% + 6px); transform: translateX(-50%); background: rgba(15,23,42,.92); color: #fff; padding: 4px 8px; border-radius: 4px; font: 600 .72rem/1.2 'Poppins', 'Segoe UI', sans-serif; white-space: nowrap; pointer-events: none; }
+.palette-tip[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .palette-color { transition: none; } }
+.card .seg button { transition: background-color .18s ease, color .18s ease; }
+.card .seg button { min-height: 22px; padding: 1px 8px; font-size: .68rem; }
+.chart { flex: none; height: var(--chart-h, 190px); min-height: 56px; position: relative; border-radius: 8px; background: var(--chart-bg, transparent); }
+.chart svg { display: block; overflow: visible; font-family: var(--font-display); }
+
+/* SVG */
+.b-bar { transform-box: fill-box; transform-origin: 50% 100%; animation: grow .9s cubic-bezier(.16,.84,.28,1) both; }
+.b-bar.neg { transform-origin: 50% 0%; }
+@keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.b-val { fill: var(--ink-strong); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.b-axis { fill: var(--ink-soft); font-size: 9.5px; }
+.b-base { stroke: var(--base-line); }
+.b-vazio { fill: var(--text-soft); font: italic 400 15px var(--font-display); }
+.cota { animation: fade .5s .6s ease-out both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.is-static .card:not(.replay) .b-bar, .is-static .card:not(.replay) .cota { animation: none; }
+.d-ref { stroke: var(--d-stroke); stroke-dasharray: 3 2; }
+.d-now { stroke: var(--d-stroke); }
+.d-track { stroke: var(--d-hair); }
+.d-pill { fill: var(--pill-bg); stroke: var(--pill-line); filter: drop-shadow(0 2px 6px rgba(15,23,42,.06)); }
+.d-txt { font-size: 10.5px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.d-span { stroke-opacity: .6; }
+.is-good .d-txt { fill: var(--good); } .is-good .d-span { stroke: var(--good); } .is-good .d-up { fill: var(--good-bg); } .is-good .d-dn { fill: url(#hatch-good); }
+.is-bad .d-txt { fill: var(--bad); } .is-bad .d-span { stroke: var(--bad); } .is-bad .d-up { fill: var(--bad-bg); } .is-bad .d-dn { fill: url(#hatch-bad); }
+.is-flat .d-txt { fill: var(--flat); } .is-flat .d-span { stroke: var(--flat); } .is-flat .d-up { fill: var(--flat-bg); } .is-flat .d-dn { fill: url(#hatch-flat); }
+.cota .d-ref, .cota .d-now { animation: dline .55s .34s cubic-bezier(.22,.9,.24,1) both; transform-box: fill-box; transform-origin: center; }
+.cota .d-span { animation: dspan .55s .48s cubic-bezier(.2,.85,.25,1) both; transform-box: fill-box; transform-origin: 50% 100%; }
+.cota .d-pill, .cota .d-txt { animation: dpill .5s .78s cubic-bezier(.2,.85,.25,1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes dline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes dspan { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes dpill { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+.is-static .card:not(.replay) .cota * { animation: none; }
+
+
+.tip { position: fixed; z-index: 200; pointer-events: none; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem var(--font-ui); box-shadow: 0 6px 18px rgba(15,23,42,.25); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.card .seg { flex-wrap: nowrap; flex-shrink: 0; }
+
+/* Monitores de notebook (1366–1600 px, até ~950 px de altura): tudo mais compacto para caber */
+@media (max-width: 1600px) {
+  .card-title { font-size: .88rem; }
+  .card .seg { gap: 1px; }
+  .card .seg button { padding: 1px 5px; font-size: .62rem; }
+  .card-head:has(.seg) .seg button { padding: 1px 4px; font-size: .58rem; }
+  .card-head { column-gap: 4px; }
+  .title-block h2 { font-size: 1.75rem; }
+  .site { font-size: 1.7rem; }
+  .filters { gap: 8px 10px; }
+  .seg button { padding: 2px 8px; font-size: .7rem; }
+  .head { gap: 10px 20px; }
+}
+@media (max-height: 960px) {
+  .page { padding-block: 8px 10px; gap: 10px; }
+  .head { padding-bottom: 10px; }
+  .panel-prod { padding: 12px 18px 10px; }
+  .panel-fin { padding: 12px 4px 10px; }
+  .card { padding-top: 10px; }
+}
+
+@media (max-width: 1180px), (max-height: 700px) {
+  html, body { height: auto; }
+  body { display: block; }
+  .dash { grid-template-columns: minmax(0, 1fr); }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; } /* cresce com a nota de rodapé */
+  .chart { height: 150px; }
+}
+/* [RESPONSIVO] notebook baixo (ex.: 1366×768): as três linhas de gráficos não cabem na altura sem
+   espremer as barras — os dois painéis seguem lado a lado e a página rola, com gráficos de 150 px */
+@media (min-width: 1181px) and (max-height: 820px) {
+  html, body { height: auto; }
+  body { display: block; }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: auto; row-gap: 18px !important; }
+  .chart { height: 150px; }
+}
+@media (max-width: 720px) {
+  .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .panel-prod .panel-grid, .panel-fin .panel-grid, .dash .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
+  .panel-prod { padding: 14px; }
+  .panel-meta { align-items: flex-start; }
+}
+/* [RESPONSIVO] toque (tablet/celular) — filtros, seletores dos cards e tela cheia com alvo de 44 px */
+@media (pointer: coarse) {
+  .seg button, .card-head:has(.seg) .seg button, .card .seg button { min-height: 44px; }
+  .fs-btn { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .b-bar, .cota, .cota * { animation: none !important; } }
+
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
+:root {
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.topnav {
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
+.topnav-logo svg { height: 26px; width: auto; display: block; }
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
+.topnav-user[hidden] { display: none; }
+.topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+/* [RESPONSIVO] barra superior em celular — o nome encolhe com reticências em vez de empurrar o avatar
+   para fora da tela; abaixo de 420 px ele sai (o título da página, logo abaixo, já diz o nome) */
+@media (max-width: 540px) {
+  .topnav-brand { flex: 1 1 auto; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; text-align: center; margin: 0 12px; }
+  .topnav-brand::after { display: none; }
+}
+@media (max-width: 420px) { .topnav-brand { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
+
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
+.settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
+.settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* ═══ fim Setup Dashboards ═══ */
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CBCDCF"/><stop offset=".42" stop-color="#BCBEC0"/><stop offset="1" stop-color="#B2B4B6"/>
+    </linearGradient>
+    <linearGradient id="g-a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#62C6EC"/><stop offset=".42" stop-color="#3CB5E5"/><stop offset="1" stop-color="#36A9D8"/>
+    </linearGradient>
+    <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
+    <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
+    <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
+  </defs>
+</svg>
+
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Logo: "../" volta ao Hub; ajuste se o dashboard morar em outro lugar. -->
+<nav class="topnav" id="topnav">
+  <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">COO Business Units Dashboard Historical</span></h1>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+
+<main class="page">
+  <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
+    <div class="title-block">
+      <h2>COO – Business Units Dashboard Historical</h2>
+    </div>
+    <div class="filters">
+      <div class="filter"><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span>
+        <div class="unit ciclo">
+          <button type="button" class="unit-trigger" id="cicloTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="cicloPop" aria-describedby="lblCiclo">
+            <span id="cicloTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop ciclo-pop" id="cicloPop" hidden><div class="unit-list" id="cicloLista" role="group" aria-labelledby="lblCiclo"></div></div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span>
+        <div class="unit">
+          <button type="button" class="unit-trigger" id="unitTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="unitPop" aria-describedby="lblBu">
+            <span class="unit-pais" id="unitPais">—</span><span class="unit-sep" aria-hidden="true">›</span><span class="unit-site" id="unitSite">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop" id="unitPop" role="dialog" aria-label="Select unit: country and site" data-i18n-aria="a.unidade" hidden>
+            <div class="unit-col"><span class="unit-h" id="unitHPais" data-i18n="u.pais">Country</span><div class="unit-list" id="unitPaises" role="group" aria-labelledby="unitHPais"></div></div>
+            <div class="unit-col"><span class="unit-h" id="unitHSite">Site</span><div class="unit-list" id="unitSites" role="group" aria-labelledby="unitHSite"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Years:</span>
+        <div class="unit anos">
+          <button type="button" class="unit-trigger" id="anosTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="anosPop" aria-describedby="lblAno">
+            <span id="anosTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop anos-pop" id="anosPop" hidden>
+            <span class="unit-h" id="dicaAnos" data-i18n="a.anos">Years shown in the charts</span>
+            <div class="anos-grid" role="group" aria-labelledby="lblAno" aria-describedby="dicaAnos" data-filter="ano"></div>
+            <div class="anos-acoes"><button type="button" data-anos="todos" data-i18n="a.anosTodos">All</button><button type="button" data-anos="ultimos" data-i18n="a.anosUltimos">Last 5</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblSerie" data-i18n="f.serie">Series:</span><div class="seg" role="group" aria-labelledby="lblSerie" data-filter="serie"></div></div>
+      <div class="filter"><span class="filter-label" id="lblDelta">Delta:</span>
+        <button type="button" class="switch" id="deltaSwitch" role="switch" aria-checked="true" aria-labelledby="lblDelta"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="fs-tools" role="group" aria-label="Colors and full screen" data-i18n-aria="a.fs">
+      <div class="cores">
+        <button type="button" class="fs-btn" id="coresBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="coresPop" aria-label="Colors" title="Colors" data-i18n-aria="k.abrir" data-i18n-title="k.abrir"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7.5" cy="11" r="1.3" fill="currentColor"/><circle cx="10.5" cy="7.3" r="1.3" fill="currentColor"/><circle cx="15" cy="7.8" r="1.3" fill="currentColor"/></svg></button>
+        <div class="cores-pop" id="coresPop" role="dialog" aria-label="Colors" data-i18n-aria="k.titulo" hidden></div>
+      </div>
+      <button type="button" class="fs-btn js-full" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-row">
+    <div class="site-id">
+      <h3 class="site" id="buName">—</h3>
+    </div>
+    <div class="panel-meta">
+          <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
+            <li id="legB"><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+            <li id="legAF"><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
+          </ul>
+          <p class="updated" data-i18n="l.hist">Annual evolution — each year from the latest load up to the cycle</p>
+          <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
+    </div>
+  </div>
+
+  <div class="dash" id="dash"></div>
+</main>
+
+<div class="tip" id="tip" hidden></div>
+<div class="color-palette" id="chartPalette" role="listbox" aria-label="Color palette"></div>
+
+<script>window.VBM_SETUP = { idiomaPadrao: 'en' }; /* COO: inglês até a pessoa escolher outro idioma */</script>
+<script>
+/* ═══ Setup Dashboards — barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Colar num <script> logo depois da marcação (setup-dashboards.html), ANTES do script do dashboard.
+   Configuração opcional, declarada antes deste script:
+     window.VBM_SETUP = {
+       idiomaPadrao: 'pt-BR' | 'en',          // sem escolha salva; padrão 'pt-BR'
+       numeroPadrao: 'pt-BR' | 'en-CA',       // sem escolha salva; padrão: pelo idioma do navegador
+       urlUsuario: '/api/me'                  // { nome, email, cargo } — rota do Portal (Kaizen)
+     };
+   Preferências por pessoa no navegador, com as MESMAS chaves do Kaizen e do Studio,
+   para valerem em todas as aplicações do Portal: vdt-theme, vdt-lang, vdt-num.
+   API para o dashboard (window.VBMSetup):
+     t(chave, vars)         texto no idioma atual ('Olá {nome}' + { nome: 'Ana' })
+     registrar(dic)         { 'pt-BR': { chave: texto }, en: { … } } — textos do dashboard
+     traduzir(raiz?)        aplica data-i18n / -aria / -title / -ph em raiz (padrão: document)
+     fmt(valor, casas)      número no formato escolhido (Brasil 1.234,56 · Canadá 1,234.56)
+     dataHora(data)         data e hora no idioma escolhido
+     on('tema'|'idioma'|'numero', fn)   redesenhar o que o JS monta
+     tema / idioma / numero (leitura) */
+window.VBMSetup = (function () {
+  'use strict';
+  var CFG = window.VBM_SETUP || {};
+  var CHAVES = { tema: 'vdt-theme', idioma: 'vdt-lang', numero: 'vdt-num' };
+  var IDIOMAS = ['pt-BR', 'en'], NUMEROS = ['pt-BR', 'en-CA'];
+  var DIC = {
+    'pt-BR': { 'sd.menu': 'Menu', 'sd.configuracoes': 'Configurações', 'sd.fechar': 'Fechar', 'sd.tema': 'Tema', 'sd.claro': 'Claro', 'sd.escuro': 'Escuro',
+      'sd.idioma': 'Idioma', 'sd.idiomaInfo': 'Idioma da interface', 'sd.numero': 'Formato numérico', 'sd.numeroInfo': 'Separador decimal e de milhar dos gráficos',
+      'sd.numeroBR': 'Brasil — 1.234,56', 'sd.numeroCA': 'Canadá — 1,234.56' },
+    en: { 'sd.menu': 'Menu', 'sd.configuracoes': 'Settings', 'sd.fechar': 'Close', 'sd.tema': 'Theme', 'sd.claro': 'Light', 'sd.escuro': 'Dark',
+      'sd.idioma': 'Language', 'sd.idiomaInfo': 'Interface language', 'sd.numero': 'Number format', 'sd.numeroInfo': 'Decimal and thousands separators in charts',
+      'sd.numeroBR': 'Brazil — 1.234,56', 'sd.numeroCA': 'Canada — 1,234.56' }
+  };
+  var ouvintes = { tema: [], idioma: [], numero: [] };
+  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* só nesta sessão */ } }
+  function avisar(evt) { ouvintes[evt].forEach(function (fn) { try { fn(estado[evt]); } catch (e) { console.error('[setup-dashboards]', e); } }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  var estado = {
+    tema: ler(CHAVES.tema) === 'dark' ? 'dark' : 'light',
+    idioma: IDIOMAS.indexOf(ler(CHAVES.idioma)) >= 0 ? ler(CHAVES.idioma) : (IDIOMAS.indexOf(CFG.idiomaPadrao) >= 0 ? CFG.idiomaPadrao : 'pt-BR'),
+    numero: NUMEROS.indexOf(ler(CHAVES.numero)) >= 0 ? ler(CHAVES.numero)
+      : NUMEROS.indexOf(CFG.numeroPadrao) >= 0 ? CFG.numeroPadrao : (/^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR')
+  };
+
+  function t(chave, vars) {
+    var s = (DIC[estado.idioma] || {})[chave];
+    if (s == null) s = DIC['pt-BR'][chave];
+    if (s == null) return chave;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : s;
+  }
+  function registrar(dic) {
+    Object.keys(dic || {}).forEach(function (l) { DIC[l] = DIC[l] || {}; for (var k in dic[l]) DIC[l][k] = dic[l][k]; });
+  }
+  function traduzir(raiz) {
+    raiz = raiz || document;
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+    });
+  }
+  function fmt(v, casas) {
+    return Number(v).toLocaleString(estado.numero, { minimumFractionDigits: casas, maximumFractionDigits: casas }).replace('-', '−');
+  }
+  function dataHora(d) {
+    var l = estado.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l) + ' ' + d.toLocaleTimeString(l);
+  }
+
+  // ── Tema: data-bg (barra e painel) + data-theme (tokens do dashboard) ──
+  function aplicarTema(tema, salvar) {
+    estado.tema = tema === 'dark' ? 'dark' : 'light';
+    var html = document.documentElement;
+    html.setAttribute('data-bg', estado.tema);
+    html.setAttribute('data-theme', estado.tema);
+    if ($('btnWhite')) $('btnWhite').classList.toggle('active', estado.tema === 'light');
+    if ($('btnBusiness')) $('btnBusiness').classList.toggle('active', estado.tema === 'dark');
+    if (salvar) { gravar(CHAVES.tema, estado.tema); avisar('tema'); }
+  }
+  function aplicarIdioma(l, salvar) {
+    estado.idioma = IDIOMAS.indexOf(l) >= 0 ? l : 'pt-BR';
+    document.documentElement.lang = estado.idioma;
+    if ($('langSelect')) $('langSelect').value = estado.idioma;
+    traduzir();
+    if (salvar) { gravar(CHAVES.idioma, estado.idioma); avisar('idioma'); }
+  }
+  function aplicarNumero(n, salvar) {
+    estado.numero = NUMEROS.indexOf(n) >= 0 ? n : 'pt-BR';
+    if ($('numSelect')) $('numSelect').value = estado.numero;
+    if (salvar) { gravar(CHAVES.numero, estado.numero); avisar('numero'); }
+  }
+
+  // ── Painel de Configurações (engrenagem) ──
+  var btn = $('settingsBtn'), painel = $('settingsPanel'), fundo = $('settingsBackdrop');
+  function abrir(sim) {
+    if (!painel) return;
+    painel.classList.toggle('open', sim); fundo.classList.toggle('open', sim);
+    btn.setAttribute('aria-expanded', String(sim)); painel.setAttribute('aria-hidden', String(!sim));
+    if (sim) { var f = painel.querySelector('.theme-toggle-btn.active') || painel.querySelector('button'); if (f) f.focus(); } else btn.focus();
+  }
+  if (btn && painel && fundo) {
+    btn.addEventListener('click', function () { abrir(!painel.classList.contains('open')); });
+    $('settingsClose').addEventListener('click', function () { abrir(false); });
+    fundo.addEventListener('click', function () { abrir(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && painel.classList.contains('open')) abrir(false); });
+    $('btnWhite').addEventListener('click', function () { aplicarTema('light', true); });
+    $('btnBusiness').addEventListener('click', function () { aplicarTema('dark', true); });
+    $('langSelect').addEventListener('change', function (e) { aplicarIdioma(e.target.value, true); });
+    $('numSelect').addEventListener('change', function (e) { aplicarNumero(e.target.value, true); });
+  }
+
+  // ── Tela cheia: html.is-fs (a barra superior sai de cena pelo CSS) ──
+  document.addEventListener('fullscreenchange', function () {
+    document.documentElement.classList.toggle('is-fs', !!document.fullscreenElement);
+    if (document.fullscreenElement) abrir(false);
+  });
+
+  // ── Usuário logado: nome, cargo e iniciais (rota do Portal) ──
+  fetch(CFG.urlUsuario || '/api/me', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (me) {
+      if (!me || !$('topnavUser')) return;
+      var nome = String(me.nome || me.email || '').trim();
+      if (!nome) return;
+      var partes = nome.split(/\s+/);
+      $('topnavUserName').textContent = nome;
+      $('topnavUserRole').textContent = me.cargo || '';
+      $('topnavUserAvatar').textContent = ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+      $('topnavUserAvatar').title = nome;
+      $('topnavUser').hidden = false;
+    })
+    .catch(function () { /* sem a rota (ex.: fora do Portal): a barra fica sem o usuário */ });
+
+  aplicarTema(estado.tema, false);
+  aplicarNumero(estado.numero, false);
+  aplicarIdioma(estado.idioma, false);
+
+  return {
+    t: t, registrar: registrar, traduzir: traduzir, fmt: fmt, dataHora: dataHora,
+    on: function (evt, fn) { if (ouvintes[evt]) ouvintes[evt].push(fn); },
+    get tema() { return estado.tema; }, get idioma() { return estado.idioma; }, get numero() { return estado.numero; }
+  };
+})();
+/* ═══ fim Setup Dashboards ═══ */
+</script>
+<script>
+(function () {
+  'use strict';
+  // ── Textos do dashboard nos dois idiomas (Setup Dashboards: VBMSetup) ──
+  var T = VBMSetup.t;
+  VBMSetup.registrar({
+    'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Business Units:', 'f.year': 'Anos:',
+      'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Cores e tela cheia',
+      'a.anos': 'Anos exibidos nos gráficos', 'a.anoUltimo': 'Pelo menos um ano fica visível', 'a.anosTodos': 'Todos', 'a.anosUltimos': 'Últimos 5', 'a.nAnos': '{n} anos',
+      'f.serie': 'Séries:', 'a.serieAF': 'Mostrar ou ocultar Actual/Forecast', 'a.serieB': 'Mostrar ou ocultar Budget', 'a.serieUltima': 'Pelo menos uma série fica visível',
+      'a.deltaBA': 'Delta: Budget → Act/Fcst de cada ano', 'a.deltaAno': 'Delta: variação em relação ao ano anterior', 'g.variacaoAno': 'variação sobre o ano anterior',
+      'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
+      'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.hist': 'Evolução anual — cada ano com a carga mais recente até o ciclo',
+      'q.semKpi': 'KPI não retornado pela query (layout: {nome})', 'q.semUnid': 'unidade ausente na query (SG_UNID)', 'q.semDec': 'casas decimais ausentes na query (VL_CASADECIMAL) — usando {n}',
+      'q.via': 'ligado por {via} ao card "{nome}"', 'q.viaApelido': 'apelido do código', 'q.viaOrdem': 'ID_ORDEM (nome diferente do layout)', 'q.viaRegra': 'regra do IR', 'q.vazio': 'Não retornado pela query',
+      'c.notaInterm': 'Os dados apresentados neste gráfico incluem a produção de intermediários.',
+      'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido', 'c.capex': 'CAPEX exibido',
+      'g.semDado': 'sem dado', 'g.variacao': 'variação',
+      'k.abrir': 'Cores', 'k.titulo': 'Cores', 'k.b': 'Barras comparativas (Budget)', 'k.af': 'Barras principais (Act/Fcst)',
+      'k.fundo': 'Fundo do gráfico', 'k.dUp': 'Delta favorável', 'k.dDown': 'Delta desfavorável', 'k.dFlat': 'Delta neutro', 'k.conector': 'Conectores',
+      'k.semFundo': 'sem fundo', 'k.restaurarCol': 'Restaurar cores das colunas',
+      'k.padrao': 'padrão', 'k.restaurar': 'Restaurar cores padrão', 'k.paleta': 'Paleta', 'k.escolher': 'Escolher a cor de {serie}',
+      'k.modo': 'Modo de coloração', 'k.grupo': 'Por grupo', 'k.coluna': 'Por coluna', 'k.colunas': 'Cores das colunas', 'k.limpar': 'Restaurar a cor padrão de {serie}',
+      'k.tagPaleta': 'paleta', 'k.porValor': 'por valor', 'k.pNenhuma': 'Nenhuma', 'k.pVale': 'Paleta VBM', 'k.pExecutiva': 'Paleta Executiva',
+      'k.grade': 'Paleta de cores', 'k.pAzul': 'Azul Monocromático', 'k.pVerde': 'Verde Monocromático', 'k.pPerformance': 'Escala de Performance', 'k.pGradiente': 'Escala Gradiente',
+      'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
+      's.consultando': 'Consultando o banco de dados…', 's.semConexao': 'Sem conexão com o banco de dados.', 's.semIndicadores': 'A consulta não trouxe indicadores anuais.',
+      's.semValores': 'A consulta não trouxe valores anuais para {bu}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).', 's.semSites': 'A consulta não trouxe Business Units com dados anuais.',
+      'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados anuais',
+      'b.desatualizado': 'banco indisponível: últimos dados lidos', 's.desatualizado': 'O banco não respondeu; estes são os últimos dados lidos (veja a hora em Última atualização).' },
+    en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Business Units:', 'f.year': 'Years:',
+      'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Colors and full screen',
+      'a.anos': 'Years shown in the charts', 'a.anoUltimo': 'At least one year stays visible', 'a.anosTodos': 'All', 'a.anosUltimos': 'Last 5', 'a.nAnos': '{n} years',
+      'f.serie': 'Series:', 'a.serieAF': 'Show or hide Actual/Forecast', 'a.serieB': 'Show or hide Budget', 'a.serieUltima': 'At least one series stays visible',
+      'a.deltaBA': 'Delta: Budget → Act/Fcst of each year', 'a.deltaAno': 'Delta: change from the previous year', 'g.variacaoAno': 'change from previous year',
+      'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
+      'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.hist': 'Annual evolution — each year from the latest load up to the cycle',
+      'q.semKpi': 'KPI not returned by the query (layout: {nome})', 'q.semUnid': 'unit missing in the query (SG_UNID)', 'q.semDec': 'decimals missing in the query (VL_CASADECIMAL) — using {n}',
+      'q.via': 'linked by {via} to card "{nome}"', 'q.viaApelido': 'code alias', 'q.viaOrdem': 'ID_ORDEM (name differs from layout)', 'q.viaRegra': 'IR rule', 'q.vazio': 'Not returned by the query',
+      'c.notaInterm': 'The data presented in this chart includes intermediates production.',
+      'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown', 'c.capex': 'CAPEX shown',
+      'g.semDado': 'no data', 'g.variacao': 'variance',
+      'k.abrir': 'Colors', 'k.titulo': 'Colors', 'k.b': 'Comparison bars (Budget)', 'k.af': 'Main bars (Act/Fcst)',
+      'k.fundo': 'Chart background', 'k.dUp': 'Favorable delta', 'k.dDown': 'Unfavorable delta', 'k.dFlat': 'Neutral delta', 'k.conector': 'Connectors',
+      'k.semFundo': 'none', 'k.restaurarCol': 'Restore column colors',
+      'k.padrao': 'default', 'k.restaurar': 'Restore default colors', 'k.paleta': 'Palette', 'k.escolher': 'Choose the color of {serie}',
+      'k.modo': 'Coloring mode', 'k.grupo': 'By group', 'k.coluna': 'By column', 'k.colunas': 'Column colors', 'k.limpar': 'Restore the default color of {serie}',
+      'k.tagPaleta': 'palette', 'k.porValor': 'by value', 'k.pNenhuma': 'None', 'k.pVale': 'VBM palette', 'k.pExecutiva': 'Executive palette',
+      'k.grade': 'Color palette', 'k.pAzul': 'Monochrome blue', 'k.pVerde': 'Monochrome green', 'k.pPerformance': 'Performance scale', 'k.pGradiente': 'Gradient scale',
+      'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
+      's.consultando': 'Querying the database…', 's.semConexao': 'No connection to the database.', 's.semIndicadores': 'The query returned no annual indicators.',
+      's.semValores': 'The query returned no annual values for {bu}.', 's.erro': 'Could not query the database ({msg}).', 's.semSites': 'The query returned no Business Units with annual data.',
+      'b.erro': 'no database connection', 'b.carregando': 'loading…', 'b.vazio': 'no annual data',
+      'b.desatualizado': 'database unavailable: last data read', 's.desatualizado': 'The database did not respond; these are the last data read (see the time in Last updated).' }
+  });
+  VBMSetup.traduzir();
+
+  // ── Indicadores de cada BU: os mesmos cards do COO Business Units Dashboard ──
+  // Cards de cada site vêm do cadastro do banco (IBP.DASHBOARD, ID_DASH do COO): um card por KPI,
+  // na ordem do ID_ORDEM, com título (NM_KPIS_DASH), unidade e casas decimais do banco (vazio = 0).
+  // Painel: ID_OPERACAO 11 = Financial Drivers; os demais, Production Drivers.
+  var SEM_DADOS = 'c.semDados'; // chave do texto (VBMSetup.t)
+  var OPERACAO_FINANCEIRA = 11, CASAS_PADRAO = 0;
+  function k(t, dec, pol, extra) {
+    var c = { t: t, dec: dec, pol: pol || 'up' };
+    for (var x in extra) c[x] = extra[x];
+    return c;
+  }
+  // Cards com seletor: KPIs do site que batem com as opções (nome em IBP.DASHBOARD e, se houver,
+  // trecho da unidade) viram UM card com botões — só quando 2 ou mais opções existem no site.
+  // Padrão do código; a configuração gravada no banco (aplicarConfig) substitui as opções.
+  var SELETORES = {
+    CAPEX_MINA: { label: 'c.capex', pol: 'down', opcoes: [
+      { chave: 'cost', lbl: 'Cost', kpi: ['CAPEX'] },
+      { chave: 'sus', lbl: 'Sustaining', kpi: ['CAPEX Sustaining'] },
+      { chave: 'gcap', lbl: 'G Cap Rep', kpi: ['CAPEX G Cap Rep'] }] },
+    ALL_IN: { label: 'c.componente', pol: 'down', opcoes: [
+      { chave: 'allin', lbl: 'All-in', kpi: ['All-in'], unid: /k/i },
+      { chave: 'byp', lbl: 'By Product', kpi: ['All-in | By Product', 'By Product'], unid: /k/i },
+      { chave: 'sus', lbl: 'Sustaining', kpi: ['All-in | Sustaining', 'Sustaining'], unid: /k/i },
+      { chave: 'cost', lbl: 'Cost', kpi: ['All-in | Cost', 'Cost'], unid: /k/i }] },
+    TEOR_CU_AU: { label: 'c.teor', pol: 'up', opcoes: [
+      { chave: 'cu', lbl: 'Cu', kpi: ['Copper Feed Grade'] },
+      { chave: 'au', lbl: 'Au', kpi: ['Gold Feed Grade'] }] }
+  };
+  // Polaridade do delta: estes KPIs são melhores quando menores (custos); os demais, quando maiores
+  var MENOR_MELHOR = ['COGS', 'CAPEX', 'CAPEX Sustaining', 'CAPEX G Cap Rep', 'All-in', 'C1 unit cash cost',
+    'Lateral Mine Development Cost', 'Vale - Lateral Mine Development Cost', 'Mining Production Expenses'].map(normalizar);
+  // Nota de rodapé do PDF por site (prefixo do nome normalizado → KPIs): produção com intermediários
+  var NOTAS = { oncapuma: ['Finished Nickel'], ontario: ['Finished Nickel', 'Copper Production'] };
+  // International Refineries: os cards de produção leem o site de cada refinaria (`filho`: prefixo do
+  // nome normalizado; ver IR_FILHOS e preencherFilhos); o painel financeiro vem do cadastro da IR
+  var MODELO_IR = { cls: 'dash--ir', colsProd: 1, prod: [k('Clydach Production', 1, 'up', { filho: 'clydach' }),
+    k('Matsuzaka Production', 1, 'up', { kpi: ['Matsusaka Production'], filho: 'mats' })] };
+  function ehIR(nome) { var n = normalizar(nome); return n === 'ir' || n === 'internationalrefineries'; }
+
+  function copiarCards(lista, prefixo) {
+    return lista.map(function (c, i) {
+      var card = {};
+      for (var x in c) card[x] = c[x];
+      card.id = prefixo + i;
+      card.vazio = SEM_DADOS;
+      return card;
+    });
+  }
+  // Visão de um site: os painéis são montados com o cadastro quando os indicadores chegam (preencher)
+  function criarVisao(nome) {
+    var ir = ehIR(nome);
+    return { cls: ir ? MODELO_IR.cls : '', colsProd: ir ? 1 : 3, rows: 3, titulo: nome, ir: ir, paineis: [
+      { titulo: 'Production Drivers', cls: 'panel-prod', cards: ir ? copiarCards(MODELO_IR.prod, 'p') : [] },
+      { titulo: 'Financial Drivers', cls: 'panel-fin', cards: [] }
+    ] };
+  }
+  // Configuração gravada no banco (o mesmo registro do COO): opções dos seletores e apelidos de KPI.
+  // Aplicada uma vez, antes de montar as telas; sem configuração, valem as definições acima.
+  function aplicarConfig(cfg) {
+    if (!cfg) return;
+    var sels = cfg.seletores || {}, apel = cfg.apelidos || {};
+    Object.keys(sels).forEach(function (cod) {
+      var base = SELETORES[cod] || { label: 'c.componente', pol: 'up' };
+      SELETORES[cod] = { label: base.label, pol: base.pol, opcoes: sels[cod].opcoes.map(function (o) {
+        var antiga = (base.opcoes || []).filter(function (x) { return x.chave === o.chave; })[0];
+        return { chave: o.chave, lbl: o.lbl, kpi: [o.titulo].concat(o.kpi || []),
+          unid: o.unid ? new RegExp(o.unid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : antiga && antiga.unid };
+      }) };
+    });
+    MODELO_IR.prod.forEach(function (c) { if (apel[c.t]) c.kpi = apel[c.t].slice(); });
+  }
+  var VISOES = {}; // nome do site → visão (criada em aplicarFiltros, com os sites da consulta)
+  var VAZIA = criarVisao('');
+  function visao() { return VISOES[state.bu] || VAZIA; }
+  // Alternativa exibida num card com seletor (teores, All-in…): a escolhida ou a primeira
+  function selDe(ind) { var k = state.sel[ind.id]; return ind.alt[k] ? k : altChaves(ind)[0]; }
+  // Opções de um card com seletor na ordem do ID_ORDEM da query (sem dados: no fim, na ordem do PDF)
+  function altChaves(ind) {
+    var ks = Object.keys(ind.alt), o = function (k) { var v = ind.alt[k].ordem; return isNaN(v) || v == null ? Infinity : v; };
+    return ks.slice().sort(function (a, b) { return (o(a) - o(b)) || (ks.indexOf(a) - ks.indexOf(b)); });
+  }
+  // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
+  function normalizar(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+
+  // ── Estado dos filtros ──
+  // Meses no idioma escolhido: só o rótulo do ciclo ("Out/26")
+  var MESES_IDIOMA = {
+    'pt-BR': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  };
+  function mesCurto(i) { return (MESES_IDIOMA[VBMSetup.idioma] || MESES_IDIOMA.en)[i]; }
+  // Unidades e anos: preenchidos com o resultado da consulta (aplicarFiltros)
+  var UNIDADES = [], ANOS = [];
+  // anos: anos exibidos nos gráficos (filtro Anos; todos por padrão)
+  // serie: 'ba' Budget e Actual/Forecast (com delta) · 'af' só Actual/Forecast · 'b' só Budget
+  var state = { ciclo: '', pais: '', bu: '', anos: [], serie: 'ba', delta: 'on', sel: {} };
+  // ── Navegação no endereço (?ciclo=&site=&anos=&serie=&delta=&sel=): o refresh volta à mesma tela e o link
+  // pode ser compartilhado. Lida uma vez na carga e validada contra os filtros da consulta (aplicarFiltros)
+  var CICLOS = [], CICLO_URL = (function () { try { return new URLSearchParams(location.search).get('ciclo') || ''; } catch (e) { return ''; } })();
+  // "Out/26" no idioma escolhido (mês do DT_REF da carga)
+  function rotuloCiclo(c) { var p = String(c || '').split('-'); return p.length === 2 ? mesCurto(Number(p[1]) - 1) + '/' + p[0].slice(2) : '—'; }
+  var URL_INI = (function () {
+    try {
+      var q = new URLSearchParams(location.search);
+      return q.has('site') || q.has('anos') ? { site: q.get('site'), anos: String(q.get('anos') || '').split(',').map(Number).filter(Boolean), serie: q.get('serie'), delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
+    } catch (e) { return null; }
+  })();
+  function salvarUrl() {
+    if (!state.bu) return; // ainda carregando: não apaga o endereço recebido
+    try {
+      var q = new URLSearchParams(location.search);
+      if (state.ciclo) q.set('ciclo', state.ciclo);
+      q.set('site', state.bu);
+      if (state.anos.length && state.anos.length < ANOS.length) q.set('anos', state.anos.join(',')); else q.delete('anos');
+      if (state.serie !== 'ba') q.set('serie', state.serie); else q.delete('serie');
+      if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
+      var sel = Object.keys(state.sel).filter(function (k) { return state.sel[k]; }).map(function (k) { return k + '.' + state.sel[k]; }).join(',');
+      if (sel) q.set('sel', sel); else q.delete('sel');
+      // ?verificar=1 é preservado (o URLSearchParams parte do endereço atual)
+      var novo = location.pathname + '?' + q.toString() + location.hash;
+      if (novo !== location.pathname + location.search + location.hash) history.replaceState(null, '', novo);
+    } catch (e) { /* sem History API: segue sem guardar */ }
+  }
+  // Anos exibidos, em ordem
+  function anosVisiveis() { return ANOS.filter(function (a) { return state.anos.indexOf(a) >= 0; }); }
+  // Letra da barra A/F do ano quando a consulta não a trouxer: ano anterior ao do ciclo = Actual
+  function letraPadrao(ano) { return ano < Number(String(state.ciclo).slice(0, 4)) ? 'A' : 'F'; }
+
+  // Formato numérico escolhido nas Configurações (Brasil 1.234,56 · Canadá 1,234.56)
+  function fmt(v, dec) { return VBMSetup.fmt(v, dec); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // Delta = A/F − B, na unidade e com as casas decimais do próprio indicador (sem % nem p.p.).
+  function delta(b, a, ind, dec) {
+    var f = Math.pow(10, dec), d = Math.round((a - b) * f) / f;
+    var txt = (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d), dec);
+    var fav = ind.pol === 'down' ? d < 0 : d > 0;
+    return { txt: txt, cls: d === 0 ? 'is-flat' : fav ? 'is-good' : 'is-bad', d: d };
+  }
+
+  function view(ind) {
+    if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, dec: ind.dec, falta: ind.falta || null, via: ind.via || '', tPdf: ind.tPdf || ind.t };
+    var alt = ind.alt[selDe(ind)];
+    return { t: alt.t || ind.t, d: alt.d, u: alt.u, dec: alt.dec != null ? alt.dec : ind.dec, falta: alt.falta || null, via: alt.via || '', tPdf: alt.tPdf || alt.t };
+  }
+
+  // ── Conferência com a query: o que o card mostra sem vir do banco ──
+  // Sempre visível: KPI não retornado, unidade (SG_UNID) e casas decimais (VL_CASADECIMAL) ausentes.
+  // Com ?verificar=1: também como o card foi ligado ao KPI quando não foi pelo nome exato.
+  var VERIFICAR = (function () { try { return new URLSearchParams(location.search).get('verificar') === '1'; } catch (e) { return false; } })();
+  function faltaNaQuery(l) { return { kpi: false, unid: !String(l.SG_UNID || '').trim(), dec: l.CASA_DECIMAL == null }; }
+  function avisosQuery(v) {
+    var f = v.falta, a = [];
+    if (f && f.kpi) a.push(T('q.semKpi', { nome: v.tPdf }));
+    else if (f) { if (f.unid) a.push(T('q.semUnid')); if (f.dec) a.push(T('q.semDec', { n: v.dec })); }
+    if (VERIFICAR && v.d && v.via && v.via !== 'nome') a.push(T('q.via', { via: v.via === 'apelido' ? T('q.viaApelido') : v.via === 'ID_ORDEM' ? T('q.viaOrdem') : T('q.viaRegra'), nome: v.tPdf }));
+    return a;
+  }
+
+  // ── Gráfico: altura e largura contidas (ritmo do print) ──
+  // Mesmo desenho do COO (barras, valores, cota de diferença). Todas as colunas numa régua única, com o
+  // MESMO passo entre elas (Budget → Actual/Forecast igual a Actual/Forecast → próximo ano), centrada no card.
+  // Séries (filtro Séries): Budget e/ou Act/Fcst. Delta com as duas: Budget → Act/Fcst do ano; com uma só:
+  // variação da série em relação ao ano anterior exibido (mesma cota, entre colunas vizinhas).
+  var SERIES = { ba: ['B', 'AF'], af: ['AF'], b: ['B'] };
+  var MAX_W = 380, MAX_H = 190; // mesmo tamanho no modo normal e em tela cheia
+  function chartSvg(ind, W, H) {
+    var v = view(ind), anos = anosVisiveis(), series = SERIES[state.serie] || SERIES.ba;
+    var comDelta = state.delta === 'on', MB = 16;
+    // Colunas do gráfico na ordem (ano a ano, na ordem das séries), com o valor e a letra A/F
+    var cols = [];
+    anos.forEach(function (a) {
+      var d = v.d && v.d[a] ? v.d[a] : [null, null, null];
+      series.forEach(function (s) { cols.push({ ano: a, s: s, v: s === 'B' ? d[0] : d[1], letra: d[2] || letraPadrao(a) }); });
+    });
+    if (!cols.some(function (c) { return c.v != null; })) { // sem dados: só a linha de base e o aviso
+      var yv0 = H - MB, MT0 = comDelta ? 46 : 20;
+      return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
+        '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
+        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT0 + yv0) / 2) + '" text-anchor="middle">' + esc(T(v.falta && v.falta.kpi ? 'q.vazio' : ind.vazio)) + '</text>' : '') + '</svg>';
+    }
+    // Régua única: passo proporcional à largura do card (até 48 px, barra de até ~30 px), centrada
+    var nb = cols.length, passo = Math.min(W / (nb + 0.4), 48), BW = passo * 0.62;
+    var x0 = (W - ((nb - 1) * passo + BW)) / 2;
+    cols.forEach(function (c, j) { c.x = x0 + j * passo; c.k = chaveColuna(c.ano, c.s); });
+    // [RESPONSIVO] valores e rótulos — a fonte encolhe até o maior número caber no passo (máx. 11 px valor,
+    // 9,5 px eixo; mín. 7 px). Se nem 7 px couber (muitos anos), os valores alternam em dois níveis
+    // Mesma regra em TODOS os gráficos da página: a fonte sai do maior número entre todos os cards (não só
+    // deste), para valores e deltas terem o mesmo tamanho lado a lado
+    var maxCar = maxCarPagina();
+    cols.forEach(function (c) { if (c.v != null) maxCar = Math.max(maxCar, fmt(c.v, v.dec).length); });
+    var cabe = (passo - 2) / (maxCar * 0.6), fsVal = Math.max(7, Math.min(11, cabe));
+    var stVal = fsVal < 11 ? ' style="font-size:' + fsVal.toFixed(1) + 'px"' : '', degrauVal = cabe < 7 ? 11 : 0;
+    var fsEixo = Math.max(7, Math.min(9.5, (passo - 2) / 1.9)), stEixo = fsEixo < 9.5 ? ' style="font-size:' + fsEixo.toFixed(1) + 'px"' : '';
+    // Deltas (ref → novo): com as duas séries, Budget → Act/Fcst de cada ano; com uma, ano anterior → ano.
+    // Pílulas lado a lado ou, sem espaço, em dois níveis alternados
+    var pares = [], porAno = series.length === 2, distPill = porAno ? 2 * passo : passo;
+    if (comDelta) for (var p = porAno ? 0 : 1; p < cols.length; p += porAno ? 2 : 1) {
+      var ref = porAno ? cols[p] : cols[p - 1], novo = porAno ? cols[p + 1] : cols[p];
+      if (ref.v != null && novo.v != null) pares.push({ ref: ref, novo: novo, i: pares.length, dl: delta(ref.v, novo.v, ind, v.dec) });
+    }
+    // [RESPONSIVO] pílula do delta na mesma escala da fonte dos valores das barras: com fonte cheia (11 px)
+    // é o desenho do COO (texto 10,5 px, pílula 17 px); quando os valores encolhem, texto, pílula e afastamento
+    // encolhem junto — o delta nunca fica maior que os números das barras
+    var escala = fsVal / 11, fsDelta = 10.5 * escala, pillH = Math.max(11, Math.round(17 * escala)), folgaPill = Math.round(22 * escala);
+    var stDelta = escala < 1 ? ' style="font-size:' + fsDelta.toFixed(1) + 'px"' : '';
+    var pillW = function (dl) { return Math.max(38 * escala, (dl.txt.length * 5.8 + 14) * escala); };
+    var maiorPill = Math.max.apply(null, [0].concat(pares.map(function (x) { return pillW(x.dl); })));
+    var degrauPill = comDelta && distPill < maiorPill + 4 ? pillH + 4 : 0;
+    var MT = (comDelta ? folgaPill + pillH + 7 + degrauPill : 20) + degrauVal;
+    // escala única: todas as barras na mesma régua
+    var all = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null; });
+    var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
+    var lo = Math.min(0, Math.min.apply(null, all)), hi = Math.max(0, Math.max.apply(null, all));
+    if (hi === lo) hi = lo + 1;
+    if (folgaTopo) hi = hi / 0.72; // a coluna mais alta usa ~72% da altura
+    var y = function (val) { return MT + (hi - val) / (hi - lo) * (H - MT - MB); }, y0 = y(0);
+    var label = [v.t + ' (' + v.u + ').'];
+    // Linha do eixo contínua sob todas as colunas (2 px das bordas)
+    var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+    var nomeDe = function (c) { return c.s === 'B' ? 'Budget' : c.letra === 'A' ? 'Actual' : 'Forecast'; };
+    var rotDe = function (c) { return String(c.ano).slice(2) + (c.s === 'B' ? 'B' : c.letra); };
+
+    cols.forEach(function (c, j) {
+      var rot = rotDe(c), bx = c.x + BW / 2;
+      if (c.v === null) { out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(rot) + '</text>'; return; }
+      var yv = y(c.v), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = c.v < 0;
+      var fill = degradeDe(corDaColuna(cols, j, ind.pol), c.s === 'B' ? 'g-b' : 'g-a');
+      var tip = esc(rot + ' · ' + nomeDe(c) + ': ' + fmt(c.v, v.dec) + ' ' + v.u);
+      out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + c.x + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + fill + ')" data-tip="' + tip + '"/>';
+      // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
+      out += '<text class="b-val"' + stVal + ' x="' + bx + '" y="' + ((neg ? y0 : yv) - 6 - (degrauVal && j % 2 ? degrauVal : 0)) + '" text-anchor="middle">' + fmt(c.v, v.dec) + '</text>';
+      out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(rot) + '</text>';
+    });
+    anos.forEach(function (a) {
+      var doAno = cols.filter(function (c) { return c.ano === a; }), par = pares.filter(function (x) { return x.novo.ano === a; })[0];
+      label.push(a + ': ' + doAno.map(function (c) { return nomeDe(c) + ' ' + (c.v === null ? T('g.semDado') : fmt(c.v, v.dec)); }).join(', ') + (par ? ', ' + T(porAno ? 'g.variacao' : 'g.variacaoAno') + ' ' + par.dl.txt : '') + '.');
+    });
+
+    // Cota de diferença do Performance Hub: nível de referência tracejado, nível novo sólido, faixa,
+    // haste, fio guia e pílula (ref → novo)
+    pares.forEach(function (x) {
+      var x1 = x.ref.x + BW, x2 = x.novo.x, cx = (x1 + x2) / 2, yr = y(x.ref.v), yn = y(x.novo.v), dl = x.dl;
+      var ytop = Math.min(yr, yn, y0), pw = pillW(dl);
+      var pillY = Math.max(0, ytop - folgaPill - pillH - degrauVal - (degrauPill && x.i % 2 ? degrauPill : 0));
+      var g = '<g class="cota ' + dl.cls + '">';
+      g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
+      g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
+      if (Math.abs(yr - yn) > 0.5) {
+        g += '<rect class="' + (x.novo.v >= x.ref.v ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
+        g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
+      }
+      g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
+      g += '<rect class="d-pill" x="' + (cx - pw / 2) + '" y="' + pillY + '" width="' + pw + '" height="' + pillH + '" rx="' + pillH / 2 + '"/>';
+      g += '<text class="d-txt"' + stDelta + ' x="' + cx + '" y="' + (pillY + pillH * 0.71) + '" text-anchor="middle">' + esc(dl.txt) + '</text>';
+      out += g + '</g>';
+    });
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // Maior número (em caracteres, no formato e nas casas decimais de cada KPI) entre todos os gráficos da
+  // página, nos anos e séries exibidos — inclui as opções dos seletores (Cu/Au, All-in…), para a fonte não
+  // mudar ao trocar de opção. Calculado uma vez por desenho da página (render zera o valor guardado)
+  var MAXCAR_PAGINA = null;
+  function maxCarPagina() {
+    if (MAXCAR_PAGINA !== null) return MAXCAR_PAGINA;
+    var anos = anosVisiveis(), series = SERIES[state.serie] || SERIES.ba, n = 1;
+    visao().paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        (c.alt ? Object.keys(c.alt).map(function (k) { return c.alt[k]; }) : [c]).forEach(function (s) {
+          var dec = s.dec != null ? s.dec : c.dec;
+          anos.forEach(function (a) {
+            var d = s.d && s.d[a];
+            if (!d) return;
+            if (series.indexOf('B') >= 0 && d[0] != null) n = Math.max(n, fmt(d[0], dec).length);
+            if (series.indexOf('AF') >= 0 && d[1] != null) n = Math.max(n, fmt(d[1], dec).length);
+          });
+        });
+      });
+    });
+    return (MAXCAR_PAGINA = n);
+  }
+
+  function cardHtml(ind) {
+    var v = view(ind), ctl = '';
+    if (ind.alt) {
+      ctl = '<div class="seg" role="group" aria-label="' + esc(T(ind.altLabel)) + '">' + altChaves(ind).map(function (k) {
+        return '<button type="button" data-alt="' + k + '" data-for="' + ind.id + '" aria-pressed="' + (selDe(ind) === k) + '">' + esc(ind.alt[k].lbl) + '</button>';
+      }).join('') + '</div>';
+    }
+    return '<article class="card card-' + ind.id + '" id="card-' + ind.id + '">' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(String(v.u).replace(/^\s*\((.*)\)\s*$/, '$1')) + ')' : '&nbsp;') + '</p>' +
+      (function (a) { return a.length ? '<p class="card-chk" title="' + esc(a.join(' · ')) + '">⚠ ' + esc(a.join(' · ')) + '</p>' : ''; })(avisosQuery(v)) + '</div>' + ctl + '</div>' +
+      '<div class="chart" data-ind="' + ind.id + '"></div>' +
+      (ind.nota ? '<p class="card-nota"><sup>1</sup> ' + esc(T(ind.nota)) + '</p>' : '') +
+      '</article>';
+  }
+
+  function byId(id) {
+    var cards = [].concat.apply([], visao().paineis.map(function (p) { return p.cards; }));
+    return cards.filter(function (i) { return i.id === id; })[0];
+  }
+
+  function drawChart(el) {
+    var W = Math.min(MAX_W, Math.round(el.clientWidth)), H = Math.min(MAX_H, Math.round(el.clientHeight));
+    if (W < 60 || H < 44) return;
+    var key = W + 'x' + H + '|' + state.delta + '|' + state.serie + '|' + (state.sel[el.getAttribute('data-ind')] || '') + '|' + anosVisiveis().join(',');
+    if (el._key === key) return;
+    el._key = key;
+    el.innerHTML = chartSvg(byId(el.getAttribute('data-ind')), W, H);
+  }
+
+  // Largura única dos gráficos: a coluna mais estreita entre todos os painéis (até MAX_W). Cards em
+  // colunas mais largas ficam com essa largura, centralizados — mesmo tamanho de barra e mesmo
+  // espaçamento entre os anos em todos os gráficos da página
+  function igualarLarguras(grids) {
+    var menor = Infinity;
+    grids.forEach(function (g) {
+      getComputedStyle(g).gridTemplateColumns.split(' ').forEach(function (t) { var n = parseFloat(t); if (n > 0) menor = Math.min(menor, n); });
+    });
+    var dash = document.getElementById('dash');
+    if (isFinite(menor)) dash.style.setProperty('--chart-w', Math.min(MAX_W, Math.floor(menor)) + 'px');
+    else dash.style.removeProperty('--chart-w');
+  }
+
+  // Altura dos gráficos: até 190 px, o quanto couber para as três linhas ocuparem o painel
+  function ajustarAltura() {
+    var grids = [].slice.call(document.querySelectorAll('#dash .panel-grid')), N = visao().rows;
+    igualarLarguras(grids);
+    var gProd = grids[0], card = gProd && gProd.querySelector('.card');
+    if (!card) return;
+    // Telas estreitas ou baixas: painéis empilhados com altura fixa por linha (CSS). O cálculo abaixo
+    // aumentaria o espaçamento a cada redimensionamento do painel, sem fim
+    if (matchMedia('(max-width: 1180px), (max-height: 820px)').matches) {
+      grids.forEach(function (g) { g.style.rowGap = ''; });
+      document.documentElement.style.removeProperty('--head-h');
+      return;
+    }
+    var cs = getComputedStyle(card), GAP_MIN = 10;
+    var extra = parseFloat(cs.paddingTop) + (parseFloat(cs.rowGap) || 6);
+    function maiorCabeca(raiz) {
+      return Math.max.apply(null, [].map.call(raiz.querySelectorAll('.card-head'), function (h) { return h.offsetHeight; }));
+    }
+    // mede os cabeçalhos na altura natural e iguala todos pelo mais alto
+    document.documentElement.style.setProperty('--head-h', '0px');
+    document.documentElement.style.setProperty('--head-h', maiorCabeca(document) + 'px');
+    var livre = (gProd.clientHeight - (N - 1) * GAP_MIN) / N - (maiorCabeca(document) + extra);
+    var h = Math.max(90, Math.min(MAX_H, Math.floor(livre)));
+    document.documentElement.style.setProperty('--chart-h', h + 'px');
+    // espaço entre as linhas: 80% da sobra dividida entre as separações; o mesmo valor nos dois painéis
+    var gap = Math.min.apply(null, grids.map(function (g) {
+      return Math.floor((g.clientHeight - N * (h + maiorCabeca(g) + extra)) / (N - 1) * 0.8);
+    }));
+    grids.forEach(function (g) { g.style.rowGap = Math.max(GAP_MIN, gap) + 'px'; });
+  }
+  new ResizeObserver(ajustarAltura).observe(document.getElementById('dash'));
+
+  // Redesenha no tamanho real do espaço (sem distorcer texto); animação só no 1º desenho
+  var ro = new ResizeObserver(function (entries) { entries.forEach(function (en) { drawChart(en.target); }); });
+  var firstPaint = true;
+  function observeCharts() {
+    document.querySelectorAll('.chart[data-ind]').forEach(function (el) { ro.observe(el); drawChart(el); });
+    if (firstPaint) {
+      firstPaint = false;
+      setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600);
+    }
+  }
+
+  // Filtros sem nova consulta (os dados já estão na página): Anos (cada botão mostra/oculta o ano),
+  // Séries (Budget e/ou Act/Fcst: liga/desliga cada uma, pelo menos uma fica) e Delta (sempre disponível)
+  var OPCOES_SERIE = [['B', 'Budget', 'a.serieB'], ['AF', 'Act/Fcst', 'a.serieAF']];
+  var serieCodigo = function (lista) { return lista.length === 2 ? 'ba' : lista[0] === 'B' ? 'b' : 'af'; };
+  function renderFilters() {
+    document.querySelector('[data-filter="ano"]').innerHTML = ANOS.map(function (a) {
+      return '<button type="button" data-v="' + a + '" aria-pressed="' + (state.anos.indexOf(a) >= 0) + '">' + a + '</button>';
+    }).join('');
+    // "2017 – 2026" (anos seguidos) ou "6 anos"
+    var vis = anosVisiveis(), seguidos = vis.length && vis[vis.length - 1] - vis[0] === vis.length - 1;
+    document.getElementById('anosTxt').textContent = !vis.length ? '—' : vis.length === 1 ? String(vis[0]) : seguidos ? vis[0] + ' – ' + vis[vis.length - 1] : T('a.nAnos', { n: vis.length });
+    var ativas = SERIES[state.serie] || SERIES.ba;
+    document.querySelector('[data-filter="serie"]').innerHTML = OPCOES_SERIE.map(function (o) {
+      return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (ativas.indexOf(o[0]) >= 0) + '" title="' + esc(T(o[2])) + '">' + esc(o[1]) + '</button>';
+    }).join('');
+    var sw = document.getElementById('deltaSwitch');
+    sw.setAttribute('aria-checked', String(state.delta === 'on'));
+    sw.title = T(ativas.length === 2 ? 'a.deltaBA' : 'a.deltaAno');
+    document.getElementById('legB').hidden = state.serie === 'af';
+    document.getElementById('legAF').hidden = state.serie === 'b';
+    renderCicloSel();
+  }
+  function renderCicloSel() {
+    document.getElementById('cicloTxt').textContent = rotuloCiclo(state.ciclo);
+    document.getElementById('cicloLista').innerHTML = CICLOS.map(function (c) {
+      return '<button type="button" data-ciclo="' + esc(c) + '" aria-pressed="' + (c === state.ciclo) + '">' + esc(rotuloCiclo(c)) + '</button>';
+    }).join('');
+  }
+
+  function render() {
+    var vs = visao(), dash = document.getElementById('dash');
+    MAXCAR_PAGINA = null; // dados, anos, séries ou formato numérico podem ter mudado
+    document.getElementById('buName').textContent = state.bu || '—';
+    document.getElementById('unitPais').textContent = state.pais ? T('pais.' + state.pais) : '—';
+    var siteTxt = state.bu || '—';
+    document.getElementById('unitSite').textContent = siteTxt;
+    // nome longo: o botão mostra só o site, para não empurrar os filtros
+    var longo = (state.pais + siteTxt).length > 30 || normalizar(T('pais.' + state.pais)) === normalizar(siteTxt); // ou igual ao país ("IR › IR")
+    document.getElementById('unitPais').hidden = longo;
+    unitTrigger.querySelector('.unit-sep').hidden = longo;
+    unitTrigger.title = (state.pais ? T('pais.' + state.pais) : '—') + ' › ' + siteTxt;
+    ro.disconnect();
+    dash.className = 'dash ' + vs.cls;
+    dash.style.setProperty('--rows', vs.rows);
+    dash.innerHTML = vs.paineis.map(function (p, i) {
+      return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
+        '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + '</h3></div>' +
+        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(T(MSG_PAINEL)) + '</p>') + '</section>';
+    }).join('');
+    ajustarAltura();
+    observeCharts();
+    salvarUrl();
+  }
+
+  // ── Unidade: drill-down País → Site ──
+  var unitTrigger = document.getElementById('unitTrigger'), unitPop = document.getElementById('unitPop');
+  var paisNav = state.pais; // país sendo navegado no painel (ainda não aplicado)
+  function renderUnit() {
+    document.getElementById('unitPaises').innerHTML = UNIDADES.map(function (u) {
+      return '<button type="button" data-pais="' + esc(u.pais) + '" aria-current="' + (u.pais === paisNav) + '">' + esc(T('pais.' + u.pais)) + '<span class="n">' + u.sites.length + ' ›</span></button>';
+    }).join('');
+    var atual = UNIDADES.filter(function (u) { return u.pais === paisNav; })[0] || { sites: [] };
+    document.getElementById('unitSites').innerHTML = atual.sites.map(function (site) {
+      var on = site === state.bu && paisNav === state.pais;
+      return '<button type="button" data-site="' + esc(site) + '" aria-pressed="' + on + '">' + esc(site) + '</button>';
+    }).join('');
+  }
+  function abrirUnit(abrir) {
+    unitPop.hidden = !abrir;
+    unitTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) {
+      paisNav = state.pais;
+      renderUnit();
+      var sel = unitPop.querySelector('button[data-site][aria-pressed="true"]') || unitPop.querySelector('button[data-site]');
+      if (sel) sel.focus();
+    }
+  }
+  unitTrigger.addEventListener('click', function () { abrirUnit(unitPop.hidden); });
+  unitPop.addEventListener('click', function (e) {
+    // O painel é redesenhado ao escolher o país: sem isto, o clique chegaria ao
+    // documento com o alvo já fora da página e fecharia o painel.
+    e.stopPropagation();
+    var pb = e.target.closest('button[data-pais]'), sb = e.target.closest('button[data-site]');
+    if (pb) {
+      paisNav = pb.getAttribute('data-pais');
+      renderUnit();
+      var f = unitPop.querySelector('button[data-pais="' + paisNav + '"]');
+      if (f) f.focus();
+    } else if (sb) {
+      state.pais = paisNav;
+      state.bu = sb.getAttribute('data-site');
+      abrirUnit(false);
+      unitTrigger.focus();
+      atualizar();
+    }
+  });
+
+  // ── Ciclo: carga gravada (DT_REF). Trocar o ciclo relê os filtros e os indicadores até aquela carga;
+  // a unidade escolhida continua quando existir no ciclo
+  var cicloTrigger = document.getElementById('cicloTrigger'), cicloPop = document.getElementById('cicloPop');
+  function abrirCicloSel(abrir) {
+    cicloPop.hidden = !abrir;
+    cicloTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) {
+      renderCicloSel();
+      var sel = cicloPop.querySelector('button[aria-pressed="true"]') || cicloPop.querySelector('button');
+      if (sel) sel.focus();
+    }
+  }
+  cicloTrigger.addEventListener('click', function () { abrirCicloSel(cicloPop.hidden && CICLOS.length > 0); });
+  cicloPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var b = e.target.closest('button[data-ciclo]');
+    if (!b) return;
+    var c = b.getAttribute('data-ciclo');
+    abrirCicloSel(false);
+    cicloTrigger.focus();
+    if (c === state.ciclo) return;
+    state.ciclo = c;
+    filtrosPromessa = null;
+    renderCicloSel();
+    atualizar();
+  });
+
+  // ── Delta: interruptor liga/desliga ──
+  document.getElementById('deltaSwitch').addEventListener('click', function () {
+    state.delta = state.delta === 'on' ? 'off' : 'on';
+    renderFilters();
+    render();
+  });
+
+  // ── Cores: botão compacto ao lado da tela cheia, com a MESMA configuração do painel de Cores do
+  // VBM Performance Studio: Modo de Coloração (Por Grupo | Por Coluna); em Por Coluna, "Cores das
+  // colunas" com Paleta (as mesmas PALETAS_COLUNAS), cor manual por coluna e "Restaurar cores das
+  // colunas"; cores do grupo (barras), fundo do gráfico, deltas e conectores (EDIT_COLOR_DEFS); e
+  // "Restaurar cores padrão". Prioridade da cor da barra: manual > paleta > grupo (como no Studio).
+  // Preferência de cada pessoa, no navegador; sem escolha, as cores do COO.
+  var PALETTE_COLORS = ['#FFFFFF', '#F6F6F6', '#E6E7E8', '#D9ECEB', '#D8F0FA', '#BCBEC0', '#7FBEBC', '#9DDAF2', '#3CB5E5', '#00B0F0', '#6E8CBA',
+    '#747678', '#555555', '#007E7A', '#034944', '#1B5E80', '#3A4A6B', '#2626D1', '#DC2626'];
+  // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas. Monocromáticas e gradiente:
+  // do mais claro ao mais escuro. Performance: pelo valor da coluna no gráfico (pior = vermelho, melhor = verde)
+  var PALETAS_COLUNAS = [
+    { id: 'vale', lbl: 'k.pVale', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
+    { id: 'executiva', lbl: 'k.pExecutiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#747678', '#C5D0E3'] },
+    { id: 'azul', lbl: 'k.pAzul', de: '#5FB4DC', ate: '#0F3F5C' },
+    { id: 'verde', lbl: 'k.pVerde', de: '#6FAFAC', ate: '#023832' },
+    { id: 'performance', lbl: 'k.pPerformance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
+    { id: 'gradiente', lbl: 'k.pGradiente', de: '#5FB4DC', ate: '#023832' }
+  ];
+  // Cores do grupo e dos elementos do gráfico (EDIT_COLOR_DEFS do Studio, sem o Plan: o ano não tem Plan).
+  // def = cor padrão do COO; o fundo padrão é o do painel (sem fundo próprio)
+  var DEFS_GRUPO = [
+    { k: 'serie:AF', lbl: 'k.af', def: '#3CB5E5', serie: true },
+    { k: 'serie:B', lbl: 'k.b', def: '#BCBEC0', serie: true },
+    { k: 'bgChart', lbl: 'k.fundo', def: null },
+    { k: 'delta:up', lbl: 'k.dUp', def: '#007E7A' },
+    { k: 'delta:down', lbl: 'k.dDown', def: '#DC2626' },
+    { k: 'delta:flat', lbl: 'k.dFlat', def: '#747678' },
+    { k: 'conector', lbl: 'k.conector', def: '#747678' }
+  ];
+  // Degradê de cada barra (topo, meio, base): o padrão é o do COO; cor escolhida → o mesmo desenho
+  var DEGRADE_PADRAO = { 'serie:B': ['#CBCDCF', '#BCBEC0', '#B2B4B6'], 'serie:AF': ['#62C6EC', '#3CB5E5', '#36A9D8'] };
+  // Delta: token de texto/linha, fundo da faixa e hachura (padrões do COO quando não há escolha)
+  var DELTAS = { 'delta:up': ['--good', '--good-bg', .10, 'hatch-good', 'rgba(0,126,122,.24)', .24],
+    'delta:down': ['--bad', '--bad-bg', .09, 'hatch-bad', 'rgba(220,38,38,.22)', .22],
+    'delta:flat': ['--flat', '--flat-bg', .12, 'hatch-flat', 'rgba(116,118,120,.24)', .24] };
+  var CORES_CHAVE = 'coo-historical-bar-colors', HEX = /^#[0-9A-F]{6}$/, COLUNA = /^\d{2}(B|AF)$/;
+  var hexOk = function (v) { v = String(v || '').toUpperCase(); return HEX.test(v) ? v : null; };
+  var misturarHex = function (a, b, t) { return '#' + [1, 3, 5].map(function (i) { return Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0'); }).join('').toUpperCase(); };
+  var rgba = function (hex, a) { return 'rgba(' + [1, 3, 5].map(function (i) { return parseInt(hex.substr(i, 2), 16); }).join(',') + ',' + a + ')'; };
+  function coresPadrao(modo) { return { modo: modo || 'grupo', paleta: '', col: {}, g: {} }; }
+  var cores = (function () {
+    var c = coresPadrao();
+    try {
+      var s = JSON.parse(localStorage.getItem(CORES_CHAVE) || 'null') || {};
+      c.modo = s.modo === 'coluna' ? 'coluna' : 'grupo';
+      c.paleta = PALETAS_COLUNAS.some(function (p) { return p.id === s.paleta; }) ? s.paleta : '';
+      Object.keys(s.col || {}).forEach(function (k) { if (COLUNA.test(k) && hexOk(s.col[k])) c.col[k] = hexOk(s.col[k]); });
+      DEFS_GRUPO.forEach(function (d) { var v = hexOk((s.g || {})[d.k]); if (v && v !== d.def) c.g[d.k] = v; });
+      // versão anterior do menu ({ b, af })
+      if (!s.g && hexOk(s.b) && hexOk(s.b) !== '#BCBEC0') c.g['serie:B'] = hexOk(s.b);
+      if (!s.g && hexOk(s.af) && hexOk(s.af) !== '#3CB5E5') c.g['serie:AF'] = hexOk(s.af);
+    } catch (e) { /* sem localStorage: cores padrão */ }
+    return c;
+  })();
+  var corGrupo = function (k) { return cores.g[k] || DEFS_GRUPO.filter(function (d) { return d.k === k; })[0].def; };
+  // Coluna = ano + série: '25B', '25AF' (a cor manual vale também quando o Forecast vira Actual)
+  function chaveColuna(ano, serie) { return String(ano).slice(2) + serie; }
+  function rotuloColuna(k) { var yy = k.slice(0, 2); return /B$/.test(k) ? yy + 'B' : yy + letraPadrao(2000 + Number(yy)); }
+  // Cor da paleta para a coluna i de cols ([{ k, v }]); performance usa o valor (polaridade do KPI: custo menor = verde)
+  function corDaPaleta(id, i, cols, pol) {
+    var p = PALETAS_COLUNAS.filter(function (x) { return x.id === id; })[0];
+    if (!p || i < 0) return null;
+    if (p.cores) return p.cores[i % p.cores.length];
+    var t = cols.length > 1 ? i / (cols.length - 1) : 0;
+    if (p.escala) {
+      var vs = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null && isFinite(x); });
+      var min = Math.min.apply(null, vs), max = Math.max.apply(null, vs);
+      t = cols[i].v != null && max > min ? (cols[i].v - min) / (max - min) : 0.5;
+      if (pol === 'down') t = 1 - t;
+      return t <= 0.5 ? misturarHex(p.escala[0], p.escala[1], t * 2) : misturarHex(p.escala[1], p.escala[2], (t - 0.5) * 2);
+    }
+    return misturarHex(p.de, p.ate, t);
+  }
+  // Cor própria da coluna (manual > paleta) ou null = cor do grupo
+  function corDaColuna(cols, i, pol) {
+    if (cores.modo !== 'coluna') return null;
+    return cores.col[cols[i].k] || (cores.paleta ? corDaPaleta(cores.paleta, i, cols, pol) : null);
+  }
+  // Degradê da barra: o do grupo (#g-b / #g-a) ou um por cor, criado uma vez nas <defs> da página
+  function degradeDe(cor, padrao) {
+    if (!cor) return padrao;
+    var id = 'gc-' + cor.slice(1);
+    if (!document.getElementById(id)) {
+      var NS = 'http://www.w3.org/2000/svg', g = document.createElementNS(NS, 'linearGradient');
+      g.setAttribute('id', id); g.setAttribute('x1', '0'); g.setAttribute('y1', '0'); g.setAttribute('x2', '0'); g.setAttribute('y2', '1');
+      [[0, misturarHex(cor, '#FFFFFF', .2)], [.42, cor], [1, misturarHex(cor, '#000000', .06)]].forEach(function (st) {
+        var s = document.createElementNS(NS, 'stop'); s.setAttribute('offset', st[0]); s.setAttribute('stop-color', st[1]); g.appendChild(s);
+      });
+      document.getElementById('g-b').parentNode.appendChild(g);
+    }
+    return id;
+  }
+  // Aplica as cores do grupo: degradês das barras, legenda, fundo, deltas (texto, faixa, hachura) e conectores.
+  // Sem escolha, os tokens do COO (que seguem o tema claro/escuro); cor escolhida vale nos dois temas
+  function aplicarCores() {
+    var raiz = document.documentElement, prop = function (n, v) { if (v) raiz.style.setProperty(n, v); else raiz.style.removeProperty(n); };
+    [['serie:B', 'g-b', '--serie-b'], ['serie:AF', 'g-a', '--serie-a']].forEach(function (s) {
+      var c = cores.g[s[0]];
+      var paradas = c ? [misturarHex(c, '#FFFFFF', .2), c, misturarHex(c, '#000000', .06)] : DEGRADE_PADRAO[s[0]];
+      document.querySelectorAll('#' + s[1] + ' stop').forEach(function (st, i) { st.setAttribute('stop-color', paradas[i]); });
+      prop(s[2], c);
+    });
+    prop('--chart-bg', cores.g.bgChart);
+    Object.keys(DELTAS).forEach(function (k) {
+      var c = cores.g[k], d = DELTAS[k];
+      prop(d[0], c); prop(d[1], c && rgba(c, d[2]));
+      var r = document.querySelector('#' + d[3] + ' rect');
+      if (r) r.setAttribute('fill', c ? rgba(c, d[5]) : d[4]);
+    });
+    prop('--d-stroke', cores.g.conector && rgba(cores.g.conector, .45));
+    prop('--d-hair', cores.g.conector && rgba(cores.g.conector, .30));
+  }
+  function ehPadrao(c) { return !c.paleta && !Object.keys(c.col).length && !Object.keys(c.g).length; }
+  function salvarCores() {
+    try {
+      if (ehPadrao(cores) && cores.modo === 'grupo') localStorage.removeItem(CORES_CHAVE);
+      else localStorage.setItem(CORES_CHAVE, JSON.stringify(cores));
+    } catch (e) { /* só nesta sessão */ }
+  }
+  var coresBtn = document.getElementById('coresBtn'), coresPop = document.getElementById('coresPop');
+  // Colunas exibidas nos gráficos (anos visíveis × séries do filtro), na ordem do gráfico
+  function colunasVisiveis() {
+    var cols = [], series = SERIES[state.serie] || SERIES.ba;
+    anosVisiveis().forEach(function (a) { series.forEach(function (s) { cols.push({ k: chaveColuna(a, s), v: null }); }); });
+    return cols;
+  }
+  function botaoCor(attr, atual, tag, idRot, idVal, titulo) {
+    var hex = atual && atual.charAt(0) === '#';
+    return '<button type="button" class="cor-btn" ' + attr + ' aria-haspopup="listbox" aria-labelledby="' + idRot + ' ' + idVal + '" title="' + esc(titulo) + '">' +
+      '<span class="cor-sw' + (atual ? '' : ' vazio') + '" style="background:' + (atual || 'transparent') + '" aria-hidden="true"></span><span id="' + idVal + '">' + esc(hex ? atual : atual ? '' : '—') + '</span>' +
+      (tag ? '<span class="cor-tag">' + esc(tag) + '</span>' : '') + '</button>';
+  }
+  function renderCores() {
+    var coluna = cores.modo === 'coluna';
+    var h = '<h4>' + esc(T('k.titulo')) + '</h4>' +
+      '<span class="cores-sub" id="corModoLbl">' + esc(T('k.modo')) + '</span>' +
+      '<div class="seg cores-modo" role="group" aria-labelledby="corModoLbl">' +
+      '<button type="button" data-modo="grupo" aria-pressed="' + !coluna + '">' + esc(T('k.grupo')) + '</button>' +
+      '<button type="button" data-modo="coluna" aria-pressed="' + coluna + '">' + esc(T('k.coluna')) + '</button></div>';
+    if (coluna) {
+      var cols = colunasVisiveis(), perf = cores.paleta === 'performance';
+      h += '<div class="cores-box"><p class="cores-box-tit" id="corColTit">' + esc(T('k.colunas')) + '</p>' +
+        '<label class="cores-sub" for="corPaleta">' + esc(T('k.paleta')) + '</label>' +
+        '<select class="cores-sel" id="corPaleta"><option value="">' + esc(T('k.pNenhuma')) + '</option>' +
+        PALETAS_COLUNAS.map(function (p) { return '<option value="' + p.id + '"' + (p.id === cores.paleta ? ' selected' : '') + '>' + esc(T(p.lbl)) + '</option>'; }).join('') + '</select>' +
+        '<div class="cores-cols" role="group" aria-labelledby="corColTit">' + cols.map(function (c, i) {
+          var manual = cores.col[c.k], rot = rotuloColuna(c.k), grupo = corGrupo(/B$/.test(c.k) ? 'serie:B' : 'serie:AF');
+          // performance: a cor depende do valor de cada gráfico — o menu mostra a escala
+          var atual = manual || (perf ? 'linear-gradient(90deg,#DC2626,#BCBEC0,#007E7A)' : cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
+          var tag = manual ? '' : perf ? T('k.porValor') : cores.paleta ? T('k.tagPaleta') : T('k.padrao');
+          return '<div class="cor-row"><span id="colLbl-' + c.k + '">' + esc(rot) + '</span><span class="cor-acoes">' +
+            botaoCor('data-col="' + c.k + '"', atual, tag, 'colLbl-' + c.k, 'colVal-' + c.k, T('k.escolher', { serie: rot })) +
+            '<button type="button" class="cor-limpar" data-limpar="' + c.k + '"' + (manual ? '' : ' disabled') + ' aria-label="' + esc(T('k.limpar', { serie: rot })) + '" title="' + esc(T('k.limpar', { serie: rot })) + '">↺</button></span></div>';
+        }).join('') + '</div>' +
+        '<button type="button" class="cores-reset" data-reset="colunas"' + (!cores.paleta && !Object.keys(cores.col).length ? ' disabled' : '') + '>' + esc(T('k.restaurarCol')) + '</button></div>';
+    }
+    // Cores do grupo e dos elementos (no modo Por Coluna, as barras seguem a lista acima)
+    h += DEFS_GRUPO.filter(function (d) { return !(coluna && d.serie); }).map(function (d) {
+      var id = d.k.replace(/\W/g, ''), atual = cores.g[d.k] || d.def;
+      return '<div class="cor-row"><span id="corLbl-' + id + '">' + esc(T(d.lbl)) + '</span>' +
+        botaoCor('data-cor="' + d.k + '"', atual, cores.g[d.k] ? '' : d.def ? T('k.padrao') : T('k.semFundo'), 'corLbl-' + id, 'corVal-' + id, T('k.escolher', { serie: T(d.lbl) })) + '</div>';
+    }).join('');
+    h += '<button type="button" class="cores-reset" data-reset="tudo"' + (ehPadrao(cores) ? ' disabled' : '') + '>' + esc(T('k.restaurar')) + '</button>';
+    coresPop.innerHTML = h;
+    posicionarCores();
+  }
+  // Ancorado à direita do botão; perto da borda esquerda (filtros quebrando linha no celular), abre para a direita
+  function posicionarCores() {
+    if (coresPop.hidden) return;
+    coresPop.style.left = ''; coresPop.style.right = '';
+    if (coresPop.getBoundingClientRect().left < 8) { coresPop.style.left = '0'; coresPop.style.right = 'auto'; }
+  }
+  window.addEventListener('resize', posicionarCores);
+  function abrirCores(abrir) {
+    coresPop.hidden = !abrir;
+    coresBtn.setAttribute('aria-expanded', String(abrir));
+    if (!abrir) { closeChartPalette(); return; }
+    renderCores();
+    var b = coresPop.querySelector('.cores-modo button[aria-pressed="true"]');
+    if (b) b.focus();
+  }
+  // Troca de cor: grava, aplica as cores do grupo e redesenha os gráficos (cores por coluna)
+  function mudarCores(foco) {
+    salvarCores();
+    aplicarCores();
+    renderCores();
+    render();
+    var f = foco && coresPop.querySelector(foco);
+    if (f) f.focus();
+  }
+  coresBtn.addEventListener('click', function () { abrirCores(coresPop.hidden); });
+  coresPop.addEventListener('change', function (e) {
+    if (e.target.id !== 'corPaleta') return;
+    cores.paleta = e.target.value; // cores definidas manualmente são mantidas (como no Studio)
+    mudarCores('#corPaleta');
+  });
+  coresPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var m = e.target.closest('button[data-modo]');
+    if (m) { cores.modo = m.getAttribute('data-modo'); mudarCores('button[data-modo="' + cores.modo + '"]'); return; }
+    var lp = e.target.closest('button[data-limpar]');
+    if (lp && !lp.disabled) { delete cores.col[lp.getAttribute('data-limpar')]; mudarCores('.cor-btn[data-col="' + lp.getAttribute('data-limpar') + '"]'); return; }
+    var b = e.target.closest('.cor-btn');
+    if (b) {
+      var k = b.getAttribute('data-cor'), col = b.getAttribute('data-col'), r = b.getBoundingClientRect();
+      openChartPalette(k ? cores.g[k] || (DEFS_GRUPO.filter(function (d) { return d.k === k; })[0].def) : cores.col[col], r.left, r.bottom, function (cor) {
+        cor = cor.toUpperCase();
+        if (k) { var def = DEFS_GRUPO.filter(function (d) { return d.k === k; })[0].def; if (cor === def) delete cores.g[k]; else cores.g[k] = cor; } else cores.col[col] = cor;
+        mudarCores(k ? '.cor-btn[data-cor="' + k + '"]' : '.cor-btn[data-col="' + col + '"]');
+      }, b);
+      return;
+    }
+    var rs = e.target.closest('button[data-reset]');
+    if (rs && !rs.disabled) {
+      if (rs.getAttribute('data-reset') === 'colunas') { cores.col = {}; cores.paleta = ''; } // cada coluna volta à cor do seu grupo
+      else cores = coresPadrao(cores.modo);
+      mudarCores('.cores-modo button[aria-pressed="true"]');
+    }
+  });
+
+  // Paleta de cores do VBM Performance Studio (openChartPalette / closeChartPalette / wireChartPalette)
+  var chartPaletteOnPick = null, chartPaletteReturn = null, chartPalette = document.getElementById('chartPalette');
+  function closeChartPalette(devolverFoco) {
+    if (!chartPalette.classList.contains('active')) return false;
+    chartPaletteOnPick = null;
+    chartPalette.classList.remove('active');
+    if (devolverFoco && chartPaletteReturn && document.contains(chartPaletteReturn)) chartPaletteReturn.focus();
+    chartPaletteReturn = null;
+    return true;
+  }
+  function showPaletteTip(sw) {
+    var tipP = chartPalette.querySelector('.palette-tip');
+    if (!tipP) return;
+    if (!sw) { tipP.hidden = true; return; }
+    tipP.textContent = sw.getAttribute('data-hex');
+    tipP.style.left = (sw.offsetLeft + sw.offsetWidth / 2) + 'px';
+    tipP.hidden = false;
+  }
+  // current: cor atual (marcada); onPick(cor) recebe a escolha; origem recebe o foco de volta
+  function openChartPalette(current, x, y, onPick, origem) {
+    var atual = String(current || '').toUpperCase();
+    chartPalette.setAttribute('aria-label', T('k.grade'));
+    chartPalette.innerHTML = PALETTE_COLORS.map(function (c) {
+      var on = c.toUpperCase() === atual;
+      return '<div class="palette-color' + (on ? ' active' : '') + '" data-color="' + c + '" data-hex="' + c + '" role="option" tabindex="0" aria-selected="' + on + '" aria-label="' + c + '" style="background-color:' + c + ';"></div>';
+    }).join('') + '<span class="palette-tip" role="tooltip" hidden></span>';
+    chartPaletteOnPick = onPick;
+    chartPaletteReturn = origem || null;
+    chartPalette.classList.add('active');
+    chartPalette.style.left = Math.max(8, Math.min(x, innerWidth - chartPalette.offsetWidth - 8)) + 'px';
+    chartPalette.style.top = Math.max(8, Math.min(y + 6, innerHeight - chartPalette.offsetHeight - 8)) + 'px';
+    (chartPalette.querySelector('.palette-color.active') || chartPalette.querySelector('.palette-color')).focus({ preventScroll: true });
+  }
+  chartPalette.addEventListener('mouseover', function (e) { showPaletteTip(e.target.closest('.palette-color')); });
+  chartPalette.addEventListener('mouseleave', function () { showPaletteTip(null); });
+  chartPalette.addEventListener('focusin', function (e) { showPaletteTip(e.target.closest('.palette-color')); });
+  chartPalette.addEventListener('focusout', function () { showPaletteTip(null); });
+  chartPalette.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.palette-color')) { e.preventDefault(); e.target.click(); }
+  });
+  chartPalette.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var opt = e.target.closest('.palette-color');
+    if (!opt || !chartPaletteOnPick) return;
+    var pick = chartPaletteOnPick;
+    closeChartPalette(false);
+    pick(opt.getAttribute('data-color'));
+  });
+
+  // Popups do cabeçalho: um clique fora ou Esc fecha (Esc fecha primeiro a paleta, depois o menu)
+  document.addEventListener('click', function (e) {
+    if (!unitPop.hidden && !e.target.closest('.unit:not(.ciclo):not(.anos)')) abrirUnit(false);
+    if (!anosPop.hidden && !e.target.closest('.anos')) abrirAnos(false);
+    if (!cicloPop.hidden && !e.target.closest('.ciclo')) abrirCicloSel(false);
+    if (!coresPop.hidden && !e.target.closest('.cores') && !e.target.closest('#chartPalette')) abrirCores(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (closeChartPalette(true)) return;
+    if (!unitPop.hidden) { abrirUnit(false); unitTrigger.focus(); }
+    if (!cicloPop.hidden) { abrirCicloSel(false); cicloTrigger.focus(); }
+    if (!anosPop.hidden) { abrirAnos(false); anosTrigger.focus(); }
+    if (!coresPop.hidden) { abrirCores(false); coresBtn.focus(); }
+  });
+
+  // ── Dados: tudo vem da consulta anual do Historical (coo-api.js → database/001_coo_historical_anual.sql) ──
+  // De dentro do navegador não dá para saber se a página está no Portal
+  // (/VBM-Performance-Hub/COO-Business-Units-Dashboard-Historical/) ou num app próprio:
+  // tenta os caminhos na ordem e guarda o primeiro que responder.
+  // Só caminhos do Historical: '/api/' na raiz do Portal é a API de OUTRA aplicação (Kaizen)
+  var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard-Historical/api/', '/COO-Business-Units-Dashboard-Historical/api/'];
+  var API_TIMEOUT_MS = 75000; // acima do requestTimeout do banco (60 s): o servidor responde antes
+  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null, filtrosFresco = true, configPromessa = null;
+
+  // Próximo caminho só quando este não existe (404) ou a rede falhou; erro do servidor (5xx, 403,
+  // 429) é a resposta certa e não se repete — senão uma queda do banco viraria várias consultas
+  function apiGet(recurso) {
+    var bases = apiBase ? [apiBase] : API_BASES, i = 0;
+    function tentar() {
+      if (i >= bases.length) return Promise.reject(new Error('API unavailable'));
+      var b = bases[i++], ctrl = window.AbortController ? new AbortController() : null;
+      var limite = ctrl ? setTimeout(function () { ctrl.abort(); }, API_TIMEOUT_MS) : null;
+      return fetch(new URL(recurso, new URL(b, location.href)), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
+        .then(function (r) {
+          clearTimeout(limite);
+          if (r.status === 404 && !apiBase) return tentar();
+          if (!r.ok) { var e = new Error(recurso + ' → ' + r.status); e.final = true; throw e; }
+          return r.json().then(function (j) { apiBase = b; return j; });
+        }, function (err) {
+          clearTimeout(limite);
+          if (err && err.name === 'AbortError') { var t = new Error(recurso + ' → timeout'); t.final = true; throw t; }
+          return tentar(); // rede: tenta o próximo caminho
+        });
+    }
+    return tentar();
+  }
+
+  // Situação dos dados, sempre visível quando não há números: sem conexão ou sem dados
+  var MSG_PAINEL = 's.consultando', ultimoStatus = null; // painel sem cards (sem conexão ou sem dados)
+  // detalhe: função que monta o texto (refeita ao trocar de idioma); upd: Date da consulta
+  function marcarStatus(tipo, detalhe, upd) {
+    ultimoStatus = [tipo, detalhe, upd];
+    if (typeof detalhe === 'function') detalhe = detalhe();
+    if (upd instanceof Date) upd = isNaN(upd) ? null : VBMSetup.dataHora(upd);
+    var b = document.getElementById('dataBadge');
+    MSG_PAINEL = tipo === 'erro' ? 's.semConexao' : tipo === 'carregando' ? 's.consultando' : 's.semIndicadores';
+    // Carregando: sem selo e a data anterior fica até a resposta chegar (troca de filtro sem "piscar")
+    b.hidden = tipo === 'ok' || tipo === 'carregando';
+    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'desatualizado' ? 'b.desatualizado' : 'b.vazio');
+    b.title = detalhe || '';
+    if (tipo !== 'carregando') document.getElementById('updTxt').textContent = upd || '—';
+  }
+
+  // ── Unidades e filtros: sites (só os do Historical, filtrados na API) e anos vêm de /api/filtros ──
+  // País (a consulta não traz): IR agrupa as refinarias; Brasil, os sites brasileiros; o resto é Canadá
+  var SITES_IR = /^(internationalrefineries|ir|clydach|clydachcnr|matsusaka|matsuzaka|matsusakatonimet)$/;
+  // IR no seletor é só "International Refineries"; Clydach | CNR (ID_SITE 16) e Matsusaka (ID_SITE 26)
+  // alimentam os cards de produção dela e não aparecem como unidade
+  var IR_NOME = 'International Refineries', IR_IDS_FILHOS = [16, 26], IR_FILHOS = [];
+  function ehFilhoIR(st) { var n = normalizar(st.nome); return IR_IDS_FILHOS.indexOf(Number(st.id)) >= 0 || /^(clydach|matsusaka|matsuzaka)/.test(n); }
+  var SITES_BRASIL = /^(salobo|sossego|oncapuma)$/;
+  function paisDo(nome) { var n = normalizar(nome); return SITES_IR.test(n) ? 'IR' : SITES_BRASIL.test(n) ? 'Brazil' : 'Canada'; }
+  var ORDEM_PAISES = ['Brazil', 'Canada', 'IR'];
+
+  function aplicarFiltros(f) {
+    var grupos = {};
+    SITE_ID = {};
+    // Ordem de apresentação: ID_SITE; a IR sem site próprio vai ao fim
+    var porId = (f.sites || []).slice().sort(function (a, b) { return (a.id == null ? Infinity : a.id) - (b.id == null ? Infinity : b.id); });
+    IR_FILHOS = porId.filter(ehFilhoIR);
+    var sites = porId.filter(function (st) { return !ehFilhoIR(st); });
+    // refinarias com dados e sem o site da IR: a IR entra mesmo assim
+    if (IR_FILHOS.length && !sites.some(function (st) { return SITES_IR.test(normalizar(st.nome)); })) sites.push({ id: null, nome: IR_NOME });
+    if (f.semNome && f.semNome.length) console.warn('[coo-historical] ID_SITE with data but no name in IBP.SITES (left out of the menu): ' + f.semNome.join(', '));
+    sites.forEach(function (st) {
+      VISOES[st.nome] = VISOES[st.nome] || criarVisao(st.nome);
+      SITE_ID[st.nome] = st.id;
+      var pais = paisDo(st.nome);
+      (grupos[pais] = grupos[pais] || []).push(st.nome);
+    });
+    UNIDADES = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
+    if (!UNIDADES.length) throw new Error(T('s.semSites'));
+    // Anos: todos visíveis por padrão; ao trocar de ciclo, os escolhidos continuam (com todos marcados,
+    // um ano novo também entra)
+    var todos = !state.anos.length || ANOS.every(function (a) { return state.anos.indexOf(a) >= 0; });
+    ANOS = (f.anos || []).slice();
+    state.anos = todos ? ANOS.slice() : state.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
+    if (URL_INI) { // tela do endereço (refresh ou link), só com valores que a consulta tem
+      var u = URL_INI; URL_INI = null;
+      if (u.site === 'IR' && !(u.site in SITE_ID)) u.site = IR_NOME; // link com o nome curto
+      if (u.site && u.site in SITE_ID) { state.bu = u.site; state.pais = paisDo(u.site); }
+      // seletores dos cards (All-in, CAPEX, Cu/Au): "id.opção" separados por vírgula; opção inválida é ignorada em selDe
+      u.sel.split(',').forEach(function (par) { var m = /^([a-z]\d+)\.([a-z]+)$/.exec(par); if (m) state.sel[m[1]] = m[2]; });
+      var anosUrl = u.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
+      if (anosUrl.length) state.anos = anosUrl;
+      if (SERIES[u.serie]) state.serie = u.serie;
+      state.delta = u.delta ? 'on' : 'off';
+    }
+    if (!state.anos.length) state.anos = ANOS.slice();
+    if (!(state.bu in SITE_ID)) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
+    renderFilters();
+  }
+
+  function filtros() {
+    if (!filtrosPromessa) {
+      // 1ª carga da página (refresh): pede ao servidor para reler o banco (ver FRESCO_MS em coo-api.js)
+      // Ciclos gravados (uma vez); depois os filtros até a carga escolhida. Sem carga gravada não há dados.
+      var fresco = filtrosFresco ? '&fresco=1' : '';
+      // Configuração do banco (seletores e apelidos): uma vez, antes da 1ª montagem; falha não bloqueia
+      var cfg = configPromessa || (configPromessa = apiGet('config?fresco=1').then(function (r) { aplicarConfig(r && r.config); }, function (e) {
+        console.warn('[coo-historical] screen configuration unavailable (using defaults):', e.message);
+      }));
+      filtrosPromessa = Promise.all([cfg, CICLOS.length ? null : apiGet('ciclos?fresco=1')]).then(function (rs) {
+        var r = rs[1];
+        if (!r) return;
+        CICLOS = ((r && r.ciclos) || []).map(function (c) { return c.ciclo; });
+        if (!CICLOS.length) throw new Error(T('s.semCiclo'));
+        if (CICLOS.indexOf(state.ciclo) < 0) state.ciclo = CICLOS.indexOf(CICLO_URL) >= 0 ? CICLO_URL : CICLOS[0];
+        renderCicloSel();
+      }).then(function () { return apiGet('filtros?ciclo=' + state.ciclo + fresco); }).then(function (f) {
+        filtrosFresco = false;
+        aplicarFiltros(f);
+      }).catch(function (e) { filtrosPromessa = null; throw e; });
+    }
+    return filtrosPromessa;
+  }
+
+  // ── Preenchimento dos cards com o resultado de /api/indicadores ──
+  // Série anual de um KPI: { ano: [Budget, Actual/Forecast, letra A|F] }, ou null sem nenhum valor
+  function serieAnual(anos) {
+    var d = {}, n = 0;
+    Object.keys(anos || {}).forEach(function (a) {
+      var x = anos[a];
+      d[a] = [x.VL_B == null ? null : Number(x.VL_B), x.VL_AF == null ? null : Number(x.VL_AF), x.LETRA_AF || null];
+      n++;
+    });
+    return n ? d : null;
+  }
+  // Casas decimais vindas do banco (IBP.DASHBOARD.VL_CASADECIMAL, por KPI); sem valor, o padrão do card
+  function casasDe(s, l) {
+    if (!('decPdf' in s)) s.decPdf = s.dec;
+    return l && l.CASA_DECIMAL != null ? l.CASA_DECIMAL : s.decPdf;
+  }
+
+  // Ordem dos gráficos em cada painel: ID_ORDEM da query; card com seletor usa a menor ordem das
+  // suas alternativas; card sem dados vai ao fim
+  function ordenarCards(vs) {
+    vs.paineis.forEach(function (p) {
+      function ordem(c) {
+        var os = (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a].ordem; }) : [c.ordem]).filter(function (o) { return !isNaN(o); });
+        return os.length ? Math.min.apply(null, os) : Infinity;
+      }
+      var pdf = function (c) { return Number(String(c.id).slice(1)); };
+      p.cards.sort(function (a, b) { return (ordem(a) - ordem(b)) || (pdf(a) - pdf(b)); });
+    });
+  }
+
+  function preencher(vs, linhas, cadastro) {
+    var porKpi = {}, kpis = {}, achados = 0;
+    // KPIs do site: o cadastro (também os sem valor anual) e os que vieram na consulta
+    function kpi(l) {
+      var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
+      if (!kpis[chave]) kpis[chave] = { chave: chave, op: Number(l.ID_OPERACAO), id: l.ID_KPI, t: String(l.NM_KPI || '').trim(),
+        ordem: Number(l.ID_ORDEM), u: String(l.SG_UNID || '').trim(), casas: l.CASA_DECIMAL };
+      return kpis[chave];
+    }
+    (cadastro || []).forEach(kpi);
+    (linhas || []).forEach(function (l) {
+      var k0 = kpi(l);
+      if (k0.casas == null && l.CASA_DECIMAL != null) k0.casas = l.CASA_DECIMAL;
+      if (!k0.u && l.SG_UNID) k0.u = String(l.SG_UNID).trim();
+      porKpi[k0.chave] = serieAnual(l.ANOS);
+    });
+    var lista = Object.keys(kpis).map(function (c) { return kpis[c]; }).filter(function (x) { return x.t; })
+      .sort(function (a, b) { return ((isNaN(a.ordem) ? Infinity : a.ordem) - (isNaN(b.ordem) ? Infinity : b.ordem)) || (a.op - b.op) || (a.id - b.id); });
+    // Dados de um KPI no card (ou na opção do seletor)
+    function aplicar(s, x) {
+      s.t = x.t; s.tPdf = x.t; s.u = x.u; s.ordem = x.ordem; s.via = 'nome';
+      s.dec = x.casas != null && !isNaN(x.casas) ? Number(x.casas) : CASAS_PADRAO;
+      s.d = porKpi[x.chave] || null;
+      s.falta = { kpi: false, unid: !x.u, dec: x.casas == null };
+      if (s.d) achados++;
+    }
+    var nomeSite = normalizar(vs.titulo), notas = [];
+    Object.keys(NOTAS).forEach(function (pref) { if (nomeSite.indexOf(pref) === 0) notas = notas.concat(NOTAS[pref].map(normalizar)); });
+    var usados = {}, prod = [], fin = [];
+    function painelDe(x) { return x.op === OPERACAO_FINANCEIRA ? fin : prod; }
+    // Seletores: as opções existentes no site viram um card só (na posição da 1ª opção)
+    var grupos = [];
+    Object.keys(SELETORES).forEach(function (cod) {
+      var sel = SELETORES[cod], ops = [];
+      sel.opcoes.forEach(function (o) {
+        var nomes = (o.kpi || []).map(normalizar);
+        var x = lista.filter(function (y) { return !usados[y.chave] && nomes.indexOf(normalizar(y.t)) >= 0 && (!o.unid || o.unid.test(y.u)); })
+          .sort(function (a, b) { return nomes.indexOf(normalizar(a.t)) - nomes.indexOf(normalizar(b.t)); })[0];
+        if (x) ops.push({ o: o, x: x });
+      });
+      if (ops.length < 2) return;
+      ops.forEach(function (it) { usados[it.x.chave] = true; });
+      grupos.push({ cod: cod, sel: sel, ops: ops });
+    });
+    lista.forEach(function (x) {
+      if (usados[x.chave]) {
+        var g = grupos.filter(function (g0) { return !g0.feito && g0.ops.some(function (it) { return it.x === x; }); })[0];
+        if (!g) return;
+        g.feito = true;
+        var card = { pol: g.sel.pol, altLabel: g.sel.label, seletor: g.cod, alt: {}, vazio: SEM_DADOS };
+        g.ops.forEach(function (it) { var a = { lbl: it.o.lbl }; aplicar(a, it.x); a.ordem = it.x.ordem; card.alt[it.o.chave] = a; });
+        card.t = g.ops[0].x.t;
+        painelDe(x).push(card);
+        return;
+      }
+      var c = { pol: MENOR_MELHOR.indexOf(normalizar(x.t)) >= 0 ? 'down' : 'up', vazio: SEM_DADOS };
+      if (notas.indexOf(normalizar(x.t)) >= 0) c.nota = 'c.notaInterm';
+      aplicar(c, x);
+      painelDe(x).push(c);
+    });
+    // IR: produção vem das refinarias (preencherFilhos); só o financeiro sai do cadastro da IR
+    var cardsProd = vs.ir ? vs.paineis[0].cards : prod;
+    cardsProd.forEach(function (c, i) { if (!vs.ir) c.id = 'p' + i; });
+    fin.forEach(function (c, i) { c.id = 'f' + i; });
+    vs.paineis[0].cards = cardsProd;
+    vs.paineis[1].cards = fin;
+    // Disposição fixa, igual à do COO: produção em 3 colunas e financeiro em 2, sempre com 3 linhas
+    // (mesma posição, tamanho e distância entre os gráficos, mesmo com menos cards).
+    if (!vs.ir) vs.rows = Math.max(3, Math.ceil(cardsProd.length / 3), Math.ceil(fin.length / 2));
+    else vs.rows = Math.max(1, cardsProd.length, Math.ceil(fin.length / 2));
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[altChaves(c)[0]]; c.t = a0.t; c.u = a0.u; } });
+    });
+    if (window.console && console.table && lista.length) {
+      console.groupCollapsed('[coo-historical] ' + vs.titulo + ': cards from IBP.DASHBOARD (' + achados + ' with annual data)');
+      console.table(lista.map(function (x) { return { panel: x.op === OPERACAO_FINANCEIRA ? 'Financial' : 'Production', NM_KPI: x.t, ID_OPERACAO: x.op, ID_KPI: x.id, ID_ORDEM: x.ordem, SG_UNID: x.u, VL_CASADECIMAL: x.casas, data: !!porKpi[x.chave] }; }));
+      console.groupEnd();
+    }
+    return achados;
+  }
+
+  // Cards lidos de outro site (produção de cada refinaria na IR): o KPI de mesmo nome,
+  // senão o de produção, senão o primeiro pelo ID_ORDEM. Devolve quantos têm dados.
+  function preencherFilhos(vs, respostas) {
+    var achados = 0;
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (s) {
+        if (!s.filho) return;
+        if (!s.tPdf) s.tPdf = s.t;
+        var r = respostas.filter(function (x) { return normalizar(x.nome).indexOf(s.filho) === 0; })[0];
+        var porKpi = {}, ordem = [];
+        ((r && r.linhas) || []).forEach(function (l) {
+          var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
+          if (!porKpi[chave]) { porKpi[chave] = { l: l, d: serieAnual(l.ANOS) }; ordem.push(chave); }
+        });
+        ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); });
+        var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
+        var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
+          ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.ordem = NaN; s.falta = { kpi: true }; s.via = ''; return; }
+        var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
+        s.falta = faltaNaQuery(l);
+        s.via = nomes.indexOf(normalizar(nome)) >= 0 ? (normalizar(nome) === normalizar(s.tPdf) ? 'nome' : 'apelido') : 'regra IR';
+        s.d = porKpi[chave].d;
+        s.dec = casasDe(s, l);
+        s.t = nome; // nome do gráfico como vem da query
+        s.ordem = Number(l.ID_ORDEM);
+        s.u = l.SG_UNID || '';
+        if (s.d) achados++;
+      });
+    });
+    return achados;
+  }
+
+  // Busca a série anual do site (e das refinarias, na IR); só a resposta mais recente é aplicada
+  function carregarIndicadores() {
+    var meu = ++seqDados;
+    marcarStatus('carregando', function () { return T('s.consultando'); });
+    filtros().then(function () {
+      if (meu !== seqDados) return null;
+      render(); // os filtros podem ter definido o site inicial
+      var ciclo = '&ciclo=' + state.ciclo, id = SITE_ID[state.bu];
+      var filhos = paisDo(state.bu) === 'IR' ? IR_FILHOS : [];
+      return Promise.all([id ? apiGet('indicadores?site=' + id + ciclo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
+        filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + ciclo).then(function (r) { r.nome = f.nome; return r; }); })));
+    }).then(function (todas) {
+      if (!todas || meu !== seqDados) return;
+      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas, resp.cadastro) + preencherFilhos(vs, todas.slice(1));
+      var dt = new Date(resp.geradoEm || (todas[1] && todas[1].geradoEm));
+      ordenarCards(vs);
+      var bu = state.bu;
+      if (n) marcarStatus(resp.desatualizado ? 'desatualizado' : 'ok', resp.desatualizado ? function () { return T('s.desatualizado'); } : '', dt);
+      else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu }); }, dt);
+      // Daqui em diante os dados da query já estão nos cards: um erro de desenho fica no console
+      // e NÃO cai no catch abaixo (que limparia os cards como se o banco tivesse falhado)
+      try { render(); } catch (e) { console.error('[coo-historical] render error:', e); }
+    }).catch(function (e) {
+      if (meu !== seqDados) return;
+      console.error('[coo-historical] failed to load indicators:', e);
+      preencher(visao(), []);
+      preencherFilhos(visao(), []);
+      var msg = e.message;
+      marcarStatus('erro', function () { return T('s.erro', { msg: msg }); });
+      render();
+    });
+  }
+
+  function atualizar() {
+    render();
+    carregarIndicadores();
+  }
+
+  // ── Eventos ──
+  // Anos: lista suspensa; cada ano mostra/oculta (o último visível não sai) e atalhos Todos / Últimos 5
+  var anosTrigger = document.getElementById('anosTrigger'), anosPop = document.getElementById('anosPop');
+  function abrirAnos(abrir) {
+    anosPop.hidden = !abrir;
+    anosTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) { var b = anosPop.querySelector('button[aria-pressed="true"]') || anosPop.querySelector('button'); if (b) b.focus(); }
+  }
+  anosTrigger.addEventListener('click', function () { abrirAnos(anosPop.hidden && ANOS.length > 0); });
+  anosPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var atalho = e.target.closest('button[data-anos]'), btn = e.target.closest('button[data-v]'), foco;
+    if (atalho) {
+      state.anos = atalho.getAttribute('data-anos') === 'todos' ? ANOS.slice() : ANOS.slice(-5);
+      foco = 'button[data-anos="' + atalho.getAttribute('data-anos') + '"]';
+    } else if (btn) {
+      var a = Number(btn.getAttribute('data-v')), i = state.anos.indexOf(a);
+      if (i >= 0 && state.anos.length === 1) { btn.title = T('a.anoUltimo'); return; }
+      if (i >= 0) state.anos.splice(i, 1); else state.anos.push(a);
+      state.anos.sort(function (x, y) { return x - y; });
+      foco = 'button[data-v="' + a + '"]';
+    } else return;
+    renderFilters();
+    var nb = anosPop.querySelector(foco);
+    if (nb) nb.focus();
+    render();
+    if (!coresPop.hidden) renderCores(); // a lista de colunas segue os anos
+  });
+  document.querySelector('[data-filter="serie"]').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-v]');
+    if (!btn) return;
+    var k = btn.getAttribute('data-v'), lista = (SERIES[state.serie] || SERIES.ba).slice(), i = lista.indexOf(k);
+    if (i >= 0 && lista.length === 1) { btn.title = T('a.serieUltima'); return; } // pelo menos uma série fica
+    if (i >= 0) lista.splice(i, 1); else lista.push(k);
+    state.serie = serieCodigo(['B', 'AF'].filter(function (x) { return lista.indexOf(x) >= 0; }));
+    renderFilters();
+    var nb = document.querySelector('[data-filter="serie"] button[data-v="' + k + '"]');
+    if (nb) nb.focus();
+    render();
+    if (!coresPop.hidden) renderCores();
+  });
+
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest('button[data-alt]');
+    if (!g) return;
+    var id = g.getAttribute('data-for'), k = g.getAttribute('data-alt');
+    if (state.sel[id] === k) return;
+    state.sel[id] = k;
+    salvarUrl();
+    var tmp = document.createElement('div');
+    tmp.innerHTML = cardHtml(byId(id));
+    var card = tmp.firstChild;
+    card.classList.add('replay');
+    document.getElementById('card-' + id).replaceWith(card);
+    ajustarAltura(); // o novo título pode mudar a altura do cabeçalho
+    observeCharts();
+    setTimeout(function () { card.classList.remove('replay'); }, 1500);
+    var btn = card.querySelector('button[data-alt="' + k + '"]');
+    if (btn) btn.focus();
+  });
+
+  var tip = document.getElementById('tip');
+  document.addEventListener('pointermove', function (e) {
+    var t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip');
+    tip.hidden = false;
+    tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px';
+    tip.style.top = (e.clientY - 34) + 'px';
+  });
+
+  // Tela cheia: alterna; navegadores ou janelas que bloqueiam a API ficam com o F11
+  // (o F11 é tratado no CSS por display-mode: fullscreen)
+  document.querySelectorAll('.js-full').forEach(function (b) {
+    b.addEventListener('click', function () {
+      try {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+      } catch (e) { /* sem suporte */ }
+    });
+  });
+  document.addEventListener('fullscreenchange', function () {
+    var on = !!document.fullscreenElement;
+    document.documentElement.classList.toggle('is-fs', on);
+    document.querySelectorAll('.js-full').forEach(function (b) {
+      b.setAttribute('aria-label', T(on ? 'fs.off' : 'fs.on'));
+      b.title = T(on ? 'fs.offTitle' : 'fs.onTitle');
+    });
+  });
+
+  VBMSetup.on('idioma', function () {
+    renderFilters();
+    if (ultimoStatus) marcarStatus.apply(null, ultimoStatus);
+    if (!unitPop.hidden) renderUnit();
+    if (!coresPop.hidden) renderCores();
+    var fs = !!document.fullscreenElement;
+    document.querySelectorAll('.js-full').forEach(function (b) { b.setAttribute('aria-label', T(fs ? 'fs.off' : 'fs.on')); b.title = T(fs ? 'fs.offTitle' : 'fs.onTitle'); });
+    render();
+  });
+  VBMSetup.on('numero', function () { render(); });
+  VBMSetup.on('tema', function () { render(); });
+
+  aplicarCores();
+  renderFilters();
+  atualizar();
+})();
+</script>
+</body></html>
