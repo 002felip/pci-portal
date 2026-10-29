@@ -428,7 +428,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
       '<text class="b-val" x="' + (x + BW / 2) + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(v, dec) + '</text>';
   }
   function paresSvg(grupos, W, H, cfg) {
-    var MT = state.delta ? 46 : 20, MB = 16, n = grupos.length, PW = W / n;
+    var MT = state.delta ? 46 : 20, MB = Math.max(16, MB_MIN), n = grupos.length, PW = W / n;
     // largura proporcional ao espaço de cada janela (cresce com a tela; o COO limita a 30 px por ser um card estreito)
     var BW = Math.max(16, Math.min(72, PW * 0.36)), GAP = Math.max(8, Math.min(28, PW * 0.1));
     var vals = []; grupos.forEach(function (g) { vals.push(g.b, g.a); });
@@ -438,8 +438,8 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
       var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, dl = delta(g.b, g.a, cfg.pol, cfg.casas);
       out += barra(xb, BW, y, y0, g.b, 'g-b', cfg.casas, g.lb + ' · Budget: ' + fmt(g.b, cfg.casas) + ' ' + cfg.unid);
       out += barra(xa, BW, y, y0, g.a, 'g-a', cfg.casas, g.la + ': ' + fmt(g.a, cfg.casas) + ' ' + cfg.unid);
-      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(g.lb) + '</text>';
-      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(g.la) + '</text>';
+      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - MB + 13) + '" text-anchor="middle">' + esc(g.lb) + '</text>';
+      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - MB + 13) + '" text-anchor="middle">' + esc(g.la) + '</text>';
       if (state.delta) out += cota(y, y0, xb + BW, xa, g.b, g.a, dl);
       rot.push(g.lb + ' ' + fmt(g.b, cfg.casas) + ', ' + g.la + ' ' + fmt(g.a, cfg.casas) + (state.delta ? ', ' + S.t('g.var') + ' ' + dl.txt : '') + '.');
     });
@@ -455,7 +455,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     { k: 'cost', lbl: 'Costs', g: ['g-b3', 'g-a3'], cor: ['#E3E4E5', '#A7DDF2'], txt: ['s-escuro', 's-escuro'] }
   ];
   function empilhadoSvg(comp, W, H, cfg) {
-    var MT = 24, MB = 20, n = comp.sus.length, PW = W / n;
+    var MT = 24, MB = Math.max(20, MB_MIN), n = comp.sus.length, PW = W / n;
     var BW = Math.max(16, Math.min(72, PW * 0.34)), GAP = Math.max(6, Math.min(24, PW * 0.08));
     var vals = [], rot = [cfg.titulo + ' (' + cfg.unid + ').'];
     comp.sus.forEach(function (_, i) { ['b', 'a'].forEach(function (l) {
@@ -477,7 +477,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
           partes.push(c.lbl + ' ' + txt);
         });
         out += '<text class="b-val s-tot" x="' + (x + BW / 2) + '" y="' + (y(acP) - 6) + '" text-anchor="middle">' + fmt(total, cfg.casas) + '</text>';
-        out += '<text class="b-axis" x="' + (x + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(l[3]) + '</text>';
+        out += '<text class="b-axis" x="' + (x + BW / 2) + '" y="' + (H - MB + 13) + '" text-anchor="middle">' + esc(l[3]) + '</text>';
         rot.push(l[3] + ': All-in ' + fmt(total, cfg.casas) + ' (' + partes.join(', ') + ').');
       });
     });
@@ -487,7 +487,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 
   // ── Curva S: mensal B (tracejado) e A|F (cheio no Actual, pontilhado no Forecast); com ano = barras B × F à direita ──
   function scurveSvg(s, W, H, cfg, acumular) {
-    var l = mesesCurtos(), b = s.b.slice(), a = s.a.slice(), MT = 22, MB = 16;
+    var l = mesesCurtos(), b = s.b.slice(), a = s.a.slice(), MT = 22, MB = Math.max(16, MB_MIN);
     if (acumular) for (var i = 1; i < 12; i++) { b[i] += b[i - 1]; a[i] += a[i - 1]; }
     var comAno = !acumular, areaW = comAno ? W - Math.min(240, Math.max(150, W * 0.2)) : W, gw = areaW / 12;
     // linhas: escala pela faixa dos valores (sem o zero), para a curva usar a altura do gráfico
@@ -529,7 +529,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
         out += '<text class="v-b" x="' + px(j) + '" y="' + (y(b[j]) + (acima ? 15 : -8)) + '" text-anchor="middle">' + fmt(b[j], 0) + '</text>';
         out += '<text class="v-a" x="' + px(j) + '" y="' + (y(a[j]) + (acima ? -8 : 15)) + '" text-anchor="middle">' + fmt(a[j], 0) + '</text>';
       }
-      if (gw >= 26 || j % 2 === 0) out += '<text class="b-axis" x="' + px(j) + '" y="' + (H - 3) + '" text-anchor="middle">' + lbl + '</text>';
+      if (gw >= 26 || j % 2 === 0) out += '<text class="b-axis" x="' + px(j) + '" y="' + (H - MB + 13) + '" text-anchor="middle">' + lbl + '</text>';
     }
     if (comAno) {
       var fb = s.b.reduce(function (x, v) { return x + v; }, 0), fa = s.a.reduce(function (x, v) { return x + v; }, 0);
@@ -540,8 +540,8 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
       out += '<line class="b-base" x1="' + (x0 + 6) + '" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
       out += barra(xb, BW, ya, y0, fb, 'g-b', 0, lb + ' · Budget: ' + fmt(fb, 0) + ' ' + cfg.unid);
       out += barra(xa, BW, ya, y0, fa, 'g-a', 0, la + ': ' + fmt(fa, 0) + ' ' + cfg.unid);
-      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + lb + '</text>';
-      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + la + '</text>';
+      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - MB + 13) + '" text-anchor="middle">' + lb + '</text>';
+      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - MB + 13) + '" text-anchor="middle">' + la + '</text>';
       if (state.delta) out += cota(ya, y0, xb + BW, xa, fb, fa, delta(fb, fa, cfg.pol, 0));
     }
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(cfg.titulo + ' (' + cfg.unid + ')') + '">' + out + '</svg>';
@@ -549,6 +549,13 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 
   // ── Ponte (waterfall): totais em degradê azul, Budget em cinza, variações em verde/vermelho, fio entre degraus ──
   // tipos: 'tot' barra cheia (reinicia o acumulado), 'd' variação, 'sub' subtotal calculado, 'ref' referência (Budget), 'zero' reinicia em 0
+  // Margem inferior da ponte: espaço para os rótulos (2-3 linhas, ou na diagonal em tela estreita)
+  function ponteMB(itens, W) {
+    var n = 0, gap = 0;
+    itens.forEach(function (it) { if (it.tipo === 'zero') gap++; else n++; });
+    var gw = W / (n + gap * 0.5);
+    return gw < 46 ? 64 : 14 + (gw < 70 ? 3 : 2) * 11;
+  }
   function ponteSvg(itens, W, H, cfg) {
     var ac = 0, bs = [], gap = 0;
     itens.forEach(function (it) {
@@ -561,7 +568,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     });
     var slots = bs.length + gap * 0.5, gw = W / slots, BW = Math.max(10, Math.min(90, gw * 0.66));
     // tela estreita: rótulos na diagonal, em uma linha; senão, até 2-3 linhas na horizontal
-    var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = giro ? 64 : 14 + linhas * 11, MT = 20;
+    var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = Math.max(ponteMB(itens, W), MB_MIN), MT = 20;
     var vals = []; bs.forEach(function (p) { vals.push(p.de, p.ate); });
     var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
     var fs = Math.max(8, Math.min(11, gw / 6));
@@ -631,13 +638,29 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     return ponteSvg(d[cfg.ind], W, H, cfg);
   }
   function bu() { return BUS.filter(function (b) { return b.chave === state.bu; })[0]; }
-  function drawChart(el, forcar) {
-    var W = Math.round(el.clientWidth), H = Math.round(el.clientHeight);
-    if (W < 60 || H < 44) return;
-    var key = W + 'x' + H;
-    if (el._key === key && !forcar) return;
-    el._key = key;
-    el.innerHTML = svgDoCard(bu().cards[+el.getAttribute('data-card')], W, H);
+  // ── Bases alinhadas: gráficos na mesma linha da grade usam a mesma margem inferior (a maior entre eles),
+  // então a linha de base fica na mesma altura em todos — inclusive ao lado das pontes, que precisam de mais espaço
+  var MB_MIN = 0;
+  function mbNatural(cfg, W) {
+    if (cfg.tipo === 'ponte') return ponteMB(dadosBu()[cfg.ind], W);
+    return cfg.tipo === 'allinStack' ? 20 : 16;
+  }
+  function desenharTodos(forcar) {
+    var cards = bu().cards, itens = [].map.call(dash.querySelectorAll('.chart'), function (el) {
+      var r = el.getBoundingClientRect(), cfg = cards[+el.getAttribute('data-card')];
+      return { el: el, cfg: cfg, W: Math.round(r.width), H: Math.round(r.height), fundo: Math.round(r.bottom), mb: mbNatural(cfg, r.width) };
+    });
+    itens.forEach(function (it) {
+      var mb = 0;
+      itens.forEach(function (o) { if (Math.abs(o.fundo - it.fundo) <= 3) mb = Math.max(mb, o.mb); });
+      if (it.W < 60 || it.H < 44) return;
+      var key = it.W + 'x' + it.H + '|' + mb;
+      if (it.el._key === key && !forcar) return;
+      it.el._key = key;
+      MB_MIN = mb;
+      it.el.innerHTML = svgDoCard(it.cfg, it.W, it.H);
+    });
+    MB_MIN = 0;
   }
 
   // ── Filtros (Business Units no lugar do drill-down País › Site do COO) ──
@@ -671,7 +694,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     state.sel[b.getAttribute('data-sel')] = b.getAttribute('data-v');
     gravarUrl(); render();
   });
-  var ro = new ResizeObserver(function (en) { en.forEach(function (e) { drawChart(e.target); }); });
+  var pend = 0, ro = new ResizeObserver(function () { cancelAnimationFrame(pend); pend = requestAnimationFrame(function () { desenharTodos(false); }); });
   var primeira = true;
   function render() {
     var b = bu();
@@ -683,7 +706,8 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     ro.disconnect();
     dash.style.gridTemplateAreas = b.areas;
     dash.innerHTML = b.cards.map(cardHtml).join('');
-    dash.querySelectorAll('.chart').forEach(function (el) { ro.observe(el); drawChart(el, true); });
+    dash.querySelectorAll('.chart').forEach(function (el) { ro.observe(el); });
+    desenharTodos(true);
     if (primeira) { primeira = false; setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600); }
   }
 
