@@ -404,7 +404,8 @@ table.tbl { width: 100%; border-collapse: collapse; font: 400 .7rem var(--font-d
   }
   function paresSvg(grupos, W, H, cfg) {
     var MT = state.delta ? 46 : 20, MB = 16, n = grupos.length, PW = W / n;
-    var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
+    // largura proporcional ao espaço de cada janela (cresce com a tela; o COO limita a 30 px por ser um card estreito)
+    var BW = Math.max(16, Math.min(72, PW * 0.36)), GAP = Math.max(8, Math.min(28, PW * 0.1));
     var vals = []; grupos.forEach(function (g) { vals.push(g.b, g.a); });
     var y = escalaY(vals, MT, MB, H), y0 = y(0), rot = [cfg.titulo + ' (' + cfg.unid + ').'];
     var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
@@ -469,7 +470,7 @@ table.tbl { width: 100%; border-collapse: collapse; font: 400 .7rem var(--font-d
     if (comAno) {
       var fb = s.b.reduce(function (x, v) { return x + v; }, 0), fa = s.a.reduce(function (x, v) { return x + v; }, 0);
       var MTa = state.delta ? 46 : 20, ya = escalaY([fb, fa], MTa, MB, H), y0 = ya(0), x0 = areaW + 8, PW = W - x0;
-      var BW = Math.max(16, Math.min(30, PW * 0.2)), GAP = Math.max(14, Math.min(24, PW * 0.14)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
+      var BW = Math.max(16, Math.min(72, PW * 0.3)), GAP = Math.max(8, Math.min(28, PW * 0.1)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
       var lb = aa() + 'B', la = aa() + (ehReal(12) ? 'A' : 'F');
       out += '<line class="l-sep" x1="' + x0 + '" x2="' + x0 + '" y1="' + MT + '" y2="' + (H - MB) + '"/>';
       out += '<line class="b-base" x1="' + (x0 + 6) + '" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
@@ -494,7 +495,7 @@ table.tbl { width: 100%; border-collapse: collapse; font: 400 .7rem var(--font-d
       else { de = 0; ate = it.v; if (it.tipo === 'tot') ac = it.v; }
       bs.push({ it: it, de: de, ate: ate, v: it.tipo === 'sub' ? ac : it.v, gap: gap });
     });
-    var slots = bs.length + gap * 0.5, gw = W / slots, BW = Math.max(10, Math.min(46, gw * 0.56));
+    var slots = bs.length + gap * 0.5, gw = W / slots, BW = Math.max(10, Math.min(90, gw * 0.66));
     // tela estreita: rótulos na diagonal, em uma linha; senão, até 2-3 linhas na horizontal
     var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = giro ? 64 : 14 + linhas * 11, MT = 20;
     var vals = []; bs.forEach(function (p) { vals.push(p.de, p.ate); });
