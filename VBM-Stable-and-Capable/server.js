@@ -57,16 +57,19 @@ function runQueryBanco() {
     options: { encrypt: true, trustServerCertificate: false }, connectionTimeout: 30000, requestTimeout: 600000,
   };
   let pool = null;
-  return async (query, params) => {
-    pool = pool || new sql.ConnectionPool(DB).connect().catch((e) => { pool = null; throw e; });
-    const request = (await pool).request();
+  const obterPool = () => (pool = pool || new sql.ConnectionPool(DB).connect().catch((e) => { pool = null; throw e; }));
+  const runQuery = async (query, params) => {
+    const request = (await obterPool()).request();
     Object.entries(params || {}).forEach(([n, [tipo, v]]) => request.input(n, tipo, v));
     return request.query(query);
   };
+  return { runQuery, obterPool };
 }
 
 (async () => {
-  const runQuery = env.STABLECAPABLE_EXCEL_TESTE ? await runQueryTeste(env.STABLECAPABLE_EXCEL_TESTE) : runQueryBanco();
+  // Modo teste (Excel): sem banco de verdade, a importação mostra a prévia mas não grava.
+  const banco = env.STABLECAPABLE_EXCEL_TESTE ? { runQuery: await runQueryTeste(env.STABLECAPABLE_EXCEL_TESTE), obterPool: null } : runQueryBanco();
+  const { runQuery, obterPool } = banco;
 
   let armazenamento = null;
   if (env.AZURE_STORAGE_ACCOUNT) {
@@ -80,7 +83,7 @@ function runQueryBanco() {
   app.disable('x-powered-by');
   if (env.STABLECAPABLE_EMAIL_LOCAL) app.use((req, res, next) => { req.headers['x-forwarded-email'] = env.STABLECAPABLE_EMAIL_LOCAL; next(); });
   app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); },
-    criarStableCapableRouter({ runQuery, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
+    criarStableCapableRouter({ runQuery, obterPool, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
   app.get(['/', '/index.html'], (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
   app.use('/assets', express.static(path.join(__dirname, 'assets')));
   app.listen(PORT, () => console.log(`[stable-and-capable] http://localhost:${PORT}/ ${env.STABLECAPABLE_EXCEL_TESTE ? '(modo teste: Excel)' : ''}`));

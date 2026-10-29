@@ -259,7 +259,7 @@ const tipo = (nome) => TIPOS[path.extname(nome).toLowerCase()] || 'application/o
 const nomeArquivoBu = (bu) => String(bu).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9+]+/g, '_').replace(/^_|_$/g, '');
 
 // ════════════════════════════════════════════════════════════════════
-function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
+function criarStableCapableRouter({ runQuery, obterPool, armazenamento, pastaBlob }) {
   const router = express.Router();
   router.use(express.json({ limit: '32kb' }));
   // Bibliotecas Python verificadas/instaladas já na subida do app.
@@ -270,6 +270,12 @@ function criarStableCapableRouter({ runQuery, armazenamento, pastaBlob }) {
     ? armazenamento
     : armazenamentoLocal(process.env.STABLECAPABLE_PASTA_LOCAL);
   if (store.local) console.warn(`${TAG} Azure Blob não configurado — arquivos gravados em ${store.raiz} (somem quando o app reinicia).`);
+  // "Importar dados": PCI Master -> IBP.PEDRAVISAODIARIA (importar-dados.js)
+  router.use('/importacao', require('./importar-dados').criarImportacaoRouter({
+    runQuery, obterPool, store, pasta: PASTA,
+    python: { prepararAmbiente, ambiente, envPython, rodar, CWD_PY },
+  }));
+
   const ARQ_HISTORICO = PASTA + '/execucoes.json';
 
   // ── Histórico ──
