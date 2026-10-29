@@ -252,13 +252,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .card-head:has(.seg) .seg { grid-area: 1 / 2 / 4 / 3; display: inline-flex; flex-wrap: nowrap; } /* sempre em uma linha */
 .card-head:has(.seg) .seg button { min-height: 20px; padding: 1px 6px; font-size: .62rem; }
 .card-head:has(.seg) .card-unit { grid-area: 2 / 1; }
-/* [RESPONSIVO] card estreito (notebook, colunas financeiras): o seletor desce para baixo do título,
-   em vez de espremer o título ("All-in") até virar reticências */
+/* [RESPONSIVO] card estreito com seletor LARGO (3+ opções: All-in, CAPEX): o seletor desce para baixo do
+   título, em vez de espremer o título até virar reticências. Seletor curto (Cu/Au) fica sempre na linha do
+   título. Os cabeçalhos têm a mesma altura em toda a página (ajustarAltura): os gráficos não saem de posição */
 .card { container: card / inline-size; }
 @container card (max-width: 300px) {
-  .card-head:has(.seg) { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
-  .card-head:has(.seg) .card-title, .card-head:has(.seg) .card-unit, .card-head:has(.seg) .card-chk { grid-area: auto; }
-  .card-head:has(.seg) .seg { grid-area: auto; justify-self: start; margin-top: 3px; }
+  .card--sel-largo .card-head:has(.seg) { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .card--sel-largo .card-head:has(.seg) .card-title, .card--sel-largo .card-head:has(.seg) .card-unit, .card--sel-largo .card-head:has(.seg) .card-chk { grid-area: auto; }
+  .card--sel-largo .card-head:has(.seg) .seg { grid-area: auto; justify-self: start; margin-top: 3px; }
 }
 /* Cabeçalhos com a mesma altura na página (ajustarAltura): os gráficos de uma linha começam na mesma altura */
 .card-head { min-height: var(--head-h, 0px); }
@@ -995,8 +996,11 @@ window.VBMSetup = (function () {
   // Unidades e anos: preenchidos com o resultado da consulta (aplicarFiltros)
   var UNIDADES = [], ANOS = [];
   // anos: anos exibidos nos gráficos (filtro Anos; todos por padrão)
-  // serie: 'ba' Budget e Actual/Forecast (com delta) · 'af' só Actual/Forecast · 'b' só Budget
-  var state = { ciclo: '', pais: '', bu: '', anos: [], serie: 'ba', delta: 'on', sel: {} };
+  // serie: 'ba' Budget e Actual/Forecast · 'af' só Actual/Forecast · 'b' só Budget
+  // Ao abrir a página: só Act/Fcst e os últimos 5 anos (SERIE_PADRAO, ANOS_PADRAO)
+  var SERIE_PADRAO = 'af', ANOS_PADRAO = 5;
+  var state = { ciclo: '', pais: '', bu: '', anos: [], serie: SERIE_PADRAO, delta: 'on', sel: {} };
+  function anosPadrao() { return ANOS.slice(-ANOS_PADRAO); }
   // ── Navegação no endereço (?ciclo=&site=&anos=&serie=&delta=&sel=): o refresh volta à mesma tela e o link
   // pode ser compartilhado. Lida uma vez na carga e validada contra os filtros da consulta (aplicarFiltros)
   var CICLOS = [], CICLO_URL = (function () { try { return new URLSearchParams(location.search).get('ciclo') || ''; } catch (e) { return ''; } })();
@@ -1005,7 +1009,7 @@ window.VBMSetup = (function () {
   var URL_INI = (function () {
     try {
       var q = new URLSearchParams(location.search);
-      return q.has('site') || q.has('anos') ? { site: q.get('site'), anos: String(q.get('anos') || '').split(',').map(Number).filter(Boolean), serie: q.get('serie'), delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
+      return q.has('site') || q.has('anos') ? { site: q.get('site'), anos: q.get('anos') === 'todos' ? 'todos' : String(q.get('anos') || '').split(',').map(Number).filter(Boolean), serie: q.get('serie'), delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
     } catch (e) { return null; }
   })();
   function salvarUrl() {
@@ -1014,8 +1018,11 @@ window.VBMSetup = (function () {
       var q = new URLSearchParams(location.search);
       if (state.ciclo) q.set('ciclo', state.ciclo);
       q.set('site', state.bu);
-      if (state.anos.length && state.anos.length < ANOS.length) q.set('anos', state.anos.join(',')); else q.delete('anos');
-      if (state.serie !== 'ba') q.set('serie', state.serie); else q.delete('serie');
+      // padrão (últimos 5 anos, só Act/Fcst) fica fora do endereço
+      var anosTxt = state.anos.join(',');
+      if (!state.anos.length || anosTxt === anosPadrao().join(',')) q.delete('anos');
+      else q.set('anos', state.anos.length === ANOS.length ? 'todos' : anosTxt);
+      if (state.serie !== SERIE_PADRAO) q.set('serie', state.serie); else q.delete('serie');
       if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
       var sel = Object.keys(state.sel).filter(function (k) { return state.sel[k]; }).map(function (k) { return k + '.' + state.sel[k]; }).join(',');
       if (sel) q.set('sel', sel); else q.delete('sel');
@@ -1191,7 +1198,7 @@ window.VBMSetup = (function () {
         return '<button type="button" data-alt="' + k + '" data-for="' + ind.id + '" aria-pressed="' + (selDe(ind) === k) + '">' + esc(ind.alt[k].lbl) + '</button>';
       }).join('') + '</div>';
     }
-    return '<article class="card card-' + ind.id + '" id="card-' + ind.id + '">' +
+    return '<article class="card card-' + ind.id + (ind.alt && altChaves(ind).length > 2 ? ' card--sel-largo' : '') + '" id="card-' + ind.id + '">' +
       '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(String(v.u).replace(/^\s*\((.*)\)\s*$/, '$1')) + ')' : '&nbsp;') + '</p>' +
       (function (a) { return a.length ? '<p class="card-chk" title="' + esc(a.join(' · ')) + '">⚠ ' + esc(a.join(' · ')) + '</p>' : ''; })(avisosQuery(v)) + '</div>' + ctl + '</div>' +
       '<div class="chart" data-ind="' + ind.id + '"></div>' +
@@ -1236,7 +1243,12 @@ window.VBMSetup = (function () {
     // aumentaria o espaçamento a cada redimensionamento do painel, sem fim
     if (matchMedia('(max-width: 1180px), (max-height: 820px)').matches) {
       grids.forEach(function (g) { g.style.rowGap = ''; });
-      document.documentElement.style.removeProperty('--head-h');
+      // cabeçalhos com a mesma altura também aqui: um título com seletor não desloca o gráfico em relação
+      // aos vizinhos da linha (no celular, uma coluna, cada card fica com a altura natural)
+      var raiz = document.documentElement;
+      raiz.style.setProperty('--head-h', '0px');
+      if (matchMedia('(max-width: 720px)').matches) raiz.style.removeProperty('--head-h');
+      else raiz.style.setProperty('--head-h', Math.max.apply(null, [].map.call(document.querySelectorAll('#dash .card-head'), function (h) { return h.offsetHeight; })) + 'px');
       return;
     }
     var cs = getComputedStyle(card), GAP_MIN = 10;
@@ -1762,23 +1774,23 @@ window.VBMSetup = (function () {
     });
     UNIDADES = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
     if (!UNIDADES.length) throw new Error(T('s.semSites'));
-    // Anos: todos visíveis por padrão; ao trocar de ciclo, os escolhidos continuam (com todos marcados,
-    // um ano novo também entra)
-    var todos = !state.anos.length || ANOS.every(function (a) { return state.anos.indexOf(a) >= 0; });
+    // Anos: os últimos 5 ao abrir; ao trocar de ciclo, a escolha continua (com "todos" ou "últimos 5"
+    // marcados, o atalho vale no novo ciclo)
+    var antes = state.anos.join(','), eraTodos = ANOS.length && antes === ANOS.join(','), eraPadrao = !state.anos.length || antes === anosPadrao().join(',');
     ANOS = (f.anos || []).slice();
-    state.anos = todos ? ANOS.slice() : state.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
+    state.anos = eraTodos ? ANOS.slice() : eraPadrao ? anosPadrao() : state.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
     if (URL_INI) { // tela do endereço (refresh ou link), só com valores que a consulta tem
       var u = URL_INI; URL_INI = null;
       if (u.site === 'IR' && !(u.site in SITE_ID)) u.site = IR_NOME; // link com o nome curto
       if (u.site && u.site in SITE_ID) { state.bu = u.site; state.pais = paisDo(u.site); }
       // seletores dos cards (All-in, CAPEX, Cu/Au): "id.opção" separados por vírgula; opção inválida é ignorada em selDe
       u.sel.split(',').forEach(function (par) { var m = /^([a-z]\d+)\.([a-z]+)$/.exec(par); if (m) state.sel[m[1]] = m[2]; });
-      var anosUrl = u.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
+      var anosUrl = u.anos === 'todos' ? ANOS.slice() : u.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
       if (anosUrl.length) state.anos = anosUrl;
       if (SERIES[u.serie]) state.serie = u.serie;
       state.delta = u.delta ? 'on' : 'off';
     }
-    if (!state.anos.length) state.anos = ANOS.slice();
+    if (!state.anos.length) state.anos = anosPadrao();
     if (!(state.bu in SITE_ID)) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
     renderFilters();
   }
