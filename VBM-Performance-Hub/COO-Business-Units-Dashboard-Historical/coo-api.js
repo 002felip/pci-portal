@@ -9,9 +9,9 @@
  * requisição é concatenado na SQL.
  *
  * Fonte dos gráficos: a MESMA tabela do COO, IBP.PHUB_PERFORMANCESTUDIO (ID_DASH do COO), só com
- * a visão ANUAL (CD_PERIODO = 'YEAR'), filtrada no banco por database/001_coo_historical_anual.sql.
- * Mês e trimestre não são lidos. Cada carga é um ciclo (DT_REF, dia 1 do mês); a tela mostra, para
- * cada ano, a carga mais recente até o ciclo escolhido.
+ * a visão ANUAL (CD_PERIODO = 'YEAR') desde COO_HIST_ANO_INICIAL (padrão 2017), filtrada no banco por
+ * database/001_coo_historical_anual.sql. Mês e trimestre não são lidos. Cada carga é um ciclo (DT_REF,
+ * dia 1 do mês); a tela mostra, para cada ano, a carga mais recente até o ciclo escolhido.
  *
  * Business Units: só as do Historical (BUS_HISTORICAL), aplicado aqui no servidor. As refinarias da
  * IR (Clydach, Matsusaka) também passam: alimentam os cards de produção da IR e não viram unidade.
@@ -37,6 +37,8 @@ const FRESCO_MS = segundos(process.env.COO_FRESCO_S, 15);
 const DESATUALIZADO_MAX_MS = segundos(process.env.COO_DESATUALIZADO_MAX_S, 2 * 3600);
 const LIMITE_POR_MINUTO = 240;
 const ID_DASH_PADRAO = 15; // IBP.DASHBOARD.ID_DASH do COO Dashboard (a mesma carga)
+// Primeiro ano da série histórica (COO_HIST_ANO_INICIAL, padrão 2017)
+const ANO_INICIAL = (() => { const n = Number(process.env.COO_HIST_ANO_INICIAL); return Number.isInteger(n) && n >= 2000 && n <= 2100 ? n : 2017; })();
 
 // Nome comparável: sem acento, espaços, pontuação ou maiúsculas (mesma regra da página)
 const normalizar = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -205,7 +207,7 @@ function carregarSql(arquivo, parametros) {
   if (/DASH\.ID_DASH\s*=\s*\d/.test(textoSql)) throw new Error(`${arquivo}: ID_DASH fixo — use @idDash`);
   return textoSql;
 }
-const ANUAL = { arquivo: '001_coo_historical_anual.sql', parametros: ['@idDash', '@dtRef', "CD_PERIODO = 'YEAR'"] };
+const ANUAL = { arquivo: '001_coo_historical_anual.sql', parametros: ['@idDash', '@dtRef', '@anoIni', "CD_PERIODO = 'YEAR'"] };
 
 // ID_DASH configurável (COO_ID_DASH, a mesma variável do COO)
 function lerIdDash(valor) {
@@ -253,7 +255,7 @@ function criarCooRouter({ runQuery, idDash }) {
   const buscar = (caminho, consulta, fresco) => comCache(caminho, async () => (await runQuery(consulta, { idDash: [sql.Int, ID_DASH] })).recordset, fresco);
   // Série anual até o ciclo 'AAAA-MM' (todas as BUs numa consulta só; cada ciclo tem o seu lugar no cache)
   const buscarAnual = (ciclo, fresco) => comCache(`/anual:${ciclo}`, async () => (await runQuery(ANUAL_SQL, {
-    idDash: [sql.Int, ID_DASH], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)],
+    idDash: [sql.Int, ID_DASH], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)], anoIni: [sql.Int, ANO_INICIAL],
   })).recordset, fresco);
   const buscarCiclos = async (fresco) => (await buscar('/ciclos', CICLOS_SQL, fresco)).map(l => ({ ciclo: cicloDe(l.DT_REF), carregadoEm: l.DT_CARGA || null }));
   async function resolverCiclo(req) {
@@ -340,4 +342,4 @@ function criarCooRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarCooRouter, carregarSql, agregarAnual, extrairFiltros, sitePermitido, normalizarConfigCoo, lerCiclo, ANUAL, CICLOS_SQL, BUS_HISTORICAL };
+module.exports = { criarCooRouter, carregarSql, agregarAnual, extrairFiltros, sitePermitido, normalizarConfigCoo, lerCiclo, ANUAL, ANO_INICIAL, CICLOS_SQL, BUS_HISTORICAL };

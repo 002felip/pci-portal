@@ -1,13 +1,14 @@
 /* ════════════════════════════════════════════════════════════════════
    COO Business Units Dashboard Historical — série ANUAL por KPI
-   Banco: BDIBPBMSA_PRD · lido pela API (coo-api.js), parâmetros @idDash e @dtRef
+   Banco: BDIBPBMSA_PRD · lido pela API (coo-api.js), parâmetros @idDash, @dtRef e @anoIni
 
    Fonte: a MESMA tabela do COO Business Units Dashboard, IBP.PHUB_PERFORMANCESTUDIO
-   (cargas gravadas por COO-Business-Units-Dashboard/database/003_carga_mensal_coo.sql).
+   (cargas gravadas pela carga mensal do COO, que grava os anos desde 2017).
    Só as linhas da visão ANUAL (CD_PERIODO = 'YEAR') saem do banco: mês e trimestre
    não são lidos.
 
    Regras:
+     @anoIni    primeiro ano da série (COO_HIST_ANO_INICIAL na API; padrão 2017).
      @dtRef     ciclo escolhido na tela (DT_REF da carga, dia 1). Só cargas até ele.
      RK_CARGA   para cada ano, a carga mais recente até @dtRef — o ano fechado
                 guarda o Actual da última carga em que apareceu ('25A'); o ano
@@ -29,6 +30,7 @@ WITH ANUAL AS (
   WHERE R.ID_DASH = @idDash
     AND R.CD_PERIODO = 'YEAR'
     AND R.ID_TIPO_VISAO IN (1, 3)
+    AND R.ORDEM_ANO >= @anoIni
     AND R.DT_REF <= @dtRef
 )
 SELECT

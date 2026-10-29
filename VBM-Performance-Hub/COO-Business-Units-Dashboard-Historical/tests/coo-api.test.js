@@ -7,7 +7,7 @@ const assert = require('node:assert');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { criarCooRouter, carregarSql, agregarAnual, extrairFiltros, sitePermitido, lerCiclo, ANUAL, CICLOS_SQL } = require('../coo-api');
+const { criarCooRouter, carregarSql, agregarAnual, extrairFiltros, sitePermitido, lerCiclo, ANUAL, ANO_INICIAL, CICLOS_SQL } = require('../coo-api');
 
 const linha = (o) => Object.assign({ ID_SITE: 6, ID_OPERACAO: 1, ID_KPI: 10, NM_KPI: 'Mine Movement', ID_ORDEM: 1, SG_UNID: 'Mt', VL_CASADECIMAL: 1 }, o);
 const ANUAIS = [
@@ -24,6 +24,7 @@ test('SQL anual: lê só a visão ANUAL da tabela do COO, com @idDash e @dtRef e
   const sql = carregarSql(ANUAL.arquivo, ANUAL.parametros);
   assert.match(sql, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
   assert.match(sql, /R\.CD_PERIODO = 'YEAR'/);
+  assert.match(sql, /R\.ORDEM_ANO >= @anoIni/);
   assert.ok(!/'MONTH'|'QUARTER'/.test(sql.replace(/\/\*[\s\S]*?\*\//g, '')), 'mês/trimestre não podem ser lidos');
   assert.ok(!/ID_DASH\s*=\s*\d/.test(sql));
 });
@@ -94,6 +95,8 @@ test('rotas: filtros e indicadores com a série anual; ciclo vira @dtRef; site f
   assert.deepStrictEqual(f.body.anos, [2025, 2026]);
   const anual = consultas.find((c) => /CD_PERIODO = 'YEAR'/.test(c.sql));
   assert.strictEqual(anual.params.dtRef[1].toISOString().slice(0, 10), '2026-10-01');
+  assert.strictEqual(anual.params.anoIni[1], 2017); // série histórica desde 2017 (COO_HIST_ANO_INICIAL)
+  assert.strictEqual(ANO_INICIAL, 2017);
 
   const i = await get(a, '/api/indicadores?site=6&ciclo=2026-10');
   assert.strictEqual(i.status, 200);
