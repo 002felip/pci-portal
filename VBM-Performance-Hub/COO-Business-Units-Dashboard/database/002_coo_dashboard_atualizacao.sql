@@ -3,8 +3,8 @@ DECLARE
     @DT_INI DATE,
     @DT_FIM DATE;
 
-SET @DT_INI = '2025-01-01';
-SET @DT_FIM = CAST(DATEADD(MONTH, 0, CONCAT(YEAR(DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, GETDATE()-1)), MONTH(DATEADD(MONTH, -1, GETDATE()-1)), 1)), '-12-01')) AS DATE);
+SET @DT_INI = DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, GETDATE()-2)) - 1, 1, 1);  -- jan do ano anterior ao último mês realizado (ciclo jan/27 → 2025; fev/27 → 2026)
+SET @DT_FIM = DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, GETDATE()-2)), 12, 1);  -- dez do ano do último mês realizado (ciclo jan/27 → 2026; fev/27 → 2027)
 SET @DT_REF =  DATEADD(MONTH, -1, GETDATE()-2)  --(SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
 SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);  -- 1º dia do mês: o mês de referência só conta como atualizado com carga no mês seguinte
 
