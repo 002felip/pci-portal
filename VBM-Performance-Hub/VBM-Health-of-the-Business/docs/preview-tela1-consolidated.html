@@ -434,7 +434,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .w-pos { fill: var(--w-pos); } .w-neg { fill: var(--w-neg); }
 .w-link { stroke: var(--d-hair); stroke-dasharray: 2 2; }
 .l-b { fill: none; stroke: var(--serie-b); stroke-width: 1.6; stroke-dasharray: 4 3; }
-.l-a { fill: none; stroke: var(--serie-a); stroke-width: 2; }
+.l-a { fill: none; stroke: var(--serie-a); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .l-f { fill: none; stroke: var(--serie-a); stroke-width: 2; stroke-dasharray: 2 3; }
 .p-b { fill: var(--page); stroke: var(--serie-b); stroke-width: 1.6; } .p-a { fill: var(--serie-a); stroke: var(--page); stroke-width: 1.2; }
 .v-b { fill: var(--ink-soft); font-size: 10px; font-variant-numeric: tabular-nums; } .v-a { fill: var(--serie-a-txt); font-size: 10px; font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -973,7 +973,27 @@ window.VBMSetup = (function () {
     var lo = Math.min.apply(null, b.concat(a)), hi = Math.max.apply(null, b.concat(a)), folga = (hi - lo) * 0.12 || 1;
     var y = function (v) { return MT + 10 + (hi + folga - v) / (hi - lo + 2 * folga) * (H - MT - 10 - MB - 8); };
     function px(k) { return gw * (k + 0.5); }
-    function linha(arr, de, ate) { var d = ''; for (var k = de; k <= ate; k++) d += (k === de ? 'M' : 'L') + px(k).toFixed(1) + ' ' + y(arr[k]).toFixed(1); return d; }
+    // Curva suavizada monótona (Fritsch–Carlson): passa por todos os pontos sem ultrapassar picos e vales.
+    // Tangentes calculadas na série inteira, para o trecho Actual e o Forecast se encontrarem sem quebra.
+    function tangentes(arr) {
+      var n = arr.length, ys = arr.map(y), dl = [], m = [];
+      for (var k = 0; k < n - 1; k++) dl.push((ys[k + 1] - ys[k]) / gw);
+      m[0] = dl[0]; m[n - 1] = dl[n - 2];
+      for (k = 1; k < n - 1; k++) m[k] = dl[k - 1] * dl[k] <= 0 ? 0 : (dl[k - 1] + dl[k]) / 2;
+      for (k = 0; k < n - 1; k++) {
+        if (dl[k] === 0) { m[k] = m[k + 1] = 0; continue; }
+        var a = m[k] / dl[k], b = m[k + 1] / dl[k], h = a * a + b * b;
+        if (h > 9) { var t = 3 / Math.sqrt(h); m[k] = t * a * dl[k]; m[k + 1] = t * b * dl[k]; }
+      }
+      return { ys: ys, m: m };
+    }
+    function linha(arr, de, ate) {
+      var tg = tangentes(arr), d = 'M' + px(de).toFixed(1) + ' ' + tg.ys[de].toFixed(1), c = gw / 3;
+      for (var k = de; k < ate; k++) {
+        d += 'C' + (px(k) + c).toFixed(1) + ' ' + (tg.ys[k] + tg.m[k] * c).toFixed(1) + ' ' + (px(k + 1) - c).toFixed(1) + ' ' + (tg.ys[k + 1] - tg.m[k + 1] * c).toFixed(1) + ' ' + px(k + 1).toFixed(1) + ' ' + tg.ys[k + 1].toFixed(1);
+      }
+      return d;
+    }
     var ult = 0; for (var k = 1; k <= 12; k++) if (ehReal(k)) ult = k;
     var out = '<line class="b-base" x1="2" x2="' + (areaW - 8) + '" y1="' + (H - MB) + '" y2="' + (H - MB) + '"/>';
     out += '<path class="l-b" d="' + linha(b, 0, 11) + '"/>';
