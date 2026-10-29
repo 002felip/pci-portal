@@ -181,6 +181,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
 .unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
 .unit-list button[data-site][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+/* Anos: lista suspensa com os anos da série (mostrar/ocultar) e atalhos */
+.anos-pop { width: min(264px, calc(100vw - 32px)); grid-template-columns: 1fr; gap: 6px; padding: 10px; }
+.anos-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.anos-grid button, .anos-acoes button { min-height: 28px; padding: 2px 6px; border-radius: 7px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .72rem var(--font-ui); font-variant-numeric: tabular-nums; cursor: pointer; }
+.anos-grid button[aria-pressed="true"] { background: var(--ctl-on-bg); border-color: transparent; color: var(--ctl-on-text); }
+.anos-grid button:hover, .anos-acoes button:hover { border-color: var(--ctl-on-bg); }
+.anos-acoes { display: flex; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+.anos-acoes button { flex: 1; }
+.switch:disabled { opacity: .45; cursor: default; }
+@media (pointer: coarse) { .anos-grid button, .anos-acoes button { min-height: 44px; } }
 /* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro */
 .ciclo-pop { width: auto; min-width: 120px; grid-template-columns: 1fr; }
 .ciclo-pop .unit-list { max-height: min(60vh, 360px); overflow-y: auto; }
@@ -305,6 +315,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .cores-sel { width: 100%; min-height: 32px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .72rem var(--font-ui); }
 .cores-sel option { background: var(--page); color: var(--text); }
 .cores-cols { display: flex; flex-direction: column; gap: 6px; }
+.cores-box { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--panel) 60%, transparent); }
+.cores-box-tit { margin: 0; font: 700 .6rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); }
+.cor-sw.vazio { border-style: dashed; }
 .cor-acoes { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .cor-limpar { width: 26px; height: 26px; padding: 0; border-radius: 7px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font-size: .8rem; line-height: 1; cursor: pointer; }
 .cor-limpar:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
@@ -322,7 +335,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (prefers-reduced-motion: reduce) { .palette-color { transition: none; } }
 .card .seg button { transition: background-color .18s ease, color .18s ease; }
 .card .seg button { min-height: 22px; padding: 1px 8px; font-size: .68rem; }
-.chart { flex: none; height: var(--chart-h, 190px); min-height: 56px; position: relative; }
+.chart { flex: none; height: var(--chart-h, 190px); min-height: 56px; position: relative; border-radius: 8px; background: var(--chart-bg, transparent); }
 .chart svg { display: block; overflow: visible; font-family: var(--font-display); }
 
 /* SVG */
@@ -640,14 +653,26 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
           </div>
         </div>
       </div>
-      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Years:</span><div class="seg" role="group" aria-labelledby="lblAno" aria-describedby="dicaAnos" data-filter="ano"></div><span class="sr-only" id="dicaAnos" data-i18n="a.anos">Years shown in the charts (click to show or hide)</span></div>
+      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Years:</span>
+        <div class="unit anos">
+          <button type="button" class="unit-trigger" id="anosTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="anosPop" aria-describedby="lblAno">
+            <span id="anosTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop anos-pop" id="anosPop" hidden>
+            <span class="unit-h" id="dicaAnos" data-i18n="a.anos">Years shown in the charts</span>
+            <div class="anos-grid" role="group" aria-labelledby="lblAno" aria-describedby="dicaAnos" data-filter="ano"></div>
+            <div class="anos-acoes"><button type="button" data-anos="todos" data-i18n="a.anosTodos">All</button><button type="button" data-anos="ultimos" data-i18n="a.anosUltimos">Last 5</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblSerie" data-i18n="f.serie">Series:</span><div class="seg" role="group" aria-labelledby="lblSerie" data-filter="serie"></div></div>
       <div class="filter"><span class="filter-label" id="lblDelta">Delta:</span>
         <button type="button" class="switch" id="deltaSwitch" role="switch" aria-checked="true" aria-labelledby="lblDelta"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
       </div>
       <div class="fs-tools" role="group" aria-label="Colors and full screen" data-i18n-aria="a.fs">
       <div class="cores">
-        <button type="button" class="fs-btn" id="coresBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="coresPop" aria-label="Bar colors" title="Bar colors" data-i18n-aria="k.abrir" data-i18n-title="k.abrir"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7.5" cy="11" r="1.3" fill="currentColor"/><circle cx="10.5" cy="7.3" r="1.3" fill="currentColor"/><circle cx="15" cy="7.8" r="1.3" fill="currentColor"/></svg></button>
-        <div class="cores-pop" id="coresPop" role="dialog" aria-label="Bar colors" data-i18n-aria="k.titulo" hidden></div>
+        <button type="button" class="fs-btn" id="coresBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="coresPop" aria-label="Colors" title="Colors" data-i18n-aria="k.abrir" data-i18n-title="k.abrir"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7.5" cy="11" r="1.3" fill="currentColor"/><circle cx="10.5" cy="7.3" r="1.3" fill="currentColor"/><circle cx="15" cy="7.8" r="1.3" fill="currentColor"/></svg></button>
+        <div class="cores-pop" id="coresPop" role="dialog" aria-label="Colors" data-i18n-aria="k.titulo" hidden></div>
       </div>
       <button type="button" class="fs-btn js-full" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
@@ -660,8 +685,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     </div>
     <div class="panel-meta">
           <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
-            <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
-            <li><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
+            <li id="legB"><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+            <li id="legAF"><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
           </ul>
           <p class="updated" data-i18n="l.hist">Annual evolution — each year from the latest load up to the cycle</p>
           <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
@@ -828,7 +853,8 @@ window.VBMSetup = (function () {
   VBMSetup.registrar({
     'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Business Units:', 'f.year': 'Anos:',
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Cores e tela cheia',
-      'a.anos': 'Anos exibidos nos gráficos (clique para mostrar ou ocultar)', 'a.anoUltimo': 'Pelo menos um ano fica visível',
+      'a.anos': 'Anos exibidos nos gráficos', 'a.anoUltimo': 'Pelo menos um ano fica visível', 'a.anosTodos': 'Todos', 'a.anosUltimos': 'Últimos 5', 'a.nAnos': '{n} anos',
+      'f.serie': 'Séries:', 'a.serieBA': 'Budget vs Actual/Forecast', 'a.serieAF': 'Apenas Actual/Forecast', 'a.serieB': 'Apenas Budget', 'a.deltaSo': 'O delta compara Budget e Actual/Forecast: escolha as duas séries',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.hist': 'Evolução anual — cada ano com a carga mais recente até o ciclo',
       'q.semKpi': 'KPI não retornado pela query (layout: {nome})', 'q.semUnid': 'unidade ausente na query (SG_UNID)', 'q.semDec': 'casas decimais ausentes na query (VL_CASADECIMAL) — usando {n}',
@@ -836,9 +862,11 @@ window.VBMSetup = (function () {
       'c.notaInterm': 'Os dados apresentados neste gráfico incluem a produção de intermediários.',
       'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido', 'c.capex': 'CAPEX exibido',
       'g.semDado': 'sem dado', 'g.variacao': 'variação',
-      'k.abrir': 'Cores das barras', 'k.titulo': 'Cores das barras', 'k.b': 'Budget (B)', 'k.af': 'Actual | Forecast (A | F)',
+      'k.abrir': 'Cores', 'k.titulo': 'Cores', 'k.b': 'Barras comparativas (Budget)', 'k.af': 'Barras principais (Act/Fcst)',
+      'k.fundo': 'Fundo do gráfico', 'k.dUp': 'Delta favorável', 'k.dDown': 'Delta desfavorável', 'k.dFlat': 'Delta neutro', 'k.conector': 'Conectores',
+      'k.semFundo': 'sem fundo', 'k.restaurarCol': 'Restaurar cores das colunas',
       'k.padrao': 'padrão', 'k.restaurar': 'Restaurar cores padrão', 'k.paleta': 'Paleta', 'k.escolher': 'Escolher a cor de {serie}',
-      'k.modo': 'Modo de coloração', 'k.grupo': 'Por grupo', 'k.coluna': 'Por coluna', 'k.colunas': 'Cores das colunas', 'k.limpar': 'Voltar {serie} à cor da paleta',
+      'k.modo': 'Modo de coloração', 'k.grupo': 'Por grupo', 'k.coluna': 'Por coluna', 'k.colunas': 'Cores das colunas', 'k.limpar': 'Restaurar a cor padrão de {serie}',
       'k.tagPaleta': 'paleta', 'k.porValor': 'por valor', 'k.pNenhuma': 'Nenhuma', 'k.pVale': 'Paleta VBM', 'k.pExecutiva': 'Paleta Executiva',
       'k.grade': 'Paleta de cores', 'k.pAzul': 'Azul Monocromático', 'k.pVerde': 'Verde Monocromático', 'k.pPerformance': 'Escala de Performance', 'k.pGradiente': 'Escala Gradiente',
       'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
@@ -848,7 +876,8 @@ window.VBMSetup = (function () {
       'b.desatualizado': 'banco indisponível: últimos dados lidos', 's.desatualizado': 'O banco não respondeu; estes são os últimos dados lidos (veja a hora em Última atualização).' },
     en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Business Units:', 'f.year': 'Years:',
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Colors and full screen',
-      'a.anos': 'Years shown in the charts (click to show or hide)', 'a.anoUltimo': 'At least one year stays visible',
+      'a.anos': 'Years shown in the charts', 'a.anoUltimo': 'At least one year stays visible', 'a.anosTodos': 'All', 'a.anosUltimos': 'Last 5', 'a.nAnos': '{n} years',
+      'f.serie': 'Series:', 'a.serieBA': 'Budget vs Actual/Forecast', 'a.serieAF': 'Actual/Forecast only', 'a.serieB': 'Budget only', 'a.deltaSo': 'Delta compares Budget and Actual/Forecast: choose both series',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.hist': 'Annual evolution — each year from the latest load up to the cycle',
       'q.semKpi': 'KPI not returned by the query (layout: {nome})', 'q.semUnid': 'unit missing in the query (SG_UNID)', 'q.semDec': 'decimals missing in the query (VL_CASADECIMAL) — using {n}',
@@ -856,9 +885,11 @@ window.VBMSetup = (function () {
       'c.notaInterm': 'The data presented in this chart includes intermediates production.',
       'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown', 'c.capex': 'CAPEX shown',
       'g.semDado': 'no data', 'g.variacao': 'variance',
-      'k.abrir': 'Bar colors', 'k.titulo': 'Bar colors', 'k.b': 'Budget (B)', 'k.af': 'Actual | Forecast (A | F)',
+      'k.abrir': 'Colors', 'k.titulo': 'Colors', 'k.b': 'Comparison bars (Budget)', 'k.af': 'Main bars (Act/Fcst)',
+      'k.fundo': 'Chart background', 'k.dUp': 'Favorable delta', 'k.dDown': 'Unfavorable delta', 'k.dFlat': 'Neutral delta', 'k.conector': 'Connectors',
+      'k.semFundo': 'none', 'k.restaurarCol': 'Restore column colors',
       'k.padrao': 'default', 'k.restaurar': 'Restore default colors', 'k.paleta': 'Palette', 'k.escolher': 'Choose the color of {serie}',
-      'k.modo': 'Coloring mode', 'k.grupo': 'By group', 'k.coluna': 'By column', 'k.colunas': 'Column colors', 'k.limpar': 'Return {serie} to the palette color',
+      'k.modo': 'Coloring mode', 'k.grupo': 'By group', 'k.coluna': 'By column', 'k.colunas': 'Column colors', 'k.limpar': 'Restore the default color of {serie}',
       'k.tagPaleta': 'palette', 'k.porValor': 'by value', 'k.pNenhuma': 'None', 'k.pVale': 'VBM palette', 'k.pExecutiva': 'Executive palette',
       'k.grade': 'Color palette', 'k.pAzul': 'Monochrome blue', 'k.pVerde': 'Monochrome green', 'k.pPerformance': 'Performance scale', 'k.pGradiente': 'Gradient scale',
       'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
@@ -963,8 +994,9 @@ window.VBMSetup = (function () {
   // Unidades e anos: preenchidos com o resultado da consulta (aplicarFiltros)
   var UNIDADES = [], ANOS = [];
   // anos: anos exibidos nos gráficos (filtro Anos; todos por padrão)
-  var state = { ciclo: '', pais: '', bu: '', anos: [], delta: 'on', sel: {} };
-  // ── Navegação no endereço (?ciclo=&site=&anos=&delta=&sel=): o refresh volta à mesma tela e o link
+  // serie: 'ba' Budget e Actual/Forecast (com delta) · 'af' só Actual/Forecast · 'b' só Budget
+  var state = { ciclo: '', pais: '', bu: '', anos: [], serie: 'ba', delta: 'on', sel: {} };
+  // ── Navegação no endereço (?ciclo=&site=&anos=&serie=&delta=&sel=): o refresh volta à mesma tela e o link
   // pode ser compartilhado. Lida uma vez na carga e validada contra os filtros da consulta (aplicarFiltros)
   var CICLOS = [], CICLO_URL = (function () { try { return new URLSearchParams(location.search).get('ciclo') || ''; } catch (e) { return ''; } })();
   // "Out/26" no idioma escolhido (mês do DT_REF da carga)
@@ -972,7 +1004,7 @@ window.VBMSetup = (function () {
   var URL_INI = (function () {
     try {
       var q = new URLSearchParams(location.search);
-      return q.has('site') || q.has('anos') ? { site: q.get('site'), anos: String(q.get('anos') || '').split(',').map(Number).filter(Boolean), delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
+      return q.has('site') || q.has('anos') ? { site: q.get('site'), anos: String(q.get('anos') || '').split(',').map(Number).filter(Boolean), serie: q.get('serie'), delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
     } catch (e) { return null; }
   })();
   function salvarUrl() {
@@ -982,6 +1014,7 @@ window.VBMSetup = (function () {
       if (state.ciclo) q.set('ciclo', state.ciclo);
       q.set('site', state.bu);
       if (state.anos.length && state.anos.length < ANOS.length) q.set('anos', state.anos.join(',')); else q.delete('anos');
+      if (state.serie !== 'ba') q.set('serie', state.serie); else q.delete('serie');
       if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
       var sel = Object.keys(state.sel).filter(function (k) { return state.sel[k]; }).map(function (k) { return k + '.' + state.sel[k]; }).join(',');
       if (sel) q.set('sel', sel); else q.delete('sel');
@@ -1026,81 +1059,94 @@ window.VBMSetup = (function () {
     return a;
   }
 
-  // ── Gráfico: altura e largura contidas (ritmo do print); um par B · A/F por ano ──
-  // Mesmo desenho do COO (barras, valores, cota de diferença), com os anos no lugar de mês/trimestre/ano
+  // ── Gráfico: altura e largura contidas (ritmo do print) ──
+  // Mesmo desenho do COO (barras, valores, cota de diferença). Todas as colunas numa régua única, com o
+  // MESMO passo entre elas (Budget → Actual/Forecast igual a Actual/Forecast → próximo ano), centrada no card.
+  // Séries (filtro Séries): Budget e Actual/Forecast (com delta), só Actual/Forecast ou só Budget.
+  var SERIES = { ba: ['B', 'AF'], af: ['AF'], b: ['B'] };
   var MAX_W = 380, MAX_H = 190; // mesmo tamanho no modo normal e em tela cheia
   function chartSvg(ind, W, H) {
-    var v = view(ind), anos = anosVisiveis(), N = Math.max(1, anos.length);
-    var showDelta = state.delta === 'on';
-    var MT = showDelta ? 46 : 20, MB = 16, PW = W / N;
-    var BW = Math.max(12, Math.min(30, PW * 0.3)), GAP = Math.max(6, Math.min(24, PW * 0.2));
-    var pares = anos.map(function (a) { return v.d && v.d[a] ? v.d[a] : [null, null, null]; });
-    // Colunas do gráfico na ordem (ano: Budget, Actual/Forecast), com o valor — cores Por Coluna
-    var colunas = [];
-    pares.forEach(function (p, i) { colunas.push({ k: chaveColuna(anos[i], 'B'), v: p[0] }, { k: chaveColuna(anos[i], 'AF'), v: p[1] }); });
-    var temDado = pares.some(function (p) { return p[0] != null || p[1] != null; });
-    if (!temDado) { // sem dados: só a linha de base e o aviso
-      var yv0 = H - MB;
+    var v = view(ind), anos = anosVisiveis(), series = SERIES[state.serie] || SERIES.ba;
+    var comDelta = state.delta === 'on' && series.length === 2, MB = 16;
+    // Colunas do gráfico na ordem (ano a ano, na ordem das séries), com o valor e a letra A/F
+    var cols = [];
+    anos.forEach(function (a) {
+      var d = v.d && v.d[a] ? v.d[a] : [null, null, null];
+      series.forEach(function (s) { cols.push({ ano: a, s: s, v: s === 'B' ? d[0] : d[1], letra: d[2] || letraPadrao(a) }); });
+    });
+    if (!cols.some(function (c) { return c.v != null; })) { // sem dados: só a linha de base e o aviso
+      var yv0 = H - MB, MT0 = comDelta ? 46 : 20;
       return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
         '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
-        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(T(v.falta && v.falta.kpi ? 'q.vazio' : ind.vazio)) + '</text>' : '') + '</svg>';
+        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT0 + yv0) / 2) + '" text-anchor="middle">' + esc(T(v.falta && v.falta.kpi ? 'q.vazio' : ind.vazio)) + '</text>' : '') + '</svg>';
     }
-    // [RESPONSIVO] valores e rótulos — a fonte encolhe até o maior número caber entre duas barras
-    // vizinhas (muitos anos, card estreito), sem passar de 11 px (valor) / 9,5 px (eixo) nem ficar abaixo de 7 px
-    var stVal = '', stEixo = '', maxCar = 1;
-    pares.forEach(function (p) { [p[0], p[1]].forEach(function (x) { if (x != null) maxCar = Math.max(maxCar, fmt(x, v.dec).length); }); });
-    var cabe = (BW + GAP - 3) / (maxCar * 0.6);
-    if (cabe < 11) stVal = ' style="font-size:' + Math.max(7, cabe).toFixed(1) + 'px"';
-    var fsEixo = Math.max(7, Math.min(9.5, (BW + GAP - 2) / 2));
-    if (fsEixo < 9.5) stEixo = ' style="font-size:' + fsEixo.toFixed(1) + 'px"';
-    // escala única: as barras de todos os anos na mesma régua
-    var all = [].concat.apply([], pares.map(function (p) { return [p[0], p[1]]; })).filter(function (x) { return x !== null && x !== undefined; });
+    // Régua única: passo proporcional à largura do card (até 48 px, barra de até ~30 px), centrada
+    var nb = cols.length, passo = Math.min(W / (nb + 0.4), 48), BW = passo * 0.62;
+    var x0 = (W - ((nb - 1) * passo + BW)) / 2;
+    cols.forEach(function (c, j) { c.x = x0 + j * passo; c.k = chaveColuna(c.ano, c.s); });
+    // [RESPONSIVO] valores e rótulos — a fonte encolhe até o maior número caber no passo (máx. 11 px valor,
+    // 9,5 px eixo; mín. 7 px). Se nem 7 px couber (muitos anos), os valores alternam em dois níveis
+    var maxCar = 1;
+    cols.forEach(function (c) { if (c.v != null) maxCar = Math.max(maxCar, fmt(c.v, v.dec).length); });
+    var cabe = (passo - 2) / (maxCar * 0.6), fsVal = Math.max(7, Math.min(11, cabe));
+    var stVal = fsVal < 11 ? ' style="font-size:' + fsVal.toFixed(1) + 'px"' : '', degrauVal = cabe < 7 ? 11 : 0;
+    var fsEixo = Math.max(7, Math.min(9.5, (passo - 2) / 1.9)), stEixo = fsEixo < 9.5 ? ' style="font-size:' + fsEixo.toFixed(1) + 'px"' : '';
+    // Deltas (B → A/F de cada ano): pílulas lado a lado ou, sem espaço, em dois níveis alternados
+    var pares = [];
+    if (comDelta) for (var p = 0; p < cols.length; p += 2) {
+      var b = cols[p], af = cols[p + 1];
+      if (b.v != null && af.v != null) pares.push({ b: b, af: af, i: p / 2, dl: delta(b.v, af.v, ind, v.dec) });
+    }
+    var pillH = 17, pillW = function (dl) { return Math.max(38, dl.txt.length * 5.8 + 14); };
+    var maiorPill = Math.max.apply(null, [0].concat(pares.map(function (x) { return pillW(x.dl); })));
+    var degrauPill = comDelta && 2 * passo < maiorPill + 4 ? pillH + 4 : 0;
+    var MT = (comDelta ? 46 + degrauPill : 20) + degrauVal;
+    // escala única: todas as barras na mesma régua
+    var all = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null; });
     var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
     var lo = Math.min(0, Math.min.apply(null, all)), hi = Math.max(0, Math.max.apply(null, all));
     if (hi === lo) hi = lo + 1;
     if (folgaTopo) hi = hi / 0.72; // a coluna mais alta usa ~72% da altura
     var y = function (val) { return MT + (hi - val) / (hi - lo) * (H - MT - MB); }, y0 = y(0);
     var label = [v.t + ' (' + v.u + ').'];
-    // Linha do eixo contínua sob todos os anos (2 px das bordas)
+    // Linha do eixo contínua sob todas as colunas (2 px das bordas)
     var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+    var nomeDe = function (c) { return c.s === 'B' ? 'Budget' : c.letra === 'A' ? 'Actual' : 'Forecast'; };
+    var rotDe = function (c) { return String(c.ano).slice(2) + (c.s === 'B' ? 'B' : c.letra); };
+
+    cols.forEach(function (c, j) {
+      var rot = rotDe(c), bx = c.x + BW / 2;
+      if (c.v === null) { out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(rot) + '</text>'; return; }
+      var yv = y(c.v), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = c.v < 0;
+      var fill = degradeDe(corDaColuna(cols, j, ind.pol), c.s === 'B' ? 'g-b' : 'g-a');
+      var tip = esc(rot + ' · ' + nomeDe(c) + ': ' + fmt(c.v, v.dec) + ' ' + v.u);
+      out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + c.x + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + fill + ')" data-tip="' + tip + '"/>';
+      // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
+      out += '<text class="b-val"' + stVal + ' x="' + bx + '" y="' + ((neg ? y0 : yv) - 6 - (degrauVal && j % 2 ? degrauVal : 0)) + '" text-anchor="middle">' + fmt(c.v, v.dec) + '</text>';
+      out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(rot) + '</text>';
+    });
+    anos.forEach(function (a) {
+      var doAno = cols.filter(function (c) { return c.ano === a; }), par = pares.filter(function (x) { return x.b.ano === a; })[0];
+      label.push(a + ': ' + doAno.map(function (c) { return nomeDe(c) + ' ' + (c.v === null ? T('g.semDado') : fmt(c.v, v.dec)); }).join(', ') + (par ? ', ' + T('g.variacao') + ' ' + par.dl.txt : '') + '.');
+    });
 
     // Cota de diferença do Performance Hub: nível de referência tracejado, nível novo sólido, faixa,
     // haste, fio guia e pílula (B → A/F)
-    function cota(xEsq, xDir, vRef, vNovo, dlc) {
-      var x1 = xEsq + BW, x2 = xDir, cx = (x1 + x2) / 2, yr = y(vRef), yn = y(vNovo);
-      var ytop = Math.min(yr, yn, y0), pillH = 17, pillW = Math.max(38, dlc.txt.length * 5.8 + 14);
-      var pillY = Math.max(0, ytop - 22 - pillH);
-      var g = '<g class="cota ' + dlc.cls + '">';
+    pares.forEach(function (x) {
+      var x1 = x.b.x + BW, x2 = x.af.x, cx = (x1 + x2) / 2, yr = y(x.b.v), yn = y(x.af.v), dl = x.dl;
+      var ytop = Math.min(yr, yn, y0), pw = pillW(dl);
+      var pillY = Math.max(0, ytop - 22 - pillH - degrauVal - (degrauPill && x.i % 2 ? degrauPill : 0));
+      var g = '<g class="cota ' + dl.cls + '">';
       g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
       g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
       if (Math.abs(yr - yn) > 0.5) {
-        g += '<rect class="' + (vNovo >= vRef ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
+        g += '<rect class="' + (x.af.v >= x.b.v ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
         g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
       }
       g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
-      g += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="8.5"/>';
-      g += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dlc.txt) + '</text>';
-      return g + '</g>';
-    }
-
-    pares.forEach(function (pair, i) {
-      var ano = anos[i], yy = String(ano).slice(2), letra = pair[2] || letraPadrao(ano);
-      var nomeAF = letra === 'A' ? 'Actual' : 'Forecast';
-      var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
-      var dl = delta(pair[0], pair[1], ind, v.dec), semPar = pair[0] === null || pair[1] === null;
-      label.push(ano + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + nomeAF + ' ' + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
-      [[xb, pair[0], degradeDe(corDaColuna(colunas, 2 * i, ind.pol), 'g-b'), yy + 'B', 'Budget'],
-        [xa, pair[1], degradeDe(corDaColuna(colunas, 2 * i + 1, ind.pol), 'g-a'), yy + letra, nomeAF]].forEach(function (bar) {
-        if (bar[1] === null) { out += '<text class="b-axis"' + stEixo + ' x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
-        var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
-        var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
-        var bx = bar[0] + BW / 2;
-        out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + bar[0] + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + tip + '"/>';
-        // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
-        out += '<text class="b-val"' + stVal + ' x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
-        out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
-      });
-      if (showDelta && !semPar) out += cota(xb, xa, pair[0], pair[1], dl);
+      g += '<rect class="d-pill" x="' + (cx - pw / 2) + '" y="' + pillY + '" width="' + pw + '" height="' + pillH + '" rx="8.5"/>';
+      g += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dl.txt) + '</text>';
+      out += g + '</g>';
     });
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
   }
@@ -1128,7 +1174,7 @@ window.VBMSetup = (function () {
   function drawChart(el) {
     var W = Math.min(MAX_W, Math.round(el.clientWidth)), H = Math.min(MAX_H, Math.round(el.clientHeight));
     if (W < 60 || H < 44) return;
-    var key = W + 'x' + H + '|' + state.delta + '|' + (state.sel[el.getAttribute('data-ind')] || '') + '|' + anosVisiveis().join(',');
+    var key = W + 'x' + H + '|' + state.delta + '|' + state.serie + '|' + (state.sel[el.getAttribute('data-ind')] || '') + '|' + anosVisiveis().join(',');
     if (el._key === key) return;
     el._key = key;
     el.innerHTML = chartSvg(byId(el.getAttribute('data-ind')), W, H);
@@ -1190,12 +1236,25 @@ window.VBMSetup = (function () {
     }
   }
 
-  // Filtro Anos: cada botão mostra/oculta o ano nos gráficos (sem nova consulta)
+  // Filtros sem nova consulta (os dados já estão na página): Anos (cada botão mostra/oculta o ano),
+  // Séries (B e A/F, só A/F ou só B) e Delta (só com as duas séries)
+  var OPCOES_SERIE = [['ba', 'B vs A/F', 'a.serieBA'], ['af', 'A/F', 'a.serieAF'], ['b', 'B', 'a.serieB']];
   function renderFilters() {
-    var g = document.querySelector('[data-filter="ano"]');
-    g.innerHTML = ANOS.map(function (a) {
+    document.querySelector('[data-filter="ano"]').innerHTML = ANOS.map(function (a) {
       return '<button type="button" data-v="' + a + '" aria-pressed="' + (state.anos.indexOf(a) >= 0) + '">' + a + '</button>';
     }).join('');
+    // "2017 – 2026" (anos seguidos) ou "6 anos"
+    var vis = anosVisiveis(), seguidos = vis.length && vis[vis.length - 1] - vis[0] === vis.length - 1;
+    document.getElementById('anosTxt').textContent = !vis.length ? '—' : vis.length === 1 ? String(vis[0]) : seguidos ? vis[0] + ' – ' + vis[vis.length - 1] : T('a.nAnos', { n: vis.length });
+    document.querySelector('[data-filter="serie"]').innerHTML = OPCOES_SERIE.map(function (o) {
+      return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (state.serie === o[0]) + '" title="' + esc(T(o[2])) + '" aria-label="' + esc(T(o[2])) + '">' + esc(o[1]) + '</button>';
+    }).join('');
+    var sw = document.getElementById('deltaSwitch'), soUma = state.serie !== 'ba';
+    sw.disabled = soUma;
+    sw.setAttribute('aria-checked', String(state.delta === 'on' && !soUma));
+    sw.title = soUma ? T('a.deltaSo') : '';
+    document.getElementById('legB').hidden = state.serie === 'af';
+    document.getElementById('legAF').hidden = state.serie === 'b';
     renderCicloSel();
   }
   function renderCicloSel() {
@@ -1302,14 +1361,16 @@ window.VBMSetup = (function () {
   // ── Delta: interruptor liga/desliga ──
   document.getElementById('deltaSwitch').addEventListener('click', function () {
     state.delta = state.delta === 'on' ? 'off' : 'on';
-    this.setAttribute('aria-checked', String(state.delta === 'on'));
+    renderFilters();
     render();
   });
 
-  // ── Cores das barras: botão compacto ao lado da tela cheia, no modelo do painel de Cores do VBM
-  // Performance Studio — Modo de Coloração Por Grupo (Budget · Actual/Forecast) ou Por Coluna (cada
-  // coluna do ano: paleta pré-definida e/ou cor manual). PALETTE_COLORS, PALETAS_COLUNAS, corDaPaleta e
-  // a prioridade "manual > paleta > grupo" vêm de lá. Preferência de cada pessoa, no navegador.
+  // ── Cores: botão compacto ao lado da tela cheia, com a MESMA configuração do painel de Cores do
+  // VBM Performance Studio: Modo de Coloração (Por Grupo | Por Coluna); em Por Coluna, "Cores das
+  // colunas" com Paleta (as mesmas PALETAS_COLUNAS), cor manual por coluna e "Restaurar cores das
+  // colunas"; cores do grupo (barras), fundo do gráfico, deltas e conectores (EDIT_COLOR_DEFS); e
+  // "Restaurar cores padrão". Prioridade da cor da barra: manual > paleta > grupo (como no Studio).
+  // Preferência de cada pessoa, no navegador; sem escolha, as cores do COO.
   var PALETTE_COLORS = ['#FFFFFF', '#F6F6F6', '#E6E7E8', '#D9ECEB', '#D8F0FA', '#BCBEC0', '#7FBEBC', '#9DDAF2', '#3CB5E5', '#00B0F0', '#6E8CBA',
     '#747678', '#555555', '#007E7A', '#034944', '#1B5E80', '#3A4A6B', '#2626D1', '#DC2626'];
   // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas. Monocromáticas e gradiente:
@@ -1322,27 +1383,46 @@ window.VBMSetup = (function () {
     { id: 'performance', lbl: 'k.pPerformance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
     { id: 'gradiente', lbl: 'k.pGradiente', de: '#5FB4DC', ate: '#023832' }
   ];
-  var CORES_PADRAO = { b: '#BCBEC0', af: '#3CB5E5' };
+  // Cores do grupo e dos elementos do gráfico (EDIT_COLOR_DEFS do Studio, sem o Plan: o ano não tem Plan).
+  // def = cor padrão do COO; o fundo padrão é o do painel (sem fundo próprio)
+  var DEFS_GRUPO = [
+    { k: 'serie:AF', lbl: 'k.af', def: '#3CB5E5', serie: true },
+    { k: 'serie:B', lbl: 'k.b', def: '#BCBEC0', serie: true },
+    { k: 'bgChart', lbl: 'k.fundo', def: null },
+    { k: 'delta:up', lbl: 'k.dUp', def: '#007E7A' },
+    { k: 'delta:down', lbl: 'k.dDown', def: '#DC2626' },
+    { k: 'delta:flat', lbl: 'k.dFlat', def: '#747678' },
+    { k: 'conector', lbl: 'k.conector', def: '#747678' }
+  ];
   // Degradê de cada barra (topo, meio, base): o padrão é o do COO; cor escolhida → o mesmo desenho
-  var DEGRADE_PADRAO = { b: ['#CBCDCF', '#BCBEC0', '#B2B4B6'], af: ['#62C6EC', '#3CB5E5', '#36A9D8'] };
+  var DEGRADE_PADRAO = { 'serie:B': ['#CBCDCF', '#BCBEC0', '#B2B4B6'], 'serie:AF': ['#62C6EC', '#3CB5E5', '#36A9D8'] };
+  // Delta: token de texto/linha, fundo da faixa e hachura (padrões do COO quando não há escolha)
+  var DELTAS = { 'delta:up': ['--good', '--good-bg', .10, 'hatch-good', 'rgba(0,126,122,.24)', .24],
+    'delta:down': ['--bad', '--bad-bg', .09, 'hatch-bad', 'rgba(220,38,38,.22)', .22],
+    'delta:flat': ['--flat', '--flat-bg', .12, 'hatch-flat', 'rgba(116,118,120,.24)', .24] };
   var CORES_CHAVE = 'coo-historical-bar-colors', HEX = /^#[0-9A-F]{6}$/, COLUNA = /^\d{2}(B|AF)$/;
   var hexOk = function (v) { v = String(v || '').toUpperCase(); return HEX.test(v) ? v : null; };
   var misturarHex = function (a, b, t) { return '#' + [1, 3, 5].map(function (i) { return Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0'); }).join('').toUpperCase(); };
-  function coresPadrao() { return { modo: 'grupo', b: CORES_PADRAO.b, af: CORES_PADRAO.af, paleta: '', col: {} }; }
+  var rgba = function (hex, a) { return 'rgba(' + [1, 3, 5].map(function (i) { return parseInt(hex.substr(i, 2), 16); }).join(',') + ',' + a + ')'; };
+  function coresPadrao(modo) { return { modo: modo || 'grupo', paleta: '', col: {}, g: {} }; }
   var cores = (function () {
     var c = coresPadrao();
     try {
       var s = JSON.parse(localStorage.getItem(CORES_CHAVE) || 'null') || {};
       c.modo = s.modo === 'coluna' ? 'coluna' : 'grupo';
-      c.b = hexOk(s.b) || c.b; c.af = hexOk(s.af) || c.af;
       c.paleta = PALETAS_COLUNAS.some(function (p) { return p.id === s.paleta; }) ? s.paleta : '';
       Object.keys(s.col || {}).forEach(function (k) { if (COLUNA.test(k) && hexOk(s.col[k])) c.col[k] = hexOk(s.col[k]); });
+      DEFS_GRUPO.forEach(function (d) { var v = hexOk((s.g || {})[d.k]); if (v && v !== d.def) c.g[d.k] = v; });
+      // versão anterior do menu ({ b, af })
+      if (!s.g && hexOk(s.b) && hexOk(s.b) !== '#BCBEC0') c.g['serie:B'] = hexOk(s.b);
+      if (!s.g && hexOk(s.af) && hexOk(s.af) !== '#3CB5E5') c.g['serie:AF'] = hexOk(s.af);
     } catch (e) { /* sem localStorage: cores padrão */ }
     return c;
   })();
+  var corGrupo = function (k) { return cores.g[k] || DEFS_GRUPO.filter(function (d) { return d.k === k; })[0].def; };
   // Coluna = ano + série: '25B', '25AF' (a cor manual vale também quando o Forecast vira Actual)
   function chaveColuna(ano, serie) { return String(ano).slice(2) + serie; }
-  function rotuloColuna(k) { var yy = k.slice(0, 2), ano = 2000 + Number(yy); return /B$/.test(k) ? yy + 'B' : yy + letraPadrao(ano); }
+  function rotuloColuna(k) { var yy = k.slice(0, 2); return /B$/.test(k) ? yy + 'B' : yy + letraPadrao(2000 + Number(yy)); }
   // Cor da paleta para a coluna i de cols ([{ k, v }]); performance usa o valor (polaridade do KPI: custo menor = verde)
   function corDaPaleta(id, i, cols, pol) {
     var p = PALETAS_COLUNAS.filter(function (x) { return x.id === id; })[0];
@@ -1377,33 +1457,44 @@ window.VBMSetup = (function () {
     }
     return id;
   }
+  // Aplica as cores do grupo: degradês das barras, legenda, fundo, deltas (texto, faixa, hachura) e conectores.
+  // Sem escolha, os tokens do COO (que seguem o tema claro/escuro); cor escolhida vale nos dois temas
   function aplicarCores() {
-    var raiz = document.documentElement;
-    [['b', 'g-b', '--serie-b'], ['af', 'g-a', '--serie-a']].forEach(function (s) {
-      var c = cores[s[0]], padrao = c === CORES_PADRAO[s[0]];
-      var paradas = padrao ? DEGRADE_PADRAO[s[0]] : [misturarHex(c, '#FFFFFF', .2), c, misturarHex(c, '#000000', .06)];
+    var raiz = document.documentElement, prop = function (n, v) { if (v) raiz.style.setProperty(n, v); else raiz.style.removeProperty(n); };
+    [['serie:B', 'g-b', '--serie-b'], ['serie:AF', 'g-a', '--serie-a']].forEach(function (s) {
+      var c = cores.g[s[0]];
+      var paradas = c ? [misturarHex(c, '#FFFFFF', .2), c, misturarHex(c, '#000000', .06)] : DEGRADE_PADRAO[s[0]];
       document.querySelectorAll('#' + s[1] + ' stop').forEach(function (st, i) { st.setAttribute('stop-color', paradas[i]); });
-      // legenda: o padrão segue o tema (tokens do COO); cor escolhida vale nos dois temas
-      if (padrao) raiz.style.removeProperty(s[2]); else raiz.style.setProperty(s[2], c);
+      prop(s[2], c);
     });
+    prop('--chart-bg', cores.g.bgChart);
+    Object.keys(DELTAS).forEach(function (k) {
+      var c = cores.g[k], d = DELTAS[k];
+      prop(d[0], c); prop(d[1], c && rgba(c, d[2]));
+      var r = document.querySelector('#' + d[3] + ' rect');
+      if (r) r.setAttribute('fill', c ? rgba(c, d[5]) : d[4]);
+    });
+    prop('--d-stroke', cores.g.conector && rgba(cores.g.conector, .45));
+    prop('--d-hair', cores.g.conector && rgba(cores.g.conector, .30));
   }
-  function ehPadrao(c) { return c.modo === 'grupo' && c.b === CORES_PADRAO.b && c.af === CORES_PADRAO.af && !c.paleta && !Object.keys(c.col).length; }
+  function ehPadrao(c) { return !c.paleta && !Object.keys(c.col).length && !Object.keys(c.g).length; }
   function salvarCores() {
     try {
-      if (ehPadrao(cores)) localStorage.removeItem(CORES_CHAVE);
+      if (ehPadrao(cores) && cores.modo === 'grupo') localStorage.removeItem(CORES_CHAVE);
       else localStorage.setItem(CORES_CHAVE, JSON.stringify(cores));
     } catch (e) { /* só nesta sessão */ }
   }
   var coresBtn = document.getElementById('coresBtn'), coresPop = document.getElementById('coresPop');
-  // Colunas exibidas nos gráficos (anos visíveis × Budget, Actual/Forecast), na ordem do gráfico
+  // Colunas exibidas nos gráficos (anos visíveis × séries do filtro), na ordem do gráfico
   function colunasVisiveis() {
-    var cols = [];
-    anosVisiveis().forEach(function (a) { cols.push({ k: chaveColuna(a, 'B'), v: null }, { k: chaveColuna(a, 'AF'), v: null }); });
+    var cols = [], series = SERIES[state.serie] || SERIES.ba;
+    anosVisiveis().forEach(function (a) { series.forEach(function (s) { cols.push({ k: chaveColuna(a, s), v: null }); }); });
     return cols;
   }
   function botaoCor(attr, atual, tag, idRot, idVal, titulo) {
+    var hex = atual && atual.charAt(0) === '#';
     return '<button type="button" class="cor-btn" ' + attr + ' aria-haspopup="listbox" aria-labelledby="' + idRot + ' ' + idVal + '" title="' + esc(titulo) + '">' +
-      '<span class="cor-sw" style="background:' + atual + '" aria-hidden="true"></span><span id="' + idVal + '">' + esc(atual.charAt(0) === '#' ? atual : '') + '</span>' +
+      '<span class="cor-sw' + (atual ? '' : ' vazio') + '" style="background:' + (atual || 'transparent') + '" aria-hidden="true"></span><span id="' + idVal + '">' + esc(hex ? atual : atual ? '' : '—') + '</span>' +
       (tag ? '<span class="cor-tag">' + esc(tag) + '</span>' : '') + '</button>';
   }
   function renderCores() {
@@ -1413,28 +1504,30 @@ window.VBMSetup = (function () {
       '<div class="seg cores-modo" role="group" aria-labelledby="corModoLbl">' +
       '<button type="button" data-modo="grupo" aria-pressed="' + !coluna + '">' + esc(T('k.grupo')) + '</button>' +
       '<button type="button" data-modo="coluna" aria-pressed="' + coluna + '">' + esc(T('k.coluna')) + '</button></div>';
-    if (!coluna) {
-      h += [['b', 'k.b'], ['af', 'k.af']].map(function (s) {
-        var atual = cores[s[0]];
-        return '<div class="cor-row"><span id="corLbl-' + s[0] + '">' + esc(T(s[1])) + '</span>' +
-          botaoCor('data-cor="' + s[0] + '"', atual, atual === CORES_PADRAO[s[0]] ? T('k.padrao') : '', 'corLbl-' + s[0], 'corVal-' + s[0], T('k.escolher', { serie: T(s[1]) })) + '</div>';
-      }).join('');
-    } else {
+    if (coluna) {
       var cols = colunasVisiveis(), perf = cores.paleta === 'performance';
-      h += '<label class="cores-sub" for="corPaleta">' + esc(T('k.paleta')) + '</label>' +
+      h += '<div class="cores-box"><p class="cores-box-tit" id="corColTit">' + esc(T('k.colunas')) + '</p>' +
+        '<label class="cores-sub" for="corPaleta">' + esc(T('k.paleta')) + '</label>' +
         '<select class="cores-sel" id="corPaleta"><option value="">' + esc(T('k.pNenhuma')) + '</option>' +
         PALETAS_COLUNAS.map(function (p) { return '<option value="' + p.id + '"' + (p.id === cores.paleta ? ' selected' : '') + '>' + esc(T(p.lbl)) + '</option>'; }).join('') + '</select>' +
-        '<div class="cores-cols" role="group" aria-label="' + esc(T('k.colunas')) + '">' + cols.map(function (c, i) {
-          var manual = cores.col[c.k], grupo = /B$/.test(c.k) ? cores.b : cores.af, rot = rotuloColuna(c.k);
+        '<div class="cores-cols" role="group" aria-labelledby="corColTit">' + cols.map(function (c, i) {
+          var manual = cores.col[c.k], rot = rotuloColuna(c.k), grupo = corGrupo(/B$/.test(c.k) ? 'serie:B' : 'serie:AF');
           // performance: a cor depende do valor de cada gráfico — o menu mostra a escala
           var atual = manual || (perf ? 'linear-gradient(90deg,#DC2626,#BCBEC0,#007E7A)' : cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
           var tag = manual ? '' : perf ? T('k.porValor') : cores.paleta ? T('k.tagPaleta') : T('k.padrao');
           return '<div class="cor-row"><span id="colLbl-' + c.k + '">' + esc(rot) + '</span><span class="cor-acoes">' +
             botaoCor('data-col="' + c.k + '"', atual, tag, 'colLbl-' + c.k, 'colVal-' + c.k, T('k.escolher', { serie: rot })) +
             '<button type="button" class="cor-limpar" data-limpar="' + c.k + '"' + (manual ? '' : ' disabled') + ' aria-label="' + esc(T('k.limpar', { serie: rot })) + '" title="' + esc(T('k.limpar', { serie: rot })) + '">↺</button></span></div>';
-        }).join('') + '</div>';
+        }).join('') + '</div>' +
+        '<button type="button" class="cores-reset" data-reset="colunas"' + (!cores.paleta && !Object.keys(cores.col).length ? ' disabled' : '') + '>' + esc(T('k.restaurarCol')) + '</button></div>';
     }
-    h += '<button type="button" class="cores-reset"' + (ehPadrao(cores) ? ' disabled' : '') + '>' + esc(T('k.restaurar')) + '</button>';
+    // Cores do grupo e dos elementos (no modo Por Coluna, as barras seguem a lista acima)
+    h += DEFS_GRUPO.filter(function (d) { return !(coluna && d.serie); }).map(function (d) {
+      var id = d.k.replace(/\W/g, ''), atual = cores.g[d.k] || d.def;
+      return '<div class="cor-row"><span id="corLbl-' + id + '">' + esc(T(d.lbl)) + '</span>' +
+        botaoCor('data-cor="' + d.k + '"', atual, cores.g[d.k] ? '' : d.def ? T('k.padrao') : T('k.semFundo'), 'corLbl-' + id, 'corVal-' + id, T('k.escolher', { serie: T(d.lbl) })) + '</div>';
+    }).join('');
+    h += '<button type="button" class="cores-reset" data-reset="tudo"' + (ehPadrao(cores) ? ' disabled' : '') + '>' + esc(T('k.restaurar')) + '</button>';
     coresPop.innerHTML = h;
     posicionarCores();
   }
@@ -1453,7 +1546,7 @@ window.VBMSetup = (function () {
     var b = coresPop.querySelector('.cores-modo button[aria-pressed="true"]');
     if (b) b.focus();
   }
-  // Troca de cor: grava, atualiza os degradês do grupo e redesenha os gráficos (cores por coluna)
+  // Troca de cor: grava, aplica as cores do grupo e redesenha os gráficos (cores por coluna)
   function mudarCores(foco) {
     salvarCores();
     aplicarCores();
@@ -1465,7 +1558,7 @@ window.VBMSetup = (function () {
   coresBtn.addEventListener('click', function () { abrirCores(coresPop.hidden); });
   coresPop.addEventListener('change', function (e) {
     if (e.target.id !== 'corPaleta') return;
-    cores.paleta = e.target.value;
+    cores.paleta = e.target.value; // cores definidas manualmente são mantidas (como no Studio)
     mudarCores('#corPaleta');
   });
   coresPop.addEventListener('click', function (e) {
@@ -1477,15 +1570,17 @@ window.VBMSetup = (function () {
     var b = e.target.closest('.cor-btn');
     if (b) {
       var k = b.getAttribute('data-cor'), col = b.getAttribute('data-col'), r = b.getBoundingClientRect();
-      var atual = k ? cores[k] : cores.col[col];
-      openChartPalette(atual, r.left, r.bottom, function (cor) {
-        if (k) cores[k] = cor.toUpperCase(); else cores.col[col] = cor.toUpperCase();
+      openChartPalette(k ? cores.g[k] || (DEFS_GRUPO.filter(function (d) { return d.k === k; })[0].def) : cores.col[col], r.left, r.bottom, function (cor) {
+        cor = cor.toUpperCase();
+        if (k) { var def = DEFS_GRUPO.filter(function (d) { return d.k === k; })[0].def; if (cor === def) delete cores.g[k]; else cores.g[k] = cor; } else cores.col[col] = cor;
         mudarCores(k ? '.cor-btn[data-cor="' + k + '"]' : '.cor-btn[data-col="' + col + '"]');
       }, b);
       return;
     }
-    if (e.target.closest('.cores-reset')) {
-      cores = coresPadrao();
+    var rs = e.target.closest('button[data-reset]');
+    if (rs && !rs.disabled) {
+      if (rs.getAttribute('data-reset') === 'colunas') { cores.col = {}; cores.paleta = ''; } // cada coluna volta à cor do seu grupo
+      else cores = coresPadrao(cores.modo);
       mudarCores('.cores-modo button[aria-pressed="true"]');
     }
   });
@@ -1541,7 +1636,8 @@ window.VBMSetup = (function () {
 
   // Popups do cabeçalho: um clique fora ou Esc fecha (Esc fecha primeiro a paleta, depois o menu)
   document.addEventListener('click', function (e) {
-    if (!unitPop.hidden && !e.target.closest('.unit:not(.ciclo)')) abrirUnit(false);
+    if (!unitPop.hidden && !e.target.closest('.unit:not(.ciclo):not(.anos)')) abrirUnit(false);
+    if (!anosPop.hidden && !e.target.closest('.anos')) abrirAnos(false);
     if (!cicloPop.hidden && !e.target.closest('.ciclo')) abrirCicloSel(false);
     if (!coresPop.hidden && !e.target.closest('.cores') && !e.target.closest('#chartPalette')) abrirCores(false);
   });
@@ -1550,6 +1646,7 @@ window.VBMSetup = (function () {
     if (closeChartPalette(true)) return;
     if (!unitPop.hidden) { abrirUnit(false); unitTrigger.focus(); }
     if (!cicloPop.hidden) { abrirCicloSel(false); cicloTrigger.focus(); }
+    if (!anosPop.hidden) { abrirAnos(false); anosTrigger.focus(); }
     if (!coresPop.hidden) { abrirCores(false); coresBtn.focus(); }
   });
 
@@ -1643,8 +1740,8 @@ window.VBMSetup = (function () {
       u.sel.split(',').forEach(function (par) { var m = /^([a-z]\d+)\.([a-z]+)$/.exec(par); if (m) state.sel[m[1]] = m[2]; });
       var anosUrl = u.anos.filter(function (a) { return ANOS.indexOf(a) >= 0; });
       if (anosUrl.length) state.anos = anosUrl;
+      if (SERIES[u.serie]) state.serie = u.serie;
       state.delta = u.delta ? 'on' : 'off';
-      document.getElementById('deltaSwitch').setAttribute('aria-checked', String(state.delta === 'on'));
     }
     if (!state.anos.length) state.anos = ANOS.slice();
     if (!(state.bu in SITE_ID)) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
@@ -1858,18 +1955,42 @@ window.VBMSetup = (function () {
   }
 
   // ── Eventos ──
-  // Anos: mostra/oculta o ano (o último visível não sai); os dados já estão na página
-  document.querySelector('[data-filter="ano"]').addEventListener('click', function (e) {
-    var btn = e.target.closest('button[data-v]');
-    if (!btn) return;
-    var a = Number(btn.getAttribute('data-v')), i = state.anos.indexOf(a);
-    if (i >= 0 && state.anos.length === 1) { btn.title = T('a.anoUltimo'); return; }
-    if (i >= 0) state.anos.splice(i, 1); else state.anos.push(a);
-    state.anos.sort(function (x, y) { return x - y; });
+  // Anos: lista suspensa; cada ano mostra/oculta (o último visível não sai) e atalhos Todos / Últimos 5
+  var anosTrigger = document.getElementById('anosTrigger'), anosPop = document.getElementById('anosPop');
+  function abrirAnos(abrir) {
+    anosPop.hidden = !abrir;
+    anosTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) { var b = anosPop.querySelector('button[aria-pressed="true"]') || anosPop.querySelector('button'); if (b) b.focus(); }
+  }
+  anosTrigger.addEventListener('click', function () { abrirAnos(anosPop.hidden && ANOS.length > 0); });
+  anosPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var atalho = e.target.closest('button[data-anos]'), btn = e.target.closest('button[data-v]'), foco;
+    if (atalho) {
+      state.anos = atalho.getAttribute('data-anos') === 'todos' ? ANOS.slice() : ANOS.slice(-5);
+      foco = 'button[data-anos="' + atalho.getAttribute('data-anos') + '"]';
+    } else if (btn) {
+      var a = Number(btn.getAttribute('data-v')), i = state.anos.indexOf(a);
+      if (i >= 0 && state.anos.length === 1) { btn.title = T('a.anoUltimo'); return; }
+      if (i >= 0) state.anos.splice(i, 1); else state.anos.push(a);
+      state.anos.sort(function (x, y) { return x - y; });
+      foco = 'button[data-v="' + a + '"]';
+    } else return;
     renderFilters();
-    var nb = document.querySelector('[data-filter="ano"] button[data-v="' + a + '"]');
+    var nb = anosPop.querySelector(foco);
     if (nb) nb.focus();
     render();
+    if (!coresPop.hidden) renderCores(); // a lista de colunas segue os anos
+  });
+  document.querySelector('[data-filter="serie"]').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-v]');
+    if (!btn || btn.getAttribute('data-v') === state.serie) return;
+    state.serie = btn.getAttribute('data-v');
+    renderFilters();
+    var nb = document.querySelector('[data-filter="serie"] button[data-v="' + state.serie + '"]');
+    if (nb) nb.focus();
+    render();
+    if (!coresPop.hidden) renderCores();
   });
 
   document.addEventListener('click', function (e) {

@@ -15,6 +15,7 @@
  *   COO_ACESSO_LOCAL_EMAIL               ← só com NODE_ENV=development e fora do
  *                                          Databricks: simula o X-Forwarded-Email
  *   COO_CACHE_TTL_S / COO_FRESCO_S / COO_DESATUALIZADO_MAX_S ← ver coo-api.js
+ *   COO_HIST_ANO_INICIAL                 ← opcional: 1º ano da série (padrão 2017)
  */
 const path = require('path');
 const express = require('express');

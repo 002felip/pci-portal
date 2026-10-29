@@ -13,6 +13,7 @@
  * _USER / _PASSWORD. Sem elas: servidor e base PRD abaixo, e o usuário/senha
  * do Portal (AZURE_SQL_USER / AZURE_SQL_PASSWORD, por valueFrom no app.yaml).
  * COO_ID_DASH (opcional): IBP.DASHBOARD.ID_DASH do dashboard (padrão 15 — a mesma carga do COO).
+ * COO_HIST_ANO_INICIAL (opcional): primeiro ano da série histórica (padrão 2017).
  */
 const path = require('path');
 const sql = require('mssql');
