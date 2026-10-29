@@ -1097,10 +1097,15 @@ window.VBMSetup = (function () {
       var b = cols[p], af = cols[p + 1];
       if (b.v != null && af.v != null) pares.push({ b: b, af: af, i: p / 2, dl: delta(b.v, af.v, ind, v.dec) });
     }
-    var pillH = 17, pillW = function (dl) { return Math.max(38, dl.txt.length * 5.8 + 14); };
+    // [RESPONSIVO] pílula do delta na mesma escala da fonte dos valores das barras: com fonte cheia (11 px)
+    // é o desenho do COO (texto 10,5 px, pílula 17 px); quando os valores encolhem, texto, pílula e afastamento
+    // encolhem junto — o delta nunca fica maior que os números das barras
+    var escala = fsVal / 11, fsDelta = 10.5 * escala, pillH = Math.max(11, Math.round(17 * escala)), folgaPill = Math.round(22 * escala);
+    var stDelta = escala < 1 ? ' style="font-size:' + fsDelta.toFixed(1) + 'px"' : '';
+    var pillW = function (dl) { return Math.max(38 * escala, (dl.txt.length * 5.8 + 14) * escala); };
     var maiorPill = Math.max.apply(null, [0].concat(pares.map(function (x) { return pillW(x.dl); })));
     var degrauPill = comDelta && 2 * passo < maiorPill + 4 ? pillH + 4 : 0;
-    var MT = (comDelta ? 46 + degrauPill : 20) + degrauVal;
+    var MT = (comDelta ? folgaPill + pillH + 7 + degrauPill : 20) + degrauVal;
     // escala única: todas as barras na mesma régua
     var all = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null; });
     var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
@@ -1135,7 +1140,7 @@ window.VBMSetup = (function () {
     pares.forEach(function (x) {
       var x1 = x.b.x + BW, x2 = x.af.x, cx = (x1 + x2) / 2, yr = y(x.b.v), yn = y(x.af.v), dl = x.dl;
       var ytop = Math.min(yr, yn, y0), pw = pillW(dl);
-      var pillY = Math.max(0, ytop - 22 - pillH - degrauVal - (degrauPill && x.i % 2 ? degrauPill : 0));
+      var pillY = Math.max(0, ytop - folgaPill - pillH - degrauVal - (degrauPill && x.i % 2 ? degrauPill : 0));
       var g = '<g class="cota ' + dl.cls + '">';
       g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
       g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
@@ -1144,8 +1149,8 @@ window.VBMSetup = (function () {
         g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
       }
       g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
-      g += '<rect class="d-pill" x="' + (cx - pw / 2) + '" y="' + pillY + '" width="' + pw + '" height="' + pillH + '" rx="8.5"/>';
-      g += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dl.txt) + '</text>';
+      g += '<rect class="d-pill" x="' + (cx - pw / 2) + '" y="' + pillY + '" width="' + pw + '" height="' + pillH + '" rx="' + pillH / 2 + '"/>';
+      g += '<text class="d-txt"' + stDelta + ' x="' + cx + '" y="' + (pillY + pillH * 0.71) + '" text-anchor="middle">' + esc(dl.txt) + '</text>';
       out += g + '</g>';
     });
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
