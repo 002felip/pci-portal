@@ -33,7 +33,7 @@ Os gráficos usam o mesmo modelo do COO: barras em degradê, valores acima das b
 └─────────────────────────────────────────────────────┘
 ```
 
-Prévia sem servidor: `docs/preview-tela1-consolidated.html` (arquivo único, abre direto no navegador).
+Prévia sem servidor: `docs/preview-health-of-the-business.html` (arquivo único, abre direto no navegador).
 
 ## Copper Business / Nickel Business
 
@@ -51,7 +51,10 @@ As duas telas têm o mesmo molde e só muda o produto. Os dados vêm do filtro B
 └──────────────────────────┴──────────────────────────┘
 ```
 
-O **All-In (AISC)** usa a mesma estratégia do All-in do COO. Um seletor no card troca a visão entre `All-in` · `Sustaining` · `Cost` · `By Product`, e a linha escolhida fica destacada na tabela abaixo do gráfico.
+- **Copper — All-In (AISC):** usa a mesma estratégia do All-in do COO. Um seletor no card troca a visão entre `All-in` · `Sustaining` · `Cost` · `By Product`. Não tem tabela.
+- **Nickel — All-In (AISC):** proposta para avaliação. Não tem seletor: é um gráfico empilhado, como o slide do PDF, com By Products abaixo do zero e Sustaining + Cap. Replac. e Costs acima. O total (All-in) aparece em cima de cada coluna, e todo segmento mostra o valor, mesmo quando é 0: dentro do segmento quando cabe, senão ao lado da coluna. O Delta é calculado sobre o All-in.
+
+Filtro Business Units: `VBM` · `Copper` · `Nickel`.
 
 ## Pendências
 

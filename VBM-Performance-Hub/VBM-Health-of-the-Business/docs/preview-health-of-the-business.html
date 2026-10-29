@@ -442,12 +442,11 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .is-static .b-bar, .is-static .cota { animation: none; }
 @media (prefers-reduced-motion: reduce) { .b-bar, .cota { animation: none !important; } }
 .tip { position: fixed; z-index: 200; pointer-events: none; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem var(--font-ui); box-shadow: 0 6px 18px rgba(15,23,42,.25); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.tbl-wrap { overflow-x: auto; }
-table.tbl { width: 100%; border-collapse: collapse; font: 400 .7rem var(--font-display); font-variant-numeric: tabular-nums; }
-.tbl th { background: var(--accent-strong); color: #fff; font-weight: 500; padding: 5px 6px; text-align: center; white-space: nowrap; }
-.tbl td { padding: 4px 6px; text-align: center; border-bottom: 1px solid var(--line); }
-.tbl tr.on td { background: color-mix(in srgb, var(--serie-a) 14%, transparent); font-weight: 600; }
-.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.s-val { font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.s-claro { fill: #FFFFFF; } .s-escuro { fill: #1F2937; } .s-fora { fill: var(--ink-soft); font-size: 9.5px; }
+.s-tot { font-weight: 600; }
+.legend-stack { gap: 3px 14px; font-size: .7rem; }
+.swatch.sw2 { display: inline-flex; width: 20px; overflow: hidden; } .swatch.sw2 i { flex: 1; }
 
 @media (max-width: 1600px) {
   .card-title { font-size: .88rem; }
@@ -554,6 +553,10 @@ table.tbl { width: 100%; border-collapse: collapse; font: 400 .7rem var(--font-d
   <defs>
     <linearGradient id="g-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CBCDCF"/><stop offset=".42" stop-color="#BCBEC0"/><stop offset="1" stop-color="#B2B4B6"/></linearGradient>
     <linearGradient id="g-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#62C6EC"/><stop offset=".42" stop-color="#3CB5E5"/><stop offset="1" stop-color="#36A9D8"/></linearGradient>
+    <linearGradient id="g-b2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A8D90"/><stop offset="1" stop-color="#717477"/></linearGradient>
+    <linearGradient id="g-a2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A7DA8"/><stop offset="1" stop-color="#1A6690"/></linearGradient>
+    <linearGradient id="g-b3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ECEDEE"/><stop offset="1" stop-color="#DCDDDE"/></linearGradient>
+    <linearGradient id="g-a3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8E4F5"/><stop offset="1" stop-color="#9AD6EE"/></linearGradient>
     <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
     <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
     <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
@@ -844,13 +847,13 @@ window.VBMSetup = (function () {
   var OPC_EBITDA = [{ chave: 'vbm', lbl: 'VBM' }, { chave: 'cu', lbl: 'Copper' }, { chave: 'ni', lbl: 'Nickel' }, { chave: 'out', lbl: 'Others' }];
   var OPC_ALLIN = [{ chave: 'allin', lbl: 'All-in' }, { chave: 'sus', lbl: 'Sustaining' }, { chave: 'cost', lbl: 'Cost' }, { chave: 'byp', lbl: 'By Product' }];
 
-  function negocio(chave, lbl) {
-    return { chave: chave, lbl: lbl, nome: lbl,
+  function negocio(chave, lbl, nome, allin) {
+    return { chave: chave, lbl: lbl, nome: nome,
       areas: '"prod ebitda" "sales capex" "allin fcf"',
       cards: [
         { area: 'prod', tipo: 'pares', titulo: 'Production', unid: 'Kt', ind: 'prod', casas: 0, pol: 'up' },
         { area: 'sales', tipo: 'pares', titulo: 'Sales', unid: 'Kt', ind: 'sales', casas: 0, pol: 'up' },
-        { area: 'allin', tipo: 'allin', titulo: 'All-In (AISC)', unid: 'US$ k/t', casas: 1, pol: 'down' },
+        { area: 'allin', tipo: allin, titulo: 'All-In (AISC)', unid: 'US$ k/t', casas: 1, pol: 'down' },
         { area: 'ebitda', tipo: 'pares', titulo: 'EBITDA', unid: 'US$ M', ind: 'ebitda', casas: 0, pol: 'up' },
         { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down' },
         { area: 'fcf', tipo: 'acum', titulo: 'FCF', unid: 'US$ M', ind: 'fcf' }
@@ -868,8 +871,10 @@ window.VBMSetup = (function () {
         { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down' },
         { area: 'fcf', tipo: 'ponte', titulo: 'FCF YEAR', unid: 'US$ M', ind: 'fcfYear' }
       ] },
-    negocio('cu', 'Copper Business'),
-    negocio('ni', 'Nickel Business')
+    // Copper: All-in com seletor (estratégia do COO). Nickel: All-in empilhado (By Products, Sustaining e Costs),
+    // proposta para avaliação, sem seletor
+    negocio('cu', 'Copper', 'Copper Business', 'allin'),
+    negocio('ni', 'Nickel', 'Nickel Business', 'allinStack')
   ];
 
   // ── Estado (na URL, para o link poder ser compartilhado) ──
@@ -962,6 +967,53 @@ window.VBMSetup = (function () {
       if (state.delta) out += cota(y, y0, xb + BW, xa, g.b, g.a, dl);
       rot.push(g.lb + ' ' + fmt(g.b, cfg.casas) + ', ' + g.la + ' ' + fmt(g.a, cfg.casas) + (state.delta ? ', ' + S.t('g.var') + ' ' + dl.txt : '') + '.');
     });
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rot.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // ── All-in empilhado (proposta Nickel, como o slide do PDF): By Products abaixo do zero, Sustaining e Costs
+  // acima; o total (All-in) em cima da coluna. Todo segmento mostra o valor, mesmo 0: dentro do segmento quando
+  // cabe, senão ao lado da coluna. Delta (A|F − B do All-in) na pílula do COO, acima das colunas.
+  var CAMADAS = [
+    { k: 'byp', lbl: 'By Products', g: ['g-b2', 'g-a2'], cor: ['#7C7F82', '#1F6F99'], txt: ['s-claro', 's-claro'] },
+    { k: 'sus', lbl: 'Sustaining + Cap. Replac.', g: ['g-b', 'g-a'], cor: ['#BCBEC0', '#3CB5E5'], txt: ['s-escuro', 's-claro'] },
+    { k: 'cost', lbl: 'Costs', g: ['g-b3', 'g-a3'], cor: ['#E3E4E5', '#A7DDF2'], txt: ['s-escuro', 's-escuro'] }
+  ];
+  function empilhadoSvg(comp, W, H, cfg) {
+    var MT = state.delta ? 50 : 24, MB = 20, n = comp.sus.length, PW = W / n;
+    var BW = Math.max(16, Math.min(72, PW * 0.34)), GAP = Math.max(6, Math.min(24, PW * 0.08));
+    var vals = [], rot = [cfg.titulo + ' (' + cfg.unid + ').'];
+    comp.sus.forEach(function (_, i) { ['b', 'a'].forEach(function (l) {
+      var p = 0, ng = 0; CAMADAS.forEach(function (c) { var v = comp[c.k][i][l]; if (v >= 0) p += v; else ng += v; }); vals.push(p, ng);
+    }); });
+    var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '';
+    comp.sus.forEach(function (g, i) {
+      var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, tot = {}, topo = {};
+      [['b', xb, 0, g.lb], ['a', xa, 1, g.la]].forEach(function (l) {
+        var lado = l[0], x = l[1], j = l[2], acP = 0, acN = 0, total = 0, partes = [];
+        CAMADAS.forEach(function (c) {
+          var v = comp[c.k][i][lado], de = v >= 0 ? acP : acN, ate = de + v;
+          if (v >= 0) acP = ate; else acN = ate;
+          total += v;
+          var ya = y(de), yb = y(ate), top = Math.min(ya, yb), h = Math.max(Math.abs(ya - yb), 1.5), txt = fmt(v, cfg.casas);
+          out += '<rect class="b-bar' + (v < 0 ? ' neg' : '') + '" x="' + x + '" y="' + top + '" width="' + BW + '" height="' + h + '" fill="url(#' + c.g[j] + ')" data-tip="' + esc(l[3] + ' · ' + c.lbl + ': ' + txt + ' ' + cfg.unid) + '"/>';
+          if (h >= 14 && txt.length * 6 + 6 <= BW) out += '<text class="s-val ' + c.txt[j] + '" x="' + (x + BW / 2) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="middle">' + txt + '</text>';
+          else out += '<text class="s-val s-fora" x="' + (j ? x + BW + 3 : x - 3) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="' + (j ? 'start' : 'end') + '">' + txt + '</text>';
+          partes.push(c.lbl + ' ' + txt);
+        });
+        tot[lado] = total; topo[lado] = y(acP);
+        out += '<text class="b-val s-tot" x="' + (x + BW / 2) + '" y="' + (y(acP) - 6) + '" text-anchor="middle">' + fmt(total, cfg.casas) + '</text>';
+        out += '<text class="b-axis" x="' + (x + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(l[3]) + '</text>';
+        rot.push(l[3] + ': All-in ' + fmt(total, cfg.casas) + ' (' + partes.join(', ') + ').');
+      });
+      if (state.delta) {
+        var dl = delta(tot.b, tot.a, cfg.pol, cfg.casas), cx = xb + BW + GAP / 2, ytop = Math.min(topo.b, topo.a) - 18;
+        var pillH = 17, pillW = Math.max(38, dl.txt.length * 5.8 + 14), pillY = Math.max(0, ytop - 8 - pillH);
+        out += '<g class="cota ' + dl.cls + '"><line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + ytop + '" y2="' + (pillY + pillH) + '"/>' +
+          '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="' + (pillH / 2) + '"/>' +
+          '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12) + '" text-anchor="middle">' + esc(dl.txt) + '</text></g>';
+      }
+    });
+    out += '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rot.join(' ')) + '">' + out + '</svg>';
   }
 
@@ -1070,14 +1122,6 @@ window.VBMSetup = (function () {
     return out.map(function (l, i) { return '<tspan x="' + x + '" dy="' + (i ? 11 : 0) + '">' + esc(l) + '</tspan>'; }).join('');
   }
 
-  function tabela(cab, linhas, ativa) {
-    var h = '<div class="tbl-wrap"><table class="tbl"><thead><tr>' + cab.map(function (c) { return '<th scope="col">' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>';
-    linhas.forEach(function (l) {
-      h += '<tr' + (l.chave === ativa ? ' class="on"' : '') + '>' + l.cels.map(function (v, i) { return '<td>' + (i ? fmt(v, l.casas) : esc(v)) + '</td>'; }).join('') + '</tr>';
-    });
-    return h + '</tbody></table></div>';
-  }
-
   // ── Cards ──
   function seletorHtml(chave, opcoes, rotulo) {
     return '<div class="seg" role="group" aria-label="' + esc(rotulo) + '">' + opcoes.map(function (o) {
@@ -1085,19 +1129,16 @@ window.VBMSetup = (function () {
     }).join('') + '</div>';
   }
   function cardHtml(cfg, i) {
-    var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '', extra = '';
+    var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '';
     if (cfg.tipo === 'ebitdaVbm') ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
-    if (cfg.tipo === 'allin') {
-      ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
-      var c = allinComp();
-      var cab = ['All-In']; c.sus.forEach(function (g) { cab.push(g.lb, g.la); });
-      function cels(nome, gs) { var r = [nome]; gs.forEach(function (g) { r.push(g.b, g.a); }); return r; }
-      extra = tabela(cab, [{ chave: 'sus', cels: cels('Sustaining', c.sus), casas: 1 }, { chave: 'cost', cels: cels('Cost', c.cost), casas: 1 }, { chave: 'byp', cels: cels('By Product', c.byp), casas: 1 }], state.sel.allin);
-    }
+    if (cfg.tipo === 'allin') ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
+    if (cfg.tipo === 'allinStack') ctl = '<ul class="legend legend-stack">' + CAMADAS.slice().reverse().map(function (c) {
+      return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
+    }).join('') + '</ul>';
     return '<article class="card" style="grid-area:' + cfg.area + '">' +
       '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4>' +
       '<p class="card-unit">(' + esc(cfg.unid) + ')</p></div>' + ctl + '</div>' +
-      '<div class="chart" data-card="' + i + '"></div>' + extra + '</article>';
+      '<div class="chart" data-card="' + i + '"></div></article>';
   }
   function dadosBu() { return D.bu[state.bu][state.ano]; }
   function allinComp() {
@@ -1115,6 +1156,7 @@ window.VBMSetup = (function () {
       var gs = k === 'allin' ? c.sus.map(function (g, i) { return { lb: g.lb, la: g.la, b: g.b + c.cost[i].b + c.byp[i].b, a: g.a + c.cost[i].a + c.byp[i].a }; }) : c[k];
       return paresSvg(gs, W, H, cfg);
     }
+    if (cfg.tipo === 'allinStack') return empilhadoSvg(allinComp(), W, H, cfg);
     if (cfg.tipo === 'pares') return paresSvg(recortes(d[cfg.ind]), W, H, cfg);
     if (cfg.tipo === 'scurve') return scurveSvg(d[cfg.ind], W, H, cfg, false);
     if (cfg.tipo === 'acum') return scurveSvg(d[cfg.ind], W, H, cfg, true);
