@@ -109,7 +109,7 @@ module.exports = function montarStableCapableNoPortal(app) {
   } catch (e) {
     console.warn(TAG + ' Azure Blob indisponível:', e.message);
   }
-  app.use(BASE + '/api', semCache, criarStableCapableRouter({ runQuery, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
+  app.use(BASE + '/api', semCache, criarStableCapableRouter({ runQuery, obterPool: getPool, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
   // portal.js, stable-capable-api.js, server.js, database/, python/,

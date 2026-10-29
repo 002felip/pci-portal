@@ -333,6 +333,77 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .historico td.historico-vazio { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+
+/* ═══ Navegação entre as opções (Início · Rodar o modelo · Importar dados · Power BI) ═══ */
+.abas { display: flex; gap: .25rem; padding: .25rem; margin: -.25rem 0 1.5rem; width: fit-content; max-width: 100%; overflow-x: auto;
+  background: var(--painel); border: 1px solid var(--painel-borda); border-radius: 100px; box-shadow: var(--painel-sombra); }
+.aba { display: inline-flex; align-items: center; gap: .4rem; padding: .48rem 1rem; border-radius: 100px; border: none; background: transparent;
+  color: var(--texto-suave); font-size: .76rem; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; transition: background .2s, color .2s; }
+.aba svg { width: 13px; height: 13px; flex-shrink: 0; }
+.aba:hover { color: var(--texto); }
+.aba[aria-current="page"] { background: var(--primario); color: var(--primario-texto); box-shadow: 0 6px 16px rgba(11,110,153,.22); }
+.vista[hidden] { display: none !important; }
+
+.opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.opcao { display: flex; flex-direction: column; align-items: flex-start; gap: .55rem; min-height: 210px; padding: 1.4rem;
+  border-radius: 14px; background: var(--painel); border: 1px solid var(--painel-borda); box-shadow: var(--painel-sombra);
+  color: inherit; text-decoration: none; transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s, box-shadow .25s; }
+.opcao:hover { transform: translateY(-3px); border-color: var(--vbm-blue); box-shadow: 0 16px 36px rgba(15,35,60,.12); }
+.opcao .icone { width: 42px; height: 42px; border-radius: .75rem; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #3cb5e5, #1a8bbf); box-shadow: 0 6px 16px rgba(60,181,229,.3); }
+.opcao .icone svg { width: 20px; height: 20px; color: #fff; }
+.opcao h2 { font-size: 1.08rem; font-weight: 600; }
+.opcao p { font-size: .8rem; line-height: 1.5; color: var(--texto-suave); }
+.opcao .acessar { margin-top: auto; font-size: .72rem; font-weight: 600; color: var(--acento); }
+.opcao .selo { font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--alerta);
+  background: var(--alerta-bg); padding: .15rem .5rem; border-radius: 100px; }
+
+/* ═══ Importar dados ═══ */
+.soltar { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem;
+  padding: 1.4rem 1rem; border: 1.5px dashed var(--campo-borda); border-radius: 12px; background: var(--campo); text-align: center;
+  cursor: pointer; transition: border-color .2s, background .2s; }
+.soltar:hover, .soltar.ativo { border-color: var(--vbm-blue); background: var(--ativo-bg); }
+.soltar input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.soltar svg { width: 26px; height: 26px; color: var(--acento); }
+.soltar strong { font-size: .8rem; font-weight: 600; }
+.soltar span { font-size: .7rem; color: var(--texto-fraco); }
+.soltar.tem-arquivo strong { color: var(--ok); }
+.selecao { width: 100%; padding: .55rem .7rem; border-radius: 9px; border: 1.5px solid var(--campo-borda); background: var(--campo);
+  color: var(--texto); font: 500 .84rem 'Poppins', sans-serif; }
+.selecao:focus { outline: none; border-color: var(--vbm-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.18); }
+[data-bg="dark"] .selecao { color-scheme: dark; }
+.link-sutil { color: var(--acento); font-weight: 600; text-decoration: none; }
+.link-sutil:hover { text-decoration: underline; }
+
+.indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin-bottom: 1.1rem; }
+.indicador { padding: .75rem .85rem; border-radius: 10px; border: 1px solid var(--linha); }
+.indicador b { display: block; font-size: 1.25rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.indicador span { font-size: .68rem; color: var(--texto-suave); }
+.indicador.ok b { color: var(--ok); } .indicador.alerta b { color: var(--alerta); } .indicador.ativo b { color: var(--ativo); }
+.avisos { margin: 0 0 1rem; padding: .7rem .85rem; border-radius: 10px; background: var(--alerta-bg); color: var(--alerta); font-size: .74rem; line-height: 1.55; }
+.avisos summary { cursor: pointer; font-weight: 600; }
+.avisos ul { margin: .4rem 0 0 1.1rem; }
+.tabela-campos { max-height: 280px; overflow: auto; border: 1px solid var(--linha); border-radius: 10px; margin-bottom: 1rem; }
+.tabela-campos table { font-size: .72rem; }
+.tabela-campos th { position: sticky; top: 0; background: var(--painel); padding: .45rem .7rem; }
+.tabela-campos td { padding: .45rem .7rem; }
+.tabela-campos td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabela-campos tr.falta td { color: var(--alerta); }
+.modos { display: flex; flex-direction: column; gap: .45rem; margin-bottom: 1rem; }
+.modo { display: flex; gap: .6rem; align-items: flex-start; padding: .65rem .8rem; border: 1px solid var(--linha); border-radius: 10px; cursor: pointer; font-size: .76rem; line-height: 1.45; }
+.modo input { margin-top: .2rem; accent-color: var(--primario); }
+.modo:has(input:checked) { border-color: var(--primario); background: var(--ativo-bg); }
+.modo small { display: block; color: var(--texto-suave); font-size: .7rem; }
+.sucesso { margin-top: .8rem; font-size: .78rem; padding: .7rem .85rem; border-radius: 9px; background: var(--ok-bg); color: var(--ok); }
+.acoes-linha { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; }
+.acoes-linha .btn-primario { width: auto; padding: .7rem 1.2rem; }
+
+.bi-vazio { text-align: center; padding: 3.5rem 1rem; color: var(--texto-suave); }
+.bi-vazio svg { width: 44px; height: 44px; color: var(--acento); opacity: .75; margin-bottom: .9rem; }
+.bi-vazio h2 { font-size: 1rem; font-weight: 600; color: var(--texto); margin-bottom: .35rem; }
+.bi-vazio p { font-size: .8rem; max-width: 46ch; margin: 0 auto; line-height: 1.5; }
+
+@media (max-width: 960px) { .opcoes { grid-template-columns: 1fr; } .opcao { min-height: 0; } .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>
@@ -401,10 +472,43 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 <main class="pagina">
   <header class="cabecalho">
     <div class="rotulo" data-i18n="page.eyebrow">Vale Base Metals · Controle Estatístico de Processo</div>
-    <h1><b>Stable &amp; Capable</b> <span data-i18n="page.title">— relatórios por Business Unit</span></h1>
-    <p data-i18n="page.intro">Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.</p>
+    <h1><b>Stable &amp; Capable</b> <span id="tituloVista"></span></h1>
+    <p id="introVista"></p>
   </header>
 
+  <nav class="abas" aria-label="Stable &amp; Capable" data-i18n-aria="nav.label">
+    <a class="aba" href="#" data-vista="inicio"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 7.2 8 2.5l5.5 4.7V13a.5.5 0 0 1-.5.5H9.6V10H6.4v3.5H3a.5.5 0 0 1-.5-.5V7.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span data-i18n="nav.inicio">Início</span></a>
+    <a class="aba" href="#modelo" data-vista="modelo"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8 4.5 2.8Z" fill="currentColor"/></svg><span data-i18n="nav.modelo">Rodar o modelo</span></a>
+    <a class="aba" href="#importar" data-vista="importar"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span data-i18n="nav.importar">Importar dados</span></a>
+    <a class="aba" href="#powerbi" data-vista="powerbi"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg><span data-i18n="nav.powerbi">Power BI</span></a>
+  </nav>
+
+  <!-- ═══ Início: escolher o que fazer ═══ -->
+  <section class="vista" id="vista-inicio" aria-labelledby="tituloVista">
+    <div class="opcoes">
+      <a class="opcao" href="#modelo">
+        <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8 4.5 2.8Z" fill="currentColor"/></svg></span>
+        <h2 data-i18n="nav.modelo">Rodar o modelo</h2>
+        <p data-i18n="op.modelo">Gere os PDFs de estabilidade e capabilidade por Business Unit para o período escolhido.</p>
+        <span class="acessar"><span data-i18n="op.abrir">Abrir</span> →</span>
+      </a>
+      <a class="opcao" href="#importar">
+        <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+        <h2 data-i18n="nav.importar">Importar dados</h2>
+        <p data-i18n="op.importar">Envie o PCI Master do mês, confira a prévia e suba os dados para o banco (IBP.PEDRAVISAODIARIA).</p>
+        <span class="acessar"><span data-i18n="op.abrir">Abrir</span> →</span>
+      </a>
+      <a class="opcao" href="#powerbi">
+        <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg></span>
+        <h2 data-i18n="nav.powerbi">Power BI</h2>
+        <p data-i18n="op.powerbi">Acompanhe os indicadores de estabilidade e capabilidade no relatório do Power BI.</p>
+        <span class="selo" data-i18n="op.embreve">Em breve</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══ Rodar o modelo (tela original) ═══ -->
+  <section class="vista" id="vista-modelo" hidden>
   <p class="diag" id="diag" role="status"></p>
   <div class="grade">
     <!-- ═══ Nova execução ═══ -->
@@ -465,6 +569,74 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </table>
     </div>
   </section>
+  </section>
+
+  <!-- ═══ Importar dados: PCI Master -> IBP.PEDRAVISAODIARIA ═══ -->
+  <section class="vista" id="vista-importar" hidden>
+    <div class="grade">
+      <section class="painel" aria-labelledby="tImp">
+        <div class="painel-titulo"><h2 id="tImp" data-i18n="imp.title">Nova importação</h2></div>
+        <form id="formImp" novalidate>
+          <div class="campo-grupo">
+            <div class="campo-rotulo"><span data-i18n="imp.arquivo">PCI Master Data File</span></div>
+            <label class="soltar" id="soltar">
+              <input type="file" id="arquivoImp" accept=".xlsx,.xlsm" aria-describedby="soltarNome"/>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" class="ico-soltar"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <strong id="soltarNome" data-i18n="imp.solte">Arraste o arquivo aqui ou clique para escolher</strong>
+              <span data-i18n="imp.formato">.xlsx atualizado do mês</span>
+            </label>
+          </div>
+          <div class="campo-grupo">
+            <div class="campo-rotulo"><span data-i18n="imp.periodo">Mês dos dados</span></div>
+            <div class="datas">
+              <div class="data"><label for="mesImp" data-i18n="imp.mes">Mês</label><select id="mesImp" class="selecao"></select></div>
+              <div class="data"><label for="anoImp" data-i18n="imp.ano">Ano</label><input type="number" id="anoImp" min="2000" max="2100" step="1"/></div>
+            </div>
+          </div>
+          <button type="submit" class="btn-primario" id="btnProcessar">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8 4.5 2.8Z" fill="currentColor"/></svg><span data-i18n="imp.processar">Processar arquivo</span>
+          </button>
+          <p class="mensagem" id="msgImp" role="alert" hidden></p>
+          <p class="rodape-form">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v4M8 4.8v.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span><span data-i18n="imp.rodape">Nada é gravado neste passo: primeiro você confere a prévia.</span> <a class="link-sutil" href="api/importacao/mapeamento" data-i18n="imp.mapa">Baixar o mapeamento</a></span>
+          </p>
+        </form>
+      </section>
+
+      <section class="painel" aria-labelledby="tPrevia" aria-live="polite">
+        <div class="painel-titulo"><h2 id="tPrevia" data-i18n="imp.previa">Prévia</h2><span id="previaPill"></span></div>
+        <div id="previaConteudo"></div>
+      </section>
+    </div>
+
+    <section class="painel historico" aria-labelledby="tHistImp">
+      <div class="painel-titulo"><h2 id="tHistImp" data-i18n="imp.hist">Importações feitas</h2><span class="dica" id="impDica"></span></div>
+      <div class="tabela-wrap">
+        <table>
+          <thead><tr>
+            <th data-i18n="imp.h.quando">Gravado em</th>
+            <th data-i18n="imp.h.mes">Mês</th>
+            <th data-i18n="hist.by">Por</th>
+            <th data-i18n="imp.h.linhas">Linhas</th>
+            <th data-i18n="hist.files">Arquivos</th>
+          </tr></thead>
+          <tbody id="histImpCorpo"><tr><td colspan="5" class="historico-vazio" data-i18n="ui.loading">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <!-- ═══ Power BI (próximo passo) ═══ -->
+  <section class="vista" id="vista-powerbi" hidden>
+    <section class="painel">
+      <div class="bi-vazio">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg>
+        <h2 data-i18n="bi.titulo">Power BI em breve</h2>
+        <p data-i18n="bi.texto">O relatório do Power BI do Stable &amp; Capable vai aparecer aqui.</p>
+      </div>
+    </section>
+  </section>
 </main>
 
 <script>
@@ -474,6 +646,31 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   // ─── i18n (chave 'vdt-lang', igual ao Portal) ───
   var I18N = {
     'pt-BR': {
+      'nav.label': 'Opções do Stable & Capable', 'nav.inicio': 'Início', 'nav.modelo': 'Rodar o modelo', 'nav.importar': 'Importar dados', 'nav.powerbi': 'Power BI',
+      'op.modelo': 'Gere os PDFs de estabilidade e capabilidade por Business Unit para o período escolhido.',
+      'op.importar': 'Envie o PCI Master do mês, confira a prévia e suba os dados para o banco (IBP.PEDRAVISAODIARIA).',
+      'op.powerbi': 'Acompanhe os indicadores de estabilidade e capabilidade no relatório do Power BI.', 'op.abrir': 'Abrir', 'op.embreve': 'Em breve',
+      'vista.inicio.t': '— o que você quer fazer?', 'vista.inicio.p': 'Escolha uma opção. Você pode trocar a qualquer momento pelas abas acima.',
+      'vista.modelo.t': '— relatórios por Business Unit',
+      'vista.modelo.p': 'Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.',
+      'vista.importar.t': '— importar dados', 'vista.importar.p': 'Envie o PCI Master Data File atualizado, escolha o mês e confira a prévia antes de subir os dados para a tabela {tab}.',
+      'vista.powerbi.t': '— Power BI', 'vista.powerbi.p': 'Relatório do Power BI do Stable & Capable.',
+      'imp.title': 'Nova importação', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Arraste o arquivo aqui ou clique para escolher', 'imp.formato': '.xlsx atualizado do mês',
+      'imp.periodo': 'Mês dos dados', 'imp.mes': 'Mês', 'imp.ano': 'Ano', 'imp.processar': 'Processar arquivo', 'imp.processando': 'Processando…',
+      'imp.rodape': 'Nada é gravado neste passo: primeiro você confere a prévia.', 'imp.mapa': 'Baixar o mapeamento',
+      'imp.previa': 'Prévia', 'imp.vazioT': 'Nenhum arquivo processado', 'imp.vazioP': 'Envie o PCI Master e escolha o mês. A prévia mostra as linhas geradas, os campos sem dados e o que já existe no banco.',
+      'imp.semArquivo': 'Escolha o arquivo PCI Master (.xlsx).', 'imp.periodoInvalido': 'Informe mês e ano válidos.',
+      'imp.t.linhas': 'linhas geradas', 'imp.t.novas': 'novas no banco', 'imp.t.existentes': 'já existem ({d} com valor diferente)', 'imp.t.avisos': 'campos com aviso',
+      'imp.avisos': '{n} campo(s) com dados faltando no mês — confira antes de subir', 'imp.c.campo': 'Campo', 'imp.c.aba': 'Aba', 'imp.c.chave': 'Site · Op · KPI', 'imp.c.dias': 'Dias', 'imp.c.media': 'Média',
+      'imp.baixar': 'Baixar resultado.xlsx', 'imp.modoTitulo': 'Linhas que já existem no banco', 
+      'imp.modo.atualizar': 'Atualizar o valor (VL_REAL) das existentes e inserir as novas', 'imp.modo.atualizarD': 'Recomendado para reenviar um mês corrigido. As outras colunas da linha não mudam.',
+      'imp.modo.novos': 'Inserir só as novas e manter as existentes como estão', 'imp.modo.novosD': 'Nada que já está no banco é alterado.',
+      'imp.subir': 'Subir {n} linhas para {tab}', 'imp.subindo': 'Gravando no banco…', 'imp.nadaASubir': 'Nada a gravar: todas as linhas já existem no banco.',
+      'imp.confirma': 'Gravar os dados de {mes} no banco ({tab})?\n\n{novas} linha(s) nova(s){atual}.', 'imp.confirmaAtual': ' e {n} atualizada(s)',
+      'imp.ok': 'Gravado em {tab}: {ins} linha(s) inserida(s) e {at} atualizada(s).', 'imp.semBanco': 'Não foi possível consultar o banco; a gravação pode falhar. {m}',
+      'imp.hist': 'Importações feitas', 'imp.h.quando': 'Gravado em', 'imp.h.mes': 'Mês', 'imp.h.linhas': 'Linhas', 'imp.hVazio': 'Nenhuma importação feita ainda.',
+      'imp.hLinhas': '{ins} inseridas · {at} atualizadas', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
+      'bi.titulo': 'Power BI em breve', 'bi.texto': 'O relatório do Power BI do Stable & Capable vai aparecer aqui.',
       'ui.menu': 'Voltar ao Portal', 'ui.loading': 'Carregando…',
       'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
       'page.eyebrow': 'Vale Base Metals · Controle Estatístico de Processo', 'page.title': '— relatórios por Business Unit',
@@ -498,6 +695,31 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'diag.instalando': 'Preparando o ambiente Python do app (só na primeira vez após o deploy, alguns minutos). Você já pode iniciar uma execução — ela começa assim que terminar.'
     },
     'en': {
+      'nav.label': 'Stable & Capable options', 'nav.inicio': 'Home', 'nav.modelo': 'Run the model', 'nav.importar': 'Import data', 'nav.powerbi': 'Power BI',
+      'op.modelo': 'Generate the stability and capability PDFs per Business Unit for the chosen period.',
+      'op.importar': 'Upload the month\'s PCI Master, check the preview and load the data into the database (IBP.PEDRAVISAODIARIA).',
+      'op.powerbi': 'Follow the stability and capability indicators in the Power BI report.', 'op.abrir': 'Open', 'op.embreve': 'Coming soon',
+      'vista.inicio.t': '— what do you want to do?', 'vista.inicio.p': 'Pick an option. You can switch at any time using the tabs above.',
+      'vista.modelo.t': '— reports by Business Unit',
+      'vista.modelo.p': 'Pick the period and the Business Units and generate the stability and capability PDFs. Files are saved to Blob storage and listed in the history below.',
+      'vista.importar.t': '— import data', 'vista.importar.p': 'Upload the updated PCI Master Data File, pick the month and check the preview before loading the data into {tab}.',
+      'vista.powerbi.t': '— Power BI', 'vista.powerbi.p': 'Stable & Capable Power BI report.',
+      'imp.title': 'New import', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Drop the file here or click to choose', 'imp.formato': 'updated .xlsx for the month',
+      'imp.periodo': 'Data month', 'imp.mes': 'Month', 'imp.ano': 'Year', 'imp.processar': 'Process file', 'imp.processando': 'Processing…',
+      'imp.rodape': 'Nothing is written in this step: you check the preview first.', 'imp.mapa': 'Download the mapping',
+      'imp.previa': 'Preview', 'imp.vazioT': 'No file processed', 'imp.vazioP': 'Upload the PCI Master and pick the month. The preview shows the generated rows, fields without data and what already exists in the database.',
+      'imp.semArquivo': 'Choose the PCI Master file (.xlsx).', 'imp.periodoInvalido': 'Enter a valid month and year.',
+      'imp.t.linhas': 'rows generated', 'imp.t.novas': 'new in the database', 'imp.t.existentes': 'already exist ({d} with a different value)', 'imp.t.avisos': 'fields with warnings',
+      'imp.avisos': '{n} field(s) with missing data in the month — check before loading', 'imp.c.campo': 'Field', 'imp.c.aba': 'Sheet', 'imp.c.chave': 'Site · Op · KPI', 'imp.c.dias': 'Days', 'imp.c.media': 'Average',
+      'imp.baixar': 'Download resultado.xlsx', 'imp.modoTitulo': 'Rows that already exist in the database',
+      'imp.modo.atualizar': 'Update the value (VL_REAL) of existing rows and insert the new ones', 'imp.modo.atualizarD': 'Recommended when re-sending a corrected month. Other columns are not changed.',
+      'imp.modo.novos': 'Insert only the new rows and keep existing ones as they are', 'imp.modo.novosD': 'Nothing already in the database is changed.',
+      'imp.subir': 'Load {n} rows into {tab}', 'imp.subindo': 'Writing to the database…', 'imp.nadaASubir': 'Nothing to write: all rows already exist in the database.',
+      'imp.confirma': 'Write the {mes} data to the database ({tab})?\n\n{novas} new row(s){atual}.', 'imp.confirmaAtual': ' and {n} updated',
+      'imp.ok': 'Written to {tab}: {ins} row(s) inserted and {at} updated.', 'imp.semBanco': 'Could not query the database; writing may fail. {m}',
+      'imp.hist': 'Imports', 'imp.h.quando': 'Written', 'imp.h.mes': 'Month', 'imp.h.linhas': 'Rows', 'imp.hVazio': 'No imports yet.',
+      'imp.hLinhas': '{ins} inserted · {at} updated', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
+      'bi.titulo': 'Power BI coming soon', 'bi.texto': 'The Stable & Capable Power BI report will show up here.',
       'ui.menu': 'Back to Portal', 'ui.loading': 'Loading…',
       'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'theme.white': 'Light', 'theme.dark': 'Dark',
       'page.eyebrow': 'Vale Base Metals · Statistical Process Control', 'page.title': '— reports by Business Unit',
@@ -758,6 +980,8 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     $('langSelect').addEventListener('change', function () {
       lang = this.value; try { localStorage.setItem('vdt-lang', lang); } catch (e) {}
       aplicarIdioma(); desenharChips(); desenharExecucao(); desenharHistorico(); rodapeDestino();
+      mostrarVista(vistaAtual);
+      if (imp.iniciado) { preencherMeses(); desenharPrevia(); desenharHistImp(); if (!imp.arquivo) escolherArquivo(null); }
     });
   })();
 
@@ -775,8 +999,161 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     $('topnavUser').hidden = false;
   }).catch(function () {});
 
+
+  // ─── Navegação entre as opções (#modelo, #importar, #powerbi; vazio = início) ───
+  var VISTAS = ['inicio', 'modelo', 'importar', 'powerbi'];
+  var vistaAtual = 'inicio';
+  function vistaDoHash() { var h = (location.hash || '').replace('#', ''); return VISTAS.indexOf(h) > 0 ? h : 'inicio'; }
+  function mostrarVista(nome) {
+    vistaAtual = nome;
+    VISTAS.forEach(function (v) { $('vista-' + v).hidden = v !== nome; });
+    document.querySelectorAll('.aba').forEach(function (a) {
+      if (a.getAttribute('data-vista') === nome) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    $('tituloVista').textContent = t('vista.' + nome + '.t');
+    $('introVista').textContent = t('vista.' + nome + '.p', { tab: (imp.config && imp.config.tabela) || 'IBP.PEDRAVISAODIARIA' });
+    if (nome === 'importar') iniciarImportacao();
+  }
+  window.addEventListener('hashchange', function () { mostrarVista(vistaDoHash()); window.scrollTo(0, 0); });
+
+  // ─── Importar dados ───
+  var imp = { config: null, arquivo: null, previa: null, modo: 'atualizar', gravando: false, resultado: null, erro: null, historico: null, iniciado: false };
+  function nomeMes(m, ano) {
+    var n = new Date(2000, m - 1, 1).toLocaleDateString(lang, { month: 'long' });
+    n = n.charAt(0).toUpperCase() + n.slice(1);
+    return ano ? n + ' ' + ano : n;
+  }
+  function preencherMeses() {
+    var sel = $('mesImp'), atual = sel.value;
+    sel.innerHTML = '';
+    for (var m = 1; m <= 12; m++) { var o = document.createElement('option'); o.value = String(m); o.textContent = nomeMes(m); sel.appendChild(o); }
+    if (atual) sel.value = atual;
+  }
+  function iniciarImportacao() {
+    if (imp.iniciado) return;
+    imp.iniciado = true;
+    preencherMeses();
+    api('importacao/config').then(function (c) {
+      imp.config = c;
+      if (!$('anoImp').value) { $('anoImp').value = c.sugestao.ano; $('mesImp').value = String(c.sugestao.mes); }
+      if (vistaAtual === 'importar') $('introVista').textContent = t('vista.importar.p', { tab: c.tabela });
+      $('impDica').textContent = c.tabela;
+    }).catch(function () {});
+    desenharPrevia();
+    carregarHistImp();
+  }
+  function escolherArquivo(f) {
+    imp.arquivo = f || null;
+    var z = $('soltar');
+    z.classList.toggle('tem-arquivo', !!f);
+    $('soltarNome').textContent = f ? f.name + ' · ' + tamanho(f.size) : t('imp.solte');
+  }
+  $('arquivoImp').addEventListener('change', function () { escolherArquivo(this.files && this.files[0]); });
+  ['dragenter', 'dragover'].forEach(function (ev) { $('soltar').addEventListener(ev, function () { $('soltar').classList.add('ativo'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { $('soltar').addEventListener(ev, function () { $('soltar').classList.remove('ativo'); }); });
+
+  $('formImp').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msg = $('msgImp'), ano = parseInt($('anoImp').value, 10), mes = parseInt($('mesImp').value, 10);
+    var erro = !imp.arquivo ? t('imp.semArquivo') : (!(ano >= 2000 && ano <= 2100 && mes >= 1 && mes <= 12) ? t('imp.periodoInvalido') : null);
+    msg.hidden = !erro; msg.textContent = erro || '';
+    if (erro) return;
+    var fd = new FormData();
+    fd.append('ano', String(ano)); fd.append('mes', String(mes)); fd.append('arquivo', imp.arquivo, imp.arquivo.name);
+    var btn = $('btnProcessar');
+    btn.disabled = true; btn.querySelector('span').textContent = t('imp.processando');
+    fetch(API + 'importacao/previa', { method: 'POST', body: fd, credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
+      .then(function (d) { imp.previa = d; imp.resultado = null; imp.erro = null; imp.modo = 'atualizar'; desenharPrevia(); })
+      .catch(function (err) { msg.hidden = false; msg.textContent = err.message || t('erro.rede'); })
+      .then(function () { btn.disabled = false; btn.querySelector('span').textContent = t('imp.processar'); });
+  });
+
+  function aSubir(p) {
+    var c = p.conflitos;
+    if (!c) return p.total;
+    return imp.modo === 'atualizar' ? p.total : c.novas;
+  }
+  function desenharPrevia() {
+    var alvo = $('previaConteudo'), p = imp.previa;
+    if (!p) {
+      $('previaPill').innerHTML = '';
+      alvo.innerHTML = '<div class="vazio">' + ICONE.vazio + '<h3>' + esc(t('imp.vazioT')) + '</h3><p>' + esc(t('imp.vazioP')) + '</p></div>';
+      return;
+    }
+    var c = p.conflitos, mesTxt = nomeMes(p.periodo.mes, p.periodo.ano);
+    $('previaPill').innerHTML = imp.resultado ? '<span class="pill ok">' + esc(t('st.concluida')) + '</span>' : '<span class="pill ativo">' + esc(t('imp.previa')) + '</span>';
+    var avisosDados = (p.avisos || []);
+    var meta = '<div class="exec-meta"><span>' + esc(t('imp.arquivo')) + ': <strong>' + esc(p.arquivo) + '</strong></span>' +
+      '<span>' + esc(t('imp.mes')) + ': <strong>' + esc(mesTxt) + '</strong></span><span><strong>' + esc(p.tabela) + '</strong></span></div>';
+    var ind = '<div class="indicadores">' +
+      '<div class="indicador ativo"><b>' + Number(p.total).toLocaleString(lang) + '</b><span>' + esc(t('imp.t.linhas')) + '</span></div>' +
+      '<div class="indicador ok"><b>' + (c ? Number(c.novas).toLocaleString(lang) : '—') + '</b><span>' + esc(t('imp.t.novas')) + '</span></div>' +
+      '<div class="indicador' + (c && c.existentes ? ' alerta' : '') + '"><b>' + (c ? Number(c.existentes).toLocaleString(lang) : '—') + '</b><span>' + esc(t('imp.t.existentes', { d: c ? c.diferentes : '—' })) + '</span></div>' +
+      '<div class="indicador' + (avisosDados.length ? ' alerta' : '') + '"><b>' + avisosDados.length + '</b><span>' + esc(t('imp.t.avisos')) + '</span></div></div>';
+    var semBanco = p.erroBanco ? '<p class="mensagem">' + esc(t('imp.semBanco', { m: p.erroBanco })) + '</p>' : '';
+    var avisos = avisosDados.length ? '<details class="avisos"' + (avisosDados.length <= 8 ? ' open' : '') + '><summary>' + esc(t('imp.avisos', { n: avisosDados.length })) + '</summary><ul>' +
+      avisosDados.map(function (a) { return '<li><strong>' + esc(a.campo) + '</strong> — ' + esc(a.msg) + '</li>'; }).join('') + '</ul></details>' : '';
+    var nf = function (v) { return v == null ? '—' : Number(v).toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 10 ? 3 : 1 }); };
+    var campos = '<div class="tabela-campos"><table><thead><tr><th>' + esc(t('imp.c.campo')) + '</th><th>' + esc(t('imp.c.aba')) + '</th><th>' + esc(t('imp.c.chave')) +
+      '</th><th class="num">' + esc(t('imp.c.dias')) + '</th><th class="num">' + esc(t('imp.c.media')) + '</th></tr></thead><tbody>' +
+      (p.campos || []).map(function (x) {
+        return '<tr' + (x.dias < x.diasMes ? ' class="falta"' : '') + '><td>' + esc(x.campo) + (x.dividir100 ? ' <small>÷100</small>' : '') + '</td><td>' + esc(x.aba) +
+          '</td><td>' + x.ID_SITE + ' · ' + x.ID_OPERACAO + ' · ' + x.ID_KPI + '</td><td class="num">' + x.dias + '/' + x.diasMes + '</td><td class="num">' + nf(x.media) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    var modos = '';
+    if (!imp.resultado && c && c.existentes > 0) {
+      modos = '<div class="campo-rotulo"><span>' + esc(t('imp.modoTitulo')) + '</span></div><div class="modos">' +
+        ['atualizar', 'novos'].map(function (m) {
+          return '<label class="modo"><input type="radio" name="modoImp" value="' + m + '"' + (imp.modo === m ? ' checked' : '') + '/><span>' + esc(t('imp.modo.' + m)) +
+            '<small>' + esc(t('imp.modo.' + m + 'D')) + '</small></span></label>';
+        }).join('') + '</div>';
+    }
+    var n = aSubir(p);
+    var baixar = '<a class="btn-sec" href="' + API + 'importacao/previa/' + encodeURIComponent(p.id) + '/resultado">' + ICONE.xlsx + esc(t('imp.baixar')) + '</a>';
+    var acao = imp.resultado
+      ? '<p class="sucesso">' + esc(t('imp.ok', { tab: p.tabela, ins: imp.resultado.inseridas, at: imp.resultado.atualizadas })) + '</p>'
+      : '<div class="acoes-linha">' + baixar + '<button type="button" class="btn-primario" id="btnSubir"' + (n && !imp.gravando ? '' : ' disabled') + '><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' +
+        '<span>' + esc(imp.gravando ? t('imp.subindo') : (n ? t('imp.subir', { n: Number(n).toLocaleString(lang), tab: p.tabela }) : t('imp.nadaASubir'))) + '</span></button></div>';
+    var erroGrav = imp.erro ? '<p class="mensagem">' + esc(imp.erro) + '</p>' : '';
+    alvo.innerHTML = meta + ind + semBanco + avisos + campos + modos + acao + erroGrav;
+    alvo.querySelectorAll('input[name="modoImp"]').forEach(function (r) { r.addEventListener('change', function () { imp.modo = r.value; desenharPrevia(); }); });
+    var b = $('btnSubir');
+    if (b) b.addEventListener('click', confirmarImportacao);
+  }
+  function confirmarImportacao() {
+    var p = imp.previa, c = p.conflitos;
+    var atualizar = imp.modo === 'atualizar' && c && c.existentes ? t('imp.confirmaAtual', { n: c.existentes }) : '';
+    var novas = c ? c.novas : p.total;
+    if (!confirm(t('imp.confirma', { mes: nomeMes(p.periodo.mes, p.periodo.ano), tab: p.tabela, novas: novas, atual: atualizar }))) return;
+    imp.gravando = true; imp.erro = null; desenharPrevia();
+    api('importacao/previa/' + encodeURIComponent(p.id) + '/confirmar', { method: 'POST', body: { modo: imp.modo } })
+      .then(function (reg) { imp.resultado = reg; carregarHistImp(); })
+      .catch(function (err) { imp.erro = err.message || t('erro.rede'); })
+      .then(function () { imp.gravando = false; desenharPrevia(); });
+  }
+  function carregarHistImp() {
+    return api('importacao/historico').then(function (d) { imp.historico = d.importacoes || []; desenharHistImp(); })
+      .catch(function () { $('histImpCorpo').innerHTML = '<tr><td colspan="5" class="historico-vazio">—</td></tr>'; });
+  }
+  function desenharHistImp() {
+    var lista = imp.historico, corpo = $('histImpCorpo');
+    if (!lista) return;
+    if (!lista.length) { corpo.innerHTML = '<tr><td colspan="5" class="historico-vazio">' + esc(t('imp.hVazio')) + '</td></tr>'; return; }
+    corpo.innerHTML = lista.map(function (r) {
+      var arqs = (r.arquivos || []).map(function (a) {
+        return '<a class="arq xlsx" href="' + API + 'importacao/historico/' + encodeURIComponent(r.id) + '/arquivos/' + encodeURIComponent(a.nome) + '" title="' + esc(a.nome) + '">' +
+          ICONE.xlsx + esc(a.tipo === 'master' ? t('imp.arqMaster') : t('imp.arqResultado')) + '</a>';
+      }).join('');
+      return '<tr><td data-l="quando">' + dataHora(r.gravadaEm) + '</td><td data-l="periodo">' + esc(nomeMes(r.mes, r.ano)) +
+        '<span class="sub">' + esc(r.tabela || '') + '</span></td><td data-l="por">' + quem(r.usuario) + '</td><td data-l="status">' +
+        esc(t('imp.hLinhas', { ins: r.inseridas, at: r.atualizadas })) + '</td><td data-l="arquivos"><div class="arquivos">' + arqs + '</div></td></tr>';
+    }).join('');
+  }
+
   // ─── Início ───
   aplicarIdioma();
+  mostrarVista(vistaDoHash());
   api('config').then(function (c) {
     estado.config = c; estado.bus = c.bus || []; estado.selecionadas = estado.bus.slice();
     $('dtInicio').value = c.periodoSugerido.inicio; $('dtFim').value = c.periodoSugerido.fim;
