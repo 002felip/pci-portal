@@ -1420,15 +1420,17 @@ window.VBMSetup = (function () {
   // Preferência de cada pessoa, no navegador; sem escolha, as cores do COO.
   var PALETTE_COLORS = ['#FFFFFF', '#F6F6F6', '#E6E7E8', '#D9ECEB', '#D8F0FA', '#BCBEC0', '#7FBEBC', '#9DDAF2', '#3CB5E5', '#00B0F0', '#6E8CBA',
     '#747678', '#555555', '#007E7A', '#034944', '#1B5E80', '#3A4A6B', '#2626D1', '#DC2626'];
-  // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas. Monocromáticas e gradiente:
-  // do mais claro ao mais escuro. Performance: pelo valor da coluna no gráfico (pior = vermelho, melhor = verde)
+  // As mesmas paletas do Studio, com tons ajustados para o Historical. Categóricas: ordem fixa que maximiza a
+  // distinção entre colunas vizinhas. Azul monocromático e gradiente: do azul-petróleo (#1B5E80) caindo para o
+  // azul claro (#9DDAF2). Performance: pelo valor da coluna no gráfico, em três faixas de tons sóbrios —
+  // tijolo suave (terço pior), cinza claro (meio) e azul-petróleo (terço melhor)
   var PALETAS_COLUNAS = [
     { id: 'vale', lbl: 'k.pVale', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
-    { id: 'executiva', lbl: 'k.pExecutiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#747678', '#C5D0E3'] },
-    { id: 'azul', lbl: 'k.pAzul', de: '#5FB4DC', ate: '#0F3F5C' },
+    { id: 'executiva', lbl: 'k.pExecutiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#B4BAC2', '#C5D0E3'] },
+    { id: 'azul', lbl: 'k.pAzul', de: '#1B5E80', ate: '#9DDAF2' },
     { id: 'verde', lbl: 'k.pVerde', de: '#6FAFAC', ate: '#023832' },
-    { id: 'performance', lbl: 'k.pPerformance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
-    { id: 'gradiente', lbl: 'k.pGradiente', de: '#5FB4DC', ate: '#023832' }
+    { id: 'performance', lbl: 'k.pPerformance', escala: ['#B86B63', '#CDD2D8', '#1B5E80'] },
+    { id: 'gradiente', lbl: 'k.pGradiente', de: '#1B5E80', ate: '#9DDAF2' }
   ];
   // Cores do grupo e dos elementos do gráfico (EDIT_COLOR_DEFS do Studio, sem o Plan: o ano não tem Plan).
   // def = cor padrão do COO; o fundo padrão é o do painel (sem fundo próprio)
@@ -1447,22 +1449,25 @@ window.VBMSetup = (function () {
   var DELTAS = { 'delta:up': ['--good', '--good-bg', .10, 'hatch-good', 'rgba(0,126,122,.24)', .24],
     'delta:down': ['--bad', '--bad-bg', .09, 'hatch-bad', 'rgba(220,38,38,.22)', .22],
     'delta:flat': ['--flat', '--flat-bg', .12, 'hatch-flat', 'rgba(116,118,120,.24)', .24] };
-  var CORES_CHAVE = 'coo-historical-bar-colors', HEX = /^#[0-9A-F]{6}$/, COLUNA = /^\d{2}(B|AF)$/;
+  // Chave nova (v2): o padrão passou a ser Por Coluna + Azul Monocromático; escolhas salvas nas versões
+  // anteriores do menu são descartadas uma vez, para todos abrirem no novo padrão
+  var CORES_CHAVE = 'coo-historical-cores-v2', CORES_CHAVE_ANTIGA = 'coo-historical-bar-colors', HEX = /^#[0-9A-F]{6}$/, COLUNA = /^\d{2}(B|AF)$/;
   var hexOk = function (v) { v = String(v || '').toUpperCase(); return HEX.test(v) ? v : null; };
   var misturarHex = function (a, b, t) { return '#' + [1, 3, 5].map(function (i) { return Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0'); }).join('').toUpperCase(); };
   var rgba = function (hex, a) { return 'rgba(' + [1, 3, 5].map(function (i) { return parseInt(hex.substr(i, 2), 16); }).join(',') + ',' + a + ')'; };
-  function coresPadrao(modo) { return { modo: modo || 'grupo', paleta: '', col: {}, g: {} }; }
+  // Padrão ao abrir a página: Por Coluna com a paleta Azul Monocromático
+  var MODO_PADRAO = 'coluna', PALETA_PADRAO = 'azul';
+  function coresPadrao() { return { modo: MODO_PADRAO, paleta: PALETA_PADRAO, col: {}, g: {} }; }
   var cores = (function () {
     var c = coresPadrao();
     try {
-      var s = JSON.parse(localStorage.getItem(CORES_CHAVE) || 'null') || {};
-      c.modo = s.modo === 'coluna' ? 'coluna' : 'grupo';
-      c.paleta = PALETAS_COLUNAS.some(function (p) { return p.id === s.paleta; }) ? s.paleta : '';
+      localStorage.removeItem(CORES_CHAVE_ANTIGA);
+      var s = JSON.parse(localStorage.getItem(CORES_CHAVE) || 'null');
+      if (!s || typeof s !== 'object') return c; // sem escolha salva: o padrão
+      c.modo = s.modo === 'grupo' ? 'grupo' : 'coluna';
+      c.paleta = s.paleta === '' || PALETAS_COLUNAS.some(function (p) { return p.id === s.paleta; }) ? s.paleta : PALETA_PADRAO;
       Object.keys(s.col || {}).forEach(function (k) { if (COLUNA.test(k) && hexOk(s.col[k])) c.col[k] = hexOk(s.col[k]); });
       DEFS_GRUPO.forEach(function (d) { var v = hexOk((s.g || {})[d.k]); if (v && v !== d.def) c.g[d.k] = v; });
-      // versão anterior do menu ({ b, af })
-      if (!s.g && hexOk(s.b) && hexOk(s.b) !== '#BCBEC0') c.g['serie:B'] = hexOk(s.b);
-      if (!s.g && hexOk(s.af) && hexOk(s.af) !== '#3CB5E5') c.g['serie:AF'] = hexOk(s.af);
     } catch (e) { /* sem localStorage: cores padrão */ }
     return c;
   })();
@@ -1481,7 +1486,8 @@ window.VBMSetup = (function () {
       var min = Math.min.apply(null, vs), max = Math.max.apply(null, vs);
       t = cols[i].v != null && max > min ? (cols[i].v - min) / (max - min) : 0.5;
       if (pol === 'down') t = 1 - t;
-      return t <= 0.5 ? misturarHex(p.escala[0], p.escala[1], t * 2) : misturarHex(p.escala[1], p.escala[2], (t - 0.5) * 2);
+      // três faixas limpas (sem tons misturados): terço pior, terço do meio e terço melhor
+      return p.escala[t < 1 / 3 ? 0 : t > 2 / 3 ? 2 : 1];
     }
     return misturarHex(p.de, p.ate, t);
   }
@@ -1524,10 +1530,11 @@ window.VBMSetup = (function () {
     prop('--d-stroke', cores.g.conector && rgba(cores.g.conector, .45));
     prop('--d-hair', cores.g.conector && rgba(cores.g.conector, .30));
   }
-  function ehPadrao(c) { return !c.paleta && !Object.keys(c.col).length && !Object.keys(c.g).length; }
+  // Cores (paleta, colunas e grupo) iguais às do padrão; o modo de coloração não conta
+  function ehPadrao(c) { return c.paleta === PALETA_PADRAO && !Object.keys(c.col).length && !Object.keys(c.g).length; }
   function salvarCores() {
     try {
-      if (ehPadrao(cores) && cores.modo === 'grupo') localStorage.removeItem(CORES_CHAVE);
+      if (ehPadrao(cores) && cores.modo === MODO_PADRAO) localStorage.removeItem(CORES_CHAVE);
       else localStorage.setItem(CORES_CHAVE, JSON.stringify(cores));
     } catch (e) { /* só nesta sessão */ }
   }
@@ -1560,13 +1567,13 @@ window.VBMSetup = (function () {
         '<div class="cores-cols" role="group" aria-labelledby="corColTit">' + cols.map(function (c, i) {
           var manual = cores.col[c.k], rot = rotuloColuna(c.k), grupo = corGrupo(/B$/.test(c.k) ? 'serie:B' : 'serie:AF');
           // performance: a cor depende do valor de cada gráfico — o menu mostra a escala
-          var atual = manual || (perf ? 'linear-gradient(90deg,#DC2626,#BCBEC0,#007E7A)' : cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
+          var atual = manual || (perf ? (function (e) { return 'linear-gradient(90deg,' + e[0] + ' 0 33%,' + e[1] + ' 33% 67%,' + e[2] + ' 67%)'; })(PALETAS_COLUNAS.filter(function (x) { return x.id === 'performance'; })[0].escala) : cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
           var tag = manual ? '' : perf ? T('k.porValor') : cores.paleta ? T('k.tagPaleta') : T('k.padrao');
           return '<div class="cor-row"><span id="colLbl-' + c.k + '">' + esc(rot) + '</span><span class="cor-acoes">' +
             botaoCor('data-col="' + c.k + '"', atual, tag, 'colLbl-' + c.k, 'colVal-' + c.k, T('k.escolher', { serie: rot })) +
             '<button type="button" class="cor-limpar" data-limpar="' + c.k + '"' + (manual ? '' : ' disabled') + ' aria-label="' + esc(T('k.limpar', { serie: rot })) + '" title="' + esc(T('k.limpar', { serie: rot })) + '">↺</button></span></div>';
         }).join('') + '</div>' +
-        '<button type="button" class="cores-reset" data-reset="colunas"' + (!cores.paleta && !Object.keys(cores.col).length ? ' disabled' : '') + '>' + esc(T('k.restaurarCol')) + '</button></div>';
+        '<button type="button" class="cores-reset" data-reset="colunas"' + (cores.paleta === PALETA_PADRAO && !Object.keys(cores.col).length ? ' disabled' : '') + '>' + esc(T('k.restaurarCol')) + '</button></div>';
     }
     // Cores do grupo e dos elementos (no modo Por Coluna, as barras seguem a lista acima)
     h += DEFS_GRUPO.filter(function (d) { return !(coluna && d.serie); }).map(function (d) {
@@ -1626,8 +1633,9 @@ window.VBMSetup = (function () {
     }
     var rs = e.target.closest('button[data-reset]');
     if (rs && !rs.disabled) {
-      if (rs.getAttribute('data-reset') === 'colunas') { cores.col = {}; cores.paleta = ''; } // cada coluna volta à cor do seu grupo
-      else cores = coresPadrao(cores.modo);
+      // colunas: sem cores manuais e com a paleta padrão (Azul Monocromático); tudo: o padrão, mantendo o modo
+      if (rs.getAttribute('data-reset') === 'colunas') { cores.col = {}; cores.paleta = PALETA_PADRAO; }
+      else { var modo = cores.modo; cores = coresPadrao(); cores.modo = modo; }
       mudarCores('.cores-modo button[aria-pressed="true"]');
     }
   });
