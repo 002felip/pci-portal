@@ -1421,13 +1421,13 @@ window.VBMSetup = (function () {
   var PALETTE_COLORS = ['#FFFFFF', '#F6F6F6', '#E6E7E8', '#D9ECEB', '#D8F0FA', '#BCBEC0', '#7FBEBC', '#9DDAF2', '#3CB5E5', '#00B0F0', '#6E8CBA',
     '#747678', '#555555', '#007E7A', '#034944', '#1B5E80', '#3A4A6B', '#2626D1', '#DC2626'];
   // As mesmas paletas do Studio, com tons ajustados para o Historical. Categóricas: ordem fixa que maximiza a
-  // distinção entre colunas vizinhas. Azul monocromático e gradiente: do azul-petróleo (#1B5E80) caindo para o
-  // azul claro (#9DDAF2). Performance: pelo valor da coluna no gráfico, em três faixas de tons sóbrios —
+  // distinção entre colunas vizinhas. Azul monocromático: do azul claro (#9DDAF2) ao azul-petróleo (#1B5E80),
+  // do mais claro ao mais escuro. Gradiente: o caminho inverso, do azul-petróleo caindo para o azul claro. Performance: pelo valor da coluna no gráfico, em três faixas de tons sóbrios —
   // tijolo suave (terço pior), cinza claro (meio) e azul-petróleo (terço melhor)
   var PALETAS_COLUNAS = [
     { id: 'vale', lbl: 'k.pVale', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
     { id: 'executiva', lbl: 'k.pExecutiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#B4BAC2', '#C5D0E3'] },
-    { id: 'azul', lbl: 'k.pAzul', de: '#1B5E80', ate: '#9DDAF2' },
+    { id: 'azul', lbl: 'k.pAzul', de: '#9DDAF2', ate: '#1B5E80' },
     { id: 'verde', lbl: 'k.pVerde', de: '#6FAFAC', ate: '#023832' },
     { id: 'performance', lbl: 'k.pPerformance', escala: ['#B86B63', '#CDD2D8', '#1B5E80'] },
     { id: 'gradiente', lbl: 'k.pGradiente', de: '#1B5E80', ate: '#9DDAF2' }
