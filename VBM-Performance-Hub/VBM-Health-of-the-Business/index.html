@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VBM Health of the Business</title>
+<link rel="stylesheet" href="assets/css/poppins.css"/>
+<link rel="stylesheet" href="assets/setup-dashboards.css"/>
+<style>
+/* Layout do PDF VBM Health of the Business (Consolidated View, Copper e Nickel Business) com o
+   desenho do COO Business Units Dashboard: título editorial em itálico, filtros em segmentos,
+   séries Budget | Adjusted Budget (B) em cinza e Forecast | Actual (F | A) em azul. */
+:root {
+  --page: #FFFFFF; --text: #1F2937; --text-soft: #6B7280; --text-faint: #9CA3AF; --line: #E5E7EB;
+  --accent: #1E8FC4; --chart-title: #1E8FC4; --base-line: #9CA3AF;
+  --serie-b: #BCBEC0; --serie-b2: #8E9194; --serie-a: #3CB5E5; --serie-a2: #1386BF;
+  --pos: #00A88F; --neg: #F0504F; --tot: #3CB5E5;
+  --pill-bg: rgba(31,41,55,.42); --pill-text: #FFFFFF;
+  --ctl-bg: #FFFFFF; --ctl-border: rgba(13,38,64,.16); --ctl-text: #1F2937; --ctl-on-bg: #0B6E99; --ctl-on-text: #FFFFFF;
+  --th-bg: #3CB5E5; --th-text: #FFFFFF; --row-alt: #F3F4F5; --row-on: rgba(60,181,229,.14);
+  --focus: #0B6E99;
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B; --text: #E8EEF5; --text-soft: rgba(232,238,245,.66); --text-faint: rgba(232,238,245,.42); --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE; --chart-title: #5CC6EE; --base-line: rgba(255,255,255,.3);
+    --serie-b: #8E949B; --serie-b2: #5F656B; --serie-a2: #1B7FB5; --pos: #34C3B8; --neg: #F87171;
+    --pill-bg: rgba(2,10,20,.5);
+    --ctl-bg: rgba(255,255,255,.05); --ctl-border: rgba(255,255,255,.16); --ctl-text: #E5EDF5; --ctl-on-bg: #3CB5E5; --ctl-on-text: #02101c;
+    --th-bg: #11577A; --row-alt: #0C2438; --row-on: rgba(60,181,229,.18); --focus: #7DD3F0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B; --text: #E8EEF5; --text-soft: rgba(232,238,245,.66); --text-faint: rgba(232,238,245,.42); --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE; --chart-title: #5CC6EE; --base-line: rgba(255,255,255,.3);
+  --serie-b: #8E949B; --serie-b2: #5F656B; --serie-a2: #1B7FB5; --pos: #34C3B8; --neg: #F87171;
+  --pill-bg: rgba(2,10,20,.5);
+  --ctl-bg: rgba(255,255,255,.05); --ctl-border: rgba(255,255,255,.16); --ctl-text: #E5EDF5; --ctl-on-bg: #3CB5E5; --ctl-on-text: #02101c;
+  --th-bg: #11577A; --row-alt: #0C2438; --row-on: rgba(60,181,229,.18); --focus: #7DD3F0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: var(--font-display); font-size: 14px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.page { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-block: 12px 24px;
+  padding-left: max(28px, env(safe-area-inset-left, 0px)); padding-right: max(28px, env(safe-area-inset-right, 0px)); }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.head h2 { margin: 0; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; }
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-display); cursor: pointer; white-space: nowrap; }
+.seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.fs-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 32px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); cursor: pointer; }
+
+.sub-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px 24px; flex-wrap: wrap; }
+.sub-row h3 { margin: 6px 0 0; font: italic 400 1.15rem var(--font-display); color: var(--text); }
+.meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.legend { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; font-size: .74rem; color: var(--text-soft); }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.swatch { width: 16px; height: 9px; border-radius: 2px; }
+.updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); }
+.demo { font-style: normal; margin-right: 6px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(245,158,11,.6); color: #B45309; }
+:root[data-theme="dark"] .demo { color: #FCD34D; }
+
+/* Grade: duas colunas. As áreas de cada visão vêm do JS (grid-template-areas), ver BUS. */
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 64px; }
+.card { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.card-title { margin: 0; font: 400 1.02rem var(--font-display); color: var(--chart-title); }
+.card-title small { font-size: .8em; }
+.card-title em { font-size: .72em; }
+.chart { position: relative; height: clamp(190px, 24vh, 250px); }
+.card.tall .chart { flex: 1 1 auto; min-height: 260px; height: auto; }
+.chart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ax { fill: var(--text-soft); font: 400 10.5px var(--font-display); }
+.val { fill: var(--text); font: 400 12px var(--font-display); font-variant-numeric: tabular-nums; }
+.pill { fill: var(--pill-bg); } .pill-t { fill: var(--pill-text); font: 400 11px var(--font-display); font-variant-numeric: tabular-nums; }
+.b-b { fill: var(--serie-b); } .b-b2 { fill: var(--serie-b2); } .b-a { fill: var(--serie-a); } .b-a2 { fill: var(--serie-a2); }
+.w-pos { fill: var(--pos); } .w-neg { fill: var(--neg); } .w-tot { fill: var(--tot); } .w-ref { fill: var(--serie-b); }
+.l-b { stroke: var(--serie-b2); stroke-dasharray: 4 3; fill: none; stroke-width: 1.4; }
+.l-a { stroke: var(--serie-a); fill: none; stroke-width: 1.8; } .l-f { stroke: var(--serie-a); stroke-dasharray: 2 3; fill: none; stroke-width: 1.6; }
+.d-b { fill: var(--serie-b2); } .d-a { fill: var(--serie-a); }
+.v-b { fill: var(--text-soft); } .v-a { fill: var(--serie-a2); }
+:root[data-theme="dark"] .v-a { fill: var(--serie-a); }
+.base { stroke: var(--base-line); }
+.tbl-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; font: 400 .7rem var(--font-display); font-variant-numeric: tabular-nums; }
+.tbl th { background: var(--th-bg); color: var(--th-text); font-weight: 500; padding: 5px 6px; text-align: center; white-space: nowrap; }
+.tbl td { padding: 4px 6px; text-align: center; border-bottom: 1px solid var(--line); }
+.tbl tr:nth-child(even) td { background: var(--row-alt); }
+.tbl tr.on td { background: var(--row-on); font-weight: 600; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+
+@media (max-width: 1000px) {
+  .dash { grid-template-columns: minmax(0, 1fr); grid-template-areas: none !important; }
+  .dash > .card { grid-area: auto !important; }
+  .card.tall .chart { flex: none; height: 280px; min-height: 0; }
+}
+@media (max-width: 640px) {
+  .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .meta { align-items: flex-start; }
+  .seg button, .fs-btn { min-height: 40px; }
+}
+</style>
+</head>
+<body>
+<nav class="topnav" id="topnav">
+  <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">VBM Health of the Business</span></h1>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+<main class="page" id="page">
+  <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
+    <h2 id="buName">—</h2>
+    <div class="filters">
+      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span><div class="seg" role="group" aria-labelledby="lblBu" data-filter="bu"></div></div>
+      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
+      <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
+      <div class="filter"><span class="filter-label" id="lblMes" data-i18n="f.month">Month:</span><div class="seg" role="group" aria-labelledby="lblMes" data-filter="mes"></div></div>
+      <div class="filter"><span class="filter-label" aria-hidden="true">&nbsp;</span>
+        <button type="button" class="fs-btn" id="fsBtn" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.on">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sub-row">
+    <h3 data-i18n="s.drivers">Production and Finance drivers</h3>
+    <div class="meta">
+      <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
+        <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+        <li><span class="swatch" style="background:var(--serie-a)"></span>Forecast | Actual (F | A)</li>
+      </ul>
+      <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
+    </div>
+  </div>
+
+  <div class="dash" id="dash"></div>
+</main>
+
+<script>window.VBM_SETUP = { idiomaPadrao: 'en' }; /* como o COO: inglês até a pessoa escolher outro idioma */</script>
+<script src="assets/setup-dashboards.js"></script>
+<script src="assets/hob-data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.HOB_DATA, S = window.VBMSetup;
+
+  S.registrar({
+    'pt-BR': { 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+      'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo',
+      's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia' },
+    en: { 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+      'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data',
+      's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen' }
+  });
+
+  var MESES = { 'pt-BR': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] };
+  var MESES_LONGOS = { 'pt-BR': ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] };
+
+  // Seletor do EBITDA consolidado: mesma estratégia do All-in do COO (a pessoa troca a visão no card)
+  var OPC_EBITDA = [{ chave: 'vbm', lbl: 'VBM' }, { chave: 'cu', lbl: 'Copper' }, { chave: 'ni', lbl: 'Nickel' }, { chave: 'out', lbl: 'Others' }];
+  var OPC_ALLIN = [{ chave: 'allin', lbl: 'All-in' }, { chave: 'sus', lbl: 'Sustaining' }, { chave: 'cost', lbl: 'Cost' }, { chave: 'byp', lbl: 'By Product' }];
+
+  function negocio(chave, lbl) {
+    return { chave: chave, lbl: lbl, nome: lbl,
+      areas: '"prod ebitda" "sales capex" "allin fcf"',
+      cards: [
+        { area: 'prod', tipo: 'pares', titulo: 'Production', unid: 'Kt', ind: 'prod', casas: 0 },
+        { area: 'sales', tipo: 'pares', titulo: 'Sales', unid: 'Kt', ind: 'sales', casas: 0 },
+        { area: 'allin', tipo: 'allin', titulo: 'All-In (AISC)', unid: 'US$ k/t', casas: 1 },
+        { area: 'ebitda', tipo: 'pares', titulo: 'EBITDA', unid: 'US$ M', ind: 'ebitda', casas: 0 },
+        { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex' },
+        { area: 'fcf', tipo: 'acum', titulo: 'FCF', unid: 'US$ M', ind: 'fcf' }
+      ] };
+  }
+  // Consolidated: o Catalyst Savings 2025F foi descontinuado. O Capex | S Curve sobe para o lugar dele
+  // (coluna direita, abaixo da ponte do EBITDA) e o EBITDA ganha a altura das duas linhas,
+  // com espaço para o seletor de segmento e a tabela de Other Segment. FCF YEAR segue na largura toda.
+  var BUS = [
+    { chave: 'vbm', lbl: 'VBM', nome: 'Vale Base Metals | Consolidated View',
+      areas: '"ebitda wf" "ebitda capex" "fcf fcf"',
+      cards: [
+        { area: 'ebitda', tipo: 'ebitdaVbm', titulo: 'EBITDA', unid: 'US$ bn', casas: 1, alto: true },
+        { area: 'wf', tipo: 'ponte', titulo: '{ano} EBITDA', unid: 'US$ M', sufixo: 'YEAR', nota: 'Comparison with previous forecast', ind: 'ebitdaYear' },
+        { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex' },
+        { area: 'fcf', tipo: 'ponte', titulo: 'FCF', unid: 'US$ M', sufixo: 'YEAR', ind: 'fcfYear' }
+      ] },
+    negocio('cu', 'Copper Business'),
+    negocio('ni', 'Nickel Business')
+  ];
+
+  // ── Estado (na URL, para o link poder ser compartilhado) ──
+  var U = D.ultimoReal, q = new URLSearchParams(location.search);
+  var state = {
+    bu: BUS.some(function (b) { return b.chave === q.get('bu'); }) ? q.get('bu') : 'vbm',
+    ano: D.anos.indexOf(+q.get('ano')) >= 0 ? +q.get('ano') : U.ano,
+    mes: +q.get('mes') >= 1 && +q.get('mes') <= 12 ? +q.get('mes') : U.mes,
+    sel: { ebitda: q.get('ebitda') || 'vbm', allin: q.get('allin') || 'allin' }
+  };
+  function gravarUrl() {
+    history.replaceState(null, '', '?' + new URLSearchParams({ bu: state.bu, ano: state.ano, mes: state.mes, ebitda: state.sel.ebitda, allin: state.sel.allin }));
+  }
+  function ehReal(mes) { return state.ano < U.ano || (state.ano === U.ano && mes <= U.mes); }
+  function aa() { return String(state.ano).slice(2); }
+
+  // ── Recortes do PDF: Mês B/A, Trimestre B/A, YTD B/A, YTG B/F e Ano B/F ──
+  // media = custo unitário (All-in): média dos meses; demais somam.
+  function recortes(s, media) {
+    var m = state.mes, t = Math.ceil(m / 3), l = MESES[S.idioma] || MESES.en;
+    function ag(arr, de, ate) {
+      if (ate <= de) return null;
+      var v = arr.slice(de, ate).reduce(function (x, y) { return x + y; }, 0);
+      return media ? v / (ate - de) : v;
+    }
+    function af(de, ate) { for (var i = de + 1; i <= ate; i++) if (!ehReal(i)) return 'F'; return 'A'; }
+    var out = [
+      { lbl: l[m - 1] + ' B', v: s.b[m - 1], b: true }, { lbl: l[m - 1] + ' ' + af(m - 1, m), v: s.a[m - 1] },
+      { lbl: 'Q' + t + 'B', v: ag(s.b, t * 3 - 3, t * 3), b: true }, { lbl: 'Q' + t + af(t * 3 - 3, t * 3), v: ag(s.a, t * 3 - 3, t * 3) },
+      { lbl: 'YTD B', v: ag(s.b, 0, m), b: true }, { lbl: 'YTD ' + af(0, m), v: ag(s.a, 0, m) }
+    ];
+    if (m < 12) out.push({ lbl: 'YTG B', v: ag(s.b, m, 12), b: true }, { lbl: 'YTG ' + af(m, 12), v: ag(s.a, m, 12) });
+    out.push({ lbl: aa() + 'B', v: ag(s.b, 0, 12), b: true }, { lbl: aa() + af(0, 12), v: ag(s.a, 0, 12) });
+    return out;
+  }
+
+  // ── SVG ──
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(nome, at, pai, txt) {
+    var e = document.createElementNS(NS, nome);
+    for (var k in at) e.setAttribute(k, at[k]);
+    if (txt != null) e.textContent = txt;
+    if (pai) pai.appendChild(e);
+    return e;
+  }
+  function novoSvg(box, rotulo) {
+    var W = box.clientWidth, H = box.clientHeight;
+    box.textContent = '';
+    if (!W || !H) return null;
+    return { svg: el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': rotulo }, box), W: W, H: H };
+  }
+  function escala(vs, topo, baixo, H) {
+    var mx = Math.max(0, Math.max.apply(null, vs)), mn = Math.min(0, Math.min.apply(null, vs));
+    return function (v) { return topo + (H - topo - baixo) * (mx - v) / ((mx - mn) || 1); };
+  }
+  function pill(g, x, y, txt) { // rótulo do valor dentro da barra, como no PDF
+    var w = txt.length * 6.4 + 10;
+    el('rect', { class: 'pill', x: x - w / 2, y: y - 8, width: w, height: 16, rx: 3 }, g);
+    el('text', { class: 'pill-t', x: x, y: y + 4, 'text-anchor': 'middle' }, g, txt);
+  }
+
+  // Barras de pares B × A|F. pilhas: [{ v: [...por recorte], cls }] empilhadas; rótulo total em cima.
+  function barras(box, rotulo, cats, pilhas, casas, total) {
+    var c = novoSvg(box, rotulo); if (!c) return;
+    var topo = total ? 26 : 10, baixo = 20, n = cats.length;
+    var tot = cats.map(function (_, i) { return pilhas.reduce(function (s, p) { return s + p.v[i]; }, 0); });
+    var vs = []; pilhas.forEach(function (p) { vs = vs.concat(p.v); }); vs = vs.concat(tot);
+    var y = escala(vs, topo, baixo, c.H), gw = c.W / n, bw = Math.min(56, gw * 0.7);
+    cats.forEach(function (cat, i) {
+      var cx = gw * (i + 0.5), g = el('g', {}, c.svg), acP = 0, acN = 0;
+      pilhas.forEach(function (p) {
+        var v = p.v[i], de = v >= 0 ? acP : acN, ate = de + v;
+        if (v >= 0) acP = ate; else acN = ate;
+        var y0 = y(de), y1 = y(ate), h = Math.abs(y1 - y0);
+        el('rect', { class: (cat.b ? p.cls[0] : p.cls[1]), x: cx - bw / 2, y: Math.min(y0, y1), width: bw, height: Math.max(1, h) }, g);
+        var txt = S.fmt(v, casas);
+        if (h >= 18 && txt.length * 6.4 + 10 <= bw + 6) pill(g, cx, Math.min(y0, y1) + Math.min(h / 2, 16), txt);
+        else if (!total) el('text', { class: 'val', x: cx, y: Math.min(y0, y1) - 4, 'text-anchor': 'middle' }, g, txt);
+      });
+      if (total) el('text', { class: 'val', x: cx, y: Math.max(14, y(Math.max(0, tot[i])) - 8), 'text-anchor': 'middle' }, g, S.fmt(tot[i], casas));
+      el('text', { class: 'ax', x: cx, y: c.H - 4, 'text-anchor': 'middle' }, c.svg, cat.lbl);
+    });
+    el('line', { class: 'base', x1: 0, x2: c.W, y1: y(0), y2: y(0) }, c.svg);
+  }
+  function pares(box, rotulo, s, casas, media) {
+    var r = recortes(s, media);
+    barras(box, rotulo, r, [{ v: r.map(function (x) { return x.v; }), cls: ['b-b', 'b-a'] }], casas, false);
+  }
+
+  // Curva S: mensal B (tracejado) e A|F (cheio até o último real, pontilhado no forecast) + barras do ano
+  function scurve(box, rotulo, s, acumular) {
+    var c = novoSvg(box, rotulo); if (!c) return;
+    var l = MESES[S.idioma] || MESES.en, b = s.b.slice(), a = s.a.slice();
+    if (acumular) for (var i = 1; i < 12; i++) { b[i] += b[i - 1]; a[i] += a[i - 1]; }
+    var barrasAno = !acumular, topo = 20, baixo = 20;
+    var areaW = barrasAno ? c.W * 0.82 : c.W, gw = areaW / 12;
+    var y = escala(b.concat(a), topo, baixo, c.H);
+    function px(i) { return gw * (i + 0.5); }
+    function caminho(arr, de, ate) { var d = ''; for (var i = de; i <= ate; i++) d += (i === de ? 'M' : 'L') + px(i) + ' ' + y(arr[i]); return d; }
+    var ult = 0; for (var k = 1; k <= 12; k++) if (ehReal(k)) ult = k;
+    el('path', { class: 'l-b', d: caminho(b, 0, 11) }, c.svg);
+    if (ult > 0) el('path', { class: 'l-a', d: caminho(a, 0, ult - 1) }, c.svg);
+    if (ult < 12) el('path', { class: 'l-f', d: caminho(a, Math.max(0, ult - 1), 11) }, c.svg);
+    for (var j = 0; j < 12; j++) {
+      var acima = a[j] >= b[j];
+      el('circle', { class: 'd-b', cx: px(j), cy: y(b[j]), r: 2.4 }, c.svg);
+      el('circle', { class: 'd-a', cx: px(j), cy: y(a[j]), r: 2.6 }, c.svg);
+      if (gw >= 30) {
+        el('text', { class: 'val v-b', x: px(j), y: y(b[j]) + (acima ? 15 : -7), 'text-anchor': 'middle', 'font-size': 11 }, c.svg, S.fmt(b[j], 0));
+        el('text', { class: 'val v-a', x: px(j), y: y(a[j]) + (acima ? -7 : 15), 'text-anchor': 'middle', 'font-size': 11 }, c.svg, S.fmt(a[j], 0));
+      }
+      // tela estreita: só o mês (sem A/F) e, se ainda não couber, um mês sim, outro não
+      if (gw >= 26 || j % 2 === 0) el('text', { class: 'ax', x: px(j), y: c.H - 4, 'text-anchor': 'middle' }, c.svg, l[j] + (gw >= 40 ? (ehReal(j + 1) ? ' A' : ' F') : ''));
+    }
+    if (barrasAno) { // 26B / 26F na escala própria, à direita
+      var fy = [s.b.reduce(function (x, v) { return x + v; }, 0), s.a.reduce(function (x, v) { return x + v; }, 0)];
+      var yb = escala(fy, topo, baixo, c.H), bw = Math.min(40, (c.W - areaW) / 2 - 6);
+      fy.forEach(function (v, i) {
+        var cx = areaW + (c.W - areaW) * (i + 0.5) / 2;
+        el('rect', { class: i ? 'b-a' : 'b-b', x: cx - bw / 2, y: yb(v), width: bw, height: yb(0) - yb(v) }, c.svg);
+        pill(c.svg, cx, yb(v) + 16, S.fmt(v, 0));
+        el('text', { class: 'ax', x: cx, y: c.H - 4, 'text-anchor': 'middle' }, c.svg, aa() + (i ? (ehReal(12) ? 'A' : 'F') : 'B'));
+      });
+    }
+    el('line', { class: 'base', x1: 0, x2: c.W, y1: y(0), y2: y(0) }, c.svg);
+  }
+
+  // Ponte (waterfall): 'tot' cheia, 'd' flutuante verde/vermelho, 'sub' subtotal calculado, 'ref' Budget, 'zero' reinicia
+  function ponte(box, rotulo, itens) {
+    var c = novoSvg(box, rotulo); if (!c) return;
+    var ac = 0, barrasP = [], gap = 0;
+    itens.forEach(function (it) {
+      if (it.tipo === 'zero') { ac = 0; gap++; return; }
+      var de, ate;
+      if (it.tipo === 'd') { de = ac; ate = ac + it.v; ac = ate; }
+      else if (it.tipo === 'sub') { de = 0; ate = ac; }
+      else { de = 0; ate = it.v; if (it.tipo === 'tot') ac = it.v; }
+      barrasP.push({ it: it, de: de, ate: ate, v: it.tipo === 'sub' ? ac : it.v, gap: gap });
+    });
+    var vs = []; barrasP.forEach(function (p) { vs.push(p.de, p.ate); });
+    var giro = barrasP.length > 10 && c.W < 1100, baixo = giro ? 44 : 36, topo = 18;
+    var y = escala(vs, topo, baixo, c.H), slots = barrasP.length + gap * 0.6, gw = c.W / slots, bw = gw * 0.8;
+    barrasP.forEach(function (p, i) {
+      var cx = gw * (i + p.gap * 0.6 + 0.5), y0 = y(p.de), y1 = y(p.ate);
+      var cls = p.it.tipo === 'd' ? (p.it.v >= 0 ? 'w-pos' : 'w-neg') : p.it.tipo === 'ref' ? 'w-ref' : 'w-tot';
+      el('rect', { class: cls, x: cx - bw / 2, y: Math.min(y0, y1), width: bw, height: Math.max(2, Math.abs(y1 - y0)) }, c.svg);
+      el('text', { class: 'val', x: cx, y: Math.min(y0, y1) - 5, 'text-anchor': 'middle' }, c.svg, S.fmt(p.v, 0));
+      var lb = el('text', { class: 'ax', 'text-anchor': giro ? 'end' : 'middle',
+        transform: giro ? 'translate(' + (cx + 4) + ' ' + (c.H - baixo + 12) + ') rotate(-35)' : 'translate(' + cx + ' ' + (c.H - baixo + 14) + ')' }, c.svg);
+      quebrar(lb, p.it.lbl, giro ? 22 : Math.max(8, Math.floor(gw / 6.2)), giro ? 1 : 2);
+    });
+    el('line', { class: 'base', x1: 0, x2: c.W, y1: y(0), y2: y(0) }, c.svg);
+  }
+  function quebrar(txt, s, max, linhas) { // rótulo em até N linhas, reticências no excesso (como no PDF)
+    var pal = s.split(' '), out = [''];
+    pal.forEach(function (p) { var u = out.length - 1; if ((out[u] + ' ' + p).trim().length > max && out[u]) out.push(p); else out[u] = (out[u] + ' ' + p).trim(); });
+    if (out.length > linhas) { out = out.slice(0, linhas); out[linhas - 1] = out[linhas - 1].slice(0, max - 1) + '…'; }
+    out.forEach(function (l, i) { el('tspan', { x: 0, dy: i ? 12 : 0 }, txt, l); });
+    txt.appendChild(document.createElementNS(NS, 'title')).textContent = s;
+  }
+
+  function tabela(cab, linhas, ativa) {
+    var w = document.createElement('div'); w.className = 'tbl-wrap';
+    var t = document.createElement('table'); t.className = 'tbl';
+    var tr = t.createTHead().insertRow();
+    cab.forEach(function (h) { var th = document.createElement('th'); th.scope = 'col'; th.textContent = h; tr.appendChild(th); });
+    var tb = t.createTBody();
+    linhas.forEach(function (l) {
+      var r = tb.insertRow(); if (l.chave && l.chave === ativa) r.className = 'on';
+      l.cels.forEach(function (v, i) { var td = r.insertCell(); td.textContent = i ? S.fmt(v, l.casas) : v; });
+    });
+    w.appendChild(t);
+    return w;
+  }
+
+  // ── Cards ──
+  function seletor(chave, opcoes) {
+    var seg = document.createElement('div'); seg.className = 'seg'; seg.setAttribute('role', 'group');
+    opcoes.forEach(function (o) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = o.lbl;
+      b.setAttribute('aria-pressed', String(state.sel[chave] === o.chave));
+      b.addEventListener('click', function () { state.sel[chave] = o.chave; gravarUrl(); render(); });
+      seg.appendChild(b);
+    });
+    return seg;
+  }
+  function card(cfg, dados) {
+    var c = document.createElement('article');
+    c.className = 'card' + (cfg.alto ? ' tall' : ''); c.style.gridArea = cfg.area;
+    var head = document.createElement('div'); head.className = 'card-head';
+    var h = document.createElement('h4'); h.className = 'card-title';
+    var titulo = cfg.titulo.replace('{ano}', state.ano);
+    h.textContent = titulo + ' ';
+    var sm = document.createElement('small'); sm.textContent = '(' + cfg.unid + ')' + (cfg.sufixo ? ' ' + cfg.sufixo : ''); h.appendChild(sm);
+    if (cfg.nota) { var em = document.createElement('em'); em.textContent = ' ' + cfg.nota; h.appendChild(em); }
+    head.appendChild(h);
+    var box = document.createElement('div'); box.className = 'chart';
+    c.appendChild(head); c.appendChild(box);
+    var rot = titulo + ' (' + cfg.unid + ')', extra = null, draw;
+
+    if (cfg.tipo === 'ebitdaVbm') {
+      head.appendChild(seletor('ebitda', OPC_EBITDA));
+      var r = { cu: recortes(dados.ebitdaCu), ni: recortes(dados.ebitdaNi), out: recortes(dados.ebitdaOut) };
+      function vals(k) { return r[k].map(function (x) { return x.v; }); }
+      if (state.sel.ebitda === 'vbm') {
+        // Copper em cima (claro), Nickel embaixo (escuro); Other Segment fica na tabela, como no PDF
+        draw = function () { barras(box, rot, r.cu, [{ v: vals('ni'), cls: ['b-b2', 'b-a2'] }, { v: vals('cu'), cls: ['b-b', 'b-a'] }], 1, true); };
+        extra = tabela(['EBITDA'].concat(r.out.map(function (x) { return x.lbl; })), [{ cels: ['Other Segment'].concat(vals('out')), casas: 2 }]);
+        var leg = document.createElement('ul'); leg.className = 'legend'; leg.style.flexDirection = 'row'; leg.style.gap = '4px 14px';
+        leg.innerHTML = '<li><span class="swatch" style="background:var(--serie-a)"></span>Copper</li><li><span class="swatch" style="background:var(--serie-a2)"></span>Nickel</li>';
+        h.after(leg);
+      } else {
+        var k = state.sel.ebitda;
+        draw = function () { barras(box, rot, r[k], [{ v: vals(k), cls: ['b-b', 'b-a'] }], k === 'out' ? 2 : 1, false); };
+      }
+    } else if (cfg.tipo === 'allin') {
+      head.appendChild(seletor('allin', OPC_ALLIN));
+      var comp = { sus: recortes(dados.sus, true), cost: recortes(dados.cost, true), byp: recortes(dados.byp, true) };
+      var all = comp.sus.map(function (x, i) { return { lbl: x.lbl, b: x.b, v: x.v + comp.cost[i].v + comp.byp[i].v }; });
+      var esc = state.sel.allin === 'allin' ? all : comp[state.sel.allin];
+      draw = function () { barras(box, rot, esc, [{ v: esc.map(function (x) { return x.v; }), cls: ['b-b', 'b-a'] }], cfg.casas, false); };
+      extra = tabela(['All-In'].concat(all.map(function (x) { return x.lbl; })), [
+        { chave: 'sus', cels: ['Sustaining'].concat(comp.sus.map(function (x) { return x.v; })), casas: 1 },
+        { chave: 'cost', cels: ['Cost'].concat(comp.cost.map(function (x) { return x.v; })), casas: 1 },
+        { chave: 'byp', cels: ['By Product'].concat(comp.byp.map(function (x) { return x.v; })), casas: 1 }
+      ], state.sel.allin);
+    } else if (cfg.tipo === 'pares') draw = function () { pares(box, rot, dados[cfg.ind], cfg.casas); };
+    else if (cfg.tipo === 'scurve') draw = function () { scurve(box, rot, dados[cfg.ind], false); };
+    else if (cfg.tipo === 'acum') draw = function () { scurve(box, rot, dados[cfg.ind], true); };
+    else if (cfg.tipo === 'ponte') draw = function () { ponte(box, rot, dados[cfg.ind]); };
+
+    if (extra) c.appendChild(extra);
+    box._draw = draw;
+    return c;
+  }
+
+  // ── Filtros (Business Units no lugar do drill-down País › Site do COO) ──
+  var FILTROS = {
+    bu: function () { return BUS.map(function (b) { return { v: b.chave, lbl: b.lbl }; }); },
+    ano: function () { return D.anos.map(function (a) { return { v: a, lbl: String(a) }; }); },
+    tri: function () { return [1, 2, 3, 4].map(function (t) { return { v: t, lbl: 'Q' + t }; }); },
+    mes: function () { var t = Math.ceil(state.mes / 3), l = MESES_LONGOS[S.idioma] || MESES_LONGOS.en; return [0, 1, 2].map(function (i) { var m = t * 3 - 2 + i; return { v: m, lbl: l[m - 1] }; }); }
+  };
+  function valor(k) { return k === 'tri' ? Math.ceil(state.mes / 3) : state[k]; }
+  function escolher(k, v) {
+    if (k === 'tri') state.mes = v * 3; // trimestre novo: último mês dele
+    else state[k] = v;
+    gravarUrl(); render();
+  }
+  function renderFiltros() {
+    document.querySelectorAll('[data-filter]').forEach(function (g) {
+      var k = g.getAttribute('data-filter');
+      g.textContent = '';
+      FILTROS[k]().forEach(function (o) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = o.lbl;
+        b.setAttribute('aria-pressed', String(valor(k) === o.v));
+        b.addEventListener('click', function () { escolher(k, o.v); });
+        g.appendChild(b);
+      });
+    });
+  }
+
+  var dash = document.getElementById('dash');
+  function desenharTodos() { dash.querySelectorAll('.chart').forEach(function (b) { if (b._draw) b._draw(); }); }
+  function render() {
+    var bu = BUS.filter(function (b) { return b.chave === state.bu; })[0], dados = D.bu[bu.chave][state.ano];
+    renderFiltros();
+    document.getElementById('buName').textContent = bu.nome;
+    var badge = document.getElementById('dataBadge');
+    badge.hidden = D.fonte !== 'demo'; badge.textContent = S.t('l.demo');
+    document.getElementById('updTxt').textContent = S.dataHora(new Date(D.atualizado));
+    dash.textContent = '';
+    dash.style.gridTemplateAreas = bu.areas;
+    bu.cards.forEach(function (cfg) { dash.appendChild(card(cfg, dados)); });
+    desenharTodos();
+  }
+
+  document.getElementById('fsBtn').addEventListener('click', function () {
+    if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  });
+  var pend = 0;
+  new ResizeObserver(function () { cancelAnimationFrame(pend); pend = requestAnimationFrame(desenharTodos); }).observe(dash);
+  ['idioma', 'numero', 'tema'].forEach(function (e) { S.on(e, function () { S.traduzir(); render(); }); });
+  S.traduzir();
+  render();
+})();
+</script>
+</body>
+</html>

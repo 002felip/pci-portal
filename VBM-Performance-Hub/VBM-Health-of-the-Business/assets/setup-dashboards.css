@@ -1,0 +1,101 @@
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
+:root {
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.topnav {
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
+.topnav-logo svg { height: 26px; width: auto; display: block; }
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
+.topnav-user[hidden] { display: none; }
+.topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
+
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
+.settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
+.settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* ═══ fim Setup Dashboards ═══ */
