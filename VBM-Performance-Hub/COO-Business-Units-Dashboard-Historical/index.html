@@ -1088,7 +1088,9 @@ window.VBMSetup = (function () {
     cols.forEach(function (c, j) { c.x = x0 + j * passo; c.k = chaveColuna(c.ano, c.s); });
     // [RESPONSIVO] valores e rótulos — a fonte encolhe até o maior número caber no passo (máx. 11 px valor,
     // 9,5 px eixo; mín. 7 px). Se nem 7 px couber (muitos anos), os valores alternam em dois níveis
-    var maxCar = 1;
+    // Mesma regra em TODOS os gráficos da página: a fonte sai do maior número entre todos os cards (não só
+    // deste), para valores e deltas terem o mesmo tamanho lado a lado
+    var maxCar = maxCarPagina();
     cols.forEach(function (c) { if (c.v != null) maxCar = Math.max(maxCar, fmt(c.v, v.dec).length); });
     var cabe = (passo - 2) / (maxCar * 0.6), fsVal = Math.max(7, Math.min(11, cabe));
     var stVal = fsVal < 11 ? ' style="font-size:' + fsVal.toFixed(1) + 'px"' : '', degrauVal = cabe < 7 ? 11 : 0;
@@ -1157,6 +1159,29 @@ window.VBMSetup = (function () {
       out += g + '</g>';
     });
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // Maior número (em caracteres, no formato e nas casas decimais de cada KPI) entre todos os gráficos da
+  // página, nos anos e séries exibidos — inclui as opções dos seletores (Cu/Au, All-in…), para a fonte não
+  // mudar ao trocar de opção. Calculado uma vez por desenho da página (render zera o valor guardado)
+  var MAXCAR_PAGINA = null;
+  function maxCarPagina() {
+    if (MAXCAR_PAGINA !== null) return MAXCAR_PAGINA;
+    var anos = anosVisiveis(), series = SERIES[state.serie] || SERIES.ba, n = 1;
+    visao().paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        (c.alt ? Object.keys(c.alt).map(function (k) { return c.alt[k]; }) : [c]).forEach(function (s) {
+          var dec = s.dec != null ? s.dec : c.dec;
+          anos.forEach(function (a) {
+            var d = s.d && s.d[a];
+            if (!d) return;
+            if (series.indexOf('B') >= 0 && d[0] != null) n = Math.max(n, fmt(d[0], dec).length);
+            if (series.indexOf('AF') >= 0 && d[1] != null) n = Math.max(n, fmt(d[1], dec).length);
+          });
+        });
+      });
+    });
+    return (MAXCAR_PAGINA = n);
   }
 
   function cardHtml(ind) {
@@ -1275,6 +1300,7 @@ window.VBMSetup = (function () {
 
   function render() {
     var vs = visao(), dash = document.getElementById('dash');
+    MAXCAR_PAGINA = null; // dados, anos, séries ou formato numérico podem ter mudado
     document.getElementById('buName').textContent = state.bu || '—';
     document.getElementById('unitPais').textContent = state.pais ? T('pais.' + state.pais) : '—';
     var siteTxt = state.bu || '—';
