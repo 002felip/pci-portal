@@ -189,7 +189,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .anos-grid button:hover, .anos-acoes button:hover { border-color: var(--ctl-on-bg); }
 .anos-acoes { display: flex; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
 .anos-acoes button { flex: 1; }
-.switch:disabled { opacity: .45; cursor: default; }
 @media (pointer: coarse) { .anos-grid button, .anos-acoes button { min-height: 44px; } }
 /* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro */
 .ciclo-pop { width: auto; min-width: 120px; grid-template-columns: 1fr; }
@@ -854,7 +853,8 @@ window.VBMSetup = (function () {
     'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Business Units:', 'f.year': 'Anos:',
       'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Cores e tela cheia',
       'a.anos': 'Anos exibidos nos gráficos', 'a.anoUltimo': 'Pelo menos um ano fica visível', 'a.anosTodos': 'Todos', 'a.anosUltimos': 'Últimos 5', 'a.nAnos': '{n} anos',
-      'f.serie': 'Séries:', 'a.serieBA': 'Budget vs Actual/Forecast', 'a.serieAF': 'Apenas Actual/Forecast', 'a.serieB': 'Apenas Budget', 'a.deltaSo': 'O delta compara Budget e Actual/Forecast: escolha as duas séries',
+      'f.serie': 'Séries:', 'a.serieAF': 'Mostrar ou ocultar Actual/Forecast', 'a.serieB': 'Mostrar ou ocultar Budget', 'a.serieUltima': 'Pelo menos uma série fica visível',
+      'a.deltaBA': 'Delta: Budget → Act/Fcst de cada ano', 'a.deltaAno': 'Delta: variação em relação ao ano anterior', 'g.variacaoAno': 'variação sobre o ano anterior',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.hist': 'Evolução anual — cada ano com a carga mais recente até o ciclo',
       'q.semKpi': 'KPI não retornado pela query (layout: {nome})', 'q.semUnid': 'unidade ausente na query (SG_UNID)', 'q.semDec': 'casas decimais ausentes na query (VL_CASADECIMAL) — usando {n}',
@@ -877,7 +877,8 @@ window.VBMSetup = (function () {
     en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Business Units:', 'f.year': 'Years:',
       'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Colors and full screen',
       'a.anos': 'Years shown in the charts', 'a.anoUltimo': 'At least one year stays visible', 'a.anosTodos': 'All', 'a.anosUltimos': 'Last 5', 'a.nAnos': '{n} years',
-      'f.serie': 'Series:', 'a.serieBA': 'Budget vs Actual/Forecast', 'a.serieAF': 'Actual/Forecast only', 'a.serieB': 'Budget only', 'a.deltaSo': 'Delta compares Budget and Actual/Forecast: choose both series',
+      'f.serie': 'Series:', 'a.serieAF': 'Show or hide Actual/Forecast', 'a.serieB': 'Show or hide Budget', 'a.serieUltima': 'At least one series stays visible',
+      'a.deltaBA': 'Delta: Budget → Act/Fcst of each year', 'a.deltaAno': 'Delta: change from the previous year', 'g.variacaoAno': 'change from previous year',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.hist': 'Annual evolution — each year from the latest load up to the cycle',
       'q.semKpi': 'KPI not returned by the query (layout: {nome})', 'q.semUnid': 'unit missing in the query (SG_UNID)', 'q.semDec': 'decimals missing in the query (VL_CASADECIMAL) — using {n}',
@@ -1062,12 +1063,13 @@ window.VBMSetup = (function () {
   // ── Gráfico: altura e largura contidas (ritmo do print) ──
   // Mesmo desenho do COO (barras, valores, cota de diferença). Todas as colunas numa régua única, com o
   // MESMO passo entre elas (Budget → Actual/Forecast igual a Actual/Forecast → próximo ano), centrada no card.
-  // Séries (filtro Séries): Budget e Actual/Forecast (com delta), só Actual/Forecast ou só Budget.
+  // Séries (filtro Séries): Budget e/ou Act/Fcst. Delta com as duas: Budget → Act/Fcst do ano; com uma só:
+  // variação da série em relação ao ano anterior exibido (mesma cota, entre colunas vizinhas).
   var SERIES = { ba: ['B', 'AF'], af: ['AF'], b: ['B'] };
   var MAX_W = 380, MAX_H = 190; // mesmo tamanho no modo normal e em tela cheia
   function chartSvg(ind, W, H) {
     var v = view(ind), anos = anosVisiveis(), series = SERIES[state.serie] || SERIES.ba;
-    var comDelta = state.delta === 'on' && series.length === 2, MB = 16;
+    var comDelta = state.delta === 'on', MB = 16;
     // Colunas do gráfico na ordem (ano a ano, na ordem das séries), com o valor e a letra A/F
     var cols = [];
     anos.forEach(function (a) {
@@ -1091,11 +1093,12 @@ window.VBMSetup = (function () {
     var cabe = (passo - 2) / (maxCar * 0.6), fsVal = Math.max(7, Math.min(11, cabe));
     var stVal = fsVal < 11 ? ' style="font-size:' + fsVal.toFixed(1) + 'px"' : '', degrauVal = cabe < 7 ? 11 : 0;
     var fsEixo = Math.max(7, Math.min(9.5, (passo - 2) / 1.9)), stEixo = fsEixo < 9.5 ? ' style="font-size:' + fsEixo.toFixed(1) + 'px"' : '';
-    // Deltas (B → A/F de cada ano): pílulas lado a lado ou, sem espaço, em dois níveis alternados
-    var pares = [];
-    if (comDelta) for (var p = 0; p < cols.length; p += 2) {
-      var b = cols[p], af = cols[p + 1];
-      if (b.v != null && af.v != null) pares.push({ b: b, af: af, i: p / 2, dl: delta(b.v, af.v, ind, v.dec) });
+    // Deltas (ref → novo): com as duas séries, Budget → Act/Fcst de cada ano; com uma, ano anterior → ano.
+    // Pílulas lado a lado ou, sem espaço, em dois níveis alternados
+    var pares = [], porAno = series.length === 2, distPill = porAno ? 2 * passo : passo;
+    if (comDelta) for (var p = porAno ? 0 : 1; p < cols.length; p += porAno ? 2 : 1) {
+      var ref = porAno ? cols[p] : cols[p - 1], novo = porAno ? cols[p + 1] : cols[p];
+      if (ref.v != null && novo.v != null) pares.push({ ref: ref, novo: novo, i: pares.length, dl: delta(ref.v, novo.v, ind, v.dec) });
     }
     // [RESPONSIVO] pílula do delta na mesma escala da fonte dos valores das barras: com fonte cheia (11 px)
     // é o desenho do COO (texto 10,5 px, pílula 17 px); quando os valores encolhem, texto, pílula e afastamento
@@ -1104,7 +1107,7 @@ window.VBMSetup = (function () {
     var stDelta = escala < 1 ? ' style="font-size:' + fsDelta.toFixed(1) + 'px"' : '';
     var pillW = function (dl) { return Math.max(38 * escala, (dl.txt.length * 5.8 + 14) * escala); };
     var maiorPill = Math.max.apply(null, [0].concat(pares.map(function (x) { return pillW(x.dl); })));
-    var degrauPill = comDelta && 2 * passo < maiorPill + 4 ? pillH + 4 : 0;
+    var degrauPill = comDelta && distPill < maiorPill + 4 ? pillH + 4 : 0;
     var MT = (comDelta ? folgaPill + pillH + 7 + degrauPill : 20) + degrauVal;
     // escala única: todas as barras na mesma régua
     var all = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null; });
@@ -1131,21 +1134,21 @@ window.VBMSetup = (function () {
       out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(rot) + '</text>';
     });
     anos.forEach(function (a) {
-      var doAno = cols.filter(function (c) { return c.ano === a; }), par = pares.filter(function (x) { return x.b.ano === a; })[0];
-      label.push(a + ': ' + doAno.map(function (c) { return nomeDe(c) + ' ' + (c.v === null ? T('g.semDado') : fmt(c.v, v.dec)); }).join(', ') + (par ? ', ' + T('g.variacao') + ' ' + par.dl.txt : '') + '.');
+      var doAno = cols.filter(function (c) { return c.ano === a; }), par = pares.filter(function (x) { return x.novo.ano === a; })[0];
+      label.push(a + ': ' + doAno.map(function (c) { return nomeDe(c) + ' ' + (c.v === null ? T('g.semDado') : fmt(c.v, v.dec)); }).join(', ') + (par ? ', ' + T(porAno ? 'g.variacao' : 'g.variacaoAno') + ' ' + par.dl.txt : '') + '.');
     });
 
     // Cota de diferença do Performance Hub: nível de referência tracejado, nível novo sólido, faixa,
-    // haste, fio guia e pílula (B → A/F)
+    // haste, fio guia e pílula (ref → novo)
     pares.forEach(function (x) {
-      var x1 = x.b.x + BW, x2 = x.af.x, cx = (x1 + x2) / 2, yr = y(x.b.v), yn = y(x.af.v), dl = x.dl;
+      var x1 = x.ref.x + BW, x2 = x.novo.x, cx = (x1 + x2) / 2, yr = y(x.ref.v), yn = y(x.novo.v), dl = x.dl;
       var ytop = Math.min(yr, yn, y0), pw = pillW(dl);
       var pillY = Math.max(0, ytop - folgaPill - pillH - degrauVal - (degrauPill && x.i % 2 ? degrauPill : 0));
       var g = '<g class="cota ' + dl.cls + '">';
       g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
       g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
       if (Math.abs(yr - yn) > 0.5) {
-        g += '<rect class="' + (x.af.v >= x.b.v ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
+        g += '<rect class="' + (x.novo.v >= x.ref.v ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
         g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
       }
       g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
@@ -1242,8 +1245,9 @@ window.VBMSetup = (function () {
   }
 
   // Filtros sem nova consulta (os dados já estão na página): Anos (cada botão mostra/oculta o ano),
-  // Séries (B e A/F, só A/F ou só B) e Delta (só com as duas séries)
-  var OPCOES_SERIE = [['ba', 'B vs A/F', 'a.serieBA'], ['af', 'A/F', 'a.serieAF'], ['b', 'B', 'a.serieB']];
+  // Séries (Budget e/ou Act/Fcst: liga/desliga cada uma, pelo menos uma fica) e Delta (sempre disponível)
+  var OPCOES_SERIE = [['B', 'Budget', 'a.serieB'], ['AF', 'Act/Fcst', 'a.serieAF']];
+  var serieCodigo = function (lista) { return lista.length === 2 ? 'ba' : lista[0] === 'B' ? 'b' : 'af'; };
   function renderFilters() {
     document.querySelector('[data-filter="ano"]').innerHTML = ANOS.map(function (a) {
       return '<button type="button" data-v="' + a + '" aria-pressed="' + (state.anos.indexOf(a) >= 0) + '">' + a + '</button>';
@@ -1251,13 +1255,13 @@ window.VBMSetup = (function () {
     // "2017 – 2026" (anos seguidos) ou "6 anos"
     var vis = anosVisiveis(), seguidos = vis.length && vis[vis.length - 1] - vis[0] === vis.length - 1;
     document.getElementById('anosTxt').textContent = !vis.length ? '—' : vis.length === 1 ? String(vis[0]) : seguidos ? vis[0] + ' – ' + vis[vis.length - 1] : T('a.nAnos', { n: vis.length });
+    var ativas = SERIES[state.serie] || SERIES.ba;
     document.querySelector('[data-filter="serie"]').innerHTML = OPCOES_SERIE.map(function (o) {
-      return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (state.serie === o[0]) + '" title="' + esc(T(o[2])) + '" aria-label="' + esc(T(o[2])) + '">' + esc(o[1]) + '</button>';
+      return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (ativas.indexOf(o[0]) >= 0) + '" title="' + esc(T(o[2])) + '">' + esc(o[1]) + '</button>';
     }).join('');
-    var sw = document.getElementById('deltaSwitch'), soUma = state.serie !== 'ba';
-    sw.disabled = soUma;
-    sw.setAttribute('aria-checked', String(state.delta === 'on' && !soUma));
-    sw.title = soUma ? T('a.deltaSo') : '';
+    var sw = document.getElementById('deltaSwitch');
+    sw.setAttribute('aria-checked', String(state.delta === 'on'));
+    sw.title = T(ativas.length === 2 ? 'a.deltaBA' : 'a.deltaAno');
     document.getElementById('legB').hidden = state.serie === 'af';
     document.getElementById('legAF').hidden = state.serie === 'b';
     renderCicloSel();
@@ -1989,10 +1993,13 @@ window.VBMSetup = (function () {
   });
   document.querySelector('[data-filter="serie"]').addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-v]');
-    if (!btn || btn.getAttribute('data-v') === state.serie) return;
-    state.serie = btn.getAttribute('data-v');
+    if (!btn) return;
+    var k = btn.getAttribute('data-v'), lista = (SERIES[state.serie] || SERIES.ba).slice(), i = lista.indexOf(k);
+    if (i >= 0 && lista.length === 1) { btn.title = T('a.serieUltima'); return; } // pelo menos uma série fica
+    if (i >= 0) lista.splice(i, 1); else lista.push(k);
+    state.serie = serieCodigo(['B', 'AF'].filter(function (x) { return lista.indexOf(x) >= 0; }));
     renderFilters();
-    var nb = document.querySelector('[data-filter="serie"] button[data-v="' + state.serie + '"]');
+    var nb = document.querySelector('[data-filter="serie"] button[data-v="' + k + '"]');
     if (nb) nb.focus();
     render();
     if (!coresPop.hidden) renderCores();
