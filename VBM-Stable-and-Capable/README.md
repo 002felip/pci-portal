@@ -10,7 +10,37 @@ Ao abrir, a pessoa escolhe entre:
 
 - **Rodar o modelo** (`#modelo`): gerar os PDFs. É o fluxo descrito abaixo.
 - **Importar dados** (`#importar`): subir o PCI Master do mês para a `IBP.PEDRAVISAODIARIA`.
-- **Power BI** (`#powerbi`): reservado para o relatório do Power BI (em breve).
+- **Power BI** (`#powerbi`): a página "Stable and capable" do `Stable_and_Capable_3.pbix`, refeita no app (ver abaixo).
+
+## Power BI (página refeita no app)
+
+Reprodução da página **"Stable and capable"** do `Stable_and_Capable_3.pbix`, sem depender de licença do Power BI nem dos visuais Python. Mesmo conteúdo, com o design do app:
+
+- **Filtros:** Business Unit → Site → KPI (Operação só aparece quando o par site/KPI tem mais de uma), período, *Remover zeros?* e *Remover outliers?*. Os padrões são os do `.pbix`: Salobo / Salobo / Ore Mined, Não, Não.
+- **Carta de controle** por **trimestre** ou **ano** ("Choose the grouping"):
+  - CL e limites com MR/d2 (d2 = 1,128), com LCL nunca negativo;
+  - as 4 regras de Nelson e a faixa dos melhores 30 dias de cada período.
+- **Medidas estatísticas e comparações:** média, melhores 30 dias, P75 e budget por período, mais a variação da média entre períodos.
+- **Histograma de capabilidade:** por ano, com 35 faixas comuns, curva normal e a tabela Ano / Mean / StDev / CV / N.
+
+**De onde vem cada parte**
+
+| Parte | Origem |
+|---|---|
+| Dados | `database/query_powerbi_stable_and_capable.sql` (a consulta da tabela `base` do `.pbix`, copiada como está), sempre no banco **PRD** |
+| Servidor | `bi-api.js`: o resultado (cerca de 80 mil linhas) fica em memória e é recarregado a cada `STABLECAPABLE_BI_CACHE_MIN` minutos (padrão 60) ou pelo botão "Atualizar dados" |
+| Cálculos e gráficos | `assets/js/painel-spc.js`: mesma lógica dos scripts Python do `.pbix` (cada bloco cita o trecho de origem), desenhados em SVG, sem biblioteca externa |
+
+- **Conferência:** os valores foram comparados com os scripts Python originais (CL/UCL/LCL, medidas e histograma).
+- **Regra 4:** reproduz o comportamento do script, que avalia só a sequência alternada que termina no fim de cada período.
+
+| Variável | Padrão |
+|---|---|
+| `STABLECAPABLE_BI_SQL_DATABASE` | `BDIBPBMSA_PRD` |
+| `STABLECAPABLE_BI_SQL_SERVER` | `AZURE_SQL_SERVER` (ou o servidor PRD) |
+| `STABLECAPABLE_BI_CACHE_MIN` | `60` |
+
+O login é o do Portal (`AZURE_SQL_USER` / `AZURE_SQL_PASSWORD`).
 
 ## Importar dados (PCI Master → IBP.PEDRAVISAODIARIA)
 

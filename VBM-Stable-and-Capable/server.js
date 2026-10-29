@@ -83,7 +83,7 @@ function runQueryBanco() {
   app.disable('x-powered-by');
   if (env.STABLECAPABLE_EMAIL_LOCAL) app.use((req, res, next) => { req.headers['x-forwarded-email'] = env.STABLECAPABLE_EMAIL_LOCAL; next(); });
   app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); },
-    criarStableCapableRouter({ runQuery, obterPool, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
+    criarStableCapableRouter({ runQuery, obterPool, runQueryPrd: runQuery, bancoBi: env.STABLECAPABLE_EXCEL_TESTE ? 'Excel de teste' : (env.STABLECAPABLE_BI_SQL_DATABASE || env.AZURE_SQL_DATABASE || 'banco'), armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
   app.get(['/', '/index.html'], (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
   app.use('/assets', express.static(path.join(__dirname, 'assets')));
   app.listen(PORT, () => console.log(`[stable-and-capable] http://localhost:${PORT}/ ${env.STABLECAPABLE_EXCEL_TESTE ? '(modo teste: Excel)' : ''}`));

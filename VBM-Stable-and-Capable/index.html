@@ -404,6 +404,75 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .bi-vazio p { font-size: .8rem; max-width: 46ch; margin: 0 auto; line-height: 1.5; }
 
 @media (max-width: 960px) { .opcoes { grid-template-columns: 1fr; } .opcao { min-height: 0; } .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ═══ Power BI refeito (painel SPC) ═══ */
+:root { --bi-cl: #008000; --bi-media: #0B3C5D; --bi-r3: #000000; --bi-caixa: #ffffff; --bi-rotulo: #f2f2f2; --bi-eixo: #6E6E6E; --bi-grade: rgba(13,38,64,.07); --bi-borda-barra: rgba(0,0,0,.55); }
+[data-bg="dark"] { --bi-cl: #4ade80; --bi-media: #4f8fc4; --bi-r3: #e8eef5; --bi-caixa: #0f2c44; --bi-rotulo: #133650; --bi-eixo: rgba(232,238,245,.62); --bi-grade: rgba(255,255,255,.07); --bi-borda-barra: rgba(255,255,255,.35); }
+.bi-filtros { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: flex-end; }
+.bi-filtros > .data { flex: 1 1 170px; min-width: 0; }
+.bi-filtros > .data.bi-per { flex: 1.6 1 290px; }
+.bi-filtros > .bi-flag { flex: 0 0 auto; }
+.bi-filtros .data label, .bi-flag > span { display: block; font-size: .66rem; color: var(--texto-fraco); margin-bottom: .25rem; }
+.bi-filtros .data[hidden] { display: none; }
+.bi-datas { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+.bi-datas input { width: 100%; min-width: 0; padding: .55rem .6rem; border-radius: 9px; border: 1.5px solid var(--campo-borda); background: var(--campo); color: var(--texto); font: 500 .8rem 'Poppins', sans-serif; color-scheme: light; }
+[data-bg="dark"] .bi-datas input { color-scheme: dark; }
+.bi-flag .segm { display: flex; background: var(--campo); border: 1.5px solid var(--campo-borda); border-radius: 100px; padding: .15rem; gap: .1rem; }
+.segm button { border: none; background: transparent; color: var(--texto-suave); font-size: .7rem; font-weight: 600; padding: .38rem .8rem; border-radius: 100px; cursor: pointer; white-space: nowrap; }
+.segm button.active { background: var(--primario); color: var(--primario-texto); }
+.bi-rodape { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; margin-top: .85rem; font-size: .7rem; color: var(--texto-fraco); }
+.bi-titulo { margin: 1.1rem 0; padding: .85rem 1.2rem; border-radius: 12px; text-align: center; font-weight: 600; font-size: 1.02rem; letter-spacing: -.005em;
+  color: #fff; background: linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%); box-shadow: var(--painel-sombra); }
+.bi-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin-bottom: .6rem; }
+.bi-cab h2 { font-size: .98rem; font-weight: 600; }
+.bi-cab .segm { background: var(--campo); border: 1.5px solid var(--campo-borda); border-radius: 100px; padding: .15rem; display: flex; gap: .1rem; }
+.bi-cab .rot-segm { font-size: .7rem; color: var(--texto-fraco); margin-right: .4rem; }
+.bi-legenda { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; font-size: .72rem; color: var(--texto-suave); margin-bottom: .4rem; }
+.bi-legenda span { display: inline-flex; align-items: center; gap: .4rem; }
+.bi-legenda i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.bi-sym { width: 14px; height: 14px; display: inline-block; position: relative; }
+.bi-sym.linha::after { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--c); }
+.bi-sym.ponto::after, .bi-sym.ponto4::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--c); }
+.bi-sym.ponto4::after { box-shadow: 0 0 0 1.5px #8a2be2; }
+.bi-sym.faixa { background: var(--c); opacity: .45; border-radius: 2px; }
+.bi-grafico { position: relative; min-height: 120px; }
+.bi-grafico.carregando { opacity: .45; transition: opacity .2s; }
+.bi-svg { display: block; overflow: visible; }
+.bi-svg text { font-family: 'Poppins', sans-serif; }
+.bi-eixo { font-size: 10.5px; fill: var(--bi-eixo); }
+.bi-grade { stroke: var(--bi-grade); }
+.bi-base { stroke: var(--bi-eixo); stroke-width: 1; }
+.bi-guia { stroke: var(--bi-eixo); stroke-dasharray: 3 3; }
+.bi-ponto { fill: var(--vbm-blue); stroke: #fff; stroke-width: 1.5; }
+.bi-t-grupo { font-size: 10.5px; font-weight: 700; fill: #1f2937; }
+.bi-t-cl { font-size: 13px; font-weight: 700; paint-order: stroke; stroke: var(--bi-caixa); stroke-width: 4px; }
+.bi-t-lim { font-size: 10px; paint-order: stroke; stroke: var(--bi-caixa); stroke-width: 3px; }
+.bi-t-best { font-size: 8.5px; fill: #8a6a12; }
+[data-bg="dark"] .bi-t-best { fill: #f2cf6b; }
+[data-bg="dark"] .bi-t-grupo { fill: #e8eef5; }
+.bi-t-barra { font-weight: 700; }
+.bi-dica { position: absolute; z-index: 5; pointer-events: none; padding: .35rem .55rem; border-radius: 7px; font-size: .7rem; line-height: 1.35;
+  background: rgba(2,16,28,.92); color: #e8eef5; box-shadow: 0 6px 18px rgba(0,0,0,.25); white-space: nowrap; }
+.bi-dica b { display: block; font-weight: 600; color: #7dd3f0; }
+.bi-msg { display: flex; align-items: center; justify-content: center; min-height: 160px; font-size: .82rem; color: var(--texto-fraco); text-align: center; padding: 1rem; }
+.bi-inferior { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
+.bi-medidas-linha { display: flex; gap: 1rem; align-items: flex-start; }
+.bi-medidas-svg { flex: 1; min-width: 0; }
+.bi-variacao { width: 210px; flex-shrink: 0; border: 1px solid var(--linha); border-radius: 10px; padding: .6rem .75rem; font-size: .72rem; }
+.bi-variacao h4 { font-size: .74rem; font-weight: 700; color: var(--texto-suave); margin-bottom: .35rem; }
+.bi-variacao ul { list-style: none; display: flex; flex-direction: column; gap: .2rem; }
+.bi-variacao li { display: flex; justify-content: space-between; gap: .5rem; font-weight: 600; }
+.bi-variacao li span { font-weight: 500; color: var(--texto-suave); }
+.bi-variacao .sobe b { color: #1F77B4; } .bi-variacao .desce b { color: #D62728; }
+[data-bg="dark"] .bi-variacao .sobe b { color: #5aa9e6; } [data-bg="dark"] .bi-variacao .desce b { color: #f87171; }
+.bi-hist-legenda { width: 100%; font-size: .72rem; margin-bottom: .4rem; }
+.bi-hist-legenda th { padding: .25rem .4rem; border-bottom: 1px solid var(--linha); font-size: .62rem; text-transform: none; letter-spacing: 0; text-align: right; }
+.bi-hist-legenda td { padding: .25rem .4rem; border-bottom: none; text-align: right; font-variant-numeric: tabular-nums; }
+.bi-hist-legenda th:first-child, .bi-hist-legenda td:first-child { width: 30px; text-align: left; }
+.bi-amostra { display: inline-block; width: 24px; height: 12px; border: 1px solid #000; position: relative; vertical-align: middle; }
+.bi-amostra::after { content: ''; position: absolute; left: 0; right: 0; top: 4px; border-top: 2px dashed var(--cor-linha, #000); }
+@media (max-width: 960px) { .bi-inferior { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .bi-medidas-linha { flex-direction: column; } .bi-variacao { width: 100%; } }
 </style>
 </head>
 <body>
@@ -501,8 +570,8 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       <a class="opcao" href="#powerbi">
         <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg></span>
         <h2 data-i18n="nav.powerbi">Power BI</h2>
-        <p data-i18n="op.powerbi">Acompanhe os indicadores de estabilidade e capabilidade no relatório do Power BI.</p>
-        <span class="selo" data-i18n="op.embreve">Em breve</span>
+        <p data-i18n="op.powerbi">Carta de controle, medidas estatísticas e histograma de capabilidade por KPI, como no Power BI.</p>
+        <span class="acessar"><span data-i18n="op.abrir">Abrir</span> →</span>
       </a>
     </div>
   </section>
@@ -627,18 +696,43 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     </section>
   </section>
 
-  <!-- ═══ Power BI (próximo passo) ═══ -->
+  <!-- ═══ Power BI: página "Stable and capable" do .pbix, refeita no app (assets/js/painel-spc.js) ═══ -->
   <section class="vista" id="vista-powerbi" hidden>
     <section class="painel">
-      <div class="bi-vazio">
-        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg>
-        <h2 data-i18n="bi.titulo">Power BI em breve</h2>
-        <p data-i18n="bi.texto">O relatório do Power BI do Stable &amp; Capable vai aparecer aqui.</p>
+      <div class="bi-filtros">
+        <div class="data"><label for="biBu">Business Unit</label><select id="biBu" class="selecao"></select></div>
+        <div class="data"><label for="biSite" data-i18n="bi.f.site">Site</label><select id="biSite" class="selecao"></select></div>
+        <div class="data"><label for="biKpi">KPI</label><select id="biKpi" class="selecao"></select></div>
+        <div class="data" id="biOpGrupo" hidden><label for="biOp" data-i18n="bi.f.op">Operação</label><select id="biOp" class="selecao"></select></div>
+        <div class="data bi-per"><label data-i18n="bi.f.periodo">Período</label>
+          <div class="bi-datas"><input type="date" id="biInicio" aria-label="Início"/><input type="date" id="biFim" aria-label="Fim"/></div></div>
+        <div class="bi-flag"><span data-i18n="bi.f.zeros">Remover zeros?</span>
+          <div class="segm" role="group"><button type="button" data-bi-flag="removerZeros" data-valor="sim" data-i18n="bi.sim">Sim</button><button type="button" class="active" data-bi-flag="removerZeros" data-valor="nao" data-i18n="bi.nao">Não</button></div></div>
+        <div class="bi-flag"><span data-i18n="bi.f.outliers">Remover outliers?</span>
+          <div class="segm" role="group"><button type="button" data-bi-flag="removerOutliers" data-valor="sim" data-i18n="bi.sim">Sim</button><button type="button" class="active" data-bi-flag="removerOutliers" data-valor="nao" data-i18n="bi.nao">Não</button></div></div>
       </div>
+      <div class="bi-rodape"><span id="biAtualizado"></span>
+        <button type="button" class="btn-sec" id="biAtualizar"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="bi.atualizar">Atualizar dados</span></button></div>
     </section>
+
+    <div class="bi-titulo" id="biTitulo" role="heading" aria-level="2"></div>
+
+    <section class="painel">
+      <div class="bi-cab"><h2 data-i18n="bi.carta">Carta de controle</h2>
+        <div style="display:flex;align-items:center"><span class="rot-segm" data-i18n="bi.agrup">Agrupar por</span>
+          <div class="segm" role="group"><button type="button" class="active" data-bi-agrup="trimestre" data-i18n="bi.trimestre">Trimestre</button><button type="button" data-bi-agrup="ano" data-i18n="bi.ano">Ano</button></div></div></div>
+      <div class="bi-legenda" id="biLegendaCarta"></div>
+      <div class="bi-grafico" id="biCartaWrap"><div id="biCarta" class="bi-grafico"></div><div class="bi-dica" id="biDica" hidden></div></div>
+    </section>
+
+    <div class="bi-inferior">
+      <section class="painel"><div class="bi-cab"><h2 data-i18n="bi.medidas">Medidas estatísticas e comparações</h2></div><div class="bi-grafico" id="biMedidas"></div></section>
+      <section class="painel"><div class="bi-cab"><h2 data-i18n="bi.hist">Histograma de capabilidade</h2></div><div class="bi-grafico" id="biHist"></div></section>
+    </div>
   </section>
 </main>
 
+<script src="assets/js/painel-spc.js"></script>
 <script>
 (function () {
   'use strict';
@@ -649,12 +743,12 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'nav.label': 'Opções do Stable & Capable', 'nav.inicio': 'Início', 'nav.modelo': 'Rodar o modelo', 'nav.importar': 'Importar dados', 'nav.powerbi': 'Power BI',
       'op.modelo': 'Gere os PDFs de estabilidade e capabilidade por Business Unit para o período escolhido.',
       'op.importar': 'Envie o PCI Master do mês, confira a prévia e suba os dados para o banco (IBP.PEDRAVISAODIARIA).',
-      'op.powerbi': 'Acompanhe os indicadores de estabilidade e capabilidade no relatório do Power BI.', 'op.abrir': 'Abrir', 'op.embreve': 'Em breve',
+      'op.powerbi': 'Carta de controle, medidas estatísticas e histograma de capabilidade por KPI, como no Power BI.', 'op.abrir': 'Abrir', 'op.embreve': 'Em breve',
       'vista.inicio.t': '— o que você quer fazer?', 'vista.inicio.p': 'Escolha uma opção. Você pode trocar a qualquer momento pelas abas acima.',
       'vista.modelo.t': '— relatórios por Business Unit',
       'vista.modelo.p': 'Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.',
       'vista.importar.t': '— importar dados', 'vista.importar.p': 'Envie o PCI Master Data File atualizado, escolha o mês e confira a prévia antes de subir os dados para a tabela {tab}.',
-      'vista.powerbi.t': '— Power BI', 'vista.powerbi.p': 'Relatório do Power BI do Stable & Capable.',
+      'vista.powerbi.t': '— Power BI', 'vista.powerbi.p': 'Estabilidade e capabilidade por KPI: carta de controle com as regras de Nelson, medidas por período e histograma por ano. Dados do banco PRD.',
       'imp.title': 'Nova importação', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Arraste o arquivo aqui ou clique para escolher', 'imp.formato': '.xlsx atualizado do mês',
       'imp.periodo': 'Mês dos dados', 'imp.mes': 'Mês', 'imp.ano': 'Ano', 'imp.processar': 'Processar arquivo', 'imp.processando': 'Processando…',
       'imp.rodape': 'Nada é gravado neste passo: primeiro você confere a prévia.', 'imp.mapa': 'Baixar o mapeamento',
@@ -670,7 +764,13 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'imp.ok': 'Gravado em {tab}: {ins} linha(s) inserida(s) e {at} atualizada(s).', 'imp.semBanco': 'Não foi possível consultar o banco; a gravação pode falhar. {m}',
       'imp.hist': 'Importações feitas', 'imp.h.quando': 'Gravado em', 'imp.h.mes': 'Mês', 'imp.h.linhas': 'Linhas', 'imp.hVazio': 'Nenhuma importação feita ainda.',
       'imp.hLinhas': '{ins} inseridas · {at} atualizadas', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
-      'bi.titulo': 'Power BI em breve', 'bi.texto': 'O relatório do Power BI do Stable & Capable vai aparecer aqui.',
+      'bi.f.site': 'Site', 'bi.f.op': 'Operação', 'bi.f.periodo': 'Período', 'bi.f.zeros': 'Remover zeros?', 'bi.f.outliers': 'Remover outliers?', 'bi.sim': 'Sim', 'bi.nao': 'Não',
+      'bi.atualizar': 'Atualizar dados', 'bi.atualizado': 'Dados de {banco} · carregados em {quando}', 'bi.selecione': 'Selecione BU, site e KPI para ver os gráficos',
+      'bi.semDados': 'Sem dados para os filtros escolhidos.', 'bi.carta': 'Carta de controle', 'bi.agrup': 'Agrupar por', 'bi.trimestre': 'Trimestre', 'bi.ano': 'Ano',
+      'bi.medidas': 'Medidas estatísticas e comparações', 'bi.hist': 'Histograma de capabilidade', 'bi.periodo': 'Período', 'bi.variacao': 'Variação da média',
+      'bi.serie.mean': 'Média', 'bi.serie.best': 'Melhores 30 dias', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Ano',
+      'bi.r.valores': 'Valores', 'bi.r.r1': 'Regra 1: ponto fora dos limites', 'bi.r.r2': 'Regra 2: 7 pontos do mesmo lado da CL',
+      'bi.r.r3': 'Regra 3: 7 pontos subindo ou descendo', 'bi.r.r4': 'Regra 4: 14 pontos alternando', 'bi.r.best': 'Melhores 30 dias',
       'ui.menu': 'Voltar ao Portal', 'ui.loading': 'Carregando…',
       'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
       'page.eyebrow': 'Vale Base Metals · Controle Estatístico de Processo', 'page.title': '— relatórios por Business Unit',
@@ -698,12 +798,12 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'nav.label': 'Stable & Capable options', 'nav.inicio': 'Home', 'nav.modelo': 'Run the model', 'nav.importar': 'Import data', 'nav.powerbi': 'Power BI',
       'op.modelo': 'Generate the stability and capability PDFs per Business Unit for the chosen period.',
       'op.importar': 'Upload the month\'s PCI Master, check the preview and load the data into the database (IBP.PEDRAVISAODIARIA).',
-      'op.powerbi': 'Follow the stability and capability indicators in the Power BI report.', 'op.abrir': 'Open', 'op.embreve': 'Coming soon',
+      'op.powerbi': 'Control chart, statistical measures and capability histogram per KPI, as in Power BI.', 'op.abrir': 'Open', 'op.embreve': 'Coming soon',
       'vista.inicio.t': '— what do you want to do?', 'vista.inicio.p': 'Pick an option. You can switch at any time using the tabs above.',
       'vista.modelo.t': '— reports by Business Unit',
       'vista.modelo.p': 'Pick the period and the Business Units and generate the stability and capability PDFs. Files are saved to Blob storage and listed in the history below.',
       'vista.importar.t': '— import data', 'vista.importar.p': 'Upload the updated PCI Master Data File, pick the month and check the preview before loading the data into {tab}.',
-      'vista.powerbi.t': '— Power BI', 'vista.powerbi.p': 'Stable & Capable Power BI report.',
+      'vista.powerbi.t': '— Power BI', 'vista.powerbi.p': 'Stability and capability per KPI: control chart with Nelson rules, measures per period and histogram per year. Data from the PRD database.',
       'imp.title': 'New import', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Drop the file here or click to choose', 'imp.formato': 'updated .xlsx for the month',
       'imp.periodo': 'Data month', 'imp.mes': 'Month', 'imp.ano': 'Year', 'imp.processar': 'Process file', 'imp.processando': 'Processing…',
       'imp.rodape': 'Nothing is written in this step: you check the preview first.', 'imp.mapa': 'Download the mapping',
@@ -719,7 +819,13 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'imp.ok': 'Written to {tab}: {ins} row(s) inserted and {at} updated.', 'imp.semBanco': 'Could not query the database; writing may fail. {m}',
       'imp.hist': 'Imports', 'imp.h.quando': 'Written', 'imp.h.mes': 'Month', 'imp.h.linhas': 'Rows', 'imp.hVazio': 'No imports yet.',
       'imp.hLinhas': '{ins} inserted · {at} updated', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
-      'bi.titulo': 'Power BI coming soon', 'bi.texto': 'The Stable & Capable Power BI report will show up here.',
+      'bi.f.site': 'Site', 'bi.f.op': 'Operation', 'bi.f.periodo': 'Period', 'bi.f.zeros': 'Remove zeros?', 'bi.f.outliers': 'Remove outliers?', 'bi.sim': 'Yes', 'bi.nao': 'No',
+      'bi.atualizar': 'Refresh data', 'bi.atualizado': 'Data from {banco} · loaded {quando}', 'bi.selecione': 'Select all filters to view the chart',
+      'bi.semDados': 'No data for the selected filters.', 'bi.carta': 'Control Chart', 'bi.agrup': 'Choose the grouping', 'bi.trimestre': 'Quarter', 'bi.ano': 'Year',
+      'bi.medidas': 'Statistical Measures and Comparisons', 'bi.hist': 'Capability Histogram', 'bi.periodo': 'Period', 'bi.variacao': 'Mean variation',
+      'bi.serie.mean': 'Mean', 'bi.serie.best': 'Best 30 Days', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Year',
+      'bi.r.valores': 'Values', 'bi.r.r1': 'Rule 1: Point outside control limits', 'bi.r.r2': 'Rule 2: 7 points on same side of center line',
+      'bi.r.r3': 'Rule 3: 7 points increasing or decreasing', 'bi.r.r4': 'Rule 4: 14 points alternating up and down', 'bi.r.best': 'Best 30 Days period',
       'ui.menu': 'Back to Portal', 'ui.loading': 'Loading…',
       'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'theme.white': 'Light', 'theme.dark': 'Dark',
       'page.eyebrow': 'Vale Base Metals · Statistical Process Control', 'page.title': '— reports by Business Unit',
@@ -973,6 +1079,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       document.documentElement.setAttribute('data-bg', t2);
       $('btnWhite').classList.toggle('active', t2 !== 'dark'); $('btnBusiness').classList.toggle('active', t2 === 'dark');
       try { localStorage.setItem('vdt-theme', t2); } catch (e) {}
+      if (window.PainelSPC) window.PainelSPC.redesenhar(); // cores dos gráficos dependem do tema
     }
     tema(document.documentElement.getAttribute('data-bg') === 'dark' ? 'dark' : 'light');
     $('btnWhite').addEventListener('click', function () { tema('light'); });
@@ -982,6 +1089,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       aplicarIdioma(); desenharChips(); desenharExecucao(); desenharHistorico(); rodapeDestino();
       mostrarVista(vistaAtual);
       if (imp.iniciado) { preencherMeses(); desenharPrevia(); desenharHistImp(); if (!imp.arquivo) escolherArquivo(null); }
+      if (window.PainelSPC) window.PainelSPC.redesenhar();
     });
   })();
 
@@ -1013,6 +1121,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     $('tituloVista').textContent = t('vista.' + nome + '.t');
     $('introVista').textContent = t('vista.' + nome + '.p', { tab: (imp.config && imp.config.tabela) || 'IBP.PEDRAVISAODIARIA' });
     if (nome === 'importar') iniciarImportacao();
+    if (nome === 'powerbi' && window.PainelSPC) window.PainelSPC.iniciar({ api: api, t: t, lang: function () { return lang; } });
   }
   window.addEventListener('hashchange', function () { mostrarVista(vistaDoHash()); window.scrollTo(0, 0); });
 

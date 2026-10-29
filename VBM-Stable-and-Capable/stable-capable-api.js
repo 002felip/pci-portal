@@ -259,7 +259,7 @@ const tipo = (nome) => TIPOS[path.extname(nome).toLowerCase()] || 'application/o
 const nomeArquivoBu = (bu) => String(bu).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9+]+/g, '_').replace(/^_|_$/g, '');
 
 // ════════════════════════════════════════════════════════════════════
-function criarStableCapableRouter({ runQuery, obterPool, armazenamento, pastaBlob }) {
+function criarStableCapableRouter({ runQuery, obterPool, runQueryPrd, bancoBi, armazenamento, pastaBlob }) {
   const router = express.Router();
   router.use(express.json({ limit: '32kb' }));
   // Bibliotecas Python verificadas/instaladas já na subida do app.
@@ -270,6 +270,9 @@ function criarStableCapableRouter({ runQuery, obterPool, armazenamento, pastaBlo
     ? armazenamento
     : armazenamentoLocal(process.env.STABLECAPABLE_PASTA_LOCAL);
   if (store.local) console.warn(`${TAG} Azure Blob não configurado — arquivos gravados em ${store.raiz} (somem quando o app reinicia).`);
+  // "Power BI": página do .pbix refeita no app, dados do PRD (bi-api.js)
+  if (runQueryPrd) router.use('/bi', require('./bi-api').criarBiRouter({ runQueryPrd, banco: bancoBi || 'PRD' }));
+
   // "Importar dados": PCI Master -> IBP.PEDRAVISAODIARIA (importar-dados.js)
   router.use('/importacao', require('./importar-dados').criarImportacaoRouter({
     runQuery, obterPool, store, pasta: PASTA,

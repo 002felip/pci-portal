@@ -21,6 +21,12 @@
  * Sem Blob configurado, a aplicação funciona gravando no disco local do app
  * (os arquivos se perdem quando ele reinicia) — o log avisa.
  *
+ * POWER BI (aba refeita no app, bi-api.js): lê SEMPRE do banco PRD, como o
+ * Power BI original, com pool próprio:
+ *   STABLECAPABLE_BI_SQL_DATABASE  padrão 'BDIBPBMSA_PRD'
+ *   STABLECAPABLE_BI_SQL_SERVER    padrão AZURE_SQL_SERVER ou o servidor PRD
+ *   login: AZURE_SQL_USER / AZURE_SQL_PASSWORD (os do Portal)
+ *
  * PYTHON: o gerador de PDF fica em ./python e roda como processo filho.
  * As bibliotecas vêm do requirements.txt da RAIZ do Portal (o Databricks
  * Apps instala no deploy). STABLECAPABLE_PYTHON (opcional) força o executável.
@@ -84,6 +90,30 @@ module.exports = function montarStableCapableNoPortal(app) {
   }
 
   // params: { nome: [tipoMssql, valor] } → request.input (nunca concatenado na SQL)
+  // ── Pool PRD da aba Power BI (independente do banco acima) ──
+  const DB_BI = {
+    server: env.STABLECAPABLE_BI_SQL_SERVER || env.AZURE_SQL_SERVER || 'rdb-ibp-bmsa-prd.database.windows.net',
+    database: env.STABLECAPABLE_BI_SQL_DATABASE || 'BDIBPBMSA_PRD',
+    user: DB.user, password: DB.password, port: DB.port,
+  };
+  let poolBi = null;
+  function getPoolBi() {
+    if (!poolBi) {
+      if (!DB_BI.user || !DB_BI.password) return Promise.reject(new Error('Stable & Capable BI: credencial do banco ausente'));
+      const pool = new sql.ConnectionPool({
+        ...DB_BI,
+        options: { encrypt: true, trustServerCertificate: false },
+        connectionTimeout: 30000,
+        requestTimeout: 10 * 60 * 1000, // ~80 mil linhas agregadas
+        pool: { max: 2, min: 0, idleTimeoutMillis: 60000 },
+      });
+      pool.on('error', (err) => { console.error(TAG + ' erro no pool BI:', err.message); poolBi = null; });
+      poolBi = pool.connect().catch((err) => { poolBi = null; throw err; });
+    }
+    return poolBi;
+  }
+  const runQueryPrd = async (query) => (await getPoolBi()).request().query(query);
+
   const runQuery = async (query, params) => {
     const request = (await getPool()).request();
     Object.entries(params || {}).forEach(([nome, [tipo, valor]]) => request.input(nome, tipo, valor));
@@ -109,7 +139,7 @@ module.exports = function montarStableCapableNoPortal(app) {
   } catch (e) {
     console.warn(TAG + ' Azure Blob indisponível:', e.message);
   }
-  app.use(BASE + '/api', semCache, criarStableCapableRouter({ runQuery, obterPool: getPool, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
+  app.use(BASE + '/api', semCache, criarStableCapableRouter({ runQuery, obterPool: getPool, runQueryPrd, bancoBi: `${DB_BI.server}/${DB_BI.database}`, armazenamento, pastaBlob: env.STABLECAPABLE_BLOB_PASTA }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
   // portal.js, stable-capable-api.js, server.js, database/, python/,
