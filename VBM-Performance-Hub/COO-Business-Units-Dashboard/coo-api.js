@@ -489,7 +489,11 @@ function criarCooRouter({ runQuery, idDash }) {
     try {
       const c = await resolverCiclo(req);
       const [linhas, sites] = await Promise.all([buscarCarga(c.ciclo, fresco(req)), buscar('/sites', SITES_SQL, fresco(req))]);
-      res.json({ ciclo: c.ciclo, ...extrairFiltros(linhas, sites) });
+      // Anos apresentados: o do último mês realizado do ciclo e o anterior (ciclo jan/27 → 2025 e 2026;
+      // fev/27 → 2026 e 2027), mesmo que a carga traga anos mais antigos
+      const anoReal = mesDoCicloDaCarga(c.ciclo).ano;
+      const doPeriodo = linhas.filter(l => { const a = anoMes(l.DT_REF)[0]; return a === anoReal || a === anoReal - 1; });
+      res.json({ ciclo: c.ciclo, ...extrairFiltros(doPeriodo, sites) });
     } catch (err) {
       responderErro(res, '/filtros', err, 'Failed to query the dashboard filters.');
     }

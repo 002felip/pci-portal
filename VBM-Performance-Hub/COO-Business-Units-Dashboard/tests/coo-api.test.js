@@ -300,3 +300,13 @@ test('configuração (PHUB_PS_SETUP): só o formato esperado passa; sem registro
     assert.deepStrictEqual([r.status, r.json], [200, { config: null }]);
   } finally { ok.close(); vazio.close(); erro.close(); }
 });
+
+test('/filtros: só o ano do último mês realizado do ciclo e o anterior (carga com anos antigos)', async () => {
+  const velhos = [2017, 2024, 2025, 2026].map((a) => linha({ DT_REF: new Date(Date.UTC(a, 7, 1)), ORDEM_GRAFICO: 2, NM_VISAO: 'Aug A' }));
+  const s = await servidor(banco(velhos));
+  try {
+    assert.deepStrictEqual((await get(s, '/api/filtros?ciclo=2026-10')).json.anos, [2025, 2026]);
+    const jan = await servidor(banco(velhos, [{ DT_REF: new Date(Date.UTC(2027, 0, 1)), DT_CARGA: null }]));
+    try { assert.deepStrictEqual((await get(jan, '/api/filtros?ciclo=2027-01')).json.anos, [2025, 2026]); } finally { jan.close(); }
+  } finally { s.close(); }
+});
