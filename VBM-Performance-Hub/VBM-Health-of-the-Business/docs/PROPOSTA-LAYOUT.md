@@ -56,8 +56,30 @@ As duas telas têm o mesmo molde e só muda o produto. Os dados vêm do filtro B
 
 Filtro Business Units: `VBM` · `Copper` · `Nickel`.
 
+## Dados do banco (próximo passo)
+
+A estrutura segue a das outras aplicações do Hub (COO):
+
+| Arquivo | Papel |
+|---|---|
+| `portal.js` | Monta a página e a API em `/VBM-Performance-Hub/VBM-Health-of-the-Business/` com pool próprio no Azure SQL PRD (variáveis `PERFORMANCEHUB_SQL_*`, como o COO) |
+| `hob-api.js` | Rotas `api/ping`, `api/health` e `api/dados`. Lê a SQL de `database/` e devolve o formato de `assets/hob-data.js` (cache de 5 min) |
+| `database/001_hob_mensal.sql` | Budget e Actual\|Forecast mensais por BU e indicador |
+| `database/002_hob_pontes.sql` | Itens das pontes 2026 EBITDA YEAR e FCF YEAR |
+| `database/003_hob_atualizacao.sql` | Data da última carga e último mês com Actual |
+| `server.js`, `package.json` | App independente (desenvolvimento), igual ao do COO |
+| `tests/hob-api.test.js` | `npm test`: banco simulado, sem rede |
+
+Cada script de `database/` traz no cabeçalho as colunas esperadas e os códigos aceitos. Para ligar ao banco:
+
+1. Escreva a consulta no lugar do `SELECT … WHERE 1 = 0` de cada script, mantendo os nomes das colunas.
+2. Apague a primeira linha (`-- HOB:PENDENTE`).
+3. Publique o Portal. Sem a marca nos três scripts, `api/dados` passa a responder com os dados do banco e a página tira o selo "Dados demo".
+
+Enquanto algum script tiver a marca, `api/dados` responde 503 (`CONSULTAS_PENDENTES`) e a página segue com a demonstração. Se o banco falhar, a página também usa a demonstração, mas o selo passa a dizer "Dados demo · banco indisponível". Mês sem valor aparece como 0 e é registrado no log do Portal.
+
 ## Pendências
 
-1. **Dados**: hoje a tela usa `assets/hob-data.js`, com valores ilustrativos e o selo "Demo data". Para ligar ao banco, crie a API em `portal.js` (molde do `coo-api.js`) devolvendo o mesmo formato descrito no topo do arquivo.
+1. **Consultas**: preencher os três scripts de `database/` (ver acima).
 2. Validar com a área de negócio o nome e a ordem das categorias das pontes (EBITDA e FCF).
 3. Confirmar se o seletor do EBITDA deve ter a opção `Non-Alloc.`.

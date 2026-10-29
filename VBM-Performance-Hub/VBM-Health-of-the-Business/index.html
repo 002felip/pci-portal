@@ -303,17 +303,32 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 <script src="assets/setup-dashboards.js"></script>
 <script src="assets/hob-data.js"></script>
 <script>
-(function () {
+/* Dados: GET api/dados (hob-api.js, consultas em database/). Prévia local (file://), API ausente ou consultas
+   ainda pendentes: a página segue com os dados de demonstração de assets/hob-data.js e o selo "Dados demo". */
+window.HOB_CARREGAR = function (iniciar) {
+  if (location.protocol === 'file:' || !window.fetch) return iniciar('SEM_API');
+  var base = location.pathname.replace(/index\.html$/i, '').replace(/\/?$/, '/');
+  fetch(base + 'api/dados', { cache: 'no-store', credentials: 'same-origin' })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: false, j: null }; }); })
+    .then(function (x) {
+      if (x.ok && x.j && x.j.anos && x.j.anos.length && x.j.ultimoReal) { window.HOB_DATA = x.j; return iniciar(null); }
+      iniciar((x.j && x.j.codigo) || 'SEM_API');
+    })
+    .catch(function () { iniciar('SEM_API'); });
+};
+</script>
+<script>
+window.HOB_CARREGAR(function (aviso) {
   'use strict';
   var D = window.HOB_DATA, S = window.VBMSetup;
 
   S.registrar({
     'pt-BR': { 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
-      'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo',
-      's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação' },
+      'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
+      's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período' },
     en: { 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
-      'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data',
-      's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change' }
+      'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
+      's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period' }
   });
   var MESES = { 'pt-BR': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
     en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] };
@@ -359,7 +374,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   var U = D.ultimoReal, q = new URLSearchParams(location.search);
   var state = {
     bu: BUS.some(function (b) { return b.chave === q.get('bu'); }) ? q.get('bu') : 'vbm',
-    ano: D.anos.indexOf(+q.get('ano')) >= 0 ? +q.get('ano') : U.ano,
+    ano: D.anos.indexOf(+q.get('ano')) >= 0 ? +q.get('ano') : D.anos.indexOf(U.ano) >= 0 ? U.ano : D.anos[D.anos.length - 1],
     mes: +q.get('mes') >= 1 && +q.get('mes') <= 12 ? +q.get('mes') : U.mes,
     delta: q.get('delta') !== 'off',
     sel: { ebitda: q.get('ebitda') || 'vbm', allin: q.get('allin') || 'allin' }
@@ -545,7 +560,9 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     if (comAno) {
       var fb = s.b.reduce(function (x, v) { return x + v; }, 0), fa = s.a.reduce(function (x, v) { return x + v; }, 0);
       var MTa = (state.delta ? 46 : 20) * K, ya = escalaY([fb, fa], MTa, MB, H), y0 = ya(0), x0 = areaW + 8, PW = W - x0;
-      var BW = cfg.larguraDe ? ponteBW(dadosBu()[cfg.larguraDe], W) : Math.max(16, Math.min(72, PW * 0.3)), GAP = Math.max(8, Math.min(28, PW * 0.1)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
+      // largura das colunas: a das colunas do FCF YEAR logo abaixo (Consolidated) ou a dos gráficos B × A|F vizinhos
+      var PWv = W / (state.mes < 12 ? 5 : 4);
+      var BW = cfg.larguraDe ? ponteBW(dadosBu()[cfg.larguraDe], W) : Math.max(16, Math.min(72, PWv * 0.36)), GAP = Math.max(8, Math.min(28, PWv * 0.1)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
       var lb = aa() + 'B', la = aa() + (ehReal(12) ? 'A' : 'F');
       out += '<line class="b-base" x1="' + (x0 + 6) + '" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
       out += barra(xb, BW, ya, y0, fb, 'g-b', 0, lb + ' · Budget: ' + fmt(fb, 0) + ' ' + cfg.unid);
@@ -584,6 +601,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     var slots = bs.length + gap * 0.5, gw = W / slots, BW = ponteBW(itens, W);
     // tela estreita: rótulos na diagonal, em uma linha; senão, até 2-3 linhas na horizontal
     var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = Math.max(ponteMB(itens, W), MB_MIN), MT = 20 * K;
+    if (!bs.length) return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(cfg.titulo + ': ' + S.t('g.semDados')) + '"><line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + (H - MB) + '" y2="' + (H - MB) + '"/><text class="b-axis" x="' + W / 2 + '" y="' + (H / 2) + '" text-anchor="middle">' + esc(S.t('g.semDados')) + '</text></svg>';
     var vals = []; bs.forEach(function (p) { vals.push(p.de, p.ate); });
     var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
     var fs = Math.max(8, Math.min(11 * K, gw / 6));
@@ -723,8 +741,8 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     renderFiltros();
     document.getElementById('buName').textContent = b.nome;
     var badge = document.getElementById('dataBadge');
-    badge.hidden = D.fonte !== 'demo'; badge.textContent = S.t('l.demo');
-    document.getElementById('updTxt').textContent = S.dataHora(new Date(D.atualizado));
+    badge.hidden = D.fonte !== 'demo'; badge.textContent = S.t(aviso === 'ERRO_BANCO' ? 'l.demoErro' : 'l.demo');
+    document.getElementById('updTxt').textContent = D.atualizado ? S.dataHora(new Date(D.atualizado)) : '—';
     ro.disconnect();
     dash.style.gridTemplateAreas = b.areas;
     dash.innerHTML = b.cards.map(cardHtml).join('');
@@ -752,7 +770,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   ['idioma', 'numero', 'tema'].forEach(function (e) { S.on(e, function () { S.traduzir(); render(); }); });
   S.traduzir();
   render();
-})();
+});
 </script>
 </body>
 </html>
