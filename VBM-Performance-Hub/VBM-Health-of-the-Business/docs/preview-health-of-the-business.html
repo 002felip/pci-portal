@@ -400,7 +400,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 :root[data-theme="dark"] .demo { color: #FCD34D; }
 
 /* Grade em duas colunas; as áreas de cada visão vêm do JS (BUS[].areas) */
-.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px 64px; }
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px clamp(40px, 4.2vw, 96px); }
 .card { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 4px 12px; }
 .card-name { min-width: 0; }
@@ -448,6 +448,26 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .legend-stack { gap: 3px 14px; font-size: .7rem; }
 .swatch.sw2 { display: inline-flex; width: 20px; overflow: hidden; } .swatch.sw2 i { flex: 1; }
 
+/* Tela única (desktop e tela cheia): a página ocupa a altura da janela, sem sobra embaixo.
+   As três linhas dividem a altura igualmente, os gráficos crescem/encolhem com o espaço e o
+   respiro entre linhas e colunas acompanha a tela. Em janelas baixas ou estreitas, a página rola. */
+@media (min-width: 1001px) and (min-height: 720px) {
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; }
+  .page { flex: 1 1 auto; min-height: 0; padding-block: clamp(14px, 2vh, 26px) clamp(14px, 2.2vh, 30px); gap: clamp(10px, 1.6vh, 20px); }
+  .head, .sub-row { flex-shrink: 0; }
+  .dash { flex: 1 1 auto; min-height: 0; grid-template-rows: repeat(3, minmax(0, 1fr)); row-gap: clamp(20px, 3.4vh, 52px); }
+  .card { min-height: 0; gap: clamp(4px, .8vh, 12px); }
+  .chart { flex: 1 1 0; min-height: 110px; height: auto; }
+  .chart svg { position: absolute; inset: 0; }
+}
+/* Notebooks (até ~860 px de altura): cabeçalho mais enxuto para sobrar altura aos gráficos */
+@media (min-width: 1001px) and (min-height: 720px) and (max-height: 860px) {
+  .head { padding-bottom: 8px; }
+  .head h2 { font-size: 1.55rem; top: -3px; }
+  .panel-title { font-size: 1rem; }
+  .card-unit { font-size: .68rem; }
+}
 @media (max-width: 1600px) {
   .card-title { font-size: .88rem; }
   .card .seg button { padding: 1px 5px; font-size: .62rem; }
