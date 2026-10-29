@@ -13,7 +13,8 @@
      } } }
    }
    tipo da ponte: 'tot' (barra cheia, reinicia o acumulado), 'd' (variação flutuante),
-   'sub' (subtotal calculado), 'ref' (referência, ex.: Budget), 'zero' (reinicia o acumulado em 0). */
+   'sub' (subtotal calculado), 'ref' (referência, ex.: Budget), 'zero' (reinicia o acumulado em 0).
+   cinza: true = coluna no cinza do Budget (subtotais e referências da ponte do FCF). */
 (function () {
   var semente = 20261029;
   function rnd() { semente = (semente * 1664525 + 1013904223) % 4294967296; return semente / 4294967296; }
@@ -56,12 +57,12 @@
         { lbl: 'EBITDA', v: Math.round(4665 * k), tipo: 'tot' },
         { lbl: 'Streaming & Wheaton Bonus', v: -1210, tipo: 'd' }, { lbl: 'ARO, PTVI, Energy', v: -284, tipo: 'd' },
         { lbl: 'Working Capital', v: 127, tipo: 'd' },
-        { lbl: 'Gross Operational Cash Flow', tipo: 'sub' },
+        { lbl: 'Gross Operational Cash Flow', tipo: 'sub', cinza: true },
         { lbl: 'Investments', v: -1488, tipo: 'd' }, { lbl: 'Income Tax', v: -445, tipo: 'd' },
         { lbl: 'Financial Expenses / Income', v: -241, tipo: 'd' }, { lbl: 'Others', v: 331, tipo: 'd' },
-        { lbl: 'Free Cash Flow', tipo: 'sub' },
-        { lbl: 'Debt Adjustments (accrued interest, FX variation)', v: 1154, tipo: 'tot' },
-        { lbl: (k < 1 ? '2025B' : '2026B') + ' Net Debt', v: -27, tipo: 'ref' },
+        { lbl: 'Free Cash Flow', tipo: 'sub', cinza: true },
+        { lbl: 'Debt Adjustments (accrued interest, FX variation)', v: 1154, tipo: 'tot', cinza: true },
+        { lbl: (k < 1 ? '2025B' : '2026B') + ' Net Debt', v: -27, tipo: 'ref', cinza: true },
         { lbl: (k < 1 ? '2025F' : '2026F') + ' Net Debt', v: 1784, tipo: 'tot' }
       ]
     };

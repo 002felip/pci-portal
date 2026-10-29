@@ -438,7 +438,6 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .l-f { fill: none; stroke: var(--serie-a); stroke-width: 2; stroke-dasharray: 2 3; }
 .p-b { fill: var(--page); stroke: var(--serie-b); stroke-width: 1.6; } .p-a { fill: var(--serie-a); stroke: var(--page); stroke-width: 1.2; }
 .v-b { fill: var(--ink-soft); font-size: 10px; font-variant-numeric: tabular-nums; } .v-a { fill: var(--serie-a-txt); font-size: 10px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.l-sep { stroke: var(--line); }
 .is-static .b-bar, .is-static .cota { animation: none; }
 @media (prefers-reduced-motion: reduce) { .b-bar, .cota { animation: none !important; } }
 .tip { position: fixed; z-index: 200; pointer-events: none; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem var(--font-ui); box-shadow: 0 6px 18px rgba(15,23,42,.25); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -776,7 +775,8 @@ window.VBMSetup = (function () {
      } } }
    }
    tipo da ponte: 'tot' (barra cheia, reinicia o acumulado), 'd' (variação flutuante),
-   'sub' (subtotal calculado), 'ref' (referência, ex.: Budget), 'zero' (reinicia o acumulado em 0). */
+   'sub' (subtotal calculado), 'ref' (referência, ex.: Budget), 'zero' (reinicia o acumulado em 0).
+   cinza: true = coluna no cinza do Budget (subtotais e referências da ponte do FCF). */
 (function () {
   var semente = 20261029;
   function rnd() { semente = (semente * 1664525 + 1013904223) % 4294967296; return semente / 4294967296; }
@@ -819,12 +819,12 @@ window.VBMSetup = (function () {
         { lbl: 'EBITDA', v: Math.round(4665 * k), tipo: 'tot' },
         { lbl: 'Streaming & Wheaton Bonus', v: -1210, tipo: 'd' }, { lbl: 'ARO, PTVI, Energy', v: -284, tipo: 'd' },
         { lbl: 'Working Capital', v: 127, tipo: 'd' },
-        { lbl: 'Gross Operational Cash Flow', tipo: 'sub' },
+        { lbl: 'Gross Operational Cash Flow', tipo: 'sub', cinza: true },
         { lbl: 'Investments', v: -1488, tipo: 'd' }, { lbl: 'Income Tax', v: -445, tipo: 'd' },
         { lbl: 'Financial Expenses / Income', v: -241, tipo: 'd' }, { lbl: 'Others', v: 331, tipo: 'd' },
-        { lbl: 'Free Cash Flow', tipo: 'sub' },
-        { lbl: 'Debt Adjustments (accrued interest, FX variation)', v: 1154, tipo: 'tot' },
-        { lbl: (k < 1 ? '2025B' : '2026B') + ' Net Debt', v: -27, tipo: 'ref' },
+        { lbl: 'Free Cash Flow', tipo: 'sub', cinza: true },
+        { lbl: 'Debt Adjustments (accrued interest, FX variation)', v: 1154, tipo: 'tot', cinza: true },
+        { lbl: (k < 1 ? '2025B' : '2026B') + ' Net Debt', v: -27, tipo: 'ref', cinza: true },
         { lbl: (k < 1 ? '2025F' : '2026F') + ' Net Debt', v: 1784, tipo: 'tot' }
       ]
     };
@@ -888,7 +888,7 @@ window.VBMSetup = (function () {
       cards: [
         { area: 'ebitda', tipo: 'ebitdaVbm', titulo: 'EBITDA', unid: 'US$ bn', casas: 1, pol: 'up' },
         { area: 'wf', tipo: 'ponte', titulo: '{ano} EBITDA YEAR', unid: 'US$ M', nota: 'Comparison with previous forecast', ind: 'ebitdaYear' },
-        { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down' },
+        { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down', larguraDe: 'fcfYear' },
         { area: 'fcf', tipo: 'ponte', titulo: 'FCF YEAR', unid: 'US$ M', ind: 'fcfYear' }
       ] },
     // Copper: All-in com seletor (estratégia do COO). Nickel: All-in empilhado (By Products, Sustaining e Costs),
@@ -1078,9 +1078,8 @@ window.VBMSetup = (function () {
     if (comAno) {
       var fb = s.b.reduce(function (x, v) { return x + v; }, 0), fa = s.a.reduce(function (x, v) { return x + v; }, 0);
       var MTa = state.delta ? 46 : 20, ya = escalaY([fb, fa], MTa, MB, H), y0 = ya(0), x0 = areaW + 8, PW = W - x0;
-      var BW = Math.max(16, Math.min(72, PW * 0.3)), GAP = Math.max(8, Math.min(28, PW * 0.1)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
+      var BW = cfg.larguraDe ? ponteBW(dadosBu()[cfg.larguraDe], W) : Math.max(16, Math.min(72, PW * 0.3)), GAP = Math.max(8, Math.min(28, PW * 0.1)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
       var lb = aa() + 'B', la = aa() + (ehReal(12) ? 'A' : 'F');
-      out += '<line class="l-sep" x1="' + x0 + '" x2="' + x0 + '" y1="' + MT + '" y2="' + (H - MB) + '"/>';
       out += '<line class="b-base" x1="' + (x0 + 6) + '" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
       out += barra(xb, BW, ya, y0, fb, 'g-b', 0, lb + ' · Budget: ' + fmt(fb, 0) + ' ' + cfg.unid);
       out += barra(xa, BW, ya, y0, fa, 'g-a', 0, la + ': ' + fmt(fa, 0) + ' ' + cfg.unid);
@@ -1100,6 +1099,11 @@ window.VBMSetup = (function () {
     var gw = W / (n + gap * 0.5);
     return gw < 46 ? 64 : 14 + (gw < 70 ? 3 : 2) * 11;
   }
+  function ponteBW(itens, W) {
+    var n = 0, gap = 0;
+    itens.forEach(function (it) { if (it.tipo === 'zero') gap++; else n++; });
+    return Math.max(10, Math.min(90, W / (n + gap * 0.5) * 0.66));
+  }
   function ponteSvg(itens, W, H, cfg) {
     var ac = 0, bs = [], gap = 0;
     itens.forEach(function (it) {
@@ -1110,7 +1114,7 @@ window.VBMSetup = (function () {
       else { de = 0; ate = it.v; if (it.tipo === 'tot') ac = it.v; }
       bs.push({ it: it, de: de, ate: ate, v: it.tipo === 'sub' ? ac : it.v, gap: gap });
     });
-    var slots = bs.length + gap * 0.5, gw = W / slots, BW = Math.max(10, Math.min(90, gw * 0.66));
+    var slots = bs.length + gap * 0.5, gw = W / slots, BW = ponteBW(itens, W);
     // tela estreita: rótulos na diagonal, em uma linha; senão, até 2-3 linhas na horizontal
     var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = Math.max(ponteMB(itens, W), MB_MIN), MT = 20;
     var vals = []; bs.forEach(function (p) { vals.push(p.de, p.ate); });
@@ -1119,7 +1123,7 @@ window.VBMSetup = (function () {
     bs.forEach(function (p, i) {
       var cx = gw * (i + p.gap * 0.5 + 0.5), x = cx - BW / 2, ya = y(p.de), yb = y(p.ate), top = Math.min(ya, yb), h = Math.max(Math.abs(ya - yb), 1.5);
       var neg = p.it.tipo === 'd' && p.it.v < 0;
-      var fill = p.it.tipo === 'd' ? '' : ' fill="url(#' + (p.it.tipo === 'ref' ? 'g-b' : 'g-a') + ')"';
+      var fill = p.it.tipo === 'd' ? '' : ' fill="url(#' + (p.it.tipo === 'ref' || p.it.cinza ? 'g-b' : 'g-a') + ')"';
       var cls = 'b-bar' + (neg ? ' neg' : '') + (p.it.tipo === 'd' ? (p.it.v >= 0 ? ' w-pos' : ' w-neg') : '');
       out += '<rect class="' + cls + '" x="' + x + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3"' + fill + ' data-tip="' + esc(p.it.lbl + ': ' + fmt(p.v, 0) + ' ' + cfg.unid) + '"/>';
       // fio até o próximo degrau (mesmo nível do fim desta barra)
