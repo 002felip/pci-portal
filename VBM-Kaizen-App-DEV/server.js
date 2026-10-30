@@ -6739,6 +6739,9 @@ app.use("/api", (req, res, next) => {
 hierarquiaKaizen = registrarRotasDashboard(apiRouter, {
   sql,
   runQuery,
+  // Cópia da base do dashboard no Blob, para o app não subir com o
+  // dashboard vazio (ver dashboard-kaizen.js, "Cópia da base no Blob").
+  blob: { configurado: blobConfigurado, enviar: enviarArquivoParaBlob, baixar: baixarArquivoDoBlob },
   corpoErroSql,
   ExcelJS,
   fonteBiblioteca,

@@ -859,22 +859,57 @@
     if (ano) { sel.y.clear(); sel.y.add(ano); }
   }
 
+  /* Cópia local da última base (30/10/2026): quem já abriu o dashboard
+     vê os números NA HORA, com a base da visita anterior, enquanto a do
+     servidor chega — e a tela se refaz sozinha quando ela chegar, mantendo
+     os filtros. Cache API do navegador (não localStorage: a base tem ~1 MB).
+     Sem suporte (ou em erro), a tela só espera o servidor, como antes. */
+  var COPIA_LOCAL = '/api/dashboard/dados?copia-local=1';
+  function lerCopiaLocal() {
+    try {
+      if (!window.caches) return Promise.resolve(null);
+      return caches.open('kz-dashboard').then(function (c) { return c.match(COPIA_LOCAL); })
+        .then(function (r) { return r ? r.json() : null; })
+        .catch(function () { return null; });
+    } catch (e) { return Promise.resolve(null); }
+  }
+  function gravarCopiaLocal(p) {
+    try {
+      if (!window.caches) return;
+      var corpo = new Blob([JSON.stringify(p)], { type: 'application/json' });
+      caches.open('kz-dashboard').then(function (c) { return c.put(COPIA_LOCAL, new Response(corpo)); }).catch(function () {});
+    } catch (e) {}
+  }
+  function mostrarBase(p, forcar) {
+    BASE = p;
+    decodificar(p);
+    if (forcar) { DET = null; }
+    aplicarAnoPadrao();
+    desenharCabecalhoBase();
+    $('dashAbrirFiltros').disabled = false;
+    aplicar();
+    mostrarVisao(visao, false);
+  }
+
   function carregar(forcar) {
     var btn = $('dashAtualizar');
     $('dashErro').hidden = true;
     if (forcar && window.VBMLoading) VBMLoading.botao(btn, true);
     else btn.disabled = true;
+    var chegou = false;
+    if (!forcar && !BASE) {
+      lerCopiaLocal().then(function (p) {
+        if (p && !chegou && !BASE && Array.isArray(p.linhas)) mostrarBase(p, false);
+      });
+    }
     return fetch('/api/dashboard/dados' + (forcar ? '?atualizar=1' : ''), { headers: { Accept: 'application/json' } })
       .then(respostaJson)
       .then(function (p) {
-        BASE = p;
-        decodificar(p);
-        if (forcar) { DET = null; }
-        aplicarAnoPadrao();
-        desenharCabecalhoBase();
-        $('dashAbrirFiltros').disabled = false;
-        aplicar();
-        mostrarVisao(visao, false);
+        chegou = true;
+        // Mesma base que a cópia local já mostrou: nada a redesenhar.
+        if (!forcar && BASE && BASE.geradoEm === p.geradoEm) return;
+        mostrarBase(p, forcar);
+        gravarCopiaLocal(p);
         if (forcar && visao === 'base') carregarDetalhes(true).catch(function () {});
       })
       .catch(function (err) {

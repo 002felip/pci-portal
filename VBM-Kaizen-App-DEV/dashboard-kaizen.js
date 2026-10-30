@@ -52,6 +52,8 @@
  */
 "use strict";
 
+const zlib = require("zlib");
+
 /** Nível do MDM -> chave usada pela tela. A ordem é a da estrutura. */
 const NIVEIS = [
   { n: 3, chave: "coo" },
@@ -342,8 +344,62 @@ function registrarRotasDashboard(api, d) {
     };
     console.log(`[dashboard] base montada: ${linhas.length} Kaizens (atual ${contagem.A}, histórico ${contagem.H}; ` +
       `hierarquia: fotografia ${contagem.foto}, MDM ${contagem.mdm}, sem ${contagem.semHierarquia}) em ${Date.now() - inicio} ms.`);
-    return { em: Date.now(), payload, linhas, textos };
+    return comJson({ em: Date.now(), payload, linhas, textos });
   }
+
+  /* O JSON da base (~1 MB) é montado UMA vez por base, não a cada pessoa
+     que abre a tela — res.json() refazia o stringify em toda requisição. */
+  function comJson(f) {
+    f.json = JSON.stringify(f.payload);
+    return f;
+  }
+
+  /* ── Cópia da base no Blob (30/10/2026) ──────────────────────────────
+     O cache acima vive na MEMÓRIA do processo. A cada deploy ou reinício
+     do Databricks App ela começa vazia, e a primeira pessoa esperava a
+     consulta pesada inteira. Agora toda base montada é gravada no Blob
+     (gzip, ~200 KB) e, ao subir, o app lê essa cópia em ~1 s: a tela abre
+     com a base anterior na hora e a nova é montada por trás (a mesma
+     regra de base vencida de obterFatos).
+     KAIZEN_DASHBOARD_COPIA = caminho dentro da pasta do Blob do Kaizen;
+     "false" desliga. Sem Blob configurado, nada muda. */
+  const COPIA = (() => {
+    const v = process.env.KAIZEN_DASHBOARD_COPIA;
+    if (v != null && ["", "false", "0", "nao", "não"].includes(String(v).trim().toLowerCase())) return null;
+    return String(v || "00 - Sistema/dashboard-base.json.gz").trim();
+  })();
+  const blob = d.blob && d.blob.configurado && d.blob.configurado() && COPIA ? d.blob : null;
+
+  function gravarCopia(f) {
+    if (!blob) return;
+    const corpo = zlib.gzipSync(Buffer.from(JSON.stringify({ versao: 1, em: f.em, payload: f.payload })));
+    blob.enviar(COPIA, corpo, "application/gzip")
+      .then(() => console.log(`[dashboard] cópia da base gravada no Blob (${Math.round(corpo.length / 1024)} KB).`))
+      .catch((err) => console.warn("[dashboard] não foi possível gravar a cópia da base no Blob:", err.message));
+  }
+
+  async function lerCopia() {
+    if (!blob) return null;
+    const inicio = Date.now();
+    try {
+      const { buffer } = await blob.baixar(COPIA);
+      const c = JSON.parse(zlib.gunzipSync(buffer).toString("utf8"));
+      if (!c || c.versao !== 1 || !c.payload || !Array.isArray(c.payload.linhas)) return null;
+      // Mesmas colunas da base atual? Se o formato mudou num deploy, a
+      // cópia é ignorada e a base é montada do zero.
+      const colunas = ["origem", "id", "data", "status", "categoria", "lider", "aprovador", "site", ...NIVEIS.map((x) => x.chave)];
+      if (JSON.stringify(c.payload.colunas) !== JSON.stringify(colunas)) return null;
+      console.log(`[dashboard] base restaurada da cópia do Blob (${c.payload.linhas.length} Kaizens, ` +
+        `de ${new Date(c.em).toISOString()}) em ${Date.now() - inicio} ms.`);
+      return comJson({ em: Number(c.em) || 0, payload: c.payload, linhas: c.payload.linhas, textos: c.payload.textos });
+    } catch (err) {
+      console.warn("[dashboard] sem cópia da base no Blob (será montada do banco):", err.message);
+      return null;
+    }
+  }
+  // Começa a ler já no registro das rotas: quando a 1ª pessoa chegar, a
+  // cópia normalmente já está na memória.
+  let restaurando = lerCopia().then((c) => { if (c && !fatos) fatos = c; }).finally(() => { restaurando = null; });
 
   /* Cache com "serve o antigo e atualiza por trás" (30/10/2026).
      ANTES: passados os 5 minutos, a PRIMEIRA pessoa que abria a tela
@@ -356,12 +412,13 @@ function registrarRotasDashboard(api, d) {
   function recarregarFatos() {
     if (!fatosEmCurso) {
       fatosEmCurso = montarFatos()
-        .then((f) => { fatos = f; return f; })
+        .then((f) => { fatos = f; gravarCopia(f); return f; })
         .finally(() => { fatosEmCurso = null; });
     }
     return fatosEmCurso;
   }
   async function obterFatos(forcar) {
+    if (restaurando) await restaurando;
     const agora = Date.now();
     const valido = fatos && agora - fatos.em < TTL_MS;
     const podeForcar = !fatos || agora - fatos.em > RECARGA_MINIMA_MS;
@@ -456,7 +513,9 @@ function registrarRotasDashboard(api, d) {
         .then(() => console.log(`[dashboard] base aquecida (${motivo}).`))
         .catch((err) => console.error(`[dashboard] aquecimento (${motivo}) falhou:`, err.message));
     };
-    setTimeout(() => aquecer("subida do app"), 20 * 1000).unref();
+    // Com a cópia do Blob restaurada, a base já existe (vencida) e é
+    // montada de novo por trás; sem ela, é montada do zero.
+    setTimeout(() => Promise.resolve(restaurando).then(() => aquecer("subida do app")), 20 * 1000).unref();
     setInterval(() => aquecer("periódico"), AQUECER_MS).unref();
   }
 
@@ -544,7 +603,7 @@ function registrarRotasDashboard(api, d) {
   api.get("/dashboard/dados", async (req, res) => {
     try {
       const f = await obterFatos(req.query.atualizar === "1");
-      res.json(f.payload);
+      res.type("application/json").send(f.json);
     } catch (err) {
       console.error("[dashboard/dados] erro:", err.message);
       res.status(500).json(d.corpoErroSql("Erro ao montar o dashboard: ", err));
