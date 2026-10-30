@@ -72,6 +72,23 @@
   var sel = {};
   CAMPOS.forEach(function (c) { CAMPO[c.k] = c; sel[c.k] = new Set(); });
   var filtroIds = [];
+  // Intervalo de mês/ano (feedback VNL: "ver de 2025 até junho de 2026").
+  // AAAAMM, 0 = aberto. Convive com os demais filtros; ao ser usado, limpa
+  // Ano e Mês, que recortariam o mesmo eixo de outro jeito.
+  var periodo = { de: 0, ate: 0 };
+  function temPeriodo() { return !!(periodo.de || periodo.ate); }
+  function ymTxt(ym) { return ym ? Math.floor(ym / 100) + '-' + ('0' + ym % 100).slice(-2) : ''; }
+  function lerYm(v) {
+    var m = /^\s*(\d{4})-(\d{1,2})\s*$/.exec(v || '');
+    if (!m) return 0;
+    var mes = parseInt(m[2], 10);
+    return mes >= 1 && mes <= 12 ? parseInt(m[1], 10) * 100 + mes : 0;
+  }
+  function periodoTxt() {
+    var mc = tx('dash.meses', []);
+    function um(ym) { return ym ? (mc[ym % 100 - 1] || ym % 100) + '/' + Math.floor(ym / 100) : '…'; }
+    return um(periodo.de) + ' – ' + um(periodo.ate);
+  }
   var TEXTO = { site: 1, coo: 1, dir: 1, head: 1, gg: 1, ga: 1, cs: 1, ld: 1, ap: 1 };
   var NIVEIS = [['coo', 'dash.fCoo'], ['dir', 'dash.fDir'], ['head', 'dash.fHead'], ['gg', 'dash.fGg'], ['ga', 'dash.fGa'], ['cs', 'dash.fCs']];
 
@@ -153,11 +170,15 @@
     // ID exato (como o filtro "ID Kaizen" do Power BI): "100" não traz
     // o 1000 nem o 10045.
     if (filtroIds.length && exceto !== 'id' && filtroIds.indexOf(String(r.id)) < 0) return false;
+    if (temPeriodo() && exceto !== 'periodo') {
+      var ym = r.dt ? Math.floor(r.dt / 100) : 0;
+      if (!ym || (periodo.de && ym < periodo.de) || (periodo.ate && ym > periodo.ate)) return false;
+    }
     return true;
   }
   function recalcular() { VIS = TODAS.filter(function (r) { return passa(r, null); }); }
   function qtdFiltros() {
-    var n = filtroIds.length ? 1 : 0;
+    var n = (filtroIds.length ? 1 : 0) + (temPeriodo() ? 1 : 0);
     CAMPOS.forEach(function (c) { if (sel[c.k].size) n++; });
     return n;
   }
@@ -204,6 +225,7 @@
         '<button type="button" class="qf-gatilho' + (s.size ? ' ativo' : '') + '" id="qfg-' + c.k + '" aria-expanded="' + abre + '" aria-controls="qfp-' + c.k + '" aria-labelledby="qfr-' + c.k + ' qfg-' + c.k + '">' + rot + '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>';
       if (abre) html += listaHtml(c);
       html += '</div>';
+      if (c.k === 'm') html += periodoHtml();
     });
     html += '<div><label class="qf-rotulo" for="qfId">' + esc(tx('dash.fId', 'ID Kaizen')) + '</label>' +
       '<input class="qf-texto" id="qfId" type="text" inputmode="numeric" autocomplete="off" placeholder="' + esc(tx('dash.idEx', '')) + '" value="' + esc(filtroIds.join(', ')) + '">' +
@@ -211,6 +233,13 @@
     $('fpCorpo').innerHTML = html;
     var n = qtdFiltros();
     $('fpConta').textContent = n ? '· ' + n : '';
+  }
+
+  function periodoHtml() {
+    return '<div><span class="qf-rotulo">' + esc(tx('dash.fPeriodo', 'Período')) + '</span><div class="qf-periodo">' +
+      '<label>' + esc(tx('dash.de', 'De')) + '<input class="qf-texto" type="month" id="qfDe" placeholder="AAAA-MM" value="' + ymTxt(periodo.de) + '"></label>' +
+      '<label>' + esc(tx('dash.ate', 'Até')) + '<input class="qf-texto" type="month" id="qfAte" placeholder="AAAA-MM" value="' + ymTxt(periodo.ate) + '"></label>' +
+      '</div><div class="qf-dica">' + esc(tx('dash.periodoDica', '')) + '</div></div>';
   }
 
   function listaHtml(c) {
@@ -266,6 +295,16 @@
       desenharPainel();
     }
   });
+  $('fpCorpo').addEventListener('change', function (e) {
+    if (e.target.id !== 'qfDe' && e.target.id !== 'qfAte') return;
+    var v = e.target.value.trim(), ym = lerYm(v);
+    if (v && !ym) return; // texto incompleto (navegador sem seletor de mês): espera o AAAA-MM
+    periodo[e.target.id === 'qfDe' ? 'de' : 'ate'] = ym;
+    if (periodo.de && periodo.ate && periodo.de > periodo.ate) { var x = periodo.de; periodo.de = periodo.ate; periodo.ate = x; }
+    if (temPeriodo()) { sel.y.clear(); sel.m.clear(); }
+    aplicar();
+    desenharPainel();
+  });
   $('fpCorpo').addEventListener('input', function (e) {
     if (e.target.id === 'qfId') {
       filtroIds = e.target.value.split(/[,;\s]+/).map(function (s) { return s.replace(/\D/g, '').replace(/^0+(?=\d)/, ''); }).filter(Boolean);
@@ -310,10 +349,47 @@
   function limparTudo() {
     CAMPOS.forEach(function (c) { sel[c.k].clear(); });
     filtroIds = [];
+    periodo = { de: 0, ate: 0 };
     aplicar();
     if ($('filtrosPainel').classList.contains('open')) desenharPainel();
   }
   $('fpLimpar').addEventListener('click', limparTudo);
+
+  /* Largura do painel de filtros: arrastar a borda direita (ou ← → com o
+     foco na alça). Fica guardada no navegador para a próxima vez. */
+  (function () {
+    var painel = $('filtrosPainel'), alca = $('fpAjuste'), CHAVE = 'kz-dash-filtros-largura';
+    if (!painel || !alca) return;
+    function ajustar(px, guardar) {
+      var max = Math.min(900, window.innerWidth * 0.92);
+      px = Math.round(Math.max(300, Math.min(max, px)));
+      painel.style.width = px + 'px';
+      if (guardar) { try { localStorage.setItem(CHAVE, String(px)); } catch (e) {} }
+      return px;
+    }
+    try { var salvo = parseInt(localStorage.getItem(CHAVE), 10); if (salvo) ajustar(salvo, false); } catch (e) {}
+    alca.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      alca.setPointerCapture(e.pointerId);
+      painel.classList.add('arrastando'); alca.classList.add('arrastando');
+    });
+    alca.addEventListener('pointermove', function (e) {
+      if (!alca.hasPointerCapture || !alca.hasPointerCapture(e.pointerId)) return;
+      ajustar(e.clientX - painel.getBoundingClientRect().left, false);
+    });
+    function soltar(e) {
+      if (alca.hasPointerCapture && alca.hasPointerCapture(e.pointerId)) alca.releasePointerCapture(e.pointerId);
+      painel.classList.remove('arrastando'); alca.classList.remove('arrastando');
+      ajustar(painel.getBoundingClientRect().width, true);
+    }
+    alca.addEventListener('pointerup', soltar);
+    alca.addEventListener('pointercancel', soltar);
+    alca.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      ajustar(painel.getBoundingClientRect().width + (e.key === 'ArrowRight' ? 32 : -32), true);
+    });
+  })();
 
   /* ════════════ etiquetas de filtro ativo ════════════ */
   function desenharChips() {
@@ -324,6 +400,7 @@
       h += '<button type="button" class="dash-chip" data-k="' + c.k + '" aria-label="' + esc(tx('dash.remover', '') + ': ' + tx(c.l, '')) + '"><b>' + esc(tx(c.l, c.k)) + ':</b><span class="v">' +
         esc(rotulo(c.k, primeiro)) + (s.size > 1 ? ' +' + (s.size - 1) : '') + '</span><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>';
     });
+    if (temPeriodo()) h += '<button type="button" class="dash-chip" data-k="periodo"><b>' + esc(tx('dash.fPeriodo', 'Período')) + ':</b><span class="v">' + esc(periodoTxt()) + '</span><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>';
     if (filtroIds.length) h += '<button type="button" class="dash-chip" data-k="id"><b>' + esc(tx('dash.fId', 'ID')) + ':</b><span class="v">' + esc(filtroIds.join(', ')) + '</span><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>';
     if (h) h += '<button type="button" class="dash-chip dash-chip-limpar" data-k="*">' + esc(tx('dash.limparTudo', 'Limpar tudo')) + '</button>';
     $('dashChips').innerHTML = h;
@@ -336,7 +413,7 @@
     var b = e.target.closest('.dash-chip'); if (!b) return;
     var k = b.dataset.k;
     if (k === '*') { limparTudo(); return; }
-    if (k === 'id') filtroIds = []; else sel[k].clear();
+    if (k === 'id') filtroIds = []; else if (k === 'periodo') periodo = { de: 0, ate: 0 }; else sel[k].clear();
     aplicar();
   });
 
@@ -470,7 +547,7 @@
       anos.set(r.y, (anos.get(r.y) || 0) + 1);
     });
     var listaAnos = Array.from(anos.keys()).sort(function (a, b) { return a - b; });
-    var escopo = sel.y.size ? Array.from(sel.y).sort().join(', ') : tx('dash.todosAnos', 'todos os anos');
+    var escopo = temPeriodo() ? periodoTxt() : sel.y.size ? Array.from(sel.y).sort().join(', ') : tx('dash.todosAnos', 'todos os anos');
     $('dashMesSub').textContent = modelo(tx('dash.mesSub', ''), { anos: escopo });
     colunas($('grafMes'), { valores: mes, rotulos: tx('dash.meses', []), deltas: true, altura: 220, minw: 560, gap: 12, topo: 56 });
     colunas($('grafAno'), { valores: listaAnos.map(function (a) { return anos.get(a); }), rotulos: listaAnos.map(String), deltas: true, altura: 220, minw: Math.max(240, listaAnos.length * 52), gap: 10, topo: 56,
@@ -504,13 +581,31 @@
       '<button type="button" data-pg="1" aria-label="' + esc(tx('dash.proxima', '')) + '"' + (b >= total ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button>';
   }
 
-  /* Detalhamento por líder */
+  /* Detalhamento: por Kaizen Líder (padrão) ou outra coluna escolhida
+     (feedback: "permitir a seleção de diferentes colunas"). o.ld guarda o
+     valor da coluna escolhida, seja ela qual for. */
+  var GRUPOS = [['ld', 'dash.fLider'], ['ap', 'dash.fAprovador'], ['site', 'dash.fSite'], ['cat', 'dash.fCategoria'],
+    ['coo', 'dash.fCoo'], ['dir', 'dash.fDir'], ['head', 'dash.fHead'], ['gg', 'dash.fGg'], ['ga', 'dash.fGa'], ['cs', 'dash.fCs']];
+  var grupoDet = 'ld';
+  function rotuloGrupo() {
+    for (var i = 0; i < GRUPOS.length; i++) if (GRUPOS[i][0] === grupoDet) return tx(GRUPOS[i][1], grupoDet);
+    return grupoDet;
+  }
+  function preencherGrupos() {
+    $('grupoDet').innerHTML = GRUPOS.map(function (g) {
+      return '<option value="' + g[0] + '"' + (g[0] === grupoDet ? ' selected' : '') + '>' + esc(tx(g[1], g[0])) + '</option>';
+    }).join('');
+  }
+  $('grupoDet').addEventListener('change', function () {
+    grupoDet = this.value; pagDet = 0; desenharDetalhe();
+  });
   var ordemDet = { k: 'total', dir: -1 }, pagDet = 0;
   function linhasDet() {
     var m = new Map();
     VIS.forEach(function (r) {
-      var o = m.get(r.ld);
-      if (!o) { o = { ld: r.ld, nome: rotulo('ld', r.ld), total: 0, st: new Map(), aprov: 0 }; m.set(r.ld, o); }
+      var g = r[grupoDet];
+      var o = m.get(g);
+      if (!o) { o = { ld: g, nome: rotulo(grupoDet, g), total: 0, st: new Map(), aprov: 0 }; m.set(g, o); }
       o.total++;
       o.st.set(r.st, (o.st.get(r.st) || 0) + 1);
       var s = STATUS.get(r.st); if (s && s.momento === 'aprovado') o.aprov++;
@@ -534,7 +629,8 @@
   }
   function desenharDetalhe() {
     var sts = statusPresentes();
-    var cols = [{ k: 'nome', t: tx('dash.thLider', 'Kaizen Líder') }, { k: 'total', t: tx('dash.thTotal', 'Total'), num: true }]
+    $('detTitulo').textContent = modelo(tx('dash.detTitulo', 'Detalhamento por {grupo}'), { grupo: rotuloGrupo() });
+    var cols = [{ k: 'nome', t: rotuloGrupo() }, { k: 'total', t: tx('dash.thTotal', 'Total'), num: true }]
       .concat(sts.map(function (id) { return { k: 's' + id, t: nomeStatus(id), num: true }; }))
       .concat([{ k: 'taxa', t: tx('dash.thTaxa', '% aprovação'), num: true }, { k: 'mix', t: tx('dash.thMix', 'Distribuição'), semOrdem: true }]);
     var lista = linhasDet();
@@ -658,7 +754,7 @@
     }
     return out.join(',');
   }
-  function exportar(aba, linhas, botao) {
+  function exportar(aba, linhas, botao, extra) {
     if (botao.disabled) return;
     var A = [], H = [];
     linhas.forEach(function (r) { (r.o ? H : A).push(r.id); });
@@ -666,7 +762,7 @@
     fetch('/api/dashboard/exportar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: '*/*' },
-      body: JSON.stringify({ idioma: emIngles() ? 'en' : 'pt-BR', aba: aba, chaves: { A: faixas(A), H: faixas(H) } })
+      body: JSON.stringify(Object.assign({ idioma: emIngles() ? 'en' : 'pt-BR', aba: aba, chaves: { A: faixas(A), H: faixas(H) } }, extra || {}))
     })
       .then(function (r) {
         if (!r.ok) return r.json().catch(function () { return null; }).then(function (c) { throw new Error((c && c.error) || 'HTTP ' + r.status); });
@@ -687,7 +783,7 @@
   $('exportarBase').addEventListener('click', function () { exportar('base', linhasBase(), this); });
   $('exportarDet').addEventListener('click', function () {
     var lideres = new Set(linhasDet().map(function (o) { return o.ld; }));
-    exportar('lideres', VIS.filter(function (r) { return lideres.has(r.ld); }), this);
+    exportar('lideres', VIS.filter(function (r) { return lideres.has(r[grupoDet]); }), this, { grupo: grupoDet, rotuloGrupo: rotuloGrupo() });
   });
 
   /* ════════════ páginas, carga e idioma ════════════ */
@@ -799,6 +895,7 @@
   $('dashTentar').addEventListener('click', function () { carregar(false); });
 
   window.addEventListener('vbm:idioma', function () {
+    preencherGrupos();
     if (!BASE) return;
     desenharCabecalhoBase();
     desenharChips();
@@ -807,6 +904,7 @@
     if ($('filtrosPainel').classList.contains('open')) desenharPainel();
   });
 
+  preencherGrupos();
   visao = (location.hash || '').replace('#', '');
   if (VISOES.indexOf(visao) < 0) visao = 'total';
   VISOES.forEach(function (k) { $('aba-' + k).setAttribute('aria-selected', String(k === visao)); });

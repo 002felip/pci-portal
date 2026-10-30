@@ -479,8 +479,8 @@ body[data-bg="dark"]{--vbm-dark:#f4f7fb;--vbm-mid:rgba(244,247,251,.55);--vbm-te
               <div class="kd-section-title" data-i18n="kd.problemObjective">Problema &amp; Objetivo</div>
             </div>
             <div class="kd-section-body" style="font-size:.83rem;color:var(--vbm-text);line-height:1.65;">
-              <p style="margin-bottom:.5rem;"><strong>Problema:</strong> <span id="kdProblem">Setup da linha 3 excede 45 min, gerando 8% de perda diária de produtividade. Falta padronização no processo.</span></p>
-              <p><strong>Objetivo:</strong> <span id="kdObjective">Reduzir para 25 min com shadowboard e procedimento visual na linha.</span></p>
+              <p style="margin-bottom:.5rem;"><strong data-i18n="kd.problemLabel">Problema:</strong> <span id="kdProblem">Setup da linha 3 excede 45 min, gerando 8% de perda diária de produtividade. Falta padronização no processo.</span></p>
+              <p><strong data-i18n="kd.objectiveLabel">Objetivo:</strong> <span id="kdObjective">Reduzir para 25 min com shadowboard e procedimento visual na linha.</span></p>
             </div>
           </div>
 
@@ -786,7 +786,8 @@ function atualizarContador() {
     setText('kdHeadId', [k.ROTULO, k.NM_CATEGORIA, k.NM_CIDADE].filter(Boolean).join(' · '));
     setText('kdHeadTitle', k.NM_KAIZEN);
     setText('kdHeadAuthor', k.NM_LIDER);
-    setText('kdHeadDate', k.DT_CRIACAO ? new Date(k.DT_CRIACAO).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '—');
+    var localTela = idiomaDaTela() === 'en' ? 'en-US' : 'pt-BR';
+    setText('kdHeadDate', k.DT_CRIACAO ? new Date(k.DT_CRIACAO).toLocaleDateString(localTela, { month: 'short', year: 'numeric' }) : '—');
     setText('kdProblem', k.DS_PROBLEMA);
     setText('kdObjective', k.DS_OBJETIVO);
     mostrarFoto('kdImgAntes', 'kdVazioAntes', urlFoto(k.URL_IMG_ANTES, k.DT_CRIACAO));
@@ -810,15 +811,15 @@ function atualizarContador() {
     var boxes = [];
     if (k.VL_RESULTADO_FINANCEIRO != null) {
       boxes.push('<div style="background:var(--vbm-off-white);border-radius:.5rem;padding:.75rem;border-left:3px solid #16a34a;">' +
-        '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:1.2rem;color:var(--vbm-dark);">' + (k.SG_MOEDA || '') + ' ' + Number(k.VL_RESULTADO_FINANCEIRO).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '</div>' +
-        '<div style="font-size:.68rem;color:var(--vbm-mid);">Resultado financeiro</div></div>');
+        '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:1.2rem;color:var(--vbm-dark);">' + (k.SG_MOEDA || '') + ' ' + Number(k.VL_RESULTADO_FINANCEIRO).toLocaleString(localTela, { minimumFractionDigits: 2 }) + '</div>' +
+        '<div style="font-size:.68rem;color:var(--vbm-mid);">' + escaparHtml(txt('kd.financialResult', 'Resultado financeiro')) + '</div></div>');
     }
     (k.RESULTADOS || []).forEach(function (r) {
       boxes.push('<div style="background:var(--vbm-off-white);border-radius:.5rem;padding:.75rem;border-left:3px solid var(--vbm-blue);">' +
         '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:.82rem;color:var(--vbm-dark);">' + escaparHtml(r.NM_RESULTADO) + '</div>' +
         '<div style="font-size:.68rem;color:var(--vbm-mid);">' + escaparHtml(r.DS_RESULTADO) + '</div></div>');
     });
-    document.getElementById('kdResults').innerHTML = boxes.join('') || '<p style="font-size:.78rem;color:var(--vbm-mid);">Nenhum resultado registrado.</p>';
+    document.getElementById('kdResults').innerHTML = boxes.join('') || '<p style="font-size:.78rem;color:var(--vbm-mid);">' + escaparHtml(txt('kd.noResults', 'Nenhum resultado registrado.')) + '</p>';
   }
 
   function selecionar(id, item) {
@@ -836,7 +837,9 @@ function atualizarContador() {
     // dados do Kaizen ANTERIOR na tela até a resposta nova chegar —
     // renderização parcial/enganosa por um instante.
     if (window.VBMLoading) VBMLoading.overlay(panel, true);
-    fetch('/api/kaizens/' + id, { headers: { Accept: 'application/json' } })
+    // ?idioma: status, categoria e resultados vêm do banco no idioma da
+    // tela (antes vinham sempre em português — feedback VNL).
+    fetch('/api/kaizens/' + id + '?idioma=' + encodeURIComponent(idiomaDaTela()), { headers: { Accept: 'application/json' } })
       .then(function (r) {
         if (r.ok) return r.json();
         return r.json().catch(function () { return null; }).then(function (corpo) {
@@ -869,7 +872,8 @@ function atualizarContador() {
     // visível por baixo, só esmaecida, até a nova chegar (ver
     // window.VBMLoading em vbm-app.js).
     if (window.VBMLoading) VBMLoading.overlay(fila, true);
-    fetch('/api/aprovacoes', { headers: { Accept: 'application/json' } })
+    idiomaDaFila = idiomaDaTela();
+    fetch('/api/aprovacoes?idioma=' + encodeURIComponent(idiomaDaFila), { headers: { Accept: 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (itens) {
         // #apQtdPendentes deixou de existir: a contagem de pendentes
@@ -877,21 +881,23 @@ function atualizarContador() {
         var badge = document.querySelector('.badge-glass');
         if (badge) badge.textContent = itens.length;
         if (!itens.length) {
-          fila.innerHTML = '<p style="padding:1rem;color:var(--vbm-mid);font-size:.8rem;">Nenhuma aprovação pendente para você.</p>';
+          fila.innerHTML = '<p style="padding:1rem;color:var(--vbm-mid);font-size:.8rem;">' + escaparHtml(txt('ap.noPending', 'Nenhuma aprovação pendente para você.')) + '</p>';
           panel.style.display = 'none';
           return;
         }
-        fila.innerHTML = itens.map(function (k, i) {
-          return '<div class="approval-item' + (i === 0 ? ' selected' : '') + '" data-kaizen="' + k.ID_KAIZEN + '">' +
+        var manter = itens.filter(function (k) { return String(k.ID_KAIZEN) === String(kaizenSelecionadoId); })[0];
+        var alvoId = manter ? manter.ID_KAIZEN : itens[0].ID_KAIZEN;
+        fila.innerHTML = itens.map(function (k) {
+          return '<div class="approval-item' + (k.ID_KAIZEN === alvoId ? ' selected' : '') + '" data-kaizen="' + k.ID_KAIZEN + '">' +
             '<div class="approval-icon"><i class="fa-solid fa-clipboard-list"></i></div>' +
             '<div class="approval-info"><div class="approval-title">' + escaparHtml(k.NM_KAIZEN) + '</div>' +
             '<div class="approval-meta">' + escaparHtml(k.NM_LIDER || '—') + ' · ' + escaparHtml(k.ROTULO) +
               (k.NM_STATUS ? ' · ' + escaparHtml(k.NM_STATUS) : '') + '</div></div>' +
             '<i class="fa-solid fa-chevron-right approval-chevron"></i></div>';
         }).join('');
-        selecionar(itens[0].ID_KAIZEN, fila.querySelector('.approval-item'));
+        selecionar(alvoId, fila.querySelector('.approval-item.selected'));
       })
-      .catch(function () { fila.innerHTML = '<p style="padding:1rem;color:#dc2626;font-size:.8rem;">Erro ao carregar a fila.</p>'; });
+      .catch(function () { fila.innerHTML = '<p style="padding:1rem;color:#dc2626;font-size:.8rem;">' + escaparHtml(txt('ap.queueError', 'Erro ao carregar a fila.')) + '</p>'; });
   }
 
   // ─── Resumo do ano (hero) ───
@@ -923,6 +929,7 @@ function atualizarContador() {
   // Idioma com que o resumo na tela foi montado — ver a guarda do
   // vbm:idioma no fim deste bloco.
   var idiomaDoResumo = null;
+  var idiomaDaFila = null;
 
   function carregarResumo() {
     idiomaDoResumo = idiomaDaTela();
@@ -1063,8 +1070,9 @@ function atualizarContador() {
   // 2x GET /api/kaizens/resumo). Mesma proteção que a Biblioteca usa: só
   // reconsulta em troca REAL de idioma.
   window.addEventListener('vbm:idioma', function () {
-    if (idiomaDaTela() === idiomaDoResumo) return;
-    carregarResumo();
+    if (idiomaDaTela() !== idiomaDoResumo) carregarResumo();
+    // Fila e Kaizen aberto também: status e categoria vêm do banco no idioma.
+    if (idiomaDaFila && idiomaDaTela() !== idiomaDaFila) carregarFila();
   });
 })();
 
@@ -1197,6 +1205,8 @@ function atualizarContador() {
       'ap.objetivoMeta': 'Objetivo / Meta',
       'ap.saveAndApprove': 'Salvar e Aprovar',
       'kd.problemObjective': 'Problema & Objetivo',
+      'kd.problemLabel': 'Problema:', 'kd.objectiveLabel': 'Objetivo:', 'kd.financialResult': 'Resultado financeiro',
+      'kd.noResults': 'Nenhum resultado registrado.', 'ap.noPending': 'Nenhuma aprovação pendente para você.', 'ap.queueError': 'Erro ao carregar a fila.',
       'kd.beforeAfter': 'Antes & Depois',
       'kd.before': 'Antes',
       'kd.noImage': 'Sem imagem registrada',
@@ -1267,6 +1277,8 @@ function atualizarContador() {
       'ap.objetivoMeta': 'Objective / Goal',
       'ap.saveAndApprove': 'Save and Approve',
       'kd.problemObjective': 'Problem & Objective',
+      'kd.problemLabel': 'Problem:', 'kd.objectiveLabel': 'Objective:', 'kd.financialResult': 'Financial result',
+      'kd.noResults': 'No results recorded.', 'ap.noPending': 'No approvals pending for you.', 'ap.queueError': 'Could not load the queue.',
       'kd.beforeAfter': 'Before & After',
       'kd.before': 'Before',
       'kd.noImage': 'No image on file',

@@ -611,8 +611,8 @@ function registrarRotasDashboard(api, d) {
           C("NM_APROVADOR", "Aprovador", "Approver", 26),
           C("MEMBROS", "Membros VBM", "VBM members", 34),
           C("EXTERNOS", "Membros externos", "External members", 26),
-          C("COO", "COO", "COO", 34),
-          C("DIR", "Diretoria", "Directorate", 36),
+          C("COO", "CEO-1", "CEO-1", 34),
+          C("DIR", "Diretoria", "Director", 36),
           C("HEAD", "Head", "Head", 36),
           C("GG", "Gerência Geral", "General Management", 36),
           C("GA", "Gerência Área", "Area Management", 36),
@@ -642,13 +642,20 @@ function registrarRotasDashboard(api, d) {
         }
         planilha.getColumn("DT_CRIACAO").numFmt = "dd/mm/yyyy";
       } else {
-        // Detalhamento por líder: uma coluna por status que aparece na
-        // seleção, na ordem do cadastro.
-        planilha = workbook.addWorksheet(en ? "Leaders" : "Lideres");
+        // Detalhamento: uma linha por valor da coluna escolhida na tela
+        // (Kaizen Líder por padrão; aprovador, site, categoria ou um nível
+        // da hierarquia) e uma coluna por status que aparece na seleção,
+        // na ordem do cadastro.
+        const POS_GRUPO = { ld: 5, ap: 6, site: 7, coo: 8, dir: 9, head: 10, gg: 11, ga: 12, cs: 13 };
+        const grupo = corpo.grupo === "cat" || Object.prototype.hasOwnProperty.call(POS_GRUPO, corpo.grupo) ? corpo.grupo : "ld";
+        const valorGrupo = (l) => (grupo === "cat" ? (l[4] >= 0 ? rotulo(cats.get(l[4]), l[4]) : "") : txt(l[POS_GRUPO[grupo]]));
+        const tituloGrupo = String(corpo.rotuloGrupo || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 60)
+          || (en ? "Kaizen Leader" : "Kaizen Líder");
+        planilha = workbook.addWorksheet(en ? "Detail" : "Detalhamento");
         const porLider = new Map();
         const statusUsados = new Set();
         for (const l of linhas) {
-          const nome = txt(l[5]) || (en ? "(Blank)" : "(Em branco)");
+          const nome = valorGrupo(l) || (en ? "(Blank)" : "(Em branco)");
           let o = porLider.get(nome);
           if (!o) { o = { nome, total: 0, st: new Map() }; porLider.set(nome, o); }
           o.total++;
@@ -658,7 +665,7 @@ function registrarRotasDashboard(api, d) {
         const ordemStatus = [...statusUsados].sort((a, b) => a - b);
         const idAprovado = f.payload.status.find((s) => s.momento === "aprovado");
         planilha.columns = [
-          { header: en ? "Kaizen Leader" : "Kaizen Líder", key: "NOME", width: 32 },
+          { header: tituloGrupo, key: "NOME", width: 32 },
           { header: "Total", key: "TOTAL", width: 9 },
           ...ordemStatus.map((id) => ({ header: rotulo(status.get(id), id) || (en ? "No status" : "Sem status"), key: "S" + id, width: 16 })),
           { header: en ? "Approval %" : "% aprovação", key: "TAXA", width: 13 },

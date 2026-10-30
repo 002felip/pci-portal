@@ -1464,6 +1464,10 @@ apiRouter.get("/aprovadores/mdm", async (req, res) => {
     const tipo = tipoPedido === 1 || tipoPedido === 2 ? tipoPedido : null;
 
     const params = [["termo", sql.NVarChar(255), termoLike]];
+    // Por prefixo, também casa o começo de QUALQUER palavra do nome —
+    // "Shute" acha "Brandon Shute" (feedback VNL: muita gente procura
+    // pelo sobrenome). Quem começa pelo nome digitado vem primeiro.
+    if (porInicio) params.push(["termoPalavra", sql.NVarChar(255), "% " + termoLike]);
     let filtroTipo = "";
     if (tipo !== null) {
       // Campos do Novo Kaizen: só quem está ATIVO no MDM (SG_ATIVO = 'A').
@@ -1485,7 +1489,8 @@ apiRouter.get("/aprovadores/mdm", async (req, res) => {
     // Por prefixo a busca é de NOME: casar e-mail e matrícula pelo começo
     // traria gente que não "começa com" o que foi digitado no nome.
     const alternativas = porInicio
-      ? [`NM_USUARIO LIKE @termo`, `${nomeDoEmail} LIKE @termo`]
+      ? [`NM_USUARIO LIKE @termo`, `${nomeDoEmail} LIKE @termo`,
+         `NM_USUARIO LIKE @termoPalavra`, `${nomeDoEmail} LIKE @termoPalavra`]
       : [`NM_USUARIO LIKE @termo`, `CD_EMAIL LIKE @termo`,
          `CD_MATRICULA LIKE @termo`, `${nomeDoEmail} LIKE @termo`];
 
@@ -1497,7 +1502,7 @@ apiRouter.get("/aprovadores/mdm", async (req, res) => {
        -- ligaria só à última alternativa e vazaria gente de outro tipo.
        WHERE (${alternativas.join(" OR ")})
        ${filtroTipo}
-       ORDER BY NM_USUARIO`,
+       ORDER BY ${porInicio ? "CASE WHEN NM_USUARIO LIKE @termo THEN 0 ELSE 1 END, " : ""}NM_USUARIO`,
       params
     );
     res.json(result.recordset);

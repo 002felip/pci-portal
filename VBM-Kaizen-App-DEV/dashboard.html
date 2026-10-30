@@ -7,7 +7,7 @@
   PAPEL DA PÁGINA
     Indicadores dos Kaizens ATUAIS + HISTÓRICOS (a mesma fonte da
     Biblioteca), com os filtros que o relatório do Power BI tinha —
-    inclusive os seis níveis da hierarquia (COO … Coord/Sup).
+    inclusive os seis níveis da hierarquia (CEO-1 … Coord/Sup).
 
   DE ONDE VÊM OS DADOS
     GET  /api/dashboard/dados     fatos compactados de todos os Kaizens
@@ -453,7 +453,17 @@ body[data-bg="dark"] .filter-search input::placeholder { color: rgba(255,255,255
 .qf-opcoes { max-height: 230px; overflow-y: auto; display: flex; flex-direction: column; }
 .qf-opcao { display: flex; align-items: center; gap: .5rem; width: 100%; padding: .38rem .45rem; border: 0; background: transparent; border-radius: .35rem; font: 400 .72rem 'Poppins', sans-serif; color: var(--vbm-dark); cursor: pointer; text-align: left; min-height: 32px; }
 .qf-opcao:hover, .qf-opcao[aria-selected="true"] { background: var(--vbm-blue-pale); }
-.qf-opcao .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qf-opcao .nm { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
+/* Alça de largura do painel de filtros (borda direita). */
+.fp-ajuste { position: absolute; top: 0; right: -5px; width: 10px; height: 100%; cursor: ew-resize; z-index: 2; touch-action: none; }
+.fp-ajuste::after { content: ''; position: absolute; top: 50%; left: 3px; width: 4px; height: 44px; margin-top: -22px; border-radius: 4px; background: rgba(60,181,229,.35); opacity: 0; transition: opacity .2s; }
+.filtros-painel:hover .fp-ajuste::after, .fp-ajuste:focus-visible::after, .fp-ajuste.arrastando::after { opacity: 1; }
+.fp-ajuste:focus-visible { outline: none; }
+.filtros-painel.arrastando { transition: none; user-select: none; }
+.qf-periodo { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.qf-periodo label { display: flex; flex-direction: column; gap: .2rem; font-size: .62rem; color: var(--vbm-mid); }
+.dash-grupo-sel { display: inline-flex; align-items: center; gap: .45rem; font-size: .72rem; color: var(--d-ink-soft); }
+.dash-grupo-sel select { min-height: 32px; padding: .3rem 1.6rem .3rem .6rem; border-radius: .5rem; border: 1px solid var(--d-line); background: var(--d-surface, #fff); color: var(--d-ink); font: 500 .74rem 'Poppins', sans-serif; }
 .qf-opcao .ct { font-size: .64rem; color: var(--vbm-mid); font-variant-numeric: tabular-nums; }
 .qf-opcao.zero .nm { opacity: .5; text-decoration: line-through; }
 .qf-check { width: 16px; height: 16px; flex: none; border-radius: .25rem; border: 1.5px solid #d0d0d0; background: #fff; display: grid; place-items: center; }
@@ -470,6 +480,9 @@ body[data-bg="dark"] .filter-search input::placeholder { color: rgba(255,255,255
 [data-bg="dark"] .fp-head h2, [data-bg="dark"] .qf-rotulo { color: #fff; }
 [data-bg="dark"] .fp-grupo { color: var(--vbm-blue-light); }
 [data-bg="dark"] .qf-gatilho, [data-bg="dark"] .qf-texto { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: #fff; }
+[data-bg="dark"] .qf-texto { color-scheme: dark; }
+[data-bg="dark"] .dash-grupo-sel select { color-scheme: dark; }
+[data-bg="dark"] .dash-grupo-sel select option { background: #0d2640; color: #fff; }
 [data-bg="dark"] .qf-texto::placeholder { color: rgba(255,255,255,.35); }
 [data-bg="dark"] .qf-lista-painel { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
 [data-bg="dark"] .qf-busca { border-color: rgba(255,255,255,.14); }
@@ -595,6 +608,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     </button>
   </div>
   <div class="fp-corpo" id="fpCorpo"></div>
+  <!-- Largura ajustável (feedback VNL: nomes longos de cargo só apareciam
+       passando o mouse). Arrastar ou setas ← → no teclado. -->
+  <div class="fp-ajuste" id="fpAjuste" role="separator" aria-orientation="vertical" tabindex="0"
+       aria-label="Ajustar largura" data-i18n-aria="dash.ajustarLargura" title="Ajustar largura" data-i18n-title="dash.ajustarLargura"></div>
   <div class="fp-pe">
     <button type="button" class="btn btn-outline btn-sm" id="fpLimpar"><i class="fa-solid fa-filter-circle-xmark"></i> <span data-i18n="dash.limparFiltros">Limpar filtros</span></button>
     <button type="button" class="btn btn-primary btn-sm" id="fpVer" data-i18n="dash.verResultados">Ver resultados</button>
@@ -632,8 +649,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     <div class="dash-barra">
       <div class="dash-abas" role="tablist" aria-label="Páginas do dashboard" id="dashAbas">
         <button type="button" class="dash-aba" role="tab" id="aba-total" aria-controls="vis-total" data-vis="total"><i class="fa-solid fa-chart-bar"></i><span data-i18n="dash.abaTotal">Total Kaizen</span></button>
-        <button type="button" class="dash-aba" role="tab" id="aba-lider" aria-controls="vis-lider" data-vis="lider"><i class="fa-solid fa-users"></i><span data-i18n="dash.abaLider">Kaizen Líder</span></button>
-        <button type="button" class="dash-aba" role="tab" id="aba-detalhe" aria-controls="vis-detalhe" data-vis="detalhe"><i class="fa-solid fa-user-check"></i><span data-i18n="dash.abaDetalhe">Detalhamento por líder</span></button>
+        <button type="button" class="dash-aba" role="tab" id="aba-lider" aria-controls="vis-lider" data-vis="lider"><i class="fa-solid fa-users"></i><span data-i18n="dash.abaLider">Top 15</span></button>
+        <button type="button" class="dash-aba" role="tab" id="aba-detalhe" aria-controls="vis-detalhe" data-vis="detalhe"><i class="fa-solid fa-user-check"></i><span data-i18n="dash.abaDetalhe">Detalhamento</span></button>
         <button type="button" class="dash-aba" role="tab" id="aba-base" aria-controls="vis-base" data-vis="base"><i class="fa-solid fa-list"></i><span data-i18n="dash.abaBase">Base de Dados</span></button>
       </div>
       <div class="dash-chips" id="dashChips" hidden></div>
@@ -725,15 +742,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       <article class="dash-card s12">
         <div class="dash-card-head">
           <div>
-            <h3 class="dash-card-titulo" data-i18n="dash.detTitulo">Detalhamento por Kaizen Líder</h3>
+            <h3 class="dash-card-titulo" id="detTitulo">Detalhamento por Kaizen Líder</h3>
             <p class="dash-card-sub" data-i18n="dash.detSub">Kaizens de cada líder por status, com a taxa de aprovação</p>
           </div>
         </div>
         <div class="dash-ferramentas">
+          <label class="dash-grupo-sel"><span data-i18n="dash.detPor">Detalhar por</span>
+            <select id="grupoDet"></select>
+          </label>
           <div class="filter-search">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <label class="sr-only" for="buscaDet" data-i18n="dash.buscarLider">Buscar líder</label>
-            <input type="text" id="buscaDet" autocomplete="off" placeholder="Buscar líder..." data-i18n-placeholder="dash.buscarLider"/>
+            <label class="sr-only" for="buscaDet" data-i18n="dash.buscarLider">Buscar...</label>
+            <input type="text" id="buscaDet" autocomplete="off" placeholder="Buscar..." data-i18n-placeholder="dash.buscarLider"/>
           </div>
           <span class="dash-conta" id="contaDet" aria-live="polite"></span>
           <span class="espaco"></span>
@@ -843,7 +863,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'dash.baseAtual': 'Kaizens atuais', 'dash.baseHist': 'Kaizens do histórico',
       'dash.atualizadoEm': 'Dados de {data} · renovados a cada {min} min',
       'dash.filtros': 'Filtros', 'dash.atualizar': 'Atualizar', 'dash.limparFiltros': 'Limpar filtros', 'dash.verResultados': 'Ver resultados',
-      'dash.abaTotal': 'Total Kaizen', 'dash.abaLider': 'Kaizen Líder', 'dash.abaDetalhe': 'Detalhamento por líder', 'dash.abaBase': 'Base de Dados',
+      'dash.abaTotal': 'Total Kaizen', 'dash.abaLider': 'Top 15', 'dash.abaDetalhe': 'Detalhamento', 'dash.abaBase': 'Base de Dados',
       'dash.resumo': 'Resumo por status', 'dash.total': 'Total de kaizens', 'dash.totalSub': 'kaizens registrados',
       'dash.aprovados': 'aprovados', 'dash.outros': 'Outros status', 'dash.semStatus': 'Sem status', 'dash.limparStatus': 'Total de kaizens: limpar filtro de status',
       'dash.mesTitulo': 'Registros por mês', 'dash.mesSub': 'Mês de criação · variação contra o mês anterior · {anos}', 'dash.todosAnos': 'todos os anos',
@@ -854,8 +874,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'dash.notaBranco': 'Cinza = nível não preenchido na hierarquia (Em branco).',
       'dash.agTitulo': 'Agentes de Melhoria', 'dash.agSub': 'Kaizens liderados · 15 primeiros · clique para filtrar',
       'dash.apTitulo': 'Aprovadores', 'dash.apSub': '15 primeiros · {nome} aprova {p} dos kaizens filtrados',
-      'dash.detTitulo': 'Detalhamento por Kaizen Líder', 'dash.detSub': 'Kaizens de cada líder por status, com a taxa de aprovação',
-      'dash.buscarLider': 'Buscar líder...', 'dash.contaLideres': '{n} líderes',
+      'dash.detTitulo': 'Detalhamento por {grupo}', 'dash.detSub': 'Kaizens por status em cada linha, com a taxa de aprovação',
+      'dash.detPor': 'Detalhar por', 'dash.buscarLider': 'Buscar...', 'dash.contaLideres': '{n} linhas',
       'dash.baseTitulo': 'Base de dados', 'dash.baseSub': 'Todos os Kaizens dentro dos filtros · clique no cabeçalho para ordenar',
       'dash.buscarBase': 'Buscar por ID, pessoa ou título...', 'dash.contaKaizens': '{n} kaizens',
       'dash.exportar': 'Exportar Excel', 'dash.exportando': 'Exportando…', 'dash.erroExportar': 'Erro ao exportar',
@@ -866,11 +886,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'dash.erroTitulo': 'Não foi possível carregar o dashboard.', 'dash.tentar': 'Tentar de novo',
       'dash.gPeriodo': 'Período e status', 'dash.gEstrutura': 'Estrutura (MDM)', 'dash.gPessoas': 'Pessoas',
       'dash.fStatus': 'Status', 'dash.fOrigem': 'Origem', 'dash.fAno': 'Ano', 'dash.fMes': 'Mês', 'dash.fCategoria': 'Categoria', 'dash.fSite': 'Site',
-      'dash.fCoo': 'COO', 'dash.fDir': 'Diretoria', 'dash.fHead': 'Head', 'dash.fGg': 'Gerência Geral', 'dash.fGa': 'Gerência Área', 'dash.fCs': 'Coord/Sup',
+      'dash.fCoo': 'CEO-1', 'dash.fDir': 'Diretoria', 'dash.fHead': 'Head', 'dash.fGg': 'Gerência Geral', 'dash.fGa': 'Gerência Área', 'dash.fCs': 'Coord/Sup',
       'dash.fLider': 'Kaizen Líder', 'dash.fAprovador': 'Aprovador', 'dash.fId': 'ID Kaizen',
       'dash.todos': 'Todos', 'dash.selTodos': 'Selecionar todos', 'dash.limpar': 'Limpar', 'dash.buscar': 'Buscar…',
       'dash.maisOpcoes': 'Mostrando {n} de {t}. Use a busca para achar outros.', 'dash.idEx': 'Ex.: 9544, 10001', 'dash.idDica': 'Separe vários IDs por vírgula.',
       'dash.remover': 'Remover filtro', 'dash.limparTudo': 'Limpar tudo',
+      'dash.fPeriodo': 'Período (mês/ano)', 'dash.de': 'De', 'dash.ate': 'Até', 'dash.periodoDica': 'Ex.: de 2025-01 até 2026-06. Ao usar o período, os filtros de Ano e Mês são limpos.',
+      'dash.ajustarLargura': 'Arraste para ajustar a largura do painel',
       'dash.atual': 'Atual', 'dash.historico': 'Histórico', 'dash.hist': 'HIST', 'dash.emBranco': '(Em branco)', 'dash.semData': 'Sem data',
       'dash.meses': ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
       'dash.mesesLongos': ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
@@ -887,7 +909,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'dash.baseAtual': 'Current Kaizens', 'dash.baseHist': 'Historical Kaizens',
       'dash.atualizadoEm': 'Data from {data} · refreshed every {min} min',
       'dash.filtros': 'Filters', 'dash.atualizar': 'Refresh', 'dash.limparFiltros': 'Clear filters', 'dash.verResultados': 'See results',
-      'dash.abaTotal': 'Total Kaizen', 'dash.abaLider': 'Kaizen Leader', 'dash.abaDetalhe': 'Leader detail', 'dash.abaBase': 'Database',
+      'dash.abaTotal': 'Total Kaizen', 'dash.abaLider': 'Top 15', 'dash.abaDetalhe': 'Detail', 'dash.abaBase': 'Database',
       'dash.resumo': 'Summary by status', 'dash.total': 'Total kaizens', 'dash.totalSub': 'kaizens registered',
       'dash.aprovados': 'approved', 'dash.outros': 'Other statuses', 'dash.semStatus': 'No status', 'dash.limparStatus': 'Total kaizens: clear status filter',
       'dash.mesTitulo': 'Records by month', 'dash.mesSub': 'Creation month · change versus previous month · {anos}', 'dash.todosAnos': 'all years',
@@ -898,8 +920,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'dash.notaBranco': 'Grey = level empty in the hierarchy (Blank).',
       'dash.agTitulo': 'Improvement Agents', 'dash.agSub': 'Kaizens led · top 15 · click to filter',
       'dash.apTitulo': 'Approvers', 'dash.apSub': 'Top 15 · {nome} approves {p} of the filtered kaizens',
-      'dash.detTitulo': 'Detail by Kaizen Leader', 'dash.detSub': 'Each leader’s kaizens by status, with approval rate',
-      'dash.buscarLider': 'Search leader...', 'dash.contaLideres': '{n} leaders',
+      'dash.detTitulo': 'Detail by {grupo}', 'dash.detSub': 'Kaizens by status in each row, with approval rate',
+      'dash.detPor': 'Detail by', 'dash.buscarLider': 'Search...', 'dash.contaLideres': '{n} rows',
       'dash.baseTitulo': 'Database', 'dash.baseSub': 'Every Kaizen within the filters · click a header to sort',
       'dash.buscarBase': 'Search by ID, person or title...', 'dash.contaKaizens': '{n} kaizens',
       'dash.exportar': 'Export Excel', 'dash.exportando': 'Exporting…', 'dash.erroExportar': 'Export failed',
@@ -910,11 +932,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'dash.erroTitulo': 'The dashboard could not be loaded.', 'dash.tentar': 'Try again',
       'dash.gPeriodo': 'Period and status', 'dash.gEstrutura': 'Organization (MDM)', 'dash.gPessoas': 'People',
       'dash.fStatus': 'Status', 'dash.fOrigem': 'Source', 'dash.fAno': 'Year', 'dash.fMes': 'Month', 'dash.fCategoria': 'Category', 'dash.fSite': 'Site',
-      'dash.fCoo': 'COO', 'dash.fDir': 'Directorate', 'dash.fHead': 'Head', 'dash.fGg': 'General Mgmt', 'dash.fGa': 'Area Mgmt', 'dash.fCs': 'Coord/Sup',
+      'dash.fCoo': 'CEO-1', 'dash.fDir': 'Director', 'dash.fHead': 'Head', 'dash.fGg': 'General Mgmt', 'dash.fGa': 'Area Mgmt', 'dash.fCs': 'Coord/Sup',
       'dash.fLider': 'Kaizen Leader', 'dash.fAprovador': 'Approver', 'dash.fId': 'Kaizen ID',
       'dash.todos': 'All', 'dash.selTodos': 'Select all', 'dash.limpar': 'Clear', 'dash.buscar': 'Search…',
       'dash.maisOpcoes': 'Showing {n} of {t}. Search to find others.', 'dash.idEx': 'E.g. 9544, 10001', 'dash.idDica': 'Separate several IDs with commas.',
       'dash.remover': 'Remove filter', 'dash.limparTudo': 'Clear all',
+      'dash.fPeriodo': 'Period (month/year)', 'dash.de': 'From', 'dash.ate': 'To', 'dash.periodoDica': 'E.g. from 2025-01 to 2026-06. Using a period clears the Year and Month filters.',
+      'dash.ajustarLargura': 'Drag to adjust the panel width',
       'dash.atual': 'Current', 'dash.historico': 'History', 'dash.hist': 'HIST', 'dash.emBranco': '(Blank)', 'dash.semData': 'No date',
       'dash.meses': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       'dash.mesesLongos': ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -962,6 +986,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   applyLang(savedLang);
 })();
 </script>
-<script src="js/dashboard.js?v=20261030-1"></script>
+<script src="js/dashboard.js?v=20261030-2"></script>
 </body>
 </html>
