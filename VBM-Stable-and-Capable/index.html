@@ -119,6 +119,15 @@
 .is-fs .topnav { display: none; }
 @media (display-mode: fullscreen) { .topnav { display: none; } }
 @media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+}
 /* ═══ fim Setup Dashboards ═══ */
 
 /* ═══ Tokens do Stable & Capable — padrão VBM Performance Hub (COO) / Kaizen ═══
@@ -512,6 +521,35 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .bi-amostra::after { content: ''; position: absolute; left: 0; right: 0; top: 4px; border-top: 2px dashed var(--cor-linha, #000); }
 @media (max-width: 960px) { .bi-inferior { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .bi-medidas-linha { flex-direction: column; } .bi-variacao { width: 100%; } }
+
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): título, painéis,
+   cartões e controles menores. Mesmo critério do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .pagina { padding: 16px 24px 28px; }
+  .cabecalho { gap: 10px 24px; padding-bottom: 10px; }
+  .cabecalho h2 { font-size: clamp(1.4rem, 2.1vw, 1.75rem); }
+  .filtro-rotulo { font-size: .7rem; }
+  .seg a, .seg button { min-height: 26px; padding: 2px 10px; font-size: .72rem; }
+  .intro { margin: 8px 0 14px; font-size: .74rem; }
+  .grade { gap: 16px; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); }
+  .painel { padding: 14px 18px 16px; border-radius: 16px; }
+  .painel-titulo { margin-bottom: 10px; }
+  .painel-titulo h2 { font-size: 1.02rem; }
+  .historico { margin-top: 16px; }
+  .tabela-wrap { margin: 0 -18px -16px; }
+  th, td { padding-left: 18px; padding-right: 18px; }
+  td { padding-top: .6rem; padding-bottom: .6rem; }
+  .opcoes { gap: 16px; }
+  .opcao { min-height: 0; padding: 16px 18px; gap: 6px; border-radius: 16px; }
+  .opcao .icone { width: 34px; height: 34px; border-radius: 10px; }
+  .opcao .icone svg { width: 17px; height: 17px; }
+  .opcao h2 { font-size: 1.15rem; }
+  .opcao p { font-size: .74rem; }
+  .opcao .acessar { padding-top: 6px; font-size: .7rem; }
+  .vazio { padding: 1.4rem 1rem; }
+  .bi-titulo { margin: 14px 0 12px; font-size: clamp(1.15rem, 1.7vw, 1.5rem); }
+  .bi-inferior { gap: 16px; margin-top: 16px; }
+}
 </style>
 </head>
 <body>
