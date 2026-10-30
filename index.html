@@ -347,6 +347,24 @@
   @media (min-width: 1600px) {
     .cards { gap: 1.5rem; }
   }
+  /* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600
+     úteis): título, cartões e espaços menores, para tudo caber sem rolar e
+     com a última linha de cartões centralizada. Telas grandes não mudam. */
+  @media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+    .topo { height: 56px; }
+    main { min-height: 0; flex: 1 1 auto; padding: clamp(.9rem, 3vh, 1.75rem) 1rem; }
+    .rotulo { font-size: .58rem; margin-bottom: .4rem; }
+    h1 { font-size: clamp(1.4rem, 2.1vw, 1.75rem); margin-bottom: .35rem; }
+    .subtitulo { font-size: .8rem; margin-bottom: clamp(.9rem, 2.6vh, 1.4rem); }
+    .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: .9rem; max-width: 860px; }
+    .card { flex: 0 1 262px; min-height: 0; padding: 1rem 1.05rem .95rem; gap: .35rem; border-radius: .85rem; }
+    .icone { width: 34px; height: 34px; border-radius: .6rem; margin-bottom: .1rem; }
+    .icone svg { width: 17px; height: 17px; }
+    .card h2 { font-size: 1.02rem; }
+    .card p { font-size: .72rem; line-height: 1.42; }
+    .acessar { font-size: .66rem; padding-top: .3rem; }
+    footer { padding: .5rem 1rem .65rem; font-size: .62rem; }
+  }
   /* 3 cards não cabem lado a lado em tela média: 2 por linha */
   @media (max-width: 1000px) and (min-width: 721px) {
     .cards { grid-template-columns: repeat(2, minmax(0, 300px)); }
