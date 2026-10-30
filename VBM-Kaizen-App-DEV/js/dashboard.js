@@ -411,7 +411,7 @@
           '<div class="dref"></div><div class="dnow"></div><div class="dfill ' + (d >= 0 ? 'up' : 'dn') + '"></div><div class="dspan"></div><div class="dtrack"></div>' +
           '<div class="dpill" title="' + esc((v - ant > 0 ? '+' : '') + fmt(v - ant) + ' ' + tx('dash.vsAnterior', '')) + '">' + (d >= 0 ? SVG_ALTA : SVG_QUEDA) + t + '</div></div>';
       }
-      var cor = o.pico && i === pico ? 'var(--vbm-blue-dark)' : 'var(--vbm-blue)';
+      var cor = (o.pico && i === pico) || (o.destaque && o.destaque[i]) ? 'var(--vbm-blue-dark)' : 'var(--vbm-blue)';
       return '<div class="col" role="img" aria-label="' + esc(o.rotulos[i] + ': ' + fmt(v)) + '" style="--h:' + alt + '%;--c:' + cor + '">' + cota +
         '<div class="bar"></div><div class="v-lbl">' + fmt(v) + '</div><div class="x-lbl">' + esc(o.rotulos[i]) + '</div></div>';
     }).join('');
@@ -460,13 +460,21 @@
     VIS.forEach(function (r) {
       if (!r.dt) return;
       mes[r.m - 1]++; dia[r.d - 1]++;
+    });
+    // "Registros por ano" ignora o PRÓPRIO filtro de ano (respeita todos os
+    // outros): com o ano atual já marcado ao abrir a tela, o gráfico
+    // continua mostrando a série e a comparação com os anos anteriores; o
+    // ano filtrado aparece destacado.
+    TODAS.forEach(function (r) {
+      if (!r.dt || !passa(r, 'y')) return;
       anos.set(r.y, (anos.get(r.y) || 0) + 1);
     });
     var listaAnos = Array.from(anos.keys()).sort(function (a, b) { return a - b; });
     var escopo = sel.y.size ? Array.from(sel.y).sort().join(', ') : tx('dash.todosAnos', 'todos os anos');
     $('dashMesSub').textContent = modelo(tx('dash.mesSub', ''), { anos: escopo });
     colunas($('grafMes'), { valores: mes, rotulos: tx('dash.meses', []), deltas: true, altura: 220, minw: 560, gap: 12, topo: 56 });
-    colunas($('grafAno'), { valores: listaAnos.map(function (a) { return anos.get(a); }), rotulos: listaAnos.map(String), deltas: true, altura: 220, minw: Math.max(240, listaAnos.length * 52), gap: 10, topo: 56 });
+    colunas($('grafAno'), { valores: listaAnos.map(function (a) { return anos.get(a); }), rotulos: listaAnos.map(String), deltas: true, altura: 220, minw: Math.max(240, listaAnos.length * 52), gap: 10, topo: 56,
+      destaque: sel.y.size ? listaAnos.map(function (a) { return sel.y.has(a); }) : null });
     colunas($('grafDia'), { valores: dia, rotulos: dia.map(function (_, i) { return String(i + 1); }), media: true, pico: true, denso: true, altura: 200, minw: 760, gap: 5, topo: 8 });
     desenharNiveis();
   }
@@ -736,6 +744,25 @@
     $('dashAtualizado').textContent = modelo(tx('dash.atualizadoEm', ''), { data: quando, min: Math.max(1, Math.round((BASE.validadeSegundos || 300) / 60)) });
   }
 
+  /* Ano atual já marcado no filtro ao abrir a tela (30/10/2026): é o
+     recorte que quase todo mundo olha primeiro, e a pessoa tira com um
+     clique na etiqueta "Ano" ou em "Limpar tudo". Só na PRIMEIRA carga —
+     "Atualizar" não mexe no filtro que a pessoa já escolheu. Sem nenhum
+     Kaizen no ano atual (ex.: começo de janeiro), vale o ano mais recente
+     com registro. */
+  var anoPadraoAplicado = false;
+  function aplicarAnoPadrao() {
+    if (anoPadraoAplicado) return;
+    anoPadraoAplicado = true;
+    var atual = new Date().getFullYear(), maisRecente = 0, temAtual = false;
+    TODAS.forEach(function (r) {
+      if (r.y === atual) temAtual = true;
+      if (r.y > maisRecente && r.y <= atual) maisRecente = r.y;
+    });
+    var ano = temAtual ? atual : maisRecente;
+    if (ano) { sel.y.clear(); sel.y.add(ano); }
+  }
+
   function carregar(forcar) {
     var btn = $('dashAtualizar');
     $('dashErro').hidden = true;
@@ -747,6 +774,7 @@
         BASE = p;
         decodificar(p);
         if (forcar) { DET = null; }
+        aplicarAnoPadrao();
         desenharCabecalhoBase();
         $('dashAbrirFiltros').disabled = false;
         aplicar();

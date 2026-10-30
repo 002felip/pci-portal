@@ -34,6 +34,8 @@ function subir(envExtra) {
     AZURE_SQL_SERVER: "teste.database.windows.net", KAIZEN_AZURE_SQL_DATABASE: "TESTE",
     AZURE_SQL_SCHEMA: "ci", AZURE_SQL_TABLE: "kzn_aprovador", AZURE_SQL_USER: "teste", AZURE_SQL_PASSWORD: "teste",
     PORT: String(PORTA), FAKE_MSSQL_LOG: LOG,
+    // Sem o aquecimento automático: o teste conta as consultas da base.
+    KAIZEN_DASHBOARD_AQUECER: "false",
   }, envExtra || {});
   const proc = spawn(process.execPath, ["-r", path.join(__dirname, "preload-dashboard.js"), "server.js"], { cwd: APP, env, stdio: ["ignore", "pipe", "pipe"] });
   let saida = "";
@@ -81,6 +83,12 @@ const H = { "X-Forwarded-Email": "membro@vale.com" };
   page.on("pageerror", (e) => errosJs.push(e.message));
   await page.goto(BASE + "/dashboard.html");
   await page.waitForSelector(".tt-num");
+  // A tela abre com o ano atual (ou o mais recente com registro) já filtrado.
+  const anos = _base.map((r) => parseInt(String(r.DT || "").slice(0, 4), 10)).filter((y) => y > 1900 && y <= new Date().getFullYear());
+  const anoPadrao = anos.includes(new Date().getFullYear()) ? new Date().getFullYear() : Math.max(...anos);
+  const chipAno = await page.textContent('#dashChips .dash-chip[data-k="y"]').catch(() => "");
+  ok("abre com o filtro de ano no ano atual/mais recente", chipAno.includes(String(anoPadrao)), chipAno);
+  await page.click('#dashChips .dash-chip[data-k="*"]');
   const totalTela = await page.textContent(".tt-num");
   ok("total na tela = linhas da API", totalTela.replace(/\D/g, "") === String(_base.length), totalTela);
   ok("4 cards de resumo", (await page.$$(".dash-tiles > *")).length === 4);
