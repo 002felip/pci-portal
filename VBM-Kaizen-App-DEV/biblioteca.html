@@ -1138,7 +1138,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
      trazem a contagem de Kaizens, e nível sem valor some da lista. */
   var filtroHierarquia = (function (container) {
     var NIVEIS = [
-      { n: 3, chave: 'hier.n3', padrao: 'COO' },
+      { n: 3, chave: 'hier.n3', padrao: 'CEO-1' },
       { n: 4, chave: 'hier.n4', padrao: 'Diretoria' },
       { n: 5, chave: 'hier.n5', padrao: 'Head' },
       { n: 6, chave: 'hier.n6', padrao: 'Gerência Geral' },
@@ -2181,8 +2181,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     if (k.VL_RESULTADO_FINANCEIRO != null) {
       boxes.push(
         '<div style="background:var(--vbm-off-white);border-radius:.5rem;padding:.85rem;border-left:3px solid #16a34a;text-align:center;">' +
-        '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:1.3rem;color:#16a34a;">' + (k.SG_MOEDA || '') + ' ' + Number(k.VL_RESULTADO_FINANCEIRO).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '</div>' +
-        '<div style="font-size:.7rem;color:var(--vbm-mid);">Resultado financeiro</div></div>'
+        '<div style="font-family:\'Poppins\',sans-serif;font-weight:700;font-size:1.3rem;color:#16a34a;">' + (k.SG_MOEDA || '') + ' ' + Number(k.VL_RESULTADO_FINANCEIRO).toLocaleString(idiomaDaTela() === 'en' ? 'en-US' : 'pt-BR', { minimumFractionDigits: 2 }) + '</div>' +
+        '<div style="font-size:.7rem;color:var(--vbm-mid);">' + escaparHtml(txtI18n('bib.financialResult', 'Resultado financeiro')) + '</div></div>'
       );
     }
     (k.RESULTADOS || []).forEach(function (r) {
@@ -2192,7 +2192,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
         '<div style="font-size:.7rem;color:var(--vbm-mid);margin-top:.2rem;">' + escaparHtml(r.DS_RESULTADO) + '</div></div>'
       );
     });
-    document.getElementById('bibModalResultados').innerHTML = boxes.join('') || '<p style="font-size:.78rem;color:var(--vbm-mid);">Nenhum resultado registrado.</p>';
+    document.getElementById('bibModalResultados').innerHTML = boxes.join('') || '<p style="font-size:.78rem;color:var(--vbm-mid);">' + escaparHtml(txtI18n('bib.noResults', 'Nenhum resultado registrado.')) + '</p>';
 
     // Rótulo pelas chaves print.* (as MESMAS que o relatório A4 usa, para
     // tela e papel não divergirem) e valor escapado: DS_* é texto digitado
@@ -2223,13 +2223,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       duas portas de entrada — abrir o modal e imprimir —, senão cada uma
       teria a sua cópia da mesma consulta e do mesmo cache. */
   function carregarDetalhe(id) {
-    if (detalheCache[id]) return Promise.resolve(detalheCache[id]);
-    return fetch('/api/kaizens/' + id, { headers: { Accept: 'application/json' } })
+    // Status, categoria, desperdícios e resultados vêm do banco NO IDIOMA
+    // DA TELA (?idioma) — sem ele, o modal e a impressão saíam com esses
+    // campos em português mesmo com a tela em inglês (feedback VNL:
+    // "Waste reduced: Inventário, ..."). O cache é por Kaizen E idioma.
+    var idioma = idiomaDaTela(), chave = id + '|' + idioma;
+    if (detalheCache[chave]) return Promise.resolve(detalheCache[chave]);
+    return fetch('/api/kaizens/' + id + '?idioma=' + encodeURIComponent(idioma), { headers: { Accept: 'application/json' } })
       .then(function (r) {
         if (!r.ok) throw new Error('falha ao carregar o Kaizen ' + id);
         return r.json();
       })
-      .then(function (k) { detalheCache[id] = k; return k; });
+      .then(function (k) { detalheCache[chave] = k; return k; });
   }
 
   /* Imprimir A4 — pelo ID do Kaizen, NUNCA pelo que estiver na tela.
@@ -2428,7 +2433,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'hier.clear': 'Limpar hierarquia', 'hier.kaizens': 'Kaizens',
       'hier.noOptions': 'Nenhum nível abaixo deste.', 'hier.deepest': 'Último nível da hierarquia.',
       'hier.error': 'Não foi possível carregar a hierarquia.',
-      'hier.n3': 'COO', 'hier.n4': 'Diretoria', 'hier.n5': 'Head', 'hier.n6': 'Gerência Geral',
+      'hier.n3': 'CEO-1', 'hier.n4': 'Diretoria', 'hier.n5': 'Head', 'hier.n6': 'Gerência Geral',
       'hier.n7': 'Gerência de Área', 'hier.n8': 'Coordenação / Supervisão',
       'bib.searchPlaceholder': 'Nome do Kaizen...',
       'bib.showingCount': '31 Kaizens aprovados · Exibindo 6',
@@ -2453,6 +2458,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'print.preparing': 'Preparando relatório para impressão...',
       'print.footer': 'VBM Problem Solving & Continuous Improvement',
       'print.errorTitle': 'Não foi possível imprimir',
+      'bib.financialResult': 'Resultado financeiro', 'bib.noResults': 'Nenhum resultado registrado.',
       'print.errorMsg': 'Não deu para carregar os dados deste Kaizen. Tente de novo.',
       'bib.groupDesperdicios': 'Redução de Desperdícios',
       'bib.editBlocked': 'Edição indisponível para o status atual',
@@ -2547,7 +2553,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'hier.clear': 'Clear hierarchy', 'hier.kaizens': 'Kaizens',
       'hier.noOptions': 'No level below this one.', 'hier.deepest': 'Deepest hierarchy level.',
       'hier.error': 'Could not load the hierarchy.',
-      'hier.n3': 'COO', 'hier.n4': 'Board', 'hier.n5': 'Head', 'hier.n6': 'General Management',
+      'hier.n3': 'CEO-1', 'hier.n4': 'Director', 'hier.n5': 'Head', 'hier.n6': 'General Management',
       'hier.n7': 'Area Management', 'hier.n8': 'Coordination / Supervision',
       'bib.searchPlaceholder': 'Kaizen name...',
       'bib.showingCount': '31 approved Kaizens · Showing 6',
@@ -2571,6 +2577,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       'print.preparing': 'Preparing the report for printing...',
       'print.footer': 'VBM Problem Solving & Continuous Improvement',
       'print.errorTitle': 'Could not print',
+      'bib.financialResult': 'Financial result', 'bib.noResults': 'No results recorded.',
       'print.errorMsg': 'The data for this Kaizen could not be loaded. Please try again.',
       'bib.groupDesperdicios': 'Waste Reduction',
       'bib.editBlocked': 'Editing unavailable for the current status',
