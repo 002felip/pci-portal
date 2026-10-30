@@ -101,9 +101,11 @@ function registrarRotasDashboard(api, d) {
   const { sql, runQuery } = d;
   const T = d.tabelas;
 
-  // Cache curto e compartilhado. Cinco minutos: o dashboard é leitura de
-  // acompanhamento, e um Kaizen recém-aprovado aparecer alguns minutos
-  // depois é aceitável — ir ao banco a cada abertura de tela não é.
+  // Cache compartilhado. Cinco minutos de base "fresca": depois disso a
+  // base ainda é entregue na hora, e a recarga roda por trás (ver
+  // obterFatos). O dashboard é leitura de acompanhamento — um Kaizen
+  // recém-aprovado aparecer alguns minutos depois é aceitável; fazer a
+  // pessoa esperar a consulta pesada a cada abertura não é.
   const TTL_MS = Number(process.env.KAIZEN_DASHBOARD_CACHE_MS) || 5 * 60 * 1000;
   // "Atualizar" na tela força a recarga, mas não mais que uma vez a cada
   // 20 s: vários cliques seguidos não viram várias consultas pesadas.
@@ -343,17 +345,33 @@ function registrarRotasDashboard(api, d) {
     return { em: Date.now(), payload, linhas, textos };
   }
 
-  async function obterFatos(forcar) {
-    const agora = Date.now();
-    const valido = fatos && agora - fatos.em < TTL_MS;
-    const podeForcar = !fatos || agora - fatos.em > RECARGA_MINIMA_MS;
-    if (valido && !(forcar && podeForcar)) return fatos;
+  /* Cache com "serve o antigo e atualiza por trás" (30/10/2026).
+     ANTES: passados os 5 minutos, a PRIMEIRA pessoa que abria a tela
+     esperava a consulta pesada inteira (todos os Kaizens, atual +
+     histórico, com quatro OUTER APPLY por linha) — e como o dashboard
+     não é aberto a cada 5 minutos, na prática quase toda abertura caía
+     nessa espera. AGORA: base vencida é entregue na hora e a recarga
+     roda em segundo plano; só espera quem abre com o app recém-subido
+     (sem base nenhuma) ou quem clica em "Atualizar". */
+  function recarregarFatos() {
     if (!fatosEmCurso) {
       fatosEmCurso = montarFatos()
         .then((f) => { fatos = f; return f; })
         .finally(() => { fatosEmCurso = null; });
     }
     return fatosEmCurso;
+  }
+  async function obterFatos(forcar) {
+    const agora = Date.now();
+    const valido = fatos && agora - fatos.em < TTL_MS;
+    const podeForcar = !fatos || agora - fatos.em > RECARGA_MINIMA_MS;
+    if (forcar && podeForcar) return recarregarFatos();
+    if (valido) return fatos;
+    if (fatos) {
+      recarregarFatos().catch((err) => console.error("[dashboard] recarga em segundo plano falhou (segue a base anterior):", err.message));
+      return fatos;
+    }
+    return recarregarFatos();
   }
 
   /* ── Título e equipe (aba Base de Dados e exportação) ───────────── */
@@ -400,17 +418,46 @@ function registrarRotasDashboard(api, d) {
     return { em: Date.now(), porChave };
   }
 
-  async function obterDetalhes(forcar) {
-    const agora = Date.now();
-    const valido = detalhes && agora - detalhes.em < TTL_MS;
-    const podeForcar = !detalhes || agora - detalhes.em > RECARGA_MINIMA_MS;
-    if (valido && !(forcar && podeForcar)) return detalhes;
+  // Mesma regra da base: vencido é entregue na hora e recarrega por trás.
+  function recarregarDetalhes() {
     if (!detalhesEmCurso) {
       detalhesEmCurso = montarDetalhes()
         .then((x) => { detalhes = x; return x; })
         .finally(() => { detalhesEmCurso = null; });
     }
     return detalhesEmCurso;
+  }
+  async function obterDetalhes(forcar) {
+    const agora = Date.now();
+    const valido = detalhes && agora - detalhes.em < TTL_MS;
+    const podeForcar = !detalhes || agora - detalhes.em > RECARGA_MINIMA_MS;
+    if (forcar && podeForcar) return recarregarDetalhes();
+    if (valido) return detalhes;
+    if (detalhes) {
+      recarregarDetalhes().catch((err) => console.error("[dashboard] recarga dos detalhes falhou (seguem os anteriores):", err.message));
+      return detalhes;
+    }
+    return recarregarDetalhes();
+  }
+
+  /* Base pronta antes da primeira pessoa chegar, e mantida aquecida.
+     Sobe ~20 s depois do app (o pool do banco e os caches de coluna já
+     estão de pé) e repete a cada KAIZEN_DASHBOARD_AQUECER_MS (padrão
+     30 min) — assim, mesmo sem ninguém abrir a tela por horas, quem abre
+     recebe uma base de no máximo meia hora, e a própria abertura já
+     dispara a atualização. A Biblioteca também usa esta base (filtro de
+     hierarquia), então ela ganha junto.
+     KAIZEN_DASHBOARD_AQUECER=false desliga (ex.: testes). */
+  if (String(process.env.KAIZEN_DASHBOARD_AQUECER || "true").toLowerCase() !== "false") {
+    const AQUECER_MS = Math.max(5 * 60 * 1000, Number(process.env.KAIZEN_DASHBOARD_AQUECER_MS) || 30 * 60 * 1000);
+    const aquecer = (motivo) => {
+      if (fatos && Date.now() - fatos.em < TTL_MS) return;
+      recarregarFatos()
+        .then(() => console.log(`[dashboard] base aquecida (${motivo}).`))
+        .catch((err) => console.error(`[dashboard] aquecimento (${motivo}) falhou:`, err.message));
+    };
+    setTimeout(() => aquecer("subida do app"), 20 * 1000).unref();
+    setInterval(() => aquecer("periódico"), AQUECER_MS).unref();
   }
 
   /* ── Hierarquia por Kaizen para OUTRAS consultas (Biblioteca) ─────
