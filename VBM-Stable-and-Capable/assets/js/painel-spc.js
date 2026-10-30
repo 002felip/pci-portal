@@ -159,7 +159,12 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var t = function (k, v) { return ctx.t(k, v); };
   var L = function () { return ctx.lang(); };
-  function fmt(x, dec) { return (x == null || isNaN(x)) ? '—' : Number(x).toLocaleString(L(), { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+  // Números no formato escolhido na engrenagem (Setup Dashboards: Brasil 1.234,56 · Canadá 1,234.56)
+  function fmt(x, dec) {
+    if (x == null || isNaN(x)) return '—';
+    if (window.VBMSetup) return window.VBMSetup.fmt(x, dec);
+    return Number(x).toLocaleString(L(), { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
   function fmtData(ms, comAno) { var d = new Date(ms); return d.toLocaleDateString(L(), comAno ? { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' } : { day: '2-digit', month: '2-digit', timeZone: 'UTC' }); }
   function mesCurto(ms) { return new Date(ms).toLocaleDateString(L(), { month: 'short', year: '2-digit', timeZone: 'UTC' }).replace('.', ''); }
 
