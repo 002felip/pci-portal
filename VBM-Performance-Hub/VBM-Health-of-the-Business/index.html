@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VBM Health of the Business</title>
+<link rel="stylesheet" href="assets/css/poppins.css"/>
+<link rel="stylesheet" href="assets/setup-dashboards.css"/>
+<style>
+/* Layout do PDF VBM Health of the Business com os gráficos do COO Business Units Dashboard:
+   mesmos tokens, fontes, barras em degradê, valores acima das barras e cota de diferença (Delta). */
+:root {
+  --page: #FFFFFF; --text: #1F2937; --text-soft: #6B7280; --text-faint: #9CA3AF; --line: #E5E7EB;
+  --accent: #1E8FC4; --accent-strong: #0B6E99; --panel: #F3F4F5; --chart-title: #1B7F7B;
+  --ink-strong: #111827; --ink-soft: #6B7280; --base-line: #D1D5DB;
+  --pill-bg: #FFFFFF; --pill-line: rgba(15,23,42,.06);
+  --d-stroke: rgba(116,118,120,.45); --d-hair: rgba(116,118,120,.30);
+  --serie-b: #BCBEC0; --serie-a: #3CB5E5; --serie-a-txt: #0B6E99;
+  --good: #007E7A; --good-bg: rgba(0,126,122,.10); --bad: #B91C1C; --bad-bg: rgba(220,38,38,.09);
+  --flat: #5B5E61; --flat-bg: rgba(116,118,120,.12);
+  --w-pos: #1FA88F; --w-neg: #E5534B;
+  --ctl-bg: #FFFFFF; --ctl-border: rgba(13,38,64,.16); --ctl-text: #1F2937; --ctl-on-bg: #0B6E99; --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif; --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B; --text: #E8EEF5; --text-soft: rgba(232,238,245,.66); --text-faint: rgba(232,238,245,.42); --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE; --accent-strong: #7DD3F0; --panel: #0C2438; --chart-title: #5FD0C9;
+    --ink-strong: #F1F5F9; --ink-soft: rgba(241,245,249,.62); --base-line: rgba(255,255,255,.22);
+    --pill-bg: #0F2C44; --pill-line: rgba(255,255,255,.10); --d-stroke: rgba(226,232,240,.45); --d-hair: rgba(226,232,240,.28);
+    --serie-b: #8E949B; --serie-a-txt: #7DD3F0;
+    --good: #34C3B8; --good-bg: rgba(52,195,184,.14); --bad: #F87171; --bad-bg: rgba(248,113,113,.14); --flat: #B0B5BA; --flat-bg: rgba(176,181,186,.14);
+    --w-pos: #34C3B8; --w-neg: #F87171;
+    --ctl-bg: rgba(255,255,255,.05); --ctl-border: rgba(255,255,255,.16); --ctl-text: #E5EDF5; --ctl-on-bg: #3CB5E5; --ctl-on-text: #02101c;
+    --focus: #7DD3F0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B; --text: #E8EEF5; --text-soft: rgba(232,238,245,.66); --text-faint: rgba(232,238,245,.42); --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE; --accent-strong: #7DD3F0; --panel: #0C2438; --chart-title: #5FD0C9;
+  --ink-strong: #F1F5F9; --ink-soft: rgba(241,245,249,.62); --base-line: rgba(255,255,255,.22);
+  --pill-bg: #0F2C44; --pill-line: rgba(255,255,255,.10); --d-stroke: rgba(226,232,240,.45); --d-hair: rgba(226,232,240,.28);
+  --serie-b: #8E949B; --serie-a-txt: #7DD3F0;
+  --good: #34C3B8; --good-bg: rgba(52,195,184,.14); --bad: #F87171; --bad-bg: rgba(248,113,113,.14); --flat: #B0B5BA; --flat-bg: rgba(176,181,186,.14);
+  --w-pos: #34C3B8; --w-neg: #F87171;
+  --ctl-bg: rgba(255,255,255,.05); --ctl-border: rgba(255,255,255,.16); --ctl-text: #E5EDF5; --ctl-on-bg: #3CB5E5; --ctl-on-text: #02101c;
+  --focus: #7DD3F0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: var(--font-display); font-size: 14px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.page { width: 100%; display: flex; flex-direction: column; gap: 14px; padding-block: 22px 24px;
+  padding-left: max(28px, env(safe-area-inset-left, 0px)); padding-right: max(28px, env(safe-area-inset-right, 0px)); }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.head h2 { margin: 0; position: relative; top: -7px; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; transition: background-color .18s ease, color .18s ease; }
+.seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.switch { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); cursor: pointer; }
+.switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+.fs-btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--text-soft); cursor: pointer; }
+.fs-btn:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
+
+.sub-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px 24px; flex-wrap: wrap; }
+.panel-title { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--text); }
+.meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: .74rem; color: var(--text-soft); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.swatch { width: 14px; height: 9px; border-radius: 2px; }
+.updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.demo { font-style: normal; margin-right: 6px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(245,158,11,.6); color: #B45309; }
+:root[data-theme="dark"] .demo { color: #FCD34D; }
+
+/* Grade em duas colunas; as áreas de cada visão vêm do JS (BUS[].areas) */
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px clamp(40px, 4.2vw, 96px); }
+.card { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 4px 12px; }
+.card-name { min-width: 0; }
+.card-title { margin: 0; font: 400 1rem/1.2 var(--font-display); color: var(--chart-title); }
+.card-title em { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+.card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
+.card .seg { flex-wrap: nowrap; flex-shrink: 0; }
+.card .seg button { min-height: 22px; padding: 1px 8px; font-size: .68rem; }
+.chart { position: relative; height: var(--chart-h, 210px); }
+.chart svg { display: block; overflow: visible; font-family: var(--font-display); }
+
+/* SVG — mesmas classes e tamanhos do COO */
+.b-bar { transform-box: fill-box; transform-origin: 50% 100%; animation: grow .9s cubic-bezier(.16,.84,.28,1) both; }
+.b-bar.neg { transform-origin: 50% 0%; }
+@keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.b-val { fill: var(--ink-strong); font-size: calc(11px * var(--k, 1)); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.b-axis { fill: var(--ink-soft); font-size: calc(9.5px * var(--k, 1)); }
+.b-base { stroke: var(--base-line); }
+.cota { animation: fade .5s .6s ease-out both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.d-ref { stroke: var(--d-stroke); stroke-dasharray: 3 2; }
+.d-now { stroke: var(--d-stroke); }
+.d-track { stroke: var(--d-hair); }
+.d-pill { fill: var(--pill-bg); stroke: var(--pill-line); filter: drop-shadow(0 2px 6px rgba(15,23,42,.06)); }
+.d-txt { font-size: calc(10.5px * var(--k, 1)); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.d-span { stroke-opacity: .6; }
+.is-good .d-txt { fill: var(--good); } .is-good .d-span { stroke: var(--good); } .is-good .d-up { fill: var(--good-bg); } .is-good .d-dn { fill: url(#hatch-good); }
+.is-bad .d-txt { fill: var(--bad); } .is-bad .d-span { stroke: var(--bad); } .is-bad .d-up { fill: var(--bad-bg); } .is-bad .d-dn { fill: url(#hatch-bad); }
+.is-flat .d-txt { fill: var(--flat); } .is-flat .d-span { stroke: var(--flat); } .is-flat .d-up { fill: var(--flat-bg); } .is-flat .d-dn { fill: url(#hatch-flat); }
+/* Ponte (waterfall) e curva S, no mesmo acabamento */
+.w-pos { fill: var(--w-pos); } .w-neg { fill: var(--w-neg); }
+.w-link { stroke: var(--d-hair); stroke-dasharray: 2 2; }
+.l-b { fill: none; stroke: var(--serie-b); stroke-width: 1.6; stroke-dasharray: 4 3; }
+.l-a { fill: none; stroke: var(--serie-a); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.l-f { fill: none; stroke: var(--serie-a); stroke-width: 2; stroke-dasharray: 2 3; }
+.p-b { fill: var(--page); stroke: var(--serie-b); stroke-width: 1.6; } .p-a { fill: var(--serie-a); stroke: var(--page); stroke-width: 1.2; }
+.v-b { fill: var(--ink-soft); font-size: calc(10px * var(--k, 1)); font-variant-numeric: tabular-nums; } .v-a { fill: var(--serie-a-txt); font-size: calc(10px * var(--k, 1)); font-weight: 500; font-variant-numeric: tabular-nums; }
+.is-static .b-bar, .is-static .cota { animation: none; }
+@media (prefers-reduced-motion: reduce) { .b-bar, .cota { animation: none !important; } }
+.tip { position: fixed; z-index: 200; pointer-events: none; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem var(--font-ui); box-shadow: 0 6px 18px rgba(15,23,42,.25); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.s-val { font-size: calc(10.5px * var(--k, 1)); font-variant-numeric: tabular-nums; }
+.s-claro { fill: #FFFFFF; } .s-escuro { fill: #1F2937; } .s-fora { fill: var(--ink-soft); font-size: calc(9.5px * var(--k, 1)); }
+.s-tot { font-weight: 600; }
+.legend-stack { gap: 3px 14px; font-size: .7rem; }
+.swatch.sw2 { display: inline-flex; width: 20px; overflow: hidden; } .swatch.sw2 i { flex: 1; }
+
+/* Tela única (desktop e tela cheia): a página ocupa a altura da janela, sem sobra embaixo.
+   As três linhas dividem a altura igualmente, os gráficos crescem/encolhem com o espaço e o
+   respiro entre linhas e colunas acompanha a tela. Em janelas baixas ou estreitas, a página rola. */
+@media (min-width: 1001px) and (min-height: 720px) {
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; }
+  .page { flex: 1 1 auto; min-height: 0; padding-block: clamp(14px, 2vh, 26px) clamp(14px, 2.2vh, 30px); gap: clamp(10px, 1.6vh, 20px); }
+  .head, .sub-row { flex-shrink: 0; }
+  .dash { flex: 1 1 auto; min-height: 0; grid-template-rows: repeat(3, minmax(0, 1fr)); row-gap: clamp(20px, 3.4vh, 52px); }
+  /* Respiro lateral: colunas mais afastadas e cada card um pouco recuado das bordas (gráficos ~8-10% mais
+     estreitos em telas grandes), para o olho percorrer um gráfico de cada vez */
+  .dash { column-gap: clamp(56px, 6vw, 120px); }
+  .card { min-height: 0; gap: clamp(4px, .8vh, 12px); padding-inline: clamp(0px, 1.8vw, 36px); }
+  .chart { flex: 1 1 0; min-height: 110px; height: auto; }
+  .chart svg { position: absolute; inset: 0; }
+}
+/* Notebooks (até ~860 px de altura): cabeçalho mais enxuto para sobrar altura aos gráficos */
+@media (min-width: 1001px) and (min-height: 720px) and (max-height: 860px) {
+  .head { padding-bottom: 8px; }
+  .head h2 { font-size: 1.55rem; top: -3px; }
+  .panel-title { font-size: 1rem; }
+  .card-unit { font-size: .68rem; }
+}
+@media (max-width: 1600px) {
+  .card-title { font-size: .88rem; }
+  .card .seg button { padding: 1px 5px; font-size: .62rem; }
+  .head h2 { font-size: 1.75rem; }
+  .filters { gap: 8px 10px; }
+  .seg button { padding: 2px 8px; font-size: .7rem; }
+}
+@media (max-width: 1000px) {
+  .dash { grid-template-columns: minmax(0, 1fr); grid-template-areas: none !important; }
+  .dash > .card { grid-area: auto !important; }
+}
+@media (max-width: 720px) {
+  .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .meta { align-items: flex-start; }
+  .head h2 { top: 0; }
+}
+@media (pointer: coarse) { .seg button, .card .seg button { min-height: 44px; } .fs-btn { width: 44px; height: 44px; } }
+</style>
+</head>
+<body>
+<nav class="topnav" id="topnav">
+  <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">VBM Health of the Business</span></h1>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CBCDCF"/><stop offset=".42" stop-color="#BCBEC0"/><stop offset="1" stop-color="#B2B4B6"/></linearGradient>
+    <linearGradient id="g-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#62C6EC"/><stop offset=".42" stop-color="#3CB5E5"/><stop offset="1" stop-color="#36A9D8"/></linearGradient>
+    <linearGradient id="g-b2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A8D90"/><stop offset="1" stop-color="#717477"/></linearGradient>
+    <linearGradient id="g-a2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A7DA8"/><stop offset="1" stop-color="#1A6690"/></linearGradient>
+    <linearGradient id="g-b3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ECEDEE"/><stop offset="1" stop-color="#DCDDDE"/></linearGradient>
+    <linearGradient id="g-a3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8E4F5"/><stop offset="1" stop-color="#9AD6EE"/></linearGradient>
+    <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
+    <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
+    <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
+  </defs>
+</svg>
+<main class="page" id="page">
+  <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
+    <h2 id="buName">—</h2>
+    <div class="filters">
+      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span><div class="seg" role="group" aria-labelledby="lblBu" data-filter="bu"></div></div>
+      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
+      <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
+      <div class="filter"><span class="filter-label" id="lblMes" data-i18n="f.month">Month:</span><div class="seg" role="group" aria-labelledby="lblMes" data-filter="mes"></div></div>
+      <div class="filter"><span class="filter-label" id="lblDelta">Delta:</span>
+        <button type="button" class="switch" id="deltaSwitch" role="switch" aria-checked="true" aria-labelledby="lblDelta"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="filter"><span class="filter-label" aria-hidden="true">&nbsp;</span>
+        <button type="button" class="fs-btn" id="fsBtn" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.on">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sub-row">
+    <h3 class="panel-title" data-i18n="s.drivers">Production and Finance drivers</h3>
+    <div class="meta">
+      <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
+        <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+        <li><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
+      </ul>
+      <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
+    </div>
+  </div>
+
+  <div class="dash" id="dash"></div>
+</main>
+<div class="tip" id="tip" hidden></div>
+
+<script>window.VBM_SETUP = { idiomaPadrao: 'en' }; /* como o COO: inglês até a pessoa escolher outro idioma */</script>
+<script src="assets/setup-dashboards.js"></script>
+<script src="assets/hob-data.js"></script>
+<script>
+/* Dados: GET api/dados (hob-api.js, consultas em database/). Prévia local (file://), API ausente ou consultas
+   ainda pendentes: a página segue com os dados de demonstração de assets/hob-data.js e o selo "Dados demo". */
+window.HOB_CARREGAR = function (iniciar) {
+  if (location.protocol === 'file:' || !window.fetch) return iniciar('SEM_API');
+  var base = location.pathname.replace(/index\.html$/i, '').replace(/\/?$/, '/');
+  fetch(base + 'api/dados', { cache: 'no-store', credentials: 'same-origin' })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: false, j: null }; }); })
+    .then(function (x) {
+      if (x.ok && x.j && x.j.anos && x.j.anos.length && x.j.ultimoReal) { window.HOB_DATA = x.j; return iniciar(null); }
+      iniciar((x.j && x.j.codigo) || 'SEM_API');
+    })
+    .catch(function () { iniciar('SEM_API'); });
+};
+</script>
+<script>
+window.HOB_CARREGAR(function (aviso) {
+  'use strict';
+  var D = window.HOB_DATA, S = window.VBMSetup;
+
+  S.registrar({
+    'pt-BR': { 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+      'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
+      's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período' },
+    en: { 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+      'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
+      's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period' }
+  });
+  var MESES = { 'pt-BR': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] };
+  var MESES_LONGOS = { 'pt-BR': ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] };
+  function mesesCurtos() { return MESES[S.idioma] || MESES.en; }
+
+  // Seletores no card: mesma estratégia do All-in do COO (a pessoa escolhe o que o gráfico mostra)
+  var OPC_EBITDA = [{ chave: 'vbm', lbl: 'VBM' }, { chave: 'cu', lbl: 'Copper' }, { chave: 'ni', lbl: 'Nickel' }, { chave: 'out', lbl: 'Others' }];
+  var OPC_ALLIN = [{ chave: 'allin', lbl: 'All-in' }, { chave: 'sus', lbl: 'Sustaining' }, { chave: 'cost', lbl: 'Cost' }, { chave: 'byp', lbl: 'By Product' }];
+
+  function negocio(chave, lbl, nome, allin) {
+    return { chave: chave, lbl: lbl, nome: nome,
+      areas: '"prod ebitda" "sales capex" "allin fcf"',
+      cards: [
+        { area: 'prod', tipo: 'pares', titulo: 'Production', unid: 'Kt', ind: 'prod', casas: 0, pol: 'up' },
+        { area: 'sales', tipo: 'pares', titulo: 'Sales', unid: 'Kt', ind: 'sales', casas: 0, pol: 'up' },
+        { area: 'allin', tipo: allin, titulo: 'All-In (AISC)', unid: 'US$ k/t', casas: 1, pol: 'down' },
+        { area: 'ebitda', tipo: 'pares', titulo: 'EBITDA', unid: 'US$ M', ind: 'ebitda', casas: 0, pol: 'up' },
+        { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down' },
+        { area: 'fcf', tipo: 'acum', titulo: 'FCF', unid: 'US$ M', ind: 'fcf' }
+      ] };
+  }
+  // Consolidated: Catalyst Savings 2025F descontinuado. Sem a tabela, o EBITDA fica do tamanho dos
+  // demais e divide a 1ª linha com a ponte do EBITDA do ano; o Capex | S Curve ganha a largura toda
+  // (12 meses + ano) e o FCF YEAR segue embaixo, também na largura toda.
+  var BUS = [
+    { chave: 'vbm', lbl: 'VBM', nome: 'Vale Base Metals | Consolidated View',
+      areas: '"ebitda wf" "capex capex" "fcf fcf"',
+      cards: [
+        { area: 'ebitda', tipo: 'ebitdaVbm', titulo: 'EBITDA', unid: 'US$ bn', casas: 1, pol: 'up' },
+        { area: 'wf', tipo: 'ponte', titulo: '{ano} EBITDA YEAR', unid: 'US$ M', nota: 'Comparison with previous forecast', ind: 'ebitdaYear' },
+        { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down', larguraDe: 'fcfYear' },
+        { area: 'fcf', tipo: 'ponte', titulo: 'FCF YEAR', unid: 'US$ M', ind: 'fcfYear' }
+      ] },
+    // Copper: All-in com seletor (estratégia do COO). Nickel: All-in empilhado (By Products, Sustaining e Costs),
+    // proposta para avaliação, sem seletor
+    negocio('cu', 'Copper', 'Copper Business', 'allin'),
+    negocio('ni', 'Nickel', 'Nickel Business', 'allinStack')
+  ];
+
+  // ── Estado (na URL, para o link poder ser compartilhado) ──
+  var U = D.ultimoReal, q = new URLSearchParams(location.search);
+  var state = {
+    bu: BUS.some(function (b) { return b.chave === q.get('bu'); }) ? q.get('bu') : 'vbm',
+    ano: D.anos.indexOf(+q.get('ano')) >= 0 ? +q.get('ano') : D.anos.indexOf(U.ano) >= 0 ? U.ano : D.anos[D.anos.length - 1],
+    mes: +q.get('mes') >= 1 && +q.get('mes') <= 12 ? +q.get('mes') : U.mes,
+    delta: q.get('delta') !== 'off',
+    sel: { ebitda: q.get('ebitda') || 'vbm', allin: q.get('allin') || 'allin' }
+  };
+  function gravarUrl() {
+    var p = { bu: state.bu, ano: state.ano, mes: state.mes, ebitda: state.sel.ebitda, allin: state.sel.allin };
+    if (!state.delta) p.delta = 'off';
+    history.replaceState(null, '', '?' + new URLSearchParams(p));
+  }
+  function ehReal(mes) { return state.ano < U.ano || (state.ano === U.ano && mes <= U.mes); }
+  function aa() { return String(state.ano).slice(2); }
+  function fmt(v, dec) { return S.fmt(v, dec); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function somaArr(a, b) { return a.map(function (v, i) { return v + b[i]; }); }
+  function somaSerie(ss) { return ss.reduce(function (r, s) { return { b: somaArr(r.b, s.b), a: somaArr(r.a, s.a) }; }); }
+
+  // Delta = A|F − B, na unidade e casas do indicador (regra do COO)
+  function delta(b, a, pol, dec) {
+    var f = Math.pow(10, dec), d = Math.round((a - b) * f) / f;
+    var txt = (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d), dec);
+    var fav = pol === 'down' ? d < 0 : d > 0;
+    return { txt: txt, cls: d === 0 ? 'is-flat' : fav ? 'is-good' : 'is-bad' };
+  }
+
+  // ── Recortes do PDF: Mês, Trimestre, YTD, YTG e Ano, cada um com B e A|F ──
+  // media = custo unitário (All-in): média dos meses; os demais somam.
+  function recortes(s, media) {
+    var m = state.mes, t = Math.ceil(m / 3), l = mesesCurtos();
+    function ag(arr, de, ate) {
+      var v = arr.slice(de, ate).reduce(function (x, y) { return x + y; }, 0);
+      return media ? v / (ate - de) : v;
+    }
+    function af(de, ate) { for (var i = de + 1; i <= ate; i++) if (!ehReal(i)) return 'F'; return 'A'; }
+    var g = [
+      { lb: l[m - 1] + ' B', la: l[m - 1] + ' ' + af(m - 1, m), b: s.b[m - 1], a: s.a[m - 1] },
+      { lb: 'Q' + t + 'B', la: 'Q' + t + af(t * 3 - 3, t * 3), b: ag(s.b, t * 3 - 3, t * 3), a: ag(s.a, t * 3 - 3, t * 3) },
+      { lb: 'YTD B', la: 'YTD ' + af(0, m), b: ag(s.b, 0, m), a: ag(s.a, 0, m) }
+    ];
+    if (m < 12) g.push({ lb: 'YTG B', la: 'YTG ' + af(m, 12), b: ag(s.b, m, 12), a: ag(s.a, m, 12) });
+    g.push({ lb: aa() + 'B', la: aa() + af(0, 12), b: ag(s.b, 0, 12), a: ag(s.a, 0, 12) });
+    return g;
+  }
+
+  // ── Barras B × A|F com a cota de diferença: o chartSvg do COO, com N janelas em vez de três ──
+  function cota(y, y0, x1, x2, vRef, vNovo, dl) {
+    var cx = (x1 + x2) / 2, yr = y(vRef), yn = y(vNovo);
+    var ytop = Math.min(yr, yn, y0), pillH = 17 * K, pillW = Math.max(38, dl.txt.length * 5.8 + 14) * K, pillY = Math.max(0, ytop - 22 * K - pillH);
+    var g = '<g class="cota ' + dl.cls + '">';
+    g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
+    g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
+    if (Math.abs(yr - yn) > 0.5) {
+      g += '<rect class="' + (vNovo >= vRef ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
+      g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
+    }
+    g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
+    g += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="' + (pillH / 2) + '"/>';
+    g += '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12 * K) + '" text-anchor="middle">' + esc(dl.txt) + '</text>';
+    return g + '</g>';
+  }
+  function escalaY(vals, MT, MB, H) {
+    var lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max(0, Math.max.apply(null, vals));
+    if (hi === lo) hi = lo + 1;
+    return function (v) { return MT + (hi - v) / (hi - lo) * (H - MT - MB); };
+  }
+  function barra(x, BW, y, y0, v, grad, dec, tip) {
+    var yv = y(v), neg = v < 0;
+    return '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + x + '" y="' + Math.min(yv, y0) + '" width="' + BW + '" height="' + Math.max(Math.abs(yv - y0), 1.5) + '" rx="3" fill="url(#' + grad + ')" data-tip="' + esc(tip) + '"/>' +
+      '<text class="b-val" x="' + (x + BW / 2) + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(v, dec) + '</text>';
+  }
+  function paresSvg(grupos, W, H, cfg) {
+    var MT = (state.delta ? 46 : 20) * K, MB = Math.max(16 * K, MB_MIN), n = grupos.length, PW = W / n;
+    // largura proporcional ao espaço de cada janela (cresce com a tela; o COO limita a 30 px por ser um card estreito)
+    var BW = Math.max(16, Math.min(72, PW * 0.36)), GAP = Math.max(8, Math.min(28, PW * 0.1));
+    var vals = []; grupos.forEach(function (g) { vals.push(g.b, g.a); });
+    var y = escalaY(vals, MT, MB, H), y0 = y(0), rot = [cfg.titulo + ' (' + cfg.unid + ').'];
+    var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+    grupos.forEach(function (g, i) {
+      var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, dl = delta(g.b, g.a, cfg.pol, cfg.casas);
+      out += barra(xb, BW, y, y0, g.b, 'g-b', cfg.casas, g.lb + ' · Budget: ' + fmt(g.b, cfg.casas) + ' ' + cfg.unid);
+      out += barra(xa, BW, y, y0, g.a, 'g-a', cfg.casas, g.la + ': ' + fmt(g.a, cfg.casas) + ' ' + cfg.unid);
+      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(g.lb) + '</text>';
+      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(g.la) + '</text>';
+      if (state.delta) out += cota(y, y0, xb + BW, xa, g.b, g.a, dl);
+      rot.push(g.lb + ' ' + fmt(g.b, cfg.casas) + ', ' + g.la + ' ' + fmt(g.a, cfg.casas) + (state.delta ? ', ' + S.t('g.var') + ' ' + dl.txt : '') + '.');
+    });
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rot.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // ── All-in empilhado (proposta Nickel, como o slide do PDF): By Products abaixo do zero, Sustaining e Costs
+  // acima; o total (All-in) em cima da coluna. Todo segmento mostra o valor, mesmo 0: dentro do segmento quando
+  // cabe, senão ao lado da coluna. Delta (A|F − B do All-in) na pílula do COO, acima das colunas, pelo interruptor.
+  var CAMADAS = [
+    { k: 'byp', lbl: 'By Products', g: ['g-b2', 'g-a2'], cor: ['#7C7F82', '#1F6F99'], txt: ['s-claro', 's-claro'] },
+    { k: 'sus', lbl: 'Sustaining + Cap. Replac.', g: ['g-b', 'g-a'], cor: ['#BCBEC0', '#3CB5E5'], txt: ['s-escuro', 's-claro'] },
+    { k: 'cost', lbl: 'Costs', g: ['g-b3', 'g-a3'], cor: ['#E3E4E5', '#A7DDF2'], txt: ['s-escuro', 's-escuro'] }
+  ];
+  function empilhadoSvg(comp, W, H, cfg) {
+    var MT = (state.delta ? 50 : 24) * K, MB = Math.max(20 * K, MB_MIN), n = comp.sus.length, PW = W / n;
+    var BW = Math.max(16, Math.min(72, PW * 0.34)), GAP = Math.max(6, Math.min(24, PW * 0.08));
+    var vals = [], rot = [cfg.titulo + ' (' + cfg.unid + ').'];
+    comp.sus.forEach(function (_, i) { ['b', 'a'].forEach(function (l) {
+      var p = 0, ng = 0; CAMADAS.forEach(function (c) { var v = comp[c.k][i][l]; if (v >= 0) p += v; else ng += v; }); vals.push(p, ng);
+    }); });
+    var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '';
+    comp.sus.forEach(function (g, i) {
+      var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, tot = {}, topo = {};
+      [['b', xb, 0, g.lb], ['a', xa, 1, g.la]].forEach(function (l) {
+        var lado = l[0], x = l[1], j = l[2], acP = 0, acN = 0, total = 0, partes = [];
+        CAMADAS.forEach(function (c) {
+          var v = comp[c.k][i][lado], de = v >= 0 ? acP : acN, ate = de + v;
+          if (v >= 0) acP = ate; else acN = ate;
+          total += v;
+          var ya = y(de), yb = y(ate), top = Math.min(ya, yb), h = Math.max(Math.abs(ya - yb), 1.5), txt = fmt(v, cfg.casas);
+          out += '<rect class="b-bar' + (v < 0 ? ' neg' : '') + '" x="' + x + '" y="' + top + '" width="' + BW + '" height="' + h + '" fill="url(#' + c.g[j] + ')" data-tip="' + esc(l[3] + ' · ' + c.lbl + ': ' + txt + ' ' + cfg.unid) + '"/>';
+          if (h >= 14 * K && (txt.length * 6 + 6) * K <= BW) out += '<text class="s-val ' + c.txt[j] + '" x="' + (x + BW / 2) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="middle">' + txt + '</text>';
+          else out += '<text class="s-val s-fora" x="' + (j ? x + BW + 3 : x - 3) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="' + (j ? 'start' : 'end') + '">' + txt + '</text>';
+          partes.push(c.lbl + ' ' + txt);
+        });
+        tot[lado] = total; topo[lado] = y(acP);
+        out += '<text class="b-val s-tot" x="' + (x + BW / 2) + '" y="' + (y(acP) - 6) + '" text-anchor="middle">' + fmt(total, cfg.casas) + '</text>';
+        out += '<text class="b-axis" x="' + (x + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(l[3]) + '</text>';
+        rot.push(l[3] + ': All-in ' + fmt(total, cfg.casas) + ' (' + partes.join(', ') + ').');
+      });
+      if (state.delta) {
+        var dl = delta(tot.b, tot.a, cfg.pol, cfg.casas), cx = xb + BW + GAP / 2, ytop = Math.min(topo.b, topo.a) - 18 * K;
+        var pillH = 17 * K, pillW = Math.max(38, dl.txt.length * 5.8 + 14) * K, pillY = Math.max(0, ytop - 8 * K - pillH);
+        out += '<g class="cota ' + dl.cls + '"><line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + ytop + '" y2="' + (pillY + pillH) + '"/>' +
+          '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="' + (pillH / 2) + '"/>' +
+          '<text class="d-txt" x="' + cx + '" y="' + (pillY + 12 * K) + '" text-anchor="middle">' + esc(dl.txt) + '</text></g>';
+        rot.push(S.t('g.var') + ' ' + dl.txt + '.');
+      }
+    });
+    out += '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rot.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // ── Curva S: mensal B (tracejado) e A|F (cheio no Actual, pontilhado no Forecast); com ano = barras B × F à direita ──
+  function scurveSvg(s, W, H, cfg, acumular) {
+    var l = mesesCurtos(), b = s.b.slice(), a = s.a.slice(), MT = 22 * K, MB = Math.max(16 * K, MB_MIN);
+    if (acumular) for (var i = 1; i < 12; i++) { b[i] += b[i - 1]; a[i] += a[i - 1]; }
+    var comAno = !acumular, areaW = comAno ? W - Math.min(240, Math.max(150, W * 0.2)) : W, gw = areaW / 12;
+    // linhas: escala pela faixa dos valores (sem o zero), para a curva usar a altura do gráfico
+    var lo = Math.min.apply(null, b.concat(a)), hi = Math.max.apply(null, b.concat(a)), folga = (hi - lo) * 0.12 || 1;
+    var y = function (v) { return MT + 10 + (hi + folga - v) / (hi - lo + 2 * folga) * (H - MT - 10 - MB - 8); };
+    function px(k) { return gw * (k + 0.5); }
+    // Curva suavizada monótona (Fritsch–Carlson): passa por todos os pontos sem ultrapassar picos e vales.
+    // Tangentes calculadas na série inteira, para o trecho Actual e o Forecast se encontrarem sem quebra.
+    function tangentes(arr) {
+      var n = arr.length, ys = arr.map(y), dl = [], m = [];
+      for (var k = 0; k < n - 1; k++) dl.push((ys[k + 1] - ys[k]) / gw);
+      m[0] = dl[0]; m[n - 1] = dl[n - 2];
+      for (k = 1; k < n - 1; k++) m[k] = dl[k - 1] * dl[k] <= 0 ? 0 : (dl[k - 1] + dl[k]) / 2;
+      for (k = 0; k < n - 1; k++) {
+        if (dl[k] === 0) { m[k] = m[k + 1] = 0; continue; }
+        var a = m[k] / dl[k], b = m[k + 1] / dl[k], h = a * a + b * b;
+        if (h > 9) { var t = 3 / Math.sqrt(h); m[k] = t * a * dl[k]; m[k + 1] = t * b * dl[k]; }
+      }
+      return { ys: ys, m: m };
+    }
+    function linha(arr, de, ate) {
+      var tg = tangentes(arr), d = 'M' + px(de).toFixed(1) + ' ' + tg.ys[de].toFixed(1), c = gw / 3;
+      for (var k = de; k < ate; k++) {
+        d += 'C' + (px(k) + c).toFixed(1) + ' ' + (tg.ys[k] + tg.m[k] * c).toFixed(1) + ' ' + (px(k + 1) - c).toFixed(1) + ' ' + (tg.ys[k + 1] - tg.m[k + 1] * c).toFixed(1) + ' ' + px(k + 1).toFixed(1) + ' ' + tg.ys[k + 1].toFixed(1);
+      }
+      return d;
+    }
+    var ult = 0; for (var k = 1; k <= 12; k++) if (ehReal(k)) ult = k;
+    var out = '<line class="b-base" x1="2" x2="' + (areaW - 8) + '" y1="' + (H - MB) + '" y2="' + (H - MB) + '"/>';
+    out += '<path class="l-b" d="' + linha(b, 0, 11) + '"/>';
+    if (ult > 0) out += '<path class="l-a" d="' + linha(a, 0, ult - 1) + '"/>';
+    if (ult < 12) out += '<path class="l-f" d="' + linha(a, Math.max(0, ult - 1), 11) + '"/>';
+    var rotulos = gw >= 34, eixoCurto = gw < 40;
+    for (var j = 0; j < 12; j++) {
+      var acima = a[j] >= b[j], lbl = l[j] + (eixoCurto ? '' : ' ' + (ehReal(j + 1) ? 'A' : 'F'));
+      out += '<circle class="p-b" cx="' + px(j) + '" cy="' + y(b[j]) + '" r="3" data-tip="' + esc(l[j] + ' · Budget: ' + fmt(b[j], 0) + ' ' + cfg.unid) + '"/>';
+      out += '<circle class="p-a" cx="' + px(j) + '" cy="' + y(a[j]) + '" r="3.6" data-tip="' + esc(l[j] + ' ' + (ehReal(j + 1) ? 'A' : 'F') + ': ' + fmt(a[j], 0) + ' ' + cfg.unid) + '"/>';
+      if (rotulos) {
+        out += '<text class="v-b" x="' + px(j) + '" y="' + (y(b[j]) + (acima ? 15 : -8) * K) + '" text-anchor="middle">' + fmt(b[j], 0) + '</text>';
+        out += '<text class="v-a" x="' + px(j) + '" y="' + (y(a[j]) + (acima ? -8 : 15) * K) + '" text-anchor="middle">' + fmt(a[j], 0) + '</text>';
+      }
+      if (gw >= 26 || j % 2 === 0) out += '<text class="b-axis" x="' + px(j) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + lbl + '</text>';
+    }
+    if (comAno) {
+      var fb = s.b.reduce(function (x, v) { return x + v; }, 0), fa = s.a.reduce(function (x, v) { return x + v; }, 0);
+      var MTa = (state.delta ? 46 : 20) * K, ya = escalaY([fb, fa], MTa, MB, H), y0 = ya(0), x0 = areaW + 8, PW = W - x0;
+      // largura das colunas: a das colunas do FCF YEAR logo abaixo (Consolidated) ou a dos gráficos B × A|F vizinhos
+      var PWv = W / (state.mes < 12 ? 5 : 4);
+      var BW = cfg.larguraDe ? ponteBW(dadosBu()[cfg.larguraDe], W) : Math.max(16, Math.min(72, PWv * 0.36)), GAP = Math.max(8, Math.min(28, PWv * 0.1)), xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
+      var lb = aa() + 'B', la = aa() + (ehReal(12) ? 'A' : 'F');
+      out += '<line class="b-base" x1="' + (x0 + 6) + '" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+      out += barra(xb, BW, ya, y0, fb, 'g-b', 0, lb + ' · Budget: ' + fmt(fb, 0) + ' ' + cfg.unid);
+      out += barra(xa, BW, ya, y0, fa, 'g-a', 0, la + ': ' + fmt(fa, 0) + ' ' + cfg.unid);
+      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + lb + '</text>';
+      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + la + '</text>';
+      if (state.delta) out += cota(ya, y0, xb + BW, xa, fb, fa, delta(fb, fa, cfg.pol, 0));
+    }
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(cfg.titulo + ' (' + cfg.unid + ')') + '">' + out + '</svg>';
+  }
+
+  // ── Ponte (waterfall): totais em degradê azul, Budget em cinza, variações em verde/vermelho, fio entre degraus ──
+  // tipos: 'tot' barra cheia (reinicia o acumulado), 'd' variação, 'sub' subtotal calculado, 'ref' referência (Budget), 'zero' reinicia em 0
+  // Margem inferior da ponte: espaço para os rótulos (2-3 linhas, ou na diagonal em tela estreita)
+  function ponteMB(itens, W) {
+    var n = 0, gap = 0;
+    itens.forEach(function (it) { if (it.tipo === 'zero') gap++; else n++; });
+    var gw = W / (n + gap * 0.5);
+    return (gw < 46 ? 64 : 14 + (gw < 70 ? 3 : 2) * 11) * K;
+  }
+  function ponteBW(itens, W) {
+    var n = 0, gap = 0;
+    itens.forEach(function (it) { if (it.tipo === 'zero') gap++; else n++; });
+    return Math.max(10, Math.min(90, W / (n + gap * 0.5) * 0.66));
+  }
+  function ponteSvg(itens, W, H, cfg) {
+    var ac = 0, bs = [], gap = 0;
+    itens.forEach(function (it) {
+      if (it.tipo === 'zero') { ac = 0; gap++; return; }
+      var de, ate;
+      if (it.tipo === 'd') { de = ac; ate = ac + it.v; ac = ate; }
+      else if (it.tipo === 'sub') { de = 0; ate = ac; }
+      else { de = 0; ate = it.v; if (it.tipo === 'tot') ac = it.v; }
+      bs.push({ it: it, de: de, ate: ate, v: it.tipo === 'sub' ? ac : it.v, gap: gap });
+    });
+    var slots = bs.length + gap * 0.5, gw = W / slots, BW = ponteBW(itens, W);
+    // tela estreita: rótulos na diagonal, em uma linha; senão, até 2-3 linhas na horizontal
+    var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = Math.max(ponteMB(itens, W), MB_MIN), MT = 20 * K;
+    if (!bs.length) return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(cfg.titulo + ': ' + S.t('g.semDados')) + '"><line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + (H - MB) + '" y2="' + (H - MB) + '"/><text class="b-axis" x="' + W / 2 + '" y="' + (H / 2) + '" text-anchor="middle">' + esc(S.t('g.semDados')) + '</text></svg>';
+    var vals = []; bs.forEach(function (p) { vals.push(p.de, p.ate); });
+    var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+    var fs = Math.max(8, Math.min(11 * K, gw / 6));
+    bs.forEach(function (p, i) {
+      var cx = gw * (i + p.gap * 0.5 + 0.5), x = cx - BW / 2, ya = y(p.de), yb = y(p.ate), top = Math.min(ya, yb), h = Math.max(Math.abs(ya - yb), 1.5);
+      var neg = p.it.tipo === 'd' && p.it.v < 0;
+      var fill = p.it.tipo === 'd' ? '' : ' fill="url(#' + (p.it.tipo === 'ref' || p.it.cinza ? 'g-b' : 'g-a') + ')"';
+      var cls = 'b-bar' + (neg ? ' neg' : '') + (p.it.tipo === 'd' ? (p.it.v >= 0 ? ' w-pos' : ' w-neg') : '');
+      out += '<rect class="' + cls + '" x="' + x + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3"' + fill + ' data-tip="' + esc(p.it.lbl + ': ' + fmt(p.v, 0) + ' ' + cfg.unid) + '"/>';
+      // fio até o próximo degrau (mesmo nível do fim desta barra)
+      var prox = bs[i + 1];
+      if (prox && prox.gap === p.gap && prox.it.tipo === 'd') {
+        var nx = gw * (i + 1 + prox.gap * 0.5 + 0.5) - BW / 2, yl = y(p.ate);
+        out += '<line class="w-link" x1="' + (x + BW) + '" x2="' + nx + '" y1="' + yl + '" y2="' + yl + '"/>';
+      }
+      out += '<text class="b-val" style="font-size:' + fs.toFixed(1) + 'px" x="' + cx + '" y="' + (top - 6) + '" text-anchor="middle">' + (p.it.tipo === 'd' && p.v > 0 ? '+' : '') + fmt(p.v, 0) + '</text>';
+      if (giro) out += '<text class="b-axis" text-anchor="end" transform="translate(' + (cx + 3) + ' ' + (H - MB + 12 * K) + ') rotate(-45)">' + quebrar(p.it.lbl, 16, 1, 0) + '<title>' + esc(p.it.lbl) + '</title></text>';
+      else out += '<text class="b-axis" x="' + cx + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + quebrar(p.it.lbl, Math.max(7, Math.floor(gw / 5.4)), linhas, cx) + '<title>' + esc(p.it.lbl) + '</title></text>';
+    });
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(cfg.titulo + ' (' + cfg.unid + ')') + '">' + out + '</svg>';
+  }
+  function quebrar(s, max, linhas, x) { // rótulo em até N linhas, reticências no excesso
+    var out = [''];
+    s.split(' ').forEach(function (p) { var u = out.length - 1; if ((out[u] + ' ' + p).trim().length > max && out[u]) out.push(p); else out[u] = (out[u] + ' ' + p).trim(); });
+    if (out.length > linhas) { out = out.slice(0, linhas); out[linhas - 1] = out[linhas - 1].slice(0, max - 1) + '…'; }
+    return out.map(function (l, i) { return '<tspan x="' + x + '" dy="' + (i ? 11 * K : 0) + '">' + esc(l) + '</tspan>'; }).join('');
+  }
+
+  // ── Cards ──
+  function seletorHtml(chave, opcoes, rotulo) {
+    return '<div class="seg" role="group" aria-label="' + esc(rotulo) + '">' + opcoes.map(function (o) {
+      return '<button type="button" data-sel="' + chave + '" data-v="' + o.chave + '" aria-pressed="' + (state.sel[chave] === o.chave) + '">' + esc(o.lbl) + '</button>';
+    }).join('') + '</div>';
+  }
+  function cardHtml(cfg, i) {
+    var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '';
+    if (cfg.tipo === 'ebitdaVbm') ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
+    if (cfg.tipo === 'allin') ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
+    if (cfg.tipo === 'allinStack') ctl = '<ul class="legend legend-stack">' + CAMADAS.slice().reverse().map(function (c) {
+      return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
+    }).join('') + '</ul>';
+    return '<article class="card" style="grid-area:' + cfg.area + '">' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4>' +
+      '<p class="card-unit">(' + esc(cfg.unid) + ')</p></div>' + ctl + '</div>' +
+      '<div class="chart" data-card="' + i + '"></div></article>';
+  }
+  function dadosBu() { return D.bu[state.bu][state.ano]; }
+  function allinComp() {
+    var d = dadosBu();
+    return { sus: recortes(d.sus, true), cost: recortes(d.cost, true), byp: recortes(d.byp, true) };
+  }
+  function svgDoCard(cfg, W, H) {
+    var d = dadosBu();
+    if (cfg.tipo === 'ebitdaVbm') {
+      var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut, vbm: somaSerie([d.ebitdaCu, d.ebitdaNi, d.ebitdaOut]) }[state.sel.ebitda];
+      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', casas: state.sel.ebitda === 'out' ? 2 : cfg.casas });
+    }
+    if (cfg.tipo === 'allin') {
+      var c = allinComp(), k = state.sel.allin;
+      var gs = k === 'allin' ? c.sus.map(function (g, i) { return { lb: g.lb, la: g.la, b: g.b + c.cost[i].b + c.byp[i].b, a: g.a + c.cost[i].a + c.byp[i].a }; }) : c[k];
+      return paresSvg(gs, W, H, cfg);
+    }
+    if (cfg.tipo === 'allinStack') return empilhadoSvg(allinComp(), W, H, cfg);
+    if (cfg.tipo === 'pares') return paresSvg(recortes(d[cfg.ind]), W, H, cfg);
+    if (cfg.tipo === 'scurve') return scurveSvg(d[cfg.ind], W, H, cfg, false);
+    if (cfg.tipo === 'acum') return scurveSvg(d[cfg.ind], W, H, cfg, true);
+    return ponteSvg(d[cfg.ind], W, H, cfg);
+  }
+  function bu() { return BUS.filter(function (b) { return b.chave === state.bu; })[0]; }
+  // ── Bases alinhadas: gráficos na mesma linha da grade usam a mesma margem inferior (a maior entre eles),
+  // então a linha de base fica na mesma altura em todos — inclusive ao lado das pontes, que precisam de mais espaço
+  var MB_MIN = 0;
+  function mbNatural(cfg, W) {
+    if (cfg.tipo === 'ponte') return ponteMB(dadosBu()[cfg.ind], W);
+    return (cfg.tipo === 'allinStack' ? 20 : 16) * K;
+  }
+  // Escala das fontes: o COO desenha em até 380×190 px; aqui o gráfico é maior, então o texto cresce na mesma
+  // proporção (entre 1× e 1,3×). Gráficos da mesma linha usam a mesma escala (a menor), para o texto ficar igual.
+  var K = 1;
+  function escalaDe(W, H) { return Math.max(1, Math.min(1.3, H / 190, W / 380)); }
+  function desenharTodos(forcar) {
+    var cards = bu().cards, itens = [].map.call(dash.querySelectorAll('.chart'), function (el) {
+      var r = el.getBoundingClientRect(), cfg = cards[+el.getAttribute('data-card')];
+      return { el: el, cfg: cfg, W: Math.round(r.width), H: Math.round(r.height), fundo: Math.round(r.bottom), k: escalaDe(r.width, r.height) };
+    });
+    function mesmaLinha(it) { return itens.filter(function (o) { return Math.abs(o.fundo - it.fundo) <= 3; }); }
+    itens.forEach(function (it) { it.kl = Math.min.apply(null, mesmaLinha(it).map(function (o) { return o.k; })); });
+    itens.forEach(function (it) { K = it.kl; it.mb = mbNatural(it.cfg, it.W); });
+    itens.forEach(function (it) {
+      var mb = Math.max.apply(null, mesmaLinha(it).map(function (o) { return o.mb; }));
+      if (it.W < 60 || it.H < 44) return;
+      var key = it.W + 'x' + it.H + '|' + mb + '|' + it.kl;
+      if (it.el._key === key && !forcar) return;
+      it.el._key = key;
+      MB_MIN = mb; K = it.kl;
+      it.el.style.setProperty('--k', K.toFixed(3));
+      it.el.innerHTML = svgDoCard(it.cfg, it.W, it.H);
+    });
+    MB_MIN = 0; K = 1;
+  }
+
+  // ── Filtros (Business Units no lugar do drill-down País › Site do COO) ──
+  var FILTROS = {
+    bu: function () { return BUS.map(function (b) { return { v: b.chave, lbl: b.lbl }; }); },
+    ano: function () { return D.anos.map(function (a) { return { v: a, lbl: String(a) }; }); },
+    tri: function () { return [1, 2, 3, 4].map(function (t) { return { v: t, lbl: 'Q' + t }; }); },
+    mes: function () { var t = Math.ceil(state.mes / 3), l = MESES_LONGOS[S.idioma] || MESES_LONGOS.en; return [0, 1, 2].map(function (i) { var m = t * 3 - 2 + i; return { v: m, lbl: l[m - 1] }; }); }
+  };
+  function valor(k) { return k === 'tri' ? Math.ceil(state.mes / 3) : state[k]; }
+  function renderFiltros() {
+    document.querySelectorAll('[data-filter]').forEach(function (g) {
+      var k = g.getAttribute('data-filter');
+      g.innerHTML = FILTROS[k]().map(function (o) {
+        return '<button type="button" data-k="' + k + '" data-v="' + o.v + '" aria-pressed="' + (valor(k) === o.v) + '">' + esc(o.lbl) + '</button>';
+      }).join('');
+    });
+    document.getElementById('deltaSwitch').setAttribute('aria-checked', String(state.delta));
+  }
+  document.querySelector('.filters').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-k]'); if (!b) return;
+    var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+    if (k === 'tri') state.mes = +v * 3; // trimestre novo: último mês dele
+    else state[k] = k === 'bu' ? v : +v;
+    gravarUrl(); render();
+  });
+
+  var dash = document.getElementById('dash');
+  dash.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-sel]'); if (!b) return;
+    state.sel[b.getAttribute('data-sel')] = b.getAttribute('data-v');
+    gravarUrl(); render();
+  });
+  var pend = 0, ro = new ResizeObserver(function () { cancelAnimationFrame(pend); pend = requestAnimationFrame(function () { desenharTodos(false); }); });
+  var primeira = true;
+  function render() {
+    var b = bu();
+    renderFiltros();
+    document.getElementById('buName').textContent = b.nome;
+    var badge = document.getElementById('dataBadge');
+    badge.hidden = D.fonte !== 'demo'; badge.textContent = S.t(aviso === 'ERRO_BANCO' ? 'l.demoErro' : 'l.demo');
+    document.getElementById('updTxt').textContent = D.atualizado ? S.dataHora(new Date(D.atualizado)) : '—';
+    ro.disconnect();
+    dash.style.gridTemplateAreas = b.areas;
+    dash.innerHTML = b.cards.map(cardHtml).join('');
+    dash.querySelectorAll('.chart').forEach(function (el) { ro.observe(el); });
+    desenharTodos(true);
+    if (primeira) { primeira = false; setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600); }
+  }
+
+  // Dica (data-tip) como no COO
+  var tip = document.getElementById('tip');
+  dash.addEventListener('mousemove', function (ev) {
+    var t = ev.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip'); tip.hidden = false;
+    var r = tip.getBoundingClientRect();
+    tip.style.left = Math.min(ev.clientX + 14, innerWidth - r.width - 8) + 'px';
+    tip.style.top = Math.max(8, ev.clientY - r.height - 10) + 'px';
+  });
+  dash.addEventListener('mouseleave', function () { tip.hidden = true; });
+
+  document.getElementById('deltaSwitch').addEventListener('click', function () { state.delta = !state.delta; gravarUrl(); render(); });
+  document.getElementById('fsBtn').addEventListener('click', function () {
+    if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  });
+  ['idioma', 'numero', 'tema'].forEach(function (e) { S.on(e, function () { S.traduzir(); render(); }); });
+  S.traduzir();
+  render();
+});
+</script>
+</body>
+</html>
