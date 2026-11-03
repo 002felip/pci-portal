@@ -453,74 +453,268 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 
 @media (max-width: 960px) { .opcoes { grid-template-columns: 1fr; gap: 16px; } .opcao { min-height: 0; } .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* ═══ Power BI refeito (painel SPC) ═══ */
-:root { --bi-cl: #008000; --bi-media: #0B3C5D; --bi-r3: #000000; --bi-caixa: #F3F4F5; --bi-rotulo: #ffffff; --bi-eixo: #6E6E6E; --bi-grade: rgba(13,38,64,.08); --bi-borda-barra: rgba(0,0,0,.55); }
-:root[data-theme="dark"] { --bi-cl: #4ade80; --bi-media: #4f8fc4; --bi-r3: #e8eef5; --bi-caixa: #0C2438; --bi-rotulo: #133650; --bi-eixo: rgba(232,238,245,.62); --bi-grade: rgba(255,255,255,.07); --bi-borda-barra: rgba(255,255,255,.35); }
-.bi-filtros { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }
-.bi-filtros > .data { flex: 1 1 170px; min-width: 0; }
-.bi-filtros > .data.bi-per { flex: 1.6 1 290px; }
-.bi-filtros > .bi-flag { flex: 0 0 auto; }
-.bi-filtros .data label, .bi-flag > span { display: block; font: italic 400 .74rem var(--font-display); color: var(--texto-suave); margin-bottom: 5px; }
-.bi-filtros .data[hidden] { display: none; }
-.bi-datas { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
-.bi-datas input { width: 100%; min-width: 0; min-height: 34px; padding: .45rem .6rem; border-radius: 9px; border: 1px solid var(--campo-borda); background: var(--campo); color: var(--ctl-text); font: 500 .8rem var(--font-ui); color-scheme: light; }
-:root[data-theme="dark"] .bi-datas input { color-scheme: dark; }
-.bi-flag .segm { display: flex; background: var(--campo); border: 1px solid var(--campo-borda); border-radius: 9px; padding: 2px; gap: 3px; }
-.segm button { border: none; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); min-height: 28px; padding: 2px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
-.segm button:hover:not(.active) { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
-.segm button.active { background: var(--primario); color: var(--primario-texto); }
-.bi-rodape { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; margin-top: 14px; font: italic 400 .7rem var(--font-display); color: var(--texto-fraco); font-variant-numeric: tabular-nums; }
-.bi-titulo { margin: 22px 0 18px; font: italic 400 clamp(1.4rem, 2vw, 2rem)/1.15 var(--font-display); color: var(--accent); letter-spacing: -.005em; text-wrap: balance; }
-.bi-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin-bottom: .6rem; }
-.bi-cab h2 { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--texto); }
-.bi-cab .segm { background: var(--campo); border: 1px solid var(--campo-borda); border-radius: 9px; padding: 2px; display: flex; gap: 3px; }
-.bi-cab .rot-segm { font: italic 400 .74rem var(--font-display); color: var(--texto-suave); margin-right: .5rem; }
-.bi-legenda { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; font-size: .72rem; color: var(--texto-suave); margin-bottom: .4rem; }
-.bi-legenda span { display: inline-flex; align-items: center; gap: .4rem; }
-.bi-legenda i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
-.bi-sym { width: 14px; height: 14px; display: inline-block; position: relative; }
-.bi-sym.linha::after { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--c); }
-.bi-sym.ponto::after, .bi-sym.ponto4::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--c); }
-.bi-sym.ponto4::after { box-shadow: 0 0 0 1.5px #8a2be2; }
-.bi-sym.faixa { background: var(--c); opacity: .45; border-radius: 2px; }
-.bi-grafico { position: relative; min-height: 120px; }
-.bi-grafico.carregando { opacity: .45; transition: opacity .2s; }
-.bi-svg { display: block; overflow: visible; }
-.bi-svg text { font-family: 'Poppins', sans-serif; }
-.bi-eixo { font-size: 10.5px; fill: var(--bi-eixo); }
-.bi-grade { stroke: var(--bi-grade); }
-.bi-base { stroke: var(--bi-eixo); stroke-width: 1; }
-.bi-guia { stroke: var(--bi-eixo); stroke-dasharray: 3 3; }
-.bi-ponto { fill: var(--vbm-blue); stroke: var(--bi-caixa); stroke-width: 1.5; }
-.bi-t-grupo { font-size: 10.5px; font-weight: 700; fill: #1f2937; }
-.bi-t-cl { font-size: 13px; font-weight: 700; paint-order: stroke; stroke: var(--bi-caixa); stroke-width: 4px; }
-.bi-t-lim { font-size: 10px; paint-order: stroke; stroke: var(--bi-caixa); stroke-width: 3px; }
-.bi-t-best { font-size: 8.5px; fill: #8a6a12; }
-:root[data-theme="dark"] .bi-t-best { fill: #f2cf6b; }
-:root[data-theme="dark"] .bi-t-grupo { fill: #e8eef5; }
-.bi-t-barra { font-weight: 700; }
-.bi-dica { position: absolute; z-index: 5; pointer-events: none; padding: .35rem .55rem; border-radius: 7px; font-size: .7rem; line-height: 1.35;
-  background: rgba(2,16,28,.92); color: #e8eef5; box-shadow: 0 6px 18px rgba(0,0,0,.25); white-space: nowrap; }
-.bi-dica b { display: block; font-weight: 600; color: #7dd3f0; }
-.bi-msg { display: flex; align-items: center; justify-content: center; min-height: 160px; font-size: .82rem; color: var(--texto-fraco); text-align: center; padding: 1rem; }
-.bi-inferior { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 24px; margin-top: 24px; }
-.bi-medidas-linha { display: flex; gap: 1rem; align-items: flex-start; }
-.bi-medidas-svg { flex: 1; min-width: 0; }
-.bi-variacao { width: 210px; flex-shrink: 0; background: var(--ctl-bg); border: 1px solid var(--linha); border-radius: 12px; padding: .6rem .75rem; font-size: .72rem; }
-.bi-variacao h4 { font: italic 400 .8rem var(--font-display); color: var(--texto-suave); margin-bottom: .35rem; }
-.bi-variacao ul { list-style: none; display: flex; flex-direction: column; gap: .2rem; }
-.bi-variacao li { display: flex; justify-content: space-between; gap: .5rem; font-weight: 600; }
-.bi-variacao li span { font-weight: 500; color: var(--texto-suave); }
-.bi-variacao .sobe b { color: #1F77B4; } .bi-variacao .desce b { color: #D62728; }
-:root[data-theme="dark"] .bi-variacao .sobe b { color: #5aa9e6; } :root[data-theme="dark"] .bi-variacao .desce b { color: #f87171; }
-.bi-hist-legenda { width: 100%; font-size: .72rem; margin-bottom: .4rem; }
-.bi-hist-legenda th { padding: .25rem .4rem; border-bottom: 1px solid var(--linha); font-size: .62rem; text-transform: none; letter-spacing: 0; text-align: right; }
-.bi-hist-legenda td { padding: .25rem .4rem; border-bottom: none; text-align: right; font-variant-numeric: tabular-nums; }
-.bi-hist-legenda th:first-child, .bi-hist-legenda td:first-child { width: 30px; text-align: left; }
-.bi-amostra { display: inline-block; width: 24px; height: 12px; border: 1px solid #000; position: relative; vertical-align: middle; }
-.bi-amostra::after { content: ''; position: absolute; left: 0; right: 0; top: 4px; border-top: 2px dashed var(--cor-linha, #000); }
-@media (max-width: 960px) { .bi-inferior { grid-template-columns: 1fr; } }
-@media (max-width: 700px) { .bi-medidas-linha { flex-direction: column; } .bi-variacao { width: 100%; } }
+/* ═══ Dashboard (aba "Dashboard", ex-"Power BI") — mesmo desenho do Dashboard do VBM Kaizen ═══
+   Hero com foto e caixa de vidro, abas, filtros na lateral com etiquetas, cartões de resumo,
+   cards brancos com sombra, colunas com cota de variação (padrão VBM Quarterly), ranking e
+   tabelas de cabeçalho escuro. Tokens --d-* copiados do dashboard.html do Kaizen, com o par
+   claro/escuro aqui mesmo (o tema do Stable & Capable vem do Setup Dashboards: data-theme).
+   Status/sinais em azuis e cinzas — sem "arco-íris"; vermelho só para ponto fora dos limites. */
+.dsc {
+  --d-surface: #ffffff; --d-solid: #ffffff; --d-surface-alt: #f7f9fc;
+  --d-line: #e8edf3; --d-line-soft: #eef2f6;
+  --d-ink: #0f172a; --d-ink-soft: #5b6676; --d-title: #316866;
+  --d-shadow: 0 10px 30px rgba(15,23,42,.06), 0 1px 3px rgba(15,23,42,.05);
+  --d-track: rgba(13,38,64,.08); --d-pill: #d8f0fa; --d-glass: rgba(246,246,246,.94);
+  --d-stroke: rgba(116,118,120,.38); --d-hair: rgba(204,204,204,.14);
+  --d-up: #007e7a; --d-up-rgb: 0,126,122; --d-down: #b91c1c; --d-down-rgb: 220,38,38; --d-flat: #555555; --d-flat-rgb: 116,118,120;
+  --d-hover: #f2f8fc; --d-sel: #e6f4fb; --d-ease: cubic-bezier(.16,.84,.28,1);
+  --vbm-blue: #3cb5e5; --vbm-blue-dark: #1a8bbf; --vbm-blue-deep: #0d2640; --vbm-blue-light: #7dd3f0; --vbm-border: rgba(60,181,229,.25);
+  --c-serie: #a7b8c6; --c-cl: #1a8bbf; --c-lim: #8a96a6; --c-best: rgba(60,181,229,.11);
+  --c-r1: #b91c1c; --c-r2: #3cb5e5; --c-r3: #0d2640; --c-r4: #8a96a6;
+  --ano-0: #3cb5e5; --ano-1: #1b5e80; --ano-2: #8a96a6; --ano-3: #c3ccd6;
+  display: flex; flex-direction: column; gap: 1.1rem; font-family: 'Poppins', 'Segoe UI', sans-serif; color: var(--d-ink);
+}
+:root[data-theme="dark"] .dsc {
+  --d-surface: rgba(255,255,255,.06); --d-solid: #0f2a40; --d-surface-alt: rgba(255,255,255,.04);
+  --d-line: rgba(255,255,255,.12); --d-line-soft: rgba(255,255,255,.08);
+  --d-ink: #f4f7fb; --d-ink-soft: rgba(244,247,251,.62); --d-title: var(--vbm-blue-light);
+  --d-shadow: 0 4px 24px rgba(0,0,0,.3); --d-track: rgba(255,255,255,.10); --d-pill: rgba(125,211,240,.22); --d-glass: rgba(13,38,64,.94);
+  --d-stroke: rgba(255,255,255,.32); --d-hair: rgba(255,255,255,.06);
+  --d-up: #34d399; --d-up-rgb: 52,211,153; --d-down: #f87171; --d-down-rgb: 248,113,113; --d-flat: rgba(255,255,255,.7); --d-flat-rgb: 200,200,200;
+  --d-hover: rgba(255,255,255,.05); --d-sel: rgba(60,181,229,.16);
+  --c-serie: rgba(255,255,255,.30); --c-cl: #7dd3f0; --c-lim: rgba(232,238,245,.55); --c-best: rgba(60,181,229,.14);
+  --c-r1: #f87171; --c-r2: #3cb5e5; --c-r3: #e8eef5; --c-r4: #9aa6b6;
+  --ano-0: #3cb5e5; --ano-1: #c3ccd6; --ano-2: #6f7d90; --ano-3: #3d4a5c;
+}
+.dsc [hidden] { display: none !important; }
+.dsc .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── Hero (mesma linguagem do Kaizen, fundo VBM) ── */
+.dsc-hero { position: relative; border-radius: 1.25rem; overflow: hidden; padding: 1.6rem 2rem; background-color: #041523;
+  background-image: linear-gradient(90deg, rgba(4,21,35,.85) 0%, rgba(4,21,35,.4) 60%, rgba(4,21,35,.6) 100%), url('assets/images/Fundo_VBM_2400x1145.webp');
+  background-size: cover; background-position: center; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; }
+.dsc-hero-orb { position: absolute; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(60,181,229,.18) 0%, transparent 65%); top: -100px; right: -60px; filter: blur(50px); pointer-events: none; }
+.dsc-hero-texto { position: relative; flex: 1 1 20rem; min-width: 0; }
+.dsc-hero-ante { font-size: .6rem; letter-spacing: .25em; text-transform: uppercase; color: var(--vbm-blue-light); margin-bottom: .5rem; }
+.dsc-hero-titulo { margin: 0 0 .45rem; font-weight: 700; font-style: italic; font-size: clamp(1.6rem, 3.2vw, 2.6rem); color: #fff; line-height: .95; letter-spacing: -.01em; text-transform: uppercase; }
+.dsc-hero-sub { font-weight: 300; font-size: clamp(.82rem, 1.5vw, 1.05rem); letter-spacing: .08em; color: rgba(255,255,255,.8); margin-bottom: .45rem; text-transform: uppercase; }
+.dsc-hero-desc { font-size: .78rem; color: rgba(255,255,255,.62); line-height: 1.6; max-width: 42rem; margin: 0; }
+.dsc-hero-box { position: relative; display: flex; flex-direction: column; gap: .7rem; min-width: 260px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; padding: .9rem 1.1rem; box-shadow: 0 8px 32px rgba(0,0,0,.18); color: #fff; }
+@supports (backdrop-filter: blur(1px)) { .dsc-hero-box { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } }
+.dsc-base { display: grid; grid-template-columns: auto auto; gap: .2rem 1.2rem; font-size: .74rem; color: rgba(255,255,255,.72); }
+.dsc-base b { color: #fff; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.dsc-atualizado { font-size: .66rem; color: rgba(255,255,255,.55); }
+.dsc-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+.dsc-btn-hero { display: inline-flex; align-items: center; gap: .45rem; height: 38px; padding: 0 .95rem; border-radius: .55rem; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; transition: background .2s, border-color .2s; }
+.dsc-btn-hero svg { width: 14px; height: 14px; flex: none; }
+.dsc-btn-hero:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.4); }
+.dsc-btn-hero.primario { background: var(--vbm-blue); border-color: var(--vbm-blue); color: #04263a; font-weight: 600; }
+.dsc-btn-hero.primario:hover { background: var(--vbm-blue-light); border-color: var(--vbm-blue-light); }
+.dsc-btn-hero:disabled { opacity: .55; cursor: not-allowed; }
+.dsc-contador { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #04263a; color: #fff; font-size: .66rem; font-weight: 700; display: inline-grid; place-items: center; }
+
+/* ── Abas + filtros ativos ── */
+.dsc-barra { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; }
+.dsc-abas { display: flex; gap: 4px; padding: 4px; border-radius: .75rem; background: var(--d-surface); border: 1px solid var(--d-line); box-shadow: var(--d-shadow); overflow-x: auto; max-width: 100%; }
+.dsc-aba { border: 0; background: transparent; color: var(--d-ink-soft); padding: .55rem 1rem; border-radius: .55rem; font: 500 .76rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; min-height: 38px; display: inline-flex; align-items: center; gap: .45rem; }
+.dsc-aba svg { width: 13px; height: 13px; flex: none; }
+.dsc-aba:hover { color: var(--d-ink); }
+.dsc-aba[aria-selected="true"] { background: var(--vbm-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.dsc-chips { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+.dsc-chip { display: inline-flex; align-items: center; gap: .45rem; max-width: 100%; padding: .32rem .7rem; border-radius: 999px; background: var(--d-surface); border: 1px solid var(--vbm-border); color: var(--d-ink); font: 400 .7rem 'Poppins', sans-serif; cursor: pointer; min-height: 32px; }
+.dsc-chip b { font-weight: 600; }
+.dsc-chip .v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+.dsc-chip svg { width: 9px; height: 9px; opacity: .6; flex: none; }
+.dsc-chip:hover { border-color: var(--vbm-blue); }
+
+/* ── Cartões de resumo ── */
+.dsc-tiles { display: grid; gap: .8rem; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); }
+.dsc-tile { position: relative; overflow: hidden; text-align: left; color: var(--d-ink); font-family: inherit; background: var(--d-surface); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1rem 1.15rem; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: .6rem; }
+.t-head { display: flex; align-items: center; gap: .5rem; font-size: .76rem; color: var(--d-ink-soft); }
+.t-head i.q { width: 9px; height: 9px; border-radius: 3px; background: var(--c); flex: none; }
+.t-num { font-size: clamp(1.6rem, 2.4vw, 2.15rem); font-weight: 600; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.t-num small { font-size: .42em; font-weight: 400; color: var(--d-ink-soft); letter-spacing: 0; margin-left: .3em; }
+.t-foot { display: flex; align-items: center; gap: .6rem; }
+.t-bar { flex: 1; height: 5px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
+.t-bar span { display: block; height: 100%; width: var(--w); min-width: 4px; background: var(--c, var(--vbm-blue)); border-radius: 999px; transform-origin: left; animation: dscGrowX .9s var(--d-ease) both; }
+.t-pct { font-size: .72rem; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+.t-leg { font-size: .66rem; color: var(--d-ink-soft); margin-top: -.3rem; }
+@keyframes dscGrowX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dsc-tile-total { background-image: linear-gradient(140deg, rgba(60,181,229,.16) 0%, rgba(60,181,229,0) 60%); }
+.dsc-tile-total::before { content: ''; position: absolute; right: 140px; top: -60px; height: 280px; border-left: 1px solid rgba(60,181,229,.35); transform: rotate(32deg); pointer-events: none; }
+.tt-corpo { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex: 1; }
+.tt-num { font-size: clamp(2.2rem, 3.6vw, 3.1rem); font-weight: 300; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.tt-sub { margin-top: .45rem; font-size: .74rem; color: var(--d-ink-soft); display: flex; flex-wrap: wrap; gap: .25rem .5rem; align-items: center; }
+.dsc-delta { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: 0 2px 12px rgba(15,23,42,.08), inset 0 0 0 1px rgba(15,23,42,.05); color: var(--ink-d); font-size: .68rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dsc-delta svg { width: 8px; height: 8px; }
+.donut { position: relative; width: 108px; max-width: 100%; aspect-ratio: 1; flex: none; display: grid; place-content: center; text-align: center; }
+.donut::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--conic); -webkit-mask: radial-gradient(farthest-side, transparent 70%, #000 71%); mask: radial-gradient(farthest-side, transparent 70%, #000 71%); animation: dscSpin 1s var(--d-ease) both; }
+@keyframes dscSpin { from { transform: rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.donut b { position: relative; font-size: 1.2rem; font-weight: 600; line-height: 1; }
+.donut small { position: relative; font-size: .54rem; line-height: 1.15; color: var(--d-ink-soft); margin-top: 3px; max-width: 62px; }
+.dsc-tile-sinais { justify-content: flex-start; gap: .15rem; padding-block: .8rem; }
+.dsc-tile-sinais .t-head { margin-bottom: .2rem; }
+.orow { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; align-items: center; gap: .5rem; border: 0; background: transparent; color: var(--d-ink); font: inherit; text-align: left; cursor: pointer; padding: .26rem .5rem; margin-inline: -.5rem; border-radius: .5rem; min-height: 28px; }
+.orow:hover { background: var(--d-hover); }
+.orow[aria-pressed="true"] { background: var(--d-sel); box-shadow: inset 0 0 0 1px rgba(60,181,229,.6); }
+.dsc-tile-sinais.tem-foco .orow[aria-pressed="false"] { opacity: .5; }
+.orow i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.orow span { font-size: .72rem; color: var(--d-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orow b { font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dsc-esqueleto { min-height: 132px; border-radius: 1rem; background: linear-gradient(90deg, var(--d-surface) 0%, var(--d-surface-alt) 50%, var(--d-surface) 100%); background-size: 200% 100%; border: 1px solid var(--d-line); animation: dscShimmer 1.4s linear infinite; }
+@keyframes dscShimmer { to { background-position: -200% 0; } }
+
+/* ── Grade e cards ── */
+.dsc-grade { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem; }
+.dsc .s4 { grid-column: span 4; } .dsc .s5 { grid-column: span 5; } .dsc .s7 { grid-column: span 7; } .dsc .s8 { grid-column: span 8; } .dsc .s12 { grid-column: span 12; }
+.dsc-card { min-width: 0; background: var(--d-surface); color: var(--d-ink); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1.15rem 1.3rem 1rem; display: flex; flex-direction: column; gap: .35rem; }
+.dsc-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
+.dsc-card-titulo { font-size: 1rem; font-weight: 500; color: var(--d-title); letter-spacing: -.005em; margin: 0; }
+.dsc-card-sub { margin: .1rem 0 0; font-size: .72rem; color: var(--d-ink-soft); }
+.dsc-rolagem { overflow-x: auto; overflow-y: hidden; margin-inline: -6px; padding-inline: 6px; }
+.dsc-vazio { padding: 2.6rem .75rem; text-align: center; color: var(--d-ink-soft); font-size: .78rem; }
+.dsc-legenda { display: flex; gap: .4rem 1rem; flex-wrap: wrap; font-size: .68rem; color: var(--d-ink-soft); }
+.dsc-legenda span { display: inline-flex; align-items: center; gap: .4rem; }
+.dsc-legenda .lg-linha { width: 16px; height: 0; border-top: 2px solid var(--c); display: inline-block; }
+.dsc-legenda .lg-tracejada { border-top-style: dashed; }
+.dsc-legenda .lg-ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: inline-block; }
+.dsc-legenda .lg-faixa { width: 14px; height: 10px; border-radius: 2px; background: var(--c); display: inline-block; }
+.dsc-seg { display: flex; gap: 3px; padding: 3px; border-radius: .65rem; background: var(--d-surface-alt); border: 1px solid var(--d-line-soft); overflow-x: auto; max-width: 100%; }
+.dsc-seg button { border: 0; background: transparent; color: var(--d-ink-soft); padding: .4rem .8rem; border-radius: .5rem; font: 500 .72rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; min-height: 32px; }
+.dsc-seg button:hover { color: var(--d-ink); }
+.dsc-seg button[aria-pressed="true"] { background: var(--d-solid); color: var(--vbm-blue-dark); box-shadow: 0 1px 3px rgba(15,23,42,.10); }
+:root[data-theme="dark"] .dsc-seg button[aria-pressed="true"] { background: rgba(60,181,229,.2); color: #fff; }
+
+/* ── Carta de controle (SVG) ── */
+.dsc-grafico { position: relative; }
+.dsc-grafico.carregando { opacity: .45; transition: opacity .2s; }
+.dsc-svg { display: block; overflow: visible; font-family: 'Poppins', sans-serif; }
+.dsc-svg .ex { font-size: 10.5px; fill: var(--d-ink-soft); }
+.dsc-svg .grade { stroke: var(--d-line-soft); }
+.dsc-svg .base { stroke: var(--d-line); }
+.dsc-svg .sep { stroke: var(--d-line); stroke-dasharray: 3 4; }
+.dsc-svg .pilula rect { fill: var(--d-pill); }
+.dsc-svg .pilula text { font-size: 10.5px; font-weight: 600; fill: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-svg .pilula text { fill: #fff; }
+.dsc-svg .t-cl { font-size: 11.5px; font-weight: 600; fill: var(--c-cl); paint-order: stroke; stroke: var(--d-solid); stroke-width: 4px; }
+.dsc-svg .t-lim { font-size: 9.5px; fill: var(--c-lim); paint-order: stroke; stroke: var(--d-solid); stroke-width: 3px; }
+.dsc-svg .t-best { font-size: 9px; fill: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-svg .t-best { fill: var(--vbm-blue-light); }
+.dsc-svg .sinal { transition: opacity .2s; }
+.dsc-svg.tem-foco .sinal:not(.foco) { opacity: .12; }
+.dsc-svg .guia { stroke: var(--d-stroke); stroke-dasharray: 3 3; }
+.dsc-svg .marca { fill: var(--vbm-blue); stroke: var(--d-solid); stroke-width: 2; }
+.dsc-svg .h-bar { transition: opacity .2s; }
+.dsc-dica { position: absolute; z-index: 5; pointer-events: none; padding: .4rem .65rem; border-radius: .55rem; font-size: .7rem; line-height: 1.4; background: var(--d-glass); color: var(--d-ink); box-shadow: 0 6px 22px rgba(15,23,42,.16), inset 0 0 0 1px rgba(15,23,42,.06); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dsc-dica b { display: block; font-weight: 600; color: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-dica b { color: var(--vbm-blue-light); }
+
+/* ── Colunas no padrão do VBM Quarterly (barra + cota de variação), igual ao Kaizen ── */
+.dsc .cc { --gap: 14px; --barw: 74%; --folga: 40px; min-width: var(--minw, 520px); padding-bottom: 26px; }
+.dsc .cc-area { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: var(--gap); height: var(--area-h, 230px); margin-top: calc(var(--folga) + var(--top-extra, 52px)); }
+.dsc .cc-area::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, transparent, var(--d-line) 8%, var(--d-line) 92%, transparent); }
+.dsc .col { position: relative; flex: 1 1 0; max-width: 96px; min-width: 14px; height: 100%; }
+.dsc .col::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 46%; height: 7px; background: var(--d-pill); border-radius: 4px; z-index: 2; }
+.dsc .bar { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: var(--barw); height: var(--h); border-radius: 4px 4px 2px 2px; z-index: 3; background-color: var(--c, var(--vbm-blue)); background-image: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 42%, rgba(15,23,42,.06) 100%); box-shadow: 0 1px 2px rgba(15,23,42,.07); animation: dscGrowBar .95s var(--d-ease) both; }
+@keyframes dscGrowBar { from { height: 0; } to { height: var(--h); } }
+.dsc .col:hover .bar { filter: brightness(1.06); }
+.dsc .v-lbl { position: absolute; bottom: calc(var(--h) + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--d-ink); font-size: .74rem; font-variant-numeric: tabular-nums; z-index: 6; }
+.dsc .x-lbl { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .7rem; color: var(--d-ink-soft); }
+.dsc .is-up { --ink-d: var(--d-up); --tint: var(--d-up-rgb); } .dsc .is-down { --ink-d: var(--d-down); --tint: var(--d-down-rgb); } .dsc .is-flat { --ink-d: var(--d-flat); --tint: var(--d-flat-rgb); }
+.dsc .dcnx { position: absolute; top: 0; bottom: 0; z-index: 7; pointer-events: none; width: calc(100% - var(--barw) + var(--gap)); right: calc(50% + var(--barw) / 2); }
+.dsc .dref, .dsc .dnow { position: absolute; left: -2px; right: -2px; height: 0; transform: scaleX(0); animation: dscLine .55s .34s cubic-bezier(.22,.9,.24,1) forwards; }
+.dsc .dref { bottom: var(--h-base); border-top: 1px dashed var(--d-stroke); transform-origin: left center; }
+.dsc .dnow { bottom: var(--h); border-top: 1px solid var(--d-stroke); transform-origin: right center; }
+@keyframes dscLine { to { transform: scaleX(1); } }
+.dsc .dfill { position: absolute; left: 0; right: 0; bottom: var(--h-min); height: var(--h-dif); opacity: 0; animation: dscFade .6s .62s ease-out forwards; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); }
+.dsc .dfill.up { background: linear-gradient(180deg, rgba(var(--tint),.17), rgba(var(--tint),.04)); }
+.dsc .dfill.dn { background: repeating-linear-gradient(135deg, rgba(var(--tint),.14) 0 3px, transparent 3px 7px); }
+@keyframes dscFade { to { opacity: 1; } }
+.dsc .dspan { position: absolute; left: 50%; bottom: var(--h-min); height: var(--h-dif); width: 2px; border-radius: 1px; background: rgba(var(--tint),.6); transform: translateX(-50%) scaleY(0); transform-origin: bottom center; animation: dscSpan .55s .48s cubic-bezier(.2,.85,.25,1) forwards; }
+@keyframes dscSpan { to { transform: translateX(-50%) scaleY(1); } }
+.dsc .dtrack { position: absolute; left: 50%; bottom: calc(var(--h-max) + 22px); width: 1px; height: calc(var(--folga) - 22px + var(--lift, 0px)); transform: translateX(-50%); background: linear-gradient(180deg, var(--d-hair) 0%, var(--d-stroke) 100%); opacity: 0; animation: dscFade .5s .7s ease-out forwards; }
+.dsc .dpill { position: absolute; left: 50%; bottom: calc(var(--h-max) + var(--folga) + var(--lift, 0px)); display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: 0 2px 12px rgba(15,23,42,.08), inset 0 0 0 1px rgba(15,23,42,.05); color: var(--ink-d); font-size: .66rem; font-weight: 500; line-height: 1.15; white-space: nowrap; font-variant-numeric: tabular-nums; opacity: 0; transform: translate(-50%, 8px) scale(.96); animation: dscPill .5s .78s cubic-bezier(.2,.85,.25,1) forwards; }
+.dsc .dpill svg, .dsc-delta svg { width: 8px; height: 8px; flex: none; }
+@keyframes dscPill { to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.dsc .avg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed var(--c-lim); z-index: 5; }
+.dsc .avg-line span { position: absolute; right: 0; bottom: 4px; font-size: .64rem; font-weight: 600; color: var(--d-ink-soft); background: var(--d-glass); padding: 1px 6px; border-radius: 6px; }
+
+/* ── Ranking (média ÷ budget) ── */
+.dsc .rank { display: flex; flex-direction: column; margin-top: .5rem; }
+.dsc .rk { display: grid; grid-template-columns: minmax(0, 76px) minmax(0, 1fr) 54px 72px; align-items: center; gap: .85rem; padding: .5rem .4rem; border-bottom: 1px solid var(--d-line-soft); }
+.dsc .rk:last-child { border-bottom: 0; }
+.dsc .rk-nome { font-size: .76rem; color: var(--d-ink); white-space: nowrap; }
+.dsc .rk-trilho { position: relative; height: 13px; border-radius: 4px; background: var(--d-line-soft); }
+.dsc .rk-barra { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); min-width: 3px; border-radius: 4px; background-color: var(--c, var(--vbm-blue)); background-image: linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 50%, rgba(15,23,42,.06) 100%); transform-origin: left; animation: dscGrowX .9s var(--d-ease) both; }
+.dsc .rk-meta { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 1.5px dashed var(--d-ink-soft); left: var(--m); }
+.dsc .rk-val { text-align: right; font-size: .84rem; font-weight: 600; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+.dsc .rk-pct { text-align: right; font-size: .68rem; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; }
+.dsc-nota { font-size: .68rem; color: var(--d-ink-soft); display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-top: .4rem; }
+.dsc-nota i { width: 12px; height: 0; border-top: 1.5px dashed var(--d-ink-soft); display: inline-block; }
+
+/* ── Tabelas ── */
+.dsc-tabela-wrap { overflow-x: auto; margin-top: .5rem; border-radius: .65rem; border: 1px solid var(--d-line); }
+.dsc-tabela { width: 100%; border-collapse: collapse; font-size: .74rem; }
+.dsc-tabela thead th { background: var(--vbm-blue-deep); color: #fff; text-align: left; font-weight: 500; padding: .65rem .75rem; white-space: nowrap; }
+.dsc-tabela th.num, .dsc-tabela td.num { text-align: right; }
+.dsc-tabela tbody td { padding: .58rem .75rem; border-top: 1px solid var(--d-line-soft); color: var(--d-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dsc-tabela tbody tr:nth-child(even) td { background: var(--d-surface-alt); }
+.dsc-tabela tbody tr:hover td { background: var(--d-hover); }
+.dsc-tabela td.per { font-weight: 600; color: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-tabela td.per { color: var(--vbm-blue-light); }
+.dsc-tabela td.mudo { color: var(--d-ink-soft); }
+.dsc-tabela .sinal-n { display: inline-flex; align-items: center; gap: .35rem; }
+.dsc-tabela .sinal-n i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.dsc-tabela .up { color: var(--d-up); } .dsc-tabela .down { color: var(--d-down); }
+.dsc-ano-cor { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--c); margin-right: .45rem; vertical-align: -1px; }
+
+/* ── Painel de filtros (lateral esquerda; mesmo desenho do Kaizen) ── */
+.dsc-filtros-fundo { position: fixed; inset: 0; background: rgba(9,20,34,.4); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s; }
+.dsc-filtros-fundo.open { opacity: 1; pointer-events: auto; }
+.dsc-filtros { position: fixed; top: 0; left: 0; width: 340px; max-width: 92vw; height: 100vh; background: #fff; box-shadow: 16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform .38s cubic-bezier(.2,1,.2,1); font-family: 'Poppins', sans-serif; color: #1a1a1a; }
+.dsc-filtros.open { transform: none; }
+.dsc-filtros .fp-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.dsc-filtros .fp-head h2 { margin: 0; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; }
+.dsc-filtros .fp-fechar { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: #6b7c93; cursor: pointer; }
+.dsc-filtros .fp-fechar:hover { background: #3cb5e5; color: #fff; }
+.dsc-filtros .fp-corpo { flex: 1; overflow-y: auto; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px; }
+.dsc-filtros .fp-grupo { font-size: .6rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #1a8bbf; margin-top: 6px; }
+.dsc-filtros .fp-pe { display: flex; gap: .6rem; padding: 12px 20px 16px; border-top: 1px solid #eef1f6; }
+.dsc-filtros .qf { display: flex; flex-direction: column; gap: .3rem; }
+.dsc-filtros .qf[hidden] { display: none; }
+.dsc-filtros .qf-rotulo { font-size: 11px; font-weight: 600; color: #1a1a1a; }
+.dsc-filtros .qf-campo { width: 100%; min-height: 38px; padding: .45rem .75rem; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; color: #1a1a1a; font: 400 11.5px 'Poppins', sans-serif; }
+.dsc-filtros .qf-campo:focus { outline: none; border-color: #3cb5e5; box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.dsc-filtros .qf-periodo { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.dsc-filtros .qf-periodo label { display: flex; flex-direction: column; gap: .2rem; font-size: .62rem; color: #6b7c93; }
+.dsc-filtros .qf-flag { display: flex; align-items: center; justify-content: space-between; gap: .75rem; font-size: 11.5px; }
+.dsc-filtros .qf-flag .dsc-seg { background: #fafcfe; border-color: #e8e8e8; }
+.dsc-filtros .qf-flag .dsc-seg button { min-height: 28px; padding: .25rem .75rem; color: #6b7c93; }
+.dsc-filtros .qf-flag .dsc-seg button[aria-pressed="true"] { background: #3cb5e5; color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.dsc-filtros .qf-dica { font-size: .64rem; color: #6b7c93; line-height: 1.45; }
+.dsc-filtros .fp-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 38px; border-radius: .55rem; font: 600 .74rem 'Poppins', sans-serif; cursor: pointer; border: 1.5px solid #3cb5e5; background: #3cb5e5; color: #fff; }
+.dsc-filtros .fp-btn.sec { background: transparent; color: #1a8bbf; }
+:root[data-theme="dark"] .dsc-filtros { background: #0d2640; color: #fff; box-shadow: 16px 0 48px rgba(0,0,0,.45); }
+:root[data-theme="dark"] .dsc-filtros .fp-head, :root[data-theme="dark"] .dsc-filtros .fp-pe { border-color: rgba(255,255,255,.1); }
+:root[data-theme="dark"] .dsc-filtros .fp-fechar { background: rgba(255,255,255,.12); color: #f4f7fb; }
+:root[data-theme="dark"] .dsc-filtros .fp-grupo { color: #7dd3f0; }
+:root[data-theme="dark"] .dsc-filtros .qf-rotulo { color: #fff; }
+:root[data-theme="dark"] .dsc-filtros .qf-campo { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: #fff; color-scheme: dark; }
+:root[data-theme="dark"] .dsc-filtros .qf-campo option { background: #0d2640; }
+:root[data-theme="dark"] .dsc-filtros .qf-periodo label, :root[data-theme="dark"] .dsc-filtros .qf-dica { color: rgba(255,255,255,.6); }
+:root[data-theme="dark"] .dsc-filtros .qf-flag .dsc-seg { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.12); }
+:root[data-theme="dark"] .dsc-filtros .qf-flag .dsc-seg button { color: rgba(255,255,255,.6); }
+:root[data-theme="dark"] .dsc-filtros .fp-btn.sec { color: #7dd3f0; }
+
+@media (max-width: 1180px) { .dsc-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 960px) { .dsc .s4, .dsc .s5, .dsc .s7, .dsc .s8 { grid-column: span 12; } }
+@media (max-width: 640px) {
+  .dsc-hero { padding: 1.2rem 1.1rem; }
+  .dsc-hero-box { min-width: 0; width: 100%; }
+  .dsc-tiles { grid-template-columns: minmax(0, 1fr); }
+  .dsc .rk { grid-template-columns: minmax(0, 64px) minmax(0, 1fr) 48px; } .dsc .rk-pct { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .dsc *, .dsc *::before, .dsc *::after { animation: none !important; transition: none !important; } }
 
 /* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): título, painéis,
    cartões e controles menores. Mesmo critério do Portal; telas maiores não mudam. */
@@ -547,8 +741,18 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .opcao p { font-size: .74rem; }
   .opcao .acessar { padding-top: 6px; font-size: .7rem; }
   .vazio { padding: 1.4rem 1rem; }
-  .bi-titulo { margin: 14px 0 12px; font-size: clamp(1.15rem, 1.7vw, 1.5rem); }
-  .bi-inferior { gap: 16px; margin-top: 16px; }
+  .dsc { gap: .85rem; }
+  .dsc-hero { padding: 1.1rem 1.4rem; border-radius: 1rem; }
+  .dsc-hero-titulo { font-size: clamp(1.3rem, 2.4vw, 1.9rem); }
+  .dsc-hero-desc { display: none; }
+  .dsc-hero-box { padding: .7rem .9rem; gap: .5rem; }
+  .dsc-btn-hero { height: 34px; }
+  .dsc-tile { min-height: 112px; padding: .8rem 1rem; }
+  .tt-num { font-size: clamp(1.9rem, 3vw, 2.5rem); }
+  .donut { width: 92px; }
+  .dsc-grade { gap: .85rem; }
+  .dsc-card { padding: .95rem 1.05rem .85rem; }
+  .dsc-aba { min-height: 34px; padding: .45rem .85rem; }
 }
 </style>
 </head>
@@ -798,39 +1002,157 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     </section>
   </section>
 
-  <!-- ═══ Power BI: página "Stable and capable" do .pbix, refeita no app (assets/js/painel-spc.js) ═══ -->
-  <section class="vista" id="vista-powerbi" hidden>
-    <section class="painel">
-      <div class="bi-filtros">
-        <div class="data"><label for="biBu">Business Unit</label><select id="biBu" class="selecao"></select></div>
-        <div class="data"><label for="biSite" data-i18n="bi.f.site">Site</label><select id="biSite" class="selecao"></select></div>
-        <div class="data"><label for="biKpi">KPI</label><select id="biKpi" class="selecao"></select></div>
-        <div class="data" id="biOpGrupo" hidden><label for="biOp" data-i18n="bi.f.op">Operação</label><select id="biOp" class="selecao"></select></div>
-        <div class="data bi-per"><label data-i18n="bi.f.periodo">Período</label>
-          <div class="bi-datas"><input type="date" id="biInicio" aria-label="Início"/><input type="date" id="biFim" aria-label="Fim"/></div></div>
-        <div class="bi-flag"><span data-i18n="bi.f.zeros">Remover zeros?</span>
-          <div class="segm" role="group"><button type="button" data-bi-flag="removerZeros" data-valor="sim" data-i18n="bi.sim">Sim</button><button type="button" class="active" data-bi-flag="removerZeros" data-valor="nao" data-i18n="bi.nao">Não</button></div></div>
-        <div class="bi-flag"><span data-i18n="bi.f.outliers">Remover outliers?</span>
-          <div class="segm" role="group"><button type="button" data-bi-flag="removerOutliers" data-valor="sim" data-i18n="bi.sim">Sim</button><button type="button" class="active" data-bi-flag="removerOutliers" data-valor="nao" data-i18n="bi.nao">Não</button></div></div>
+  <!-- ═══ Dashboard: estabilidade e capabilidade por KPI, no desenho do Dashboard do VBM Kaizen
+       (hero, abas, filtros na lateral, cartões de resumo, cards e tabelas). Cálculos SPC iguais
+       aos visuais Python do .pbix — ver assets/js/painel-spc.js. Dados: api/bi (banco PRD). ═══ -->
+  <section class="vista dsc" id="vista-powerbi" hidden>
+    <div class="dsc-hero">
+      <div class="dsc-hero-orb" aria-hidden="true"></div>
+      <div class="dsc-hero-texto">
+        <div class="dsc-hero-ante" data-i18n="bi.ante">Controle estatístico de processo</div>
+        <h3 class="dsc-hero-titulo" id="biTitulo">—</h3>
+        <div class="dsc-hero-sub" id="biSub"></div>
+        <p class="dsc-hero-desc" data-i18n="bi.desc">Carta de controle com as regras de Nelson, medidas por período e capabilidade por ano.</p>
       </div>
-      <div class="bi-rodape"><span id="biAtualizado"></span>
-        <button type="button" class="btn-sec" id="biAtualizar"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="bi.atualizar">Atualizar dados</span></button></div>
-    </section>
-
-    <div class="bi-titulo" id="biTitulo" role="heading" aria-level="2"></div>
-
-    <section class="painel">
-      <div class="bi-cab"><h2 data-i18n="bi.carta">Carta de controle</h2>
-        <div style="display:flex;align-items:center;flex-wrap:wrap"><span class="rot-segm" data-i18n="bi.agrup">Agrupar por</span>
-          <div class="segm" role="group"><button type="button" class="active" data-bi-agrup="trimestre" data-i18n="bi.trimestre">Trimestre</button><button type="button" data-bi-agrup="ano" data-i18n="bi.ano">Ano</button></div></div></div>
-      <div class="bi-legenda" id="biLegendaCarta"></div>
-      <div class="bi-grafico" id="biCartaWrap"><div id="biCarta" class="bi-grafico"></div><div class="bi-dica" id="biDica" hidden></div></div>
-    </section>
-
-    <div class="bi-inferior">
-      <section class="painel"><div class="bi-cab"><h2 data-i18n="bi.medidas">Medidas estatísticas e comparações</h2></div><div class="bi-grafico" id="biMedidas"></div></section>
-      <section class="painel"><div class="bi-cab"><h2 data-i18n="bi.hist">Histograma de capabilidade</h2></div><div class="bi-grafico" id="biHist"></div></section>
+      <div class="dsc-hero-box">
+        <div class="dsc-base">
+          <span data-i18n="bi.h.periodo">Período</span><b id="biQtdPeriodo">—</b>
+          <span data-i18n="bi.h.dias">Dias com dado</span><b id="biQtdDias">—</b>
+        </div>
+        <div class="dsc-atualizado" id="biAtualizado"></div>
+        <div class="dsc-acoes">
+          <button type="button" class="dsc-btn-hero primario" id="biAbrirFiltros" aria-controls="biFiltros" aria-expanded="false">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 3.5h12L9.5 8.8v3.7l-3 1.5V8.8L2 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <span data-i18n="bi.filtros">Filtros</span><span class="dsc-contador" id="biContaFiltros" hidden>0</span>
+          </button>
+          <button type="button" class="dsc-btn-hero" id="biAtualizar">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span data-i18n="bi.atualizar">Atualizar</span>
+          </button>
+        </div>
+      </div>
     </div>
+
+    <div class="dsc-barra">
+      <div class="dsc-abas" role="tablist" aria-label="Dashboard" id="biAbas">
+        <button type="button" class="dsc-aba" role="tab" id="biAba-carta" aria-controls="biVis-carta" data-vis="carta"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 11.5 5 7l3 2.5 3-5 3.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 4h13M1.5 14h13" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg><span data-i18n="bi.carta">Carta de controle</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="biAba-medidas" aria-controls="biVis-medidas" data-vis="medidas"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="8" width="2.6" height="6" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="9" rx=".6" fill="currentColor"/><rect x="11.4" y="2.5" width="2.6" height="11.5" rx=".6" fill="currentColor"/></svg><span data-i18n="bi.medidas">Medidas por período</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="biAba-capab" aria-controls="biVis-capab" data-vis="capab"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 14C4 14 5 3 8 3s4 11 6.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M1.5 14h13" stroke="currentColor" stroke-width="1"/></svg><span data-i18n="bi.capab">Capabilidade</span></button>
+      </div>
+      <div class="dsc-chips" id="biChips"></div>
+    </div>
+
+    <section class="dsc-tiles" id="biTiles" aria-label="Resumo" data-i18n-aria="bi.resumo">
+      <div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div>
+    </section>
+
+    <!-- CARTA DE CONTROLE -->
+    <section class="dsc-grade" id="biVis-carta" role="tabpanel" aria-labelledby="biAba-carta">
+      <article class="dsc-card s12">
+        <div class="dsc-card-head">
+          <div>
+            <h3 class="dsc-card-titulo" data-i18n="bi.carta">Carta de controle</h3>
+            <p class="dsc-card-sub" id="biCartaSub"></p>
+          </div>
+          <div class="dsc-seg" role="group" aria-label="Agrupar por" data-i18n-aria="bi.agrup">
+            <button type="button" data-bi-agrup="trimestre" aria-pressed="true" data-i18n="bi.trimestre">Trimestre</button>
+            <button type="button" data-bi-agrup="ano" aria-pressed="false" data-i18n="bi.ano">Ano</button>
+          </div>
+        </div>
+        <div class="dsc-legenda" id="biLegendaCarta"></div>
+        <div class="dsc-grafico" id="biCartaWrap"><div id="biCarta"></div><div class="dsc-dica" id="biDica" hidden></div></div>
+      </article>
+      <article class="dsc-card s12">
+        <div class="dsc-card-head"><div>
+          <h3 class="dsc-card-titulo" data-i18n="bi.lim">Limites por período</h3>
+          <p class="dsc-card-sub" data-i18n="bi.limSub">CL = média do período · UCL e LCL = CL ± 3σ, com σ pela amplitude móvel média ÷ 1,128</p>
+        </div></div>
+        <div class="dsc-tabela-wrap"><table class="dsc-tabela"><thead><tr id="biLimCab"></tr></thead><tbody id="biLimCorpo"></tbody></table></div>
+      </article>
+    </section>
+
+    <!-- MEDIDAS POR PERÍODO -->
+    <section class="dsc-grade" id="biVis-medidas" role="tabpanel" aria-labelledby="biAba-medidas" hidden>
+      <article class="dsc-card s7">
+        <div class="dsc-card-head">
+          <div>
+            <h3 class="dsc-card-titulo" data-i18n="bi.medTitulo">Média por período</h3>
+            <p class="dsc-card-sub" data-i18n="bi.medSub">Média diária de cada período · variação contra o período anterior</p>
+          </div>
+          <div class="dsc-legenda"><span><i class="lg-linha" style="--c:var(--d-up)"></i><span data-i18n="bi.alta">alta</span></span><span><i class="lg-linha" style="--c:var(--d-down)"></i><span data-i18n="bi.queda">queda</span></span></div>
+        </div>
+        <div class="dsc-rolagem"><div id="biMedidas"></div></div>
+      </article>
+      <article class="dsc-card s5">
+        <div class="dsc-card-head"><div>
+          <h3 class="dsc-card-titulo" data-i18n="bi.budTitulo">Média x Budget</h3>
+          <p class="dsc-card-sub" data-i18n="bi.budSub">Quanto do budget a média de cada período atingiu</p>
+        </div></div>
+        <div class="rank" id="biRankBudget"></div>
+        <div class="dsc-nota"><i></i><span data-i18n="bi.budNota">linha tracejada = 100% do budget</span></div>
+      </article>
+      <article class="dsc-card s12">
+        <div class="dsc-card-head"><div>
+          <h3 class="dsc-card-titulo" data-i18n="bi.medTab">Medidas por período</h3>
+          <p class="dsc-card-sub" data-i18n="bi.medTabSub">Média, melhores 30 dias (média móvel de 30 dias com dado), P75 e budget</p>
+        </div></div>
+        <div class="dsc-tabela-wrap"><table class="dsc-tabela"><thead><tr id="biMedCab"></tr></thead><tbody id="biMedCorpo"></tbody></table></div>
+      </article>
+    </section>
+
+    <!-- CAPABILIDADE -->
+    <section class="dsc-grade" id="biVis-capab" role="tabpanel" aria-labelledby="biAba-capab" hidden>
+      <article class="dsc-card s8">
+        <div class="dsc-card-head">
+          <div>
+            <h3 class="dsc-card-titulo" data-i18n="bi.histTitulo">Distribuição por ano</h3>
+            <p class="dsc-card-sub" data-i18n="bi.histSub">% dos dias em cada faixa de valor · linha tracejada = curva normal do ano</p>
+          </div>
+          <div class="dsc-seg" role="group" id="biAnosSeg" aria-label="Ano" data-i18n-aria="bi.ano"></div>
+        </div>
+        <div class="dsc-grafico" id="biHistWrap"><div id="biHist"></div><div class="dsc-dica" id="biHistDica" hidden></div></div>
+      </article>
+      <article class="dsc-card s4">
+        <div class="dsc-card-head"><div>
+          <h3 class="dsc-card-titulo" data-i18n="bi.anosTitulo">Resumo por ano</h3>
+          <p class="dsc-card-sub" data-i18n="bi.anosSub">Dispersão: quanto menor o CV, mais estável o processo</p>
+        </div></div>
+        <div class="dsc-tabela-wrap"><table class="dsc-tabela"><thead><tr id="biAnosCab"></tr></thead><tbody id="biAnosCorpo"></tbody></table></div>
+      </article>
+    </section>
+
+    <!-- Painel de filtros (abre pela esquerda) — mesmo desenho do Dashboard do Kaizen -->
+    <div class="dsc-filtros-fundo" id="biFiltrosFundo"></div>
+    <aside class="dsc-filtros" id="biFiltros" role="dialog" aria-modal="true" aria-labelledby="biFiltrosTitulo" aria-hidden="true" inert>
+      <div class="fp-head">
+        <h2 id="biFiltrosTitulo" data-i18n="bi.filtros">Filtros</h2>
+        <button class="fp-fechar" id="biFiltrosFechar" type="button" aria-label="Fechar" data-i18n-aria="bi.fechar">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="fp-corpo">
+        <div class="fp-grupo" data-i18n="bi.g.kpi">Indicador</div>
+        <label class="qf"><span class="qf-rotulo">Business Unit</span><select id="biBu" class="qf-campo"></select></label>
+        <label class="qf"><span class="qf-rotulo" data-i18n="bi.f.site">Site</span><select id="biSite" class="qf-campo"></select></label>
+        <label class="qf"><span class="qf-rotulo">KPI</span><select id="biKpi" class="qf-campo"></select></label>
+        <label class="qf" id="biOpGrupo" hidden><span class="qf-rotulo" data-i18n="bi.f.op">Operação</span><select id="biOp" class="qf-campo"></select></label>
+        <div class="fp-grupo" data-i18n="bi.f.periodo">Período</div>
+        <div class="qf-periodo">
+          <label><span data-i18n="bi.de">De</span><input type="date" id="biInicio" class="qf-campo"/></label>
+          <label><span data-i18n="bi.ate">Até</span><input type="date" id="biFim" class="qf-campo"/></label>
+        </div>
+        <div class="fp-grupo" data-i18n="bi.g.trat">Tratamento dos dados</div>
+        <div class="qf-flag"><span data-i18n="bi.f.zeros">Remover zeros</span>
+          <div class="dsc-seg" role="group"><button type="button" data-bi-flag="removerZeros" data-valor="sim" aria-pressed="false" data-i18n="bi.sim">Sim</button><button type="button" data-bi-flag="removerZeros" data-valor="nao" aria-pressed="true" data-i18n="bi.nao">Não</button></div></div>
+        <div class="qf-flag"><span data-i18n="bi.f.outliers">Remover outliers</span>
+          <div class="dsc-seg" role="group"><button type="button" data-bi-flag="removerOutliers" data-valor="sim" aria-pressed="false" data-i18n="bi.sim">Sim</button><button type="button" data-bi-flag="removerOutliers" data-valor="nao" aria-pressed="true" data-i18n="bi.nao">Não</button></div></div>
+        <p class="qf-dica" data-i18n="bi.tratDica">Outliers: fora de média ± 3,5 desvios. Valores negativos sempre contam como zero.</p>
+      </div>
+      <div class="fp-pe">
+        <button type="button" class="fp-btn sec" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button>
+        <button type="button" class="fp-btn" id="biFiltrosVer" data-i18n="bi.ver">Ver resultados</button>
+      </div>
+    </aside>
   </section>
 </main>
 
@@ -980,7 +1302,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js"></script>
+<script src="assets/js/painel-spc.js?v=20261103-1"></script>
 <script>
 (function () {
   'use strict';
@@ -988,15 +1310,15 @@ window.VBMSetup = (function () {
   // ─── Textos da tela (idioma, tema e formato numérico ficam no Setup Dashboards: window.VBMSetup) ───
   var I18N = {
     'pt-BR': {
-      'nav.label': 'Opções do Stable & Capable', 'nav.inicio': 'Início', 'nav.modelo': 'Rodar o modelo', 'nav.importar': 'Importar dados', 'nav.powerbi': 'Power BI',
+      'nav.label': 'Opções do Stable & Capable', 'nav.inicio': 'Início', 'nav.modelo': 'Rodar o modelo', 'nav.importar': 'Importar dados', 'nav.powerbi': 'Dashboard',
       'op.modelo': 'Gere os PDFs de estabilidade e capabilidade por Business Unit para o período escolhido.',
       'op.importar': 'Envie o PCI Master do mês, confira a prévia e suba os dados para o banco (IBP.PEDRAVISAODIARIA).',
-      'op.powerbi': 'Carta de controle, medidas estatísticas e histograma de capabilidade por KPI, como no Power BI.', 'op.abrir': 'Abrir', 'op.embreve': 'Em breve',
+      'op.powerbi': 'Carta de controle, medidas por período e capabilidade de cada KPI, com os dados do banco PRD.', 'op.abrir': 'Abrir', 'op.embreve': 'Em breve',
       'nav.rotulo': 'Opção:', 'vista.inicio.t': 'Stable & Capable', 'vista.inicio.p': 'Estabilidade e capabilidade dos processos (SPC). Escolha o que fazer; você pode trocar de opção a qualquer momento no seletor acima.',
       'vista.modelo.t': 'Rodar o modelo',
       'vista.modelo.p': 'Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.',
       'vista.importar.t': 'Importar dados', 'vista.importar.p': 'Envie o PCI Master Data File atualizado, escolha o mês e confira a prévia antes de subir os dados para a tabela {tab}.',
-      'vista.powerbi.t': 'Power BI', 'vista.powerbi.p': 'Estabilidade e capabilidade por KPI: carta de controle com as regras de Nelson, medidas por período e histograma por ano. Dados do banco PRD.',
+      'vista.powerbi.t': 'Dashboard', 'vista.powerbi.p': '',
       'imp.title': 'Nova importação', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Arraste o arquivo aqui ou clique para escolher', 'imp.formato': '.xlsx atualizado do mês',
       'imp.periodo': 'Mês dos dados', 'imp.mes': 'Mês', 'imp.ano': 'Ano', 'imp.processar': 'Processar arquivo', 'imp.processando': 'Processando…',
       'imp.rodape': 'Nada é gravado neste passo: primeiro você confere a prévia.', 'imp.mapa': 'Baixar o mapeamento',
@@ -1012,10 +1334,27 @@ window.VBMSetup = (function () {
       'imp.ok': 'Gravado em {tab}: {ins} linha(s) inserida(s) e {at} atualizada(s).', 'imp.semBanco': 'Não foi possível consultar o banco; a gravação pode falhar. {m}',
       'imp.hist': 'Importações feitas', 'imp.h.quando': 'Gravado em', 'imp.h.mes': 'Mês', 'imp.h.linhas': 'Linhas', 'imp.hVazio': 'Nenhuma importação feita ainda.',
       'imp.hLinhas': '{ins} inseridas · {at} atualizadas', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
-      'bi.f.site': 'Site', 'bi.f.op': 'Operação', 'bi.f.periodo': 'Período', 'bi.f.zeros': 'Remover zeros?', 'bi.f.outliers': 'Remover outliers?', 'bi.sim': 'Sim', 'bi.nao': 'Não',
-      'bi.atualizar': 'Atualizar dados', 'bi.atualizado': 'Dados de {banco} · carregados em {quando}', 'bi.selecione': 'Selecione BU, site e KPI para ver os gráficos',
+      'bi.ante': 'Controle estatístico de processo · banco PRD', 'bi.desc': 'Carta de controle com as regras de Nelson, medidas por período e capabilidade por ano.',
+      'bi.h.periodo': 'Período', 'bi.h.dias': 'Dias com dado', 'bi.filtros': 'Filtros', 'bi.fechar': 'Fechar', 'bi.resumo': 'Resumo',
+      'bi.capab': 'Capabilidade', 'bi.g.kpi': 'Indicador', 'bi.g.trat': 'Tratamento dos dados', 'bi.de': 'De', 'bi.ate': 'Até',
+      'bi.tratDica': 'Outliers: fora de média ± 3,5 desvios. Valores negativos sempre contam como zero.',
+      'bi.limpar': 'Restaurar padrão', 'bi.ver': 'Ver resultados', 'bi.limparDica': 'Período inteiro, sem remover zeros nem outliers', 'bi.semZeros': 'Sem zeros', 'bi.semOutliers': 'Sem outliers',
+      'bi.t.media': 'Média · {p}', 'bi.t.vs': 'vs. {p}', 'bi.t.sobControle': 'sob controle', 'bi.t.sobControleDica': 'Dias dentro dos limites de controle (sem a regra 1), no período filtrado',
+      'bi.t.melhor': 'Melhores 30 dias · {p}', 'bi.t.melhorLeg': 'média ÷ melhores 30 dias', 'bi.t.semMelhor': 'menos de 30 dias com dado',
+      'bi.t.budget': 'Budget · {p}', 'bi.t.budgetLeg': 'média ÷ budget', 'bi.semBudget': 'sem budget no período', 'bi.t.sinais': 'Sinais fora de controle',
+      'bi.cartaSub': 'Limites por {agrup} · clique num sinal do resumo para destacá-lo', 'bi.lim': 'Limites por período',
+      'bi.limSub': 'CL = média do período · UCL e LCL = CL ± 3σ, com σ pela amplitude móvel média ÷ 1,128',
+      'bi.th.periodo': 'Período', 'bi.th.dias': 'Dias', 'bi.th.regra': 'Regra {n}', 'bi.semLimite': 'menos de 7 dias: sem limites',
+      'bi.medTitulo': 'Média por período', 'bi.medSub': 'Média diária de cada período · variação contra o período anterior', 'bi.alta': 'alta', 'bi.queda': 'queda',
+      'bi.budTitulo': 'Média x Budget', 'bi.budSub': 'Quanto do budget a média de cada período atingiu', 'bi.budNota': 'linha tracejada = 100% do budget',
+      'bi.medTab': 'Medidas por período', 'bi.medTabSub': 'Média, melhores 30 dias (média móvel de 30 dias com dado), P75 e budget',
+      'bi.th.delta': 'Variação', 'bi.th.ating': 'Média ÷ Budget', 'bi.vsAnterior': 'vs. período anterior',
+      'bi.histTitulo': 'Distribuição por ano', 'bi.histSub': '% dos dias em cada faixa de valor · linha tracejada = curva normal do ano', 'bi.todos': 'Todos',
+      'bi.anosTitulo': 'Resumo por ano', 'bi.anosSub': 'Dispersão: quanto menor o CV, mais estável o processo', 'bi.th.desvio': 'Desvio',
+      'bi.f.site': 'Site', 'bi.f.op': 'Operação', 'bi.f.periodo': 'Período', 'bi.f.zeros': 'Remover zeros', 'bi.f.outliers': 'Remover outliers', 'bi.sim': 'Sim', 'bi.nao': 'Não',
+      'bi.atualizar': 'Atualizar', 'bi.atualizado': 'Dados de {banco} · carregados em {quando}', 'bi.selecione': 'Selecione BU, site e KPI para ver os gráficos',
       'bi.semDados': 'Sem dados para os filtros escolhidos.', 'bi.carta': 'Carta de controle', 'bi.agrup': 'Agrupar por', 'bi.trimestre': 'Trimestre', 'bi.ano': 'Ano',
-      'bi.medidas': 'Medidas estatísticas e comparações', 'bi.hist': 'Histograma de capabilidade', 'bi.periodo': 'Período', 'bi.variacao': 'Variação da média',
+      'bi.medidas': 'Medidas por período', 'bi.hist': 'Histograma de capabilidade', 'bi.periodo': 'Período', 'bi.variacao': 'Variação da média',
       'bi.serie.mean': 'Média', 'bi.serie.best': 'Melhores 30 dias', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Ano',
       'bi.r.valores': 'Valores', 'bi.r.r1': 'Regra 1: ponto fora dos limites', 'bi.r.r2': 'Regra 2: 7 pontos do mesmo lado da CL',
       'bi.r.r3': 'Regra 3: 7 pontos subindo ou descendo', 'bi.r.r4': 'Regra 4: 14 pontos alternando', 'bi.r.best': 'Melhores 30 dias',
@@ -1043,15 +1382,15 @@ window.VBMSetup = (function () {
       'diag.instalando': 'Preparando o ambiente Python do app (só na primeira vez após o deploy, alguns minutos). Você já pode iniciar uma execução — ela começa assim que terminar.'
     },
     'en': {
-      'nav.label': 'Stable & Capable options', 'nav.inicio': 'Home', 'nav.modelo': 'Run the model', 'nav.importar': 'Import data', 'nav.powerbi': 'Power BI',
+      'nav.label': 'Stable & Capable options', 'nav.inicio': 'Home', 'nav.modelo': 'Run the model', 'nav.importar': 'Import data', 'nav.powerbi': 'Dashboard',
       'op.modelo': 'Generate the stability and capability PDFs per Business Unit for the chosen period.',
       'op.importar': 'Upload the month\'s PCI Master, check the preview and load the data into the database (IBP.PEDRAVISAODIARIA).',
-      'op.powerbi': 'Control chart, statistical measures and capability histogram per KPI, as in Power BI.', 'op.abrir': 'Open', 'op.embreve': 'Coming soon',
+      'op.powerbi': 'Control chart, measures per period and capability for each KPI, with data from the PRD database.', 'op.abrir': 'Open', 'op.embreve': 'Coming soon',
       'nav.rotulo': 'Option:', 'vista.inicio.t': 'Stable & Capable', 'vista.inicio.p': 'Process stability and capability (SPC). Pick what to do; you can switch options at any time using the selector above.',
       'vista.modelo.t': 'Run the model',
       'vista.modelo.p': 'Pick the period and the Business Units and generate the stability and capability PDFs. Files are saved to Blob storage and listed in the history below.',
       'vista.importar.t': 'Import data', 'vista.importar.p': 'Upload the updated PCI Master Data File, pick the month and check the preview before loading the data into {tab}.',
-      'vista.powerbi.t': 'Power BI', 'vista.powerbi.p': 'Stability and capability per KPI: control chart with Nelson rules, measures per period and histogram per year. Data from the PRD database.',
+      'vista.powerbi.t': 'Dashboard', 'vista.powerbi.p': '',
       'imp.title': 'New import', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Drop the file here or click to choose', 'imp.formato': 'updated .xlsx for the month',
       'imp.periodo': 'Data month', 'imp.mes': 'Month', 'imp.ano': 'Year', 'imp.processar': 'Process file', 'imp.processando': 'Processing…',
       'imp.rodape': 'Nothing is written in this step: you check the preview first.', 'imp.mapa': 'Download the mapping',
@@ -1067,13 +1406,30 @@ window.VBMSetup = (function () {
       'imp.ok': 'Written to {tab}: {ins} row(s) inserted and {at} updated.', 'imp.semBanco': 'Could not query the database; writing may fail. {m}',
       'imp.hist': 'Imports', 'imp.h.quando': 'Written', 'imp.h.mes': 'Month', 'imp.h.linhas': 'Rows', 'imp.hVazio': 'No imports yet.',
       'imp.hLinhas': '{ins} inserted · {at} updated', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
-      'bi.f.site': 'Site', 'bi.f.op': 'Operation', 'bi.f.periodo': 'Period', 'bi.f.zeros': 'Remove zeros?', 'bi.f.outliers': 'Remove outliers?', 'bi.sim': 'Yes', 'bi.nao': 'No',
-      'bi.atualizar': 'Refresh data', 'bi.atualizado': 'Data from {banco} · loaded {quando}', 'bi.selecione': 'Select all filters to view the chart',
-      'bi.semDados': 'No data for the selected filters.', 'bi.carta': 'Control Chart', 'bi.agrup': 'Choose the grouping', 'bi.trimestre': 'Quarter', 'bi.ano': 'Year',
-      'bi.medidas': 'Statistical Measures and Comparisons', 'bi.hist': 'Capability Histogram', 'bi.periodo': 'Period', 'bi.variacao': 'Mean variation',
-      'bi.serie.mean': 'Mean', 'bi.serie.best': 'Best 30 Days', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Year',
-      'bi.r.valores': 'Values', 'bi.r.r1': 'Rule 1: Point outside control limits', 'bi.r.r2': 'Rule 2: 7 points on same side of center line',
-      'bi.r.r3': 'Rule 3: 7 points increasing or decreasing', 'bi.r.r4': 'Rule 4: 14 points alternating up and down', 'bi.r.best': 'Best 30 Days period',
+      'bi.ante': 'Statistical process control · PRD database', 'bi.desc': 'Control chart with Nelson rules, measures per period and capability per year.',
+      'bi.h.periodo': 'Period', 'bi.h.dias': 'Days with data', 'bi.filtros': 'Filters', 'bi.fechar': 'Close', 'bi.resumo': 'Summary',
+      'bi.capab': 'Capability', 'bi.g.kpi': 'Indicator', 'bi.g.trat': 'Data treatment', 'bi.de': 'From', 'bi.ate': 'To',
+      'bi.tratDica': 'Outliers: outside mean ± 3.5 standard deviations. Negative values always count as zero.',
+      'bi.limpar': 'Reset', 'bi.ver': 'See results', 'bi.limparDica': 'Whole period, without removing zeros or outliers', 'bi.semZeros': 'Zeros removed', 'bi.semOutliers': 'Outliers removed',
+      'bi.t.media': 'Mean · {p}', 'bi.t.vs': 'vs. {p}', 'bi.t.sobControle': 'in control', 'bi.t.sobControleDica': 'Days within the control limits (no rule 1 signal), in the filtered period',
+      'bi.t.melhor': 'Best 30 days · {p}', 'bi.t.melhorLeg': 'mean ÷ best 30 days', 'bi.t.semMelhor': 'fewer than 30 days with data',
+      'bi.t.budget': 'Budget · {p}', 'bi.t.budgetLeg': 'mean ÷ budget', 'bi.semBudget': 'no budget in the period', 'bi.t.sinais': 'Out-of-control signals',
+      'bi.cartaSub': 'Limits per {agrup} · click a signal in the summary to highlight it', 'bi.lim': 'Limits per period',
+      'bi.limSub': 'CL = period mean · UCL and LCL = CL ± 3σ, with σ from the average moving range ÷ 1.128',
+      'bi.th.periodo': 'Period', 'bi.th.dias': 'Days', 'bi.th.regra': 'Rule {n}', 'bi.semLimite': 'fewer than 7 days: no limits',
+      'bi.medTitulo': 'Mean per period', 'bi.medSub': 'Daily mean of each period · change versus the previous period', 'bi.alta': 'increase', 'bi.queda': 'decrease',
+      'bi.budTitulo': 'Mean x Budget', 'bi.budSub': 'How much of the budget each period’s mean reached', 'bi.budNota': 'dashed line = 100% of budget',
+      'bi.medTab': 'Measures per period', 'bi.medTabSub': 'Mean, best 30 days (30-day moving average over days with data), P75 and budget',
+      'bi.th.delta': 'Change', 'bi.th.ating': 'Mean ÷ Budget', 'bi.vsAnterior': 'vs. previous period',
+      'bi.histTitulo': 'Distribution per year', 'bi.histSub': '% of days in each value range · dashed line = the year’s normal curve', 'bi.todos': 'All',
+      'bi.anosTitulo': 'Summary per year', 'bi.anosSub': 'Spread: the lower the CV, the more stable the process', 'bi.th.desvio': 'Std dev',
+      'bi.f.site': 'Site', 'bi.f.op': 'Operation', 'bi.f.periodo': 'Period', 'bi.f.zeros': 'Remove zeros', 'bi.f.outliers': 'Remove outliers', 'bi.sim': 'Yes', 'bi.nao': 'No',
+      'bi.atualizar': 'Refresh', 'bi.atualizado': 'Data from {banco} · loaded {quando}', 'bi.selecione': 'Select all filters to view the chart',
+      'bi.semDados': 'No data for the selected filters.', 'bi.carta': 'Control chart', 'bi.agrup': 'Group by', 'bi.trimestre': 'Quarter', 'bi.ano': 'Year',
+      'bi.medidas': 'Measures per period', 'bi.hist': 'Capability Histogram', 'bi.periodo': 'Period', 'bi.variacao': 'Mean variation',
+      'bi.serie.mean': 'Mean', 'bi.serie.best': 'Best 30 days', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Year',
+      'bi.r.valores': 'Values', 'bi.r.r1': 'Rule 1: point outside the limits', 'bi.r.r2': 'Rule 2: 7 points on the same side of CL',
+      'bi.r.r3': 'Rule 3: 7 points rising or falling', 'bi.r.r4': 'Rule 4: 14 points alternating', 'bi.r.best': 'Best 30 days',
       'ui.menu': 'Back to Portal', 'ui.loading': 'Loading…',
       'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'theme.white': 'Light', 'theme.dark': 'Dark',
       'page.eyebrow': 'Vale Base Metals · Statistical Process Control', 'page.title': '— reports by Business Unit',
@@ -1331,6 +1687,7 @@ window.VBMSetup = (function () {
     });
     $('tituloVista').textContent = t('vista.' + nome + '.t');
     $('introVista').textContent = t('vista.' + nome + '.p', { tab: (imp.config && imp.config.tabela) || 'IBP.PEDRAVISAODIARIA' });
+    $('introVista').hidden = nome === 'powerbi'; // o hero do dashboard já tem título e descrição
     if (nome === 'importar') iniciarImportacao();
     if (nome === 'powerbi' && window.PainelSPC) window.PainelSPC.iniciar({ api: api, t: t, lang: L });
   }
