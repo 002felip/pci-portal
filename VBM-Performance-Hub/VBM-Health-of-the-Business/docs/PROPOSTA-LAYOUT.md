@@ -33,7 +33,6 @@ Os gráficos usam o mesmo modelo do COO: barras em degradê, valores acima das b
 └─────────────────────────────────────────────────────┘
 ```
 
-Prévia sem servidor: `docs/preview-health-of-the-business.html` (arquivo único, abre direto no navegador).
 
 ## Copper Business / Nickel Business
 
@@ -63,7 +62,7 @@ A estrutura segue a das outras aplicações do Hub (COO):
 | Arquivo | Papel |
 |---|---|
 | `portal.js` | Monta a página e a API em `/VBM-Performance-Hub/VBM-Health-of-the-Business/` com pool próprio no Azure SQL PRD (variáveis `PERFORMANCEHUB_SQL_*`, como o COO) |
-| `hob-api.js` | Rotas `api/ping`, `api/health` e `api/dados`. Lê a SQL de `database/` e devolve o formato de `assets/hob-data.js` (cache de 5 min) |
+| `hob-api.js` | Rotas `api/ping`, `api/health` e `api/dados`. Lê a SQL de `database/` e devolve o formato dos dados de demonstração (`window.HOB_DATA` no `index.html`) (cache de 5 min) |
 | `database/001_hob_mensal.sql` | Budget e Actual\|Forecast mensais por BU e indicador |
 | `database/002_hob_pontes.sql` | Itens das pontes 2026 EBITDA YEAR e FCF YEAR |
 | `database/003_hob_atualizacao.sql` | Data da última carga e último mês com Actual |

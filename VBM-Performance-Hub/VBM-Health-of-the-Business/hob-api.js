@@ -3,7 +3,7 @@
  * Mesmo molde do coo-api.js: a SQL fica em database/*.sql e é lida na subida.
  *
  *   GET /ping   diagnóstico que NÃO toca no banco
- *   GET /dados  tudo o que a página usa, no formato de assets/hob-data.js
+ *   GET /dados  tudo o que a página usa, no formato de window.HOB_DATA (dados de demonstração no index.html)
  *
  * Enquanto um script de database/ tiver a marca "-- HOB:PENDENTE", /dados responde
  * 503 { codigo: 'CONSULTAS_PENDENTES' } e a página segue com os dados de demonstração.
@@ -45,7 +45,7 @@ function consultasPendentes(sqls) {
 const chave = (v) => String(v == null ? '' : v).trim().toUpperCase();
 const numero = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
 
-// Linhas do banco → formato da página (o mesmo de assets/hob-data.js). Mês sem valor vira 0 e entra em avisos.
+// Linhas do banco → formato da página (o mesmo de window.HOB_DATA no index.html). Mês sem valor vira 0 e entra em avisos.
 function montarDados({ mensal = [], pontes = [], atualizacao = null }) {
   const bu = {}, anos = new Set(), avisos = [];
   const no = (b, ano) => ((bu[b] = bu[b] || {})[ano] = bu[b][ano] || {});
