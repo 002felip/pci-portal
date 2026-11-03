@@ -1,61 +1,107 @@
 // Testes do módulo de dados do Health of the Business (node --test). Banco simulado: runQuery falso, sem rede.
 // Rodar na pasta da aplicação: npm test
 process.env.HOB_CACHE_TTL_S = '1';
+process.env.HOB_FRESCO_S = '1';
 const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
-const { criarHobRouter, montarDados, carregarSql, consultasPendentes, ARQUIVOS, INDICADORES, PENDENTE } = require('../hob-api');
+const fs = require('fs');
+const path = require('path');
+const { criarHobRouter, montarDados, mapearWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO } = require('../hob-api');
 
-const mensal = [];
+// Linhas no formato de database/001_hob_dashboard.sql
+const linha = (o) => Object.assign({ CD_PERIODO: 'MONTH', ID_SISTEMA: 1, ID_SITE: 1, ID_OPERACAO: 1, ID_KPI: 10, NM_KPI: 'EBITDA Copper', ID_ORDEM: 1, SG_UNID: 'US$ bn', VL_CASADECIMAL: 2 }, o);
+const LINHAS = [];
 for (let m = 1; m <= 12; m++) {
-  mensal.push({ CD_BU: 'VBM', NR_ANO: 2026, NR_MES: m, CD_INDICADOR: 'EBITDA_CU', VL_B: 0.3, VL_AF: 0.32 });
-  mensal.push({ CD_BU: 'cu ', NR_ANO: 2026, NR_MES: m, CD_INDICADOR: 'aisc_byp', VL_B: -7, VL_AF: -7.2 });
+  LINHAS.push(linha({ ANO: 2026, MES: m, SERIE: 'B', NM_VISAO: 'x B', VL_KPI: 0.3 }), linha({ ANO: 2026, MES: m, SERIE: 'AF', NM_VISAO: m <= 9 ? 'x A' : 'x F', VL_KPI: 0.32 }));
+  LINHAS.push(linha({ ID_SITE: 2, ID_KPI: 20, NM_KPI: 'Production', SG_UNID: 'kt', VL_CASADECIMAL: 0, ANO: 2026, MES: m, SERIE: 'AF', VL_KPI: 30 }));
+  LINHAS.push(linha({ ID_SITE: 3, ID_KPI: 21, NM_KPI: 'Production', SG_UNID: 'kt', VL_CASADECIMAL: 0, ANO: 2026, MES: m, SERIE: 'AF', VL_KPI: 14 }));
 }
-const pontes = [
-  { NR_ANO: 2026, CD_PONTE: 'EBITDA_YEAR', NR_ORDEM: 2, DS_ITEM: 'FX impact', VL_ITEM: 16, TP_ITEM: 'd', FL_CINZA: 0 },
-  { NR_ANO: 2026, CD_PONTE: 'EBITDA_YEAR', NR_ORDEM: 1, DS_ITEM: 'FY M-1 (Act/Fcst)', VL_ITEM: 4874, TP_ITEM: 'tot', FL_CINZA: 0 },
-  { NR_ANO: 2026, CD_PONTE: 'EBITDA_YEAR', NR_ORDEM: 3, DS_ITEM: 'FY Act/Fcst', VL_ITEM: null, TP_ITEM: 'sub', FL_CINZA: 0 },
-  { NR_ANO: 2026, CD_PONTE: 'FCF_YEAR', NR_ORDEM: 1, DS_ITEM: 'Free Cash Flow', VL_ITEM: null, TP_ITEM: 'sub', FL_CINZA: 1 },
-];
-const atualizacao = { DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 20, 18, 51)), NR_ANO_REAL: 2026, NR_MES_REAL: 9 };
+LINHAS.push(
+  linha({ CD_PERIODO: 'YEAR', ID_KPI: 30, NM_KPI: 'EBITDA FY M-1', ANO: 2026, MES: 12, SERIE: 'AF', VL_KPI: 4874 }),
+  linha({ CD_PERIODO: 'YEAR', ID_KPI: 31, NM_KPI: 'EBITDA Bridge | Price', ANO: 2026, MES: 12, SERIE: 'AF', VL_KPI: -200 }),
+  linha({ CD_PERIODO: 'YEAR', ID_KPI: 40, NM_KPI: 'Net Debt', ANO: 2025, MES: 12, SERIE: 'AF', VL_KPI: 1189 }),
+  linha({ CD_PERIODO: 'YEAR', ID_KPI: 40, NM_KPI: 'Net Debt', ANO: 2026, MES: 12, SERIE: 'B', VL_KPI: -27 }),
+  linha({ CD_PERIODO: 'YEAR', ID_KPI: 40, NM_KPI: 'Net Debt', ANO: 2026, MES: 12, SERIE: 'AF', VL_KPI: 1784 }),
+);
+// IBP.WATERFALL (colunas no padrão do IBP): duas referências em 2026, vale a mais recente
+const WF = [];
+[['2025 Net Debt', 1189], ['EBITDA', 4665], ['Investments', -1488], ['Item novo', 5], ['2026B Net Debt', -27], ['2026F Net Debt', 1784]].forEach(([n, v], i) => {
+  WF.push({ DT_REF: new Date(Date.UTC(2026, 9, 1)), ID_SITE: 40, ID_ORDEM: i + 1, DS_ITEM: n, VL_ITEM: v });
+  WF.push({ DT_REF: new Date(Date.UTC(2026, 8, 1)), ID_SITE: 40, ID_ORDEM: i + 1, DS_ITEM: n, VL_ITEM: 0 });
+});
+const CONFIG = normalizarConfigHob({ bus: { cu: { sites: [2] }, ni: { sites: [3] } } });
 
-test('montarDados: formato da página, chaves normalizadas e meses completos', () => {
-  const d = montarDados({ mensal, pontes, atualizacao });
-  assert.strictEqual(d.fonte, 'db');
-  assert.deepStrictEqual(d.anos, [2026]);
+test('SQL de leitura: tabela das cargas do COO, cadastro IBP.DASHBOARD, @idDash e @dtRef, sem ID_DASH fixo', () => {
+  const s = carregarSql(LEITURA.arquivo, LEITURA.parametros);
+  assert.match(s, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
+  assert.match(s, /R\.DT_REF = @dtRef/);
+  assert.match(s, /R\.CD_PERIODO IN \('MONTH', 'YEAR'\)/);
+  assert.match(s, /R\.ID_TIPO_VISAO IN \(1, 3\)/);
+  assert.ok(!/ID_DASH\s*=\s*\d/.test(s));
+  assert.match(CICLOS_SQL, /WHERE R\.ID_DASH = @idDash/);
+});
+
+test('SQL de leitura: junção com separador (sem colisão de CONCAT entre site/operação/KPI)', () => {
+  const ativas = fs.readFileSync(path.join(__dirname, '..', 'database', LEITURA.arquivo), 'utf8').split('\n').filter((l) => !l.trim().startsWith('--'));
+  for (const l of ativas) if (/CONCAT\([^)]*ID_SITE/.test(l)) assert.match(l, /'\|'/, l.trim());
+});
+
+test('005_config_hob.sql grava o mesmo JSON do padrão do código, no registro da API', () => {
+  const s = fs.readFileSync(path.join(__dirname, '..', 'database', '005_config_hob.sql'), 'utf8');
+  assert.ok(s.includes(`'${CONFIG_VISAO}'`));
+  const json = JSON.parse(/@LAYOUT\s+NVARCHAR\(MAX\)\s+=\s+N'([\s\S]*?)';\n/.exec(s)[1].replace(/''/g, "'"));
+  assert.deepStrictEqual(normalizarConfigHob(json), normalizarConfigHob(CONFIG_PADRAO)); // mesma configuração efetiva
+});
+
+test('003_carga_mensal_hob.sql: mesmo DELETE/INSERT da carga do COO e trava sem @ID_DASH', () => {
+  const s = fs.readFileSync(path.join(__dirname, '..', 'database', '003_carga_mensal_hob.sql'), 'utf8');
+  assert.match(s, /DELETE FROM IBP\.PHUB_PERFORMANCESTUDIO\s+WHERE DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH/);
+  assert.match(s, /INSERT INTO IBP\.PHUB_PERFORMANCESTUDIO/);
+  assert.match(s, /IF @ID_DASH IS NULL THROW/);
+});
+
+test('montarDados: séries mensais por BU (sites da configuração), último mês real e cadastro do KPI', () => {
+  const d = montarDados(LINHAS, CONFIG, '2026-10');
   assert.deepStrictEqual(d.ultimoReal, { ano: 2026, mes: 9 });
-  assert.strictEqual(d.atualizado, '2026-10-20T18:51:00.000Z');
-  assert.strictEqual(d.bu.vbm[2026].ebitdaCu.a[0], 0.32);
-  assert.strictEqual(d.bu.cu[2026].byp.b[11], -7);
-  // todo indicador de toda BU existe com 12 meses; sem dado vira 0 e gera aviso
-  for (const b of ['vbm', 'cu', 'ni']) {
-    for (const ind of Object.values(INDICADORES[b])) {
-      assert.strictEqual(d.bu[b][2026][ind].b.length, 12, `${b}/${ind}`);
-      assert.strictEqual(d.bu[b][2026][ind].a.length, 12, `${b}/${ind}`);
-    }
-  }
-  assert.strictEqual(d.bu.ni[2026].prod.a[5], 0);
-  assert.ok(d.avisos.some((a) => a.startsWith('ni/prod 2026')));
+  assert.deepStrictEqual(d.anos, [2025, 2026]);
+  assert.strictEqual(d.bu.vbm[2026].ebitdaCu.b[0], 0.3);
+  assert.strictEqual(d.bu.vbm[2026].ebitdaCu.a[11], 0.32);
+  assert.strictEqual(d.bu.cu[2026].prod.a[0], 30); // site 2
+  assert.strictEqual(d.bu.ni[2026].prod.a[0], 14); // site 3
+  assert.deepStrictEqual(d.meta.vbm.ebitdaCu, { nome: 'EBITDA Copper', unid: 'US$ bn', casas: 2 });
+  assert.ok(d.avisos.some((a) => a.startsWith('cu/sales: KPI não encontrado')));
+  assert.strictEqual(d.bu.cu[2026].sales.a.length, 12);
 });
 
-test('montarDados: pontes na ordem de NR_ORDEM, com tipo, valor e cinza', () => {
-  const d = montarDados({ mensal, pontes, atualizacao });
-  assert.deepStrictEqual(d.bu.vbm[2026].ebitdaYear, [
-    { tipo: 'tot', lbl: 'FY M-1 (Act/Fcst)', v: 4874 },
-    { tipo: 'd', lbl: 'FX impact', v: 16 },
-    { tipo: 'sub', lbl: 'FY Act/Fcst' },
-  ]);
-  assert.deepStrictEqual(d.bu.vbm[2026].fcfYear, [{ tipo: 'sub', lbl: 'Free Cash Flow', cinza: true }]);
+test('montarDados: pontes pela configuração (valor anual, série B/AF, ano anterior e {ano} no rótulo)', () => {
+  const d = montarDados(LINHAS, CONFIG, '2026-10');
+  const e = d.bu.vbm[2026].ebitdaYear, f = d.bu.vbm[2026].fcfYear;
+  assert.deepStrictEqual(e[0], { tipo: 'tot', lbl: 'FY M-1 (Act/Fcst)', v: 4874 });
+  assert.deepStrictEqual(e[2], { tipo: 'd', lbl: 'Price', v: -200 });
+  assert.deepStrictEqual(e[6], { tipo: 'sub', lbl: 'FY Act/Fcst' });
+  assert.deepStrictEqual(e[7], { tipo: 'zero' });
+  assert.deepStrictEqual(f[0], { tipo: 'tot', lbl: '2025 Net Debt', v: 1189 });
+  assert.deepStrictEqual(f[12], { tipo: 'ref', lbl: '2026B Net Debt', v: -27, cinza: true });
+  assert.deepStrictEqual(f[13], { tipo: 'tot', lbl: '2026F Net Debt', v: 1784 });
 });
 
-test('montarDados: linhas inválidas ignoradas com aviso', () => {
-  const d = montarDados({ mensal: mensal.concat([{ CD_BU: 'XX', NR_ANO: 2026, NR_MES: 1, CD_INDICADOR: 'PROD', VL_B: 1, VL_AF: 1 }, { CD_BU: 'CU', NR_ANO: 2026, NR_MES: 13, CD_INDICADOR: 'PROD', VL_B: 1, VL_AF: 1 }]), pontes: [], atualizacao });
-  assert.strictEqual(d.avisos.filter((a) => a.startsWith('linha ignorada')).length, 2);
+test('normalizarConfigHob: só o formato esperado passa; o resto vem do padrão', () => {
+  assert.strictEqual(normalizarConfigHob('{inválido'), null);
+  const c = normalizarConfigHob({ indicadores: { cu: { prod: ['Copper Production'], inventado: ['x'] } }, pontes: { fcfYear: [{ tipo: 'xx' }] } });
+  assert.deepStrictEqual(c.indicadores.cu.prod, ['Copper Production']);
+  assert.strictEqual(c.indicadores.cu.inventado, undefined);
+  assert.deepStrictEqual(c.pontes.fcfYear, CONFIG_PADRAO.pontes.fcfYear); // nenhum item válido: padrão
 });
 
-test('scripts de database/ existem e começam pendentes', () => {
-  const sqls = Object.fromEntries(Object.entries(ARQUIVOS).map(([k, a]) => [k, carregarSql(a)]));
-  assert.deepStrictEqual(consultasPendentes(sqls), Object.keys(ARQUIVOS));
+test('lerCiclo e lerIdDash', () => {
+  assert.strictEqual(lerCiclo('2026-10'), '2026-10');
+  assert.strictEqual(lerCiclo('2026-10-01'), '2026-10');
+  assert.strictEqual(lerCiclo(''), null);
+  assert.strictEqual(lerCiclo('2026-13'), undefined);
+  assert.strictEqual(lerIdDash(undefined), null);
+  assert.strictEqual(lerIdDash('42'), 42);
+  assert.throws(() => lerIdDash('abc'));
 });
 
 async function chamar(router, caminho) {
@@ -67,26 +113,92 @@ async function chamar(router, caminho) {
     return { status: r.status, json: await r.json() };
   } finally { srv.close(); }
 }
+// Banco simulado: responde pela SQL recebida
+function banco(opc = {}) {
+  const chamadas = [];
+  const runQuery = async (q, params) => {
+    chamadas.push({ q, params });
+    if (opc.falha) throw new Error('Login failed for user secreto');
+    if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)), DT_CARGA: new Date(Date.UTC(2026, 9, 2, 8)) }, { DT_REF: new Date(Date.UTC(2026, 8, 1)), DT_CARGA: null }] };
+    if (/IBP\.WATERFALL/.test(q)) return { recordset: opc.semWaterfall ? [] : WF };
+    if (/PHUB_PS_SETUP/.test(q)) return { recordset: [{ DS_LAYOUT: JSON.stringify({ bus: { cu: { sites: [2] }, ni: { sites: [3] } } }) }] };
+    return { recordset: LINHAS };
+  };
+  return { runQuery, chamadas };
+}
 
-test('/dados: 503 CONSULTAS_PENDENTES enquanto houver script marcado, sem tocar no banco', async () => {
-  let chamadas = 0;
-  const router = criarHobRouter({ runQuery: async () => { chamadas++; return { recordset: [] }; }, sqls: { mensal: PENDENTE + '\nSELECT 1', pontes: 'SELECT 1', atualizacao: 'SELECT 1' } });
-  const r = await chamar(router, '/dados');
+test('rotas sem HOB_ID_DASH: 503 ID_DASH_PENDENTE, sem tocar no banco', async () => {
+  const b = banco();
+  const router = criarHobRouter({ runQuery: b.runQuery });
+  const r = await chamar(router, '/indicadores');
   assert.strictEqual(r.status, 503);
-  assert.strictEqual(r.json.codigo, 'CONSULTAS_PENDENTES');
-  assert.deepStrictEqual(r.json.pendentes, ['001_hob_mensal.sql']);
-  assert.strictEqual(chamadas, 0);
+  assert.strictEqual(r.json.codigo, 'ID_DASH_PENDENTE');
+  assert.strictEqual(b.chamadas.length, 0);
+  assert.deepStrictEqual((await chamar(router, '/ping')).json, { ok: true, idDash: null });
 });
 
-test('/dados: monta a resposta com as três consultas e responde 500 sem texto do banco quando falha', async () => {
-  const sqls = { mensal: 'M', pontes: 'P', atualizacao: 'A' };
-  const ok = criarHobRouter({ sqls, runQuery: async (q) => ({ recordset: q === 'M' ? mensal : q === 'P' ? pontes : [atualizacao] }) });
-  const r = await chamar(ok, '/dados');
+test('/indicadores: carga mais recente (ou ?ciclo=), configuração do banco e parâmetros tipados', async () => {
+  const b = banco();
+  const router = criarHobRouter({ runQuery: b.runQuery, idDash: '42' });
+  const r = await chamar(router, '/indicadores');
   assert.strictEqual(r.status, 200);
-  assert.strictEqual(r.json.bu.vbm['2026'].ebitdaYear.length, 3);
-  const falha = criarHobRouter({ sqls, runQuery: async () => { throw new Error('Login failed for user secreto'); } });
-  const e = await chamar(falha, '/dados');
+  assert.strictEqual(r.json.ciclo, '2026-10');
+  assert.deepStrictEqual(r.json.ciclos, ['2026-10', '2026-09']);
+  assert.strictEqual(r.json.config, 'banco');
+  assert.strictEqual(r.json.atualizado, '2026-10-02T08:00:00.000Z');
+  assert.strictEqual(r.json.bu.cu['2026'].prod.a[0], 30);
+  const leitura = b.chamadas.find((c) => c.params && c.params.dtRef);
+  assert.strictEqual(leitura.params.idDash[1], 42);
+  assert.strictEqual(leitura.params.dtRef[1].toISOString(), '2026-10-01T00:00:00.000Z');
+  assert.strictEqual((await chamar(router, '/indicadores?ciclo=2026-09')).json.ciclo, '2026-09');
+  assert.strictEqual((await chamar(router, '/indicadores?ciclo=2025-01')).status, 404);
+  assert.strictEqual((await chamar(router, '/indicadores?ciclo=xx')).status, 400);
+});
+
+test('/indicadores: banco fora responde 500 sem texto do banco', async () => {
+  const router = criarHobRouter({ runQuery: banco({ falha: true }).runQuery, idDash: 42 });
+  const e = await chamar(router, '/indicadores');
   assert.strictEqual(e.status, 500);
   assert.strictEqual(e.json.codigo, 'ERRO_BANCO');
   assert.ok(!JSON.stringify(e.json).includes('secreto'));
+});
+
+test('SQL do FCF YEAR: a consulta de IBP.WATERFALL com site e ano inicial por parâmetro', () => {
+  const s = carregarSql(WATERFALL.arquivo, WATERFALL.parametros);
+  assert.match(s, /FROM IBP\.WATERFALL W/);
+  assert.match(s, /W\.ID_SITE = @site/);
+  assert.match(s, /YEAR\(W\.DT_REF\) >= @anoIni/);
+  assert.deepStrictEqual(CONFIG_PADRAO.fcf, { site: 40, anoInicial: 2025 });
+});
+
+test('mapearWaterfall: referência mais recente do ano, ordem, tipo e cinza pela configuração, subtotais inseridos', () => {
+  const w = mapearWaterfall(WF, CONFIG);
+  assert.deepStrictEqual(w.colunas, { data: 'DT_REF', rotulo: 'DS_ITEM', valor: 'VL_ITEM', ordem: 'ID_ORDEM', tipo: null });
+  const it = w.anos[2026].itens;
+  assert.strictEqual(w.anos[2026].dtRef, '2026-10-01T00:00:00.000Z');
+  assert.deepStrictEqual(it[0], { tipo: 'tot', lbl: '2025 Net Debt', v: 1189 });
+  assert.deepStrictEqual(it.find((x) => x.lbl === '2026B Net Debt'), { tipo: 'ref', lbl: '2026B Net Debt', v: -27, cinza: true });
+  assert.deepStrictEqual(it.find((x) => x.lbl === '2026F Net Debt'), { tipo: 'tot', lbl: '2026F Net Debt', v: 1784 });
+  assert.deepStrictEqual(it.find((x) => x.lbl === 'Item novo'), { tipo: 'd', lbl: 'Item novo', v: 5 });
+  assert.ok(it.some((x) => x.tipo === 'sub' && x.lbl === 'Free Cash Flow' && x.cinza));
+  assert.ok(w.avisos.some((a) => a.includes('Item novo')));
+  assert.match(mapearWaterfall([{ X: 1 }], CONFIG).avisos[0], /colunas não reconhecidas/);
+});
+
+test('/waterfall responde sem HOB_ID_DASH; /indicadores usa o FCF de IBP.WATERFALL; bruto só com diagnóstico', async () => {
+  const b = banco();
+  const semId = criarHobRouter({ runQuery: b.runQuery });
+  const w = await chamar(semId, '/waterfall');
+  assert.strictEqual(w.status, 200);
+  assert.strictEqual(w.json.site, 40);
+  assert.strictEqual(w.json.anos['2026'].itens[0].v, 1189);
+  const consulta = b.chamadas.find((c) => /IBP\.WATERFALL/.test(c.q));
+  assert.strictEqual(consulta.params.site[1], 40);
+  assert.strictEqual(consulta.params.anoIni[1], 2025);
+  assert.strictEqual((await chamar(semId, '/waterfall?bruto=1')).status, 404);
+  const r = await chamar(criarHobRouter({ runQuery: b.runQuery, idDash: 42 }), '/indicadores');
+  assert.strictEqual(r.json.fcf, 'waterfall');
+  assert.strictEqual(r.json.bu.vbm['2026'].fcfYear[0].lbl, '2025 Net Debt');
+  const sem = await chamar(criarHobRouter({ runQuery: banco({ semWaterfall: true }).runQuery, idDash: 42 }), '/indicadores');
+  assert.strictEqual(sem.json.fcf, 'config');
 });

@@ -12,7 +12,9 @@
  *   AZURE_SQL_USER, AZURE_SQL_PASSWORD   ← secrets (valueFrom), nunca em texto puro
  *   HOB_ACESSO_LOCAL_EMAIL               ← só com NODE_ENV=development e fora do
  *                                          Databricks: simula o X-Forwarded-Email
- *   HOB_CACHE_TTL_S                      ← ver hob-api.js
+ *   HOB_ID_DASH                          ← IBP.DASHBOARD.ID_DASH do Health of the Business
+ *                                          (sem ele: dados de demonstração)
+ *   HOB_CACHE_TTL_S / HOB_FRESCO_S / HOB_DESATUALIZADO_MAX_S ← ver hob-api.js
  */
 const path = require('path');
 const express = require('express');
@@ -95,7 +97,7 @@ const assets = express.static(path.join(__dirname, 'assets'), { index: false, ma
 app.use('/assets', assets);
 app.use(`/${PASTA}/assets`, assets);
 
-const router = criarHobRouter({ runQuery });
+const router = criarHobRouter({ runQuery, idDash: process.env.HOB_ID_DASH });
 for (const base of BASES_API) app.use(base, (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, router);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

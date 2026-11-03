@@ -56,11 +56,13 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .head h2 { margin: 0; position: relative; top: -7px; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
 .filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
 .filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter[hidden] { display: none; }
 .filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
 .seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
 .seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; transition: background-color .18s ease, color .18s ease; }
 .seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
 .seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.ciclo-sel { min-height: 32px; padding: 2px 8px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; }
 .switch { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); cursor: pointer; }
 .switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
 .switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
@@ -385,6 +387,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
     <h2 id="buName">—</h2>
     <div class="filters">
+      <div class="filter" id="fCiclo" hidden><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span><select class="ciclo-sel" id="cicloSel" aria-labelledby="lblCiclo"></select></div>
       <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span><div class="seg" role="group" aria-labelledby="lblBu" data-filter="bu"></div></div>
       <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
       <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
@@ -647,16 +650,27 @@ window.VBMSetup = (function () {
 })();
 </script>
 <script>
-/* Dados: GET api/dados (hob-api.js, consultas em database/). Prévia local (file://), API ausente ou consultas
-   ainda pendentes: a página segue com os dados de demonstração (window.HOB_DATA, acima) e o selo "Dados demo". */
+/* Dados: GET api/indicadores?ciclo= (hob-api.js): a carga do dashboard em IBP.PHUB_PERFORMANCESTUDIO, como no COO.
+   Prévia local (file://), API ausente, HOB_ID_DASH não definido ou nenhuma carga gravada: a página segue com os
+   dados de demonstração (window.HOB_DATA, acima) e o selo "Dados demo". */
 window.HOB_CARREGAR = function (iniciar) {
   if (location.protocol === 'file:' || !window.fetch) return iniciar('SEM_API');
   var base = location.pathname.replace(/index\.html$/i, '').replace(/\/?$/, '/');
-  fetch(base + 'api/dados', { cache: 'no-store', credentials: 'same-origin' })
+  var ciclo = new URLSearchParams(location.search).get('ciclo');
+  fetch(base + 'api/indicadores' + (ciclo ? '?ciclo=' + encodeURIComponent(ciclo) : ''), { cache: 'no-store', credentials: 'same-origin' })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: false, j: null }; }); })
     .then(function (x) {
       if (x.ok && x.j && x.j.anos && x.j.anos.length && x.j.ultimoReal) { window.HOB_DATA = x.j; return iniciar(null); }
-      iniciar((x.j && x.j.codigo) || 'SEM_API');
+      var codigo = (x.j && x.j.codigo) || 'SEM_API';
+      // Sem a carga do dashboard, o FCF YEAR ainda vem do banco (IBP.WATERFALL); o resto fica na demonstração
+      return fetch(base + 'api/waterfall', { cache: 'no-store', credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (w) {
+          var D = window.HOB_DATA, n = 0;
+          Object.keys((w && w.anos) || {}).forEach(function (ano) { if (D.bu.vbm[ano] && w.anos[ano].itens.length) { D.bu.vbm[ano].fcfYear = w.anos[ano].itens; n++; } });
+          if (n) D.fcfBanco = true;
+        }, function () {})
+        .then(function () { iniciar(codigo); });
     })
     .catch(function () { iniciar('SEM_API'); });
 };
@@ -667,10 +681,10 @@ window.HOB_CARREGAR(function (aviso) {
   var D = window.HOB_DATA, S = window.VBMSetup;
 
   S.registrar({
-    'pt-BR': { 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+    'pt-BR': { 'l.demoFcf': 'Dados demo · FCF YEAR do banco', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período' },
-    en: { 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+    en: { 'l.demoFcf': 'Demo data · FCF YEAR from database', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period' }
   });
@@ -725,6 +739,7 @@ window.HOB_CARREGAR(function (aviso) {
   };
   function gravarUrl() {
     var p = { bu: state.bu, ano: state.ano, mes: state.mes, ebitda: state.sel.ebitda, allin: state.sel.allin };
+    if (D.ciclo) p.ciclo = D.ciclo;
     if (!state.delta) p.delta = 'off';
     history.replaceState(null, '', '?' + new URLSearchParams(p));
   }
@@ -980,7 +995,17 @@ window.HOB_CARREGAR(function (aviso) {
       return '<button type="button" data-sel="' + chave + '" data-v="' + o.chave + '" aria-pressed="' + (state.sel[chave] === o.chave) + '">' + esc(o.lbl) + '</button>';
     }).join('') + '</div>';
   }
+  // Unidade e casas decimais do KPI: as de IBP.DASHBOARD (D.meta, dados do banco); sem elas, as do código
+  function doCadastro(cfg) {
+    var m = D.meta && D.meta[state.bu] && D.meta[state.bu][cfg.ind || (cfg.tipo === 'ebitdaVbm' ? 'ebitdaCu' : '')];
+    if (!m) return cfg;
+    var c = Object.assign({}, cfg);
+    if (m.unid) c.unid = m.unid;
+    if (m.casas != null) c.casas = m.casas;
+    return c;
+  }
   function cardHtml(cfg, i) {
+    cfg = doCadastro(cfg);
     var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '';
     if (cfg.tipo === 'ebitdaVbm') ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
     if (cfg.tipo === 'allin') ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
@@ -998,6 +1023,7 @@ window.HOB_CARREGAR(function (aviso) {
     return { sus: recortes(d.sus, true), cost: recortes(d.cost, true), byp: recortes(d.byp, true) };
   }
   function svgDoCard(cfg, W, H) {
+    cfg = doCadastro(cfg);
     var d = dadosBu();
     if (cfg.tipo === 'ebitdaVbm') {
       var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut, vbm: somaSerie([d.ebitdaCu, d.ebitdaNi, d.ebitdaOut]) }[state.sel.ebitda];
@@ -1078,6 +1104,10 @@ window.HOB_CARREGAR(function (aviso) {
     state.sel[b.getAttribute('data-sel')] = b.getAttribute('data-v');
     gravarUrl(); render();
   });
+  // Trocar o ciclo relê a carga daquele mês (nova ida à API), mantendo os demais filtros
+  document.getElementById('cicloSel').addEventListener('change', function (e) {
+    var p = new URLSearchParams(location.search); p.set('ciclo', e.target.value); location.search = p.toString();
+  });
   var pend = 0, ro = new ResizeObserver(function () { cancelAnimationFrame(pend); pend = requestAnimationFrame(function () { desenharTodos(false); }); });
   var primeira = true;
   function render() {
@@ -1085,7 +1115,11 @@ window.HOB_CARREGAR(function (aviso) {
     renderFiltros();
     document.getElementById('buName').textContent = b.nome;
     var badge = document.getElementById('dataBadge');
-    badge.hidden = D.fonte !== 'demo'; badge.textContent = S.t(aviso === 'ERRO_BANCO' ? 'l.demoErro' : 'l.demo');
+    badge.hidden = D.fonte !== 'demo' && !D.desatualizado;
+    badge.textContent = D.desatualizado ? S.t('l.desat') + S.dataHora(new Date(D.atualizado)) : S.t(aviso === 'ERRO_BANCO' ? 'l.demoErro' : D.fcfBanco ? 'l.demoFcf' : 'l.demo');
+    var fc = document.getElementById('fCiclo'), cs = document.getElementById('cicloSel');
+    fc.hidden = !(D.ciclos && D.ciclos.length);
+    if (!fc.hidden) cs.innerHTML = D.ciclos.map(function (c) { return '<option value="' + esc(c) + '"' + (c === D.ciclo ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
     document.getElementById('updTxt').textContent = D.atualizado ? S.dataHora(new Date(D.atualizado)) : '—';
     ro.disconnect();
     dash.style.gridTemplateAreas = b.areas;

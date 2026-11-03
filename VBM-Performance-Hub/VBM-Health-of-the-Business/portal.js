@@ -12,12 +12,14 @@
  * variáveis do Performance Hub: PERFORMANCEHUB_SQL_SERVER / _DATABASE / _PORT /
  * _USER / _PASSWORD. Sem elas: servidor e base PRD abaixo, e o usuário/senha
  * do Portal (AZURE_SQL_USER / AZURE_SQL_PASSWORD, por valueFrom no app.yaml).
- * A SQL fica em database/ (hob-api.js). Enquanto as consultas estiverem
- * pendentes, /api/dados responde 503 e a página usa os dados de demonstração.
+ * Dados: as cargas do dashboard em IBP.PHUB_PERFORMANCESTUDIO, lidas por hob-api.js
+ * (SQL em database/), como no COO.
+ * HOB_ID_DASH: IBP.DASHBOARD.ID_DASH do Health of the Business. Sem ele, as rotas de
+ * dados respondem 503 (ID_DASH_PENDENTE) e a página usa os dados de demonstração.
  */
 const path = require('path');
 const sql = require('mssql');
-const { criarHobRouter, consultasPendentes, carregarSql, ARQUIVOS } = require('./hob-api');
+const { criarHobRouter } = require('./hob-api');
 
 const PRD_SERVER = 'rdb-ibp-bmsa-prd.database.windows.net';
 const PRD_DATABASE = 'BDIBPBMSA_PRD';
@@ -91,8 +93,7 @@ module.exports = function montarHealthOfTheBusinessNoPortal(app) {
       res.status(503).json({ status: 'unhealthy' });
     }
   });
-  const sqls = Object.fromEntries(Object.entries(ARQUIVOS).map(([k, a]) => [k, carregarSql(a)]));
-  app.use(BASE + '/api', semCache, criarHobRouter({ runQuery, sqls }));
+  app.use(BASE + '/api', semCache, criarHobRouter({ runQuery, idDash: env.HOB_ID_DASH }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
   // server.js, portal.js, hob-api.js, database/, docs/, tests/, package*.json, .env*
@@ -104,9 +105,8 @@ module.exports = function montarHealthOfTheBusinessNoPortal(app) {
     res.status(404).set('Cache-Control', 'no-store').json({ error: 'Not found.' });
   });
 
-  const pendentes = consultasPendentes(sqls);
-  console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database}` +
-    (pendentes.length ? ` — consultas pendentes (${pendentes.map(k => ARQUIVOS[k]).join(', ')}): página com dados de demonstração` : ''));
+  console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database} — ` +
+    (env.HOB_ID_DASH ? `ID_DASH ${env.HOB_ID_DASH}` : 'HOB_ID_DASH não definido: página com dados de demonstração'));
   if (!env.PERFORMANCEHUB_SQL_SERVER || !(env.PERFORMANCEHUB_AZURE_SQL_DATABASE || env.PERFORMANCEHUB_SQL_DATABASE)) {
     console.warn(`${TAG} ATENÇÃO: servidor/base não definidos por variável — usando o padrão de PRODUÇÃO (${PRD_SERVER}/${PRD_DATABASE}). Em DEV/HML defina PERFORMANCEHUB_SQL_SERVER e PERFORMANCEHUB_AZURE_SQL_DATABASE.`);
   }
