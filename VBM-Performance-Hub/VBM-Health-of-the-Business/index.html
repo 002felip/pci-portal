@@ -167,6 +167,12 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .meta { align-items: flex-start; }
   .head h2 { top: 0; }
 }
+/* Telas menores (notebook com escala de 125–150% no Windows): mesmo critério do Portal e do COO —
+   respiro entre a barra e o título, e título um pouco menor. Telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .page { padding-top: 14px; }
+  .head h2 { font-size: 1.5rem; }
+}
 @media (pointer: coarse) { .seg button, .card .seg button { min-height: 44px; } .fs-btn { width: 44px; height: 44px; } }
 </style>
 </head>

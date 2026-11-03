@@ -323,6 +323,15 @@
 .is-fs .topnav { display: none; }
 @media (display-mode: fullscreen) { .topnav { display: none; } }
 @media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+}
 /* ═══ fim Setup Dashboards ═══ */
 </style>
 <style>
@@ -485,6 +494,12 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .meta { align-items: flex-start; }
   .head h2 { top: 0; }
+}
+/* Telas menores (notebook com escala de 125–150% no Windows): mesmo critério do Portal e do COO —
+   respiro entre a barra e o título, e título um pouco menor. Telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .page { padding-top: 14px; }
+  .head h2 { font-size: 1.5rem; }
 }
 @media (pointer: coarse) { .seg button, .card .seg button { min-height: 44px; } .fs-btn { width: 44px; height: 44px; } }
 </style>
