@@ -1,0 +1,20 @@
+{
+  "name": "vbm-health-of-the-business",
+  "version": "1.0.0",
+  "description": "VBM Health of the Business — Consolidated, Copper and Nickel views (Budget x Actual/Forecast), with a direct connection to Azure SQL PRD",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "start:local": "node --env-file=.env server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "express": "^5.2.1",
+    "mssql": "^11.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
