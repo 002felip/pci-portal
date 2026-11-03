@@ -520,6 +520,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .is-fs .topnav { display: none; }
 @media (display-mode: fullscreen) { .topnav { display: none; } }
 @media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+}
+/* Telas menores: respiro entre a barra e o título, e título um pouco menor. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .page { padding-top: 14px; }
+  .title-block h2 { font-size: 1.5rem; }
+  .site { font-size: 1.45rem; }
+}
 /* ═══ fim Setup Dashboards ═══ */
 </style>
 

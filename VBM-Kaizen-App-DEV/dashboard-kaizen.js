@@ -52,6 +52,8 @@
  */
 "use strict";
 
+const zlib = require("zlib");
+
 /** Nível do MDM -> chave usada pela tela. A ordem é a da estrutura. */
 const NIVEIS = [
   { n: 3, chave: "coo" },
@@ -101,9 +103,11 @@ function registrarRotasDashboard(api, d) {
   const { sql, runQuery } = d;
   const T = d.tabelas;
 
-  // Cache curto e compartilhado. Cinco minutos: o dashboard é leitura de
-  // acompanhamento, e um Kaizen recém-aprovado aparecer alguns minutos
-  // depois é aceitável — ir ao banco a cada abertura de tela não é.
+  // Cache compartilhado. Cinco minutos de base "fresca": depois disso a
+  // base ainda é entregue na hora, e a recarga roda por trás (ver
+  // obterFatos). O dashboard é leitura de acompanhamento — um Kaizen
+  // recém-aprovado aparecer alguns minutos depois é aceitável; fazer a
+  // pessoa esperar a consulta pesada a cada abertura não é.
   const TTL_MS = Number(process.env.KAIZEN_DASHBOARD_CACHE_MS) || 5 * 60 * 1000;
   // "Atualizar" na tela força a recarga, mas não mais que uma vez a cada
   // 20 s: vários cliques seguidos não viram várias consultas pesadas.
@@ -340,20 +344,91 @@ function registrarRotasDashboard(api, d) {
     };
     console.log(`[dashboard] base montada: ${linhas.length} Kaizens (atual ${contagem.A}, histórico ${contagem.H}; ` +
       `hierarquia: fotografia ${contagem.foto}, MDM ${contagem.mdm}, sem ${contagem.semHierarquia}) em ${Date.now() - inicio} ms.`);
-    return { em: Date.now(), payload, linhas, textos };
+    return comJson({ em: Date.now(), payload, linhas, textos });
   }
 
-  async function obterFatos(forcar) {
-    const agora = Date.now();
-    const valido = fatos && agora - fatos.em < TTL_MS;
-    const podeForcar = !fatos || agora - fatos.em > RECARGA_MINIMA_MS;
-    if (valido && !(forcar && podeForcar)) return fatos;
+  /* O JSON da base (~1 MB) é montado UMA vez por base, não a cada pessoa
+     que abre a tela — res.json() refazia o stringify em toda requisição. */
+  function comJson(f) {
+    f.json = JSON.stringify(f.payload);
+    return f;
+  }
+
+  /* ── Cópia da base no Blob (30/10/2026) ──────────────────────────────
+     O cache acima vive na MEMÓRIA do processo. A cada deploy ou reinício
+     do Databricks App ela começa vazia, e a primeira pessoa esperava a
+     consulta pesada inteira. Agora toda base montada é gravada no Blob
+     (gzip, ~200 KB) e, ao subir, o app lê essa cópia em ~1 s: a tela abre
+     com a base anterior na hora e a nova é montada por trás (a mesma
+     regra de base vencida de obterFatos).
+     KAIZEN_DASHBOARD_COPIA = caminho dentro da pasta do Blob do Kaizen;
+     "false" desliga. Sem Blob configurado, nada muda. */
+  const COPIA = (() => {
+    const v = process.env.KAIZEN_DASHBOARD_COPIA;
+    if (v != null && ["", "false", "0", "nao", "não"].includes(String(v).trim().toLowerCase())) return null;
+    return String(v || "00 - Sistema/dashboard-base.json.gz").trim();
+  })();
+  const blob = d.blob && d.blob.configurado && d.blob.configurado() && COPIA ? d.blob : null;
+
+  function gravarCopia(f) {
+    if (!blob) return;
+    const corpo = zlib.gzipSync(Buffer.from(JSON.stringify({ versao: 1, em: f.em, payload: f.payload })));
+    blob.enviar(COPIA, corpo, "application/gzip")
+      .then(() => console.log(`[dashboard] cópia da base gravada no Blob (${Math.round(corpo.length / 1024)} KB).`))
+      .catch((err) => console.warn("[dashboard] não foi possível gravar a cópia da base no Blob:", err.message));
+  }
+
+  async function lerCopia() {
+    if (!blob) return null;
+    const inicio = Date.now();
+    try {
+      const { buffer } = await blob.baixar(COPIA);
+      const c = JSON.parse(zlib.gunzipSync(buffer).toString("utf8"));
+      if (!c || c.versao !== 1 || !c.payload || !Array.isArray(c.payload.linhas)) return null;
+      // Mesmas colunas da base atual? Se o formato mudou num deploy, a
+      // cópia é ignorada e a base é montada do zero.
+      const colunas = ["origem", "id", "data", "status", "categoria", "lider", "aprovador", "site", ...NIVEIS.map((x) => x.chave)];
+      if (JSON.stringify(c.payload.colunas) !== JSON.stringify(colunas)) return null;
+      console.log(`[dashboard] base restaurada da cópia do Blob (${c.payload.linhas.length} Kaizens, ` +
+        `de ${new Date(c.em).toISOString()}) em ${Date.now() - inicio} ms.`);
+      return comJson({ em: Number(c.em) || 0, payload: c.payload, linhas: c.payload.linhas, textos: c.payload.textos });
+    } catch (err) {
+      console.warn("[dashboard] sem cópia da base no Blob (será montada do banco):", err.message);
+      return null;
+    }
+  }
+  // Começa a ler já no registro das rotas: quando a 1ª pessoa chegar, a
+  // cópia normalmente já está na memória.
+  let restaurando = lerCopia().then((c) => { if (c && !fatos) fatos = c; }).finally(() => { restaurando = null; });
+
+  /* Cache com "serve o antigo e atualiza por trás" (30/10/2026).
+     ANTES: passados os 5 minutos, a PRIMEIRA pessoa que abria a tela
+     esperava a consulta pesada inteira (todos os Kaizens, atual +
+     histórico, com quatro OUTER APPLY por linha) — e como o dashboard
+     não é aberto a cada 5 minutos, na prática quase toda abertura caía
+     nessa espera. AGORA: base vencida é entregue na hora e a recarga
+     roda em segundo plano; só espera quem abre com o app recém-subido
+     (sem base nenhuma) ou quem clica em "Atualizar". */
+  function recarregarFatos() {
     if (!fatosEmCurso) {
       fatosEmCurso = montarFatos()
-        .then((f) => { fatos = f; return f; })
+        .then((f) => { fatos = f; gravarCopia(f); return f; })
         .finally(() => { fatosEmCurso = null; });
     }
     return fatosEmCurso;
+  }
+  async function obterFatos(forcar) {
+    if (restaurando) await restaurando;
+    const agora = Date.now();
+    const valido = fatos && agora - fatos.em < TTL_MS;
+    const podeForcar = !fatos || agora - fatos.em > RECARGA_MINIMA_MS;
+    if (forcar && podeForcar) return recarregarFatos();
+    if (valido) return fatos;
+    if (fatos) {
+      recarregarFatos().catch((err) => console.error("[dashboard] recarga em segundo plano falhou (segue a base anterior):", err.message));
+      return fatos;
+    }
+    return recarregarFatos();
   }
 
   /* ── Título e equipe (aba Base de Dados e exportação) ───────────── */
@@ -400,17 +475,48 @@ function registrarRotasDashboard(api, d) {
     return { em: Date.now(), porChave };
   }
 
-  async function obterDetalhes(forcar) {
-    const agora = Date.now();
-    const valido = detalhes && agora - detalhes.em < TTL_MS;
-    const podeForcar = !detalhes || agora - detalhes.em > RECARGA_MINIMA_MS;
-    if (valido && !(forcar && podeForcar)) return detalhes;
+  // Mesma regra da base: vencido é entregue na hora e recarrega por trás.
+  function recarregarDetalhes() {
     if (!detalhesEmCurso) {
       detalhesEmCurso = montarDetalhes()
         .then((x) => { detalhes = x; return x; })
         .finally(() => { detalhesEmCurso = null; });
     }
     return detalhesEmCurso;
+  }
+  async function obterDetalhes(forcar) {
+    const agora = Date.now();
+    const valido = detalhes && agora - detalhes.em < TTL_MS;
+    const podeForcar = !detalhes || agora - detalhes.em > RECARGA_MINIMA_MS;
+    if (forcar && podeForcar) return recarregarDetalhes();
+    if (valido) return detalhes;
+    if (detalhes) {
+      recarregarDetalhes().catch((err) => console.error("[dashboard] recarga dos detalhes falhou (seguem os anteriores):", err.message));
+      return detalhes;
+    }
+    return recarregarDetalhes();
+  }
+
+  /* Base pronta antes da primeira pessoa chegar, e mantida aquecida.
+     Sobe ~20 s depois do app (o pool do banco e os caches de coluna já
+     estão de pé) e repete a cada KAIZEN_DASHBOARD_AQUECER_MS (padrão
+     30 min) — assim, mesmo sem ninguém abrir a tela por horas, quem abre
+     recebe uma base de no máximo meia hora, e a própria abertura já
+     dispara a atualização. A Biblioteca também usa esta base (filtro de
+     hierarquia), então ela ganha junto.
+     KAIZEN_DASHBOARD_AQUECER=false desliga (ex.: testes). */
+  if (String(process.env.KAIZEN_DASHBOARD_AQUECER || "true").toLowerCase() !== "false") {
+    const AQUECER_MS = Math.max(5 * 60 * 1000, Number(process.env.KAIZEN_DASHBOARD_AQUECER_MS) || 30 * 60 * 1000);
+    const aquecer = (motivo) => {
+      if (fatos && Date.now() - fatos.em < TTL_MS) return;
+      recarregarFatos()
+        .then(() => console.log(`[dashboard] base aquecida (${motivo}).`))
+        .catch((err) => console.error(`[dashboard] aquecimento (${motivo}) falhou:`, err.message));
+    };
+    // Com a cópia do Blob restaurada, a base já existe (vencida) e é
+    // montada de novo por trás; sem ela, é montada do zero.
+    setTimeout(() => Promise.resolve(restaurando).then(() => aquecer("subida do app")), 20 * 1000).unref();
+    setInterval(() => aquecer("periódico"), AQUECER_MS).unref();
   }
 
   /* ── Hierarquia por Kaizen para OUTRAS consultas (Biblioteca) ─────
@@ -497,7 +603,7 @@ function registrarRotasDashboard(api, d) {
   api.get("/dashboard/dados", async (req, res) => {
     try {
       const f = await obterFatos(req.query.atualizar === "1");
-      res.json(f.payload);
+      res.type("application/json").send(f.json);
     } catch (err) {
       console.error("[dashboard/dados] erro:", err.message);
       res.status(500).json(d.corpoErroSql("Erro ao montar o dashboard: ", err));
@@ -564,8 +670,8 @@ function registrarRotasDashboard(api, d) {
           C("NM_APROVADOR", "Aprovador", "Approver", 26),
           C("MEMBROS", "Membros VBM", "VBM members", 34),
           C("EXTERNOS", "Membros externos", "External members", 26),
-          C("COO", "COO", "COO", 34),
-          C("DIR", "Diretoria", "Directorate", 36),
+          C("COO", "CEO-1", "CEO-1", 34),
+          C("DIR", "Diretoria", "Director", 36),
           C("HEAD", "Head", "Head", 36),
           C("GG", "Gerência Geral", "General Management", 36),
           C("GA", "Gerência Área", "Area Management", 36),
@@ -595,13 +701,20 @@ function registrarRotasDashboard(api, d) {
         }
         planilha.getColumn("DT_CRIACAO").numFmt = "dd/mm/yyyy";
       } else {
-        // Detalhamento por líder: uma coluna por status que aparece na
-        // seleção, na ordem do cadastro.
-        planilha = workbook.addWorksheet(en ? "Leaders" : "Lideres");
+        // Detalhamento: uma linha por valor da coluna escolhida na tela
+        // (Kaizen Líder por padrão; aprovador, site, categoria ou um nível
+        // da hierarquia) e uma coluna por status que aparece na seleção,
+        // na ordem do cadastro.
+        const POS_GRUPO = { ld: 5, ap: 6, site: 7, coo: 8, dir: 9, head: 10, gg: 11, ga: 12, cs: 13 };
+        const grupo = corpo.grupo === "cat" || Object.prototype.hasOwnProperty.call(POS_GRUPO, corpo.grupo) ? corpo.grupo : "ld";
+        const valorGrupo = (l) => (grupo === "cat" ? (l[4] >= 0 ? rotulo(cats.get(l[4]), l[4]) : "") : txt(l[POS_GRUPO[grupo]]));
+        const tituloGrupo = String(corpo.rotuloGrupo || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 60)
+          || (en ? "Kaizen Leader" : "Kaizen Líder");
+        planilha = workbook.addWorksheet(en ? "Detail" : "Detalhamento");
         const porLider = new Map();
         const statusUsados = new Set();
         for (const l of linhas) {
-          const nome = txt(l[5]) || (en ? "(Blank)" : "(Em branco)");
+          const nome = valorGrupo(l) || (en ? "(Blank)" : "(Em branco)");
           let o = porLider.get(nome);
           if (!o) { o = { nome, total: 0, st: new Map() }; porLider.set(nome, o); }
           o.total++;
@@ -611,7 +724,7 @@ function registrarRotasDashboard(api, d) {
         const ordemStatus = [...statusUsados].sort((a, b) => a - b);
         const idAprovado = f.payload.status.find((s) => s.momento === "aprovado");
         planilha.columns = [
-          { header: en ? "Kaizen Leader" : "Kaizen Líder", key: "NOME", width: 32 },
+          { header: tituloGrupo, key: "NOME", width: 32 },
           { header: "Total", key: "TOTAL", width: 9 },
           ...ordemStatus.map((id) => ({ header: rotulo(status.get(id), id) || (en ? "No status" : "Sem status"), key: "S" + id, width: 16 })),
           { header: en ? "Approval %" : "% aprovação", key: "TAXA", width: 13 },

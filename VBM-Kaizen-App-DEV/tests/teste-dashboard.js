@@ -34,6 +34,8 @@ function subir(envExtra) {
     AZURE_SQL_SERVER: "teste.database.windows.net", KAIZEN_AZURE_SQL_DATABASE: "TESTE",
     AZURE_SQL_SCHEMA: "ci", AZURE_SQL_TABLE: "kzn_aprovador", AZURE_SQL_USER: "teste", AZURE_SQL_PASSWORD: "teste",
     PORT: String(PORTA), FAKE_MSSQL_LOG: LOG,
+    // Sem o aquecimento automático: o teste conta as consultas da base.
+    KAIZEN_DASHBOARD_AQUECER: "false",
   }, envExtra || {});
   const proc = spawn(process.execPath, ["-r", path.join(__dirname, "preload-dashboard.js"), "server.js"], { cwd: APP, env, stdio: ["ignore", "pipe", "pipe"] });
   let saida = "";
@@ -81,6 +83,12 @@ const H = { "X-Forwarded-Email": "membro@vale.com" };
   page.on("pageerror", (e) => errosJs.push(e.message));
   await page.goto(BASE + "/dashboard.html");
   await page.waitForSelector(".tt-num");
+  // A tela abre com o ano atual (ou o mais recente com registro) já filtrado.
+  const anos = _base.map((r) => parseInt(String(r.DT || "").slice(0, 4), 10)).filter((y) => y > 1900 && y <= new Date().getFullYear());
+  const anoPadrao = anos.includes(new Date().getFullYear()) ? new Date().getFullYear() : Math.max(...anos);
+  const chipAno = await page.textContent('#dashChips .dash-chip[data-k="y"]').catch(() => "");
+  ok("abre com o filtro de ano no ano atual/mais recente", chipAno.includes(String(anoPadrao)), chipAno);
+  await page.click('#dashChips .dash-chip[data-k="*"]');
   const totalTela = await page.textContent(".tt-num");
   ok("total na tela = linhas da API", totalTela.replace(/\D/g, "") === String(_base.length), totalTela);
   ok("4 cards de resumo", (await page.$$(".dash-tiles > *")).length === 4);
@@ -150,7 +158,7 @@ const H = { "X-Forwarded-Email": "membro@vale.com" };
   const wb = new ExcelJS.Workbook(); await wb.xlsx.readFile(arq);
   const ws = wb.worksheets[0];
   ok("Excel da base com todas as linhas filtradas", ws.rowCount - 1 === _base.length, `${ws.rowCount - 1} linhas`);
-  ok("Excel tem os 6 níveis + título", ["COO", "Diretoria", "Head", "Gerência Geral", "Gerência Área", "Coord/Sup", "Título"].every((h) => ws.getRow(1).values.includes(h)));
+  ok("Excel tem os 6 níveis + título", ["CEO-1", "Diretoria", "Head", "Gerência Geral", "Gerência Área", "Coord/Sup", "Título"].every((h) => ws.getRow(1).values.includes(h)));
   await page.click("#aba-detalhe");
   const [dl2] = await Promise.all([page.waitForEvent("download"), page.click("#exportarDet")]);
   const arq2 = path.join(SHOTS, "export-lideres.xlsx");
@@ -165,7 +173,7 @@ const H = { "X-Forwarded-Email": "membro@vale.com" };
   await page.selectOption("#langSelect", "en");
   await page.click("#settingsClose");
   ok("tema escuro aplicado", (await page.getAttribute("body", "data-bg")) === "dark");
-  ok("inglês: aba e status traduzidos", (await page.textContent("#aba-lider")).includes("Kaizen Leader") && (await page.textContent("#dashTiles")).includes("Approved"));
+  ok("inglês: aba e status traduzidos", (await page.textContent("#aba-detalhe")).includes("Detail") && (await page.textContent("#dashTiles")).includes("Approved"));
   await page.waitForTimeout(1300);
   await page.screenshot({ path: path.join(SHOTS, "05-total-escuro-en.png"), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });

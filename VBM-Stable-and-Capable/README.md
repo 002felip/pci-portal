@@ -4,6 +4,75 @@ Gera os relatórios PDF de **estabilidade e capabilidade (SPC)** por Business Un
 Endereço: `/VBM-Stable-and-Capable/`, aplicação da raiz do Portal (card na página inicial, ao lado do VBM-Kaizen-App e do VBM-Performance-Hub).
 Montada pelo `server.js` da raiz, depois do controle de acesso do Portal (IBP.USERS com CD_MATRICULA).
 
+## Opções da tela
+
+Ao abrir, a pessoa escolhe entre:
+
+- **Rodar o modelo** (`#modelo`): gerar os PDFs. É o fluxo descrito abaixo.
+- **Importar dados** (`#importar`): subir o PCI Master do mês para a `IBP.PEDRAVISAODIARIA`.
+- **Power BI** (`#powerbi`): a página "Stable and capable" do `Stable_and_Capable_3.pbix`, refeita no app (ver abaixo).
+
+## Power BI (página refeita no app)
+
+Reprodução da página **"Stable and capable"** do `Stable_and_Capable_3.pbix`, sem depender de licença do Power BI nem dos visuais Python. Mesmo conteúdo, com o design do app:
+
+- **Filtros:** Business Unit → Site → KPI (Operação só aparece quando o par site/KPI tem mais de uma), período, *Remover zeros?* e *Remover outliers?*. Os padrões são os do `.pbix`: Salobo / Salobo / Ore Mined, Não, Não.
+- **Carta de controle** por **trimestre** ou **ano** ("Choose the grouping"):
+  - CL e limites com MR/d2 (d2 = 1,128), com LCL nunca negativo;
+  - as 4 regras de Nelson e a faixa dos melhores 30 dias de cada período.
+- **Medidas estatísticas e comparações:** média, melhores 30 dias, P75 e budget por período, mais a variação da média entre períodos.
+- **Histograma de capabilidade:** por ano, com 35 faixas comuns, curva normal e a tabela Ano / Mean / StDev / CV / N.
+
+**De onde vem cada parte**
+
+| Parte | Origem |
+|---|---|
+| Dados | `database/query_powerbi_stable_and_capable.sql` (a consulta da tabela `base` do `.pbix`, copiada como está), sempre no banco **PRD** |
+| Servidor | `bi-api.js`: o resultado (cerca de 80 mil linhas) fica em memória e é recarregado a cada `STABLECAPABLE_BI_CACHE_MIN` minutos (padrão 60) ou pelo botão "Atualizar dados" |
+| Cálculos e gráficos | `assets/js/painel-spc.js`: mesma lógica dos scripts Python do `.pbix` (cada bloco cita o trecho de origem), desenhados em SVG, sem biblioteca externa |
+
+- **Conferência:** os valores foram comparados com os scripts Python originais (CL/UCL/LCL, medidas e histograma).
+- **Regra 4:** reproduz o comportamento do script, que avalia só a sequência alternada que termina no fim de cada período.
+
+| Variável | Padrão |
+|---|---|
+| `STABLECAPABLE_BI_SQL_DATABASE` | `BDIBPBMSA_PRD` |
+| `STABLECAPABLE_BI_SQL_SERVER` | `AZURE_SQL_SERVER` (ou o servidor PRD) |
+| `STABLECAPABLE_BI_CACHE_MIN` | `60` |
+
+O login é o do Portal (`AZURE_SQL_USER` / `AZURE_SQL_PASSWORD`).
+
+## Importar dados (PCI Master → IBP.PEDRAVISAODIARIA)
+
+Substitui o fluxo manual de todo mês: rodar o `mapeamento.py` no Colab e subir o `resultado.xlsx` no banco.
+
+1. **Prévia** (`POST api/importacao/previa`): a pessoa envia o PCI Master Data File e escolhe mês e ano. O script `python/scripts/importar_pci_master.py` faz o mesmo que o `mapeamento.py`, usando o mapeamento de `python/data/mapeamento_bu_kpi.xlsx`, e **nada é gravado**. A tela mostra:
+   - as linhas geradas;
+   - os campos sem dados ou com dias faltando no mês;
+   - quantas linhas já existem no banco.
+
+   Dá para baixar o `resultado.xlsx`, idêntico ao de antes.
+2. **Gravação** (`POST api/importacao/previa/:id/confirmar`): tudo numa única transação. Se algo falha, nada é gravado.
+   - `atualizar`: linhas que já existem (mesma data, sistema, site, operação e KPI) têm **só o `VL_REAL`** atualizado; as demais são inseridas.
+   - `novos`: só insere as que não existem.
+
+   Nenhuma linha é apagada, então `VL_D30`, `VL_CS`, `VL_PD` e `VL_PROJ` vindos de outra origem não são zerados.
+3. **Arquivos e histórico:** o `resultado_AAAA-MM.xlsx` e o `PCI_Master_AAAA-MM.xlsx` vão para o Blob, em `<pasta>/importacoes/<id>/`. O registro (quem, quando, linhas inseridas e atualizadas) fica em `importacoes.json`.
+
+Antes de gravar, o app confere as colunas da tabela no próprio banco (`INFORMATION_SCHEMA`). Se faltar coluna, ou se houver coluna obrigatória que o arquivo não preenche, a gravação é bloqueada com a explicação.
+
+**Mapeamento:** para mudar campos, sites ou KPIs, substitua `python/data/mapeamento_bu_kpi.xlsx`. Ele é baixável pela tela. Dois formatos são aceitos:
+- `NM_TABELA`: nome da coluna. A aba é descoberta pelo cabeçalho, preferindo a aba da BU à `Consolidated Table`.
+- `NM_ABA` + `NM_CAMPO`: formato do `mapeamento.py` original.
+
+Também lê `ID_SISTEMA`, `ID_SITE`, `ID_OPERACAO`, `ID_KPI` e `Dividir por 100?`.
+
+| Variável | Padrão |
+|---|---|
+| `STABLECAPABLE_TABELA_IMPORTACAO` | `IBP.PEDRAVISAODIARIA` (mesmo banco do resto da aplicação) |
+
+O login do banco precisa de permissão de `SELECT`, `INSERT` e `UPDATE` nessa tabela.
+
 ## Como funciona
 
 ```

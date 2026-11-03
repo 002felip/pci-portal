@@ -49,7 +49,8 @@ Os dashboards do Hub são uma página só e cada pasta serve apenas `index.html`
    `html.is-fs` no `fullscreenchange` e o CSS esconde a barra; no F11 vale
    `@media (display-mode: fullscreen)`. Se o layout calcula alturas (ex.: `ajustarAltura`),
    ele precisa reagir ao tamanho da área (`ResizeObserver`), não a um valor fixo.
-7. **Layout.** A barra tem 64 px e é `position: sticky`. Em página de altura fixa
+7. **Layout.** A barra tem 64 px (56 px em telas menores: até 1440 px de largura ou 820 px de altura,
+   o caso de notebook com escala de 125–150% no Windows) e é `position: sticky`. Em página de altura fixa
    (`body` em coluna com `height: 100%`), a área do dashboard deve ser `flex: 1; min-height: 0`
    para encolher com a barra e crescer de volta na tela cheia, sem rolagem.
 8. **Usuário logado.** O JS chama `GET /api/me` (rota do Portal/Kaizen; devolve `nome`,
@@ -63,5 +64,5 @@ Os dashboards do Hub são uma página só e cada pasta serve apenas `index.html`
 - Não altere outros projetos ao aplicar a skill: tudo vai na pasta do dashboard.
 - Acessibilidade: engrenagem com `aria-expanded`, painel com `role="dialog"`, Esc fecha,
   foco volta para a engrenagem. Mantenha esses atributos ao copiar.
-- Conferir antes de entregar: 1920×1080, 1440×860 e 390 px; tema claro e escuro; troca de
+- Conferir antes de entregar: 1920×1080, 1440×860, 1280×590 (notebook com escala de 150%) e 390 px; tema claro e escuro; troca de
   idioma e de formato numérico redesenhando os gráficos; tela cheia (botão e F11) sem a barra.
