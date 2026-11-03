@@ -55,30 +55,41 @@ As duas telas têm o mesmo molde e só muda o produto. Os dados vêm do filtro B
 
 Filtro Business Units: `VBM` · `Copper` · `Nickel`.
 
-## Dados do banco (próximo passo)
+## Dados do banco
 
-A estrutura segue a das outras aplicações do Hub (COO):
+Mesma estrutura dos demais dashboards do Hub (COO e COO Historical):
 
 | Arquivo | Papel |
 |---|---|
-| `portal.js` | Monta a página e a API em `/VBM-Performance-Hub/VBM-Health-of-the-Business/` com pool próprio no Azure SQL PRD (variáveis `PERFORMANCEHUB_SQL_*`, como o COO) |
-| `hob-api.js` | Rotas `api/ping`, `api/health` e `api/dados`. Lê a SQL de `database/` e devolve o formato dos dados de demonstração (`window.HOB_DATA` no `index.html`) (cache de 5 min) |
-| `database/001_hob_mensal.sql` | Budget e Actual\|Forecast mensais por BU e indicador |
-| `database/002_hob_pontes.sql` | Itens das pontes 2026 EBITDA YEAR e FCF YEAR |
-| `database/003_hob_atualizacao.sql` | Data da última carga e último mês com Actual |
+| `portal.js` | Monta a página e a API em `/VBM-Performance-Hub/VBM-Health-of-the-Business/`, com pool próprio no Azure SQL PRD (variáveis `PERFORMANCEHUB_SQL_*`, como o COO) |
+| `hob-api.js` | Rotas `api/ping`, `api/health`, `api/ciclos`, `api/config`, `api/indicadores?ciclo=` e `api/waterfall`. Mesmo cache, refresh (`?fresco=1`), tolerância a banco fora e limite por usuário do COO |
+| `database/001_hob_dashboard.sql` | Leitura de uma carga (`DT_REF`) em `IBP.PHUB_PERFORMANCESTUDIO` + cadastro em `IBP.DASHBOARD` (`@idDash`, `@dtRef`) |
+| `database/002_hob_waterfall.sql` | FCF YEAR: `IBP.WATERFALL` do site 40 desde 2025 (`@site`, `@anoIni`) |
+| `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO` (mesmo `DELETE`/`INSERT` do COO). **Pendente:** a consulta de origem |
+| `database/005_config_hob.sql` | Configuração da tela em `IBP.PHUB_PS_SETUP` (`CD_VISAO 'VBM_HEALTH_OF_THE_BUSINESS'`): sites de cada BU, KPI de cada gráfico, degraus das pontes e origem do FCF |
 | `server.js`, `package.json` | App independente (desenvolvimento), igual ao do COO |
 | `tests/hob-api.test.js` | `npm test`: banco simulado, sem rede |
 
-Cada script de `database/` traz no cabeçalho as colunas esperadas e os códigos aceitos. Para ligar ao banco:
+Variáveis (no `app.yaml` do Portal):
 
-1. Escreva a consulta no lugar do `SELECT … WHERE 1 = 0` de cada script, mantendo os nomes das colunas.
-2. Apague a primeira linha (`-- HOB:PENDENTE`).
-3. Publique o Portal. Sem a marca nos três scripts, `api/dados` passa a responder com os dados do banco e a página tira o selo "Dados demo".
+| Variável | Uso |
+|---|---|
+| `HOB_ID_DASH` | `IBP.DASHBOARD.ID_DASH` do Health of the Business. Sem ela, só o FCF YEAR vem do banco |
+| `HOB_CACHE_TTL_S`, `HOB_FRESCO_S`, `HOB_DESATUALIZADO_MAX_S` | Opcionais, mesmos padrões do COO (300 s, 15 s, 2 h) |
+| `HOB_DIAGNOSTICO=1` | Liga `api/waterfall?bruto=1` (colunas e linhas de `IBP.WATERFALL` como vieram) |
 
-Enquanto algum script tiver a marca, `api/dados` responde 503 (`CONSULTAS_PENDENTES`) e a página segue com a demonstração. Se o banco falhar, a página também usa a demonstração, mas o selo passa a dizer "Dados demo · banco indisponível". Mês sem valor aparece como 0 e é registrado no log do Portal.
+**Já vem do banco:** FCF YEAR, de `IBP.WATERFALL`. Para cada ano vale a referência mais recente (maior `DT_REF`). Rótulo, valor e ordem saem das colunas da tabela (padrão de nomes do IBP: `DS_`/`NM_`, `VL_`, `ORDEM`). O tipo e o cinza de cada degrau saem da configuração, e os subtotais são calculados pela tela.
+
+**Para o restante vir do banco:**
+1. Cadastrar o dashboard e os KPIs em `IBP.DASHBOARD` (novo `ID_DASH`), com os nomes de `005_config_hob.sql` (ou ajustar o JSON).
+2. Preencher a consulta de origem em `003_carga_mensal_hob.sql` e o `@ID_DASH`, e agendar no Data Factory como a do COO.
+3. Rodar `005_config_hob.sql` (com os sites de cada BU em `bus`).
+4. Definir `HOB_ID_DASH` no `app.yaml` e fazer o redeploy.
+
+Enquanto não houver carga, a página usa a demonstração com o selo "Dados demo · FCF YEAR do banco".
 
 ## Pendências
 
-1. **Consultas**: preencher os três scripts de `database/` (ver acima).
-2. Validar com a área de negócio o nome e a ordem das categorias das pontes (EBITDA e FCF).
-3. Confirmar se o seletor do EBITDA deve ter a opção `Non-Alloc.`.
+1. **Carga mensal**: consulta de origem de `003_carga_mensal_hob.sql` e o `ID_DASH` do dashboard.
+2. Conferir as colunas de `IBP.WATERFALL` no Portal (`HOB_DIAGNOSTICO=1` → `api/waterfall?bruto=1`).
+3. Validar com a área de negócio o nome e a ordem das categorias das pontes (EBITDA e FCF).

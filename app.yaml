@@ -24,6 +24,11 @@ env:
     value: 'BDIBPBMSA_DEV'
   - name: 'PERFORMANCEHUB_AZURE_SQL_DATABASE'  # VBM-Performance-Hub
     value: 'BDIBPBMSA_PRD'
+  # VBM Health of the Business (VBM-Performance-Hub/VBM-Health-of-the-Business): IBP.DASHBOARD.ID_DASH
+  # do dashboard. Sem ela a página abre com dados de demonstração e só o FCF YEAR vem do banco
+  # (IBP.WATERFALL). Descomentar com o ID quando o dashboard for cadastrado:
+  # - name: 'HOB_ID_DASH'
+  #   value: '<ID_DASH>'
   - name: 'AZURE_SQL_PORT'
     value: '1433'
   - name: 'AZURE_SQL_SCHEMA'
