@@ -4897,7 +4897,8 @@ const TITLE_SEPS = [
 ];
 const UNIT_OPTIONS = [
   { v: '', label: 'Automática (do indicador)' }, { v: 't', label: 't — tonelada' }, { v: 'Kt', label: 'Kt — mil toneladas' },
-  { v: 'Mt', label: 'Mt — milhão de toneladas' }, { v: '%', label: '% — percentual' }, { v: 'US$', label: 'US$ — dólar' },
+  { v: 'Mt', label: 'Mt — milhão de toneladas' }, { v: 'kg', label: 'kg — quilograma' },
+  { v: 'oz', label: 'oz — onça troy' }, { v: 'koz', label: 'koz — mil onças troy' }, { v: 'Moz', label: 'Moz — milhão de onças troy' }, { v: '%', label: '% — percentual' }, { v: 'US$', label: 'US$ — dólar' },
   { v: 'KUSD', label: 'KUSD — mil dólares' }, { v: 'MUSD', label: 'MUSD — milhão de dólares' }, { v: 'BUSD', label: 'BUSD — bilhão de dólares' }, { v: 'custom', label: 'Personalizada…' }
 ];
 const SCALE_OPTIONS = [
@@ -5428,7 +5429,9 @@ function aplicarCoresAoVivo() {
 }
 
 // Unidade ↔ escala: mesma família (toneladas, dólares) → fator = base dos dados ÷ unidade escolhida
-const UNIDADE_MULT = { t: ['t', 1], kt: ['t', 1e3], mt: ['t', 1e6], 'us$': ['usd', 1], usd: ['usd', 1], kusd: ['usd', 1e3], musd: ['usd', 1e6], busd: ['usd', 1e9] };
+// Massa em toneladas: kg ÷ 1.000 = t; onça troy = 31,1034768 g (kg × 32,1507466 = oz)
+const OZ_T = 31.1034768e-6;
+const UNIDADE_MULT = { t: ['t', 1], kt: ['t', 1e3], mt: ['t', 1e6], kg: ['t', 1e-3], oz: ['t', OZ_T], koz: ['t', OZ_T * 1e3], moz: ['t', OZ_T * 1e6], 'us$': ['usd', 1], usd: ['usd', 1], kusd: ['usd', 1e3], musd: ['usd', 1e6], busd: ['usd', 1e9] };
 const multDe = u => UNIDADE_MULT[String(u || '').trim().toLowerCase()] || null;
 // Unidade(s) identificada(s) nos dados do gráfico (SG_UNID das linhas filtradas, como o subtítulo)
 function unidadesDosDados(c) {

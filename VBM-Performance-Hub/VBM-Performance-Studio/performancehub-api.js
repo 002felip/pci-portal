@@ -400,7 +400,7 @@ const CONFIG_COR_COLUNA_MAX = 80;
 const CONFIG_PALETAS = ['vale', 'executiva', 'azul', 'verde', 'performance', 'gradiente'];
 const CONFIG_CAMPOS_TITULO = ['product', 'sites', 'visoes', 'horizontes', 'ano'];
 const CONFIG_SEPARADORES = [' ', ' - ', ' / ', ' | ', '\n'];
-const CONFIG_UNIDADES = ['', 't', 'Kt', 'Mt', '%', 'US$', 'KUSD', 'MUSD', 'BUSD', 'custom'];
+const CONFIG_UNIDADES = ['', 't', 'Kt', 'Mt', 'kg', 'oz', 'koz', 'Moz', '%', 'US$', 'KUSD', 'MUSD', 'BUSD', 'custom'];
 
 function tabelaConfig(nome) {
   const t = nome || CONFIG_TABELA_PADRAO;
