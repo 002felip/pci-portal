@@ -57,8 +57,8 @@ const normalizar = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '
 //               {ano} no rótulo vira o ano do valor. cinza: coluna no cinza do Budget.
 const CONFIG_VISAO = 'VBM_HEALTH_OF_THE_BUSINESS';
 const CONFIG_PADRAO = {
-  // FCF YEAR: IBP.WATERFALL do site (consulta do time de dados: ID_SITE = 40, desde 2025)
-  fcf: { site: 40, anoInicial: 2025 },
+  // FCF YEAR: IBP.WATERFALL (consulta do time de dados: ID_SITE = 40, ID_TIPO = 2, desde 2025)
+  fcf: { site: 40, tipo: 2, anoInicial: 2025 },
   bus: { vbm: { sites: [] }, cu: { sites: [] }, ni: { sites: [] } },
   indicadores: {
     vbm: { ebitdaCu: ['EBITDA Copper'], ebitdaNi: ['EBITDA Nickel'], ebitdaOut: ['EBITDA Others', 'EBITDA Other Segments'], capex: ['CAPEX'] },
@@ -116,8 +116,9 @@ function normalizarConfigHob(json) {
   if (!c || typeof c !== 'object') return null;
   const out = JSON.parse(JSON.stringify(CONFIG_PADRAO));
   if (c.fcf && typeof c.fcf === 'object') {
-    const site = Number(c.fcf.site), ano = Number(c.fcf.anoInicial);
+    const site = Number(c.fcf.site), tipo = Number(c.fcf.tipo), ano = Number(c.fcf.anoInicial);
     if (Number.isInteger(site) && site > 0) out.fcf.site = site;
+    if (c.fcf.tipo != null && Number.isInteger(tipo) && tipo > 0) out.fcf.tipo = tipo;
     if (Number.isInteger(ano) && ano >= 2000 && ano <= 2100) out.fcf.anoInicial = ano;
   }
   for (const b of BUS) {
@@ -303,7 +304,7 @@ function carregarSql(arquivo, parametros) {
   return textoSql;
 }
 const LEITURA = { arquivo: '001_hob_dashboard.sql', parametros: ['@idDash', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD'] };
-const WATERFALL = { arquivo: '002_hob_waterfall.sql', parametros: ['IBP.WATERFALL', '@site', '@anoIni'] };
+const WATERFALL = { arquivo: '002_hob_waterfall.sql', parametros: ['IBP.WATERFALL', '@site', '@tipo', '@anoIni'] };
 
 // Cargas do Health of the Business em IBP.PHUB_PERFORMANCESTUDIO (uma por DT_REF), com a hora da gravação
 const CICLOS_SQL = `
@@ -383,8 +384,8 @@ function criarHobRouter({ runQuery, idDash }) {
   }
   // FCF YEAR de IBP.WATERFALL (não depende do ID_DASH). Falha não derruba /indicadores: vale a configuração
   async function lerWaterfall(config, f) {
-    const { site, anoInicial } = config.fcf;
-    const linhas = await comCache(`/waterfall:${site}:${anoInicial}`, async () => (await runQuery(WATERFALL_SQL, { site: [sql.Int, site], anoIni: [sql.Int, anoInicial] })).recordset, f);
+    const { site, tipo, anoInicial } = config.fcf;
+    const linhas = await comCache(`/waterfall:${site}:${tipo}:${anoInicial}`, async () => (await runQuery(WATERFALL_SQL, { site: [sql.Int, site], tipo: [sql.Int, tipo], anoIni: [sql.Int, anoInicial] })).recordset, f);
     return { linhas, ...mapearWaterfall(linhas, config) };
   }
   function responderErro(res, rotaNome, err, falha) {
@@ -448,9 +449,9 @@ function criarHobRouter({ runQuery, idDash }) {
       if (w.avisos.length) console.warn(`${TAG} IBP.WATERFALL: ${w.avisos.slice(0, 5).join(' | ')}`);
       if (req.query.bruto === '1') {
         if (!diagnostico) return res.status(404).json({ error: 'Not found.' });
-        return res.json({ site: cfg.config.fcf.site, anoInicial: cfg.config.fcf.anoInicial, colunas: w.linhas.length ? Object.keys(w.linhas[0]) : [], mapeamento: w.colunas, linhas: w.linhas.slice(0, 200) });
+        return res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anoInicial: cfg.config.fcf.anoInicial, colunas: w.linhas.length ? Object.keys(w.linhas[0]) : [], mapeamento: w.colunas, linhas: w.linhas.slice(0, 200) });
       }
-      res.json({ site: cfg.config.fcf.site, anos: w.anos, avisos: w.avisos });
+      res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anos: w.anos, avisos: w.avisos });
     } catch (err) {
       responderErro(res, '/waterfall', err, 'Failed to query IBP.WATERFALL.');
     }
