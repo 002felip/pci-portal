@@ -673,42 +673,63 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .dsc-ano-cor { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--c); margin-right: .45rem; vertical-align: -1px; }
 
 /* ── Painel de filtros (lateral esquerda; mesmo desenho do Kaizen) ── */
-.dsc-filtros-fundo { position: fixed; inset: 0; background: rgba(9,20,34,.4); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s; }
-.dsc-filtros-fundo.open { opacity: 1; pointer-events: auto; }
-.dsc-filtros { position: fixed; top: 0; left: 0; width: 340px; max-width: 92vw; height: 100vh; background: #fff; box-shadow: 16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform .38s cubic-bezier(.2,1,.2,1); font-family: 'Poppins', sans-serif; color: #1a1a1a; }
-.dsc-filtros.open { transform: none; }
-.dsc-filtros .fp-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
-.dsc-filtros .fp-head h2 { margin: 0; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; }
-.dsc-filtros .fp-fechar { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: #6b7c93; cursor: pointer; }
-.dsc-filtros .fp-fechar:hover { background: #3cb5e5; color: #fff; }
-.dsc-filtros .fp-corpo { flex: 1; overflow-y: auto; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px; }
-.dsc-filtros .fp-grupo { font-size: .6rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #1a8bbf; margin-top: 6px; }
-.dsc-filtros .fp-pe { display: flex; gap: .6rem; padding: 12px 20px 16px; border-top: 1px solid #eef1f6; }
-.dsc-filtros .qf { display: flex; flex-direction: column; gap: .3rem; }
-.dsc-filtros .qf[hidden] { display: none; }
-.dsc-filtros .qf-rotulo { font-size: 11px; font-weight: 600; color: #1a1a1a; }
-.dsc-filtros .qf-campo { width: 100%; min-height: 38px; padding: .45rem .75rem; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; color: #1a1a1a; font: 400 11.5px 'Poppins', sans-serif; }
-.dsc-filtros .qf-campo:focus { outline: none; border-color: #3cb5e5; box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
-.dsc-filtros .qf-periodo { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
-.dsc-filtros .qf-periodo label { display: flex; flex-direction: column; gap: .2rem; font-size: .62rem; color: #6b7c93; }
-.dsc-filtros .qf-flag { display: flex; align-items: center; justify-content: space-between; gap: .75rem; font-size: 11.5px; }
-.dsc-filtros .qf-flag .dsc-seg { background: #fafcfe; border-color: #e8e8e8; }
-.dsc-filtros .qf-flag .dsc-seg button { min-height: 28px; padding: .25rem .75rem; color: #6b7c93; }
-.dsc-filtros .qf-flag .dsc-seg button[aria-pressed="true"] { background: #3cb5e5; color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
-.dsc-filtros .qf-dica { font-size: .64rem; color: #6b7c93; line-height: 1.45; }
-.dsc-filtros .fp-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 38px; border-radius: .55rem; font: 600 .74rem 'Poppins', sans-serif; cursor: pointer; border: 1.5px solid #3cb5e5; background: #3cb5e5; color: #fff; }
-.dsc-filtros .fp-btn.sec { background: transparent; color: #1a8bbf; }
-:root[data-theme="dark"] .dsc-filtros { background: #0d2640; color: #fff; box-shadow: 16px 0 48px rgba(0,0,0,.45); }
-:root[data-theme="dark"] .dsc-filtros .fp-head, :root[data-theme="dark"] .dsc-filtros .fp-pe { border-color: rgba(255,255,255,.1); }
-:root[data-theme="dark"] .dsc-filtros .fp-fechar { background: rgba(255,255,255,.12); color: #f4f7fb; }
-:root[data-theme="dark"] .dsc-filtros .fp-grupo { color: #7dd3f0; }
-:root[data-theme="dark"] .dsc-filtros .qf-rotulo { color: #fff; }
-:root[data-theme="dark"] .dsc-filtros .qf-campo { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: #fff; color-scheme: dark; }
-:root[data-theme="dark"] .dsc-filtros .qf-campo option { background: #0d2640; }
-:root[data-theme="dark"] .dsc-filtros .qf-periodo label, :root[data-theme="dark"] .dsc-filtros .qf-dica { color: rgba(255,255,255,.6); }
-:root[data-theme="dark"] .dsc-filtros .qf-flag .dsc-seg { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.12); }
-:root[data-theme="dark"] .dsc-filtros .qf-flag .dsc-seg button { color: rgba(255,255,255,.6); }
-:root[data-theme="dark"] .dsc-filtros .fp-btn.sec { color: #7dd3f0; }
+/* ── Filtros: mesmo padrão dos reports do VBM Performance Hub (COO – Business Units Dashboard) ── */
+.dsc {
+  --ctl-bg: #FFFFFF; --ctl-border: rgba(13,38,64,.16); --ctl-text: #1F2937; --ctl-on-bg: #0B6E99; --ctl-on-text: #FFFFFF;
+  --f-soft: #5b6676; --f-faint: #8a96a8; --f-pop: #ffffff; --f-shadow: 0 14px 34px rgba(15,23,42,.16);
+}
+:root[data-theme="dark"] .dsc {
+  --ctl-bg: rgba(255,255,255,.05); --ctl-border: rgba(255,255,255,.16); --ctl-text: #E5EDF5; --ctl-on-bg: #3CB5E5; --ctl-on-text: #02101c;
+  --f-soft: rgba(244,247,251,.62); --f-faint: rgba(244,247,251,.42); --f-pop: #0f2a40; --f-shadow: 0 14px 34px rgba(0,0,0,.45);
+}
+.dsc .filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; padding-bottom: 14px; border-bottom: 1px solid var(--d-line); }
+.dsc .filter { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
+.dsc .filter[hidden] { display: none; }
+.dsc .filter-acao { margin-left: auto; }
+.dsc .filter-label { font: italic 400 .74rem 'Poppins', 'Segoe UI', sans-serif; color: var(--f-soft); }
+.dsc .unit { position: relative; }
+.dsc .unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; max-width: 100%; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
+.dsc .unit-trigger:hover, .dsc .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.dsc .unit-trigger > span { overflow: hidden; text-overflow: ellipsis; }
+.dsc .unit-pais { color: var(--f-soft); }
+.dsc .unit-sep { color: var(--f-faint); }
+.dsc .unit-site { color: var(--ctl-on-bg); font-weight: 600; }
+.dsc .unit-caret { flex: none; color: var(--f-soft); transition: transform .18s ease; }
+.dsc .unit-trigger[aria-expanded="true"] .unit-caret { transform: rotate(180deg); }
+.dsc .unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 380px; max-width: calc(100vw - 32px); display: grid; grid-template-columns: 1fr 1.15fr; padding: 8px; border-radius: 12px; border: 1px solid var(--d-line); background: var(--f-pop); box-shadow: var(--f-shadow); }
+.dsc .unit-pop[hidden] { display: none; }
+.dsc .unit-pop.lista-pop { width: auto; min-width: 200px; grid-template-columns: 1fr; }
+.dsc .unit-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; }
+.dsc .unit-col + .unit-col { border-left: 1px solid var(--d-line); padding-left: 10px; }
+.dsc .unit-h { font: 600 .62rem 'Poppins', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--f-soft); padding: 2px 8px 4px; }
+.dsc .unit-list { display: flex; flex-direction: column; gap: 2px; max-height: min(60vh, 380px); overflow-y: auto; }
+.dsc .unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem 'Poppins', sans-serif; text-align: left; cursor: pointer; }
+.dsc .unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.dsc .unit-list button .n { color: var(--f-faint); font-size: .68rem; }
+.dsc .unit-list button[aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
+.dsc .unit-list button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.dsc .unit-list button[aria-pressed="true"] .n { color: inherit; opacity: .75; }
+.dsc .seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.dsc .seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
+.dsc .seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.dsc .seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.dsc .seg.datas { align-items: center; flex-wrap: nowrap; padding: 2px 6px; }
+.dsc .seg.datas input { min-height: 26px; border: 0; background: transparent; color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; padding: 0 2px; }
+.dsc .seg.datas input:focus { outline: 2px solid var(--ctl-on-bg); outline-offset: 1px; border-radius: 5px; }
+:root[data-theme="dark"] .dsc .seg.datas input { color-scheme: dark; }
+.dsc .datas-sep { color: var(--f-faint); font-size: .74rem; }
+.dsc .switch { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); cursor: pointer; }
+.dsc .switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--f-soft) 40%, transparent); transition: background-color .18s ease; }
+.dsc .switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.dsc .switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.dsc .switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+.dsc .nav-chip { min-height: 32px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
+.dsc .nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.dsc .nav-chip:disabled { opacity: .4; cursor: default; }
+.dsc .unit-trigger:focus-visible, .dsc .seg button:focus-visible, .dsc .switch:focus-visible, .dsc .nav-chip:focus-visible, .dsc .unit-list button:focus-visible { outline: 2px solid var(--ctl-on-bg); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .dsc .switch-track, .dsc .switch-thumb, .dsc .unit-caret { transition: none; } }
+@media (max-width: 720px) { .dsc .filters { gap: 8px 10px; } .dsc .filter-acao { margin-left: 0; } .dsc .unit-pop { grid-template-columns: 1fr; } .dsc .unit-col + .unit-col { border-left: 0; border-top: 1px solid var(--d-line); padding-left: 4px; } }
+@media (pointer: coarse) { .dsc .seg button, .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; } }
 
 @media (max-width: 1180px) { .dsc-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 1180px) { .dsc .s3, .dsc .s9 { grid-column: span 12; } }
@@ -1023,10 +1044,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
         </div>
         <div class="dsc-atualizado" id="biAtualizado"></div>
         <div class="dsc-acoes">
-          <button type="button" class="dsc-btn-hero primario" id="biAbrirFiltros" aria-controls="biFiltros" aria-expanded="false">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 3.5h12L9.5 8.8v3.7l-3 1.5V8.8L2 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-            <span data-i18n="bi.filtros">Filtros</span><span class="dsc-contador" id="biContaFiltros" hidden>0</span>
-          </button>
           <button type="button" class="dsc-btn-hero" id="biAtualizar">
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span data-i18n="bi.atualizar">Atualizar</span>
@@ -1035,7 +1052,50 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </div>
     </div>
 
-    <div class="dsc-barra"><div class="dsc-chips" id="biChips"></div></div>
+    <!-- Filtros no padrão dos reports do VBM Performance Hub (COO – Business Units Dashboard):
+         rótulo em itálico em cima, seletor BU › Site em duas colunas, listas, segmentado e interruptores -->
+    <section class="filters dsc-filtros-barra" aria-label="Filtros" data-i18n-aria="bi.filtros">
+      <div class="filter"><span class="filter-label" id="lblBiBu">Business Unit:</span>
+        <div class="unit" data-pop="biBuPop">
+          <button type="button" class="unit-trigger" id="biBuTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="biBuPop" aria-describedby="lblBiBu">
+            <span class="unit-pais" id="biBuTxt">—</span><span class="unit-sep" aria-hidden="true">›</span><span class="unit-site" id="biSiteTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop" id="biBuPop" role="dialog" aria-label="Business Unit e site" data-i18n-aria="bi.a.unidade" hidden>
+            <div class="unit-col"><span class="unit-h" id="biHBu">Business Unit</span><div class="unit-list" id="biBuLista" role="group" aria-labelledby="biHBu"></div></div>
+            <div class="unit-col"><span class="unit-h" id="biHSite" data-i18n="bi.f.site">Site</span><div class="unit-list" id="biSiteLista" role="group" aria-labelledby="biHSite"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiKpi">KPI:</span>
+        <div class="unit" data-pop="biKpiPop">
+          <button type="button" class="unit-trigger" id="biKpiTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="biKpiPop" aria-describedby="lblBiKpi"><span class="unit-site" id="biKpiTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="biKpiPop" hidden><div class="unit-list" id="biKpiLista" role="group" aria-labelledby="lblBiKpi"></div></div>
+        </div>
+      </div>
+      <div class="filter" id="biOpGrupo" hidden><span class="filter-label" id="lblBiOp" data-i18n="bi.f.opRot">Operação:</span>
+        <div class="unit" data-pop="biOpPop">
+          <button type="button" class="unit-trigger" id="biOpTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="biOpPop" aria-describedby="lblBiOp"><span class="unit-site" id="biOpTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="biOpPop" hidden><div class="unit-list" id="biOpLista" role="group" aria-labelledby="lblBiOp"></div></div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiVisao" data-i18n="bi.f.visao">Visão:</span>
+        <div class="seg" role="group" aria-labelledby="lblBiVisao">
+          <button type="button" data-bi-agrup="trimestre" aria-pressed="true" data-i18n="bi.trimestre">Trimestre</button><button type="button" data-bi-agrup="ano" aria-pressed="false" data-i18n="bi.ano">Ano</button>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiPeriodo" data-i18n="bi.f.periodoRot">Período:</span>
+        <div class="seg datas" role="group" aria-labelledby="lblBiPeriodo">
+          <input type="date" id="biInicio" aria-label="De" data-i18n-aria="bi.de"/><span class="datas-sep" aria-hidden="true">–</span><input type="date" id="biFim" aria-label="Até" data-i18n-aria="bi.ate"/>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiZeros" data-i18n="bi.f.zerosRot">Remover zeros:</span>
+        <button type="button" class="switch" data-bi-flag="removerZeros" role="switch" aria-checked="false" aria-labelledby="lblBiZeros"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiOut" data-i18n="bi.f.outliersRot">Remover outliers:</span>
+        <button type="button" class="switch" data-bi-flag="removerOutliers" role="switch" aria-checked="false" aria-labelledby="lblBiOut" title="Fora de média ± 3,5 desvios" data-i18n-title="bi.outDica"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="filter filter-acao"><button type="button" class="nav-chip" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button></div>
+    </section>
 
     <!-- Os três visuais da página "Stable and capable" do .pbix, na mesma disposição:
          carta de controle em cima; medidas estatísticas (com a variação da média) e
@@ -1046,10 +1106,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
           <div>
             <h3 class="dsc-card-titulo" data-i18n="bi.carta">Carta de controle</h3>
             <p class="dsc-card-sub" id="biCartaSub"></p>
-          </div>
-          <div class="dsc-seg" role="group" aria-label="Agrupar por" data-i18n-aria="bi.agrup">
-            <button type="button" data-bi-agrup="trimestre" aria-pressed="true" data-i18n="bi.trimestre">Trimestre</button>
-            <button type="button" data-bi-agrup="ano" aria-pressed="false" data-i18n="bi.ano">Ano</button>
           </div>
         </div>
         <div class="dsc-legenda" id="biLegendaCarta"></div>
@@ -1079,38 +1135,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </article>
     </section>
 
-    <!-- Painel de filtros (abre pela esquerda) — mesmo desenho do Dashboard do Kaizen -->
-    <div class="dsc-filtros-fundo" id="biFiltrosFundo"></div>
-    <aside class="dsc-filtros" id="biFiltros" role="dialog" aria-modal="true" aria-labelledby="biFiltrosTitulo" aria-hidden="true" inert>
-      <div class="fp-head">
-        <h2 id="biFiltrosTitulo" data-i18n="bi.filtros">Filtros</h2>
-        <button class="fp-fechar" id="biFiltrosFechar" type="button" aria-label="Fechar" data-i18n-aria="bi.fechar">
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-      <div class="fp-corpo">
-        <div class="fp-grupo" data-i18n="bi.g.kpi">Indicador</div>
-        <label class="qf"><span class="qf-rotulo">Business Unit</span><select id="biBu" class="qf-campo"></select></label>
-        <label class="qf"><span class="qf-rotulo" data-i18n="bi.f.site">Site</span><select id="biSite" class="qf-campo"></select></label>
-        <label class="qf"><span class="qf-rotulo">KPI</span><select id="biKpi" class="qf-campo"></select></label>
-        <label class="qf" id="biOpGrupo" hidden><span class="qf-rotulo" data-i18n="bi.f.op">Operação</span><select id="biOp" class="qf-campo"></select></label>
-        <div class="fp-grupo" data-i18n="bi.f.periodo">Período</div>
-        <div class="qf-periodo">
-          <label><span data-i18n="bi.de">De</span><input type="date" id="biInicio" class="qf-campo"/></label>
-          <label><span data-i18n="bi.ate">Até</span><input type="date" id="biFim" class="qf-campo"/></label>
-        </div>
-        <div class="fp-grupo" data-i18n="bi.g.trat">Tratamento dos dados</div>
-        <div class="qf-flag"><span data-i18n="bi.f.zeros">Remover zeros</span>
-          <div class="dsc-seg" role="group"><button type="button" data-bi-flag="removerZeros" data-valor="sim" aria-pressed="false" data-i18n="bi.sim">Sim</button><button type="button" data-bi-flag="removerZeros" data-valor="nao" aria-pressed="true" data-i18n="bi.nao">Não</button></div></div>
-        <div class="qf-flag"><span data-i18n="bi.f.outliers">Remover outliers</span>
-          <div class="dsc-seg" role="group"><button type="button" data-bi-flag="removerOutliers" data-valor="sim" aria-pressed="false" data-i18n="bi.sim">Sim</button><button type="button" data-bi-flag="removerOutliers" data-valor="nao" aria-pressed="true" data-i18n="bi.nao">Não</button></div></div>
-        <p class="qf-dica" data-i18n="bi.tratDica">Outliers: fora de média ± 3,5 desvios. Valores negativos sempre contam como zero.</p>
-      </div>
-      <div class="fp-pe">
-        <button type="button" class="fp-btn sec" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button>
-        <button type="button" class="fp-btn" id="biFiltrosVer" data-i18n="bi.ver">Ver resultados</button>
-      </div>
-    </aside>
   </section>
 </main>
 
@@ -1260,7 +1284,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js?v=20261104-1"></script>
+<script src="assets/js/painel-spc.js?v=20261104-2"></script>
 <script>
 (function () {
   'use strict';
@@ -1303,6 +1327,7 @@ window.VBMSetup = (function () {
       'bi.th.periodo': 'Período',       'bi.medidasTitulo': 'Medidas estatísticas e comparações', 'bi.medSub': 'Mean, Best 30 Days, P75 e Budget por período · eixo com zoom automático, como no Power BI', 'bi.variacaoSub': 'Mean contra o período anterior',             'bi.medTab': 'Medidas por período', 'bi.medTabSub': 'Os mesmos valores do gráfico acima',
             'bi.histTitulo': 'Distribuição por ano', 'bi.histSub': '% dos dias em cada faixa de valor · linha tracejada = curva normal do ano', 'bi.todos': 'Todos',
       'bi.anosTitulo': 'Resumo por ano', 'bi.anosSub': 'Dispersão: quanto menor o CV, mais estável o processo', 'bi.th.desvio': 'Desvio',
+      'bi.f.opRot': 'Operação:', 'bi.f.visao': 'Visão:', 'bi.f.periodoRot': 'Período:', 'bi.f.zerosRot': 'Remover zeros:', 'bi.f.outliersRot': 'Remover outliers:', 'bi.outDica': 'Outliers: fora de média ± 3,5 desvios', 'bi.a.unidade': 'Business Unit e site',
       'bi.f.site': 'Site', 'bi.f.op': 'Operação', 'bi.f.periodo': 'Período', 'bi.f.zeros': 'Remover zeros', 'bi.f.outliers': 'Remover outliers', 'bi.sim': 'Sim', 'bi.nao': 'Não',
       'bi.atualizar': 'Atualizar', 'bi.atualizado': 'Dados de {banco} · carregados em {quando}', 'bi.selecione': 'Selecione BU, site e KPI para ver os gráficos',
       'bi.semDados': 'Sem dados para os filtros escolhidos.', 'bi.carta': 'Carta de controle', 'bi.agrup': 'Agrupar por', 'bi.trimestre': 'Trimestre', 'bi.ano': 'Ano',
@@ -1369,6 +1394,7 @@ window.VBMSetup = (function () {
       'bi.th.periodo': 'Period',       'bi.medidasTitulo': 'Statistical Measures and Comparisons', 'bi.medSub': 'Mean, Best 30 Days, P75 and Budget per period · auto-zoomed axis, as in Power BI', 'bi.variacaoSub': 'Mean versus the previous period',             'bi.medTab': 'Measures per period', 'bi.medTabSub': 'The same values as the chart above',
             'bi.histTitulo': 'Distribution per year', 'bi.histSub': '% of days in each value range · dashed line = the year’s normal curve', 'bi.todos': 'All',
       'bi.anosTitulo': 'Summary per year', 'bi.anosSub': 'Spread: the lower the CV, the more stable the process', 'bi.th.desvio': 'Std dev',
+      'bi.f.opRot': 'Operation:', 'bi.f.visao': 'View:', 'bi.f.periodoRot': 'Period:', 'bi.f.zerosRot': 'Remove zeros:', 'bi.f.outliersRot': 'Remove outliers:', 'bi.outDica': 'Outliers: outside mean ± 3.5 standard deviations', 'bi.a.unidade': 'Business Unit and site',
       'bi.f.site': 'Site', 'bi.f.op': 'Operation', 'bi.f.periodo': 'Period', 'bi.f.zeros': 'Remove zeros', 'bi.f.outliers': 'Remove outliers', 'bi.sim': 'Yes', 'bi.nao': 'No',
       'bi.atualizar': 'Refresh', 'bi.atualizado': 'Data from {banco} · loaded {quando}', 'bi.selecione': 'Select all filters to view the chart',
       'bi.semDados': 'No data for the selected filters.', 'bi.carta': 'Control chart', 'bi.agrup': 'Group by', 'bi.trimestre': 'Quarter', 'bi.ano': 'Year',
