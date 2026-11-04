@@ -64,6 +64,13 @@ const CONFIG_PADRAO = {
   // EBITDA (gráfico por período, seletor VBM | Copper | Nickel | Others): KPI EBITDA (ID_KPI 73) da carga do
   // COO em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 15). Sites: VBM 40, Copper 38, Nickel 39, Others 45 + 102 + 46
   ebitda: { idDash: 15, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39], out: [45, 102, 46] } },
+  // Demais gráficos mês a mês: um KPI (ID_KPI) da mesma carga do COO por série, no site da página
+  // (VBM 40, Copper 38, Nickel 39). null = ainda sem KPI definido (o gráfico segue na demonstração)
+  coo: { idDash: 15, sites: { vbm: 40, cu: 38, ni: 39 }, kpis: {
+    'vbm.capex': null,
+    'cu.prod': null, 'cu.sales': null, 'cu.ebitda': 73, 'cu.capex': null, 'cu.fcf': null, 'cu.sus': null, 'cu.cost': null, 'cu.byp': null,
+    'ni.prod': null, 'ni.sales': null, 'ni.ebitda': 73, 'ni.capex': null, 'ni.fcf': null, 'ni.sus': null, 'ni.cost': null, 'ni.byp': null,
+  } },
   bus: { vbm: { sites: [] }, cu: { sites: [] }, ni: { sites: [] } },
   indicadores: {
     vbm: { ebitdaCu: ['EBITDA Copper'], ebitdaNi: ['EBITDA Nickel'], ebitdaOut: ['EBITDA Others', 'EBITDA Other Segments'], capex: ['CAPEX'] },
@@ -127,6 +134,16 @@ function normalizarConfigHob(json) {
     if (Number.isInteger(site) && site > 0) out[k].site = site;
     if (f.tipo != null && Number.isInteger(tipo) && tipo > 0) out[k].tipo = tipo;
     if (Number.isInteger(ano) && ano >= 2000 && ano <= 2100) out[k].anoInicial = ano;
+  }
+  if (c.coo && typeof c.coo === 'object') {
+    const id = Number(c.coo.idDash);
+    if (Number.isInteger(id) && id > 0) out.coo.idDash = id;
+    for (const b of ['vbm', 'cu', 'ni']) { const n = Number(c.coo.sites && c.coo.sites[b]); if (Number.isInteger(n) && n > 0) out.coo.sites[b] = n; }
+    for (const [k, v] of Object.entries(c.coo.kpis || {})) {
+      if (!(k in out.coo.kpis)) continue;
+      const n = Number(v);
+      out.coo.kpis[k] = v === null ? null : Number.isInteger(n) && n > 0 ? n : out.coo.kpis[k];
+    }
   }
   if (c.ebitda && typeof c.ebitda === 'object') {
     const id = Number(c.ebitda.idDash), kpi = Number(c.ebitda.idKpi);
@@ -342,6 +359,21 @@ function montarEbitda(linhas, config, ciclo) {
   return { ciclo, ultimoReal, anos, meta, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
 }
 
+// ── Demais séries da carga do COO: linhas de 004 (um KPI por consulta) → série mensal do site da página ──
+function montarSerieCoo(linhas, site) {
+  const anos = {};
+  let meta = null;
+  for (const l of linhas) {
+    if (Number(l.ID_SITE) !== site) continue;
+    const ano = Number(l.ANO), m = Number(l.MES) - 1;
+    if (!Number.isInteger(ano) || m < 0 || m > 11) continue;
+    if (!meta || (!meta.unid && l.SG_UNID)) meta = { nome: String(l.NM_KPI || '').trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+    const s = anos[ano] = anos[ano] || { b: Array(12).fill(0), a: Array(12).fill(0) };
+    s[l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
+  }
+  return { anos, meta };
+}
+
 // Erro do banco → código para a tela (sem o texto do banco na resposta; o texto vai para o log)
 function codigoDoErro(err) {
   const m = String((err && err.message) || '');
@@ -460,6 +492,27 @@ function criarHobRouter({ runQuery, idDash }) {
     const linhas = await comCache(`/ebitda:${idDash}:${idKpi}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, idKpi], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
     return { idDash, idKpi, ...montarEbitda(linhas, config, ciclo) };
   }
+  // Séries da carga do COO configuradas em coo.kpis (uma consulta por ID_KPI, a mesma do EBITDA)
+  async function lerCoo(config, f, cicloPedido) {
+    const { idDash, sites, kpis } = config.coo;
+    const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, f)).map(l => cicloDe(l.DT_REF));
+    if (!ciclos.length) throw Object.assign(new Error('Sem carga do COO'), { status: 404, codigo: 'SEM_CICLO' });
+    const ciclo = cicloPedido && ciclos.includes(cicloPedido) ? cicloPedido : ciclos[0];
+    const [anoC, mesC] = ciclo.split('-').map(Number);
+    const ids = [...new Set(Object.values(kpis).filter(v => v))];
+    const porKpi = {};
+    await Promise.all(ids.map(async (idKpi) => {
+      porKpi[idKpi] = await comCache(`/ebitda:${idDash}:${idKpi}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, idKpi], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
+    }));
+    const series = {}, pendentes = [], avisos = [];
+    for (const [chave, idKpi] of Object.entries(kpis)) {
+      if (!idKpi) { pendentes.push(chave); continue; }
+      const site = sites[chave.split('.')[0]], s = montarSerieCoo(porKpi[idKpi], site);
+      if (!Object.keys(s.anos).length) avisos.push(`${chave}: KPI ${idKpi} sem linhas do site ${site} no ciclo ${ciclo}`);
+      series[chave] = { idKpi, site, ...s };
+    }
+    return { idDash, ciclo, ultimoReal: mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 }, series, pendentes, avisos };
+  }
   const pontePedida = (req) => (req.query.ponte === 'ebitdaYear' ? 'ebitdaYear' : 'fcfYear');
   function responderErro(res, rotaNome, err, falha) {
     if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
@@ -555,6 +608,22 @@ function criarHobRouter({ runQuery, idDash }) {
     }
   });
 
+  // Demais gráficos da carga do COO (coo.kpis). ?ciclo= como em /ebitda
+  router.get('/coo', async (req, res) => {
+    let cfg = null;
+    const configuradas = () => (cfg ? Object.keys(cfg.config.coo.kpis).filter(k => cfg.config.coo.kpis[k]) : []);
+    try {
+      cfg = await lerConfig(fresco(req));
+      const c = await lerCoo(cfg.config, fresco(req), lerCiclo(req.query.ciclo) || null);
+      if (c.avisos.length) console.warn(`${TAG} carga do COO (ID_DASH ${c.idDash}): ${c.avisos.join(' | ')}`);
+      res.json(c);
+    } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo, configuradas: configuradas() });
+      console.error(`${TAG} erro em /coo:`, err.message);
+      res.status(500).json({ error: 'Failed to query the COO load.', ...codigoDoErro(err), configuradas: configuradas() });
+    }
+  });
+
   // EBITDA por segmento (carga do COO). ?ciclo= segue o ciclo da tela quando o COO tiver a mesma carga
   router.get('/ebitda', async (req, res) => {
     const pedido = lerCiclo(req.query.ciclo);
@@ -573,4 +642,4 @@ function criarHobRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarHobRouter, montarDados, montarEbitda, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };

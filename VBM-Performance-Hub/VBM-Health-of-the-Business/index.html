@@ -667,7 +667,7 @@ window.HOB_CARREGAR = function (iniciar) {
   }
   var q = ciclo ? '?ciclo=' + encodeURIComponent(ciclo) : '';
   function falha(r) { return { ok: false, codigo: (r.j && r.j.codigo) || (r.status === 404 ? 'SEM_API' : r.status ? 'ERRO_BANCO' : 'SEM_API'), detalhe: r.j && r.j.detalhe }; }
-  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q)]).then(function (rs) {
+  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q)]).then(function (rs) {
     var x = rs[0];
     // pontes de IBP.WATERFALL: uma por referência (DT_REF)
     window.HOB_PONTES = {};
@@ -678,6 +678,9 @@ window.HOB_CARREGAR = function (iniciar) {
     // EBITDA por segmento (carga do COO, ID_DASH 15)
     var e = rs[3];
     window.HOB_EBITDA = e.ok && e.j && e.j.anos && Object.keys(e.j.anos).length ? Object.assign({ ok: true }, e.j) : falha(e);
+    // Demais séries da carga do COO (Copper, Nickel e Capex): só as configuradas com ID_KPI
+    var c = rs[4];
+    window.HOB_COO = c.ok && c.j && c.j.series ? Object.assign({ ok: true }, c.j) : Object.assign(falha(c), { configuradas: (c.j && c.j.configuradas) || [] });
     if (x.ok && x.j && x.j.anos && x.j.anos.length && x.j.ultimoReal) { window.HOB_DATA = x.j; return iniciar(null); }
     iniciar((x.j && x.j.codigo) || 'SEM_API');
   });
@@ -696,6 +699,22 @@ window.HOB_CARREGAR(function (aviso) {
     if (E.meta) D.meta.vbm.ebitdaCu = E.meta;
     if (D.fonte === 'demo' && E.ultimoReal) D.ultimoReal = E.ultimoReal;
   }
+  // Séries da carga do COO configuradas (coo.kpis): substituem a demonstração no gráfico da página
+  var C = window.HOB_COO;
+  if (C && C.ok) Object.keys(C.series).forEach(function (chave) {
+    var p = chave.split('.'), s = C.series[chave];
+    Object.keys(s.anos).forEach(function (ano) { if (D.bu[p[0]] && D.bu[p[0]][ano]) D.bu[p[0]][ano][p[1]] = s.anos[ano]; });
+    if (s.meta) { D.meta = D.meta || {}; D.meta[p[0]] = D.meta[p[0]] || {}; D.meta[p[0]][p[1]] = s.meta; }
+  });
+  // Série da carga do COO sem dado (falha ou ano sem linhas): o motivo, em vez da demonstração
+  function cooErro(bu, ind) {
+    var C = window.HOB_COO, chave = bu + '.' + ind;
+    if (!C) return null;
+    if (!C.ok) return C.configuradas.indexOf(chave) >= 0 ? (C.codigo === 'SEM_CICLO' ? S.t('eb.semCiclo') : S.t('fcf.' + C.codigo, { detalhe: C.detalhe || '' }).replace('IBP.WATERFALL', 'IBP.PHUB_PERFORMANCESTUDIO')) : null;
+    var s = C.series[chave];
+    return s && !s.anos[state.ano] ? S.t('g.semDados') : null;
+  }
+  function doBancoCoo(bu, ind) { var C = window.HOB_COO; return !!(C && C.ok && C.series[bu + '.' + ind] && C.series[bu + '.' + ind].anos[state.ano]); }
 
   S.registrar({
     'pt-BR': { 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do COO (ID_DASH 15) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do COO', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
@@ -1081,7 +1100,11 @@ window.HOB_CARREGAR(function (aviso) {
       var gs = k === 'allin' ? c.sus.map(function (g, i) { return { lb: g.lb, la: g.la, b: g.b + c.cost[i].b + c.byp[i].b, a: g.a + c.cost[i].a + c.byp[i].a }; }) : c[k];
       return paresSvg(gs, W, H, cfg);
     }
+    var ae = (cfg.tipo === 'allin' || cfg.tipo === 'allinStack') && ['sus', 'cost', 'byp'].map(function (k) { return cooErro(state.bu, k); }).filter(Boolean)[0];
+    if (ae) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ae }));
     if (cfg.tipo === 'allinStack') return empilhadoSvg(allinComp(), W, H, cfg);
+    var ce = cfg.ind && cooErro(state.bu, cfg.ind);
+    if (ce && /^(pares|scurve|acum)$/.test(cfg.tipo)) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ce }));
     if (cfg.tipo === 'pares') return paresSvg(recortes(d[cfg.ind]), W, H, cfg);
     if (cfg.tipo === 'scurve') return scurveSvg(d[cfg.ind], W, H, cfg, false);
     if (cfg.tipo === 'acum') return scurveSvg(d[cfg.ind], W, H, cfg, true);
@@ -1168,9 +1191,14 @@ window.HOB_CARREGAR(function (aviso) {
     badge.textContent = D.desatualizado ? S.t('l.desat') + S.dataHora(new Date(D.atualizado)) : (function () {
       if (aviso === 'ERRO_BANCO') return S.t('l.demoErro');
       var P = window.HOB_PONTES || {}, doBanco = [];
-      if (window.HOB_EBITDA && window.HOB_EBITDA.ok) doBanco.push('EBITDA');
-      if (P.ebitdaYear && P.ebitdaYear.ok) doBanco.push('EBITDA YEAR');
-      if (P.fcfYear && P.fcfYear.ok) doBanco.push('FCF YEAR');
+      if (state.bu === 'vbm') {
+        if (window.HOB_EBITDA && window.HOB_EBITDA.ok) doBanco.push('EBITDA');
+        if (P.ebitdaYear && P.ebitdaYear.ok) doBanco.push('EBITDA YEAR');
+        if (doBancoCoo('vbm', 'capex')) doBanco.push('Capex');
+        if (P.fcfYear && P.fcfYear.ok) doBanco.push('FCF YEAR');
+      } else {
+        [['prod', 'Production'], ['sales', 'Sales'], ['sus', 'All-In'], ['ebitda', 'EBITDA'], ['capex', 'Capex'], ['fcf', 'FCF']].forEach(function (x) { if (doBancoCoo(state.bu, x[0])) doBanco.push(x[1]); });
+      }
       return S.t('l.demo') + (doBanco.length ? ' · ' + S.t('l.doBanco', { lista: doBanco.join(', ') }) : '');
     })();
     var fc = document.getElementById('fCiclo'), cs = document.getElementById('cicloSel');
