@@ -298,3 +298,29 @@ test('/ebitda: ciclo mais recente do ID_DASH 15 (ou o da tela, se existir), KPI 
   const consulta = chamadas.filter((c) => /IBP\.WATERFALL/.test(c.q)).pop();
   assert.strictEqual(consulta.params.tipo[1], 3);
 });
+
+test('/coo: séries da carga do COO por ID_KPI no site da página; KPI null fica pendente', async () => {
+  const chamadas = [];
+  const runQuery = async (q, params) => {
+    chamadas.push({ q, params });
+    if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)) }] };
+    if (/PHUB_PS_SETUP/.test(q)) return { recordset: [] };
+    return { recordset: EB };
+  };
+  const r = await chamar(criarHobRouter({ runQuery }), '/coo');
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(r.json.ciclo, '2026-10');
+  assert.strictEqual(r.json.series['cu.ebitda'].anos['2026'].b[0], 300); // site 38
+  assert.strictEqual(r.json.series['ni.ebitda'].anos['2026'].a[0], 151); // site 39
+  assert.deepStrictEqual(r.json.series['cu.ebitda'].meta, { nome: 'EBITDA', unid: 'US$ M', casas: 0 });
+  assert.ok(r.json.pendentes.includes('cu.prod') && r.json.pendentes.includes('vbm.capex'));
+  assert.strictEqual(chamadas.filter((c) => c.params && c.params.idKpi).length, 1); // KPI 73 lido uma vez para os dois sites
+});
+
+test('normalizarConfigHob: coo.kpis aceita só as séries conhecidas, inteiro ou null', () => {
+  const c = normalizarConfigHob({ coo: { kpis: { 'cu.prod': 12, 'cu.ebitda': null, 'xx.yy': 5, 'ni.sales': 'abc' } } });
+  assert.strictEqual(c.coo.kpis['cu.prod'], 12);
+  assert.strictEqual(c.coo.kpis['cu.ebitda'], null);
+  assert.strictEqual(c.coo.kpis['xx.yy'], undefined);
+  assert.strictEqual(c.coo.kpis['ni.sales'], null); // inválido: mantém o padrão
+});

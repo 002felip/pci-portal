@@ -13,6 +13,9 @@
      ebitdaPonte  2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO 3
      ebitda       EBITDA por período: ID_DASH (15) e ID_KPI (73) da carga do COO em IBP.PHUB_PERFORMANCESTUDIO e
                   ID_SITE de cada opção: vbm 40 (total), cu 38, ni 39, out 45 + 102 + 46
+     coo          demais gráficos mês a mês: ID_KPI da carga do COO (ID_DASH 15) por série, no site da página
+                  (vbm 40, cu 38, ni 39). Ex.: "cu.prod": <ID_KPI de Production>. null = segue na demonstração.
+                  Séries: vbm.capex; cu/ni: prod, sales, ebitda (73), capex, fcf e o All-in: sus, cost, byp
      bus          sites (IBP.DASHBOARD.ID_SITE) de cada Business Unit: vbm, cu (Copper), ni (Nickel).
                   Vazio = qualquer site do dashboard. Obrigatório quando o mesmo nome de KPI
                   (ex.: EBITDA, CAPEX) existe em mais de uma BU.
@@ -60,6 +63,33 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
         102,
         46
       ]
+    }
+  },
+  "coo": {
+    "idDash": 15,
+    "sites": {
+      "vbm": 40,
+      "cu": 38,
+      "ni": 39
+    },
+    "kpis": {
+      "vbm.capex": null,
+      "cu.prod": null,
+      "cu.sales": null,
+      "cu.ebitda": 73,
+      "cu.capex": null,
+      "cu.fcf": null,
+      "cu.sus": null,
+      "cu.cost": null,
+      "cu.byp": null,
+      "ni.prod": null,
+      "ni.sales": null,
+      "ni.ebitda": 73,
+      "ni.capex": null,
+      "ni.fcf": null,
+      "ni.sus": null,
+      "ni.cost": null,
+      "ni.byp": null
     }
   },
   "bus": {
