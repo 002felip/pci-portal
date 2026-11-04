@@ -528,7 +528,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .dsc-chip:hover { border-color: var(--vbm-blue); }
 
 /* ── Cartões de resumo ── */
-.dsc-tiles { display: grid; gap: .8rem; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); }
+.dsc-tiles { display: grid; gap: .8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .dsc-tile { position: relative; overflow: hidden; text-align: left; color: var(--d-ink); font-family: inherit; background: var(--d-surface); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1rem 1.15rem; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: .6rem; }
 .t-head { display: flex; align-items: center; gap: .5rem; font-size: .76rem; color: var(--d-ink-soft); }
 .t-head i.q { width: 9px; height: 9px; border-radius: 3px; background: var(--c); flex: none; }
@@ -541,32 +541,18 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .t-leg { font-size: .66rem; color: var(--d-ink-soft); margin-top: -.3rem; }
 @keyframes dscGrowX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .dsc-tile-total { background-image: linear-gradient(140deg, rgba(60,181,229,.16) 0%, rgba(60,181,229,0) 60%); }
-.dsc-tile-total::before { content: ''; position: absolute; right: 140px; top: -60px; height: 280px; border-left: 1px solid rgba(60,181,229,.35); transform: rotate(32deg); pointer-events: none; }
+.dsc-tile-total::before { content: ''; position: absolute; right: 40px; top: -60px; height: 280px; border-left: 1px solid rgba(60,181,229,.35); transform: rotate(32deg); pointer-events: none; }
 .tt-corpo { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex: 1; }
 .tt-num { font-size: clamp(2.2rem, 3.6vw, 3.1rem); font-weight: 300; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .tt-sub { margin-top: .45rem; font-size: .74rem; color: var(--d-ink-soft); display: flex; flex-wrap: wrap; gap: .25rem .5rem; align-items: center; }
 .dsc-delta { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: 0 2px 12px rgba(15,23,42,.08), inset 0 0 0 1px rgba(15,23,42,.05); color: var(--ink-d); font-size: .68rem; font-weight: 500; font-variant-numeric: tabular-nums; }
 .dsc-delta svg { width: 8px; height: 8px; }
-.donut { position: relative; width: 108px; max-width: 100%; aspect-ratio: 1; flex: none; display: grid; place-content: center; text-align: center; }
-.donut::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--conic); -webkit-mask: radial-gradient(farthest-side, transparent 70%, #000 71%); mask: radial-gradient(farthest-side, transparent 70%, #000 71%); animation: dscSpin 1s var(--d-ease) both; }
-@keyframes dscSpin { from { transform: rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
-.donut b { position: relative; font-size: 1.2rem; font-weight: 600; line-height: 1; }
-.donut small { position: relative; font-size: .54rem; line-height: 1.15; color: var(--d-ink-soft); margin-top: 3px; max-width: 62px; }
-.dsc-tile-sinais { justify-content: flex-start; gap: .15rem; padding-block: .8rem; }
-.dsc-tile-sinais .t-head { margin-bottom: .2rem; }
-.orow { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; align-items: center; gap: .5rem; border: 0; background: transparent; color: var(--d-ink); font: inherit; text-align: left; cursor: pointer; padding: .26rem .5rem; margin-inline: -.5rem; border-radius: .5rem; min-height: 28px; }
-.orow:hover { background: var(--d-hover); }
-.orow[aria-pressed="true"] { background: var(--d-sel); box-shadow: inset 0 0 0 1px rgba(60,181,229,.6); }
-.dsc-tile-sinais.tem-foco .orow[aria-pressed="false"] { opacity: .5; }
-.orow i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
-.orow span { font-size: .72rem; color: var(--d-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.orow b { font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .dsc-esqueleto { min-height: 132px; border-radius: 1rem; background: linear-gradient(90deg, var(--d-surface) 0%, var(--d-surface-alt) 50%, var(--d-surface) 100%); background-size: 200% 100%; border: 1px solid var(--d-line); animation: dscShimmer 1.4s linear infinite; }
 @keyframes dscShimmer { to { background-position: -200% 0; } }
 
 /* ── Grade e cards ── */
 .dsc-grade { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem; }
-.dsc .s4 { grid-column: span 4; } .dsc .s5 { grid-column: span 5; } .dsc .s7 { grid-column: span 7; } .dsc .s8 { grid-column: span 8; } .dsc .s12 { grid-column: span 12; }
+.dsc .s3 { grid-column: span 3; } .dsc .s9 { grid-column: span 9; } .dsc .s4 { grid-column: span 4; } .dsc .s5 { grid-column: span 5; } .dsc .s7 { grid-column: span 7; } .dsc .s8 { grid-column: span 8; } .dsc .s12 { grid-column: span 12; }
 .dsc-card { min-width: 0; background: var(--d-surface); color: var(--d-ink); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1.15rem 1.3rem 1rem; display: flex; flex-direction: column; gap: .35rem; }
 .dsc-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
 .dsc-card-titulo { font-size: 1rem; font-weight: 500; color: var(--d-title); letter-spacing: -.005em; margin: 0; }
@@ -639,18 +625,36 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .dsc .avg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed var(--c-lim); z-index: 5; }
 .dsc .avg-line span { position: absolute; right: 0; bottom: 4px; font-size: .64rem; font-weight: 600; color: var(--d-ink-soft); background: var(--d-glass); padding: 1px 6px; border-radius: 6px; }
 
-/* ── Ranking (média ÷ budget) ── */
-.dsc .rank { display: flex; flex-direction: column; margin-top: .5rem; }
-.dsc .rk { display: grid; grid-template-columns: minmax(0, 76px) minmax(0, 1fr) 54px 72px; align-items: center; gap: .85rem; padding: .5rem .4rem; border-bottom: 1px solid var(--d-line-soft); }
-.dsc .rk:last-child { border-bottom: 0; }
-.dsc .rk-nome { font-size: .76rem; color: var(--d-ink); white-space: nowrap; }
-.dsc .rk-trilho { position: relative; height: 13px; border-radius: 4px; background: var(--d-line-soft); }
-.dsc .rk-barra { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); min-width: 3px; border-radius: 4px; background-color: var(--c, var(--vbm-blue)); background-image: linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 50%, rgba(15,23,42,.06) 100%); transform-origin: left; animation: dscGrowX .9s var(--d-ease) both; }
-.dsc .rk-meta { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 1.5px dashed var(--d-ink-soft); left: var(--m); }
-.dsc .rk-val { text-align: right; font-size: .84rem; font-weight: 600; color: var(--d-ink); font-variant-numeric: tabular-nums; }
-.dsc .rk-pct { text-align: right; font-size: .68rem; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; }
-.dsc-nota { font-size: .68rem; color: var(--d-ink-soft); display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-top: .4rem; }
-.dsc-nota i { width: 12px; height: 0; border-top: 1.5px dashed var(--d-ink-soft); display: inline-block; }
+/* ── Medidas estatísticas (v4/v5 do .pbix): quatro barras por período, no desenho das colunas do Kaizen ── */
+.dsc { --m-mean: #1a8bbf; --m-best: #3cb5e5; --m-p75: #9ddaf2; --m-budget: #8a96a6; }
+:root[data-theme="dark"] .dsc { --m-mean: #3cb5e5; --m-best: #7dd3f0; --m-p75: #2f6f93; --m-budget: #9aa6b6; }
+.dsc .cg { min-width: var(--minw, 520px); padding-bottom: 26px; }
+.dsc .cg-area { position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: var(--gap, 18px); height: var(--area-h, 250px); margin-top: 24px; }
+.dsc .cg-area::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, transparent, var(--d-line) 8%, var(--d-line) 92%, transparent); }
+.dsc .cg-grupo { position: relative; flex: 1 1 0; max-width: 150px; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.dsc .cg-col { position: relative; flex: 1 1 0; max-width: 30px; height: 100%; }
+.dsc .cg-bar { position: absolute; bottom: 0; left: 0; right: 0; height: var(--h); border-radius: 4px 4px 2px 2px; background-color: var(--c); background-image: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 42%, rgba(15,23,42,.06) 100%); animation: dscGrowBar .95s var(--d-ease) both; }
+.dsc .cg-col:hover .cg-bar { filter: brightness(1.06); }
+.dsc .cg-v { position: absolute; bottom: calc(var(--h) + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: var(--fv, .64rem); font-weight: 600; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+.dsc .cg-grupo .x-lbl { bottom: -22px; }
+.dsc-variacao { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-direction: column; }
+.dsc-variacao li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .2rem; border-bottom: 1px solid var(--d-line-soft); font-size: .74rem; color: var(--d-ink-soft); }
+.dsc-variacao li:last-child { border-bottom: 0; }
+.dsc-variacao li b { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: inset 0 0 0 1px rgba(15,23,42,.06); color: var(--ink-d); font-size: .7rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Medidas + caixa "Variação da média" lado a lado (como no .pbix); legenda do histograma acima do gráfico */
+.dsc-medidas-linha { display: flex; gap: 1rem; align-items: flex-start; }
+.dsc-medidas-graf { flex: 1; min-width: 0; }
+.dsc-variacao-caixa { width: 200px; flex: none; margin-top: 1.2rem; padding: .7rem .8rem; border: 1px solid var(--d-line); border-radius: .8rem; background: var(--d-surface-alt); }
+.dsc-variacao-caixa h4 { margin: 0 0 .2rem; font-size: .76rem; font-weight: 600; color: var(--d-ink-soft); }
+.dsc-variacao-caixa .dsc-variacao { margin-top: 0; }
+.dsc-variacao-caixa .dsc-variacao li { padding: .42rem 0; font-size: .7rem; }
+.dsc-variacao-caixa .dsc-variacao li span { white-space: nowrap; font-size: .66rem; }
+.dsc-variacao-caixa .dsc-variacao li b { white-space: nowrap; }
+.dsc-hist-legenda { margin-top: .4rem; }
+.dsc-hist-legenda .dsc-tabela { font-size: .7rem; }
+.dsc-hist-legenda .dsc-tabela thead th, .dsc-hist-legenda .dsc-tabela tbody td { padding: .45rem .55rem; }
+@media (max-width: 700px) { .dsc-medidas-linha { flex-direction: column; align-items: stretch; } .dsc-variacao-caixa { width: 100%; margin-top: 0; } }
 
 /* ── Tabelas ── */
 .dsc-tabela-wrap { overflow-x: auto; margin-top: .5rem; border-radius: .65rem; border: 1px solid var(--d-line); }
@@ -707,13 +711,13 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 :root[data-theme="dark"] .dsc-filtros .fp-btn.sec { color: #7dd3f0; }
 
 @media (max-width: 1180px) { .dsc-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .dsc .s3, .dsc .s9 { grid-column: span 12; } }
 @media (max-width: 960px) { .dsc .s4, .dsc .s5, .dsc .s7, .dsc .s8 { grid-column: span 12; } }
 @media (max-width: 640px) {
   .dsc-hero { padding: 1.2rem 1.1rem; }
   .dsc-hero-box { min-width: 0; width: 100%; }
   .dsc-tiles { grid-template-columns: minmax(0, 1fr); }
-  .dsc .rk { grid-template-columns: minmax(0, 64px) minmax(0, 1fr) 48px; } .dsc .rk-pct { display: none; }
-}
+  }
 @media (prefers-reduced-motion: reduce) { .dsc *, .dsc *::before, .dsc *::after { animation: none !important; transition: none !important; } }
 
 /* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): título, painéis,
@@ -749,7 +753,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .dsc-btn-hero { height: 34px; }
   .dsc-tile { min-height: 112px; padding: .8rem 1rem; }
   .tt-num { font-size: clamp(1.9rem, 3vw, 2.5rem); }
-  .donut { width: 92px; }
   .dsc-grade { gap: .85rem; }
   .dsc-card { padding: .95rem 1.05rem .85rem; }
   .dsc-aba { min-height: 34px; padding: .45rem .85rem; }
@@ -1017,7 +1020,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       <div class="dsc-hero-box">
         <div class="dsc-base">
           <span data-i18n="bi.h.periodo">Período</span><b id="biQtdPeriodo">—</b>
-          <span data-i18n="bi.h.dias">Dias com dado</span><b id="biQtdDias">—</b>
         </div>
         <div class="dsc-atualizado" id="biAtualizado"></div>
         <div class="dsc-acoes">
@@ -1033,21 +1035,12 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </div>
     </div>
 
-    <div class="dsc-barra">
-      <div class="dsc-abas" role="tablist" aria-label="Dashboard" id="biAbas">
-        <button type="button" class="dsc-aba" role="tab" id="biAba-carta" aria-controls="biVis-carta" data-vis="carta"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 11.5 5 7l3 2.5 3-5 3.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 4h13M1.5 14h13" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg><span data-i18n="bi.carta">Carta de controle</span></button>
-        <button type="button" class="dsc-aba" role="tab" id="biAba-medidas" aria-controls="biVis-medidas" data-vis="medidas"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="8" width="2.6" height="6" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="9" rx=".6" fill="currentColor"/><rect x="11.4" y="2.5" width="2.6" height="11.5" rx=".6" fill="currentColor"/></svg><span data-i18n="bi.medidas">Medidas por período</span></button>
-        <button type="button" class="dsc-aba" role="tab" id="biAba-capab" aria-controls="biVis-capab" data-vis="capab"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 14C4 14 5 3 8 3s4 11 6.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M1.5 14h13" stroke="currentColor" stroke-width="1"/></svg><span data-i18n="bi.capab">Capabilidade</span></button>
-      </div>
-      <div class="dsc-chips" id="biChips"></div>
-    </div>
+    <div class="dsc-barra"><div class="dsc-chips" id="biChips"></div></div>
 
-    <section class="dsc-tiles" id="biTiles" aria-label="Resumo" data-i18n-aria="bi.resumo">
-      <div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div>
-    </section>
-
-    <!-- CARTA DE CONTROLE -->
-    <section class="dsc-grade" id="biVis-carta" role="tabpanel" aria-labelledby="biAba-carta">
+    <!-- Os três visuais da página "Stable and capable" do .pbix, na mesma disposição:
+         carta de controle em cima; medidas estatísticas (com a variação da média) e
+         histograma de capabilidade (com a legenda Ano/Mean/StDev/CV/N) embaixo. -->
+    <section class="dsc-grade">
       <article class="dsc-card s12">
         <div class="dsc-card-head">
           <div>
@@ -1062,62 +1055,27 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
         <div class="dsc-legenda" id="biLegendaCarta"></div>
         <div class="dsc-grafico" id="biCartaWrap"><div id="biCarta"></div><div class="dsc-dica" id="biDica" hidden></div></div>
       </article>
-      <article class="dsc-card s12">
-        <div class="dsc-card-head"><div>
-          <h3 class="dsc-card-titulo" data-i18n="bi.lim">Limites por período</h3>
-          <p class="dsc-card-sub" data-i18n="bi.limSub">CL = média do período · UCL e LCL = CL ± 3σ, com σ pela amplitude móvel média ÷ 1,128</p>
-        </div></div>
-        <div class="dsc-tabela-wrap"><table class="dsc-tabela"><thead><tr id="biLimCab"></tr></thead><tbody id="biLimCorpo"></tbody></table></div>
-      </article>
-    </section>
 
-    <!-- MEDIDAS POR PERÍODO -->
-    <section class="dsc-grade" id="biVis-medidas" role="tabpanel" aria-labelledby="biAba-medidas" hidden>
-      <article class="dsc-card s7">
-        <div class="dsc-card-head">
-          <div>
-            <h3 class="dsc-card-titulo" data-i18n="bi.medTitulo">Média por período</h3>
-            <p class="dsc-card-sub" data-i18n="bi.medSub">Média diária de cada período · variação contra o período anterior</p>
-          </div>
-          <div class="dsc-legenda"><span><i class="lg-linha" style="--c:var(--d-up)"></i><span data-i18n="bi.alta">alta</span></span><span><i class="lg-linha" style="--c:var(--d-down)"></i><span data-i18n="bi.queda">queda</span></span></div>
-        </div>
-        <div class="dsc-rolagem"><div id="biMedidas"></div></div>
-      </article>
-      <article class="dsc-card s5">
-        <div class="dsc-card-head"><div>
-          <h3 class="dsc-card-titulo" data-i18n="bi.budTitulo">Média x Budget</h3>
-          <p class="dsc-card-sub" data-i18n="bi.budSub">Quanto do budget a média de cada período atingiu</p>
-        </div></div>
-        <div class="rank" id="biRankBudget"></div>
-        <div class="dsc-nota"><i></i><span data-i18n="bi.budNota">linha tracejada = 100% do budget</span></div>
-      </article>
-      <article class="dsc-card s12">
-        <div class="dsc-card-head"><div>
-          <h3 class="dsc-card-titulo" data-i18n="bi.medTab">Medidas por período</h3>
-          <p class="dsc-card-sub" data-i18n="bi.medTabSub">Média, melhores 30 dias (média móvel de 30 dias com dado), P75 e budget</p>
-        </div></div>
-        <div class="dsc-tabela-wrap"><table class="dsc-tabela"><thead><tr id="biMedCab"></tr></thead><tbody id="biMedCorpo"></tbody></table></div>
-      </article>
-    </section>
-
-    <!-- CAPABILIDADE -->
-    <section class="dsc-grade" id="biVis-capab" role="tabpanel" aria-labelledby="biAba-capab" hidden>
       <article class="dsc-card s8">
         <div class="dsc-card-head">
-          <div>
-            <h3 class="dsc-card-titulo" data-i18n="bi.histTitulo">Distribuição por ano</h3>
-            <p class="dsc-card-sub" data-i18n="bi.histSub">% dos dias em cada faixa de valor · linha tracejada = curva normal do ano</p>
-          </div>
-          <div class="dsc-seg" role="group" id="biAnosSeg" aria-label="Ano" data-i18n-aria="bi.ano"></div>
+          <h3 class="dsc-card-titulo" data-i18n="bi.medidasTitulo">Medidas estatísticas e comparações</h3>
+          <div class="dsc-legenda" id="biLegendaMedidas"></div>
         </div>
-        <div class="dsc-grafico" id="biHistWrap"><div id="biHist"></div><div class="dsc-dica" id="biHistDica" hidden></div></div>
+        <div class="dsc-medidas-linha">
+          <div class="dsc-rolagem dsc-medidas-graf"><div id="biMedidas"></div></div>
+          <div class="dsc-variacao-caixa">
+            <h4 data-i18n="bi.variacao">Variação da média</h4>
+            <ul class="dsc-variacao" id="biVariacao"></ul>
+          </div>
+        </div>
       </article>
+
       <article class="dsc-card s4">
-        <div class="dsc-card-head"><div>
-          <h3 class="dsc-card-titulo" data-i18n="bi.anosTitulo">Resumo por ano</h3>
-          <p class="dsc-card-sub" data-i18n="bi.anosSub">Dispersão: quanto menor o CV, mais estável o processo</p>
-        </div></div>
-        <div class="dsc-tabela-wrap"><table class="dsc-tabela"><thead><tr id="biAnosCab"></tr></thead><tbody id="biAnosCorpo"></tbody></table></div>
+        <div class="dsc-card-head">
+          <h3 class="dsc-card-titulo" data-i18n="bi.hist">Histograma de capabilidade</h3>
+        </div>
+        <div class="dsc-tabela-wrap dsc-hist-legenda"><table class="dsc-tabela"><thead><tr id="biAnosCab"></tr></thead><tbody id="biAnosCorpo"></tbody></table></div>
+        <div class="dsc-grafico" id="biHistWrap"><div id="biHist"></div><div class="dsc-dica" id="biHistDica" hidden></div></div>
       </article>
     </section>
 
@@ -1302,7 +1260,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js?v=20261103-1"></script>
+<script src="assets/js/painel-spc.js?v=20261104-1"></script>
 <script>
 (function () {
   'use strict';
@@ -1335,21 +1293,15 @@ window.VBMSetup = (function () {
       'imp.hist': 'Importações feitas', 'imp.h.quando': 'Gravado em', 'imp.h.mes': 'Mês', 'imp.h.linhas': 'Linhas', 'imp.hVazio': 'Nenhuma importação feita ainda.',
       'imp.hLinhas': '{ins} inseridas · {at} atualizadas', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
       'bi.ante': 'Controle estatístico de processo · banco PRD', 'bi.desc': 'Carta de controle com as regras de Nelson, medidas por período e capabilidade por ano.',
-      'bi.h.periodo': 'Período', 'bi.h.dias': 'Dias com dado', 'bi.filtros': 'Filtros', 'bi.fechar': 'Fechar', 'bi.resumo': 'Resumo',
+      'bi.h.periodo': 'Período', 'bi.filtros': 'Filtros', 'bi.fechar': 'Fechar', 'bi.resumo': 'Resumo',
       'bi.capab': 'Capabilidade', 'bi.g.kpi': 'Indicador', 'bi.g.trat': 'Tratamento dos dados', 'bi.de': 'De', 'bi.ate': 'Até',
       'bi.tratDica': 'Outliers: fora de média ± 3,5 desvios. Valores negativos sempre contam como zero.',
       'bi.limpar': 'Restaurar padrão', 'bi.ver': 'Ver resultados', 'bi.limparDica': 'Período inteiro, sem remover zeros nem outliers', 'bi.semZeros': 'Sem zeros', 'bi.semOutliers': 'Sem outliers',
-      'bi.t.media': 'Média · {p}', 'bi.t.vs': 'vs. {p}', 'bi.t.sobControle': 'sob controle', 'bi.t.sobControleDica': 'Dias dentro dos limites de controle (sem a regra 1), no período filtrado',
-      'bi.t.melhor': 'Melhores 30 dias · {p}', 'bi.t.melhorLeg': 'média ÷ melhores 30 dias', 'bi.t.semMelhor': 'menos de 30 dias com dado',
-      'bi.t.budget': 'Budget · {p}', 'bi.t.budgetLeg': 'média ÷ budget', 'bi.semBudget': 'sem budget no período', 'bi.t.sinais': 'Sinais fora de controle',
-      'bi.cartaSub': 'Limites por {agrup} · clique num sinal do resumo para destacá-lo', 'bi.lim': 'Limites por período',
-      'bi.limSub': 'CL = média do período · UCL e LCL = CL ± 3σ, com σ pela amplitude móvel média ÷ 1,128',
-      'bi.th.periodo': 'Período', 'bi.th.dias': 'Dias', 'bi.th.regra': 'Regra {n}', 'bi.semLimite': 'menos de 7 dias: sem limites',
-      'bi.medTitulo': 'Média por período', 'bi.medSub': 'Média diária de cada período · variação contra o período anterior', 'bi.alta': 'alta', 'bi.queda': 'queda',
-      'bi.budTitulo': 'Média x Budget', 'bi.budSub': 'Quanto do budget a média de cada período atingiu', 'bi.budNota': 'linha tracejada = 100% do budget',
-      'bi.medTab': 'Medidas por período', 'bi.medTabSub': 'Média, melhores 30 dias (média móvel de 30 dias com dado), P75 e budget',
-      'bi.th.delta': 'Variação', 'bi.th.ating': 'Média ÷ Budget', 'bi.vsAnterior': 'vs. período anterior',
-      'bi.histTitulo': 'Distribuição por ano', 'bi.histSub': '% dos dias em cada faixa de valor · linha tracejada = curva normal do ano', 'bi.todos': 'Todos',
+      'bi.t.vs': 'vs. {p}',       'bi.t.semMelhor': 'menos de 30 dias com dado',
+      'bi.semBudget': 'sem budget no período',       'bi.cartaSub': 'Limites por {agrup} · CL = média, UCL/LCL = CL ± 3σ (σ = amplitude móvel média ÷ 1,128)', 'bi.lim': 'Limites por período',
+      'bi.limSub': 'Os mesmos CL, UCL, LCL e melhores 30 dias da carta acima',
+      'bi.th.periodo': 'Período',       'bi.medidasTitulo': 'Medidas estatísticas e comparações', 'bi.medSub': 'Mean, Best 30 Days, P75 e Budget por período · eixo com zoom automático, como no Power BI', 'bi.variacaoSub': 'Mean contra o período anterior',             'bi.medTab': 'Medidas por período', 'bi.medTabSub': 'Os mesmos valores do gráfico acima',
+            'bi.histTitulo': 'Distribuição por ano', 'bi.histSub': '% dos dias em cada faixa de valor · linha tracejada = curva normal do ano', 'bi.todos': 'Todos',
       'bi.anosTitulo': 'Resumo por ano', 'bi.anosSub': 'Dispersão: quanto menor o CV, mais estável o processo', 'bi.th.desvio': 'Desvio',
       'bi.f.site': 'Site', 'bi.f.op': 'Operação', 'bi.f.periodo': 'Período', 'bi.f.zeros': 'Remover zeros', 'bi.f.outliers': 'Remover outliers', 'bi.sim': 'Sim', 'bi.nao': 'Não',
       'bi.atualizar': 'Atualizar', 'bi.atualizado': 'Dados de {banco} · carregados em {quando}', 'bi.selecione': 'Selecione BU, site e KPI para ver os gráficos',
@@ -1407,21 +1359,15 @@ window.VBMSetup = (function () {
       'imp.hist': 'Imports', 'imp.h.quando': 'Written', 'imp.h.mes': 'Month', 'imp.h.linhas': 'Rows', 'imp.hVazio': 'No imports yet.',
       'imp.hLinhas': '{ins} inserted · {at} updated', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
       'bi.ante': 'Statistical process control · PRD database', 'bi.desc': 'Control chart with Nelson rules, measures per period and capability per year.',
-      'bi.h.periodo': 'Period', 'bi.h.dias': 'Days with data', 'bi.filtros': 'Filters', 'bi.fechar': 'Close', 'bi.resumo': 'Summary',
+      'bi.h.periodo': 'Period', 'bi.filtros': 'Filters', 'bi.fechar': 'Close', 'bi.resumo': 'Summary',
       'bi.capab': 'Capability', 'bi.g.kpi': 'Indicator', 'bi.g.trat': 'Data treatment', 'bi.de': 'From', 'bi.ate': 'To',
       'bi.tratDica': 'Outliers: outside mean ± 3.5 standard deviations. Negative values always count as zero.',
       'bi.limpar': 'Reset', 'bi.ver': 'See results', 'bi.limparDica': 'Whole period, without removing zeros or outliers', 'bi.semZeros': 'Zeros removed', 'bi.semOutliers': 'Outliers removed',
-      'bi.t.media': 'Mean · {p}', 'bi.t.vs': 'vs. {p}', 'bi.t.sobControle': 'in control', 'bi.t.sobControleDica': 'Days within the control limits (no rule 1 signal), in the filtered period',
-      'bi.t.melhor': 'Best 30 days · {p}', 'bi.t.melhorLeg': 'mean ÷ best 30 days', 'bi.t.semMelhor': 'fewer than 30 days with data',
-      'bi.t.budget': 'Budget · {p}', 'bi.t.budgetLeg': 'mean ÷ budget', 'bi.semBudget': 'no budget in the period', 'bi.t.sinais': 'Out-of-control signals',
-      'bi.cartaSub': 'Limits per {agrup} · click a signal in the summary to highlight it', 'bi.lim': 'Limits per period',
-      'bi.limSub': 'CL = period mean · UCL and LCL = CL ± 3σ, with σ from the average moving range ÷ 1.128',
-      'bi.th.periodo': 'Period', 'bi.th.dias': 'Days', 'bi.th.regra': 'Rule {n}', 'bi.semLimite': 'fewer than 7 days: no limits',
-      'bi.medTitulo': 'Mean per period', 'bi.medSub': 'Daily mean of each period · change versus the previous period', 'bi.alta': 'increase', 'bi.queda': 'decrease',
-      'bi.budTitulo': 'Mean x Budget', 'bi.budSub': 'How much of the budget each period’s mean reached', 'bi.budNota': 'dashed line = 100% of budget',
-      'bi.medTab': 'Measures per period', 'bi.medTabSub': 'Mean, best 30 days (30-day moving average over days with data), P75 and budget',
-      'bi.th.delta': 'Change', 'bi.th.ating': 'Mean ÷ Budget', 'bi.vsAnterior': 'vs. previous period',
-      'bi.histTitulo': 'Distribution per year', 'bi.histSub': '% of days in each value range · dashed line = the year’s normal curve', 'bi.todos': 'All',
+      'bi.t.vs': 'vs. {p}',       'bi.t.semMelhor': 'fewer than 30 days with data',
+      'bi.semBudget': 'no budget in the period',       'bi.cartaSub': 'Limits per {agrup} · CL = mean, UCL/LCL = CL ± 3σ (σ = average moving range ÷ 1.128)', 'bi.lim': 'Limits per period',
+      'bi.limSub': 'The same CL, UCL, LCL and best 30 days as the chart above',
+      'bi.th.periodo': 'Period',       'bi.medidasTitulo': 'Statistical Measures and Comparisons', 'bi.medSub': 'Mean, Best 30 Days, P75 and Budget per period · auto-zoomed axis, as in Power BI', 'bi.variacaoSub': 'Mean versus the previous period',             'bi.medTab': 'Measures per period', 'bi.medTabSub': 'The same values as the chart above',
+            'bi.histTitulo': 'Distribution per year', 'bi.histSub': '% of days in each value range · dashed line = the year’s normal curve', 'bi.todos': 'All',
       'bi.anosTitulo': 'Summary per year', 'bi.anosSub': 'Spread: the lower the CV, the more stable the process', 'bi.th.desvio': 'Std dev',
       'bi.f.site': 'Site', 'bi.f.op': 'Operation', 'bi.f.periodo': 'Period', 'bi.f.zeros': 'Remove zeros', 'bi.f.outliers': 'Remove outliers', 'bi.sim': 'Yes', 'bi.nao': 'No',
       'bi.atualizar': 'Refresh', 'bi.atualizado': 'Data from {banco} · loaded {quando}', 'bi.selecione': 'Select all filters to view the chart',
