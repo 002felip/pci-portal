@@ -78,7 +78,9 @@ Variáveis (no `app.yaml` do Portal):
 | `HOB_CACHE_TTL_S`, `HOB_FRESCO_S`, `HOB_DESATUALIZADO_MAX_S` | Opcionais, mesmos padrões do COO (300 s, 15 s, 2 h) |
 | `HOB_DIAGNOSTICO=1` | Liga `api/waterfall?bruto=1` (colunas e linhas de `IBP.WATERFALL` como vieram) |
 
-**Já vem do banco:** FCF YEAR, de `IBP.WATERFALL`. Para cada ano vale a referência mais recente (maior `DT_REF`). Rótulo, valor e ordem saem das colunas da tabela (padrão de nomes do IBP: `DS_`/`NM_`, `VL_`, `ORDEM`). O tipo e o cinza de cada degrau saem da configuração, e os subtotais são calculados pela tela.
+**Já vem do banco:** FCF YEAR, de `IBP.WATERFALL` (site 40, tipo 2, desde 2025), sincronizado com os filtros: a tela mostra a referência (`DT_REF`) mais recente do **Ano** escolhido até o **Mês** escolhido, e o título indica qual (ex.: "ref. Sep/2026"). No Portal o FCF YEAR nunca usa a demonstração: sem dado, o card mostra o motivo (coluna inexistente, tabela não encontrada, sem permissão, sem referência até o mês, API não publicada…). Rótulo, valor e ordem saem das colunas da tabela (padrão de nomes do IBP: `DS_`/`NM_`, `VL_`, `ORDEM`); tipo e cinza de cada degrau, da configuração; subtotais calculados pela tela.
+
+**Conferir a tabela no Portal:** `…/VBM-Health-of-the-Business/api/waterfall/estrutura` mostra as colunas, como a API as entendeu e as referências encontradas — sem os valores.
 
 **Para o restante vir do banco:**
 1. Cadastrar o dashboard e os KPIs em `IBP.DASHBOARD` (novo `ID_DASH`), com os nomes de `005_config_hob.sql` (ou ajustar o JSON).
@@ -91,5 +93,5 @@ Enquanto não houver carga, a página usa a demonstração com o selo "Dados dem
 ## Pendências
 
 1. **Carga mensal**: consulta de origem de `003_carga_mensal_hob.sql` e o `ID_DASH` do dashboard.
-2. Conferir as colunas de `IBP.WATERFALL` no Portal (`HOB_DIAGNOSTICO=1` → `api/waterfall?bruto=1`).
+2. Conferir as colunas de `IBP.WATERFALL` no Portal (`api/waterfall/estrutura`).
 3. Validar com a área de negócio o nome e a ordem das categorias das pontes (EBITDA e FCF).

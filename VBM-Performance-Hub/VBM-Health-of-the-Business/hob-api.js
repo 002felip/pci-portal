@@ -254,29 +254,28 @@ function colunasWaterfall(l) {
   };
 }
 function mapearWaterfall(linhas, config) {
-  const avisos = [], anos = {};
-  if (!linhas.length) return { anos, colunas: null, avisos: ['IBP.WATERFALL sem linhas para o site/ano'] };
+  const avisos = [], anos = {}, referencias = [];
+  if (!linhas.length) return { anos, referencias, colunas: null, avisos: ['IBP.WATERFALL sem linhas para o site/tipo/ano'] };
   const col = colunasWaterfall(linhas[0]);
   if (!col.data || !col.rotulo || !col.valor) {
-    return { anos, colunas: col, avisos: [`colunas não reconhecidas em IBP.WATERFALL (data/rótulo/valor): ${Object.keys(linhas[0]).join(', ')}`] };
+    return { anos, referencias, colunas: col, avisos: [`colunas não reconhecidas em IBP.WATERFALL (data/rótulo/valor): ${Object.keys(linhas[0]).join(', ')}`] };
   }
   const ref = new Map(config.pontes.fcfYear.map(i => [semAno(i.lbl), i]));
-  const porAno = new Map();
+  // Uma ponte por referência (DT_REF): a tela escolhe a do Ano/Mês dos filtros
+  const porRef = new Map();
   for (const l of linhas) {
     const d = l[col.data] instanceof Date ? l[col.data] : new Date(l[col.data]);
     if (isNaN(d)) continue;
-    const ano = d.getUTCFullYear(), t = d.getTime();
-    const atual = porAno.get(ano);
-    if (!atual || t > atual.t) porAno.set(ano, { t, dt: d, linhas: [l] });
-    else if (t === atual.t) atual.linhas.push(l);
+    const chave = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    if (!porRef.has(chave)) porRef.set(chave, { dt: d, linhas: [] });
+    porRef.get(chave).linhas.push(l);
   }
-  for (const [ano, g] of porAno) {
-    const ls = g.linhas.slice().sort((a, b) => (col.ordem ? Number(a[col.ordem]) - Number(b[col.ordem]) : 0));
-    const itens = ls.map(l => {
+  function itensDe(ls, rotuloRef) {
+    const itens = ls.slice().sort((a, b) => (col.ordem ? Number(a[col.ordem]) - Number(b[col.ordem]) : 0)).map(l => {
       const lbl = String(l[col.rotulo]).trim(), c = ref.get(semAno(lbl));
       const tipoTab = col.tipo ? String(l[col.tipo] || '').trim().toLowerCase() : '';
       const tipo = TIPOS.includes(tipoTab) ? tipoTab : c ? c.tipo : 'd';
-      if (!c && !TIPOS.includes(tipoTab)) avisos.push(`${ano}: "${lbl}" não está na configuração (entra como variação)`);
+      if (!c && !TIPOS.includes(tipoTab)) avisos.push(`${rotuloRef}: "${lbl}" não está na configuração (entra como variação)`);
       const item = { tipo, lbl };
       if (tipo !== 'sub' && tipo !== 'zero') item.v = l[col.valor] == null ? 0 : Number(l[col.valor]);
       if (c && c.cinza) item.cinza = true;
@@ -289,9 +288,26 @@ function mapearWaterfall(linhas, config) {
       const onde = ant ? itens.findIndex(y => semAno(y.lbl) === semAno(ant.lbl)) + 1 : 0;
       itens.splice(onde, 0, { tipo: 'sub', lbl: i.lbl, ...(i.cinza ? { cinza: true } : {}) });
     });
-    anos[ano] = { dtRef: g.dt.toISOString(), itens };
+    return itens;
   }
-  return { anos, colunas: col, avisos: [...new Set(avisos)] };
+  for (const [chave, g] of [...porRef].sort((x, y) => x[0].localeCompare(y[0]))) {
+    const r = { ref: chave, ano: g.dt.getUTCFullYear(), mes: g.dt.getUTCMonth() + 1, dtRef: g.dt.toISOString(), itens: itensDe(g.linhas, chave) };
+    referencias.push(r);
+    anos[r.ano] = { dtRef: r.dtRef, itens: r.itens }; // em ordem crescente: fica a mais recente do ano
+  }
+  return { anos, referencias, colunas: col, avisos: [...new Set(avisos)] };
+}
+
+// Erro do banco → código para a tela (sem o texto do banco na resposta; o texto vai para o log)
+function codigoDoErro(err) {
+  const m = String((err && err.message) || '');
+  let r;
+  if ((r = /Invalid column name '([^']+)'/i.exec(m))) return { codigo: 'COLUNA', detalhe: r[1] };
+  if (/Invalid object name/i.test(m)) return { codigo: 'TABELA' };
+  if (/permission|denied/i.test(m)) return { codigo: 'PERMISSAO' };
+  if (/Login failed|credencial/i.test(m)) return { codigo: 'LOGIN' };
+  if (/timeout|timed out/i.test(m)) return { codigo: 'TEMPO' };
+  return { codigo: 'ERRO_BANCO' };
 }
 
 // Lê o script de database/ e confere os parâmetros que a API passa (falha ao subir, não na tela)
@@ -427,6 +443,7 @@ function criarHobRouter({ runQuery, idDash }) {
         const w = await lerWaterfall(cfg.config, fresco(req));
         for (const [ano, x] of Object.entries(w.anos)) if (dados.bu.vbm[ano]) dados.bu.vbm[ano].fcfYear = x.itens;
         dados.fcf = Object.keys(w.anos).length ? 'waterfall' : 'config';
+        dados.fcfRefs = w.referencias;
         dados.avisos.push(...w.avisos);
       } catch (err) {
         console.error(`${TAG} IBP.WATERFALL indisponível (FCF YEAR pela configuração):`, err.message);
@@ -451,13 +468,32 @@ function criarHobRouter({ runQuery, idDash }) {
         if (!diagnostico) return res.status(404).json({ error: 'Not found.' });
         return res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anoInicial: cfg.config.fcf.anoInicial, colunas: w.linhas.length ? Object.keys(w.linhas[0]) : [], mapeamento: w.colunas, linhas: w.linhas.slice(0, 200) });
       }
-      res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anos: w.anos, avisos: w.avisos });
+      res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, referencias: w.referencias, anos: w.anos, avisos: w.avisos,
+        ...(w.referencias.length ? {} : { codigo: w.colunas ? 'COLUNAS' : 'SEM_LINHAS' }) });
     } catch (err) {
-      responderErro(res, '/waterfall', err, 'Failed to query IBP.WATERFALL.');
+      console.error(`${TAG} erro em /waterfall:`, err.message);
+      res.status(500).json({ error: 'Failed to query IBP.WATERFALL.', ...codigoDoErro(err) });
+    }
+  });
+
+  // Estrutura de IBP.WATERFALL como a API a enxerga: colunas, tipos, mapeamento e referências — sem os valores.
+  // Serve para conferir no Portal por que o FCF YEAR não veio do banco (rota protegida pelo acesso do Hub).
+  router.get('/waterfall/estrutura', async (req, res) => {
+    const cfg = await lerConfig(fresco(req));
+    const base = { site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anoInicial: cfg.config.fcf.anoInicial };
+    try {
+      const w = await lerWaterfall(cfg.config, true);
+      const l0 = w.linhas[0] || {};
+      res.json({ ...base, ok: w.referencias.length > 0, linhas: w.linhas.length,
+        colunas: Object.keys(l0).map(c => ({ nome: c, tipo: l0[c] === null ? 'null' : l0[c] instanceof Date ? 'data' : typeof l0[c] })),
+        mapeamento: w.colunas, referencias: w.referencias.map(r => ({ ref: r.ref, itens: r.itens.length })), avisos: w.avisos.slice(0, 20) });
+    } catch (err) {
+      console.error(`${TAG} erro em /waterfall/estrutura:`, err.message);
+      res.status(500).json({ ...base, ok: false, ...codigoDoErro(err) });
     }
   });
 
   return router;
 }
 
-module.exports = { criarHobRouter, montarDados, mapearWaterfall, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { criarHobRouter, montarDados, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
