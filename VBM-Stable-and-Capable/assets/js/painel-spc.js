@@ -160,7 +160,7 @@
   var st = {
     filtros: null, combo: null, serie: null, carregando: false, erro: null,
     op: { removerZeros: false, removerOutliers: false, inicio: null, fim: null },
-    porAno: false, vis: 'carta', anoFoco: null
+    porAno: false
   };
   var res = null; // resultado do último cálculo (grupos, limites, medidas)
   var $ = function (id) { return document.getElementById(id); };
@@ -255,36 +255,21 @@
       if (!p.linhas.length) msg = t('bi.semDados'); else res = calcular(p);
     }
     if (!res) {
-      if (st.carregando && !st.serie) { esqueleto(); return; }
       if (msg) {
-        $('biTiles').innerHTML = '<div class="dsc-tile" style="grid-column:1/-1;min-height:0">' + vazioHtml(msg) + '</div>';
         ALVOS.forEach(function (id) { $(id).innerHTML = vazioHtml(msg); });
-        ['biLimCab', 'biLimCorpo', 'biMedCab', 'biMedCorpo', 'biAnosCab', 'biAnosCorpo', 'biLegendaCarta', 'biLegendaMedidas', 'biAnosSeg', 'biVariacao'].forEach(function (id) { $(id).innerHTML = ''; });
+        ['biAnosCab', 'biAnosCorpo', 'biLegendaCarta', 'biLegendaMedidas', 'biVariacao'].forEach(function (id) { $(id).innerHTML = ''; });
         $('biCartaSub').textContent = '';
       }
       return;
     }
     desenharHero();
-    desenharTiles();
     desenharVisao();
   }
-  function esqueleto() { $('biTiles').innerHTML = '<div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div><div class="dsc-esqueleto"></div>'; }
 
-  function mostrarVisao(v) {
-    st.vis = v;
-    ['carta', 'medidas', 'capab'].forEach(function (k) {
-      $('biVis-' + k).hidden = k !== v;
-      var aba = $('biAba-' + k); aba.setAttribute('aria-selected', String(k === v)); aba.tabIndex = k === v ? 0 : -1;
-    });
-    try { localStorage.setItem('sc-dashboard-aba', v); } catch (e) {}
-    desenharVisao();
-  }
-  /** Só a aba visível é desenhada: as outras têm largura 0 e seriam refeitas ao abrir */
+  /** A página do .pbix tem os três visuais juntos: carta, medidas e histograma */
   function desenharVisao() {
     if (!res) return;
-    if (st.vis === 'carta') { desenharCarta(); desenharLimites(); }
-    else if (st.vis === 'medidas') desenharMedidas();
-    else desenharCapab();
+    desenharCarta(); desenharMedidas(); desenharCapab();
   }
 
   // ── Hero e etiquetas ──
@@ -311,31 +296,6 @@
     if (st.op.removerZeros) h += '<button type="button" class="dsc-chip" data-chip="removerZeros" data-remover="1"><span class="v">' + esc(t('bi.semZeros')) + '</span>' + SVG_X + '</button>';
     if (st.op.removerOutliers) h += '<button type="button" class="dsc-chip" data-chip="removerOutliers" data-remover="1"><span class="v">' + esc(t('bi.semOutliers')) + '</span>' + SVG_X + '</button>';
     $('biChips').innerHTML = h;
-  }
-
-  // ── Cartões de resumo ──
-  function deltaHtml(atual, anterior, rotAnterior) {
-    if (!isFinite(atual) || !isFinite(anterior) || anterior === 0) return '';
-    var d = (atual - anterior) / Math.abs(anterior), cls = Math.abs(d) < 0.005 ? 'is-flat' : d > 0 ? 'is-up' : 'is-down';
-    return '<span class="dsc-delta ' + cls + '">' + (d >= 0 ? SVG_ALTA : SVG_QUEDA) + (d > 0 ? '+' : '') + fmt(d * 100, 1) + '%</span><span>' + esc(t('bi.t.vs', { p: rotAnterior })) + '</span>';
-  }
-  /** Cartões do último período com as MESMAS medidas do .pbix (v4/v5): Mean (com a
-   *  variação da média contra o período anterior), Best 30 Days, P75 e Budget. */
-  function desenharTiles() {
-    var gs = res.grupos, ult = gs[gs.length - 1], ant = gs.length > 1 ? gs[gs.length - 2] : null, dec = res.decMed;
-    var un = esc(unidadeTitulo(st.serie));
-    var rot = function (k) { return esc(t('bi.serie.' + k) + ' · ' + ult.rotulo); };
-    var h = '<div class="dsc-tile dsc-tile-total"><div class="t-head">' + rot('mean') + '</div>' +
-      '<div class="tt-corpo"><div><div class="tt-num">' + fmt(ult.mean, dec) + '</div><div class="tt-sub"><span>' + un + '</span>' + (ant ? deltaHtml(ult.mean, ant.mean, ant.rotulo) : '') + '</div></div></div></div>';
-    h += '<div class="dsc-tile"><div class="t-head"><i class="q" style="--c:var(--m-best)"></i>' + rot('best') + '</div>' +
-      '<div class="t-num">' + fmt(ult.best, dec) + '<small>' + un + '</small></div>' +
-      '<div class="t-leg">' + esc(ult.b30 ? t('bi.periodo') + ': ' + fmtData(ult.b30.inicio) + ' – ' + fmtData(ult.b30.fim) : t('bi.t.semMelhor')) + '</div></div>';
-    h += '<div class="dsc-tile"><div class="t-head"><i class="q" style="--c:var(--m-p75)"></i>' + rot('p75') + '</div>' +
-      '<div class="t-num">' + fmt(ult.p75, dec) + '<small>' + un + '</small></div><div class="t-leg">&nbsp;</div></div>';
-    h += '<div class="dsc-tile"><div class="t-head"><i class="q" style="--c:var(--m-budget)"></i>' + rot('budget') + '</div>' +
-      '<div class="t-num">' + fmt(ult.budget, dec) + '<small>' + un + '</small></div>' +
-      '<div class="t-leg">' + (isFinite(ult.budget) ? '&nbsp;' : esc(t('bi.semBudget'))) + '</div></div>';
-    $('biTiles').innerHTML = h;
   }
 
   // ── Carta de controle (v1 trimestre / v2 ano), no desenho do Kaizen ──
@@ -433,18 +393,6 @@
     area.addEventListener('mouseleave', function () { guia.setAttribute('visibility', 'hidden'); ponto.setAttribute('visibility', 'hidden'); dica.hidden = true; });
   }
 
-  function desenharLimites() {
-    var dec = res.decCarta;
-    $('biLimCab').innerHTML = [t('bi.th.periodo'), 'CL', 'UCL', 'LCL'].map(function (c, i) { return '<th' + (i ? ' class="num"' : '') + '>' + esc(c) + '</th>'; }).join('') +
-      '<th>' + esc(t('bi.r.best')) + '</th>';
-    $('biLimCorpo').innerHTML = res.grupos.map(function (g) {
-      var s = g.spc;
-      return '<tr><td class="per">' + esc(g.rotulo) + '</td>' +
-        (s ? '<td class="num"><b>' + fmt(s.cl, dec) + '</b></td><td class="num">' + fmt(s.ucl, dec) + '</td><td class="num">' + fmt(s.lcl, dec) + '</td>' : '<td class="num mudo" colspan="3">—</td>') +
-        '<td>' + (g.b30 ? esc(fmtData(g.b30.inicio, true) + ' – ' + fmtData(g.b30.fim, true)) : '<span class="mudo">—</span>') + '</td></tr>';
-    }).join('');
-  }
-
   // ── Medidas por período (v4 trimestre / v5 ano) ──
   /** v4/v5 do .pbix: quatro barras por período (Mean, Best 30 Days, P75, Budget), com o
    *  "zoom automático no eixo Y" do script (mín. e máx. ± 15% da amplitude), desenhadas no
@@ -459,7 +407,7 @@
       var lo = Math.min.apply(null, todos), hi = Math.max.apply(null, todos), pad = (hi - lo || Math.abs(hi) || 1) * 0.15;
       lo -= pad; hi += pad;
       var fv = gs.length > 8 ? '.52rem' : gs.length > 5 ? '.58rem' : '.66rem';
-      alvo.innerHTML = '<div class="cg" style="--minw:' + Math.max(360, gs.length * 132) + 'px;--fv:' + fv + '"><div class="cg-area">' + gs.map(function (g) {
+      alvo.innerHTML = '<div class="cg" style="--minw:' + Math.max(300, gs.length * 66) + 'px;--fv:' + fv + '"><div class="cg-area">' + gs.map(function (g) {
         return '<div class="cg-grupo">' + MEDIDAS.map(function (k) {
           var v = g[k], alt = isFinite(v) ? Math.max(0, (v - lo) / (hi - lo) * 100) : 0;
           return '<div class="cg-col" role="img" aria-label="' + esc(g.rotulo + ' · ' + t('bi.serie.' + k) + ': ' + fmt(v, dec)) + '" title="' + esc(t('bi.serie.' + k) + ': ' + fmt(v, dec)) + '" style="--h:' + alt + '%;--c:var(--m-' + k + ')">' +
@@ -478,12 +426,6 @@
     }
     $('biVariacao').innerHTML = itens.length ? itens.join('') : '<li><span>—</span></li>';
 
-    // Tabela com os mesmos valores
-    $('biMedCab').innerHTML = [t('bi.th.periodo')].concat(MEDIDAS.map(function (k) { return t('bi.serie.' + k); }))
-      .map(function (c, i) { return '<th' + (i ? ' class="num"' : '') + '>' + esc(c) + '</th>'; }).join('');
-    $('biMedCorpo').innerHTML = gs.map(function (g) {
-      return '<tr><td class="per">' + esc(g.rotulo) + '</td>' + MEDIDAS.map(function (k, j) { return '<td class="num">' + (j ? '' : '<b>') + fmt(g[k], dec) + (j ? '' : '</b>') + '</td>'; }).join('') + '</tr>';
-    }).join('');
   }
 
   // ── Capabilidade (v3): histograma por ano + curva normal ──
@@ -503,17 +445,14 @@
     });
     // cor por recência: o ano mais novo em azul Vale, os anteriores em azul escuro e cinzas
     anos.forEach(function (a, i) { a.cor = cor('--ano-' + Math.min(3, anos.length - 1 - i), '#3cb5e5'); });
-    if (st.anoFoco && !anos.some(function (a) { return a.ano === st.anoFoco; })) st.anoFoco = null;
-    $('biAnosSeg').innerHTML = anos.length > 1 ? ['<button type="button" data-bi-ano="" aria-pressed="' + (!st.anoFoco) + '">' + esc(t('bi.todos')) + '</button>']
-      .concat(anos.map(function (a) { return '<button type="button" data-bi-ano="' + a.ano + '" aria-pressed="' + (st.anoFoco === a.ano) + '">' + a.ano + '</button>'; })).join('') : '';
     $('biAnosCab').innerHTML = [t('bi.h.ano'), t('bi.serie.mean'), t('bi.th.desvio'), 'CV', 'N'].map(function (c, i) { return '<th' + (i ? ' class="num"' : '') + '>' + esc(c) + '</th>'; }).join('');
     $('biAnosCorpo').innerHTML = anos.map(function (a) {
-      return '<tr' + (st.anoFoco && st.anoFoco !== a.ano ? ' style="opacity:.45"' : '') + '><td class="per"><i class="dsc-ano-cor" style="--c:' + a.cor + '"></i>' + a.ano + '</td><td class="num"><b>' + fmt(a.media, 2) + '</b></td><td class="num">' + fmt(a.sd, 2) +
+      return '<tr><td class="per"><i class="dsc-ano-cor" style="--c:' + a.cor + '"></i>' + a.ano + '</td><td class="num"><b>' + fmt(a.media, 2) + '</b></td><td class="num">' + fmt(a.sd, 2) +
         '</td><td class="num">' + fmt(a.cv, 1) + '%</td><td class="num">' + fmt(a.n, 0) + '</td></tr>';
     }).join('');
     if (!anos.length) { alvo.innerHTML = vazioHtml(t('bi.semDados')); return; }
 
-    var vis = anos.filter(function (a) { return !st.anoFoco || a.ano === st.anoFoco; });
+    var vis = anos;
     var W = Math.max(alvo.clientWidth, 300), H = 300, m = { l: 40, r: 12, t: 12, b: 28 };
     var curvas = vis.map(function (a) {
       var pts = [];
@@ -602,7 +541,7 @@
   var iniciado = false;
   function ligarEventos() {
     ['biBu', 'biSite', 'biKpi', 'biOp'].forEach(function (id) {
-      $(id).addEventListener('change', function () { st.anoFoco = null; montarFiltros(lerPreferencia()); carregarSerie(); });
+      $(id).addEventListener('change', function () { montarFiltros(lerPreferencia()); carregarSerie(); });
     });
     ['biInicio', 'biFim'].forEach(function (id) {
       $(id).addEventListener('change', function () { st.op.inicio = $('biInicio').value || null; st.op.fim = $('biFim').value || null; desenhar(); });
@@ -612,16 +551,6 @@
     });
     document.querySelectorAll('[data-bi-agrup]').forEach(function (b) {
       b.addEventListener('click', function () { st.porAno = b.getAttribute('data-bi-agrup') === 'ano'; desenhar(); });
-    });
-    $('biAbas').addEventListener('click', function (e) { var b = e.target.closest('[data-vis]'); if (b) mostrarVisao(b.getAttribute('data-vis')); });
-    $('biAbas').addEventListener('keydown', function (e) {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      var ordem = ['carta', 'medidas', 'capab'], i = (ordem.indexOf(st.vis) + (e.key === 'ArrowRight' ? 1 : -1) + 3) % 3;
-      mostrarVisao(ordem[i]); $('biAba-' + ordem[i]).focus();
-    });
-    $('biAnosSeg').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-bi-ano]'); if (!b) return;
-      st.anoFoco = b.getAttribute('data-bi-ano') ? Number(b.getAttribute('data-bi-ano')) : null; desenharCapab();
     });
     $('biChips').addEventListener('click', function (e) {
       var b = e.target.closest('[data-chip]'); if (!b) return;
@@ -651,10 +580,7 @@
       if (iniciado) { desenhar(); return; }
       iniciado = true;
       ligarEventos(); marcarFlags();
-      var aba = 'carta';
-      try { aba = localStorage.getItem('sc-dashboard-aba') || 'carta'; } catch (e) {}
-      mostrarVisao(['carta', 'medidas', 'capab'].indexOf(aba) >= 0 ? aba : 'carta');
-      st.carregando = true; esqueleto();
+      st.carregando = true;
       ALVOS.forEach(function (id) { $(id).innerHTML = vazioHtml(t('ui.loading')); });
       carregarFiltros(false);
     },
