@@ -59,6 +59,11 @@ const CONFIG_VISAO = 'VBM_HEALTH_OF_THE_BUSINESS';
 const CONFIG_PADRAO = {
   // FCF YEAR: IBP.WATERFALL (consulta do time de dados: ID_SITE = 40, ID_TIPO = 2, desde 2025)
   fcf: { site: 40, tipo: 2, anoInicial: 2025 },
+  // 2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO = 3
+  ebitdaPonte: { site: 40, tipo: 3, anoInicial: 2025 },
+  // EBITDA (gráfico por período, seletor VBM | Copper | Nickel | Others): KPI EBITDA (ID_KPI 73) da carga do
+  // COO em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 15). Sites: VBM 40, Copper 38, Nickel 39, Others 45 + 102 + 46
+  ebitda: { idDash: 15, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39], out: [45, 102, 46] } },
   bus: { vbm: { sites: [] }, cu: { sites: [] }, ni: { sites: [] } },
   indicadores: {
     vbm: { ebitdaCu: ['EBITDA Copper'], ebitdaNi: ['EBITDA Nickel'], ebitdaOut: ['EBITDA Others', 'EBITDA Other Segments'], capex: ['CAPEX'] },
@@ -115,11 +120,22 @@ function normalizarConfigHob(json) {
   try { c = typeof json === 'string' ? JSON.parse(json) : json; } catch (e) { return null; }
   if (!c || typeof c !== 'object') return null;
   const out = JSON.parse(JSON.stringify(CONFIG_PADRAO));
-  if (c.fcf && typeof c.fcf === 'object') {
-    const site = Number(c.fcf.site), tipo = Number(c.fcf.tipo), ano = Number(c.fcf.anoInicial);
-    if (Number.isInteger(site) && site > 0) out.fcf.site = site;
-    if (c.fcf.tipo != null && Number.isInteger(tipo) && tipo > 0) out.fcf.tipo = tipo;
-    if (Number.isInteger(ano) && ano >= 2000 && ano <= 2100) out.fcf.anoInicial = ano;
+  for (const k of ['fcf', 'ebitdaPonte']) {
+    const f = c[k];
+    if (!f || typeof f !== 'object') continue;
+    const site = Number(f.site), tipo = Number(f.tipo), ano = Number(f.anoInicial);
+    if (Number.isInteger(site) && site > 0) out[k].site = site;
+    if (f.tipo != null && Number.isInteger(tipo) && tipo > 0) out[k].tipo = tipo;
+    if (Number.isInteger(ano) && ano >= 2000 && ano <= 2100) out[k].anoInicial = ano;
+  }
+  if (c.ebitda && typeof c.ebitda === 'object') {
+    const id = Number(c.ebitda.idDash), kpi = Number(c.ebitda.idKpi);
+    if (Number.isInteger(id) && id > 0) out.ebitda.idDash = id;
+    if (Number.isInteger(kpi) && kpi > 0) out.ebitda.idKpi = kpi;
+    for (const seg of ['vbm', 'cu', 'ni', 'out']) {
+      const lista = c.ebitda.sites && Array.isArray(c.ebitda.sites[seg]) ? c.ebitda.sites[seg].map(Number).filter(n => Number.isInteger(n) && n > 0) : null;
+      if (lista) out.ebitda.sites[seg] = lista;
+    }
   }
   for (const b of BUS) {
     const sites = c.bus && c.bus[b] && Array.isArray(c.bus[b].sites) ? c.bus[b].sites.map(Number).filter(n => Number.isInteger(n) && n > 0) : null;
@@ -253,14 +269,17 @@ function colunasWaterfall(l) {
     tipo: achar([/^TP_/i, /TIPO|TYPE/i], (c) => typeof l[c] === 'string'),
   };
 }
-function mapearWaterfall(linhas, config) {
+// Ponte da tela → chave da configuração com site/tipo/ano de IBP.WATERFALL
+const FONTE_PONTE = { fcfYear: 'fcf', ebitdaYear: 'ebitdaPonte' };
+function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
   const avisos = [], anos = {}, referencias = [];
   if (!linhas.length) return { anos, referencias, colunas: null, avisos: ['IBP.WATERFALL sem linhas para o site/tipo/ano'] };
   const col = colunasWaterfall(linhas[0]);
   if (!col.data || !col.rotulo || !col.valor) {
     return { anos, referencias, colunas: col, avisos: [`colunas não reconhecidas em IBP.WATERFALL (data/rótulo/valor): ${Object.keys(linhas[0]).join(', ')}`] };
   }
-  const ref = new Map(config.pontes.fcfYear.map(i => [semAno(i.lbl), i]));
+  const modelo = config.pontes[ponte].filter(i => i.tipo !== 'zero');
+  const ref = new Map(modelo.map(i => [semAno(i.lbl), i]));
   // Uma ponte por referência (DT_REF): a tela escolhe a do Ano/Mês dos filtros
   const porRef = new Map();
   for (const l of linhas) {
@@ -282,9 +301,9 @@ function mapearWaterfall(linhas, config) {
       return item;
     });
     // subtotais da configuração que a tabela não traz: na mesma posição relativa
-    config.pontes.fcfYear.forEach((i, pos) => {
+    modelo.forEach((i, pos) => {
       if (i.tipo !== 'sub' || itens.some(x => semAno(x.lbl) === semAno(i.lbl))) return;
-      const ant = config.pontes.fcfYear.slice(0, pos).reverse().find(x => itens.some(y => semAno(y.lbl) === semAno(x.lbl)));
+      const ant = modelo.slice(0, pos).reverse().find(x => itens.some(y => semAno(y.lbl) === semAno(x.lbl)));
       const onde = ant ? itens.findIndex(y => semAno(y.lbl) === semAno(ant.lbl)) + 1 : 0;
       itens.splice(onde, 0, { tipo: 'sub', lbl: i.lbl, ...(i.cinza ? { cinza: true } : {}) });
     });
@@ -296,6 +315,31 @@ function mapearWaterfall(linhas, config) {
     anos[r.ano] = { dtRef: r.dtRef, itens: r.itens }; // em ordem crescente: fica a mais recente do ano
   }
   return { anos, referencias, colunas: col, avisos: [...new Set(avisos)] };
+}
+
+// ── EBITDA da carga do COO (004_hob_ebitda.sql) → séries mensais por segmento ──
+// Segmento pelo ID_SITE (configuração ebitda.sites): VBM é o site total (40), não a soma dos segmentos;
+// Others soma os seus sites. Linha de site fora da configuração entra em avisos (não é usada).
+function montarEbitda(linhas, config, ciclo) {
+  const [anoC, mesC] = ciclo.split('-').map(Number);
+  const ultimoReal = mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 };
+  const SEG = { vbm: 'ebitdaVbm', cu: 'ebitdaCu', ni: 'ebitdaNi', out: 'ebitdaOut' };
+  const avisos = [], anos = {}, sitesUsados = {}, fora = new Set();
+  let meta = null;
+  for (const l of linhas) {
+    const site = Number(l.ID_SITE), seg = Object.keys(SEG).find(k => config.ebitda.sites[k].includes(site));
+    if (!seg) { fora.add(String(site)); continue; }
+    const ano = Number(l.ANO), m = Number(l.MES) - 1;
+    if (!Number.isInteger(ano) || m < 0 || m > 11) continue;
+    sitesUsados[seg] = sitesUsados[seg] || new Set(); sitesUsados[seg].add(l.NM_SITE ? `${site} ${String(l.NM_SITE).trim()}` : String(site));
+    if (!meta || (!meta.unid && l.SG_UNID)) meta = { nome: String(l.NM_KPI || 'EBITDA').trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+    if (!anos[ano]) { anos[ano] = {}; for (const k of Object.values(SEG)) anos[ano][k] = { b: Array(12).fill(0), a: Array(12).fill(0) }; }
+    anos[ano][SEG[seg]][l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
+  }
+  if (fora.size) avisos.push(`sites com o KPI ${config.ebitda.idKpi} fora da configuração (não usados): ${[...fora].join(', ')}`);
+  for (const k of Object.keys(SEG)) if (!sitesUsados[k] && Object.keys(anos).length) avisos.push(`${k}: nenhum dos sites ${config.ebitda.sites[k].join(', ')} tem o KPI ${config.ebitda.idKpi} no ciclo ${ciclo}`);
+  if (!Object.keys(anos).length) avisos.push(`KPI ${config.ebitda.idKpi} sem linhas no ciclo ${ciclo} (ID_DASH ${config.ebitda.idDash})`);
+  return { ciclo, ultimoReal, anos, meta, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
 }
 
 // Erro do banco → código para a tela (sem o texto do banco na resposta; o texto vai para o log)
@@ -320,6 +364,7 @@ function carregarSql(arquivo, parametros) {
   return textoSql;
 }
 const LEITURA = { arquivo: '001_hob_dashboard.sql', parametros: ['@idDash', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD'] };
+const EBITDA = { arquivo: '004_hob_ebitda.sql', parametros: ['@idDash', '@idKpi', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD', "CD_PERIODO = 'MONTH'"] };
 const WATERFALL = { arquivo: '002_hob_waterfall.sql', parametros: ['IBP.WATERFALL', '@site', '@tipo', '@anoIni'] };
 
 // Cargas do Health of the Business em IBP.PHUB_PERFORMANCESTUDIO (uma por DT_REF), com a hora da gravação
@@ -343,6 +388,7 @@ function criarHobRouter({ runQuery, idDash }) {
   const ID_DASH = lerIdDash(idDash);
   const LEITURA_SQL = carregarSql(LEITURA.arquivo, LEITURA.parametros);
   const WATERFALL_SQL = carregarSql(WATERFALL.arquivo, WATERFALL.parametros);
+  const EBITDA_SQL = carregarSql(EBITDA.arquivo, EBITDA.parametros);
   const diagnostico = process.env.HOB_DIAGNOSTICO === '1';
   const router = express.Router();
   const cache = new Map();
@@ -399,11 +445,22 @@ function criarHobRouter({ runQuery, idDash }) {
     }
   }
   // FCF YEAR de IBP.WATERFALL (não depende do ID_DASH). Falha não derruba /indicadores: vale a configuração
-  async function lerWaterfall(config, f) {
-    const { site, tipo, anoInicial } = config.fcf;
+  async function lerWaterfall(config, f, ponte = 'fcfYear') {
+    const { site, tipo, anoInicial } = config[FONTE_PONTE[ponte]];
     const linhas = await comCache(`/waterfall:${site}:${tipo}:${anoInicial}`, async () => (await runQuery(WATERFALL_SQL, { site: [sql.Int, site], tipo: [sql.Int, tipo], anoIni: [sql.Int, anoInicial] })).recordset, f);
-    return { linhas, ...mapearWaterfall(linhas, config) };
+    return { linhas, ...mapearWaterfall(linhas, config, ponte) };
   }
+  // EBITDA da carga do COO: o ciclo pedido, se existir no dashboard de origem; senão, o mais recente
+  async function lerEbitda(config, f, cicloPedido) {
+    const idDash = config.ebitda.idDash;
+    const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, f)).map(l => cicloDe(l.DT_REF));
+    if (!ciclos.length) throw Object.assign(new Error('Sem carga do COO'), { status: 404, codigo: 'SEM_CICLO' });
+    const ciclo = cicloPedido && ciclos.includes(cicloPedido) ? cicloPedido : ciclos[0];
+    const idKpi = config.ebitda.idKpi;
+    const linhas = await comCache(`/ebitda:${idDash}:${idKpi}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, idKpi], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
+    return { idDash, idKpi, ...montarEbitda(linhas, config, ciclo) };
+  }
+  const pontePedida = (req) => (req.query.ponte === 'ebitdaYear' ? 'ebitdaYear' : 'fcfYear');
   function responderErro(res, rotaNome, err, falha) {
     if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
     console.error(`${TAG} erro em ${rotaNome}:`, err.message);
@@ -439,16 +496,19 @@ function criarHobRouter({ runQuery, idDash }) {
         lerConfig(fresco(req)),
       ]);
       const dados = montarDados(linhas, cfg.config, c.ciclo);
-      try {
-        const w = await lerWaterfall(cfg.config, fresco(req));
-        for (const [ano, x] of Object.entries(w.anos)) if (dados.bu.vbm[ano]) dados.bu.vbm[ano].fcfYear = x.itens;
-        dados.fcf = Object.keys(w.anos).length ? 'waterfall' : 'config';
-        dados.fcfRefs = w.referencias;
-        dados.avisos.push(...w.avisos);
-      } catch (err) {
-        console.error(`${TAG} IBP.WATERFALL indisponível (FCF YEAR pela configuração):`, err.message);
-        dados.fcf = 'config';
+      dados.pontesRefs = {};
+      for (const ponte of Object.keys(FONTE_PONTE)) {
+        try {
+          const w = await lerWaterfall(cfg.config, fresco(req), ponte);
+          for (const [ano, x] of Object.entries(w.anos)) if (dados.bu.vbm[ano]) dados.bu.vbm[ano][ponte] = x.itens;
+          dados.pontesRefs[ponte] = w.referencias;
+          dados.avisos.push(...w.avisos);
+        } catch (err) {
+          console.error(`${TAG} IBP.WATERFALL (${ponte}) indisponível:`, err.message);
+        }
       }
+      dados.fcfRefs = dados.pontesRefs.fcfYear || [];
+      dados.fcf = dados.fcfRefs.length ? 'waterfall' : 'config';
       if (dados.avisos.length) console.warn(`${TAG} ciclo ${c.ciclo}: ${dados.avisos.length} aviso(s):`, dados.avisos.slice(0, 5).join(' | '));
       const item = cache.get(`/leitura:${c.ciclo}`) || {};
       res.json({ ...dados, ciclos: c.todos.map(x => x.ciclo), config: cfg.origem,
@@ -462,13 +522,14 @@ function criarHobRouter({ runQuery, idDash }) {
   router.get('/waterfall', async (req, res) => {
     try {
       const cfg = await lerConfig(fresco(req));
-      const w = await lerWaterfall(cfg.config, fresco(req));
-      if (w.avisos.length) console.warn(`${TAG} IBP.WATERFALL: ${w.avisos.slice(0, 5).join(' | ')}`);
+      const ponte = pontePedida(req), fonte = cfg.config[FONTE_PONTE[ponte]];
+      const w = await lerWaterfall(cfg.config, fresco(req), ponte);
+      if (w.avisos.length) console.warn(`${TAG} IBP.WATERFALL (${ponte}): ${w.avisos.slice(0, 5).join(' | ')}`);
       if (req.query.bruto === '1') {
         if (!diagnostico) return res.status(404).json({ error: 'Not found.' });
-        return res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anoInicial: cfg.config.fcf.anoInicial, colunas: w.linhas.length ? Object.keys(w.linhas[0]) : [], mapeamento: w.colunas, linhas: w.linhas.slice(0, 200) });
+        return res.json({ ponte, site: fonte.site, tipo: fonte.tipo, anoInicial: fonte.anoInicial, colunas: w.linhas.length ? Object.keys(w.linhas[0]) : [], mapeamento: w.colunas, linhas: w.linhas.slice(0, 200) });
       }
-      res.json({ site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, referencias: w.referencias, anos: w.anos, avisos: w.avisos,
+      res.json({ ponte, site: fonte.site, tipo: fonte.tipo, referencias: w.referencias, anos: w.anos, avisos: w.avisos,
         ...(w.referencias.length ? {} : { codigo: w.colunas ? 'COLUNAS' : 'SEM_LINHAS' }) });
     } catch (err) {
       console.error(`${TAG} erro em /waterfall:`, err.message);
@@ -480,9 +541,10 @@ function criarHobRouter({ runQuery, idDash }) {
   // Serve para conferir no Portal por que o FCF YEAR não veio do banco (rota protegida pelo acesso do Hub).
   router.get('/waterfall/estrutura', async (req, res) => {
     const cfg = await lerConfig(fresco(req));
-    const base = { site: cfg.config.fcf.site, tipo: cfg.config.fcf.tipo, anoInicial: cfg.config.fcf.anoInicial };
+    const ponte = pontePedida(req), fonte = cfg.config[FONTE_PONTE[ponte]];
+    const base = { ponte, site: fonte.site, tipo: fonte.tipo, anoInicial: fonte.anoInicial };
     try {
-      const w = await lerWaterfall(cfg.config, true);
+      const w = await lerWaterfall(cfg.config, true, ponte);
       const l0 = w.linhas[0] || {};
       res.json({ ...base, ok: w.referencias.length > 0, linhas: w.linhas.length,
         colunas: Object.keys(l0).map(c => ({ nome: c, tipo: l0[c] === null ? 'null' : l0[c] instanceof Date ? 'data' : typeof l0[c] })),
@@ -493,7 +555,22 @@ function criarHobRouter({ runQuery, idDash }) {
     }
   });
 
+  // EBITDA por segmento (carga do COO). ?ciclo= segue o ciclo da tela quando o COO tiver a mesma carga
+  router.get('/ebitda', async (req, res) => {
+    const pedido = lerCiclo(req.query.ciclo);
+    try {
+      const cfg = await lerConfig(fresco(req));
+      const e = await lerEbitda(cfg.config, fresco(req), pedido || null);
+      if (e.avisos.length) console.warn(`${TAG} EBITDA (ID_DASH ${e.idDash}): ${e.avisos.join(' | ')}`);
+      res.json({ ...e, ...(Object.keys(e.anos).length ? {} : { codigo: 'SEM_LINHAS' }) });
+    } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
+      console.error(`${TAG} erro em /ebitda:`, err.message);
+      res.status(500).json({ error: 'Failed to query the EBITDA.', ...codigoDoErro(err) });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarHobRouter, montarDados, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { criarHobRouter, montarDados, montarEbitda, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };

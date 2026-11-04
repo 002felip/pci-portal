@@ -9,7 +9,10 @@
      NM_USUARIO_CRIACAO = 'vbm-health-of-the-business'  (dono técnico: ninguém o edita pelo Studio)
 
    Conteúdo (o mesmo de CONFIG_PADRAO em hob-api.js; sem registro, a tela usa o código):
-     fcf          FCF YEAR: site, tipo (ID_TIPO) e ano inicial da consulta em IBP.WATERFALL (database/002_hob_waterfall.sql)
+     fcf          FCF YEAR: site, tipo (ID_TIPO 2) e ano inicial da consulta em IBP.WATERFALL (database/002_hob_waterfall.sql)
+     ebitdaPonte  2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO 3
+     ebitda       EBITDA por período: ID_DASH (15) e ID_KPI (73) da carga do COO em IBP.PHUB_PERFORMANCESTUDIO e
+                  ID_SITE de cada opção: vbm 40 (total), cu 38, ni 39, out 45 + 102 + 46
      bus          sites (IBP.DASHBOARD.ID_SITE) de cada Business Unit: vbm, cu (Copper), ni (Nickel).
                   Vazio = qualquer site do dashboard. Obrigatório quando o mesmo nome de KPI
                   (ex.: EBITDA, CAPEX) existe em mais de uma BU.
@@ -33,6 +36,31 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
     "site": 40,
     "tipo": 2,
     "anoInicial": 2025
+  },
+  "ebitdaPonte": {
+    "site": 40,
+    "tipo": 3,
+    "anoInicial": 2025
+  },
+  "ebitda": {
+    "idDash": 15,
+    "idKpi": 73,
+    "sites": {
+      "vbm": [
+        40
+      ],
+      "cu": [
+        38
+      ],
+      "ni": [
+        39
+      ],
+      "out": [
+        45,
+        102,
+        46
+      ]
+    }
   },
   "bus": {
     "vbm": {
