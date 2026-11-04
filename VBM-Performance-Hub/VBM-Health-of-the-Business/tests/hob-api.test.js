@@ -204,3 +204,38 @@ test('/waterfall responde sem HOB_ID_DASH; /indicadores usa o FCF de IBP.WATERFA
   const sem = await chamar(criarHobRouter({ runQuery: banco({ semWaterfall: true }).runQuery, idDash: 42 }), '/indicadores');
   assert.strictEqual(sem.json.fcf, 'config');
 });
+
+test('mapearWaterfall: uma ponte por referência (DT_REF), em ordem, para a tela seguir Ano/Mês', () => {
+  const w = mapearWaterfall(WF, CONFIG);
+  assert.deepStrictEqual(w.referencias.map((r) => r.ref), ['2026-09', '2026-10']);
+  assert.deepStrictEqual([w.referencias[0].ano, w.referencias[0].mes], [2026, 9]);
+  assert.strictEqual(w.referencias[0].itens[0].v, 0);    // setembro
+  assert.strictEqual(w.referencias[1].itens[0].v, 1189); // outubro
+  assert.strictEqual(w.anos[2026].itens[0].v, 1189);     // o ano fica com a mais recente
+});
+
+test('codigoDoErro: motivo para a tela sem o texto do banco', () => {
+  const { codigoDoErro } = require('../hob-api');
+  assert.deepStrictEqual(codigoDoErro(new Error("Invalid column name 'ID_TIPO'.")), { codigo: 'COLUNA', detalhe: 'ID_TIPO' });
+  assert.deepStrictEqual(codigoDoErro(new Error("Invalid object name 'IBP.WATERFALL'.")), { codigo: 'TABELA' });
+  assert.deepStrictEqual(codigoDoErro(new Error('The SELECT permission was denied')), { codigo: 'PERMISSAO' });
+  assert.deepStrictEqual(codigoDoErro(new Error('Login failed for user x')), { codigo: 'LOGIN' });
+  assert.deepStrictEqual(codigoDoErro(new Error('qualquer')), { codigo: 'ERRO_BANCO' });
+});
+
+test('/waterfall: referências e código de erro; /waterfall/estrutura mostra colunas sem os valores', async () => {
+  const ok = await chamar(criarHobRouter({ runQuery: banco().runQuery }), '/waterfall');
+  assert.deepStrictEqual(ok.json.referencias.map((r) => r.ref), ['2026-09', '2026-10']);
+  const est = await chamar(criarHobRouter({ runQuery: banco().runQuery }), '/waterfall/estrutura');
+  assert.strictEqual(est.json.ok, true);
+  assert.deepStrictEqual(est.json.colunas.map((c) => c.nome), ['DT_REF', 'ID_SITE', 'ID_ORDEM', 'DS_ITEM', 'VL_ITEM']);
+  assert.strictEqual(est.json.colunas[0].tipo, 'data');
+  assert.ok(!JSON.stringify(est.json).includes('1189'), 'sem valores');
+  const erro = criarHobRouter({ runQuery: async () => { throw new Error("Invalid column name 'ID_TIPO'. secreto"); } });
+  const e = await chamar(erro, '/waterfall');
+  assert.strictEqual(e.status, 500);
+  assert.deepStrictEqual([e.json.codigo, e.json.detalhe], ['COLUNA', 'ID_TIPO']);
+  assert.ok(!JSON.stringify(e.json).includes('secreto'));
+  const ee = await chamar(erro, '/waterfall/estrutura');
+  assert.strictEqual(ee.json.codigo, 'COLUNA');
+});
