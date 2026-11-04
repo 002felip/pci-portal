@@ -167,8 +167,9 @@ test('SQL do FCF YEAR: a consulta de IBP.WATERFALL com site e ano inicial por pa
   const s = carregarSql(WATERFALL.arquivo, WATERFALL.parametros);
   assert.match(s, /FROM IBP\.WATERFALL W/);
   assert.match(s, /W\.ID_SITE = @site/);
+  assert.match(s, /W\.ID_TIPO = @tipo/);
   assert.match(s, /YEAR\(W\.DT_REF\) >= @anoIni/);
-  assert.deepStrictEqual(CONFIG_PADRAO.fcf, { site: 40, anoInicial: 2025 });
+  assert.deepStrictEqual(CONFIG_PADRAO.fcf, { site: 40, tipo: 2, anoInicial: 2025 });
 });
 
 test('mapearWaterfall: referência mais recente do ano, ordem, tipo e cinza pela configuração, subtotais inseridos', () => {
@@ -194,6 +195,7 @@ test('/waterfall responde sem HOB_ID_DASH; /indicadores usa o FCF de IBP.WATERFA
   assert.strictEqual(w.json.anos['2026'].itens[0].v, 1189);
   const consulta = b.chamadas.find((c) => /IBP\.WATERFALL/.test(c.q));
   assert.strictEqual(consulta.params.site[1], 40);
+  assert.strictEqual(consulta.params.tipo[1], 2);
   assert.strictEqual(consulta.params.anoIni[1], 2025);
   assert.strictEqual((await chamar(semId, '/waterfall?bruto=1')).status, 404);
   const r = await chamar(criarHobRouter({ runQuery: b.runQuery, idDash: 42 }), '/indicadores');

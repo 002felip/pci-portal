@@ -64,7 +64,7 @@ Mesma estrutura dos demais dashboards do Hub (COO e COO Historical):
 | `portal.js` | Monta a página e a API em `/VBM-Performance-Hub/VBM-Health-of-the-Business/`, com pool próprio no Azure SQL PRD (variáveis `PERFORMANCEHUB_SQL_*`, como o COO) |
 | `hob-api.js` | Rotas `api/ping`, `api/health`, `api/ciclos`, `api/config`, `api/indicadores?ciclo=` e `api/waterfall`. Mesmo cache, refresh (`?fresco=1`), tolerância a banco fora e limite por usuário do COO |
 | `database/001_hob_dashboard.sql` | Leitura de uma carga (`DT_REF`) em `IBP.PHUB_PERFORMANCESTUDIO` + cadastro em `IBP.DASHBOARD` (`@idDash`, `@dtRef`) |
-| `database/002_hob_waterfall.sql` | FCF YEAR: `IBP.WATERFALL` do site 40 desde 2025 (`@site`, `@anoIni`) |
+| `database/002_hob_waterfall.sql` | FCF YEAR: `IBP.WATERFALL` do site 40, tipo 2, desde 2025 (`@site`, `@tipo`, `@anoIni`) |
 | `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO` (mesmo `DELETE`/`INSERT` do COO). **Pendente:** a consulta de origem |
 | `database/005_config_hob.sql` | Configuração da tela em `IBP.PHUB_PS_SETUP` (`CD_VISAO 'VBM_HEALTH_OF_THE_BUSINESS'`): sites de cada BU, KPI de cada gráfico, degraus das pontes e origem do FCF |
 | `server.js`, `package.json` | App independente (desenvolvimento), igual ao do COO |
