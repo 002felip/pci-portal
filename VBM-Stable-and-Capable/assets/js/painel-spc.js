@@ -160,8 +160,10 @@
   var st = {
     filtros: null, combo: null, serie: null, carregando: false, erro: null,
     op: { removerZeros: false, removerOutliers: false, inicio: null, fim: null },
-    porAno: false
+    porAno: false,
+    sel: { bu: '', site: '', kpi: '', op: '' } // seleção atual (BU › Site, KPI, Operação)
   };
+  var buNav = null; // BU aberta na coluna da esquerda do seletor BU › Site (ainda sem escolher o site)
   var res = null; // resultado do último cálculo (grupos, limites, medidas)
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -179,30 +181,66 @@
   function mesCurto(ms) { return new Date(ms).toLocaleDateString(L(), { month: 'short', year: '2-digit', timeZone: 'UTC' }).replace('.', ''); }
   var SVG_ALTA = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5L9 8H1z" fill="currentColor"></path></svg>';
   var SVG_QUEDA = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5L1 2h8z" fill="currentColor"></path></svg>';
-  var SVG_X = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var REGRAS = [['r1', '--c-r1', 'bi.r.r1'], ['r2', '--c-r2', 'bi.r.r2'], ['r3', '--c-r3', 'bi.r.r3'], ['r4', '--c-r4', 'bi.r.r4']];
 
   function unicos(lista, campo) { var s = []; lista.forEach(function (c) { if (s.indexOf(c[campo]) < 0) s.push(c[campo]); }); return s; }
-  function opcoes(sel, valores, atual, rotulo) {
-    sel.innerHTML = valores.map(function (v) { return '<option value="' + esc(v) + '">' + esc(rotulo ? rotulo(v) : v) + '</option>'; }).join('');
-    sel.value = valores.indexOf(atual) >= 0 ? atual : (valores[0] || '');
-    return sel.value;
-  }
+  function escolher(valores, atual) { return valores.indexOf(atual) >= 0 ? atual : (valores[0] || ''); }
 
   /** Cascata BU → Site → KPI → Operação (operação só aparece quando há mais de uma) */
   function montarFiltros(pref) {
     var lista = st.filtros.combinacoes;
-    var bu = opcoes($('biBu'), unicos(lista, 'bu'), pref.bu);
+    var bu = escolher(unicos(lista, 'bu'), pref.bu);
     var l1 = lista.filter(function (c) { return c.bu === bu; });
-    var site = opcoes($('biSite'), unicos(l1, 'site'), pref.site);
+    var site = escolher(unicos(l1, 'site'), pref.site);
     var l2 = l1.filter(function (c) { return c.site === site; });
-    var kpi = opcoes($('biKpi'), unicos(l2, 'kpi'), pref.kpi);
+    var kpi = escolher(unicos(l2, 'kpi'), pref.kpi);
     var l3 = l2.filter(function (c) { return c.kpi === kpi; });
-    var op = opcoes($('biOp'), unicos(l3, 'op'), pref.op);
+    var op = escolher(unicos(l3, 'op'), pref.op);
+    st.sel = { bu: bu, site: site, kpi: kpi, op: op };
     $('biOpGrupo').hidden = unicos(l3, 'op').length < 2;
     st.combo = l3.filter(function (c) { return c.op === op; })[0] || null;
+    buNav = bu;
+    desenharSeletores();
   }
-  function lerPreferencia() { return { bu: $('biBu').value, site: $('biSite').value, kpi: $('biKpi').value, op: $('biOp').value }; }
+  function lerPreferencia() { return { bu: st.sel.bu, site: st.sel.site, kpi: st.sel.kpi, op: st.sel.op }; }
+
+  /** Seletores no padrão do COO – Business Units Dashboard: gatilho com o valor atual e lista em popover */
+  function botaoLista(attr, v, marcado, extra) {
+    return '<button type="button" ' + attr + '="' + esc(v) + '" aria-pressed="' + marcado + '"><span>' + esc(v || '—') + '</span>' + (extra || '') + '</button>';
+  }
+  function desenharSeletores() {
+    if (!st.filtros) return;
+    var lista = st.filtros.combinacoes, s = st.sel;
+    $('biBuTxt').textContent = s.bu || '—'; $('biSiteTxt').textContent = s.site || '—';
+    $('biKpiTxt').textContent = s.kpi || '—'; $('biOpTxt').textContent = s.op || '—';
+    $('biBuLista').innerHTML = unicos(lista, 'bu').map(function (b) {
+      var n = unicos(lista.filter(function (c) { return c.bu === b; }), 'site').length;
+      return '<button type="button" data-bu="' + esc(b) + '" aria-current="' + (b === buNav) + '"><span>' + esc(b) + '</span><span class="n">' + n + '</span></button>';
+    }).join('');
+    $('biSiteLista').innerHTML = unicos(lista.filter(function (c) { return c.bu === buNav; }), 'site').map(function (x) {
+      return botaoLista('data-site', x, buNav === s.bu && x === s.site);
+    }).join('');
+    var l2 = lista.filter(function (c) { return c.bu === s.bu && c.site === s.site; });
+    $('biKpiLista').innerHTML = unicos(l2, 'kpi').map(function (k) { return botaoLista('data-kpi', k, k === s.kpi); }).join('');
+    $('biOpLista').innerHTML = unicos(l2.filter(function (c) { return c.kpi === s.kpi; }), 'op').map(function (o) { return botaoLista('data-op', o, o === s.op); }).join('');
+  }
+  var popAberto = null;
+  function abrirPop(id) {
+    if (popAberto && popAberto !== id) fecharPop(false);
+    var pop = $(id), gat = document.querySelector('[aria-controls="' + id + '"]');
+    if (!pop.hidden) { fecharPop(true); return; }
+    if (id === 'biBuPop') { buNav = st.sel.bu; desenharSeletores(); }
+    pop.hidden = false; gat.setAttribute('aria-expanded', 'true'); popAberto = id;
+    var foco = pop.querySelector('[aria-pressed="true"]') || pop.querySelector('[aria-current="true"]') || pop.querySelector('button');
+    if (foco) foco.focus();
+  }
+  function fecharPop(focarGatilho) {
+    if (!popAberto) return;
+    var id = popAberto, gat = document.querySelector('[aria-controls="' + id + '"]');
+    $(id).hidden = true; gat.setAttribute('aria-expanded', 'false'); popAberto = null;
+    if (focarGatilho) gat.focus();
+  }
+  function escolherFiltro(pref) { fecharPop(true); montarFiltros(pref); carregarSerie(); }
 
   function carregarSerie() {
     if (!st.combo) { st.serie = null; desenhar(); return; }
@@ -245,7 +283,6 @@
   function desenhar() {
     if (!ctx) return;
     desenharHero();
-    desenharChips();
     document.querySelectorAll('[data-bi-agrup]').forEach(function (b) { b.setAttribute('aria-pressed', String((b.getAttribute('data-bi-agrup') === 'ano') === st.porAno)); });
     ALVOS.forEach(function (id) { $(id).classList.toggle('carregando', st.carregando); });
     res = null;
@@ -280,23 +317,13 @@
     $('biQtdPeriodo').textContent = res ? fmtData(res.t0, true) + ' – ' + fmtData(res.t1, true) : '—';
     var f = st.filtros;
     $('biAtualizado').textContent = f ? t('bi.atualizado', { quando: new Date(f.atualizadoEm).toLocaleString(L(), { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }), banco: f.banco }) : '';
-    var n = qtdFiltros();
-    $('biContaFiltros').hidden = !n; $('biContaFiltros').textContent = n;
+    $('biFiltrosLimpar').disabled = qtdFiltros() === 0;
   }
   function periodoCompleto() {
     var f = st.filtros; if (!f) return true;
     return (!st.op.inicio || st.op.inicio <= f.periodo.min) && (!st.op.fim || st.op.fim >= f.periodo.max);
   }
   function qtdFiltros() { return (periodoCompleto() ? 0 : 1) + (st.op.removerZeros ? 1 : 0) + (st.op.removerOutliers ? 1 : 0); }
-  function desenharChips() {
-    var s = st.combo, h = '';
-    if (s) h += '<button type="button" class="dsc-chip" data-chip="kpi"><b>KPI:</b><span class="v">' + esc([s.bu, s.site, s.kpi].concat(s.op && !$('biOpGrupo').hidden ? [s.op] : []).join(' › ')) + '</span></button>';
-    if (st.filtros) h += '<button type="button" class="dsc-chip" data-chip="periodo"' + (periodoCompleto() ? '' : ' data-remover="1"') + '><b>' + esc(t('bi.f.periodo')) + ':</b><span class="v">' +
-      esc(fmtIso(st.op.inicio || st.filtros.periodo.min, true) + ' – ' + fmtIso(st.op.fim || st.filtros.periodo.max, true)) + '</span>' + (periodoCompleto() ? '' : SVG_X) + '</button>';
-    if (st.op.removerZeros) h += '<button type="button" class="dsc-chip" data-chip="removerZeros" data-remover="1"><span class="v">' + esc(t('bi.semZeros')) + '</span>' + SVG_X + '</button>';
-    if (st.op.removerOutliers) h += '<button type="button" class="dsc-chip" data-chip="removerOutliers" data-remover="1"><span class="v">' + esc(t('bi.semOutliers')) + '</span>' + SVG_X + '</button>';
-    $('biChips').innerHTML = h;
-  }
 
   // ── Carta de controle (v1 trimestre / v2 ano), no desenho do Kaizen ──
   function legendaCarta() {
@@ -504,18 +531,10 @@
   }
 
   // ═══════════════════════════════ filtros (painel lateral) ════════════
-  var focoAntes = null;
-  function painelFiltros(abrir) {
-    var pn = $('biFiltros');
-    pn.classList.toggle('open', abrir); $('biFiltrosFundo').classList.toggle('open', abrir);
-    pn.setAttribute('aria-hidden', String(!abrir)); $('biAbrirFiltros').setAttribute('aria-expanded', String(abrir));
-    if (abrir) { pn.removeAttribute('inert'); focoAntes = document.activeElement; setTimeout(function () { $('biBu').focus(); }, 40); }
-    else { pn.setAttribute('inert', ''); if (focoAntes && focoAntes.focus) focoAntes.focus(); }
-  }
   function marcarFlags() {
     document.querySelectorAll('[data-bi-flag]').forEach(function (o) {
       var k = o.getAttribute('data-bi-flag');
-      o.setAttribute('aria-pressed', String((o.getAttribute('data-valor') === 'sim') === !!st.op[k]));
+      o.setAttribute('aria-checked', String(!!st.op[k]));
     });
   }
   function definirPeriodo(ini, fim) {
@@ -540,35 +559,39 @@
 
   var iniciado = false;
   function ligarEventos() {
-    ['biBu', 'biSite', 'biKpi', 'biOp'].forEach(function (id) {
-      $(id).addEventListener('change', function () { montarFiltros(lerPreferencia()); carregarSerie(); });
+    document.querySelectorAll('.dsc .unit-trigger').forEach(function (g) {
+      g.addEventListener('click', function (e) { e.stopPropagation(); abrirPop(g.getAttribute('aria-controls')); });
     });
+    $('biBuLista').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-bu]'); if (!b) return;
+      buNav = b.getAttribute('data-bu'); desenharSeletores();
+      var primeiro = $('biSiteLista').querySelector('button'); if (primeiro) primeiro.focus();
+    });
+    $('biSiteLista').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-site]'); if (b) escolherFiltro({ bu: buNav, site: b.getAttribute('data-site'), kpi: st.sel.kpi, op: st.sel.op });
+    });
+    $('biKpiLista').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-kpi]'); if (b) escolherFiltro({ bu: st.sel.bu, site: st.sel.site, kpi: b.getAttribute('data-kpi'), op: st.sel.op });
+    });
+    $('biOpLista').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-op]'); if (b) escolherFiltro({ bu: st.sel.bu, site: st.sel.site, kpi: st.sel.kpi, op: b.getAttribute('data-op') });
+    });
+    // o clique numa BU redesenha a lista (o alvo sai do DOM): só fecha com clique fora do seletor
+    document.addEventListener('click', function (e) { if (popAberto && e.target.isConnected && !e.target.closest('.unit')) fecharPop(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popAberto) fecharPop(true); });
     ['biInicio', 'biFim'].forEach(function (id) {
       $(id).addEventListener('change', function () { st.op.inicio = $('biInicio').value || null; st.op.fim = $('biFim').value || null; desenhar(); });
     });
     document.querySelectorAll('[data-bi-flag]').forEach(function (b) {
-      b.addEventListener('click', function () { st.op[b.getAttribute('data-bi-flag')] = b.getAttribute('data-valor') === 'sim'; marcarFlags(); desenhar(); });
+      b.addEventListener('click', function () { var k = b.getAttribute('data-bi-flag'); st.op[k] = !st.op[k]; marcarFlags(); desenhar(); });
     });
     document.querySelectorAll('[data-bi-agrup]').forEach(function (b) {
       b.addEventListener('click', function () { st.porAno = b.getAttribute('data-bi-agrup') === 'ano'; desenhar(); });
     });
-    $('biChips').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-chip]'); if (!b) return;
-      var k = b.getAttribute('data-chip');
-      if (!b.hasAttribute('data-remover')) { painelFiltros(true); return; }
-      if (k === 'periodo') definirPeriodo(st.filtros.periodo.min, st.filtros.periodo.max);
-      else { st.op[k] = false; marcarFlags(); }
-      desenhar();
-    });
-    $('biAbrirFiltros').addEventListener('click', function () { painelFiltros(true); });
-    $('biFiltrosFechar').addEventListener('click', function () { painelFiltros(false); });
-    $('biFiltrosVer').addEventListener('click', function () { painelFiltros(false); });
-    $('biFiltrosFundo').addEventListener('click', function () { painelFiltros(false); });
     $('biFiltrosLimpar').addEventListener('click', function () {
       if (st.filtros) definirPeriodo(st.filtros.periodo.min, st.filtros.periodo.max);
       st.op.removerZeros = false; st.op.removerOutliers = false; marcarFlags(); desenhar();
     });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('biFiltros').classList.contains('open')) painelFiltros(false); });
     $('biAtualizar').addEventListener('click', function () { carregarFiltros(true); });
     var pend = null;
     window.addEventListener('resize', function () { clearTimeout(pend); pend = setTimeout(function () { if (!$('vista-powerbi').hidden) desenharVisao(); }, 150); });
