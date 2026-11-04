@@ -64,7 +64,8 @@ Mesma estrutura dos demais dashboards do Hub (COO e COO Historical):
 | `portal.js` | Monta a página e a API em `/VBM-Performance-Hub/VBM-Health-of-the-Business/`, com pool próprio no Azure SQL PRD (variáveis `PERFORMANCEHUB_SQL_*`, como o COO) |
 | `hob-api.js` | Rotas `api/ping`, `api/health`, `api/ciclos`, `api/config`, `api/indicadores?ciclo=` e `api/waterfall`. Mesmo cache, refresh (`?fresco=1`), tolerância a banco fora e limite por usuário do COO |
 | `database/001_hob_dashboard.sql` | Leitura de uma carga (`DT_REF`) em `IBP.PHUB_PERFORMANCESTUDIO` + cadastro em `IBP.DASHBOARD` (`@idDash`, `@dtRef`) |
-| `database/002_hob_waterfall.sql` | FCF YEAR: `IBP.WATERFALL` do site 40, tipo 2, desde 2025 (`@site`, `@tipo`, `@anoIni`) |
+| `database/002_hob_waterfall.sql` | Pontes: `IBP.WATERFALL` do site 40 desde 2025 — tipo 2 = FCF YEAR, tipo 3 = 2026 EBITDA YEAR (`@site`, `@tipo`, `@anoIni`) |
+| `database/004_hob_ebitda.sql` | EBITDA: carga do COO em `IBP.PHUB_PERFORMANCESTUDIO` (`@idDash` 15, `@idKpi` 73, `@dtRef`) |
 | `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO` (mesmo `DELETE`/`INSERT` do COO). **Pendente:** a consulta de origem |
 | `database/005_config_hob.sql` | Configuração da tela em `IBP.PHUB_PS_SETUP` (`CD_VISAO 'VBM_HEALTH_OF_THE_BUSINESS'`): sites de cada BU, KPI de cada gráfico, degraus das pontes e origem do FCF |
 | `server.js`, `package.json` | App independente (desenvolvimento), igual ao do COO |
@@ -78,9 +79,17 @@ Variáveis (no `app.yaml` do Portal):
 | `HOB_CACHE_TTL_S`, `HOB_FRESCO_S`, `HOB_DESATUALIZADO_MAX_S` | Opcionais, mesmos padrões do COO (300 s, 15 s, 2 h) |
 | `HOB_DIAGNOSTICO=1` | Liga `api/waterfall?bruto=1` (colunas e linhas de `IBP.WATERFALL` como vieram) |
 
-**Já vem do banco:** FCF YEAR, de `IBP.WATERFALL` (site 40, tipo 2, desde 2025), sincronizado com os filtros: a tela mostra a referência (`DT_REF`) mais recente do **Ano** escolhido até o **Mês** escolhido, e o título indica qual (ex.: "ref. Sep/2026"). No Portal o FCF YEAR nunca usa a demonstração: sem dado, o card mostra o motivo (coluna inexistente, tabela não encontrada, sem permissão, sem referência até o mês, API não publicada…). Rótulo, valor e ordem saem das colunas da tabela (padrão de nomes do IBP: `DS_`/`NM_`, `VL_`, `ORDEM`); tipo e cinza de cada degrau, da configuração; subtotais calculados pela tela.
+**Já vem do banco** (sincronizado com os filtros Ano e Mês):
 
-**Conferir a tabela no Portal:** `…/VBM-Health-of-the-Business/api/waterfall/estrutura` mostra as colunas, como a API as entendeu e as referências encontradas — sem os valores.
+| Gráfico | Fonte |
+|---|---|
+| EBITDA (US$, seletor VBM, Copper, Nickel, Others) | `IBP.PHUB_PERFORMANCESTUDIO`, carga do COO (`ID_DASH` 15), `ID_KPI` 73, mês a mês; sites VBM 40 (total), Copper 38, Nickel 39, Others 45 + 102 + 46 (`database/004_hob_ebitda.sql`) |
+| 2026 EBITDA YEAR | `IBP.WATERFALL`, `ID_SITE` 40, `ID_TIPO` 3, desde 2025 (`database/002_hob_waterfall.sql`) |
+| FCF YEAR | `IBP.WATERFALL`, `ID_SITE` 40, `ID_TIPO` 2, desde 2025 |
+
+Nas pontes, a tela mostra a referência (`DT_REF`) mais recente do Ano escolhido até o Mês escolhido, e o título indica qual (ex.: "ref. Sep/2026"). No EBITDA, o ciclo é o mais recente da carga do COO (ou o da tela, quando existe nos dois). No Portal esses gráficos nunca usam a demonstração: sem dado, o card mostra o motivo (coluna inexistente, tabela não encontrada, sem permissão, sem referência até o mês, sem carga do COO, API não publicada…). Rótulo, valor e ordem das pontes saem das colunas de `IBP.WATERFALL` (padrão de nomes do IBP: `DS_`/`NM_`, `VL_`, `ORDEM`); tipo e cinza de cada degrau, da configuração; subtotais calculados pela tela.
+
+**Conferir no Portal:** `…/VBM-Health-of-the-Business/api/waterfall/estrutura` (FCF YEAR) e `…/api/waterfall/estrutura?ponte=ebitdaYear` (EBITDA YEAR) mostram as colunas, como a API as entendeu e as referências encontradas — sem os valores.
 
 **Para o restante vir do banco:**
 1. Cadastrar o dashboard e os KPIs em `IBP.DASHBOARD` (novo `ID_DASH`), com os nomes de `005_config_hob.sql` (ou ajustar o JSON).

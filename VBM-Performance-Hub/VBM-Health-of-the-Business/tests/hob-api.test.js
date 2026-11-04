@@ -239,3 +239,62 @@ test('/waterfall: referências e código de erro; /waterfall/estrutura mostra co
   const ee = await chamar(erro, '/waterfall/estrutura');
   assert.strictEqual(ee.json.codigo, 'COLUNA');
 });
+
+test('SQL do EBITDA: carga do COO em IBP.PHUB_PERFORMANCESTUDIO, KPI por @idKpi, mês, B e Act/Fcst', () => {
+  const { EBITDA } = require('../hob-api');
+  const s = carregarSql(EBITDA.arquivo, EBITDA.parametros);
+  assert.match(s, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
+  assert.match(s, /R\.ID_KPI = @idKpi/);
+  assert.match(s, /R\.CD_PERIODO = 'MONTH'/);
+  assert.match(s, /LEFT JOIN IBP\.DASHBOARD DASH/);
+  assert.ok(!/ID_DASH\s*=\s*\d/.test(s));
+  assert.deepStrictEqual(CONFIG_PADRAO.ebitda, { idDash: 15, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39], out: [45, 102, 46] } });
+  assert.deepStrictEqual(CONFIG_PADRAO.ebitdaPonte, { site: 40, tipo: 3, anoInicial: 2025 });
+});
+
+// Linhas no formato de 004_hob_ebitda.sql (carga do COO, KPI 73)
+const EB = [];
+for (const [site, nome, v] of [[40, 'VBM', 500], [38, 'Copper', 300], [39, 'Nickel', 150], [45, 'Outro A', 10], [102, 'Outro B', 5], [46, 'Outro C', 2], [6, 'Salobo', 999]])
+  for (let m = 1; m <= 12; m++) {
+    EB.push({ ANO: 2026, MES: m, ID_SITE: site, NM_SITE: nome, NM_KPI: 'EBITDA', SG_UNID: 'US$ M', VL_CASADECIMAL: 0, SERIE: 'B', VL_KPI: v });
+    EB.push({ ANO: 2026, MES: m, ID_SITE: site, NM_SITE: nome, NM_KPI: 'EBITDA', SG_UNID: 'US$ M', VL_CASADECIMAL: 0, SERIE: 'AF', VL_KPI: v + 1 });
+  }
+
+test('montarEbitda: segmento pelo ID_SITE (VBM 40 é o total, Others soma 45/102/46); site fora não entra', () => {
+  const { montarEbitda } = require('../hob-api');
+  const e = montarEbitda(EB, CONFIG_PADRAO, '2026-10');
+  assert.deepStrictEqual(e.ultimoReal, { ano: 2026, mes: 9 });
+  assert.strictEqual(e.anos[2026].ebitdaVbm.b[0], 500);
+  assert.strictEqual(e.anos[2026].ebitdaCu.b[0], 300);
+  assert.strictEqual(e.anos[2026].ebitdaNi.a[0], 151);
+  assert.strictEqual(e.anos[2026].ebitdaOut.b[0], 17);
+  assert.deepStrictEqual(e.meta, { nome: 'EBITDA', unid: 'US$ M', casas: 0 });
+  assert.deepStrictEqual(e.sites.out, ['45 Outro A', '102 Outro B', '46 Outro C']);
+  assert.ok(e.avisos.some((a) => a.includes('fora da configuração') && a.includes('6')));
+});
+
+test('/ebitda: ciclo mais recente do ID_DASH 15 (ou o da tela, se existir), KPI 73; /waterfall?ponte=ebitdaYear usa ID_TIPO 3', async () => {
+  const chamadas = [];
+  const runQuery = async (q, params) => {
+    chamadas.push({ q, params });
+    if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)) }, { DT_REF: new Date(Date.UTC(2026, 8, 1)) }] };
+    if (/IBP\.WATERFALL/.test(q)) return { recordset: WF };
+    if (/PHUB_PS_SETUP/.test(q)) return { recordset: [] };
+    return { recordset: EB };
+  };
+  const router = criarHobRouter({ runQuery });
+  const r = await chamar(router, '/ebitda');
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(r.json.ciclo, '2026-10');
+  assert.deepStrictEqual([r.json.idDash, r.json.idKpi], [15, 73]);
+  assert.strictEqual(r.json.anos['2026'].ebitdaVbm.b[0], 500);
+  const leitura = chamadas.find((c) => c.params && c.params.idKpi);
+  assert.deepStrictEqual([leitura.params.idDash[1], leitura.params.idKpi[1]], [15, 73]);
+  assert.strictEqual((await chamar(router, '/ebitda?ciclo=2026-09')).json.ciclo, '2026-09');
+  assert.strictEqual((await chamar(router, '/ebitda?ciclo=2020-01')).json.ciclo, '2026-10'); // ciclo inexistente no COO: o mais recente
+  const w = await chamar(router, '/waterfall?ponte=ebitdaYear');
+  assert.strictEqual(w.json.ponte, 'ebitdaYear');
+  assert.strictEqual(w.json.tipo, 3);
+  const consulta = chamadas.filter((c) => /IBP\.WATERFALL/.test(c.q)).pop();
+  assert.strictEqual(consulta.params.tipo[1], 3);
+});
