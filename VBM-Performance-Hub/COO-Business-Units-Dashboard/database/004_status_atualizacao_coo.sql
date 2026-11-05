@@ -11,9 +11,10 @@
    Regra = SQL - COO DASHBOARD ATUALIZACAO (por KPI e DT_IND):
      sem linha em PEDRAVISAOCONSOLIDADA no DT_IND ou sem log  → 'N'
      DT_IND anterior ao mês de @DT_REF                        → 'S'
-     mês de (DT_ATUALIZACAO - 1 mês) >= mês de @DT_REF        → 'S'
+     DT_ATUALIZACAO >= referência (1º dia do mês de GETDATE()-2) → 'S'
      demais                                                   → 'N'
-   @DT_REF = mês anterior ao DT_REF da carga (= DATEADD(MONTH, -1, GETDATE()-2), dia 1, como no
+   Referência = 1º dia do mês de GETDATE()-2 (ex.: 2026-11-01), mesmo quando a carga do mês ainda
+   não foi gravada e as linhas atualizadas são as da carga mais recente. @DT_REF = mês anterior (como no
    002_coo_dashboard_atualizacao.sql em produção): o mês do ciclo só conta como
    atualizado com atualização no mês seguinte.
 
@@ -26,14 +27,17 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 DECLARE @ID_DASH  INT  = 15;
-DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);
+-- Referência da atualização: 1º dia do mês de GETDATE()-2 (ex.: 05/11/2026 → 2026-11-01).
+-- KPI atualizado = última atualização com data maior ou igual a essa referência
+DECLARE @DT_CORTE DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);
+-- Mês do ciclo (último mês realizado): o mês anterior à referência (2026-11-01 → 2026-10-01)
+DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, @DT_CORTE);
+DECLARE @DT_CARGA DATE = @DT_CORTE;
 -- Carga do mês ainda não gravada (ex.: dia 5 sem a carga do mês): usa a carga mais recente do dashboard
 IF NOT EXISTS (SELECT 1 FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF = @DT_CARGA)
   SET @DT_CARGA = (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF <= @DT_CARGA);
 IF @DT_CARGA IS NULL
   THROW 50020, 'Nenhuma carga do dashboard em IBP.PHUB_PERFORMANCESTUDIO: rode antes o 003_carga_mensal_coo.sql.', 1;
--- Mês do ciclo da carga (último mês realizado): carga 2026-10-01 → 2026-09-01
-DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, @DT_CARGA);
 DECLARE @LINHAS   INT;
 
 -- Última atualização por KPI e DT_IND (KPI com linha no mês em PEDRAVISAOCONSOLIDADA)
@@ -69,7 +73,7 @@ SET
   R.SG_STATUS = CASE
     WHEN A.DT_ATUALIZACAO IS NULL THEN 'N'
     WHEN R.DT_IND < @DT_REF THEN 'S'
-    WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, A.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, A.DT_ATUALIZACAO)), 1) >= @DT_REF THEN 'S'
+    WHEN A.DT_ATUALIZACAO >= @DT_CORTE THEN 'S'  -- atualização a partir da referência (2026-11-01)
     ELSE 'N'
   END
 FROM IBP.PHUB_PERFORMANCESTUDIO R
@@ -82,7 +86,7 @@ SET @LINHAS = @@ROWCOUNT;
 
 COMMIT TRANSACTION;
 
-SELECT ID_DASH = @ID_DASH, DT_REF = @DT_CARGA, MES_CICLO = @DT_REF, LINHAS_ATUALIZADAS = @LINHAS;
+SELECT ID_DASH = @ID_DASH, DT_REF = @DT_CARGA, REFERENCIA = @DT_CORTE, MES_CICLO = @DT_REF, LINHAS_ATUALIZADAS = @LINHAS;
 
 -- Resumo (linhas por situação)
 SELECT ID_DASH, @DT_CARGA AS DT_REF, @DT_REF AS MES_CICLO, SG_STATUS, COUNT(*) AS LINHAS
