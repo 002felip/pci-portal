@@ -892,6 +892,23 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     LEFT JOIN ${DASH_ACESSO} A ON A.ID_DASHBOARD = S.ID_DASHBOARD AND A.NM_USUARIO = @email`;
 
   // Rota com usuário identificado; erro de banco → 500 sem detalhes internos
+  // Causa resumida de um erro do banco para a tela (sem texto livre do SQL Server)
+  function causaDoErroBanco(m) {
+    const perm = /The (\w+) permission was denied on the object '([^']+)'(?:.*schema '([^']+)')?/i.exec(m);
+    if (perm) return { codigo: 'BD-PERMISSAO', causa: `sem permissão de ${perm[1].toUpperCase()} em ${perm[3] ? perm[3] + '.' : ''}${perm[2]} (verifique os GRANT do usuário do app)` };
+    if (/permission|denied/i.test(m)) return { codigo: 'BD-PERMISSAO', causa: 'sem permissão no banco para esta operação (verifique os GRANT do usuário do app)' };
+    const obj = /Invalid object name '([^']+)'/i.exec(m);
+    if (obj) return { codigo: 'BD-TABELA', causa: `tabela ${obj[1]} não encontrada no banco` };
+    const col = /Invalid column name '([^']+)'/i.exec(m);
+    if (col) return { codigo: 'BD-COLUNA', causa: `coluna ${col[1]} não encontrada no banco` };
+    if (/truncat/i.test(m)) return { codigo: 'BD-TAMANHO', causa: 'valor maior que o tamanho da coluna no banco' };
+    if (/FOREIGN KEY|REFERENCE constraint/i.test(m)) return { codigo: 'BD-VINCULO', causa: 'vínculo inválido entre as tabelas' };
+    if (/PRIMARY KEY|duplicate key|UNIQUE/i.test(m)) return { codigo: 'BD-DUPLICADO', causa: 'registro duplicado no banco' };
+    if (/Login failed|ETIMEOUT|ESOCKET|ECONN|timeout|connect/i.test(m)) return { codigo: 'BD-CONEXAO', causa: 'sem conexão com o banco' };
+    if (/Cannot find module/i.test(m)) return { codigo: 'APP-MODULO', causa: 'componente do app não encontrado na publicação' };
+    return { codigo: 'ERRO_BANCO', causa: '' };
+  }
+
   const comUsuario = (acao, handler) => async (req, res) => {
     res.set('Cache-Control', 'no-store');
     const email = lerEmail(req.get('X-Forwarded-Email'));
@@ -900,7 +917,8 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
       await handler(req, res, email);
     } catch (err) {
       console.error(`[performance-hub] dashboards (${acao}):`, err.message);
-      if (!res.headersSent) res.status(500).json({ error: `Falha ao ${acao} o dashboard.`, codigo: 'ERRO_BANCO' });
+      const { codigo, causa } = causaDoErroBanco(String(err.message || ''));
+      if (!res.headersSent) res.status(500).json({ error: `Falha ao ${acao} o dashboard${causa ? `: ${causa}` : ''}.`, codigo });
     }
   };
 
@@ -937,7 +955,7 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
   function colunaEmailUsuarios() {
     if (!colunaUsuarios) {
       colunaUsuarios = Promise.resolve()
-        .then(() => require('../portal-acesso'))
+        .then(() => require('../../portal-acesso')) // raiz do repositório (como o Kaizen em server.js)
         .then(m => m.descobrirColunaEmail(runQuery).then(coluna => ({ coluna, tabela: `[${m.TABELA_USUARIOS.esquema}].[${m.TABELA_USUARIOS.nome}]` })))
         .catch(err => { colunaUsuarios = null; throw err; });
     }
