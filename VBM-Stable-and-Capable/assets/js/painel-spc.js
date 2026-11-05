@@ -577,6 +577,14 @@
     }).then(function () { $('biAtualizar').disabled = false; });
   }
 
+  function rotuloTelaCheia() {
+    var on = !!document.fullscreenElement;
+    document.querySelectorAll('#vista-powerbi .js-full').forEach(function (b) {
+      b.setAttribute('aria-label', t(on ? 'bi.fs.off' : 'bi.fs.on'));
+      b.title = t(on ? 'bi.fs.offTitle' : 'bi.fs.onTitle');
+    });
+  }
+
   var iniciado = false;
   function ligarEventos() {
     document.querySelectorAll('.dsc .unit-trigger').forEach(function (g) {
@@ -613,6 +621,17 @@
       st.op.removerZeros = false; st.op.removerOutliers = false; marcarFlags(); desenhar();
     });
     $('biAtualizar').addEventListener('click', function () { carregarFiltros(true); });
+    // Tela cheia (mesmo comportamento dos dashboards do Hub): alterna; navegador que bloqueia a API fica com o F11.
+    // A classe html.is-fs vem do setup-dashboards; o resize que a tela cheia dispara redesenha os gráficos.
+    document.querySelectorAll('#vista-powerbi .js-full').forEach(function (b) {
+      b.addEventListener('click', function () {
+        try {
+          if (document.fullscreenElement) document.exitFullscreen();
+          else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+        } catch (e) { /* sem suporte */ }
+      });
+    });
+    document.addEventListener('fullscreenchange', rotuloTelaCheia);
     var pend = null;
     window.addEventListener('resize', function () { clearTimeout(pend); pend = setTimeout(function () { if (!$('vista-powerbi').hidden) { redimensionando = true; desenharVisao(); redimensionando = false; } }, 150); });
   }
@@ -628,6 +647,6 @@
       carregarFiltros(false);
     },
     // troca de idioma, formato numérico ou tema (as cores dos gráficos dependem do tema)
-    redesenhar: function () { if (iniciado) desenhar(); }
+    redesenhar: function () { if (iniciado) { rotuloTelaCheia(); desenhar(); } }
   };
 })();
