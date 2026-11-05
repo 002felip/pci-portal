@@ -433,13 +433,21 @@
     else {
       var lo = Math.min.apply(null, todos), hi = Math.max.apply(null, todos), pad = (hi - lo || Math.abs(hi) || 1) * 0.15;
       lo -= pad; hi += pad;
-      var fv = gs.length > 8 ? '.52rem' : gs.length > 5 ? '.58rem' : '.66rem';
-      alvo.innerHTML = '<div class="cg" style="--minw:' + Math.max(300, gs.length * 66) + 'px;--fv:' + fv + '"><div class="cg-area">' + gs.map(function (g) {
+      // Sem rolagem lateral (como no .pbix): as barras se ajustam à largura do card e os
+      // rótulos acompanham — valor menor quando a coluna estreita, ano em segunda linha no eixo
+      var larg = Math.max(alvo.clientWidth, 200), porGrupo = larg / gs.length;
+      var gap = Math.round(Math.max(4, Math.min(18, porGrupo * 0.14)));
+      var colw = Math.max(2, (porGrupo - gap) / MEDIDAS.length - 3);
+      var maxChars = 1; gs.forEach(function (g) { MEDIDAS.forEach(function (k) { if (isFinite(g[k])) maxChars = Math.max(maxChars, fmt(g[k], dec).length); }); });
+      var fvPx = Math.min(10.5, (colw + 3) / (maxChars * 0.62));
+      var duasLinhas = porGrupo < 58;
+      var classes = 'cg' + (fvPx < 6.5 ? ' cg-sem-valor' : '') + (duasLinhas ? ' cg-eixo2' : '');
+      alvo.innerHTML = '<div class="' + classes + '" style="--gap:' + gap + 'px;--fv:' + fvPx.toFixed(1) + 'px"><div class="cg-area">' + gs.map(function (g) {
         return '<div class="cg-grupo">' + MEDIDAS.map(function (k) {
           var v = g[k], alt = isFinite(v) ? Math.max(0, (v - lo) / (hi - lo) * 100) : 0;
           return '<div class="cg-col" role="img" aria-label="' + esc(g.rotulo + ' · ' + t('bi.serie.' + k) + ': ' + fmt(v, dec)) + '" title="' + esc(t('bi.serie.' + k) + ': ' + fmt(v, dec)) + '" style="--h:' + alt + '%;--c:var(--m-' + k + ')">' +
             (isFinite(v) ? '<div class="cg-bar"></div><div class="cg-v">' + fmt(v, dec) + '</div>' : '') + '</div>';
-        }).join('') + '<div class="x-lbl">' + esc(g.rotulo) + '</div></div>';
+        }).join('') + '<div class="x-lbl">' + (duasLinhas ? esc(g.rotulo).replace(' ', '<br>') : esc(g.rotulo)) + '</div></div>';
       }).join('') + '</div></div>';
     }
 
