@@ -277,6 +277,18 @@
   }
 
   // ═══════════════════════════════ desenho ═════════════════════════════
+  /** Alturas dos gráficos. Até 1600 px de largura ficam fixas (como antes); em telas maiores
+   *  acompanham a altura da janela, com piso e teto, para a página não sobrar em branco nem
+   *  esticar demais. As barras de Medidas seguem o histograma ao lado (legenda + gráfico). */
+  var redimensionando = false; // redesenho por resize: sem a animação de crescer as barras de novo
+  function alturasDashboard() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    if (vw < 1600) return { carta: 380, hist: 300, barras: null };
+    var gigante = vw >= 3000; // 4K a 100% de escala: tetos maiores
+    var carta = Math.round(Math.min(gigante ? 760 : 520, Math.max(380, vh * 0.36)));
+    var hist = Math.round(Math.min(gigante ? 600 : 420, Math.max(300, vh * 0.28)));
+    return { carta: carta, hist: hist, barras: hist + 40 };
+  }
   function vazioHtml(msg) { return '<div class="dsc-vazio">' + esc(msg) + '</div>'; }
   var ALVOS = ['biCarta', 'biMedidas', 'biHist'];
 
@@ -336,7 +348,7 @@
     legendaCarta();
     $('biCartaSub').textContent = t('bi.cartaSub', { agrup: t(res.porAno ? 'bi.ano' : 'bi.trimestre').toLowerCase() });
     var alvo = $('biCarta'), p = res.p, dec = res.decCarta, gs = res.grupos;
-    var W = Math.max(alvo.clientWidth, 480), H = 380, m = { l: 52, r: 16, t: 40, b: 30 };
+    var W = Math.max(alvo.clientWidth, 480), H = alturasDashboard().carta, m = { l: 52, r: 16, t: 40, b: 30 };
     var vals = p.linhas.filter(function (r) { return r.v != null; }).map(function (r) { return r.v; });
     gs.forEach(function (x) { if (x.spc) vals.push(x.spc.ucl, x.spc.lcl); });
     var ymin = Math.min.apply(null, vals), ymax = Math.max.apply(null, vals);
@@ -439,10 +451,10 @@
       var gap = Math.round(Math.max(4, Math.min(18, porGrupo * 0.14)));
       var colw = Math.max(2, (porGrupo - gap) / MEDIDAS.length - 3);
       var maxChars = 1; gs.forEach(function (g) { MEDIDAS.forEach(function (k) { if (isFinite(g[k])) maxChars = Math.max(maxChars, fmt(g[k], dec).length); }); });
-      var fvPx = Math.min(10.5, (colw + 3) / (maxChars * 0.62));
+      var fvPx = Math.min(window.innerWidth >= 3000 ? 15 : window.innerWidth >= 1600 ? 12 : 10.5, (colw + 3) / (maxChars * 0.62));
       var duasLinhas = porGrupo < 58;
-      var classes = 'cg' + (fvPx < 6.5 ? ' cg-sem-valor' : '') + (duasLinhas ? ' cg-eixo2' : '');
-      alvo.innerHTML = '<div class="' + classes + '" style="--gap:' + gap + 'px;--fv:' + fvPx.toFixed(1) + 'px"><div class="cg-area">' + gs.map(function (g) {
+      var classes = 'cg' + (redimensionando ? ' cg-estatico' : '') + (fvPx < 6.5 ? ' cg-sem-valor' : '') + (duasLinhas ? ' cg-eixo2' : '');
+      alvo.innerHTML = '<div class="' + classes + '" style="--gap:' + gap + 'px;--fv:' + fvPx.toFixed(1) + 'px' + (alturasDashboard().barras ? ';--area-h:' + alturasDashboard().barras + 'px' : '') + '"><div class="cg-area">' + gs.map(function (g) {
         return '<div class="cg-grupo">' + MEDIDAS.map(function (k) {
           var v = g[k], alt = isFinite(v) ? Math.max(0, (v - lo) / (hi - lo) * 100) : 0;
           return '<div class="cg-col" role="img" aria-label="' + esc(g.rotulo + ' · ' + t('bi.serie.' + k) + ': ' + fmt(v, dec)) + '" title="' + esc(t('bi.serie.' + k) + ': ' + fmt(v, dec)) + '" style="--h:' + alt + '%;--c:var(--m-' + k + ')">' +
@@ -488,7 +500,7 @@
     if (!anos.length) { alvo.innerHTML = vazioHtml(t('bi.semDados')); return; }
 
     var vis = anos;
-    var W = Math.max(alvo.clientWidth, 300), H = 300, m = { l: 40, r: 12, t: 12, b: 28 };
+    var W = Math.max(alvo.clientWidth, 300), H = alturasDashboard().hist, m = { l: 40, r: 12, t: 12, b: 28 };
     var curvas = vis.map(function (a) {
       var pts = [];
       for (var i = 0; i <= 120; i++) {
@@ -602,7 +614,7 @@
     });
     $('biAtualizar').addEventListener('click', function () { carregarFiltros(true); });
     var pend = null;
-    window.addEventListener('resize', function () { clearTimeout(pend); pend = setTimeout(function () { if (!$('vista-powerbi').hidden) desenharVisao(); }, 150); });
+    window.addEventListener('resize', function () { clearTimeout(pend); pend = setTimeout(function () { if (!$('vista-powerbi').hidden) { redimensionando = true; desenharVisao(); redimensionando = false; } }, 150); });
   }
 
   window.PainelSPC = {

@@ -631,6 +631,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .dsc .cg { padding-bottom: 26px; }
 .dsc .cg.cg-eixo2 { padding-bottom: 38px; }
 .dsc .cg-sem-valor .cg-v { display: none; }
+.dsc .cg-estatico .cg-bar { animation: none; }
 .dsc .cg .cg-area { margin-top: 20px; height: var(--area-h, 330px); }
 @media (max-width: 960px) { .dsc .cg .cg-area { height: 270px; } }
 .dsc .cg-area { position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: var(--gap, 18px); height: var(--area-h, 250px); margin-top: 24px; }
@@ -736,6 +737,67 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 @media (max-width: 720px) { .dsc .filters { gap: 8px 10px; } .dsc .filter-acao { margin-left: 0; } .dsc .unit-pop { grid-template-columns: 1fr; } .dsc .unit-col + .unit-col { border-left: 0; border-top: 1px solid var(--d-line); padding-left: 4px; } }
 @media (pointer: coarse) { .dsc .seg button, .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; } }
 
+/* ── Telas maiores (≥ 1600 px), só no Dashboard: a página deixa de ficar presa em 1440 px,
+   os gráficos crescem com a altura da tela (painel-spc.js → alturasDashboard) e os textos
+   ganham um degrau. O resto do app (Início, Rodar o modelo, Importar) não muda. ── */
+@media (min-width: 1600px) {
+  .pagina:has(#vista-powerbi:not([hidden])) { max-width: min(94vw, 2400px); padding-inline: 40px; }
+  .dsc-grade { gap: 1.3rem; }
+  .dsc-card { padding: 1.35rem 1.6rem 1.2rem; }
+  .dsc-card-titulo { font-size: 1.12rem; }
+  .dsc-card-sub { font-size: .78rem; }
+  .dsc-legenda { font-size: .74rem; }
+  .dsc .filter-label { font-size: .8rem; }
+  .dsc .unit-trigger, .dsc .seg button, .dsc .seg.datas input, .dsc .nav-chip { font-size: .8rem; }
+  .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 36px; }
+  .dsc .seg button { min-height: 30px; }
+  .dsc .seg.datas input { min-height: 30px; }
+  .dsc-svg .ex { font-size: 11.5px; }
+  .dsc-svg .pilula text { font-size: 11.5px; }
+  .dsc-svg .t-cl { font-size: 12.5px; }
+  .dsc-svg .t-lim { font-size: 10.5px; }
+  .dsc-svg .t-best { font-size: 10px; }
+  .dsc .cg-grupo .x-lbl { font-size: .74rem; }
+  .dsc-variacao-caixa { width: 230px; }
+  .dsc-variacao-caixa h4 { font-size: .84rem; }
+  .dsc-variacao-caixa .dsc-variacao li span { font-size: .74rem; }
+  .dsc-variacao-caixa .dsc-variacao li b { font-size: .76rem; }
+  .dsc-hist-legenda .dsc-tabela { font-size: .78rem; }
+}
+@media (min-width: 2200px) {
+  .dsc-hero { padding: 2rem 2.6rem; }
+  .dsc-card-titulo { font-size: 1.22rem; }
+  .dsc-legenda { font-size: .8rem; }
+  .dsc-svg .ex { font-size: 12.5px; }
+  .dsc-svg .pilula text { font-size: 12.5px; }
+  .dsc-svg .t-cl { font-size: 13.5px; }
+  .dsc-svg .t-lim { font-size: 11.5px; }
+  .dsc .cg-grupo .x-lbl { font-size: .8rem; }
+  .dsc-variacao-caixa { width: 260px; }
+}
+@media (min-width: 3000px) {
+  .pagina:has(#vista-powerbi:not([hidden])) { max-width: min(94vw, 3400px); }
+  .dsc .filter-label { font-size: .95rem; }
+  .dsc .unit-trigger, .dsc .seg button, .dsc .seg.datas input, .dsc .nav-chip { font-size: .95rem; }
+  .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; }
+  .dsc .seg button, .dsc .seg.datas input { min-height: 38px; }
+  .dsc-card { padding: 1.8rem 2.1rem 1.6rem; }
+  .dsc-card-titulo { font-size: 1.45rem; }
+  .dsc-card-sub { font-size: .95rem; }
+  .dsc-legenda { font-size: .95rem; }
+  .dsc-hero { padding: 2.6rem 3.2rem; }
+  .dsc-svg .ex { font-size: 15px; }
+  .dsc-svg .pilula text { font-size: 15px; }
+  .dsc-svg .t-cl { font-size: 16px; }
+  .dsc-svg .t-lim { font-size: 13.5px; }
+  .dsc-svg .t-best { font-size: 12.5px; }
+  .dsc .cg-grupo .x-lbl { font-size: .95rem; }
+  .dsc-variacao-caixa { width: 320px; }
+  .dsc-variacao-caixa h4 { font-size: 1.05rem; }
+  .dsc-variacao-caixa .dsc-variacao li span { font-size: .92rem; }
+  .dsc-variacao-caixa .dsc-variacao li b { font-size: .92rem; }
+  .dsc-hist-legenda .dsc-tabela { font-size: .95rem; }
+}
 @media (max-width: 1180px) { .dsc-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 1180px) { .dsc .s3, .dsc .s9 { grid-column: span 12; } }
 @media (max-width: 960px) { .dsc .s4, .dsc .s5, .dsc .s7, .dsc .s8 { grid-column: span 12; } }
@@ -1289,7 +1351,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js?v=20261105-1"></script>
+<script src="assets/js/painel-spc.js?v=20261105-2"></script>
 <script>
 (function () {
   'use strict';
