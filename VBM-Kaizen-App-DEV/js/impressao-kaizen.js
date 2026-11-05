@@ -9,7 +9,11 @@
    Abre um diálogo DO APP (não o do navegador) para escolher:
      · papel: A4, A3 ou A2
      · orientação: horizontal ou vertical
-   com prévia ao vivo, e duas saídas:
+   com prévia ao vivo, e três saídas:
+     · "Baixar PPT" — PowerPoint EDITÁVEL (caixas de texto, formas e fotos
+       soltas, não uma imagem da folha), no mesmo papel, orientação e
+       idioma, com a mesma disposição da folha. Gerado aqui mesmo
+       (PptxGenJS, carregado só na primeira vez).
      · "Baixar PDF" — o PDF é gerado aqui mesmo (html2canvas-pro + jsPDF,
        carregados só na primeira vez), já no papel e orientação
        escolhidos. Não passa pela janela de impressão do navegador.
@@ -39,7 +43,8 @@
   var PREF = 'vbm-impressao-kaizen';
   var LIBS = {
     h2c: 'js/vendor/html2canvas-pro-2.5.2.min.js',
-    pdf: 'js/vendor/jspdf-4.2.1.umd.min.js'
+    pdf: 'js/vendor/jspdf-4.2.1.umd.min.js',
+    ppt: 'js/vendor/pptxgenjs-3.12.0.bundle.min.js'
   };
 
   var T = {
@@ -52,10 +57,12 @@
       dialogTitle: 'Imprimir Kaizen', paper: 'Papel', orientation: 'Orientação', landscape: 'Horizontal',
       portrait: 'Vertical', preview: 'Prévia', cancel: 'Cancelar', print: 'Imprimir', pdf: 'Baixar PDF',
       generating: 'Gerando PDF…', preparing: 'Preparando…', size: 'Tamanho',
-      hint: 'O papel e a orientação escolhidos aqui já vão definidos para a impressora e para o PDF.',
+      hint: 'O papel e a orientação escolhidos aqui já vão definidos para a impressora, o PDF e o PPT.',
       errTitle: 'Não foi possível gerar o PDF', errMsg: 'Tente de novo ou use "Imprimir".',
       popupTitle: 'Janela bloqueada', popupMsg: 'Permita pop-ups para este site para imprimir.',
-      done: 'PDF gerado', concluded: 'Concluído em'
+      done: 'PDF gerado', concluded: 'Concluído em',
+      ppt: 'Baixar PPT', generatingPpt: 'Gerando PPT…', donePpt: 'PPT gerado',
+      errPptTitle: 'Não foi possível gerar o PPT', errPptMsg: 'Tente de novo ou use "Baixar PDF".'
     },
     en: {
       improve: 'Improve Together', results: 'Results Achieved', before: 'Before', after: 'After',
@@ -66,10 +73,12 @@
       dialogTitle: 'Print Kaizen', paper: 'Paper', orientation: 'Orientation', landscape: 'Landscape',
       portrait: 'Portrait', preview: 'Preview', cancel: 'Cancel', print: 'Print', pdf: 'Download PDF',
       generating: 'Generating PDF…', preparing: 'Preparing…', size: 'Size',
-      hint: 'The paper and orientation chosen here go straight to the printer and to the PDF.',
+      hint: 'The paper and orientation chosen here go straight to the printer, the PDF and the PPT.',
       errTitle: 'Could not generate the PDF', errMsg: 'Try again or use "Print".',
       popupTitle: 'Window blocked', popupMsg: 'Allow pop-ups for this site to print.',
-      done: 'PDF generated', concluded: 'Completed on'
+      done: 'PDF generated', concluded: 'Completed on',
+      ppt: 'Download PPT', generatingPpt: 'Generating PPT…', donePpt: 'PPT generated',
+      errPptTitle: 'Could not generate the PPT', errPptMsg: 'Try again or use "Download PDF".'
     }
   };
 
@@ -395,6 +404,315 @@
     });
   }
 
+  /* ── PowerPoint editável ─────────────────────────────────────────────
+     Mesma folha, desenhada com objetos do PowerPoint: cada texto é uma
+     caixa de texto, cada faixa uma forma e cada foto uma imagem solta —
+     dá para editar, mover e reaproveitar no PPT. Medidas em mm, as
+     mesmas proporções do CSS da folha (`e` = 1em da folha). O PowerPoint
+     não encolhe texto sozinho ao abrir o arquivo, então o tamanho da
+     fonte de cada caixa é estimado aqui (até 62%, como na folha). */
+  var pptPromessa = null;
+  function carregarPpt() {
+    if (window.PptxGenJS) return Promise.resolve();
+    if (!pptPromessa) pptPromessa = carregarScript(LIBS.ppt).catch(function (e) { pptPromessa = null; throw e; });
+    return pptPromessa;
+  }
+
+  function imagemDeUrl(src) {
+    return new Promise(function (ok, erro) {
+      var img = new Image();
+      img.onload = function () { ok(img); };
+      img.onerror = function () { erro(new Error('imagem não carregou: ' + src)); };
+      img.src = src;
+    });
+  }
+  /* Foto -> JPEG (o PowerPoint não abre WEBP), no máximo `maxPx` de lado. */
+  function rasterizar(img, tipo, maxPx) {
+    var r = Math.min(1, maxPx / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+    var w = Math.max(1, Math.round((img.naturalWidth || img.width) * r)), h = Math.max(1, Math.round((img.naturalHeight || img.height) * r));
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    var g = c.getContext('2d');
+    if (tipo === 'image/jpeg') { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); }
+    g.drawImage(img, 0, 0, w, h);
+    return { data: c.toDataURL(tipo, 0.88), w: w, h: h };
+  }
+  function foto(url, maxPx) {
+    if (!url) return Promise.resolve(null);
+    return fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+      .then(function (b) {
+        var u = URL.createObjectURL(b);
+        return imagemDeUrl(u).then(function (img) { var x = rasterizar(img, 'image/jpeg', maxPx); URL.revokeObjectURL(u); return x; },
+          function (e) { URL.revokeObjectURL(u); throw e; });
+      })
+      .catch(function (e) { console.warn('[impressão] PPT sem a foto:', e.message); return null; });
+  }
+  function svgPng(svg, w, h) {
+    // Sem xmlns o navegador não desenha o SVG como imagem (caso da ONDA).
+    var marcado = svg.replace(/<svg\b/, '<svg width="' + w + '" height="' + h + '"' +
+      (/xmlns=/.test(svg) ? '' : ' xmlns="http://www.w3.org/2000/svg"'));
+    return imagemDeUrl('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(marcado))
+      .then(function (img) { return rasterizar(img, 'image/png', Math.max(w, h)); })
+      .catch(function () { return null; });
+  }
+  function logoPng(caminho, alturaPx) {
+    return fetch(absoluto(caminho)).then(function (r) { return r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status)); })
+      .then(function (svg) {
+        var vb = /viewBox="\s*[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)/.exec(svg);
+        var prop = vb ? parseFloat(vb[1]) / parseFloat(vb[2]) : 71 / 28;
+        return svgPng(svg.replace(/\s(width|height)="[^"]*"/g, ''), Math.round(alturaPx * prop), alturaPx);
+      })
+      .catch(function () { return null; });
+  }
+  function pngDeUrl(caminho) {
+    return imagemDeUrl(absoluto(caminho)).then(function (img) { return rasterizar(img, 'image/png', 1200); }).catch(function () { return null; });
+  }
+
+  /* Fonte que cabe na caixa: estimativa pela largura média do caractere. */
+  function linhasDe(textos, wMm, fMm) {
+    var porLinha = Math.max(1, Math.floor(wMm / (fMm * 0.52)));
+    return textos.reduce(function (n, p) { return n + Math.max(1, Math.ceil(String(p).length / porLinha)); }, 0);
+  }
+  function fonteQueCabe(paragrafos, wMm, hMm, pt, minimo) {
+    var textos = paragrafos.join('\n').split('\n');
+    var espacos = Math.max(0, paragrafos.length - 1) * 4 * 0.3528;   // paraSpaceAfter: 4 pt
+    for (var r = 1; r >= (minimo || 0.62); r -= 0.04) {
+      var fMm = pt * r * 0.3528;
+      if (linhasDe(textos, wMm, fMm) * fMm * 1.38 + espacos <= hMm) return +(pt * r).toFixed(1);
+    }
+    return +(pt * (minimo || 0.62)).toFixed(1);
+  }
+
+  function gerarPpt(k, cfg, ctx) {
+    var en = ctx.idioma === 'en';
+    var t = T[en ? 'en' : 'pt'];
+    var d = dimensoes(cfg), W = d.w, H = d.h;
+    var paisagem = cfg.orientacao === 'paisagem';
+    var e = Math.min(W, H) * 0.0148;                 // 1em da folha, em mm
+    var PT = e * 2.8346;                             // 1em em pontos
+    var IN = function (mm) { return +(mm / 25.4).toFixed(4); };
+    var FONTE = 'Arial', VERDE = '007E79', AZUL = '3CB5E5', CINZA = '7C7F84';
+    var larguraFoto = Math.round(Math.min(2600, W * 5.5));
+
+    // Mesmo conteúdo da folha (montarFolha).
+    var marcados = {};
+    (k.RESULTADOS || []).forEach(function (r) { marcados[r.ID_RESULTADO != null ? 'i' + r.ID_RESULTADO : 'n' + r.NM_RESULTADO] = r; });
+    var itens = [], vistos = {};
+    (ctx.catalogo || []).forEach(function (c) {
+      var on = !!marcados['i' + c.ID] || Object.keys(marcados).some(function (key) { return marcados[key].NM_RESULTADO === c.NM; });
+      if (!c.ATIVO && !on) return;
+      vistos[c.NM] = true; itens.push({ nm: c.NM, on: on });
+    });
+    (k.RESULTADOS || []).forEach(function (r) { if (!vistos[r.NM_RESULTADO]) itens.push({ nm: r.NM_RESULTADO, on: true }); });
+    var fin = '';
+    if (k.VL_RESULTADO_FINANCEIRO != null && k.VL_RESULTADO_FINANCEIRO !== '') {
+      fin = (k.SG_MOEDA ? k.SG_MOEDA + ' ' : '') + Number(k.VL_RESULTADO_FINANCEIRO)
+        .toLocaleString(en ? 'en-US' : 'pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    var vistosP = {};
+    var unico = function (p) { var c = String(p.NM_USUARIO || '').trim().toUpperCase(); if (!c || vistosP[c]) return false; vistosP[c] = true; return true; };
+    var pessoas = [{ NM_USUARIO: k.NM_LIDER, lider: true }].filter(unico).concat((k.MEMBROS || []).filter(unico));
+    var envolvidos = (k.ENVOLVIDOS || []).filter(unico).map(function (p) { return p.NM_USUARIO; });
+
+    return carregarPpt().then(function () {
+      return Promise.all([
+        foto(k.URL_IMG_ANTES ? absoluto(ctx.urlImagem(k.URL_IMG_ANTES, larguraFoto)) : null, 1800),
+        foto(k.URL_IMG_DEPOIS ? absoluto(ctx.urlImagem(k.URL_IMG_DEPOIS, larguraFoto)) : null, 1800),
+        pngDeUrl('assets/images/vps-logo.png'),
+        logoPng('assets/images/vale-logo.svg', 240),
+        svgPng(ONDA, Math.round(W * 0.2 * 12), Math.round(H * 0.13 * 12))
+      ]);
+    }).then(function (img) {
+      var fotoAntes = img[0], fotoDepois = img[1], vps = img[2], vale = img[3], onda = img[4];
+      var pptx = new window.PptxGenJS();
+      pptx.defineLayout({ name: 'KAIZEN', width: IN(W), height: IN(H) });
+      pptx.layout = 'KAIZEN';
+      pptx.title = (k.ROTULO || '') + ' — ' + (k.NM_KAIZEN || '');
+      pptx.company = 'Vale';
+      var sl = pptx.addSlide();
+      sl.background = { color: 'FFFFFF' };
+      var S = pptx.ShapeType;
+      var borda = { color: VERDE, width: +(0.16 * PT).toFixed(2) };
+
+      function texto(runs, x, y, w, h, o) {
+        sl.addText(runs, Object.assign({ x: IN(x), y: IN(y), w: IN(w), h: IN(h), fontFace: FONTE, color: CINZA, margin: 0, valign: 'top' }, o || {}));
+      }
+      function imagem(im, x, y, w, h) {
+        if (!im) return;
+        var r = Math.min(w / im.w, h / im.h), iw = im.w * r, ih = im.h * r;
+        sl.addImage({ data: im.data.replace(/^data:/, ''), x: IN(x + (w - iw) / 2), y: IN(y + (h - ih) / 2), w: IN(iw), h: IN(ih) });
+      }
+      function barra(txt, x, y, w, h, em, forma, inverter) {
+        sl.addText(txt, { x: IN(x), y: IN(y), w: IN(w), h: IN(h), shape: forma || S.rect, flipH: !!inverter,
+          fill: { color: AZUL }, line: forma ? undefined : borda, fontFace: FONTE, fontSize: +(em * PT).toFixed(1),
+          color: 'FFFFFF', align: 'center', valign: 'middle', margin: 0 });
+      }
+      // Caixa de texto do template: borda verde, itálico cinza, rótulos em verde.
+      function caixa(pars, x, y, w, h) {
+        sl.addShape(S.rect, { x: IN(x), y: IN(y), w: IN(w), h: IN(h), fill: { color: 'FFFFFF' }, line: borda });
+        var pad = 0.8 * e;
+        var tam = fonteQueCabe(pars.map(function (p) { return (p.rot ? p.rot + ': ' : '') + p.txt; }), w - 2 * pad, h - 2 * pad, 1.22 * PT);
+        var runs = [];
+        pars.forEach(function (p, i) {
+          var fim = i === pars.length - 1;
+          if (p.rot) runs.push({ text: p.rot + ': ', options: { bold: true, italic: false, color: VERDE } });
+          runs.push({ text: p.txt, options: { italic: true, color: CINZA, breakLine: !fim, paraSpaceAfter: fim ? 0 : 4 } });
+        });
+        texto(runs, x + pad, y + pad, w - 2 * pad, h - 2 * pad, { fontSize: tam, lineSpacingMultiple: 1.1 });
+      }
+      function caixaFoto(im, legenda, x, y, w, h) {
+        sl.addShape(S.rect, { x: IN(x), y: IN(y), w: IN(w), h: IN(h), fill: { color: 'FFFFFF' }, line: borda });
+        var hLeg = 0;
+        if (legenda) {
+          hLeg = Math.min(h * 0.38, Math.max(3 * e, Math.ceil(legenda.length / Math.max(1, (w - 1.6 * e) / (1.08 * e * 0.5))) * 1.08 * e * 1.35 + 1.2 * e));
+          var yL = y + h - hLeg;
+          sl.addShape(S.line, { x: IN(x), y: IN(yL), w: IN(w), h: 0, line: { color: 'E6E7E8', width: 0.75 } });
+          texto(legenda, x + 0.8 * e, yL + 0.5 * e, w - 1.6 * e, hLeg - e,
+            { italic: true, fontSize: fonteQueCabe([legenda], w - 1.6 * e, hLeg - e, 1.08 * PT) });
+        }
+        var pad = 0.4 * e;
+        if (im) imagem(im, x + pad, y + pad, w - 2 * pad, h - hLeg - 2 * pad);
+        else texto(t.noImage, x, y, w, h - hLeg, { italic: true, color: 'BCBEC0', fontSize: +(1.1 * PT).toFixed(1), align: 'center', valign: 'middle' });
+      }
+
+      // Faixa lateral, onda do canto com o logo Vale, rodapé.
+      sl.addShape(S.rect, { x: 0, y: 0, w: IN(W * 0.016), h: IN(H), fill: { color: AZUL }, line: { color: AZUL, width: 0 } });
+      if (onda) sl.addImage({ data: onda.data.replace(/^data:/, ''), x: IN(W * 0.8), y: 0, w: IN(W * 0.2), h: IN(H * 0.13) });
+      if (vale) {
+        var lh = H * 0.13 * 0.3, lw = lh * vale.w / vale.h;
+        sl.addImage({ data: vale.data.replace(/^data:/, ''), x: IN(W - W * 0.2 * 0.09 - lw), y: IN(H * 0.13 * 0.22), w: IN(lw), h: IN(lh) });
+      }
+      texto([k.ROTULO, k.NM_CATEGORIA, k.NM_STATUS].filter(Boolean).join(' · '), W * 0.3, H - H * 0.007 - 1.3 * e, W * 0.674, 1.3 * e,
+        { fontSize: +(0.78 * PT).toFixed(1), color: 'BCBEC0', align: 'right' });
+
+      var x0 = W * 0.042, x1 = W - W * 0.026, y0 = H * 0.022, y1 = H - H * 0.024, iw = x1 - x0;
+
+      // Marca "Kaizen / Improve Together" + logo VPS.
+      function marca(x, y) {
+        texto([{ text: 'Kaizen', options: { fontSize: +(3.5 * PT).toFixed(1), breakLine: true } },
+               { text: t.improve, options: { fontSize: +(1.95 * PT).toFixed(1) } }],
+          x, y, 17 * e, 6.2 * e, { color: VERDE, valign: 'middle', lineSpacingMultiple: 0.95 });
+        var lwV = 0;
+        if (vps) { lwV = 6.2 * e * vps.w / vps.h; imagem(vps, x + 17.5 * e, y, lwV, 6.2 * e); }
+        return 17.5 * e + lwV;
+      }
+      // "Resultados Alcançados": título + lista em duas colunas.
+      function resultados(x, y, w) {
+        texto(t.results, x, y, w, 1.8 * e, { fontSize: +(1.45 * PT).toFixed(1), align: 'center' });
+        var metade = Math.ceil(itens.length / 2), colW = (w - 1.2 * e) / 2;
+        var cols = [itens.slice(0, metade), itens.slice(metade)];
+        // Fonte da lista: o item mais longo cabe numa linha (até 72% de 1em).
+        // Se nem assim couber, quebra — e a altura sai da coluna com mais linhas.
+        var maior = itens.reduce(function (m, i) { return Math.max(m, i.nm.length + 2); }, 1);
+        var ptLista = Math.max(0.72 * PT, Math.min(PT, colW / (maior * 0.56 * 0.3528)));
+        var fLista = ptLista * 0.3528;
+        var hLista = Math.max.apply(null, cols.map(function (col) {
+          var porLinha = Math.max(1, Math.floor(colW / (fLista * 0.56)));
+          return col.reduce(function (n, i) { return n + Math.max(1, Math.ceil((i.nm.length + 2) / porLinha)); }, 0) * fLista * 1.35;
+        })) + 0.3 * e;
+        cols.forEach(function (col, ci) {
+          if (!col.length) return;
+          texto(col.map(function (i, n) {
+            return { text: (i.on ? '☑ ' : '☐ ') + i.nm, options: { bold: i.on, color: i.on ? '2F3337' : CINZA, breakLine: n < col.length - 1 } };
+          }), x + ci * (colW + 1.2 * e), y + 1.9 * e, colW, hLista, { fontSize: +ptLista.toFixed(1), lineSpacingMultiple: 1.05 });
+        });
+        var h = 1.9 * e + hLista;
+        if (fin) { texto(t.financial + ': ' + fin, x, y + h + 0.2 * e, w, 1.4 * e, { fontSize: +(0.95 * PT).toFixed(1), bold: true, color: VERDE, align: 'center' }); h += 1.6 * e; }
+        return h;
+      }
+      // Equipe: "fotos" com iniciais (líder em verde), nome e papel; envolvidos em texto.
+      function equipe(x, y, w) {
+        var lado = 6.4 * e, passo = lado + 0.7 * e, cabem = Math.max(1, Math.floor((w + 0.7 * e) / passo));
+        pessoas.slice(0, cabem).forEach(function (p, i) {
+          var px = x + i * passo;
+          sl.addShape(S.rect, { x: IN(px), y: IN(y), w: IN(lado), h: IN(lado), fill: { color: 'F6FBFB' }, line: borda });
+          var dc = 3.8 * e;
+          sl.addText(iniciais(p.NM_USUARIO), { x: IN(px + (lado - dc) / 2), y: IN(y + (lado - dc) / 2), w: IN(dc), h: IN(dc), shape: S.ellipse,
+            fill: { color: p.lider ? VERDE : AZUL }, line: { color: p.lider ? VERDE : AZUL, width: 0 }, fontFace: FONTE,
+            fontSize: +(1.05 * PT).toFixed(1), bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', margin: 0 });
+          var runs = [{ text: primeiroEUltimo(p.NM_USUARIO), options: { color: '555555', fontSize: +(0.9 * PT).toFixed(1), breakLine: !!p.lider } }];
+          if (p.lider) runs.push({ text: t.leader.toUpperCase(), options: { color: VERDE, bold: true, fontSize: +(0.72 * PT).toFixed(1) } });
+          texto(runs, px - 0.3 * e, y + lado + 0.25 * e, lado + 0.6 * e, 3.2 * e, { align: 'center' });
+        });
+        var h = lado + 3.5 * e;
+        if (envolvidos.length) {
+          var txtEnv = envolvidos.join(', ');
+          var hEnv = Math.min(4.5 * e, Math.ceil((t.involved.length + txtEnv.length + 2) / Math.max(1, w / (0.85 * e * 0.5))) * 0.85 * e * 1.3 + 0.4 * e);
+          texto([{ text: t.involved + ': ', options: { bold: true, color: VERDE } }, { text: txtEnv, options: { color: '555555' } }],
+            x, y + h, w, hEnv, { fontSize: fonteQueCabe([t.involved + ': ' + txtEnv], w, hEnv, 0.85 * PT) });
+          h += hEnv;
+        }
+        return h;
+      }
+      // Faixa da Unidade de Negócio + título do Kaizen.
+      function unidade(x, y, w) {
+        var h = 2.4 * e;
+        sl.addShape(S.rect, { x: IN(x), y: IN(y), w: IN(w), h: IN(h), fill: { color: AZUL }, line: borda });
+        texto(t.bu + ': ' + (k.NM_SITE || '—'), x + 0.8 * e, y, w * 0.62, h, { fontSize: +(1.5 * PT).toFixed(1), color: 'FFFFFF', underline: { style: 'sng' }, valign: 'middle' });
+        texto([k.ROTULO, dataCurta(k.DT_CONCLUSAO || k.DT_CRIACAO, en)].filter(Boolean).join(' · '), x + w * 0.62, y, w * 0.38 - 0.8 * e, h,
+          { fontSize: +(0.93 * PT).toFixed(1), color: 'FFFFFF', align: 'right', valign: 'middle' });
+        var hT = 3.3 * e;
+        texto(k.NM_KAIZEN || '', x, y + h + 0.45 * e, w, hT, { fontSize: fonteQueCabe([k.NM_KAIZEN || ''], w, hT, 1.32 * PT, 0.75), bold: true, color: VERDE });
+        return h + 0.45 * e + hT;
+      }
+      // Problema / Solução / Benefícios, com as faixas em seta do template.
+      function centro(x, y, w, h) {
+        var hb = 2.6 * e, g = 0.45 * e, hc = (h - 3 * hb - 5 * g) / 3;
+        var problema = [{ txt: k.DS_PROBLEMA || '—' }];
+        if (k.DS_OBJETIVO) problema.push({ rot: t.goal, txt: k.DS_OBJETIVO });
+        var benef = [];
+        if (k.DS_RESULTADO_ALCANCADO) benef.push({ txt: k.DS_RESULTADO_ALCANCADO });
+        if (fin) benef.push({ rot: t.financial, txt: fin });
+        if (k.DS_RESULTADO_ESPERADO) benef.push({ rot: t.comparison, txt: k.DS_RESULTADO_ESPERADO });
+        if ((k.DESPERDICIOS || []).length) benef.push({ rot: t.waste, txt: k.DESPERDICIOS.join(', ') });
+        if (!benef.length) benef.push({ txt: '—' });
+        var yy = y;
+        barra(t.problem, x, yy, w, hb, 1.75, S.homePlate, true); yy += hb + g;
+        caixa(problema, x, yy, w, hc); yy += hc + g;
+        barra(t.solution, x, yy, w, hb, 1.75, S.homePlate, false); yy += hb + g;
+        caixa([{ txt: k.DS_ESTADO_DEPOIS || '—' }], x, yy, w, hc); yy += hc + g;
+        barra(t.benefits, x, yy, w, hb, 1.75); yy += hb + g;
+        caixa(benef, x, yy, w, hc);
+      }
+      function colunaFoto(rot, im, legenda, x, y, w, h) {
+        var hb = 1.62 * 2.6 * e;
+        barra(rot, x, y, w, hb, 2.6);
+        caixaFoto(im, legenda, x, y + hb + 0.55 * e, w, h - hb - 0.55 * e);
+      }
+
+      if (paisagem) {
+        var limite = x1 - iw * 0.165, gap = 2.2 * e;
+        var wm = marca(x0, y0);
+        var xr = x0 + wm + gap, wr = Math.min(22 * e, (limite - xr) * 0.5);
+        var hr = resultados(xr, y0, wr);
+        var xe = xr + wr + gap;
+        var he = equipe(xe, y0, Math.max(10 * e, limite - xe));
+        var yc = y0 + Math.max(6.2 * e, hr, he) + 1.1 * e, hcorpo = y1 - yc;
+        var tot = iw - 2 * gap, wl = tot * 28 / 90, wc = tot * 34 / 90;
+        colunaFoto(t.before, fotoAntes, k.DS_ESTADO_ANTES, x0, yc, wl, hcorpo);
+        var xc = x0 + wl + gap;
+        var hu = unidade(xc, yc, wc);
+        centro(xc, yc + hu + 0.45 * e, wc, hcorpo - hu - 0.45 * e);
+        colunaFoto(t.after, fotoDepois, '', xc + wc + gap, yc, wl, hcorpo);
+      } else {
+        marca(x0, y0);
+        var y2 = y0 + 6.2 * e + 1.1 * e, wR = iw * 0.46;
+        var hR = resultados(x0, y2, wR);
+        var hE = equipe(x0 + wR + 2 * e, y2, iw - wR - 2 * e);
+        var y3 = y2 + Math.max(hR, hE) + 1.1 * e;
+        var hU = unidade(x0, y3, iw);
+        var y4 = y3 + hU + 1.1 * e, resto = y1 - y4 - 1.1 * e;
+        var hBA = resto / 2.3, wBA = (iw - 1.4 * e) / 2;
+        colunaFoto(t.before, fotoAntes, k.DS_ESTADO_ANTES, x0, y4, wBA, hBA);
+        colunaFoto(t.after, fotoDepois, '', x0 + wBA + 1.4 * e, y4, wBA, hBA);
+        centro(x0, y4 + hBA + 1.1 * e, iw, resto - hBA);
+      }
+
+      return pptx.writeFile({ fileName: nomeArquivo([k.ROTULO, k.NM_SITE, k.NM_LIDER, cfg.papel]) + '.pptx' });
+    });
+  }
+
   function imprimir(k, cfg, ctx) {
     var folha = montarFolha(k, cfg, ctx);
     var win = window.open('', '_blank');
@@ -485,6 +803,7 @@
         '</div></div>' +
         '<div class="modal-foot">' +
           '<button class="btn btn-ghost" type="button" data-imp="fechar" data-t="cancel"></button>' +
+          '<button class="btn btn-outline" type="button" data-imp="ppt">' + ICONE_PDF + ' <span data-t="ppt"></span></button>' +
           '<button class="btn btn-outline" type="button" data-imp="pdf">' + ICONE_PDF + ' <span data-t="pdf"></span></button>' +
           '<button class="btn btn-primary" type="button" data-imp="imprimir"><i class="fa-solid fa-print"></i> <span data-t="print"></span></button>' +
         '</div>' +
@@ -503,6 +822,15 @@
       else if (b.dataset.imp === 'imprimir') {
         if (!imprimir(s.k, s.cfg, s.ctx) && window.showToast) showToast('warning', s.t.popupTitle, s.t.popupMsg);
         else fechar();
+      } else if (b.dataset.imp === 'ppt') {
+        var rotP = b.querySelector('span');
+        b.disabled = true; rotP.textContent = s.t.generatingPpt;
+        gerarPpt(s.k, s.cfg, s.ctx).then(function () {
+          if (window.showToast) showToast('success', s.t.donePpt, '', 2500);
+        }).catch(function (err) {
+          console.error('[impressão] PPT:', err);
+          if (window.showToast) showToast('error', s.t.errPptTitle, s.t.errPptMsg, 5000);
+        }).then(function () { b.disabled = false; rotP.textContent = s.t.ppt; });
       } else if (b.dataset.imp === 'pdf') {
         var rot = b.querySelector('span');
         b.disabled = true; rot.textContent = s.t.generating;
@@ -593,5 +921,5 @@
   };
 
   // Exposto para testes e para outras telas que queiram a folha pronta.
-  window.KaizenFolha = { montar: montarFolha, gerarPdf: gerarPdf, PAPEIS: PAPEIS };
+  window.KaizenFolha = { montar: montarFolha, gerarPdf: gerarPdf, gerarPpt: gerarPpt, PAPEIS: PAPEIS };
 })();

@@ -1,19 +1,25 @@
 /**
  * Aplicação do Performance Hub montada em /VBM-Performance-Hub/<pasta>/
- * (página: index.html). O endereço sai do NOME DA PASTA — copiar esta
- * pasta com outro nome cria outra aplicação no Hub sem mudar código aqui.
+ * (página: index.html). Mesmo molde do portal.js do COO-Business-Units-Dashboard:
+ * o endereço sai do NOME DA PASTA.
  *
  * Quem chama é VBM-Performance-Hub/portal.js (ver a lista APLICACOES lá),
- * ANTES do express.static do Portal.
+ * ANTES do express.static do Portal. O controle de acesso (IBP.USERS com
+ * CD_MATRICULA, portal-acesso.js) já vale para tudo em /VBM-Performance-Hub,
+ * inclusive esta API — registrado no server.js do Portal.
  *
- * Conexão PRÓPRIA (pool separado do Kaizen), sempre no Azure SQL PRD.
- * Variáveis opcionais: PERFORMANCEHUB_SQL_SERVER / _DATABASE / _PORT / _USER /
- * _PASSWORD. Sem elas: servidor e base PRD abaixo, e o usuário/senha do
- * Portal (AZURE_SQL_USER / AZURE_SQL_PASSWORD).
+ * Conexão PRÓPRIA (pool separado), sempre no Azure SQL PRD, com as mesmas
+ * variáveis do Performance Hub: PERFORMANCEHUB_SQL_SERVER / _DATABASE / _PORT /
+ * _USER / _PASSWORD. Sem elas: servidor e base PRD abaixo, e o usuário/senha
+ * do Portal (AZURE_SQL_USER / AZURE_SQL_PASSWORD, por valueFrom no app.yaml).
+ * Dados: as cargas do dashboard em IBP.PHUB_PERFORMANCESTUDIO, lidas por hob-api.js
+ * (SQL em database/), como no COO.
+ * HOB_ID_DASH: IBP.DASHBOARD.ID_DASH do Health of the Business. Sem ele, as rotas de
+ * dados respondem 503 (ID_DASH_PENDENTE) e a página usa os dados de demonstração.
  */
 const path = require('path');
 const sql = require('mssql');
-const { criarPerformanceHubRouter } = require('./performancehub-api');
+const { criarHobRouter } = require('./hob-api');
 
 const PRD_SERVER = 'rdb-ibp-bmsa-prd.database.windows.net';
 const PRD_DATABASE = 'BDIBPBMSA_PRD';
@@ -22,15 +28,12 @@ const HUB = '/' + path.basename(path.dirname(__dirname));
 const PASTA = path.basename(__dirname);
 const BASE = HUB + '/' + PASTA;
 const TAG = '[' + PASTA.toLowerCase() + ']';
-// Raiz do portal (duas pastas acima): de onde vem o módulo azure-blob do Kaizen.
-const RAIZ_PORTAL = path.resolve(__dirname, '..', '..');
 const escaparRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-module.exports = function montarPerformanceHubNoPortal(app) {
+module.exports = function montarHealthOfTheBusinessNoPortal(app) {
   const env = process.env;
   const DB = {
     server: env.PERFORMANCEHUB_SQL_SERVER || PRD_SERVER,
-    // PERFORMANCEHUB_AZURE_SQL_DATABASE = convenção do app.yaml do portal.
     database: env.PERFORMANCEHUB_AZURE_SQL_DATABASE || env.PERFORMANCEHUB_SQL_DATABASE || PRD_DATABASE,
     user: env.PERFORMANCEHUB_SQL_USER || env.AZURE_SQL_USER || '',
     password: env.PERFORMANCEHUB_SQL_PASSWORD || env.AZURE_SQL_PASSWORD || '',
@@ -44,7 +47,7 @@ module.exports = function montarPerformanceHubNoPortal(app) {
     if (!poolPromise && ultimaFalha && Date.now() - ultimaFalha.em < 30000) return Promise.reject(ultimaFalha.erro);
     if (!poolPromise) {
       const faltando = ['user', 'password'].filter(k => !DB[k]);
-      if (faltando.length) return Promise.reject(new Error(`Performance Hub: credencial do banco ausente (${faltando.join(', ')})`));
+      if (faltando.length) return Promise.reject(new Error(`Health of the Business: credencial do banco ausente (${faltando.join(', ')})`));
       const pool = new sql.ConnectionPool({
         server: DB.server,
         port: DB.port,
@@ -80,37 +83,32 @@ module.exports = function montarPerformanceHubNoPortal(app) {
   const semCache = (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); };
 
   // Express não diferencia maiúsculas: cobre <BASE>/api em qualquer caixa.
+  // O motivo da falha fica no log; a resposta não leva texto do banco.
   app.get(BASE + '/api/health', semCache, async (req, res) => {
     try {
       await runQuery('SELECT 1 AS ok');
-      res.json({ status: 'healthy', database: DB.database, server: DB.server });
+      res.json({ status: 'healthy' });
     } catch (err) {
-      res.status(503).json({ status: 'unhealthy', database: DB.database, error: err.message });
+      console.error(TAG + ' health:', err.message);
+      res.status(503).json({ status: 'unhealthy' });
     }
   });
-  // PERFORMANCEHUB_CONFIG_TABLE (opcional): tabela das configurações dos gráficos.
-  // Imagens de fundo: mesmo Azure Blob do portal (AZURE_STORAGE_*, módulo do
-  // Kaizen). Sem ele, o upload responde 503 e o resto do Performance Hub segue normal.
-  let armazenamento = null;
-  try {
-    const blob = require(path.join(RAIZ_PORTAL, process.env.KAIZEN_PASTA || 'VBM-Kaizen-App', 'azure-blob'));
-    armazenamento = { configurado: blob.blobConfigurado, enviar: blob.enviarArquivoParaBlob, baixar: blob.baixarArquivoDoBlob };
-  } catch (e) {
-    console.warn(TAG + ' armazenamento de imagens indisponível:', e.message);
-  }
-  app.use(BASE + '/api', semCache, criarPerformanceHubRouter({ runQuery, tabelaConfiguracao: env.PERFORMANCEHUB_CONFIG_TABLE, armazenamento, pastaFundos: env.PERFORMANCEHUB_BG_PASTA }));
+  app.use(BASE + '/api', semCache, criarHobRouter({ runQuery, idDash: env.HOB_ID_DASH }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
-  // server.js, portal.js, performancehub-api.js, app.yaml, package*.json, .env*
-  // e docs ficam bloqueados (o express.static do Portal serve a pasta).
+  // server.js, portal.js, hob-api.js, database/, docs/, tests/, package*.json, .env*
+  // ficam bloqueados (o express.static do Portal serve a pasta).
   const PUBLICO = new RegExp('^' + escaparRegex(BASE) + '\\/?(index\\.html|assets\\/.+)?$', 'i');
   app.use(BASE, (req, res, next) => {
     const caminho = req.originalUrl.split('?')[0];
     if (PUBLICO.test(caminho) && !/\.\.|%2e|%5c|\\/i.test(caminho)) return next();
-    res.status(404).set('Cache-Control', 'no-store').json({ error: 'Não encontrado.' });
+    res.status(404).set('Cache-Control', 'no-store').json({ error: 'Not found.' });
   });
 
-  console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database}`);
-  // Conexão PRD reaproveitada pelo controle de acesso do Portal (portal-acesso.js)
+  console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database} — ` +
+    (env.HOB_ID_DASH ? `ID_DASH ${env.HOB_ID_DASH}` : 'HOB_ID_DASH não definido: página com dados de demonstração'));
+  if (!env.PERFORMANCEHUB_SQL_SERVER || !(env.PERFORMANCEHUB_AZURE_SQL_DATABASE || env.PERFORMANCEHUB_SQL_DATABASE)) {
+    console.warn(`${TAG} ATENÇÃO: servidor/base não definidos por variável — usando o padrão de PRODUÇÃO (${PRD_SERVER}/${PRD_DATABASE}). Em DEV/HML defina PERFORMANCEHUB_SQL_SERVER e PERFORMANCEHUB_AZURE_SQL_DATABASE.`);
+  }
   return { runQuery };
 };

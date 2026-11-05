@@ -181,7 +181,7 @@ body {
 }
 
 /* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
-.dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 146px 4px; } /* espaço dos 3 ícones à direita */
+.dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 188px 4px; } /* espaço dos 4 ícones à direita */
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
   font: 300 1.1rem/1.2 'Poppins', 'Segoe UI', sans-serif; letter-spacing: .08em; color: rgba(255,255,255,.88);
@@ -203,7 +203,7 @@ html:-webkit-full-screen .topnav { display: none; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-acao:disabled { opacity: .45; cursor: not-allowed; }
 .dash-acao.is-pendente { background: #0B6E99; color: #fff; border-color: #0B6E99; }
-@media (max-width: 760px) { .dash-titulo { padding: 12px 136px 4px 16px; } .dash-titulo-nome { font-size: .92rem; } }
+@media (max-width: 760px) { .dash-titulo { padding: 12px 178px 4px 16px; } .dash-titulo-nome { font-size: .92rem; } }
 .settings-btn {
   display: flex;
   align-items: center;
@@ -449,6 +449,16 @@ html:-webkit-full-screen .topnav { display: none; }
   text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap;
 }
 
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+  .app-main, .page-content { min-height: calc(100vh - 56px); }
+}
 @media (max-width: 960px) {
   .topnav-brand { font-size: .9rem; }
   .topnav-user-role { display: none; }
@@ -2083,6 +2093,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <div class="dash-acoes" id="dashAcoes">
     <button type="button" class="dash-acao" id="dashSalvar" aria-label="Salvar dashboard no banco" title="Salvar dashboard no banco" data-i18n-aria="ui.dash_salvar" data-i18n-title="ui.dash_salvar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashDesfazer" aria-label="Desfazer alterações não salvas" title="Desfazer alterações não salvas" data-i18n-aria="ui.dash_desfazer" data-i18n-title="ui.dash_desfazer"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+    <button type="button" class="dash-acao" id="dashExcel" aria-label="Baixar dados em Excel" title="Baixar dados em Excel" data-i18n-aria="ui.baixar_excel" data-i18n-title="ui.baixar_excel"><i class="fa-solid fa-file-excel" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashTelaCheia" aria-pressed="false" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.tela_cheia" data-i18n-title="ui.tela_cheia"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
   </div>
 </div>
@@ -2370,6 +2381,9 @@ const I18N_UI = {
   'ui.dash_salvar': ['Salvar dashboard no banco', 'Save dashboard to the database'],
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
+  'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
+  'ui.excel_sem_dados': ['Nenhum gráfico com dados para exportar.', 'No chart with data to export.'],
+  'ui.excel_falhou': ['Não foi possível gerar o Excel. Tente novamente.', 'Could not generate the Excel file. Try again.'],
   'ui.sair_tela_cheia': ['Sair da tela cheia', 'Exit full screen'],
   'ui.dash_desfazer_confirma': ['Clique de novo em desfazer para descartar as alterações de “{nome}”.', 'Click undo again to discard the changes to “{nome}”.'],
   'ui.dash_desfeito': ['“{nome}” voltou à última versão salva.', '“{nome}” is back to its last saved version.'],
@@ -4409,6 +4423,8 @@ function onChartShortcut(e) {
 }
 
 function updateChartActionButtons() {
+  const xl = document.getElementById('dashExcel');
+  if (xl) xl.disabled = !charts.length;
   const rm = document.getElementById('qeDel');
   if (!rm) return;
   rm.disabled = !charts.length;
@@ -4497,7 +4513,8 @@ function relayoutSeMudou() {
 function updateBoardHeight() {
   if (board.classList.contains('is-fluxo')) { board.style.minHeight = ''; return; }
   const bottom = Math.max(0, ...charts.map(c => c.pos.y + c.el.offsetHeight));
-  board.style.minHeight = Math.max(innerHeight - 64, bottom + 24) + 'px';
+  const topo = (document.getElementById('topnav') || {}).offsetHeight || 64; // 64 ou 56 px (telas menores)
+  board.style.minHeight = Math.max(innerHeight - topo, bottom + 24) + 'px';
 }
 function defaultSize() {
   return clampSize(Math.min(board.clientWidth - 2 * BOARD_M, 1200), Math.min(innerHeight * 0.76, 720));
@@ -4886,7 +4903,8 @@ const TITLE_SEPS = [
 ];
 const UNIT_OPTIONS = [
   { v: '', label: 'Automática (do indicador)' }, { v: 't', label: 't — tonelada' }, { v: 'Kt', label: 'Kt — mil toneladas' },
-  { v: 'Mt', label: 'Mt — milhão de toneladas' }, { v: '%', label: '% — percentual' }, { v: 'US$', label: 'US$ — dólar' },
+  { v: 'Mt', label: 'Mt — milhão de toneladas' }, { v: 'kg', label: 'kg — quilograma' },
+  { v: 'oz', label: 'oz — onça troy' }, { v: 'koz', label: 'koz — mil onças troy' }, { v: 'Moz', label: 'Moz — milhão de onças troy' }, { v: '%', label: '% — percentual' }, { v: 'US$', label: 'US$ — dólar' },
   { v: 'KUSD', label: 'KUSD — mil dólares' }, { v: 'MUSD', label: 'MUSD — milhão de dólares' }, { v: 'BUSD', label: 'BUSD — bilhão de dólares' }, { v: 'custom', label: 'Personalizada…' }
 ];
 const SCALE_OPTIONS = [
@@ -5417,7 +5435,9 @@ function aplicarCoresAoVivo() {
 }
 
 // Unidade ↔ escala: mesma família (toneladas, dólares) → fator = base dos dados ÷ unidade escolhida
-const UNIDADE_MULT = { t: ['t', 1], kt: ['t', 1e3], mt: ['t', 1e6], 'us$': ['usd', 1], usd: ['usd', 1], kusd: ['usd', 1e3], musd: ['usd', 1e6], busd: ['usd', 1e9] };
+// Massa em toneladas: kg ÷ 1.000 = t; onça troy = 31,1034768 g (kg × 32,1507466 = oz)
+const OZ_T = 31.1034768e-6;
+const UNIDADE_MULT = { t: ['t', 1], kt: ['t', 1e3], mt: ['t', 1e6], kg: ['t', 1e-3], oz: ['t', OZ_T], koz: ['t', OZ_T * 1e3], moz: ['t', OZ_T * 1e6], 'us$': ['usd', 1], usd: ['usd', 1], kusd: ['usd', 1e3], musd: ['usd', 1e6], busd: ['usd', 1e9] };
 const multDe = u => UNIDADE_MULT[String(u || '').trim().toLowerCase()] || null;
 // Unidade(s) identificada(s) nos dados do gráfico (SG_UNID das linhas filtradas, como o subtítulo)
 function unidadesDosDados(c) {
@@ -6383,6 +6403,7 @@ function atualizarEstadoDash() {
   const a = dash.atual, pendente = dashPendente(a), acoes = $qe('dashAcoes');
   if (!acoes) return;
   $qe('dashSalvar').hidden = $qe('dashDesfazer').hidden = !podeAlterar(a);
+  $qe('dashExcel').disabled = !charts.length;
   $qe('dashSalvar').disabled = $qe('dashDesfazer').disabled = !pendente || dash.gravando;
   $qe('dashSalvar').classList.toggle('is-pendente', pendente);
 }
@@ -6409,6 +6430,286 @@ function iniciarTelaCheia() {
   document.addEventListener('webkitfullscreenchange', sinc);
   sinc();
 }
+// ── Baixar Excel: dados dos gráficos da tela (comparações, gráficos como tabela e base) ──
+// ExcelJS (assets/js, sem internet) só é carregada no primeiro clique
+let excelJsCarregando = null;
+function carregarExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  excelJsCarregando = excelJsCarregando || new Promise((ok, falha) => {
+    const s = document.createElement('script');
+    s.src = 'assets/js/exceljs.min.js';
+    s.onload = () => ok(window.ExcelJS);
+    s.onerror = () => { excelJsCarregando = null; falha(new Error('ExcelJS não carregou')); };
+    document.head.appendChild(s);
+  });
+  return excelJsCarregando;
+}
+// Rótulo da coluna → período, série (B/P/A/F) e ano: "Q3A 26", "YTDB 26", "26F"
+function partesDaColuna(t) {
+  const { core, yearSuffix } = splitTypeLabel(t);
+  const anual = !yearSuffix && core.match(/^(\d{2,4})([A-Z])$/i);
+  if (anual) return { periodo: 'ANO', letra: anual[2].toUpperCase(), ano: 2000 + Number(anual[1].slice(-2)) };
+  return { periodo: core.slice(0, -1), letra: core.slice(-1).toUpperCase(), ano: yearSuffix ? 2000 + Number(yearSuffix.trim()) : null };
+}
+const EXCEL_SERIE = { B: 'Budget', P: 'Plan', A: 'Actual', F: 'Forecast' };
+function horizonteExcel(p, ano) {
+  const yy = String(ano).slice(-2);
+  if (p === 'ANO') return `ANO ${ano}`;
+  if (p === 'YTD') return `YTD ${yy}`;
+  if (/^Q\d$/i.test(p)) return `TRIMESTRE · ${p} ${yy}`;
+  if (/^H\d$/i.test(p)) return `SEMESTRE · ${p} ${yy}`;
+  return `${p} ${yy}`;
+}
+// Ordem dos horizontes na planilha: meses, trimestres, semestres, YTD e ano (e o ano dentro de cada um)
+function ordemHorizonteExcel(p, ano) {
+  const n = Number((String(p).match(/\d+/) || [0])[0]);
+  const tipo = p === 'ANO' ? 4 : p === 'YTD' ? 3 : /^H\d$/i.test(p) ? 2 : /^Q\d$/i.test(p) ? 1 : 0;
+  return tipo * 1e6 + ano * 100 + n;
+}
+// Comparações de cada gráfico: real (A/F) ÷ Budget/Plan do mesmo período e ÷ real do ano anterior
+function comparacoesDoGrafico(linhas) {
+  const p = linhas.map(l => ({ ...l, ...partesDaColuna(l.col) }));
+  const out = [];
+  p.filter(x => (x.letra === 'A' || x.letra === 'F') && x.ano).forEach(x => {
+    const hz = horizonteExcel(x.periodo, x.ano), ordem = ordemHorizonteExcel(x.periodo, x.ano);
+    ['B', 'P'].forEach(b => {
+      const base = p.find(y => y.periodo === x.periodo && y.ano === x.ano && y.letra === b);
+      if (base) out.push({ hz, ordem, tipo: 'plano', nome: `${EXCEL_SERIE[b]} → ${EXCEL_SERIE[x.letra]}`, base: base.col, atual: x.col });
+    });
+    const ant = p.find(y => y.periodo === x.periodo && y.ano === x.ano - 1 && y.letra === 'A') || p.find(y => y.periodo === x.periodo && y.ano === x.ano - 1 && y.letra === 'F');
+    if (ant) {
+      const rot = c => (x.periodo === 'ANO' ? c : `${x.periodo} ${c.slice(-2)}`);
+      out.push({ hz, ordem, tipo: 'ano', nome: `${/^Q\d$/i.test(x.periodo) ? 'QoQ' : 'YoY'} · ${rot(ant.col)} → ${rot(x.col)}`, base: ant.col, atual: x.col });
+    }
+  });
+  return out;
+}
+// Lê cada gráfico como está na tela (filtros, ordem, unidade e escala), sem alterar nada
+function dadosDosGraficosParaExcel() {
+  const atual = activeChart, defSites = FILTER_DEFS.find(d => d.key === 'sites');
+  const ordem = [...charts].sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
+  const out = [];
+  editorHold++;
+  try {
+    ordem.forEach(c => {
+      activateChart(c);
+      const cfg = activeChartCfg();
+      const linhas = getFilteredChartRows().map(r => ({ col: r.type.trim(), v: Number.isFinite(r.value) ? r.value * cfg.unidade.fator : null, cor: getBarColor(r.type) }));
+      if (!linhas.length) return;
+      const site = textoDoFiltro(c.filters || {}, defSites);
+      out.push({ titulo: tituloDoCard(c), produto: (c.filters && c.filters.product) || '—', site, total: site === 'Todos',
+        unidade: unitTextOf(cfg) || unidadeDosDados(c) || '', dec: cfg.decBar, linhas, comps: comparacoesDoGrafico(linhas) });
+    });
+  } finally {
+    if (atual) activateChart(atual); else deselectChart();
+    editorHold--;
+  }
+  return out;
+}
+
+async function baixarExcelDashboard() {
+  const btn = $qe('dashExcel');
+  if (!charts.length || btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const ExcelJS = await carregarExcelJS();
+    const graficos = dadosDosGraficosParaExcel();
+    if (!graficos.length) { mostrarAviso(tx('ui.excel_sem_dados'), true); return; }
+    const wb = await montarExcelDashboard(ExcelJS, graficos);
+    const blob = new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const nome = ((dash.atual && dash.atual.nome) || 'VBM Performance Studio').replace(/[\\/:*?"<>|]+/g, '-').trim();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${nome}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch (err) {
+    console.error('[performance-hub] exportar Excel:', err);
+    mostrarAviso(tx('ui.excel_falhou'), true);
+  } finally {
+    btn.disabled = !charts.length;
+  }
+}
+
+async function montarExcelDashboard(ExcelJS, G) {
+  // Formatação das tabelas da Vale + fonte do app (Poppins)
+  const C = { azul: 'FF3CB5E5', verde: 'FF007E7A', branco: 'FFFFFFFF', texto: 'FF262626', suave: 'FF595959', cinza: 'FFD9D9D9', ponto: 'FFBFBFBF', up: 'FF00B050', down: 'FFFF0000' };
+  const fonte = (o = {}) => ({ name: 'Poppins', size: 9, color: { argb: C.texto }, ...o });
+  const fill = argb => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+  const branca = { style: 'thin', color: { argb: C.branco } };
+  const pontilhada = { bottom: { style: 'dotted', color: { argb: C.ponto } } };
+  const num = dec => (dec > 0 ? `#,##0.${'0'.repeat(dec)}` : '#,##0');
+  const delta = dec => `+${num(dec)};-${num(dec)};${num(dec)}`;
+  const PCT = '[>=1]"▲ "0.0%;"▼ "0.0%';
+  const argb = hex => 'FF' + String(hex || '#BCBEC0').replace('#', '').toUpperCase();
+  const d = dash.atual;
+  const nomeDash = (d && d.nome) || 'VBM Performance Studio';
+  const mesAno = d ? `${new Date(d.anoRef, d.mesRef - 1, 1).toLocaleDateString(idioma, { month: 'long' }).replace(/^./, m => m.toUpperCase())} | ${d.anoRef}` : '';
+  const usuario = (($qe('topnavUserName') || {}).textContent || '').trim();
+  const agora = new Date().toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' });
+  const rodapeInfo = `VBM Performance Studio · Gerado em ${agora}${usuario ? ` por ${usuario}` : ''}`;
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'VBM Performance Studio';
+  wb.created = new Date();
+  const cabecalho = (ws, ult, sub) => {
+    ws.mergeCells(1, 1, 1, ult);
+    Object.assign(ws.getCell(1, 1), { value: nomeDash, font: fonte({ size: 18, color: { argb: C.azul } }), alignment: { horizontal: 'center', vertical: 'middle' } });
+    ws.mergeCells(2, 1, 2, ult);
+    Object.assign(ws.getCell(2, 1), { value: mesAno, font: fonte({ size: 11, bold: true, italic: true, color: { argb: C.verde } }), alignment: { horizontal: 'center' } });
+    ws.mergeCells(3, 1, 3, ult);
+    Object.assign(ws.getCell(3, 1), { value: `${sub} · ${rodapeInfo}`, font: fonte({ size: 8, color: { argb: C.suave } }), alignment: { horizontal: 'center' } });
+    ws.getRow(1).height = 30; ws.getRow(2).height = 18;
+  };
+  const legenda = (ws, linha, ult) => {
+    ws.mergeCells(linha, 1, linha, ult);
+    Object.assign(ws.getCell(linha, 1), {
+      value: 'Legenda: B = Budget · P = Plan · A = Actual (realizado) · F = Forecast (projeção) · Δ = 2ª coluna − 1ª · % = 2ª coluna ÷ 1ª (real ÷ Budget; ano atual ÷ ano anterior), verde a partir de 100%. Valores como exibidos no dashboard (filtros, unidade e escala de cada gráfico).',
+      font: fonte({ size: 8, italic: true, color: { argb: C.suave } }), alignment: { wrapText: true, vertical: 'top' } });
+    ws.getRow(linha).height = 28;
+  };
+  const corPct = (ws, ref) => ws.addConditionalFormatting({ ref, rules: [
+    { type: 'cellIs', operator: 'greaterThanOrEqual', formulae: ['1'], style: { font: { color: { argb: C.up }, bold: true } } },
+    { type: 'cellIs', operator: 'lessThan', formulae: ['1'], style: { font: { color: { argb: C.down }, bold: true } } }] });
+  const cabCelula = (cel, valor, cor = C.azul) => Object.assign(cel, { value: valor, font: fonte({ bold: true, color: { argb: C.branco } }), fill: fill(cor),
+    alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { left: branca, right: branca, top: branca } });
+  const pagina = (ws, retrato, titulos) => {
+    ws.pageSetup = { orientation: retrato ? 'portrait' : 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true,
+      margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }, ...(titulos ? { printTitlesRow: titulos } : {}) };
+    ws.headerFooter = { oddFooter: `&L&8${nomeDash.replace(/&/g, '&&')}&R&8&P / &N` };
+  };
+  const valorDe = (g, col) => { const l = g.linhas.find(x => x.col === col); return l ? l.v : null; };
+
+  // ── Aba 1: Comparações (visões de todos os gráficos, por horizonte) ──
+  const visoes = [];
+  G.forEach(g => g.comps.forEach(cp => { if (!visoes.some(v => v.base === cp.base && v.atual === cp.atual)) visoes.push(cp); }));
+  visoes.sort((a, b) => a.ordem - b.ordem || (a.tipo === 'plano' ? -1 : 1) - (b.tipo === 'plano' ? -1 : 1));
+  const hzs = [...new Set(visoes.map(v => v.hz))];
+  const ws = wb.addWorksheet('Comparações', { properties: { tabColor: { argb: C.azul } } });
+  const larg = [38, 9];
+  visoes.forEach((v, i) => { larg.push(10, 10, 9, 11); if (i < visoes.length - 1) larg.push(visoes[i + 1].hz !== v.hz ? 3 : 1); });
+  ws.columns = larg.map(width => ({ width }));
+  const ult = Math.max(larg.length, 6);
+  cabecalho(ws, ult, 'Comparações dos gráficos');
+  const colIni = [];
+  let cc = 3;
+  visoes.forEach((v, i) => { colIni.push(cc); cc += 4 + (i < visoes.length - 1 ? 1 : 0); });
+  ws.mergeCells(5, 1, 7, 1); cabCelula(ws.getCell(5, 1), 'Indicadores');
+  ws.mergeCells(5, 2, 7, 2); cabCelula(ws.getCell(5, 2), 'Unid.');
+  hzs.forEach(hz => {
+    const idx = visoes.map((v, i) => (v.hz === hz ? i : -1)).filter(i => i >= 0);
+    const c0 = colIni[idx[0]], c1 = colIni[idx[idx.length - 1]] + 3;
+    ws.mergeCells(5, c0, 5, c1);
+    cabCelula(ws.getCell(5, c0), hz, C.verde);
+    ws.getCell(5, c0).font = fonte({ bold: true, size: 10, color: { argb: C.branco } });
+  });
+  visoes.forEach((v, i) => {
+    ws.mergeCells(6, colIni[i], 6, colIni[i] + 3);
+    cabCelula(ws.getCell(6, colIni[i]), v.nome);
+    [v.base, v.atual, 'Δ', '%'].forEach((t, k) => cabCelula(ws.getCell(7, colIni[i] + k), t));
+  });
+  ws.getRow(5).height = 20; ws.getRow(6).height = 18; ws.getRow(7).height = 18;
+  let r = 8;
+  [...new Set(G.map(g => g.produto))].forEach(prod => {
+    for (let c = 1; c <= ult; c++) ws.getCell(r, c).fill = fill(C.cinza);
+    Object.assign(ws.getCell(r, 1), { value: prod, font: fonte({ bold: true, italic: true, size: 10 }) });
+    r++;
+    G.filter(g => g.produto === prod).forEach(g => {
+      Object.assign(ws.getCell(r, 1), { value: (g.total ? '' : '   ') + g.titulo, font: fonte({ bold: g.total }) });
+      Object.assign(ws.getCell(r, 2), { value: g.unidade, font: fonte({ color: { argb: C.suave } }), alignment: { horizontal: 'center' } });
+      visoes.forEach((v, i) => {
+        const c0 = colIni[i], vb = valorDe(g, v.base), va = valorDe(g, v.atual), L = n => ws.getColumn(n).letter;
+        if (vb == null || va == null) {
+          [0, 1, 2, 3].forEach(k => Object.assign(ws.getCell(r, c0 + k), { value: '—', font: fonte({ color: { argb: C.ponto } }), alignment: { horizontal: 'center' } }));
+          return;
+        }
+        ws.getCell(r, c0).value = vb;
+        ws.getCell(r, c0 + 1).value = va;
+        ws.getCell(r, c0 + 2).value = { formula: `${L(c0 + 1)}${r}-${L(c0)}${r}`, result: va - vb };
+        ws.getCell(r, c0 + 3).value = { formula: `IFERROR(${L(c0 + 1)}${r}/${L(c0)}${r},"—")`, result: vb ? va / vb : '—' };
+        [num(g.dec), num(g.dec), delta(g.dec), PCT].forEach((f, k) => Object.assign(ws.getCell(r, c0 + k), {
+          numFmt: f, font: fonte({ bold: g.total, color: { argb: k === 0 ? C.suave : C.texto } }), alignment: { horizontal: 'right' } }));
+      });
+      for (let c = 1; c <= ult; c++) ws.getCell(r, c).border = pontilhada;
+      r++;
+    });
+  });
+  visoes.forEach((v, i) => { const L = ws.getColumn(colIni[i] + 3).letter; corPct(ws, `${L}8:${L}${Math.max(8, r - 1)}`); });
+  legenda(ws, r + 1, ult);
+  pagina(ws, false, '1:7');
+  ws.views = [{ state: 'frozen', xSplit: 2, ySplit: 7, showGridLines: false }];
+
+  // ── Aba 2: Gráficos (cada gráfico como tabela, barras nas cores do gráfico) ──
+  const wg = wb.addWorksheet('Gráficos', { properties: { tabColor: { argb: C.verde } } });
+  wg.columns = [13, 11, 12, 32, 13, 12, 2, 18, 12].map(width => ({ width }));
+  cabecalho(wg, 9, 'Gráficos como tabela (mesma ordem e cores da tela)');
+  let lg = 5;
+  G.forEach(g => {
+    wg.mergeCells(lg, 1, lg, 9);
+    for (let c = 1; c <= 9; c++) wg.getCell(lg, c).fill = fill(C.cinza);
+    Object.assign(wg.getCell(lg, 1), { value: `${g.titulo}${g.unidade ? ` (${g.unidade})` : ''}`, font: fonte({ size: 10, bold: true, italic: true }), alignment: { vertical: 'middle' } });
+    wg.getRow(lg).height = 20;
+    lg++;
+    ['Coluna', 'Tipo', 'Valor', '', 'vs Budget/Plan', '%', '', 'vs ano anterior', '%'].forEach((h, k) => cabCelula(wg.getCell(lg, k + 1), h));
+    lg++;
+    const ini = lg, max = Math.max(0, ...g.linhas.map(l => l.v || 0));
+    g.linhas.forEach(l => {
+      const t = partesDaColuna(l.col);
+      Object.assign(wg.getCell(lg, 1), { value: l.col, font: fonte({ bold: true }) });
+      Object.assign(wg.getCell(lg, 2), { value: EXCEL_SERIE[t.letra] || '', font: fonte({ color: { argb: C.suave } }) });
+      Object.assign(wg.getCell(lg, 3), { value: l.v, numFmt: num(g.dec), font: fonte(), alignment: { horizontal: 'right', indent: 1 } });
+      Object.assign(wg.getCell(lg, 4), { value: { formula: `C${lg}`, result: l.v }, numFmt: ';;;' });
+      if (max > 0) wg.addConditionalFormatting({ ref: `D${lg}`, rules: [{ type: 'dataBar', gradient: false, showValue: false, border: false,
+        cfvo: [{ type: 'num', value: 0 }, { type: 'num', value: max }], color: { argb: argb(l.cor) } }] });
+      [['plano', 5], ['ano', 8]].forEach(([tipo, cb]) => {
+        const cp = g.comps.find(x => x.atual === l.col && x.tipo === tipo);
+        const ib = cp ? g.linhas.findIndex(x => x.col === cp.base) : -1;
+        if (ib < 0) return;
+        Object.assign(wg.getCell(lg, cb), { value: cp.base, font: fonte({ color: { argb: C.suave } }), alignment: { horizontal: 'right' } });
+        const vb = g.linhas[ib].v;
+        Object.assign(wg.getCell(lg, cb + 1), { value: { formula: `IFERROR(C${lg}/C${ini + ib},"—")`, result: vb ? l.v / vb : '—' }, numFmt: PCT, font: fonte(), alignment: { horizontal: 'right' } });
+        corPct(wg, wg.getCell(lg, cb + 1).address);
+      });
+      for (let c = 1; c <= 9; c++) wg.getCell(lg, c).border = pontilhada;
+      lg++;
+    });
+    lg += 2;
+  });
+  legenda(wg, lg, 9);
+  pagina(wg, true);
+  wg.views = [{ showGridLines: false }];
+
+  // ── Aba 3: Dados (tabela do Excel para filtros e tabela dinâmica) ──
+  const wd = wb.addWorksheet('Dados', { properties: { tabColor: { argb: C.suave } } });
+  const linhas = [];
+  G.forEach(g => g.linhas.forEach(l => {
+    const t = partesDaColuna(l.col);
+    const vs = tipo => {
+      const cp = g.comps.find(x => x.atual === l.col && x.tipo === tipo), vb = cp ? valorDe(g, cp.base) : null;
+      return cp && vb ? [cp.base, l.v / vb] : [null, null];
+    };
+    linhas.push([g.titulo, g.produto, g.site, t.periodo === 'ANO' ? 'Ano' : t.periodo === 'YTD' ? 'YTD' : /^Q\d$/i.test(t.periodo) ? 'Trimestre' : /^H\d$/i.test(t.periodo) ? 'Semestre' : 'Mês', t.periodo, t.ano, EXCEL_SERIE[t.letra] || t.letra,
+      l.col, l.v, g.unidade, ...vs('plano'), ...vs('ano')]);
+  }));
+  wd.addTable({ name: 'DadosDashboard', ref: 'A5', headerRow: true, style: { theme: 'TableStyleLight1', showRowStripes: false },
+    columns: ['Gráfico', 'Produto', 'Site', 'Horizonte', 'Período', 'Ano', 'Tipo', 'Coluna', 'Valor', 'Unidade', 'vs Budget/Plan', '% vs Budget/Plan', 'vs ano anterior', '% vs ano anterior'].map(name => ({ name, filterButton: true })),
+    rows: linhas });
+  wd.columns = [36, 18, 14, 12, 9, 8, 11, 11, 12, 9, 15, 17, 16, 18].map(width => ({ width }));
+  cabecalho(wd, 14, 'Base para análise (filtros e tabela dinâmica)');
+  for (let c = 1; c <= 14; c++) cabCelula(wd.getCell(5, c), wd.getCell(5, c).value);
+  wd.getRow(5).height = 30;
+  for (let i = 6; i < 6 + linhas.length; i++) {
+    for (let c = 1; c <= 14; c++) Object.assign(wd.getCell(i, c), { font: fonte(), border: pontilhada });
+    wd.getCell(i, 9).numFmt = '#,##0.0##';
+    wd.getCell(i, 12).numFmt = wd.getCell(i, 14).numFmt = '0.0%';
+  }
+  pagina(wd, false, '5:5');
+  wd.views = [{ state: 'frozen', ySplit: 5, showGridLines: false }];
+  return wb;
+}
+
 async function salvarDashboardNoBanco() {
   const d = dash.atual;
   if (!dashPendente(d) || dash.gravando) return;
@@ -6876,6 +7177,7 @@ function initDashboards() {
   $qe('dashSalvar').addEventListener('click', salvarDashboardNoBanco);
   $qe('dashDesfazer').addEventListener('click', desfazerAlteracoesDash);
   iniciarTelaCheia();
+  $qe('dashExcel').addEventListener('click', baixarExcelDashboard);
   renderDash();
   // Nenhum dashboard abre sozinho: a lista fica pronta para o usuário escolher ou criar
   carregarDashboards().then(renderDash);

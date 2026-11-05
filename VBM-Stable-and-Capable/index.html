@@ -6,8 +6,10 @@
   Gera os PDFs de estabilidade/capabilidade (SPC) por Business Unit para o
   período escolhido. A API (portal.js + stable-capable-api.js) consulta o
   banco, roda o gerador Python e salva os arquivos no Azure Blob.
-  Visual: topo, fundo, engrenagem (tema 'vdt-theme' / idioma 'vdt-lang')
-  e usuário iguais às outras aplicações do Portal.
+  Visual: barra superior e Configurações da skill setup-dashboards
+  (.claude/skills/setup-dashboards — tema/idioma/formato numérico em
+  window.VBMSetup, chaves vdt-theme/vdt-lang/vdt-num) e corpo no padrão do
+  VBM Performance Hub (COO) / Kaizen: página branca, painéis cinza, títulos em itálico.
   ═══════════════════════════════════════════════════════════════════
 -->
 <head>
@@ -15,190 +17,239 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>VBM Stable &amp; Capable</title>
 <link rel="stylesheet" href="assets/css/poppins.css"/>
-<script>try { document.documentElement.setAttribute('data-bg', localStorage.getItem('vdt-theme') === 'dark' ? 'dark' : 'light'); } catch (e) { document.documentElement.setAttribute('data-bg', 'light'); }</script>
+<script>(function () { var t = 'light'; try { t = localStorage.getItem('vdt-theme') === 'dark' ? 'dark' : 'light'; } catch (e) {} document.documentElement.setAttribute('data-bg', t); document.documentElement.setAttribute('data-theme', t); })();</script>
 <style>
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
 :root {
-  --vbm-blue: #3cb5e5;
-  --vbm-blue-light: #7dd3f0;
-  --vbm-blue-dark: #0d2640;
-  --vbm-dark: #0a1421;
-  --vbm-mid: #6b7c93;
-  --vbm-white: #f4f7fb;
-  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --qtr-grad: linear-gradient(135deg, rgba(4,21,35,.78) 0%, rgba(8,45,79,.66) 60%, rgba(13,61,107,.60) 100%);
-  --qtr-base: #02101c;
-  --qtr-bg-padrao:
-    radial-gradient(1100px 620px at 8% -8%, rgba(60,181,229,.16), transparent 62%),
-    radial-gradient(900px 560px at 104% 108%, rgba(26,139,191,.14), transparent 60%),
-    linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%);
-
-  /* Tokens da tela (escuro) */
-  --texto: #f4f7fb;
-  --texto-suave: rgba(244,247,251,.68);
-  --texto-fraco: rgba(244,247,251,.45);
-  --painel: rgba(255,255,255,.06);
-  --painel-borda: rgba(255,255,255,.11);
-  --painel-sombra: 0 10px 30px rgba(0,0,0,.25);
-  --linha: rgba(255,255,255,.09);
-  --campo: rgba(255,255,255,.06);
-  --campo-borda: rgba(255,255,255,.16);
-  --chip: rgba(255,255,255,.05);
-  --chip-borda: rgba(255,255,255,.14);
-  --primario: #3CB5E5;
-  --primario-hover: #5cc6ee;
-  --primario-texto: #02101c;
-  --acento: #7DD3F0;
-  --barra-fundo: rgba(255,255,255,.08);
-  --ok: #34C3B8;      --ok-bg: rgba(52,195,184,.14);
-  --erro: #F87171;    --erro-bg: rgba(248,113,113,.14);
-  --alerta: #FBBF24;  --alerta-bg: rgba(251,191,36,.14);
-  --ativo: #7DD3F0;   --ativo-bg: rgba(60,181,229,.16);
-  --neutro: #B0B5BA;  --neutro-bg: rgba(176,181,186,.14);
-  --foco: #7DD3F0;
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-html[data-bg="light"] {
-  --qtr-base: #eef2f7;
-  --qtr-bg-padrao:
-    radial-gradient(1100px 620px at 8% -8%, rgba(60,181,229,.14), transparent 62%),
-    radial-gradient(900px 560px at 104% 108%, rgba(26,139,191,.10), transparent 60%),
-    linear-gradient(135deg, #f5f8fc 0%, #edf2f8 55%, #e2eaf3 100%);
-  --texto: #0f1d2e;
-  --texto-suave: #4b5b70;
-  --texto-fraco: #8493a6;
-  --painel: rgba(255,255,255,.86);
-  --painel-borda: rgba(13,38,64,.08);
-  --painel-sombra: 0 10px 30px rgba(15,35,60,.07);
-  --linha: rgba(13,38,64,.08);
-  --campo: #fff;
-  --campo-borda: #dfe5ec;
-  --chip: #fff;
-  --chip-borda: #dfe5ec;
-  --primario: #0B6E99;
-  --primario-hover: #095B7F;
-  --primario-texto: #fff;
-  --acento: #1E8FC4;
-  --barra-fundo: #e8eef4;
-  --ok: #007E7A;      --ok-bg: rgba(0,126,122,.10);
-  --erro: #B91C1C;    --erro-bg: rgba(220,38,38,.09);
-  --alerta: #B45309;  --alerta-bg: rgba(245,158,11,.12);
-  --ativo: #0B6E99;   --ativo-bg: rgba(11,110,153,.10);
-  --neutro: #5B5E61;  --neutro-bg: rgba(116,118,120,.12);
-  --foco: #0B6E99;
-}
-html[data-bg="light"] .topnav { background: var(--qtr-grad), #02101c; }
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { min-height: 100%; }
-body {
-  font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif; font-size: 14px;
-  color: var(--texto); background: var(--qtr-bg-padrao), var(--qtr-base); background-attachment: fixed;
-  -webkit-font-smoothing: antialiased;
-}
-:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
-button { font: inherit; color: inherit; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
-/* ═══ TOPNAV — igual às outras aplicações do Hub ═══ */
 .topnav {
-  position: sticky; top: 0; z-index: 100; height: 64px;
-  background: var(--qtr-grad); display: flex; align-items: center; padding: 0 2rem;
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
   border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
 }
-@supports (backdrop-filter: blur(1px)) { .topnav { backdrop-filter: blur(4px) saturate(120%); -webkit-backdrop-filter: blur(4px) saturate(120%); } }
-.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; margin-right: 1.5rem; }
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
 .topnav-logo svg { height: 26px; width: auto; display: block; }
 .topnav-brand {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  display: flex; align-items: center; gap: .32em; margin: 0;
-  font-size: 1.02rem; line-height: 1; color: #fff; white-space: nowrap; pointer-events: none;
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
 }
-.topnav-brand span { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
-.topnav-brand::after { content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px; background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0)); }
-.topnav-actions { display: flex; align-items: center; gap: .5rem; margin-left: auto; position: relative; z-index: 1; }
-.settings-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; transition: background .25s, transform .35s var(--ease-spring); }
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
 .settings-btn:hover { background: rgba(255,255,255,.12); }
 .settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
-.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
 .topnav-user[hidden] { display: none; }
 .topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
-.topnav-user-name { font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
-.topnav-user-role { font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
-.topnav-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf); border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: #fff; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
 
-/* ═══ Painel de Configurações — padrão Kaizen ═══ */
-.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--ease-out); }
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
 .settings-backdrop.open { opacity: 1; pointer-events: auto; }
-.settings-panel { position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff; box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column; transform: translateX(100%); transition: transform .38s var(--ease-out); color: #1a1a1a; }
-.settings-panel.open { transform: translateX(0); }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
 .settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
-.settings-panel-head h2 { font-weight: 700; font-size: .92rem; }
-.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: #888; cursor: pointer; }
-.settings-close:hover { background: var(--vbm-blue); color: #fff; }
-.settings-panel-body { padding: 20px; display: flex; flex-direction: column; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
 .settings-section { display: flex; flex-direction: column; gap: 9px; }
-.settings-section-title { font-weight: 600; font-size: 11px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
 .settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
-.theme-toggle { display: flex; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
-.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; color: #888; border: none; background: transparent; cursor: pointer; font-weight: 600; }
-.theme-toggle-btn.active { background: var(--vbm-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
-.settings-select { width: 100%; appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem .75rem; font: 500 11.5px 'Poppins', sans-serif; color: #1a1a1a; cursor: pointer; }
-[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); color: #fff; }
-@supports (backdrop-filter: blur(1px)) { [data-bg="dark"] .settings-panel { background: rgba(255,255,255,.07); backdrop-filter: blur(16px) saturate(140%); } }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
 [data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
-[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: #f4f7fb; }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
 [data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
 [data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
 [data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
 [data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
-[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: #fff; }
-[data-bg="dark"] .settings-select option { background: #0d2640; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
 
-/* ═══ Página ═══ */
-.pagina { max-width: 1240px; margin: 0 auto; padding: 2rem 2rem 3rem; }
-.cabecalho { margin-bottom: 1.5rem; }
-.rotulo { font-size: .64rem; letter-spacing: .28em; text-transform: uppercase; color: var(--acento); margin-bottom: .45rem; }
-.cabecalho h1 { font-weight: 300; font-style: italic; font-size: clamp(1.6rem, 2.4vw, 2.1rem); line-height: 1.1; letter-spacing: -.01em; }
-.cabecalho h1 b { font-weight: 600; }
-.cabecalho p { margin-top: .45rem; color: var(--texto-suave); font-size: .86rem; max-width: 70ch; line-height: 1.5; }
-
-.grade { display: grid; grid-template-columns: minmax(330px, 410px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-.painel {
-  background: var(--painel); border: 1px solid var(--painel-borda); border-radius: 14px;
-  box-shadow: var(--painel-sombra); padding: 1.35rem 1.4rem;
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
 }
-@supports (backdrop-filter: blur(1px)) { [data-bg="dark"] .painel { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); } }
-.painel-titulo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; }
-.painel-titulo h2 { font-size: .98rem; font-weight: 600; letter-spacing: -.005em; }
-.painel-titulo .dica { font-size: .72rem; color: var(--texto-fraco); }
+/* ═══ fim Setup Dashboards ═══ */
+
+/* ═══ Tokens do Stable & Capable — padrão VBM Performance Hub (COO) / Kaizen ═══
+   Página branca, painéis cinza arredondados sem sombra, títulos em itálico na cor de destaque,
+   rótulos de filtro em itálico e controles em pílula. Tema escuro em :root[data-theme="dark"]
+   (o setup-dashboards.js grava data-theme e data-bg no <html>). */
+:root {
+  --page: #FFFFFF;
+  --text: #1F2937;
+  --text-soft: #6B7280;
+  --text-faint: #9CA3AF;
+  --line: #E5E7EB;
+  --accent: #1E8FC4;          /* títulos grandes (uso só em ≥ 24 px) */
+  --accent-strong: #0B6E99;
+  --panel: #F3F4F5;
+  --ctl-bg: #FFFFFF;
+  --ctl-border: rgba(13,38,64,.16);
+  --ctl-text: #1F2937;
+  --ctl-on-bg: #0B6E99;
+  --ctl-on-hover: #095B7F;
+  --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --good: #007E7A;  --good-bg: rgba(0,126,122,.10);
+  --bad: #B91C1C;   --bad-bg: rgba(220,38,38,.09);
+  --warn: #B45309;  --warn-bg: rgba(245,158,11,.12);
+  --flat: #5B5E61;  --flat-bg: rgba(116,118,120,.12);
+  --track: #E3E6EA;
+  --log-bg: #0F1D2E;
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --vbm-blue: #3cb5e5;
+
+  /* Nomes usados pelas telas (apontam para os tokens acima) */
+  --texto: var(--text); --texto-suave: var(--text-soft); --texto-fraco: var(--text-faint);
+  --painel: var(--panel); --linha: var(--line);
+  --campo: var(--ctl-bg); --campo-borda: var(--ctl-border); --chip: var(--ctl-bg); --chip-borda: var(--ctl-border);
+  --primario: var(--ctl-on-bg); --primario-hover: var(--ctl-on-hover); --primario-texto: var(--ctl-on-text);
+  --acento: var(--accent-strong); --barra-fundo: var(--track);
+  --ok: var(--good); --ok-bg: var(--good-bg); --erro: var(--bad); --erro-bg: var(--bad-bg);
+  --alerta: var(--warn); --alerta-bg: var(--warn-bg); --ativo: var(--ctl-on-bg); --ativo-bg: rgba(11,110,153,.10);
+  --neutro: var(--flat); --neutro-bg: var(--flat-bg); --foco: var(--focus);
+}
+:root[data-theme="dark"] {
+  --page: #06192B;
+  --text: #E8EEF5;
+  --text-soft: rgba(232,238,245,.66);
+  --text-faint: rgba(232,238,245,.42);
+  --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE;
+  --accent-strong: #7DD3F0;
+  --panel: #0C2438;
+  --ctl-bg: rgba(255,255,255,.05);
+  --ctl-border: rgba(255,255,255,.16);
+  --ctl-text: #E5EDF5;
+  --ctl-on-bg: #3CB5E5;
+  --ctl-on-hover: #5CC6EE;
+  --ctl-on-text: #02101c;
+  --focus: #7DD3F0;
+  --good: #34C3B8;  --good-bg: rgba(52,195,184,.14);
+  --bad: #F87171;   --bad-bg: rgba(248,113,113,.14);
+  --warn: #FBBF24;  --warn-bg: rgba(251,191,36,.14);
+  --flat: #B0B5BA;  --flat-bg: rgba(176,181,186,.14);
+  --track: rgba(255,255,255,.10);
+  --log-bg: rgba(2,10,20,.6);
+  --ativo-bg: rgba(60,181,229,.16);
+  color-scheme: dark;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  font-family: var(--font-display); font-size: 14px;
+  color: var(--text); background: var(--page);
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button { font: inherit; color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ═══ Página: cabeçalho igual ao do COO (título em itálico à esquerda, opções à direita, linha embaixo) ═══ */
+.pagina { max-width: 1440px; margin: 0 auto; padding: 28px 32px 48px; }
+.cabecalho { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.cabecalho-titulo { min-width: 0; }
+.cabecalho h2 { margin: 0; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
+.intro { margin: 12px 0 24px; max-width: 90ch; font: italic 400 .8rem/1.55 var(--font-display); color: var(--text-soft); }
+.filtro { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filtro-rotulo { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+
+.grade { display: grid; grid-template-columns: minmax(330px, 410px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.painel { background: var(--panel); border-radius: 20px; padding: 18px 22px 20px; }
+.painel-titulo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 14px; }
+.painel-titulo h2 { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--text); }
+.painel-titulo .dica { font: italic 400 .7rem var(--font-display); color: var(--text-faint); }
 
 .campo-grupo { margin-bottom: 1.2rem; }
-.campo-rotulo { display: flex; align-items: baseline; justify-content: space-between; font-size: .72rem; font-weight: 600; color: var(--texto-suave); margin-bottom: .45rem; letter-spacing: .01em; }
-.campo-rotulo button { border: none; background: none; color: var(--acento); font-size: .7rem; font-weight: 600; cursor: pointer; padding: 0; }
+.campo-rotulo { display: flex; align-items: baseline; justify-content: space-between; font: italic 400 .78rem var(--font-display); color: var(--texto-suave); margin-bottom: .45rem; }
+.campo-rotulo button { border: none; background: none; color: var(--acento); font: normal 600 .7rem var(--font-ui); cursor: pointer; padding: 0; }
 .datas { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
-.data label { display: block; font-size: .66rem; color: var(--texto-fraco); margin-bottom: .25rem; }
+.data label { display: block; font: italic 400 .74rem var(--font-display); color: var(--texto-suave); margin-bottom: 5px; }
 .data input {
-  width: 100%; padding: .55rem .7rem; border-radius: 9px; border: 1.5px solid var(--campo-borda);
-  background: var(--campo); color: var(--texto); font: 500 .84rem 'Poppins', sans-serif; color-scheme: light;
+  width: 100%; min-height: 34px; padding: .45rem .7rem; border-radius: 9px; border: 1px solid var(--campo-borda);
+  background: var(--campo); color: var(--ctl-text); font: 500 .8rem var(--font-ui); color-scheme: light;
   transition: border-color .2s, box-shadow .2s;
 }
-[data-bg="dark"] .data input { color-scheme: dark; }
-.data input:focus { outline: none; border-color: var(--vbm-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.18); }
+:root[data-theme="dark"] .data input { color-scheme: dark; }
+.data input:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primario) 18%, transparent); }
 .data input[aria-invalid="true"] { border-color: var(--erro); }
 
 .atalhos { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
 .atalho, .chip {
   border: 1px solid var(--chip-borda); background: var(--chip); color: var(--texto-suave);
-  border-radius: 100px; padding: .32rem .75rem; font-size: .7rem; font-weight: 500; cursor: pointer;
+  border-radius: 999px; padding: .32rem .8rem; font: 500 .72rem var(--font-ui); cursor: pointer;
   transition: background .2s, color .2s, border-color .2s;
 }
-.atalho:hover, .chip:hover { border-color: var(--vbm-blue); color: var(--texto); }
+.atalho:hover, .chip:hover { border-color: var(--primario); color: var(--primario); }
 .resumo-periodo { margin-top: .7rem; font-size: .74rem; color: var(--texto-suave); line-height: 1.5; }
 .resumo-periodo strong { color: var(--texto); font-weight: 600; }
 .resumo-periodo.invalido { color: var(--erro); }
 
 .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
-.chip { display: inline-flex; align-items: center; gap: .4rem; padding: .42rem .8rem; font-size: .76rem; }
+.chip { display: inline-flex; align-items: center; gap: .4rem; padding: .38rem .8rem; font-size: .74rem; }
 .chip .marca { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--campo-borda); display: inline-flex; align-items: center; justify-content: center; transition: background .2s, border-color .2s; }
 .chip .marca svg { width: 9px; height: 9px; opacity: 0; }
 .chip[aria-pressed="true"] { background: var(--ativo-bg); border-color: var(--primario); color: var(--texto); }
@@ -208,15 +259,15 @@ button { font: inherit; color: inherit; }
 
 .btn-primario {
   width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
-  padding: .78rem 1rem; border: none; border-radius: 10px; cursor: pointer;
-  background: var(--primario); color: var(--primario-texto); font-weight: 600; font-size: .86rem; letter-spacing: .01em;
-  box-shadow: 0 8px 20px rgba(11,110,153,.25); transition: background .2s, transform .15s, box-shadow .2s;
+  min-height: 40px; padding: .62rem 1rem; border: none; border-radius: 9px; cursor: pointer;
+  background: var(--primario); color: var(--primario-texto); font: 600 .82rem var(--font-ui); letter-spacing: .01em;
+  transition: background .2s, transform .15s;
 }
 .btn-primario:hover:not(:disabled) { background: var(--primario-hover); }
 .btn-primario:active:not(:disabled) { transform: translateY(1px); }
-.btn-primario:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.btn-primario:disabled { opacity: .45; cursor: not-allowed; }
 .btn-primario svg { width: 15px; height: 15px; }
-.rodape-form { margin-top: .8rem; font-size: .68rem; color: var(--texto-fraco); line-height: 1.5; display: flex; gap: .4rem; }
+.rodape-form { margin-top: .8rem; font: italic 400 .7rem/1.5 var(--font-display); color: var(--texto-fraco); display: flex; gap: .4rem; }
 .rodape-form svg { width: 12px; height: 12px; flex-shrink: 0; margin-top: 2px; }
 .mensagem { margin-top: .8rem; font-size: .76rem; padding: .6rem .75rem; border-radius: 9px; background: var(--erro-bg); color: var(--erro); }
 .mensagem[hidden] { display: none; }
@@ -224,13 +275,13 @@ button { font: inherit; color: inherit; }
 /* ── Execução ── */
 .vazio { text-align: center; padding: 2.4rem 1rem; color: var(--texto-suave); }
 .vazio svg { width: 40px; height: 40px; color: var(--acento); opacity: .7; margin-bottom: .8rem; }
-.vazio h3 { font-size: .92rem; font-weight: 600; color: var(--texto); margin-bottom: .3rem; }
+.vazio h3 { font: italic 400 1rem var(--font-display); color: var(--texto); margin-bottom: .3rem; }
 .vazio p { font-size: .78rem; line-height: 1.5; max-width: 42ch; margin: 0 auto; }
 
 .exec-meta { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-size: .75rem; color: var(--texto-suave); margin-bottom: 1.1rem; }
 .exec-meta strong { color: var(--texto); font-weight: 600; }
 .etapas { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-bottom: 1.2rem; }
-.etapa { position: relative; padding: .6rem .7rem; border-radius: 10px; border: 1px solid var(--linha); font-size: .72rem; color: var(--texto-fraco); display: flex; align-items: center; gap: .5rem; }
+.etapa { position: relative; padding: .6rem .7rem; border-radius: 10px; border: 1px solid var(--linha); background: var(--ctl-bg); font-size: .72rem; color: var(--texto-fraco); display: flex; align-items: center; gap: .5rem; }
 .etapa .bola { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: .62rem; font-weight: 700; flex-shrink: 0; }
 .etapa.feita { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
 .etapa.feita .bola { background: var(--ok); border-color: var(--ok); color: #fff; }
@@ -253,10 +304,10 @@ button { font: inherit; color: inherit; }
 
 .exec-acoes { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
 .btn-sec {
-  display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .85rem; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--chip-borda); background: var(--chip); color: var(--texto-suave); font-size: .72rem; font-weight: 600; text-decoration: none;
+  display: inline-flex; align-items: center; gap: .4rem; min-height: 32px; padding: .4rem .85rem; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--chip-borda); background: var(--chip); color: var(--ctl-text); font: 500 .74rem var(--font-ui); text-decoration: none;
 }
-.btn-sec:hover { border-color: var(--vbm-blue); color: var(--texto); }
+.btn-sec:hover { border-color: var(--primario); color: var(--primario); }
 .btn-sec.perigo:hover { border-color: var(--erro); color: var(--erro); }
 .btn-sec svg { width: 12px; height: 12px; }
 details.log { margin-top: 1rem; }
@@ -265,7 +316,7 @@ details.log summary::before { content: '▸'; transition: transform .2s; display
 details.log[open] summary::before { transform: rotate(90deg); }
 details.log pre {
   margin-top: .6rem; max-height: 220px; overflow: auto; padding: .75rem .85rem; border-radius: 10px;
-  background: rgba(2,16,28,.88); color: #cfe3f1; font: .68rem/1.55 ui-monospace, 'Cascadia Mono', Consolas, monospace; white-space: pre-wrap; word-break: break-word;
+  background: var(--log-bg); color: #cfe3f1; font: .68rem/1.55 ui-monospace, 'Cascadia Mono', Consolas, monospace; white-space: pre-wrap; word-break: break-word;
 }
 
 /* ── Pills de status ── */
@@ -280,11 +331,11 @@ details.log pre {
 @keyframes pisca { 50% { opacity: .3; } }
 
 /* ── Histórico ── */
-.historico { margin-top: 1.25rem; }
-.tabela-wrap { overflow-x: auto; margin: 0 -1.4rem -1.35rem; }
+.historico { margin-top: 24px; }
+.tabela-wrap { overflow-x: auto; margin: 0 -22px -20px; }
 table { width: 100%; border-collapse: collapse; font-size: .78rem; }
-th { text-align: left; font-size: .64rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-fraco); padding: .55rem 1.4rem; border-bottom: 1px solid var(--linha); white-space: nowrap; }
-td { padding: .8rem 1.4rem; border-bottom: 1px solid var(--linha); vertical-align: top; }
+th { text-align: left; font: italic 400 .74rem var(--font-display); color: var(--texto-suave); padding: .55rem 22px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+td { padding: .8rem 22px; border-bottom: 1px solid var(--linha); vertical-align: top; }
 tr:last-child td { border-bottom: none; }
 td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-top: .1rem; }
 .arquivos { display: flex; flex-wrap: wrap; gap: .3rem; }
@@ -293,11 +344,11 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   font-size: .7rem; font-weight: 500; color: var(--texto); background: var(--chip); border: 1px solid var(--chip-borda);
   transition: border-color .2s, color .2s;
 }
-.arq:hover { border-color: var(--vbm-blue); color: var(--acento); }
+.arq:hover { border-color: var(--primario); color: var(--primario); }
 .arq svg { width: 11px; height: 11px; flex-shrink: 0; }
 .arq.pdf svg { color: #E2574C; }
 .arq.xlsx svg { color: #1D7044; }
-[data-bg="dark"] .arq.xlsx svg { color: #4ADE80; }
+:root[data-theme="dark"] .arq.xlsx svg { color: #4ADE80; }
 .arq.log { color: var(--texto-suave); }
 .historico-vazio { padding: 1.4rem; text-align: center; font-size: .78rem; color: var(--texto-fraco); }
 
@@ -309,22 +360,20 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 
 @media (max-width: 960px) {
   .grade { grid-template-columns: 1fr; }
-  .topnav { padding: 0 1rem; }
-  .topnav-user-role { display: none; }
 }
 @media (max-width: 600px) {
-  .pagina { padding: 1.25rem 1rem 2rem; }
-  .topnav-brand { font-size: .8rem; }
-  .topnav-user-text { display: none; }
+  .pagina { padding: 20px 16px 32px; }
+  .painel { padding: 16px 16px 18px; border-radius: 16px; }
+  .tabela-wrap { margin: 0 -16px -18px; }
   .datas { grid-template-columns: 1fr; }
   .etapas { grid-template-columns: 1fr; }
   .bu-linha { grid-template-columns: 1fr auto; }
   .bu-linha .barra { grid-column: 1 / -1; grid-row: 2; }
   .bu-erro { grid-column: 1 / -1; }
   /* Histórico vira lista de cartões: tabela com 5 colunas não cabe */
-  .tabela-wrap { margin: 0 -1.4rem -1.35rem; overflow: visible; }
+  .tabela-wrap { margin: 0 -16px -18px; overflow: visible; }
   .historico thead { display: none; }
-  .historico tr { display: grid; grid-template-columns: 1fr auto; gap: .35rem .8rem; padding: .9rem 1.4rem; border-bottom: 1px solid var(--linha); }
+  .historico tr { display: grid; grid-template-columns: 1fr auto; gap: .35rem .8rem; padding: .9rem 16px; border-bottom: 1px solid var(--linha); }
   .historico tr:last-child { border-bottom: none; }
   .historico td { padding: 0; border: none; }
   .historico td[data-l="periodo"] { grid-column: 1 / -1; grid-row: 2; }
@@ -333,17 +382,500 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .historico td.historico-vazio { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+
+/* ═══ Navegação entre as opções (Início · Rodar o modelo · Importar dados · Power BI): controle segmentado do COO ═══ */
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg a, .seg button { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 12px; border: 0; border-radius: 7px; background: transparent;
+  color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-decoration: none; white-space: nowrap; cursor: pointer; transition: background .2s, color .2s; }
+.seg a svg { width: 13px; height: 13px; flex-shrink: 0; opacity: .8; }
+.seg a:hover, .seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg a[aria-current="page"], .seg button.active { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.seg a[aria-current="page"] svg { opacity: 1; }
+.vista[hidden] { display: none !important; }
+
+/* Início: as três opções como painéis cinza do Hub */
+.opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.opcao { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-height: 230px; padding: 22px 24px;
+  border-radius: 20px; background: var(--panel); border: 1px solid transparent;
+  color: inherit; text-decoration: none; transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s; }
+.opcao:hover { transform: translateY(-3px); border-color: var(--ctl-on-bg); }
+.opcao .icone { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #3cb5e5, #1a8bbf); }
+.opcao .icone svg { width: 20px; height: 20px; color: #fff; }
+.opcao h2 { margin-top: 4px; font: italic 400 1.4rem/1.15 var(--font-display); color: var(--accent); }
+.opcao p { font-size: .8rem; line-height: 1.55; color: var(--texto-suave); }
+.opcao .acessar { margin-top: auto; font-size: .74rem; font-weight: 600; color: var(--acento); }
+
+/* ═══ Importar dados ═══ */
+.soltar { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem;
+  padding: 1.4rem 1rem; border: 1.5px dashed var(--campo-borda); border-radius: 12px; background: var(--campo); text-align: center;
+  cursor: pointer; transition: border-color .2s, background .2s; }
+.soltar:hover, .soltar.ativo { border-color: var(--primario); background: var(--ativo-bg); }
+.soltar input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.soltar svg { width: 26px; height: 26px; color: var(--acento); }
+.soltar strong { font-size: .8rem; font-weight: 600; }
+.soltar span { font-size: .7rem; color: var(--texto-fraco); }
+.soltar.tem-arquivo strong { color: var(--ok); }
+.selecao { width: 100%; min-height: 34px; padding: .45rem .7rem; border-radius: 9px; border: 1px solid var(--campo-borda); background: var(--campo);
+  color: var(--ctl-text); font: 500 .8rem var(--font-ui); }
+.selecao:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primario) 18%, transparent); }
+:root[data-theme="dark"] .selecao { color-scheme: dark; }
+.link-sutil { color: var(--acento); font-weight: 600; text-decoration: none; }
+.link-sutil:hover { text-decoration: underline; }
+
+.indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin-bottom: 1.1rem; }
+.indicador { padding: .75rem .85rem; border-radius: 12px; background: var(--ctl-bg); border: 1px solid var(--linha); }
+.indicador b { display: block; font-size: 1.25rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.indicador span { font-size: .68rem; color: var(--texto-suave); }
+.indicador.ok b { color: var(--ok); } .indicador.alerta b { color: var(--alerta); } .indicador.ativo b { color: var(--ativo); }
+.avisos { margin: 0 0 1rem; padding: .7rem .85rem; border-radius: 10px; background: var(--alerta-bg); color: var(--alerta); font-size: .74rem; line-height: 1.55; }
+.avisos summary { cursor: pointer; font-weight: 600; }
+.avisos ul { margin: .4rem 0 0 1.1rem; }
+.tabela-campos { max-height: 280px; overflow: auto; background: var(--ctl-bg); border: 1px solid var(--linha); border-radius: 10px; margin-bottom: 1rem; }
+.tabela-campos table { font-size: .72rem; }
+.tabela-campos th { position: sticky; top: 0; background: var(--page); padding: .45rem .7rem; }
+.tabela-campos td { padding: .45rem .7rem; }
+.tabela-campos td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabela-campos tr.falta td { color: var(--alerta); }
+.modos { display: flex; flex-direction: column; gap: .45rem; margin-bottom: 1rem; }
+.modo { display: flex; gap: .6rem; align-items: flex-start; padding: .65rem .8rem; background: var(--ctl-bg); border: 1px solid var(--linha); border-radius: 10px; cursor: pointer; font-size: .76rem; line-height: 1.45; }
+.modo input { margin-top: .2rem; accent-color: var(--primario); }
+.modo:has(input:checked) { border-color: var(--primario); background: var(--ativo-bg); }
+.modo small { display: block; color: var(--texto-suave); font-size: .7rem; }
+.sucesso { margin-top: .8rem; font-size: .78rem; padding: .7rem .85rem; border-radius: 9px; background: var(--ok-bg); color: var(--ok); }
+.acoes-linha { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; }
+.acoes-linha .btn-primario { width: auto; padding: .7rem 1.2rem; }
+
+.bi-vazio { text-align: center; padding: 3.5rem 1rem; color: var(--texto-suave); }
+.bi-vazio svg { width: 44px; height: 44px; color: var(--acento); opacity: .75; margin-bottom: .9rem; }
+.bi-vazio h2 { font-size: 1rem; font-weight: 600; color: var(--texto); margin-bottom: .35rem; }
+.bi-vazio p { font-size: .8rem; max-width: 46ch; margin: 0 auto; line-height: 1.5; }
+
+@media (max-width: 960px) { .opcoes { grid-template-columns: 1fr; gap: 16px; } .opcao { min-height: 0; } .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ═══ Dashboard (aba "Dashboard", ex-"Power BI") — mesmo desenho do Dashboard do VBM Kaizen ═══
+   Hero com foto e caixa de vidro, abas, filtros na lateral com etiquetas, cartões de resumo,
+   cards brancos com sombra, colunas com cota de variação (padrão VBM Quarterly), ranking e
+   tabelas de cabeçalho escuro. Tokens --d-* copiados do dashboard.html do Kaizen, com o par
+   claro/escuro aqui mesmo (o tema do Stable & Capable vem do Setup Dashboards: data-theme).
+   Status/sinais em azuis e cinzas — sem "arco-íris"; vermelho só para ponto fora dos limites. */
+.dsc {
+  --d-surface: #ffffff; --d-solid: #ffffff; --d-surface-alt: #f7f9fc;
+  --d-line: #e8edf3; --d-line-soft: #eef2f6;
+  --d-ink: #0f172a; --d-ink-soft: #5b6676; --d-title: #316866;
+  --d-shadow: 0 10px 30px rgba(15,23,42,.06), 0 1px 3px rgba(15,23,42,.05);
+  --d-track: rgba(13,38,64,.08); --d-pill: #d8f0fa; --d-glass: rgba(246,246,246,.94);
+  --d-stroke: rgba(116,118,120,.38); --d-hair: rgba(204,204,204,.14);
+  --d-up: #007e7a; --d-up-rgb: 0,126,122; --d-down: #b91c1c; --d-down-rgb: 220,38,38; --d-flat: #555555; --d-flat-rgb: 116,118,120;
+  --d-hover: #f2f8fc; --d-sel: #e6f4fb; --d-ease: cubic-bezier(.16,.84,.28,1);
+  --vbm-blue: #3cb5e5; --vbm-blue-dark: #1a8bbf; --vbm-blue-deep: #0d2640; --vbm-blue-light: #7dd3f0; --vbm-border: rgba(60,181,229,.25);
+  --c-serie: #a7b8c6; --c-cl: #1a8bbf; --c-lim: #8a96a6; --c-best: rgba(60,181,229,.11);
+  --c-r1: #b91c1c; --c-r2: #3cb5e5; --c-r3: #0d2640; --c-r4: #8a96a6;
+  --ano-0: #3cb5e5; --ano-1: #1b5e80; --ano-2: #8a96a6; --ano-3: #c3ccd6;
+  display: flex; flex-direction: column; gap: 1.1rem; font-family: 'Poppins', 'Segoe UI', sans-serif; color: var(--d-ink);
+}
+:root[data-theme="dark"] .dsc {
+  --d-surface: rgba(255,255,255,.06); --d-solid: #0f2a40; --d-surface-alt: rgba(255,255,255,.04);
+  --d-line: rgba(255,255,255,.12); --d-line-soft: rgba(255,255,255,.08);
+  --d-ink: #f4f7fb; --d-ink-soft: rgba(244,247,251,.62); --d-title: var(--vbm-blue-light);
+  --d-shadow: 0 4px 24px rgba(0,0,0,.3); --d-track: rgba(255,255,255,.10); --d-pill: rgba(125,211,240,.22); --d-glass: rgba(13,38,64,.94);
+  --d-stroke: rgba(255,255,255,.32); --d-hair: rgba(255,255,255,.06);
+  --d-up: #34d399; --d-up-rgb: 52,211,153; --d-down: #f87171; --d-down-rgb: 248,113,113; --d-flat: rgba(255,255,255,.7); --d-flat-rgb: 200,200,200;
+  --d-hover: rgba(255,255,255,.05); --d-sel: rgba(60,181,229,.16);
+  --c-serie: rgba(255,255,255,.30); --c-cl: #7dd3f0; --c-lim: rgba(232,238,245,.55); --c-best: rgba(60,181,229,.14);
+  --c-r1: #f87171; --c-r2: #3cb5e5; --c-r3: #e8eef5; --c-r4: #9aa6b6;
+  --ano-0: #3cb5e5; --ano-1: #c3ccd6; --ano-2: #6f7d90; --ano-3: #3d4a5c;
+}
+.dsc [hidden] { display: none !important; }
+.dsc .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── Hero (mesma linguagem do Kaizen, fundo VBM) ── */
+.dsc-hero { position: relative; border-radius: 1.25rem; overflow: hidden; padding: 1.6rem 2rem; background-color: #041523;
+  background-image: linear-gradient(90deg, rgba(4,21,35,.85) 0%, rgba(4,21,35,.4) 60%, rgba(4,21,35,.6) 100%), url('assets/images/Fundo_VBM_2400x1145.webp');
+  background-size: cover; background-position: center; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; }
+.dsc-hero-orb { position: absolute; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(60,181,229,.18) 0%, transparent 65%); top: -100px; right: -60px; filter: blur(50px); pointer-events: none; }
+.dsc-hero-texto { position: relative; flex: 1 1 20rem; min-width: 0; }
+.dsc-hero-ante { font-size: .6rem; letter-spacing: .25em; text-transform: uppercase; color: var(--vbm-blue-light); margin-bottom: .5rem; }
+.dsc-hero-titulo { margin: 0 0 .45rem; font-weight: 700; font-style: italic; font-size: clamp(1.6rem, 3.2vw, 2.6rem); color: #fff; line-height: .95; letter-spacing: -.01em; text-transform: uppercase; }
+.dsc-hero-sub { font-weight: 300; font-size: clamp(.82rem, 1.5vw, 1.05rem); letter-spacing: .08em; color: rgba(255,255,255,.8); margin-bottom: .45rem; text-transform: uppercase; }
+.dsc-hero-desc { font-size: .78rem; color: rgba(255,255,255,.62); line-height: 1.6; max-width: 42rem; margin: 0; }
+.dsc-hero-box { position: relative; display: flex; flex-direction: column; gap: .7rem; min-width: 260px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; padding: .9rem 1.1rem; box-shadow: 0 8px 32px rgba(0,0,0,.18); color: #fff; }
+@supports (backdrop-filter: blur(1px)) { .dsc-hero-box { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } }
+.dsc-base { display: grid; grid-template-columns: auto auto; gap: .2rem 1.2rem; font-size: .74rem; color: rgba(255,255,255,.72); }
+.dsc-base b { color: #fff; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.dsc-atualizado { font-size: .66rem; color: rgba(255,255,255,.55); }
+.dsc-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+.dsc-btn-hero { display: inline-flex; align-items: center; gap: .45rem; height: 38px; padding: 0 .95rem; border-radius: .55rem; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; transition: background .2s, border-color .2s; }
+.dsc-btn-hero svg { width: 14px; height: 14px; flex: none; }
+.dsc-btn-hero:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.4); }
+.dsc-btn-hero.primario { background: var(--vbm-blue); border-color: var(--vbm-blue); color: #04263a; font-weight: 600; }
+.dsc-btn-hero.primario:hover { background: var(--vbm-blue-light); border-color: var(--vbm-blue-light); }
+.dsc-btn-hero:disabled { opacity: .55; cursor: not-allowed; }
+.dsc-contador { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #04263a; color: #fff; font-size: .66rem; font-weight: 700; display: inline-grid; place-items: center; }
+
+/* ── Abas + filtros ativos ── */
+.dsc-barra { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; }
+.dsc-abas { display: flex; gap: 4px; padding: 4px; border-radius: .75rem; background: var(--d-surface); border: 1px solid var(--d-line); box-shadow: var(--d-shadow); overflow-x: auto; max-width: 100%; }
+.dsc-aba { border: 0; background: transparent; color: var(--d-ink-soft); padding: .55rem 1rem; border-radius: .55rem; font: 500 .76rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; min-height: 38px; display: inline-flex; align-items: center; gap: .45rem; }
+.dsc-aba svg { width: 13px; height: 13px; flex: none; }
+.dsc-aba:hover { color: var(--d-ink); }
+.dsc-aba[aria-selected="true"] { background: var(--vbm-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.dsc-chips { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+.dsc-chip { display: inline-flex; align-items: center; gap: .45rem; max-width: 100%; padding: .32rem .7rem; border-radius: 999px; background: var(--d-surface); border: 1px solid var(--vbm-border); color: var(--d-ink); font: 400 .7rem 'Poppins', sans-serif; cursor: pointer; min-height: 32px; }
+.dsc-chip b { font-weight: 600; }
+.dsc-chip .v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+.dsc-chip svg { width: 9px; height: 9px; opacity: .6; flex: none; }
+.dsc-chip:hover { border-color: var(--vbm-blue); }
+
+/* ── Cartões de resumo ── */
+.dsc-tiles { display: grid; gap: .8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dsc-tile { position: relative; overflow: hidden; text-align: left; color: var(--d-ink); font-family: inherit; background: var(--d-surface); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1rem 1.15rem; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: .6rem; }
+.t-head { display: flex; align-items: center; gap: .5rem; font-size: .76rem; color: var(--d-ink-soft); }
+.t-head i.q { width: 9px; height: 9px; border-radius: 3px; background: var(--c); flex: none; }
+.t-num { font-size: clamp(1.6rem, 2.4vw, 2.15rem); font-weight: 600; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.t-num small { font-size: .42em; font-weight: 400; color: var(--d-ink-soft); letter-spacing: 0; margin-left: .3em; }
+.t-foot { display: flex; align-items: center; gap: .6rem; }
+.t-bar { flex: 1; height: 5px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
+.t-bar span { display: block; height: 100%; width: var(--w); min-width: 4px; background: var(--c, var(--vbm-blue)); border-radius: 999px; transform-origin: left; animation: dscGrowX .9s var(--d-ease) both; }
+.t-pct { font-size: .72rem; color: var(--d-ink-soft); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+.t-leg { font-size: .66rem; color: var(--d-ink-soft); margin-top: -.3rem; }
+@keyframes dscGrowX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dsc-tile-total { background-image: linear-gradient(140deg, rgba(60,181,229,.16) 0%, rgba(60,181,229,0) 60%); }
+.dsc-tile-total::before { content: ''; position: absolute; right: 40px; top: -60px; height: 280px; border-left: 1px solid rgba(60,181,229,.35); transform: rotate(32deg); pointer-events: none; }
+.tt-corpo { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex: 1; }
+.tt-num { font-size: clamp(2.2rem, 3.6vw, 3.1rem); font-weight: 300; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.tt-sub { margin-top: .45rem; font-size: .74rem; color: var(--d-ink-soft); display: flex; flex-wrap: wrap; gap: .25rem .5rem; align-items: center; }
+.dsc-delta { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: 0 2px 12px rgba(15,23,42,.08), inset 0 0 0 1px rgba(15,23,42,.05); color: var(--ink-d); font-size: .68rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dsc-delta svg { width: 8px; height: 8px; }
+.dsc-esqueleto { min-height: 132px; border-radius: 1rem; background: linear-gradient(90deg, var(--d-surface) 0%, var(--d-surface-alt) 50%, var(--d-surface) 100%); background-size: 200% 100%; border: 1px solid var(--d-line); animation: dscShimmer 1.4s linear infinite; }
+@keyframes dscShimmer { to { background-position: -200% 0; } }
+
+/* ── Grade e cards ── */
+.dsc-grade { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem; }
+.dsc .s3 { grid-column: span 3; } .dsc .s9 { grid-column: span 9; } .dsc .s4 { grid-column: span 4; } .dsc .s5 { grid-column: span 5; } .dsc .s7 { grid-column: span 7; } .dsc .s8 { grid-column: span 8; } .dsc .s12 { grid-column: span 12; }
+.dsc-card { min-width: 0; background: var(--d-surface); color: var(--d-ink); border: 1px solid var(--d-line); border-radius: 1rem; box-shadow: var(--d-shadow); padding: 1.15rem 1.3rem 1rem; display: flex; flex-direction: column; gap: .35rem; }
+.dsc-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
+.dsc-card-titulo { font-size: 1rem; font-weight: 500; color: var(--d-title); letter-spacing: -.005em; margin: 0; }
+.dsc-card-sub { margin: .1rem 0 0; font-size: .72rem; color: var(--d-ink-soft); }
+.dsc-rolagem { overflow-x: auto; overflow-y: hidden; margin-inline: -6px; padding-inline: 6px; }
+.dsc-vazio { padding: 2.6rem .75rem; text-align: center; color: var(--d-ink-soft); font-size: .78rem; }
+.dsc-legenda { display: flex; gap: .4rem 1rem; flex-wrap: wrap; font-size: .68rem; color: var(--d-ink-soft); }
+.dsc-legenda span { display: inline-flex; align-items: center; gap: .4rem; }
+.dsc-legenda .lg-linha { width: 16px; height: 0; border-top: 2px solid var(--c); display: inline-block; }
+.dsc-legenda .lg-tracejada { border-top-style: dashed; }
+.dsc-legenda .lg-ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: inline-block; }
+.dsc-legenda .lg-faixa { width: 14px; height: 10px; border-radius: 2px; background: var(--c); display: inline-block; }
+.dsc-seg { display: flex; gap: 3px; padding: 3px; border-radius: .65rem; background: var(--d-surface-alt); border: 1px solid var(--d-line-soft); overflow-x: auto; max-width: 100%; }
+.dsc-seg button { border: 0; background: transparent; color: var(--d-ink-soft); padding: .4rem .8rem; border-radius: .5rem; font: 500 .72rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; min-height: 32px; }
+.dsc-seg button:hover { color: var(--d-ink); }
+.dsc-seg button[aria-pressed="true"] { background: var(--d-solid); color: var(--vbm-blue-dark); box-shadow: 0 1px 3px rgba(15,23,42,.10); }
+:root[data-theme="dark"] .dsc-seg button[aria-pressed="true"] { background: rgba(60,181,229,.2); color: #fff; }
+
+/* ── Carta de controle (SVG) ── */
+.dsc-grafico { position: relative; }
+.dsc-grafico.carregando { opacity: .45; transition: opacity .2s; }
+.dsc-svg { display: block; overflow: visible; font-family: 'Poppins', sans-serif; }
+.dsc-svg .ex { font-size: 10.5px; fill: var(--d-ink-soft); }
+.dsc-svg .grade { stroke: var(--d-line-soft); }
+.dsc-svg .base { stroke: var(--d-line); }
+.dsc-svg .sep { stroke: var(--d-line); stroke-dasharray: 3 4; }
+.dsc-svg .pilula rect { fill: var(--d-pill); }
+.dsc-svg .pilula text { font-size: 10.5px; font-weight: 600; fill: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-svg .pilula text { fill: #fff; }
+.dsc-svg .t-cl { font-size: 11.5px; font-weight: 600; fill: var(--c-cl); paint-order: stroke; stroke: var(--d-solid); stroke-width: 4px; }
+.dsc-svg .t-lim { font-size: 9.5px; fill: var(--c-lim); paint-order: stroke; stroke: var(--d-solid); stroke-width: 3px; }
+.dsc-svg .t-best { font-size: 9px; fill: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-svg .t-best { fill: var(--vbm-blue-light); }
+.dsc-svg .sinal { transition: opacity .2s; }
+.dsc-svg.tem-foco .sinal:not(.foco) { opacity: .12; }
+.dsc-svg .guia { stroke: var(--d-stroke); stroke-dasharray: 3 3; }
+.dsc-svg .marca { fill: var(--vbm-blue); stroke: var(--d-solid); stroke-width: 2; }
+.dsc-svg .h-bar { transition: opacity .2s; }
+.dsc-dica { position: absolute; z-index: 5; pointer-events: none; padding: .4rem .65rem; border-radius: .55rem; font-size: .7rem; line-height: 1.4; background: var(--d-glass); color: var(--d-ink); box-shadow: 0 6px 22px rgba(15,23,42,.16), inset 0 0 0 1px rgba(15,23,42,.06); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dsc-dica b { display: block; font-weight: 600; color: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-dica b { color: var(--vbm-blue-light); }
+
+/* ── Colunas no padrão do VBM Quarterly (barra + cota de variação), igual ao Kaizen ── */
+.dsc .cc { --gap: 14px; --barw: 74%; --folga: 40px; min-width: var(--minw, 520px); padding-bottom: 26px; }
+.dsc .cc-area { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: var(--gap); height: var(--area-h, 230px); margin-top: calc(var(--folga) + var(--top-extra, 52px)); }
+.dsc .cc-area::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, transparent, var(--d-line) 8%, var(--d-line) 92%, transparent); }
+.dsc .col { position: relative; flex: 1 1 0; max-width: 96px; min-width: 14px; height: 100%; }
+.dsc .col::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 46%; height: 7px; background: var(--d-pill); border-radius: 4px; z-index: 2; }
+.dsc .bar { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: var(--barw); height: var(--h); border-radius: 4px 4px 2px 2px; z-index: 3; background-color: var(--c, var(--vbm-blue)); background-image: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 42%, rgba(15,23,42,.06) 100%); box-shadow: 0 1px 2px rgba(15,23,42,.07); animation: dscGrowBar .95s var(--d-ease) both; }
+@keyframes dscGrowBar { from { height: 0; } to { height: var(--h); } }
+.dsc .col:hover .bar { filter: brightness(1.06); }
+.dsc .v-lbl { position: absolute; bottom: calc(var(--h) + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--d-ink); font-size: .74rem; font-variant-numeric: tabular-nums; z-index: 6; }
+.dsc .x-lbl { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .7rem; color: var(--d-ink-soft); }
+.dsc .is-up { --ink-d: var(--d-up); --tint: var(--d-up-rgb); } .dsc .is-down { --ink-d: var(--d-down); --tint: var(--d-down-rgb); } .dsc .is-flat { --ink-d: var(--d-flat); --tint: var(--d-flat-rgb); }
+.dsc .dcnx { position: absolute; top: 0; bottom: 0; z-index: 7; pointer-events: none; width: calc(100% - var(--barw) + var(--gap)); right: calc(50% + var(--barw) / 2); }
+.dsc .dref, .dsc .dnow { position: absolute; left: -2px; right: -2px; height: 0; transform: scaleX(0); animation: dscLine .55s .34s cubic-bezier(.22,.9,.24,1) forwards; }
+.dsc .dref { bottom: var(--h-base); border-top: 1px dashed var(--d-stroke); transform-origin: left center; }
+.dsc .dnow { bottom: var(--h); border-top: 1px solid var(--d-stroke); transform-origin: right center; }
+@keyframes dscLine { to { transform: scaleX(1); } }
+.dsc .dfill { position: absolute; left: 0; right: 0; bottom: var(--h-min); height: var(--h-dif); opacity: 0; animation: dscFade .6s .62s ease-out forwards; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); }
+.dsc .dfill.up { background: linear-gradient(180deg, rgba(var(--tint),.17), rgba(var(--tint),.04)); }
+.dsc .dfill.dn { background: repeating-linear-gradient(135deg, rgba(var(--tint),.14) 0 3px, transparent 3px 7px); }
+@keyframes dscFade { to { opacity: 1; } }
+.dsc .dspan { position: absolute; left: 50%; bottom: var(--h-min); height: var(--h-dif); width: 2px; border-radius: 1px; background: rgba(var(--tint),.6); transform: translateX(-50%) scaleY(0); transform-origin: bottom center; animation: dscSpan .55s .48s cubic-bezier(.2,.85,.25,1) forwards; }
+@keyframes dscSpan { to { transform: translateX(-50%) scaleY(1); } }
+.dsc .dtrack { position: absolute; left: 50%; bottom: calc(var(--h-max) + 22px); width: 1px; height: calc(var(--folga) - 22px + var(--lift, 0px)); transform: translateX(-50%); background: linear-gradient(180deg, var(--d-hair) 0%, var(--d-stroke) 100%); opacity: 0; animation: dscFade .5s .7s ease-out forwards; }
+.dsc .dpill { position: absolute; left: 50%; bottom: calc(var(--h-max) + var(--folga) + var(--lift, 0px)); display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: 0 2px 12px rgba(15,23,42,.08), inset 0 0 0 1px rgba(15,23,42,.05); color: var(--ink-d); font-size: .66rem; font-weight: 500; line-height: 1.15; white-space: nowrap; font-variant-numeric: tabular-nums; opacity: 0; transform: translate(-50%, 8px) scale(.96); animation: dscPill .5s .78s cubic-bezier(.2,.85,.25,1) forwards; }
+.dsc .dpill svg, .dsc-delta svg { width: 8px; height: 8px; flex: none; }
+@keyframes dscPill { to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.dsc .avg-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed var(--c-lim); z-index: 5; }
+.dsc .avg-line span { position: absolute; right: 0; bottom: 4px; font-size: .64rem; font-weight: 600; color: var(--d-ink-soft); background: var(--d-glass); padding: 1px 6px; border-radius: 6px; }
+
+/* ── Medidas estatísticas (v4/v5 do .pbix): quatro barras por período, no desenho das colunas do Kaizen ── */
+.dsc { --m-mean: #1a8bbf; --m-best: #3cb5e5; --m-p75: #9ddaf2; --m-budget: #8a96a6; }
+:root[data-theme="dark"] .dsc { --m-mean: #3cb5e5; --m-best: #7dd3f0; --m-p75: #2f6f93; --m-budget: #9aa6b6; }
+.dsc .cg { padding-bottom: 26px; }
+.dsc .cg.cg-eixo2 { padding-bottom: 38px; }
+.dsc .cg-sem-valor .cg-v { display: none; }
+.dsc .cg-estatico .cg-bar { animation: none; }
+.dsc .cg .cg-area { margin-top: 20px; height: var(--area-h, 330px); }
+@media (max-width: 960px) { .dsc .cg .cg-area { height: 270px; } }
+.dsc .cg-area { position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: var(--gap, 18px); height: var(--area-h, 250px); margin-top: 24px; }
+.dsc .cg-area::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, transparent, var(--d-line) 8%, var(--d-line) 92%, transparent); }
+.dsc .cg-grupo { position: relative; flex: 1 1 0; min-width: 0; max-width: 150px; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.dsc .cg-col { position: relative; flex: 1 1 0; min-width: 0; max-width: 30px; height: 100%; }
+.dsc .cg-bar { position: absolute; bottom: 0; left: 0; right: 0; height: var(--h); border-radius: 4px 4px 2px 2px; background-color: var(--c); background-image: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 42%, rgba(15,23,42,.06) 100%); animation: dscGrowBar .95s var(--d-ease) both; }
+.dsc .cg-col:hover .cg-bar { filter: brightness(1.06); }
+.dsc .cg-v { position: absolute; bottom: calc(var(--h) + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: var(--fv, .64rem); font-weight: 600; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+.dsc .cg-grupo .x-lbl { bottom: -22px; font-size: .66rem; }
+.dsc .cg-eixo2 .cg-grupo .x-lbl { bottom: -34px; white-space: normal; text-align: center; line-height: 1.15; font-size: .6rem; }
+.dsc-variacao { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-direction: column; }
+.dsc-variacao li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .2rem; border-bottom: 1px solid var(--d-line-soft); font-size: .74rem; color: var(--d-ink-soft); }
+.dsc-variacao li:last-child { border-bottom: 0; }
+.dsc-variacao li b { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: var(--d-glass); box-shadow: inset 0 0 0 1px rgba(15,23,42,.06); color: var(--ink-d); font-size: .7rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Medidas + caixa "Variação da média" lado a lado (como no .pbix); legenda do histograma acima do gráfico */
+.dsc-medidas-linha { display: flex; gap: 1rem; align-items: flex-start; }
+.dsc-medidas-graf { flex: 1; min-width: 0; }
+.dsc-variacao-caixa { width: 188px; flex: none; margin-top: 1.2rem; padding: .7rem .8rem; border: 1px solid var(--d-line); border-radius: .8rem; background: var(--d-surface-alt); }
+.dsc-variacao-caixa h4 { margin: 0 0 .2rem; font-size: .76rem; font-weight: 600; color: var(--d-ink-soft); }
+.dsc-variacao-caixa .dsc-variacao { margin-top: 0; }
+.dsc-variacao-caixa .dsc-variacao li { padding: .42rem 0; font-size: .7rem; }
+.dsc-variacao-caixa .dsc-variacao li span { white-space: nowrap; font-size: .66rem; }
+.dsc-variacao-caixa .dsc-variacao li b { white-space: nowrap; }
+.dsc-hist-legenda { margin-top: .4rem; }
+.dsc-hist-legenda .dsc-tabela { font-size: .7rem; }
+.dsc-hist-legenda .dsc-tabela thead th, .dsc-hist-legenda .dsc-tabela tbody td { padding: .45rem .55rem; }
+@media (max-width: 700px) { .dsc-medidas-linha { flex-direction: column; align-items: stretch; } .dsc-variacao-caixa { width: 100%; margin-top: 0; } }
+
+/* ── Tabelas ── */
+.dsc-tabela-wrap { overflow-x: auto; margin-top: .5rem; border-radius: .65rem; border: 1px solid var(--d-line); }
+.dsc-tabela { width: 100%; border-collapse: collapse; font-size: .74rem; }
+.dsc-tabela thead th { background: var(--vbm-blue-deep); color: #fff; text-align: left; font-weight: 500; padding: .65rem .75rem; white-space: nowrap; }
+.dsc-tabela th.num, .dsc-tabela td.num { text-align: right; }
+.dsc-tabela tbody td { padding: .58rem .75rem; border-top: 1px solid var(--d-line-soft); color: var(--d-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dsc-tabela tbody tr:nth-child(even) td { background: var(--d-surface-alt); }
+.dsc-tabela tbody tr:hover td { background: var(--d-hover); }
+.dsc-tabela td.per { font-weight: 600; color: var(--vbm-blue-dark); }
+:root[data-theme="dark"] .dsc-tabela td.per { color: var(--vbm-blue-light); }
+.dsc-tabela td.mudo { color: var(--d-ink-soft); }
+.dsc-tabela .sinal-n { display: inline-flex; align-items: center; gap: .35rem; }
+.dsc-tabela .sinal-n i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.dsc-tabela .up { color: var(--d-up); } .dsc-tabela .down { color: var(--d-down); }
+.dsc-ano-cor { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--c); margin-right: .45rem; vertical-align: -1px; }
+
+/* ── Painel de filtros (lateral esquerda; mesmo desenho do Kaizen) ── */
+/* ── Filtros: mesmo padrão dos reports do VBM Performance Hub (COO – Business Units Dashboard) ── */
+.dsc {
+  --ctl-bg: #FFFFFF; --ctl-border: rgba(13,38,64,.16); --ctl-text: #1F2937; --ctl-on-bg: #0B6E99; --ctl-on-text: #FFFFFF;
+  --f-soft: #5b6676; --f-faint: #8a96a8; --f-pop: #ffffff; --f-shadow: 0 14px 34px rgba(15,23,42,.16);
+}
+:root[data-theme="dark"] .dsc {
+  --ctl-bg: rgba(255,255,255,.05); --ctl-border: rgba(255,255,255,.16); --ctl-text: #E5EDF5; --ctl-on-bg: #3CB5E5; --ctl-on-text: #02101c;
+  --f-soft: rgba(244,247,251,.62); --f-faint: rgba(244,247,251,.42); --f-pop: #0f2a40; --f-shadow: 0 14px 34px rgba(0,0,0,.45);
+}
+.dsc .filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; padding-bottom: 14px; border-bottom: 1px solid var(--d-line); }
+.dsc .filter { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
+.dsc .filter[hidden] { display: none; }
+.dsc .filter-acao { margin-left: auto; }
+.dsc .filter-label { font: italic 400 .74rem 'Poppins', 'Segoe UI', sans-serif; color: var(--f-soft); }
+.dsc .unit { position: relative; }
+.dsc .unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; max-width: 100%; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
+.dsc .unit-trigger:hover, .dsc .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.dsc .unit-trigger > span { overflow: hidden; text-overflow: ellipsis; }
+.dsc .unit-pais { color: var(--f-soft); }
+.dsc .unit-sep { color: var(--f-faint); }
+.dsc .unit-site { color: var(--ctl-on-bg); font-weight: 600; }
+.dsc .unit-caret { flex: none; color: var(--f-soft); transition: transform .18s ease; }
+.dsc .unit-trigger[aria-expanded="true"] .unit-caret { transform: rotate(180deg); }
+.dsc .unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 380px; max-width: calc(100vw - 32px); display: grid; grid-template-columns: 1fr 1.15fr; padding: 8px; border-radius: 12px; border: 1px solid var(--d-line); background: var(--f-pop); box-shadow: var(--f-shadow); }
+.dsc .unit-pop[hidden] { display: none; }
+.dsc .unit-pop.lista-pop { width: auto; min-width: 200px; grid-template-columns: 1fr; }
+.dsc .unit-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; }
+.dsc .unit-col + .unit-col { border-left: 1px solid var(--d-line); padding-left: 10px; }
+.dsc .unit-h { font: 600 .62rem 'Poppins', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--f-soft); padding: 2px 8px 4px; }
+.dsc .unit-list { display: flex; flex-direction: column; gap: 2px; max-height: min(60vh, 380px); overflow-y: auto; }
+.dsc .unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem 'Poppins', sans-serif; text-align: left; cursor: pointer; }
+.dsc .unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.dsc .unit-list button .n { color: var(--f-faint); font-size: .68rem; }
+.dsc .unit-list button[aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
+.dsc .unit-list button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.dsc .unit-list button[aria-pressed="true"] .n { color: inherit; opacity: .75; }
+.dsc .seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.dsc .seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
+.dsc .seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.dsc .seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.dsc .seg.datas { align-items: center; flex-wrap: nowrap; padding: 2px 6px; }
+.dsc .seg.datas input { min-height: 26px; border: 0; background: transparent; color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; padding: 0 2px; }
+.dsc .seg.datas input:focus { outline: 2px solid var(--ctl-on-bg); outline-offset: 1px; border-radius: 5px; }
+:root[data-theme="dark"] .dsc .seg.datas input { color-scheme: dark; }
+.dsc .datas-sep { color: var(--f-faint); font-size: .74rem; }
+.dsc .switch { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); cursor: pointer; }
+.dsc .switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--f-soft) 40%, transparent); transition: background-color .18s ease; }
+.dsc .switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.dsc .switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.dsc .switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+.dsc .nav-chip { min-height: 32px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
+.dsc .nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.dsc .nav-chip:disabled { opacity: .4; cursor: default; }
+.dsc .acoes-linha { display: flex; align-items: center; gap: 6px; }
+/* Tela cheia, no mesmo padrão dos dashboards do Performance Hub (COO): botão no fim dos filtros;
+   em tela cheia (botão → html.is-fs; F11 → display-mode) saem a barra superior e o cabeçalho da página */
+.dsc .fs-btn { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--f-soft); cursor: pointer; }
+.dsc .fs-btn:hover { color: var(--ctl-on-bg); border-color: var(--ctl-on-bg); }
+.dsc .fs-btn:focus-visible { outline: 2px solid var(--ctl-on-bg); outline-offset: 2px; }
+.dsc .ico-exit { display: none; }
+.is-fs .dsc .ico-exit { display: block; }
+.is-fs .dsc .ico-enter { display: none; }
+.is-fs .pagina:has(#vista-powerbi:not([hidden])) > .cabecalho { display: none; }
+.is-fs .pagina:has(#vista-powerbi:not([hidden])) { padding-top: 20px; }
+@media (display-mode: fullscreen) {
+  .pagina:has(#vista-powerbi:not([hidden])) > .cabecalho { display: none; }
+  .pagina:has(#vista-powerbi:not([hidden])) { padding-top: 20px; }
+}
+.dsc .unit-trigger:focus-visible, .dsc .seg button:focus-visible, .dsc .switch:focus-visible, .dsc .nav-chip:focus-visible, .dsc .unit-list button:focus-visible { outline: 2px solid var(--ctl-on-bg); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .dsc .switch-track, .dsc .switch-thumb, .dsc .unit-caret { transition: none; } }
+@media (max-width: 720px) { .dsc .filters { gap: 8px 10px; } .dsc .filter-acao { margin-left: 0; } .dsc .unit-pop { grid-template-columns: 1fr; } .dsc .unit-col + .unit-col { border-left: 0; border-top: 1px solid var(--d-line); padding-left: 4px; } }
+@media (pointer: coarse) { .dsc .seg button, .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; } .dsc .fs-btn { width: 44px; height: 44px; } }
+
+/* ── Telas maiores (≥ 1600 px), só no Dashboard: a página deixa de ficar presa em 1440 px,
+   os gráficos crescem com a altura da tela (painel-spc.js → alturasDashboard) e os textos
+   ganham um degrau. O resto do app (Início, Rodar o modelo, Importar) não muda. ── */
+@media (min-width: 1600px) {
+  .pagina:has(#vista-powerbi:not([hidden])) { max-width: min(94vw, 2400px); padding-inline: 40px; }
+  .dsc-grade { gap: 1.3rem; }
+  .dsc-card { padding: 1.35rem 1.6rem 1.2rem; }
+  .dsc-card-titulo { font-size: 1.12rem; }
+  .dsc-card-sub { font-size: .78rem; }
+  .dsc-legenda { font-size: .74rem; }
+  .dsc .filter-label { font-size: .8rem; }
+  .dsc .unit-trigger, .dsc .seg button, .dsc .seg.datas input, .dsc .nav-chip { font-size: .8rem; }
+  .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 36px; }
+  .dsc .fs-btn { width: 36px; height: 36px; }
+  .dsc .seg button { min-height: 30px; }
+  .dsc .seg.datas input { min-height: 30px; }
+  .dsc-svg .ex { font-size: 11.5px; }
+  .dsc-svg .pilula text { font-size: 11.5px; }
+  .dsc-svg .t-cl { font-size: 12.5px; }
+  .dsc-svg .t-lim { font-size: 10.5px; }
+  .dsc-svg .t-best { font-size: 10px; }
+  .dsc .cg-grupo .x-lbl { font-size: .74rem; }
+  .dsc-variacao-caixa { width: 230px; }
+  .dsc-variacao-caixa h4 { font-size: .84rem; }
+  .dsc-variacao-caixa .dsc-variacao li span { font-size: .74rem; }
+  .dsc-variacao-caixa .dsc-variacao li b { font-size: .76rem; }
+  .dsc-hist-legenda .dsc-tabela { font-size: .78rem; }
+}
+@media (min-width: 2200px) {
+  .dsc-hero { padding: 2rem 2.6rem; }
+  .dsc-card-titulo { font-size: 1.22rem; }
+  .dsc-legenda { font-size: .8rem; }
+  .dsc-svg .ex { font-size: 12.5px; }
+  .dsc-svg .pilula text { font-size: 12.5px; }
+  .dsc-svg .t-cl { font-size: 13.5px; }
+  .dsc-svg .t-lim { font-size: 11.5px; }
+  .dsc .cg-grupo .x-lbl { font-size: .8rem; }
+  .dsc-variacao-caixa { width: 260px; }
+}
+@media (min-width: 3000px) {
+  .pagina:has(#vista-powerbi:not([hidden])) { max-width: min(94vw, 3400px); }
+  .dsc .filter-label { font-size: .95rem; }
+  .dsc .unit-trigger, .dsc .seg button, .dsc .seg.datas input, .dsc .nav-chip { font-size: .95rem; }
+  .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; }
+  .dsc .fs-btn { width: 44px; height: 44px; }
+  .dsc .seg button, .dsc .seg.datas input { min-height: 38px; }
+  .dsc-card { padding: 1.8rem 2.1rem 1.6rem; }
+  .dsc-card-titulo { font-size: 1.45rem; }
+  .dsc-card-sub { font-size: .95rem; }
+  .dsc-legenda { font-size: .95rem; }
+  .dsc-hero { padding: 2.6rem 3.2rem; }
+  .dsc-svg .ex { font-size: 15px; }
+  .dsc-svg .pilula text { font-size: 15px; }
+  .dsc-svg .t-cl { font-size: 16px; }
+  .dsc-svg .t-lim { font-size: 13.5px; }
+  .dsc-svg .t-best { font-size: 12.5px; }
+  .dsc .cg-grupo .x-lbl { font-size: .95rem; }
+  .dsc-variacao-caixa { width: 320px; }
+  .dsc-variacao-caixa h4 { font-size: 1.05rem; }
+  .dsc-variacao-caixa .dsc-variacao li span { font-size: .92rem; }
+  .dsc-variacao-caixa .dsc-variacao li b { font-size: .92rem; }
+  .dsc-hist-legenda .dsc-tabela { font-size: .95rem; }
+}
+@media (max-width: 1180px) { .dsc-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .dsc .s3, .dsc .s9 { grid-column: span 12; } }
+@media (max-width: 960px) { .dsc .s4, .dsc .s5, .dsc .s7, .dsc .s8 { grid-column: span 12; } }
+@media (max-width: 640px) {
+  .dsc-hero { padding: 1.2rem 1.1rem; }
+  .dsc-hero-box { min-width: 0; width: 100%; }
+  .dsc-tiles { grid-template-columns: minmax(0, 1fr); }
+  }
+@media (prefers-reduced-motion: reduce) { .dsc *, .dsc *::before, .dsc *::after { animation: none !important; transition: none !important; } }
+
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): título, painéis,
+   cartões e controles menores. Mesmo critério do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .pagina { padding: 16px 24px 28px; }
+  .cabecalho { gap: 10px 24px; padding-bottom: 10px; }
+  .cabecalho h2 { font-size: clamp(1.4rem, 2.1vw, 1.75rem); }
+  .filtro-rotulo { font-size: .7rem; }
+  .seg a, .seg button { min-height: 26px; padding: 2px 10px; font-size: .72rem; }
+  .intro { margin: 8px 0 14px; font-size: .74rem; }
+  .grade { gap: 16px; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); }
+  .painel { padding: 14px 18px 16px; border-radius: 16px; }
+  .painel-titulo { margin-bottom: 10px; }
+  .painel-titulo h2 { font-size: 1.02rem; }
+  .historico { margin-top: 16px; }
+  .tabela-wrap { margin: 0 -18px -16px; }
+  th, td { padding-left: 18px; padding-right: 18px; }
+  td { padding-top: .6rem; padding-bottom: .6rem; }
+  .opcoes { gap: 16px; }
+  .opcao { min-height: 0; padding: 16px 18px; gap: 6px; border-radius: 16px; }
+  .opcao .icone { width: 34px; height: 34px; border-radius: 10px; }
+  .opcao .icone svg { width: 17px; height: 17px; }
+  .opcao h2 { font-size: 1.15rem; }
+  .opcao p { font-size: .74rem; }
+  .opcao .acessar { padding-top: 6px; font-size: .7rem; }
+  .vazio { padding: 1.4rem 1rem; }
+  .dsc { gap: .85rem; }
+  .dsc-hero { padding: 1.1rem 1.4rem; border-radius: 1rem; }
+  .dsc-hero-titulo { font-size: clamp(1.3rem, 2.4vw, 1.9rem); }
+  .dsc-hero-desc { display: none; }
+  .dsc-hero-box { padding: .7rem .9rem; gap: .5rem; }
+  .dsc-btn-hero { height: 34px; }
+  .dsc-tile { min-height: 112px; padding: .8rem 1rem; }
+  .tt-num { font-size: clamp(1.9rem, 3vw, 2.5rem); }
+  .dsc-grade { gap: .85rem; }
+  .dsc-card { padding: .95rem 1.05rem .85rem; }
+  .dsc-aba { min-height: 34px; padding: .45rem .85rem; }
+}
 </style>
 </head>
 <body>
 
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Trocar VBM Stable &amp; Capable pelo nome do dashboard (ex.: "COO Business Units Dashboard").
+     Logo: "/" volta ao Portal (o Stable & Capable fica na raiz). -->
 <nav class="topnav" id="topnav">
-  <a href="/" class="topnav-logo" title="Portal" data-i18n-title="ui.menu">
+  <a href="/" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
     <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
-  <mask id="sc_logo_mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
     <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
   </mask>
-  <g mask="url(#sc_logo_mask)">
+  <g mask="url(#sd-vale-mask)">
     <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
     <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
     <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
@@ -353,9 +885,9 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   </g>
 </svg>
   </a>
-  <h1 class="topnav-brand" aria-label="VBM - Stable &amp; Capable"><span aria-hidden="true">VBM</span><span aria-hidden="true">Stable &amp; Capable</span></h1>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">VBM Stable &amp; Capable</span></h1>
   <div class="topnav-actions">
-    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" data-i18n-title="settings.title" aria-label="Configurações" data-i18n-aria="settings.title">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
       <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
         <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
         <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
@@ -372,39 +904,94 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 </nav>
 
 <div class="settings-backdrop" id="settingsBackdrop"></div>
-<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true">
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
   <div class="settings-panel-head">
-    <h2 data-i18n="settings.title">Configurações</h2>
-    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="settings.close">
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
     </button>
   </div>
   <div class="settings-panel-body">
     <section class="settings-section">
-      <span class="settings-section-title" data-i18n="settings.theme">Tema</span>
-      <div class="theme-toggle" role="group">
-        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="theme.white">Claro</button>
-        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="theme.dark">Escuro</button>
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
       </div>
     </section>
     <div class="settings-divider"></div>
     <section class="settings-section">
-      <span class="settings-section-title" data-i18n="settings.language">Idioma</span>
-      <select id="langSelect" class="settings-select" aria-label="Idioma">
-        <option value="pt-BR">Português (Brasil)</option>
-        <option value="en">English</option>
-      </select>
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
     </section>
   </div>
 </aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
 
 <main class="pagina">
   <header class="cabecalho">
-    <div class="rotulo" data-i18n="page.eyebrow">Vale Base Metals · Controle Estatístico de Processo</div>
-    <h1><b>Stable &amp; Capable</b> <span data-i18n="page.title">— relatórios por Business Unit</span></h1>
-    <p data-i18n="page.intro">Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.</p>
+    <div class="cabecalho-titulo"><h2 id="tituloVista"></h2></div>
+    <div class="filtro">
+      <span class="filtro-rotulo" id="rotNav" data-i18n="nav.rotulo">Opção:</span>
+      <nav class="seg" aria-labelledby="rotNav">
+      <a href="#" data-vista="inicio"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 7.2 8 2.5l5.5 4.7V13a.5.5 0 0 1-.5.5H9.6V10H6.4v3.5H3a.5.5 0 0 1-.5-.5V7.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span data-i18n="nav.inicio">Início</span></a>
+      <a href="#modelo" data-vista="modelo"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8 4.5 2.8Z" fill="currentColor"/></svg><span data-i18n="nav.modelo">Rodar o modelo</span></a>
+      <a href="#importar" data-vista="importar"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span data-i18n="nav.importar">Importar dados</span></a>
+      <a href="#powerbi" data-vista="powerbi"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg><span data-i18n="nav.powerbi">Power BI</span></a>
+      </nav>
+    </div>
   </header>
+  <p class="intro" id="introVista"></p>
 
+  <!-- ═══ Início: escolher o que fazer ═══ -->
+  <section class="vista" id="vista-inicio" aria-labelledby="tituloVista">
+    <div class="opcoes">
+      <a class="opcao" href="#modelo">
+        <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8 4.5 2.8Z" fill="currentColor"/></svg></span>
+        <h2 data-i18n="nav.modelo">Rodar o modelo</h2>
+        <p data-i18n="op.modelo">Gere os PDFs de estabilidade e capabilidade por Business Unit para o período escolhido.</p>
+        <span class="acessar"><span data-i18n="op.abrir">Abrir</span> →</span>
+      </a>
+      <a class="opcao" href="#importar">
+        <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+        <h2 data-i18n="nav.importar">Importar dados</h2>
+        <p data-i18n="op.importar">Envie o PCI Master do mês, confira a prévia e suba os dados para o banco (IBP.PEDRAVISAODIARIA).</p>
+        <span class="acessar"><span data-i18n="op.abrir">Abrir</span> →</span>
+      </a>
+      <a class="opcao" href="#powerbi">
+        <span class="icone"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="8" width="2.6" height="5.5" rx=".6" fill="currentColor"/><rect x="6.7" y="5" width="2.6" height="8.5" rx=".6" fill="currentColor"/><rect x="10.9" y="2.5" width="2.6" height="11" rx=".6" fill="currentColor"/></svg></span>
+        <h2 data-i18n="nav.powerbi">Power BI</h2>
+        <p data-i18n="op.powerbi">Carta de controle, medidas estatísticas e histograma de capabilidade por KPI, como no Power BI.</p>
+        <span class="acessar"><span data-i18n="op.abrir">Abrir</span> →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══ Rodar o modelo (tela original) ═══ -->
+  <section class="vista" id="vista-modelo" hidden>
   <p class="diag" id="diag" role="status"></p>
   <div class="grade">
     <!-- ═══ Nova execução ═══ -->
@@ -465,15 +1052,374 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </table>
     </div>
   </section>
+  </section>
+
+  <!-- ═══ Importar dados: PCI Master -> IBP.PEDRAVISAODIARIA ═══ -->
+  <section class="vista" id="vista-importar" hidden>
+    <div class="grade">
+      <section class="painel" aria-labelledby="tImp">
+        <div class="painel-titulo"><h2 id="tImp" data-i18n="imp.title">Nova importação</h2></div>
+        <form id="formImp" novalidate>
+          <div class="campo-grupo">
+            <div class="campo-rotulo"><span data-i18n="imp.arquivo">PCI Master Data File</span></div>
+            <label class="soltar" id="soltar">
+              <input type="file" id="arquivoImp" accept=".xlsx,.xlsm" aria-describedby="soltarNome"/>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" class="ico-soltar"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <strong id="soltarNome" data-i18n="imp.solte">Arraste o arquivo aqui ou clique para escolher</strong>
+              <span data-i18n="imp.formato">.xlsx atualizado do mês</span>
+            </label>
+          </div>
+          <div class="campo-grupo">
+            <div class="campo-rotulo"><span data-i18n="imp.periodo">Mês dos dados</span></div>
+            <div class="datas">
+              <div class="data"><label for="mesImp" data-i18n="imp.mes">Mês</label><select id="mesImp" class="selecao"></select></div>
+              <div class="data"><label for="anoImp" data-i18n="imp.ano">Ano</label><input type="number" id="anoImp" min="2000" max="2100" step="1"/></div>
+            </div>
+          </div>
+          <button type="submit" class="btn-primario" id="btnProcessar">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8 4.5 2.8Z" fill="currentColor"/></svg><span data-i18n="imp.processar">Processar arquivo</span>
+          </button>
+          <p class="mensagem" id="msgImp" role="alert" hidden></p>
+          <p class="rodape-form">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v4M8 4.8v.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span><span data-i18n="imp.rodape">Nada é gravado neste passo: primeiro você confere a prévia.</span> <a class="link-sutil" href="api/importacao/mapeamento" data-i18n="imp.mapa">Baixar o mapeamento</a></span>
+          </p>
+        </form>
+      </section>
+
+      <section class="painel" aria-labelledby="tPrevia" aria-live="polite">
+        <div class="painel-titulo"><h2 id="tPrevia" data-i18n="imp.previa">Prévia</h2><span id="previaPill"></span></div>
+        <div id="previaConteudo"></div>
+      </section>
+    </div>
+
+    <section class="painel historico" aria-labelledby="tHistImp">
+      <div class="painel-titulo"><h2 id="tHistImp" data-i18n="imp.hist">Importações feitas</h2><span class="dica" id="impDica"></span></div>
+      <div class="tabela-wrap">
+        <table>
+          <thead><tr>
+            <th data-i18n="imp.h.quando">Gravado em</th>
+            <th data-i18n="imp.h.mes">Mês</th>
+            <th data-i18n="hist.by">Por</th>
+            <th data-i18n="imp.h.linhas">Linhas</th>
+            <th data-i18n="hist.files">Arquivos</th>
+          </tr></thead>
+          <tbody id="histImpCorpo"><tr><td colspan="5" class="historico-vazio" data-i18n="ui.loading">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <!-- ═══ Dashboard: estabilidade e capabilidade por KPI, no desenho do Dashboard do VBM Kaizen
+       (hero, abas, filtros na lateral, cartões de resumo, cards e tabelas). Cálculos SPC iguais
+       aos visuais Python do .pbix — ver assets/js/painel-spc.js. Dados: api/bi (banco PRD). ═══ -->
+  <section class="vista dsc" id="vista-powerbi" hidden>
+    <div class="dsc-hero">
+      <div class="dsc-hero-orb" aria-hidden="true"></div>
+      <div class="dsc-hero-texto">
+        <div class="dsc-hero-ante" data-i18n="bi.ante">Controle estatístico de processo</div>
+        <h3 class="dsc-hero-titulo" id="biTitulo">—</h3>
+        <div class="dsc-hero-sub" id="biSub"></div>
+        <p class="dsc-hero-desc" data-i18n="bi.desc">Carta de controle com as regras de Nelson, medidas por período e capabilidade por ano.</p>
+      </div>
+      <div class="dsc-hero-box">
+        <div class="dsc-base">
+          <span data-i18n="bi.h.periodo">Período</span><b id="biQtdPeriodo">—</b>
+        </div>
+        <div class="dsc-atualizado" id="biAtualizado"></div>
+        <div class="dsc-acoes">
+          <button type="button" class="dsc-btn-hero" id="biAtualizar">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span data-i18n="bi.atualizar">Atualizar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros no padrão dos reports do VBM Performance Hub (COO – Business Units Dashboard):
+         rótulo em itálico em cima, seletor BU › Site em duas colunas, listas, segmentado e interruptores -->
+    <section class="filters dsc-filtros-barra" aria-label="Filtros" data-i18n-aria="bi.filtros">
+      <div class="filter"><span class="filter-label" id="lblBiBu">Business Unit:</span>
+        <div class="unit" data-pop="biBuPop">
+          <button type="button" class="unit-trigger" id="biBuTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="biBuPop" aria-describedby="lblBiBu">
+            <span class="unit-pais" id="biBuTxt">—</span><span class="unit-sep" aria-hidden="true">›</span><span class="unit-site" id="biSiteTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop" id="biBuPop" role="dialog" aria-label="Business Unit e site" data-i18n-aria="bi.a.unidade" hidden>
+            <div class="unit-col"><span class="unit-h" id="biHBu">Business Unit</span><div class="unit-list" id="biBuLista" role="group" aria-labelledby="biHBu"></div></div>
+            <div class="unit-col"><span class="unit-h" id="biHSite" data-i18n="bi.f.site">Site</span><div class="unit-list" id="biSiteLista" role="group" aria-labelledby="biHSite"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiKpi">KPI:</span>
+        <div class="unit" data-pop="biKpiPop">
+          <button type="button" class="unit-trigger" id="biKpiTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="biKpiPop" aria-describedby="lblBiKpi"><span class="unit-site" id="biKpiTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="biKpiPop" hidden><div class="unit-list" id="biKpiLista" role="group" aria-labelledby="lblBiKpi"></div></div>
+        </div>
+      </div>
+      <div class="filter" id="biOpGrupo" hidden><span class="filter-label" id="lblBiOp" data-i18n="bi.f.opRot">Operação:</span>
+        <div class="unit" data-pop="biOpPop">
+          <button type="button" class="unit-trigger" id="biOpTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="biOpPop" aria-describedby="lblBiOp"><span class="unit-site" id="biOpTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="biOpPop" hidden><div class="unit-list" id="biOpLista" role="group" aria-labelledby="lblBiOp"></div></div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiVisao" data-i18n="bi.f.visao">Visão:</span>
+        <div class="seg" role="group" aria-labelledby="lblBiVisao">
+          <button type="button" data-bi-agrup="trimestre" aria-pressed="true" data-i18n="bi.trimestre">Trimestre</button><button type="button" data-bi-agrup="ano" aria-pressed="false" data-i18n="bi.ano">Ano</button>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiPeriodo" data-i18n="bi.f.periodoRot">Período:</span>
+        <div class="seg datas" role="group" aria-labelledby="lblBiPeriodo">
+          <input type="date" id="biInicio" aria-label="De" data-i18n-aria="bi.de"/><span class="datas-sep" aria-hidden="true">–</span><input type="date" id="biFim" aria-label="Até" data-i18n-aria="bi.ate"/>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiZeros" data-i18n="bi.f.zerosRot">Remover zeros:</span>
+        <button type="button" class="switch" data-bi-flag="removerZeros" role="switch" aria-checked="false" aria-labelledby="lblBiZeros"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBiOut" data-i18n="bi.f.outliersRot">Remover outliers:</span>
+        <button type="button" class="switch" data-bi-flag="removerOutliers" role="switch" aria-checked="false" aria-labelledby="lblBiOut" title="Fora de média ± 3,5 desvios" data-i18n-title="bi.outDica"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="filter filter-acao"><div class="acoes-linha"><button type="button" class="nav-chip" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button><button type="button" class="fs-btn js-full" aria-label="Tela cheia" title="Tela cheia (F11)" data-i18n-aria="bi.fs.on" data-i18n-title="bi.fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
+    </section>
+
+    <!-- Os três visuais da página "Stable and capable" do .pbix, na mesma disposição:
+         carta de controle em cima; medidas estatísticas (com a variação da média) e
+         histograma de capabilidade (com a legenda Ano/Mean/StDev/CV/N) embaixo. -->
+    <section class="dsc-grade">
+      <article class="dsc-card s12">
+        <div class="dsc-card-head">
+          <div>
+            <h3 class="dsc-card-titulo" data-i18n="bi.carta">Carta de controle</h3>
+            <p class="dsc-card-sub" id="biCartaSub"></p>
+          </div>
+        </div>
+        <div class="dsc-legenda" id="biLegendaCarta"></div>
+        <div class="dsc-grafico" id="biCartaWrap"><div id="biCarta"></div><div class="dsc-dica" id="biDica" hidden></div></div>
+      </article>
+
+      <article class="dsc-card s8">
+        <div class="dsc-card-head">
+          <h3 class="dsc-card-titulo" data-i18n="bi.medidasTitulo">Medidas estatísticas e comparações</h3>
+          <div class="dsc-legenda" id="biLegendaMedidas"></div>
+        </div>
+        <div class="dsc-medidas-linha">
+          <div class="dsc-medidas-graf"><div id="biMedidas"></div></div>
+          <div class="dsc-variacao-caixa">
+            <h4 data-i18n="bi.variacao">Variação da média</h4>
+            <ul class="dsc-variacao" id="biVariacao"></ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="dsc-card s4">
+        <div class="dsc-card-head">
+          <h3 class="dsc-card-titulo" data-i18n="bi.hist">Histograma de capabilidade</h3>
+        </div>
+        <div class="dsc-tabela-wrap dsc-hist-legenda"><table class="dsc-tabela"><thead><tr id="biAnosCab"></tr></thead><tbody id="biAnosCorpo"></tbody></table></div>
+        <div class="dsc-grafico" id="biHistWrap"><div id="biHist"></div><div class="dsc-dica" id="biHistDica" hidden></div></div>
+      </article>
+    </section>
+
+  </section>
 </main>
 
+<script>window.VBM_SETUP = { idiomaPadrao: 'pt-BR' };</script>
+<script>
+/* ═══ Setup Dashboards — barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Colar num <script> logo depois da marcação (setup-dashboards.html), ANTES do script do dashboard.
+   Configuração opcional, declarada antes deste script:
+     window.VBM_SETUP = {
+       idiomaPadrao: 'pt-BR' | 'en',          // sem escolha salva; padrão 'pt-BR'
+       numeroPadrao: 'pt-BR' | 'en-CA',       // sem escolha salva; padrão: pelo idioma do navegador
+       urlUsuario: '/api/me'                  // { nome, email, cargo } — rota do Portal (Kaizen)
+     };
+   Preferências por pessoa no navegador, com as MESMAS chaves do Kaizen e do Studio,
+   para valerem em todas as aplicações do Portal: vdt-theme, vdt-lang, vdt-num.
+   API para o dashboard (window.VBMSetup):
+     t(chave, vars)         texto no idioma atual ('Olá {nome}' + { nome: 'Ana' })
+     registrar(dic)         { 'pt-BR': { chave: texto }, en: { … } } — textos do dashboard
+     traduzir(raiz?)        aplica data-i18n / -aria / -title / -ph em raiz (padrão: document)
+     fmt(valor, casas)      número no formato escolhido (Brasil 1.234,56 · Canadá 1,234.56)
+     dataHora(data)         data e hora no idioma escolhido
+     on('tema'|'idioma'|'numero', fn)   redesenhar o que o JS monta
+     tema / idioma / numero (leitura) */
+window.VBMSetup = (function () {
+  'use strict';
+  var CFG = window.VBM_SETUP || {};
+  var CHAVES = { tema: 'vdt-theme', idioma: 'vdt-lang', numero: 'vdt-num' };
+  var IDIOMAS = ['pt-BR', 'en'], NUMEROS = ['pt-BR', 'en-CA'];
+  var DIC = {
+    'pt-BR': { 'sd.menu': 'Menu', 'sd.configuracoes': 'Configurações', 'sd.fechar': 'Fechar', 'sd.tema': 'Tema', 'sd.claro': 'Claro', 'sd.escuro': 'Escuro',
+      'sd.idioma': 'Idioma', 'sd.idiomaInfo': 'Idioma da interface', 'sd.numero': 'Formato numérico', 'sd.numeroInfo': 'Separador decimal e de milhar dos gráficos',
+      'sd.numeroBR': 'Brasil — 1.234,56', 'sd.numeroCA': 'Canadá — 1,234.56' },
+    en: { 'sd.menu': 'Menu', 'sd.configuracoes': 'Settings', 'sd.fechar': 'Close', 'sd.tema': 'Theme', 'sd.claro': 'Light', 'sd.escuro': 'Dark',
+      'sd.idioma': 'Language', 'sd.idiomaInfo': 'Interface language', 'sd.numero': 'Number format', 'sd.numeroInfo': 'Decimal and thousands separators in charts',
+      'sd.numeroBR': 'Brazil — 1.234,56', 'sd.numeroCA': 'Canada — 1,234.56' }
+  };
+  var ouvintes = { tema: [], idioma: [], numero: [] };
+  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* só nesta sessão */ } }
+  function avisar(evt) { ouvintes[evt].forEach(function (fn) { try { fn(estado[evt]); } catch (e) { console.error('[setup-dashboards]', e); } }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  var estado = {
+    tema: ler(CHAVES.tema) === 'dark' ? 'dark' : 'light',
+    idioma: IDIOMAS.indexOf(ler(CHAVES.idioma)) >= 0 ? ler(CHAVES.idioma) : (IDIOMAS.indexOf(CFG.idiomaPadrao) >= 0 ? CFG.idiomaPadrao : 'pt-BR'),
+    numero: NUMEROS.indexOf(ler(CHAVES.numero)) >= 0 ? ler(CHAVES.numero)
+      : NUMEROS.indexOf(CFG.numeroPadrao) >= 0 ? CFG.numeroPadrao : (/^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR')
+  };
+
+  function t(chave, vars) {
+    var s = (DIC[estado.idioma] || {})[chave];
+    if (s == null) s = DIC['pt-BR'][chave];
+    if (s == null) return chave;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : s;
+  }
+  function registrar(dic) {
+    Object.keys(dic || {}).forEach(function (l) { DIC[l] = DIC[l] || {}; for (var k in dic[l]) DIC[l][k] = dic[l][k]; });
+  }
+  function traduzir(raiz) {
+    raiz = raiz || document;
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+    });
+  }
+  function fmt(v, casas) {
+    return Number(v).toLocaleString(estado.numero, { minimumFractionDigits: casas, maximumFractionDigits: casas }).replace('-', '−');
+  }
+  function dataHora(d) {
+    var l = estado.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l) + ' ' + d.toLocaleTimeString(l);
+  }
+
+  // ── Tema: data-bg (barra e painel) + data-theme (tokens do dashboard) ──
+  function aplicarTema(tema, salvar) {
+    estado.tema = tema === 'dark' ? 'dark' : 'light';
+    var html = document.documentElement;
+    html.setAttribute('data-bg', estado.tema);
+    html.setAttribute('data-theme', estado.tema);
+    if ($('btnWhite')) $('btnWhite').classList.toggle('active', estado.tema === 'light');
+    if ($('btnBusiness')) $('btnBusiness').classList.toggle('active', estado.tema === 'dark');
+    if (salvar) { gravar(CHAVES.tema, estado.tema); avisar('tema'); }
+  }
+  function aplicarIdioma(l, salvar) {
+    estado.idioma = IDIOMAS.indexOf(l) >= 0 ? l : 'pt-BR';
+    document.documentElement.lang = estado.idioma;
+    if ($('langSelect')) $('langSelect').value = estado.idioma;
+    traduzir();
+    if (salvar) { gravar(CHAVES.idioma, estado.idioma); avisar('idioma'); }
+  }
+  function aplicarNumero(n, salvar) {
+    estado.numero = NUMEROS.indexOf(n) >= 0 ? n : 'pt-BR';
+    if ($('numSelect')) $('numSelect').value = estado.numero;
+    if (salvar) { gravar(CHAVES.numero, estado.numero); avisar('numero'); }
+  }
+
+  // ── Painel de Configurações (engrenagem) ──
+  var btn = $('settingsBtn'), painel = $('settingsPanel'), fundo = $('settingsBackdrop');
+  function abrir(sim) {
+    if (!painel) return;
+    painel.classList.toggle('open', sim); fundo.classList.toggle('open', sim);
+    btn.setAttribute('aria-expanded', String(sim)); painel.setAttribute('aria-hidden', String(!sim));
+    if (sim) { var f = painel.querySelector('.theme-toggle-btn.active') || painel.querySelector('button'); if (f) f.focus(); } else btn.focus();
+  }
+  if (btn && painel && fundo) {
+    btn.addEventListener('click', function () { abrir(!painel.classList.contains('open')); });
+    $('settingsClose').addEventListener('click', function () { abrir(false); });
+    fundo.addEventListener('click', function () { abrir(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && painel.classList.contains('open')) abrir(false); });
+    $('btnWhite').addEventListener('click', function () { aplicarTema('light', true); });
+    $('btnBusiness').addEventListener('click', function () { aplicarTema('dark', true); });
+    $('langSelect').addEventListener('change', function (e) { aplicarIdioma(e.target.value, true); });
+    $('numSelect').addEventListener('change', function (e) { aplicarNumero(e.target.value, true); });
+  }
+
+  // ── Tela cheia: html.is-fs (a barra superior sai de cena pelo CSS) ──
+  document.addEventListener('fullscreenchange', function () {
+    document.documentElement.classList.toggle('is-fs', !!document.fullscreenElement);
+    if (document.fullscreenElement) abrir(false);
+  });
+
+  // ── Usuário logado: nome, cargo e iniciais (rota do Portal) ──
+  fetch(CFG.urlUsuario || '/api/me', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (me) {
+      if (!me || !$('topnavUser')) return;
+      var nome = String(me.nome || me.email || '').trim();
+      if (!nome) return;
+      var partes = nome.split(/\s+/);
+      $('topnavUserName').textContent = nome;
+      $('topnavUserRole').textContent = me.cargo || '';
+      $('topnavUserAvatar').textContent = ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+      $('topnavUserAvatar').title = nome;
+      $('topnavUser').hidden = false;
+    })
+    .catch(function () { /* sem a rota (ex.: fora do Portal): a barra fica sem o usuário */ });
+
+  aplicarTema(estado.tema, false);
+  aplicarNumero(estado.numero, false);
+  aplicarIdioma(estado.idioma, false);
+
+  return {
+    t: t, registrar: registrar, traduzir: traduzir, fmt: fmt, dataHora: dataHora,
+    on: function (evt, fn) { if (ouvintes[evt]) ouvintes[evt].push(fn); },
+    get tema() { return estado.tema; }, get idioma() { return estado.idioma; }, get numero() { return estado.numero; }
+  };
+})();
+/* ═══ fim Setup Dashboards ═══ */
+</script>
+<script src="assets/js/painel-spc.js?v=20261105-3"></script>
 <script>
 (function () {
   'use strict';
 
-  // ─── i18n (chave 'vdt-lang', igual ao Portal) ───
+  // ─── Textos da tela (idioma, tema e formato numérico ficam no Setup Dashboards: window.VBMSetup) ───
   var I18N = {
     'pt-BR': {
+      'nav.label': 'Opções do Stable & Capable', 'nav.inicio': 'Início', 'nav.modelo': 'Rodar o modelo', 'nav.importar': 'Importar dados', 'nav.powerbi': 'Dashboard',
+      'op.modelo': 'Gere os PDFs de estabilidade e capabilidade por Business Unit para o período escolhido.',
+      'op.importar': 'Envie o PCI Master do mês, confira a prévia e suba os dados para o banco (IBP.PEDRAVISAODIARIA).',
+      'op.powerbi': 'Carta de controle, medidas por período e capabilidade de cada KPI, com os dados do banco PRD.', 'op.abrir': 'Abrir', 'op.embreve': 'Em breve',
+      'nav.rotulo': 'Opção:', 'vista.inicio.t': 'Stable & Capable', 'vista.inicio.p': 'Estabilidade e capabilidade dos processos (SPC). Escolha o que fazer; você pode trocar de opção a qualquer momento no seletor acima.',
+      'vista.modelo.t': 'Rodar o modelo',
+      'vista.modelo.p': 'Escolha o período e as Business Units e gere os PDFs de estabilidade e capabilidade. Os arquivos ficam salvos no Blob e disponíveis no histórico abaixo.',
+      'vista.importar.t': 'Importar dados', 'vista.importar.p': 'Envie o PCI Master Data File atualizado, escolha o mês e confira a prévia antes de subir os dados para a tabela {tab}.',
+      'vista.powerbi.t': 'Dashboard', 'vista.powerbi.p': '',
+      'imp.title': 'Nova importação', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Arraste o arquivo aqui ou clique para escolher', 'imp.formato': '.xlsx atualizado do mês',
+      'imp.periodo': 'Mês dos dados', 'imp.mes': 'Mês', 'imp.ano': 'Ano', 'imp.processar': 'Processar arquivo', 'imp.processando': 'Processando…',
+      'imp.rodape': 'Nada é gravado neste passo: primeiro você confere a prévia.', 'imp.mapa': 'Baixar o mapeamento',
+      'imp.previa': 'Prévia', 'imp.vazioT': 'Nenhum arquivo processado', 'imp.vazioP': 'Envie o PCI Master e escolha o mês. A prévia mostra as linhas geradas, os campos sem dados e o que já existe no banco.',
+      'imp.semArquivo': 'Escolha o arquivo PCI Master (.xlsx).', 'imp.periodoInvalido': 'Informe mês e ano válidos.',
+      'imp.t.linhas': 'linhas geradas', 'imp.t.novas': 'novas no banco', 'imp.t.existentes': 'já existem ({d} com valor diferente)', 'imp.t.avisos': 'campos com aviso',
+      'imp.avisos': '{n} campo(s) com dados faltando no mês — confira antes de subir', 'imp.c.campo': 'Campo', 'imp.c.aba': 'Aba', 'imp.c.chave': 'Site · Op · KPI', 'imp.c.dias': 'Dias', 'imp.c.media': 'Média',
+      'imp.baixar': 'Baixar resultado.xlsx', 'imp.modoTitulo': 'Linhas que já existem no banco', 
+      'imp.modo.atualizar': 'Atualizar o valor (VL_REAL) das existentes e inserir as novas', 'imp.modo.atualizarD': 'Recomendado para reenviar um mês corrigido. As outras colunas da linha não mudam.',
+      'imp.modo.novos': 'Inserir só as novas e manter as existentes como estão', 'imp.modo.novosD': 'Nada que já está no banco é alterado.',
+      'imp.subir': 'Subir {n} linhas para {tab}', 'imp.subindo': 'Gravando no banco…', 'imp.nadaASubir': 'Nada a gravar: todas as linhas já existem no banco.',
+      'imp.confirma': 'Gravar os dados de {mes} no banco ({tab})?\n\n{novas} linha(s) nova(s){atual}.', 'imp.confirmaAtual': ' e {n} atualizada(s)',
+      'imp.ok': 'Gravado em {tab}: {ins} linha(s) inserida(s) e {at} atualizada(s).', 'imp.semBanco': 'Não foi possível consultar o banco; a gravação pode falhar. {m}',
+      'imp.hist': 'Importações feitas', 'imp.h.quando': 'Gravado em', 'imp.h.mes': 'Mês', 'imp.h.linhas': 'Linhas', 'imp.hVazio': 'Nenhuma importação feita ainda.',
+      'imp.hLinhas': '{ins} inseridas · {at} atualizadas', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
+      'bi.ante': 'Controle estatístico de processo · banco PRD', 'bi.desc': 'Carta de controle com as regras de Nelson, medidas por período e capabilidade por ano.',
+      'bi.h.periodo': 'Período', 'bi.filtros': 'Filtros', 'bi.fechar': 'Fechar', 'bi.resumo': 'Resumo',
+      'bi.capab': 'Capabilidade', 'bi.g.kpi': 'Indicador', 'bi.g.trat': 'Tratamento dos dados', 'bi.de': 'De', 'bi.ate': 'Até',
+      'bi.tratDica': 'Outliers: fora de média ± 3,5 desvios. Valores negativos sempre contam como zero.',
+      'bi.fs.on': 'Tela cheia', 'bi.fs.onTitle': 'Tela cheia (F11)', 'bi.fs.off': 'Sair da tela cheia', 'bi.fs.offTitle': 'Sair da tela cheia (Esc)',
+      'bi.limpar': 'Restaurar padrão', 'bi.ver': 'Ver resultados', 'bi.limparDica': 'Período inteiro, sem remover zeros nem outliers', 'bi.semZeros': 'Sem zeros', 'bi.semOutliers': 'Sem outliers',
+      'bi.t.vs': 'vs. {p}',       'bi.t.semMelhor': 'menos de 30 dias com dado',
+      'bi.semBudget': 'sem budget no período',       'bi.cartaSub': 'Limites por {agrup} · CL = média, UCL/LCL = CL ± 3σ (σ = amplitude móvel média ÷ 1,128)', 'bi.lim': 'Limites por período',
+      'bi.limSub': 'Os mesmos CL, UCL, LCL e melhores 30 dias da carta acima',
+      'bi.th.periodo': 'Período',       'bi.medidasTitulo': 'Medidas estatísticas e comparações', 'bi.medSub': 'Mean, Best 30 Days, P75 e Budget por período · eixo com zoom automático, como no Power BI', 'bi.variacaoSub': 'Mean contra o período anterior',             'bi.medTab': 'Medidas por período', 'bi.medTabSub': 'Os mesmos valores do gráfico acima',
+            'bi.histTitulo': 'Distribuição por ano', 'bi.histSub': '% dos dias em cada faixa de valor · linha tracejada = curva normal do ano', 'bi.todos': 'Todos',
+      'bi.anosTitulo': 'Resumo por ano', 'bi.anosSub': 'Dispersão: quanto menor o CV, mais estável o processo', 'bi.th.desvio': 'Desvio',
+      'bi.f.opRot': 'Operação:', 'bi.f.visao': 'Visão:', 'bi.f.periodoRot': 'Período:', 'bi.f.zerosRot': 'Remover zeros:', 'bi.f.outliersRot': 'Remover outliers:', 'bi.outDica': 'Outliers: fora de média ± 3,5 desvios', 'bi.a.unidade': 'Business Unit e site',
+      'bi.f.site': 'Site', 'bi.f.op': 'Operação', 'bi.f.periodo': 'Período', 'bi.f.zeros': 'Remover zeros', 'bi.f.outliers': 'Remover outliers', 'bi.sim': 'Sim', 'bi.nao': 'Não',
+      'bi.atualizar': 'Atualizar', 'bi.atualizado': 'Dados de {banco} · carregados em {quando}', 'bi.selecione': 'Selecione BU, site e KPI para ver os gráficos',
+      'bi.semDados': 'Sem dados para os filtros escolhidos.', 'bi.carta': 'Carta de controle', 'bi.agrup': 'Agrupar por', 'bi.trimestre': 'Trimestre', 'bi.ano': 'Ano',
+      'bi.medidas': 'Medidas por período', 'bi.hist': 'Histograma de capabilidade', 'bi.periodo': 'Período', 'bi.variacao': 'Variação da média',
+      'bi.serie.mean': 'Média', 'bi.serie.best': 'Melhores 30 dias', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Ano',
+      'bi.r.valores': 'Valores', 'bi.r.r1': 'Regra 1: ponto fora dos limites', 'bi.r.r2': 'Regra 2: 7 pontos do mesmo lado da CL',
+      'bi.r.r3': 'Regra 3: 7 pontos subindo ou descendo', 'bi.r.r4': 'Regra 4: 14 pontos alternando', 'bi.r.best': 'Melhores 30 dias',
       'ui.menu': 'Voltar ao Portal', 'ui.loading': 'Carregando…',
       'settings.title': 'Configurações', 'settings.close': 'Fechar', 'settings.theme': 'Tema', 'settings.language': 'Idioma', 'theme.white': 'Claro', 'theme.dark': 'Escuro',
       'page.eyebrow': 'Vale Base Metals · Controle Estatístico de Processo', 'page.title': '— relatórios por Business Unit',
@@ -498,6 +1444,50 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'diag.instalando': 'Preparando o ambiente Python do app (só na primeira vez após o deploy, alguns minutos). Você já pode iniciar uma execução — ela começa assim que terminar.'
     },
     'en': {
+      'nav.label': 'Stable & Capable options', 'nav.inicio': 'Home', 'nav.modelo': 'Run the model', 'nav.importar': 'Import data', 'nav.powerbi': 'Dashboard',
+      'op.modelo': 'Generate the stability and capability PDFs per Business Unit for the chosen period.',
+      'op.importar': 'Upload the month\'s PCI Master, check the preview and load the data into the database (IBP.PEDRAVISAODIARIA).',
+      'op.powerbi': 'Control chart, measures per period and capability for each KPI, with data from the PRD database.', 'op.abrir': 'Open', 'op.embreve': 'Coming soon',
+      'nav.rotulo': 'Option:', 'vista.inicio.t': 'Stable & Capable', 'vista.inicio.p': 'Process stability and capability (SPC). Pick what to do; you can switch options at any time using the selector above.',
+      'vista.modelo.t': 'Run the model',
+      'vista.modelo.p': 'Pick the period and the Business Units and generate the stability and capability PDFs. Files are saved to Blob storage and listed in the history below.',
+      'vista.importar.t': 'Import data', 'vista.importar.p': 'Upload the updated PCI Master Data File, pick the month and check the preview before loading the data into {tab}.',
+      'vista.powerbi.t': 'Dashboard', 'vista.powerbi.p': '',
+      'imp.title': 'New import', 'imp.arquivo': 'PCI Master Data File', 'imp.solte': 'Drop the file here or click to choose', 'imp.formato': 'updated .xlsx for the month',
+      'imp.periodo': 'Data month', 'imp.mes': 'Month', 'imp.ano': 'Year', 'imp.processar': 'Process file', 'imp.processando': 'Processing…',
+      'imp.rodape': 'Nothing is written in this step: you check the preview first.', 'imp.mapa': 'Download the mapping',
+      'imp.previa': 'Preview', 'imp.vazioT': 'No file processed', 'imp.vazioP': 'Upload the PCI Master and pick the month. The preview shows the generated rows, fields without data and what already exists in the database.',
+      'imp.semArquivo': 'Choose the PCI Master file (.xlsx).', 'imp.periodoInvalido': 'Enter a valid month and year.',
+      'imp.t.linhas': 'rows generated', 'imp.t.novas': 'new in the database', 'imp.t.existentes': 'already exist ({d} with a different value)', 'imp.t.avisos': 'fields with warnings',
+      'imp.avisos': '{n} field(s) with missing data in the month — check before loading', 'imp.c.campo': 'Field', 'imp.c.aba': 'Sheet', 'imp.c.chave': 'Site · Op · KPI', 'imp.c.dias': 'Days', 'imp.c.media': 'Average',
+      'imp.baixar': 'Download resultado.xlsx', 'imp.modoTitulo': 'Rows that already exist in the database',
+      'imp.modo.atualizar': 'Update the value (VL_REAL) of existing rows and insert the new ones', 'imp.modo.atualizarD': 'Recommended when re-sending a corrected month. Other columns are not changed.',
+      'imp.modo.novos': 'Insert only the new rows and keep existing ones as they are', 'imp.modo.novosD': 'Nothing already in the database is changed.',
+      'imp.subir': 'Load {n} rows into {tab}', 'imp.subindo': 'Writing to the database…', 'imp.nadaASubir': 'Nothing to write: all rows already exist in the database.',
+      'imp.confirma': 'Write the {mes} data to the database ({tab})?\n\n{novas} new row(s){atual}.', 'imp.confirmaAtual': ' and {n} updated',
+      'imp.ok': 'Written to {tab}: {ins} row(s) inserted and {at} updated.', 'imp.semBanco': 'Could not query the database; writing may fail. {m}',
+      'imp.hist': 'Imports', 'imp.h.quando': 'Written', 'imp.h.mes': 'Month', 'imp.h.linhas': 'Rows', 'imp.hVazio': 'No imports yet.',
+      'imp.hLinhas': '{ins} inserted · {at} updated', 'imp.arqResultado': 'resultado', 'imp.arqMaster': 'PCI Master', 'imp.arquivoEscolhido': '{n}',
+      'bi.ante': 'Statistical process control · PRD database', 'bi.desc': 'Control chart with Nelson rules, measures per period and capability per year.',
+      'bi.h.periodo': 'Period', 'bi.filtros': 'Filters', 'bi.fechar': 'Close', 'bi.resumo': 'Summary',
+      'bi.capab': 'Capability', 'bi.g.kpi': 'Indicator', 'bi.g.trat': 'Data treatment', 'bi.de': 'From', 'bi.ate': 'To',
+      'bi.tratDica': 'Outliers: outside mean ± 3.5 standard deviations. Negative values always count as zero.',
+      'bi.fs.on': 'Full screen', 'bi.fs.onTitle': 'Full screen (F11)', 'bi.fs.off': 'Exit full screen', 'bi.fs.offTitle': 'Exit full screen (Esc)',
+      'bi.limpar': 'Reset', 'bi.ver': 'See results', 'bi.limparDica': 'Whole period, without removing zeros or outliers', 'bi.semZeros': 'Zeros removed', 'bi.semOutliers': 'Outliers removed',
+      'bi.t.vs': 'vs. {p}',       'bi.t.semMelhor': 'fewer than 30 days with data',
+      'bi.semBudget': 'no budget in the period',       'bi.cartaSub': 'Limits per {agrup} · CL = mean, UCL/LCL = CL ± 3σ (σ = average moving range ÷ 1.128)', 'bi.lim': 'Limits per period',
+      'bi.limSub': 'The same CL, UCL, LCL and best 30 days as the chart above',
+      'bi.th.periodo': 'Period',       'bi.medidasTitulo': 'Statistical Measures and Comparisons', 'bi.medSub': 'Mean, Best 30 Days, P75 and Budget per period · auto-zoomed axis, as in Power BI', 'bi.variacaoSub': 'Mean versus the previous period',             'bi.medTab': 'Measures per period', 'bi.medTabSub': 'The same values as the chart above',
+            'bi.histTitulo': 'Distribution per year', 'bi.histSub': '% of days in each value range · dashed line = the year’s normal curve', 'bi.todos': 'All',
+      'bi.anosTitulo': 'Summary per year', 'bi.anosSub': 'Spread: the lower the CV, the more stable the process', 'bi.th.desvio': 'Std dev',
+      'bi.f.opRot': 'Operation:', 'bi.f.visao': 'View:', 'bi.f.periodoRot': 'Period:', 'bi.f.zerosRot': 'Remove zeros:', 'bi.f.outliersRot': 'Remove outliers:', 'bi.outDica': 'Outliers: outside mean ± 3.5 standard deviations', 'bi.a.unidade': 'Business Unit and site',
+      'bi.f.site': 'Site', 'bi.f.op': 'Operation', 'bi.f.periodo': 'Period', 'bi.f.zeros': 'Remove zeros', 'bi.f.outliers': 'Remove outliers', 'bi.sim': 'Yes', 'bi.nao': 'No',
+      'bi.atualizar': 'Refresh', 'bi.atualizado': 'Data from {banco} · loaded {quando}', 'bi.selecione': 'Select all filters to view the chart',
+      'bi.semDados': 'No data for the selected filters.', 'bi.carta': 'Control chart', 'bi.agrup': 'Group by', 'bi.trimestre': 'Quarter', 'bi.ano': 'Year',
+      'bi.medidas': 'Measures per period', 'bi.hist': 'Capability Histogram', 'bi.periodo': 'Period', 'bi.variacao': 'Mean variation',
+      'bi.serie.mean': 'Mean', 'bi.serie.best': 'Best 30 days', 'bi.serie.p75': 'P75', 'bi.serie.budget': 'Budget', 'bi.h.ano': 'Year',
+      'bi.r.valores': 'Values', 'bi.r.r1': 'Rule 1: point outside the limits', 'bi.r.r2': 'Rule 2: 7 points on the same side of CL',
+      'bi.r.r3': 'Rule 3: 7 points rising or falling', 'bi.r.r4': 'Rule 4: 14 points alternating', 'bi.r.best': 'Best 30 days',
       'ui.menu': 'Back to Portal', 'ui.loading': 'Loading…',
       'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'theme.white': 'Light', 'theme.dark': 'Dark',
       'page.eyebrow': 'Vale Base Metals · Statistical Process Control', 'page.title': '— reports by Business Unit',
@@ -522,22 +1512,10 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       'diag.instalando': 'Setting up the app Python environment (first time after deploy only, a few minutes). You can start a run now — it begins as soon as this finishes.'
     }
   };
-  var lang = 'pt-BR';
-  try { lang = I18N[localStorage.getItem('vdt-lang')] ? localStorage.getItem('vdt-lang') : 'pt-BR'; } catch (e) {}
-  function t(k, v) {
-    var s = (I18N[lang] && I18N[lang][k]) || I18N['pt-BR'][k] || k;
-    return v ? s.replace(/\{(\w+)\}/g, function (_, n) { return v[n] != null ? v[n] : ''; }) : s;
-  }
-  function aplicarIdioma() {
-    document.documentElement.lang = lang;
-    [['data-i18n', null], ['data-i18n-title', 'title'], ['data-i18n-aria', 'aria-label']].forEach(function (a) {
-      document.querySelectorAll('[' + a[0] + ']').forEach(function (el) {
-        var v = t(el.getAttribute(a[0]));
-        if (a[1]) el.setAttribute(a[1], v); else el.textContent = v;
-      });
-    });
-    document.getElementById('langSelect').value = lang;
-  }
+  window.VBMSetup.registrar(I18N);
+  var t = window.VBMSetup.t;
+  var L = function () { return window.VBMSetup.idioma; };
+  var num = function (v, casas) { return window.VBMSetup.fmt(v, casas || 0); };
 
   // ─── Utilidades ───
   var $ = function (id) { return document.getElementById(id); };
@@ -554,11 +1532,11 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) { var e = new Error(d.error || ('HTTP ' + r.status)); e.status = r.status; e.dados = d; throw e; } return d; });
     });
   }
-  function dataBR(isoStr) { if (!isoStr) return '—'; var p = isoStr.slice(0, 10).split('-'); return lang === 'en' ? p[1] + '/' + p[2] + '/' + p[0] : p[2] + '/' + p[1] + '/' + p[0]; }
+  function dataBR(isoStr) { if (!isoStr) return '—'; var p = isoStr.slice(0, 10).split('-'); return L() === 'en' ? p[1] + '/' + p[2] + '/' + p[0] : p[2] + '/' + p[1] + '/' + p[0]; }
   function dataHora(isoStr) {
     if (!isoStr) return '—';
     var d = new Date(isoStr);
-    return d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(L(), { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString(L(), { hour: '2-digit', minute: '2-digit' });
   }
   function isoLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function quem(u) { return u ? esc(String(u).split('@')[0]) : '—'; }
@@ -668,7 +1646,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       '<span>' + esc(t('exec.period')) + ': <strong>' + dataBR(mostrar.inicio) + ' → ' + dataBR(mostrar.fim) + '</strong></span>' +
       '<span>' + esc(t('exec.started')) + ': <strong>' + dataHora(mostrar.criadaEm) + '</strong></span>' +
       (mostrar.usuario ? '<span>' + esc(t('exec.by')) + ': <strong>' + quem(mostrar.usuario) + '</strong></span>' : '') +
-      (mostrar.linhas != null ? '<span>' + esc(t('exec.rows')) + ': <strong>' + Number(mostrar.linhas).toLocaleString(lang) + '</strong></span>' : '') + '</div>';
+      (mostrar.linhas != null ? '<span>' + esc(t('exec.rows')) + ': <strong>' + num(mostrar.linhas) + '</strong></span>' : '') + '</div>';
     var erroGeral = mostrar.erro ? '<p class="mensagem">' + esc(mostrar.erro) + '</p>' : '';
     var acoes = '<div class="exec-acoes">' + (ex ? '<button type="button" class="btn-sec perigo" id="btnCancelar">' + ICONE.parar + esc(t('exec.cancel')) + '</button>' : arquivosHtml(mostrar)) + '</div>';
     var aberto = alvo.querySelector('details.log') && alvo.querySelector('details.log').open;
@@ -686,7 +1664,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
     if (!lista.length) { corpo.innerHTML = '<tr><td colspan="5" class="historico-vazio">' + esc(t('hist.vazio')) + '</td></tr>'; return; }
     corpo.innerHTML = lista.map(function (ex) {
       return '<tr><td data-l="quando">' + dataHora(ex.criadaEm) + '</td>' +
-        '<td data-l="periodo">' + dataBR(ex.inicio) + ' → ' + dataBR(ex.fim) + '<span class="sub">' + (ex.linhas != null ? Number(ex.linhas).toLocaleString(lang) + ' ' + (lang === 'en' ? 'rows' : 'linhas') : '') + '</span></td>' +
+        '<td data-l="periodo">' + dataBR(ex.inicio) + ' → ' + dataBR(ex.fim) + '<span class="sub">' + (ex.linhas != null ? num(ex.linhas) + ' ' + (L() === 'en' ? 'rows' : 'linhas') : '') + '</span></td>' +
         '<td data-l="por">' + quem(ex.usuario) + '</td><td data-l="status">' + pill(ex.status) + '</td><td data-l="arquivos">' + arquivosHtml(ex) + '</td></tr>';
     }).join('');
   }
@@ -739,44 +1717,178 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       });
   });
 
-  // ─── Engrenagem: tema e idioma (mesmas chaves do Portal) ───
-  (function () {
-    var btn = $('settingsBtn'), panel = $('settingsPanel'), bd = $('settingsBackdrop');
-    function abrir(on) { panel.classList.toggle('open', on); bd.classList.toggle('open', on); btn.setAttribute('aria-expanded', String(on)); panel.setAttribute('aria-hidden', String(!on)); }
-    btn.addEventListener('click', function () { abrir(!panel.classList.contains('open')); });
-    $('settingsClose').addEventListener('click', function () { abrir(false); });
-    bd.addEventListener('click', function () { abrir(false); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') abrir(false); });
-    function tema(t2) {
-      document.documentElement.setAttribute('data-bg', t2);
-      $('btnWhite').classList.toggle('active', t2 !== 'dark'); $('btnBusiness').classList.toggle('active', t2 === 'dark');
-      try { localStorage.setItem('vdt-theme', t2); } catch (e) {}
-    }
-    tema(document.documentElement.getAttribute('data-bg') === 'dark' ? 'dark' : 'light');
-    $('btnWhite').addEventListener('click', function () { tema('light'); });
-    $('btnBusiness').addEventListener('click', function () { tema('dark'); });
-    $('langSelect').addEventListener('change', function () {
-      lang = this.value; try { localStorage.setItem('vdt-lang', lang); } catch (e) {}
-      aplicarIdioma(); desenharChips(); desenharExecucao(); desenharHistorico(); rodapeDestino();
-    });
-  })();
+  // ─── Configurações (engrenagem do Setup Dashboards): redesenha o que o JS monta ───
+  function redesenharTudo() {
+    desenharChips(); desenharExecucao(); desenharHistorico(); rodapeDestino();
+    mostrarVista(vistaAtual);
+    if (imp.iniciado) { preencherMeses(); desenharPrevia(); desenharHistImp(); if (!imp.arquivo) escolherArquivo(null); }
+    if (window.PainelSPC) window.PainelSPC.redesenhar();
+  }
+  window.VBMSetup.on('idioma', redesenharTudo);
+  window.VBMSetup.on('numero', redesenharTudo);
+  window.VBMSetup.on('tema', function () { if (window.PainelSPC) window.PainelSPC.redesenhar(); }); // cores dos gráficos dependem do tema
 
   function rodapeDestino() {
     if (!estado.config) return;
     $('histDica').textContent = estado.config.armazenamento === 'blob' ? t('hist.pasta', { p: estado.config.pasta }) : t('hist.local');
   }
 
-  // Usuário logado — mesmo dado do cabeçalho do Kaizen (GET /api/me).
-  fetch('/api/me', { headers: { Accept: 'application/json' } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
-    if (!me || !(me.nome || me.email)) return;
-    var nome = me.nome || me.email, p = nome.trim().split(/\s+/);
-    $('topnavUserName').textContent = nome; $('topnavUserRole').textContent = me.cargo || '';
-    $('topnavUserAvatar').textContent = ((p[0] || '')[0] || '') + (p.length > 1 ? p[p.length - 1][0] : '');
-    $('topnavUser').hidden = false;
-  }).catch(function () {});
+  // ─── Navegação entre as opções (#modelo, #importar, #powerbi; vazio = início) ───
+  var VISTAS = ['inicio', 'modelo', 'importar', 'powerbi'];
+  var vistaAtual = 'inicio';
+  function vistaDoHash() { var h = (location.hash || '').replace('#', ''); return VISTAS.indexOf(h) > 0 ? h : 'inicio'; }
+  function mostrarVista(nome) {
+    vistaAtual = nome;
+    VISTAS.forEach(function (v) { $('vista-' + v).hidden = v !== nome; });
+    document.querySelectorAll('.seg a[data-vista]').forEach(function (a) {
+      if (a.getAttribute('data-vista') === nome) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    $('tituloVista').textContent = t('vista.' + nome + '.t');
+    $('introVista').textContent = t('vista.' + nome + '.p', { tab: (imp.config && imp.config.tabela) || 'IBP.PEDRAVISAODIARIA' });
+    $('introVista').hidden = nome === 'powerbi'; // o hero do dashboard já tem título e descrição
+    if (nome === 'importar') iniciarImportacao();
+    if (nome === 'powerbi' && window.PainelSPC) window.PainelSPC.iniciar({ api: api, t: t, lang: L });
+  }
+  window.addEventListener('hashchange', function () { mostrarVista(vistaDoHash()); window.scrollTo(0, 0); });
+
+  // ─── Importar dados ───
+  var imp = { config: null, arquivo: null, previa: null, modo: 'atualizar', gravando: false, resultado: null, erro: null, historico: null, iniciado: false };
+  function nomeMes(m, ano) {
+    var n = new Date(2000, m - 1, 1).toLocaleDateString(L(), { month: 'long' });
+    n = n.charAt(0).toUpperCase() + n.slice(1);
+    return ano ? n + ' ' + ano : n;
+  }
+  function preencherMeses() {
+    var sel = $('mesImp'), atual = sel.value;
+    sel.innerHTML = '';
+    for (var m = 1; m <= 12; m++) { var o = document.createElement('option'); o.value = String(m); o.textContent = nomeMes(m); sel.appendChild(o); }
+    if (atual) sel.value = atual;
+  }
+  function iniciarImportacao() {
+    if (imp.iniciado) return;
+    imp.iniciado = true;
+    preencherMeses();
+    api('importacao/config').then(function (c) {
+      imp.config = c;
+      if (!$('anoImp').value) { $('anoImp').value = c.sugestao.ano; $('mesImp').value = String(c.sugestao.mes); }
+      if (vistaAtual === 'importar') $('introVista').textContent = t('vista.importar.p', { tab: c.tabela });
+      $('impDica').textContent = c.tabela;
+    }).catch(function () {});
+    desenharPrevia();
+    carregarHistImp();
+  }
+  function escolherArquivo(f) {
+    imp.arquivo = f || null;
+    var z = $('soltar');
+    z.classList.toggle('tem-arquivo', !!f);
+    $('soltarNome').textContent = f ? f.name + ' · ' + tamanho(f.size) : t('imp.solte');
+  }
+  $('arquivoImp').addEventListener('change', function () { escolherArquivo(this.files && this.files[0]); });
+  ['dragenter', 'dragover'].forEach(function (ev) { $('soltar').addEventListener(ev, function () { $('soltar').classList.add('ativo'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { $('soltar').addEventListener(ev, function () { $('soltar').classList.remove('ativo'); }); });
+
+  $('formImp').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msg = $('msgImp'), ano = parseInt($('anoImp').value, 10), mes = parseInt($('mesImp').value, 10);
+    var erro = !imp.arquivo ? t('imp.semArquivo') : (!(ano >= 2000 && ano <= 2100 && mes >= 1 && mes <= 12) ? t('imp.periodoInvalido') : null);
+    msg.hidden = !erro; msg.textContent = erro || '';
+    if (erro) return;
+    var fd = new FormData();
+    fd.append('ano', String(ano)); fd.append('mes', String(mes)); fd.append('arquivo', imp.arquivo, imp.arquivo.name);
+    var btn = $('btnProcessar');
+    btn.disabled = true; btn.querySelector('span').textContent = t('imp.processando');
+    fetch(API + 'importacao/previa', { method: 'POST', body: fd, credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
+      .then(function (d) { imp.previa = d; imp.resultado = null; imp.erro = null; imp.modo = 'atualizar'; desenharPrevia(); })
+      .catch(function (err) { msg.hidden = false; msg.textContent = err.message || t('erro.rede'); })
+      .then(function () { btn.disabled = false; btn.querySelector('span').textContent = t('imp.processar'); });
+  });
+
+  function aSubir(p) {
+    var c = p.conflitos;
+    if (!c) return p.total;
+    return imp.modo === 'atualizar' ? p.total : c.novas;
+  }
+  function desenharPrevia() {
+    var alvo = $('previaConteudo'), p = imp.previa;
+    if (!p) {
+      $('previaPill').innerHTML = '';
+      alvo.innerHTML = '<div class="vazio">' + ICONE.vazio + '<h3>' + esc(t('imp.vazioT')) + '</h3><p>' + esc(t('imp.vazioP')) + '</p></div>';
+      return;
+    }
+    var c = p.conflitos, mesTxt = nomeMes(p.periodo.mes, p.periodo.ano);
+    $('previaPill').innerHTML = imp.resultado ? '<span class="pill ok">' + esc(t('st.concluida')) + '</span>' : '<span class="pill ativo">' + esc(t('imp.previa')) + '</span>';
+    var avisosDados = (p.avisos || []);
+    var meta = '<div class="exec-meta"><span>' + esc(t('imp.arquivo')) + ': <strong>' + esc(p.arquivo) + '</strong></span>' +
+      '<span>' + esc(t('imp.mes')) + ': <strong>' + esc(mesTxt) + '</strong></span><span><strong>' + esc(p.tabela) + '</strong></span></div>';
+    var ind = '<div class="indicadores">' +
+      '<div class="indicador ativo"><b>' + num(p.total) + '</b><span>' + esc(t('imp.t.linhas')) + '</span></div>' +
+      '<div class="indicador ok"><b>' + (c ? num(c.novas) : '—') + '</b><span>' + esc(t('imp.t.novas')) + '</span></div>' +
+      '<div class="indicador' + (c && c.existentes ? ' alerta' : '') + '"><b>' + (c ? num(c.existentes) : '—') + '</b><span>' + esc(t('imp.t.existentes', { d: c ? c.diferentes : '—' })) + '</span></div>' +
+      '<div class="indicador' + (avisosDados.length ? ' alerta' : '') + '"><b>' + avisosDados.length + '</b><span>' + esc(t('imp.t.avisos')) + '</span></div></div>';
+    var semBanco = p.erroBanco ? '<p class="mensagem">' + esc(t('imp.semBanco', { m: p.erroBanco })) + '</p>' : '';
+    var avisos = avisosDados.length ? '<details class="avisos"' + (avisosDados.length <= 8 ? ' open' : '') + '><summary>' + esc(t('imp.avisos', { n: avisosDados.length })) + '</summary><ul>' +
+      avisosDados.map(function (a) { return '<li><strong>' + esc(a.campo) + '</strong> — ' + esc(a.msg) + '</li>'; }).join('') + '</ul></details>' : '';
+    var nf = function (v) { return v == null ? '—' : num(v, Math.abs(v) < 10 ? 2 : 1); };
+    var campos = '<div class="tabela-campos"><table><thead><tr><th>' + esc(t('imp.c.campo')) + '</th><th>' + esc(t('imp.c.aba')) + '</th><th>' + esc(t('imp.c.chave')) +
+      '</th><th class="num">' + esc(t('imp.c.dias')) + '</th><th class="num">' + esc(t('imp.c.media')) + '</th></tr></thead><tbody>' +
+      (p.campos || []).map(function (x) {
+        return '<tr' + (x.dias < x.diasMes ? ' class="falta"' : '') + '><td>' + esc(x.campo) + (x.dividir100 ? ' <small>÷100</small>' : '') + '</td><td>' + esc(x.aba) +
+          '</td><td>' + x.ID_SITE + ' · ' + x.ID_OPERACAO + ' · ' + x.ID_KPI + '</td><td class="num">' + x.dias + '/' + x.diasMes + '</td><td class="num">' + nf(x.media) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    var modos = '';
+    if (!imp.resultado && c && c.existentes > 0) {
+      modos = '<div class="campo-rotulo"><span>' + esc(t('imp.modoTitulo')) + '</span></div><div class="modos">' +
+        ['atualizar', 'novos'].map(function (m) {
+          return '<label class="modo"><input type="radio" name="modoImp" value="' + m + '"' + (imp.modo === m ? ' checked' : '') + '/><span>' + esc(t('imp.modo.' + m)) +
+            '<small>' + esc(t('imp.modo.' + m + 'D')) + '</small></span></label>';
+        }).join('') + '</div>';
+    }
+    var n = aSubir(p);
+    var baixar = '<a class="btn-sec" href="' + API + 'importacao/previa/' + encodeURIComponent(p.id) + '/resultado">' + ICONE.xlsx + esc(t('imp.baixar')) + '</a>';
+    var acao = imp.resultado
+      ? '<p class="sucesso">' + esc(t('imp.ok', { tab: p.tabela, ins: num(imp.resultado.inseridas), at: num(imp.resultado.atualizadas) })) + '</p>'
+      : '<div class="acoes-linha">' + baixar + '<button type="button" class="btn-primario" id="btnSubir"' + (n && !imp.gravando ? '' : ' disabled') + '><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.5V2.5M4.8 5.5 8 2.3l3.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10v2.2c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' +
+        '<span>' + esc(imp.gravando ? t('imp.subindo') : (n ? t('imp.subir', { n: num(n), tab: p.tabela }) : t('imp.nadaASubir'))) + '</span></button></div>';
+    var erroGrav = imp.erro ? '<p class="mensagem">' + esc(imp.erro) + '</p>' : '';
+    alvo.innerHTML = meta + ind + semBanco + avisos + campos + modos + acao + erroGrav;
+    alvo.querySelectorAll('input[name="modoImp"]').forEach(function (r) { r.addEventListener('change', function () { imp.modo = r.value; desenharPrevia(); }); });
+    var b = $('btnSubir');
+    if (b) b.addEventListener('click', confirmarImportacao);
+  }
+  function confirmarImportacao() {
+    var p = imp.previa, c = p.conflitos;
+    var atualizar = imp.modo === 'atualizar' && c && c.existentes ? t('imp.confirmaAtual', { n: c.existentes }) : '';
+    var novas = c ? c.novas : p.total;
+    if (!confirm(t('imp.confirma', { mes: nomeMes(p.periodo.mes, p.periodo.ano), tab: p.tabela, novas: novas, atual: atualizar }))) return;
+    imp.gravando = true; imp.erro = null; desenharPrevia();
+    api('importacao/previa/' + encodeURIComponent(p.id) + '/confirmar', { method: 'POST', body: { modo: imp.modo } })
+      .then(function (reg) { imp.resultado = reg; carregarHistImp(); })
+      .catch(function (err) { imp.erro = err.message || t('erro.rede'); })
+      .then(function () { imp.gravando = false; desenharPrevia(); });
+  }
+  function carregarHistImp() {
+    return api('importacao/historico').then(function (d) { imp.historico = d.importacoes || []; desenharHistImp(); })
+      .catch(function () { $('histImpCorpo').innerHTML = '<tr><td colspan="5" class="historico-vazio">—</td></tr>'; });
+  }
+  function desenharHistImp() {
+    var lista = imp.historico, corpo = $('histImpCorpo');
+    if (!lista) return;
+    if (!lista.length) { corpo.innerHTML = '<tr><td colspan="5" class="historico-vazio">' + esc(t('imp.hVazio')) + '</td></tr>'; return; }
+    corpo.innerHTML = lista.map(function (r) {
+      var arqs = (r.arquivos || []).map(function (a) {
+        return '<a class="arq xlsx" href="' + API + 'importacao/historico/' + encodeURIComponent(r.id) + '/arquivos/' + encodeURIComponent(a.nome) + '" title="' + esc(a.nome) + '">' +
+          ICONE.xlsx + esc(a.tipo === 'master' ? t('imp.arqMaster') : t('imp.arqResultado')) + '</a>';
+      }).join('');
+      return '<tr><td data-l="quando">' + dataHora(r.gravadaEm) + '</td><td data-l="periodo">' + esc(nomeMes(r.mes, r.ano)) +
+        '<span class="sub">' + esc(r.tabela || '') + '</span></td><td data-l="por">' + quem(r.usuario) + '</td><td data-l="status">' +
+        esc(t('imp.hLinhas', { ins: num(r.inseridas), at: num(r.atualizadas) })) + '</td><td data-l="arquivos"><div class="arquivos">' + arqs + '</div></td></tr>';
+    }).join('');
+  }
 
   // ─── Início ───
-  aplicarIdioma();
+  window.VBMSetup.traduzir();
+  mostrarVista(vistaDoHash());
   api('config').then(function (c) {
     estado.config = c; estado.bus = c.bus || []; estado.selecionadas = estado.bus.slice();
     $('dtInicio').value = c.periodoSugerido.inicio; $('dtFim').value = c.periodoSugerido.fim;
