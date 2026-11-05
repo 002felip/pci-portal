@@ -3,7 +3,7 @@
    Banco: BDIBPBMSA_PRD · agendar no Data Factory depois de 003_carga_mensal_coo.sql
 
    Atualiza, nas linhas do ciclo atual do COO em IBP.PHUB_PERFORMANCESTUDIO
-   (ID_DASH 15, DT_REF = mês de GETDATE()-2, dia 1):
+   (ID_DASH 15, DT_REF = mês de GETDATE()-2, dia 1; sem essa carga, a mais recente gravada):
      DT_ATUALIZACAO = última atualização do KPI em IBP.LOG_PEDRAVISAOCONSOLIDADA
                       (NULL quando o KPI não tem linha no mês ou não tem log)
      SG_STATUS      = 'S' atualizado | 'N' pendente
@@ -13,7 +13,7 @@
      DT_IND anterior ao mês de @DT_REF                        → 'S'
      mês de (DT_ATUALIZACAO - 1 mês) >= mês de @DT_REF        → 'S'
      demais                                                   → 'N'
-   @DT_REF = DATEADD(MONTH, -1, GETDATE()-2), no 1º dia do mês (como no
+   @DT_REF = mês anterior ao DT_REF da carga (= DATEADD(MONTH, -1, GETDATE()-2), dia 1, como no
    002_coo_dashboard_atualizacao.sql em produção): o mês do ciclo só conta como
    atualizado com atualização no mês seguinte.
 
@@ -26,9 +26,15 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 DECLARE @ID_DASH  INT  = 15;
-DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, GETDATE() - 2);
-SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
 DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);
+-- Carga do mês ainda não gravada (ex.: dia 5 sem a carga do mês): usa a carga mais recente do dashboard
+IF NOT EXISTS (SELECT 1 FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF = @DT_CARGA)
+  SET @DT_CARGA = (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF <= @DT_CARGA);
+IF @DT_CARGA IS NULL
+  THROW 50020, 'Nenhuma carga do dashboard em IBP.PHUB_PERFORMANCESTUDIO: rode antes o 003_carga_mensal_coo.sql.', 1;
+-- Mês do ciclo da carga (último mês realizado): carga 2026-10-01 → 2026-09-01
+DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, @DT_CARGA);
+DECLARE @LINHAS   INT;
 
 -- Última atualização por KPI e DT_IND (KPI com linha no mês em PEDRAVISAOCONSOLIDADA)
 IF OBJECT_ID('tempdb..#A') IS NOT NULL DROP TABLE #A;
@@ -72,8 +78,11 @@ INNER JOIN #A A
   AND A.ID_OPERACAO = R.ID_OPERACAO AND A.ID_KPI = R.ID_KPI
 WHERE R.ID_DASH = @ID_DASH
   AND R.DT_REF = @DT_CARGA;
+SET @LINHAS = @@ROWCOUNT;
 
 COMMIT TRANSACTION;
+
+SELECT ID_DASH = @ID_DASH, DT_REF = @DT_CARGA, MES_CICLO = @DT_REF, LINHAS_ATUALIZADAS = @LINHAS;
 
 -- Resumo (linhas por situação)
 SELECT ID_DASH, @DT_CARGA AS DT_REF, @DT_REF AS MES_CICLO, SG_STATUS, COUNT(*) AS LINHAS
