@@ -732,10 +732,25 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .dsc .nav-chip { min-height: 32px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; white-space: nowrap; }
 .dsc .nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
 .dsc .nav-chip:disabled { opacity: .4; cursor: default; }
+.dsc .acoes-linha { display: flex; align-items: center; gap: 6px; }
+/* Tela cheia, no mesmo padrão dos dashboards do Performance Hub (COO): botão no fim dos filtros;
+   em tela cheia (botão → html.is-fs; F11 → display-mode) saem a barra superior e o cabeçalho da página */
+.dsc .fs-btn { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--f-soft); cursor: pointer; }
+.dsc .fs-btn:hover { color: var(--ctl-on-bg); border-color: var(--ctl-on-bg); }
+.dsc .fs-btn:focus-visible { outline: 2px solid var(--ctl-on-bg); outline-offset: 2px; }
+.dsc .ico-exit { display: none; }
+.is-fs .dsc .ico-exit { display: block; }
+.is-fs .dsc .ico-enter { display: none; }
+.is-fs .pagina:has(#vista-powerbi:not([hidden])) > .cabecalho { display: none; }
+.is-fs .pagina:has(#vista-powerbi:not([hidden])) { padding-top: 20px; }
+@media (display-mode: fullscreen) {
+  .pagina:has(#vista-powerbi:not([hidden])) > .cabecalho { display: none; }
+  .pagina:has(#vista-powerbi:not([hidden])) { padding-top: 20px; }
+}
 .dsc .unit-trigger:focus-visible, .dsc .seg button:focus-visible, .dsc .switch:focus-visible, .dsc .nav-chip:focus-visible, .dsc .unit-list button:focus-visible { outline: 2px solid var(--ctl-on-bg); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .dsc .switch-track, .dsc .switch-thumb, .dsc .unit-caret { transition: none; } }
 @media (max-width: 720px) { .dsc .filters { gap: 8px 10px; } .dsc .filter-acao { margin-left: 0; } .dsc .unit-pop { grid-template-columns: 1fr; } .dsc .unit-col + .unit-col { border-left: 0; border-top: 1px solid var(--d-line); padding-left: 4px; } }
-@media (pointer: coarse) { .dsc .seg button, .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; } }
+@media (pointer: coarse) { .dsc .seg button, .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; } .dsc .fs-btn { width: 44px; height: 44px; } }
 
 /* ── Telas maiores (≥ 1600 px), só no Dashboard: a página deixa de ficar presa em 1440 px,
    os gráficos crescem com a altura da tela (painel-spc.js → alturasDashboard) e os textos
@@ -750,6 +765,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .dsc .filter-label { font-size: .8rem; }
   .dsc .unit-trigger, .dsc .seg button, .dsc .seg.datas input, .dsc .nav-chip { font-size: .8rem; }
   .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 36px; }
+  .dsc .fs-btn { width: 36px; height: 36px; }
   .dsc .seg button { min-height: 30px; }
   .dsc .seg.datas input { min-height: 30px; }
   .dsc-svg .ex { font-size: 11.5px; }
@@ -780,6 +796,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .dsc .filter-label { font-size: .95rem; }
   .dsc .unit-trigger, .dsc .seg button, .dsc .seg.datas input, .dsc .nav-chip { font-size: .95rem; }
   .dsc .unit-trigger, .dsc .switch, .dsc .nav-chip { min-height: 44px; }
+  .dsc .fs-btn { width: 44px; height: 44px; }
   .dsc .seg button, .dsc .seg.datas input { min-height: 38px; }
   .dsc-card { padding: 1.8rem 2.1rem 1.6rem; }
   .dsc-card-titulo { font-size: 1.45rem; }
@@ -1161,7 +1178,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       <div class="filter"><span class="filter-label" id="lblBiOut" data-i18n="bi.f.outliersRot">Remover outliers:</span>
         <button type="button" class="switch" data-bi-flag="removerOutliers" role="switch" aria-checked="false" aria-labelledby="lblBiOut" title="Fora de média ± 3,5 desvios" data-i18n-title="bi.outDica"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
       </div>
-      <div class="filter filter-acao"><button type="button" class="nav-chip" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button></div>
+      <div class="filter filter-acao"><div class="acoes-linha"><button type="button" class="nav-chip" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button><button type="button" class="fs-btn js-full" aria-label="Tela cheia" title="Tela cheia (F11)" data-i18n-aria="bi.fs.on" data-i18n-title="bi.fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
     </section>
 
     <!-- Os três visuais da página "Stable and capable" do .pbix, na mesma disposição:
@@ -1351,7 +1368,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js?v=20261105-2"></script>
+<script src="assets/js/painel-spc.js?v=20261105-3"></script>
 <script>
 (function () {
   'use strict';
@@ -1387,6 +1404,7 @@ window.VBMSetup = (function () {
       'bi.h.periodo': 'Período', 'bi.filtros': 'Filtros', 'bi.fechar': 'Fechar', 'bi.resumo': 'Resumo',
       'bi.capab': 'Capabilidade', 'bi.g.kpi': 'Indicador', 'bi.g.trat': 'Tratamento dos dados', 'bi.de': 'De', 'bi.ate': 'Até',
       'bi.tratDica': 'Outliers: fora de média ± 3,5 desvios. Valores negativos sempre contam como zero.',
+      'bi.fs.on': 'Tela cheia', 'bi.fs.onTitle': 'Tela cheia (F11)', 'bi.fs.off': 'Sair da tela cheia', 'bi.fs.offTitle': 'Sair da tela cheia (Esc)',
       'bi.limpar': 'Restaurar padrão', 'bi.ver': 'Ver resultados', 'bi.limparDica': 'Período inteiro, sem remover zeros nem outliers', 'bi.semZeros': 'Sem zeros', 'bi.semOutliers': 'Sem outliers',
       'bi.t.vs': 'vs. {p}',       'bi.t.semMelhor': 'menos de 30 dias com dado',
       'bi.semBudget': 'sem budget no período',       'bi.cartaSub': 'Limites por {agrup} · CL = média, UCL/LCL = CL ± 3σ (σ = amplitude móvel média ÷ 1,128)', 'bi.lim': 'Limites por período',
@@ -1454,6 +1472,7 @@ window.VBMSetup = (function () {
       'bi.h.periodo': 'Period', 'bi.filtros': 'Filters', 'bi.fechar': 'Close', 'bi.resumo': 'Summary',
       'bi.capab': 'Capability', 'bi.g.kpi': 'Indicator', 'bi.g.trat': 'Data treatment', 'bi.de': 'From', 'bi.ate': 'To',
       'bi.tratDica': 'Outliers: outside mean ± 3.5 standard deviations. Negative values always count as zero.',
+      'bi.fs.on': 'Full screen', 'bi.fs.onTitle': 'Full screen (F11)', 'bi.fs.off': 'Exit full screen', 'bi.fs.offTitle': 'Exit full screen (Esc)',
       'bi.limpar': 'Reset', 'bi.ver': 'See results', 'bi.limparDica': 'Whole period, without removing zeros or outliers', 'bi.semZeros': 'Zeros removed', 'bi.semOutliers': 'Outliers removed',
       'bi.t.vs': 'vs. {p}',       'bi.t.semMelhor': 'fewer than 30 days with data',
       'bi.semBudget': 'no budget in the period',       'bi.cartaSub': 'Limits per {agrup} · CL = mean, UCL/LCL = CL ± 3σ (σ = average moving range ÷ 1.128)', 'bi.lim': 'Limits per period',

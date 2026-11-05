@@ -116,6 +116,8 @@ e sem depender de licença do Power BI.
   - interruptores Remover zeros e Remover outliers (média ± 3,5 desvios).
 
   Os padrões são os do `.pbix`: Salobo / Salobo / Ore Mined, sem remover nada.
+- **Tela cheia:** botão no fim da barra de filtros, como nos dashboards do Hub. Em tela cheia (botão ou F11)
+  saem a barra superior e o cabeçalho da página; `Esc` volta.
 - **Responsividade:**
   - o gráfico de barras se ajusta à largura, sem rolagem lateral;
   - a partir de 1600 px, a vista usa até `min(94vw, 2400px)` (3400 px a partir de 3000 px), e as
