@@ -628,15 +628,20 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 /* ── Medidas estatísticas (v4/v5 do .pbix): quatro barras por período, no desenho das colunas do Kaizen ── */
 .dsc { --m-mean: #1a8bbf; --m-best: #3cb5e5; --m-p75: #9ddaf2; --m-budget: #8a96a6; }
 :root[data-theme="dark"] .dsc { --m-mean: #3cb5e5; --m-best: #7dd3f0; --m-p75: #2f6f93; --m-budget: #9aa6b6; }
-.dsc .cg { min-width: var(--minw, 520px); padding-bottom: 26px; }
+.dsc .cg { padding-bottom: 26px; }
+.dsc .cg.cg-eixo2 { padding-bottom: 38px; }
+.dsc .cg-sem-valor .cg-v { display: none; }
+.dsc .cg .cg-area { margin-top: 20px; height: var(--area-h, 330px); }
+@media (max-width: 960px) { .dsc .cg .cg-area { height: 270px; } }
 .dsc .cg-area { position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: var(--gap, 18px); height: var(--area-h, 250px); margin-top: 24px; }
 .dsc .cg-area::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, transparent, var(--d-line) 8%, var(--d-line) 92%, transparent); }
-.dsc .cg-grupo { position: relative; flex: 1 1 0; max-width: 150px; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
-.dsc .cg-col { position: relative; flex: 1 1 0; max-width: 30px; height: 100%; }
+.dsc .cg-grupo { position: relative; flex: 1 1 0; min-width: 0; max-width: 150px; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.dsc .cg-col { position: relative; flex: 1 1 0; min-width: 0; max-width: 30px; height: 100%; }
 .dsc .cg-bar { position: absolute; bottom: 0; left: 0; right: 0; height: var(--h); border-radius: 4px 4px 2px 2px; background-color: var(--c); background-image: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 42%, rgba(15,23,42,.06) 100%); animation: dscGrowBar .95s var(--d-ease) both; }
 .dsc .cg-col:hover .cg-bar { filter: brightness(1.06); }
 .dsc .cg-v { position: absolute; bottom: calc(var(--h) + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: var(--fv, .64rem); font-weight: 600; color: var(--d-ink); font-variant-numeric: tabular-nums; }
-.dsc .cg-grupo .x-lbl { bottom: -22px; }
+.dsc .cg-grupo .x-lbl { bottom: -22px; font-size: .66rem; }
+.dsc .cg-eixo2 .cg-grupo .x-lbl { bottom: -34px; white-space: normal; text-align: center; line-height: 1.15; font-size: .6rem; }
 .dsc-variacao { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-direction: column; }
 .dsc-variacao li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .2rem; border-bottom: 1px solid var(--d-line-soft); font-size: .74rem; color: var(--d-ink-soft); }
 .dsc-variacao li:last-child { border-bottom: 0; }
@@ -645,7 +650,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 /* Medidas + caixa "Variação da média" lado a lado (como no .pbix); legenda do histograma acima do gráfico */
 .dsc-medidas-linha { display: flex; gap: 1rem; align-items: flex-start; }
 .dsc-medidas-graf { flex: 1; min-width: 0; }
-.dsc-variacao-caixa { width: 200px; flex: none; margin-top: 1.2rem; padding: .7rem .8rem; border: 1px solid var(--d-line); border-radius: .8rem; background: var(--d-surface-alt); }
+.dsc-variacao-caixa { width: 188px; flex: none; margin-top: 1.2rem; padding: .7rem .8rem; border: 1px solid var(--d-line); border-radius: .8rem; background: var(--d-surface-alt); }
 .dsc-variacao-caixa h4 { margin: 0 0 .2rem; font-size: .76rem; font-weight: 600; color: var(--d-ink-soft); }
 .dsc-variacao-caixa .dsc-variacao { margin-top: 0; }
 .dsc-variacao-caixa .dsc-variacao li { padding: .42rem 0; font-size: .7rem; }
@@ -1118,7 +1123,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
           <div class="dsc-legenda" id="biLegendaMedidas"></div>
         </div>
         <div class="dsc-medidas-linha">
-          <div class="dsc-rolagem dsc-medidas-graf"><div id="biMedidas"></div></div>
+          <div class="dsc-medidas-graf"><div id="biMedidas"></div></div>
           <div class="dsc-variacao-caixa">
             <h4 data-i18n="bi.variacao">Variação da média</h4>
             <ul class="dsc-variacao" id="biVariacao"></ul>
@@ -1284,7 +1289,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js?v=20261104-2"></script>
+<script src="assets/js/painel-spc.js?v=20261105-1"></script>
 <script>
 (function () {
   'use strict';
