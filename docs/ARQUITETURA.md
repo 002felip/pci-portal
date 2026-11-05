@@ -3,7 +3,8 @@
 Portal de aplicações de **Performance & Continuous Improvement (PCI)** da Vale Base Metals.
 Este documento descreve como o Portal está montado hoje: hospedagem, roteamento, acesso,
 bancos, armazenamento e cada aplicação. Para detalhes de uma aplicação, siga o link do
-documento dela no fim de cada seção.
+documento dela no fim de cada seção, ou a documentação técnica por projeto em
+[`projetos/`](projetos/README.md).
 
 > Situação de referência: `main` em novembro de 2026.
 
