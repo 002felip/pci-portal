@@ -22,6 +22,7 @@ const APLICACOES = [
   'COO-Business-Units-Dashboard',
   'COO-Business-Units-Dashboard-Historical',
   'VBM-Health-of-the-Business',
+  'VBM-Lean-Six-Sigma',               // sem banco: planilhas do programa LSS em data/
 ];
 const BASE = '/' + path.basename(__dirname);
 

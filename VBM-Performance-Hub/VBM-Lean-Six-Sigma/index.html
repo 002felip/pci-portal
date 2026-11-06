@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VBM Lean Six Sigma — Vale Base Metals</title>
+<link rel="stylesheet" href="../assets/css/poppins.css">
+<link rel="stylesheet" href="assets/css/setup-dashboards.css">
+<link rel="stylesheet" href="assets/css/lss.css?v=20261106-1">
+</head>
+<body>
+
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Trocar VBM Lean Six Sigma pelo nome do dashboard (ex.: "COO Business Units Dashboard").
+     Logo: "../" volta ao Hub; ajuste se o dashboard morar em outro lugar. -->
+<nav class="topnav" id="topnav">
+  <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">VBM Lean Six Sigma</span></h1>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+
+<script src="assets/js/setup-dashboards.js"></script>
+
+<main class="pagina">
+  <section class="dsc" id="lss" aria-labelledby="lssTitulo">
+    <!-- Hero (mesma linguagem do Kaizen e do Stable & Capable) -->
+    <div class="dsc-hero">
+      <div class="dsc-hero-orb" aria-hidden="true"></div>
+      <div class="dsc-hero-texto">
+        <div class="dsc-hero-ante" data-i18n="hero.ante">Melhoria contínua · Lean Six Sigma</div>
+        <h2 class="dsc-hero-titulo" id="lssTitulo">Lean Six Sigma</h2>
+        <div class="dsc-hero-sub" id="lssSub" data-i18n="hero.sub">Green Belt · portfólio de projetos e coaching</div>
+        <p class="dsc-hero-desc" data-i18n="hero.desc">Acompanhamento dos projetos Green Belt por site, etapa DMAIC e ciclo, com a timeline de coaching de cada projeto.</p>
+      </div>
+      <div class="dsc-hero-box">
+        <div class="dsc-base">
+          <span data-i18n="hero.projetos">Projetos</span><b id="lssQtd">—</b>
+          <span data-i18n="hero.site">Site</span><b id="lssSiteHero">—</b>
+        </div>
+        <div class="dsc-atualizado" id="lssAtualizado"></div>
+      </div>
+    </div>
+
+    <!-- Filtros no padrão dos reports do Performance Hub (COO) -->
+    <section class="filters" aria-label="Filtros" data-i18n-aria="f.aria">
+      <div class="filter" data-filtro="site"><span class="filter-label" id="lbl-site" data-i18n="f.site">Site:</span>
+        <div class="unit">
+          <button type="button" class="unit-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="pop-site" aria-describedby="lbl-site"><span class="unit-site" data-valor></span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="pop-site" hidden><div class="unit-list" role="group" aria-labelledby="lbl-site"></div></div>
+        </div>
+      </div>
+      <div class="filter" data-filtro="status"><span class="filter-label" id="lbl-status" data-i18n="f.status">Status:</span>
+        <div class="unit">
+          <button type="button" class="unit-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="pop-status" aria-describedby="lbl-status"><span class="unit-site" data-valor></span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="pop-status" hidden><div class="unit-list" role="group" aria-labelledby="lbl-status"></div></div>
+        </div>
+      </div>
+      <div class="filter" data-filtro="ciclo"><span class="filter-label" id="lbl-ciclo" data-i18n="f.ciclo">Ciclo:</span>
+        <div class="unit">
+          <button type="button" class="unit-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="pop-ciclo" aria-describedby="lbl-ciclo"><span class="unit-site" data-valor></span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="pop-ciclo" hidden><div class="unit-list" role="group" aria-labelledby="lbl-ciclo"></div></div>
+        </div>
+      </div>
+      <div class="filter" data-filtro="etapa"><span class="filter-label" id="lbl-etapa" data-i18n="f.etapa">Etapa:</span>
+        <div class="unit">
+          <button type="button" class="unit-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="pop-etapa" aria-describedby="lbl-etapa"><span class="unit-site" data-valor></span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="unit-pop lista-pop" id="pop-etapa" hidden><div class="unit-list" role="group" aria-labelledby="lbl-etapa"></div></div>
+        </div>
+      </div>
+      <div class="filter filter-acao"><div class="acoes-linha">
+        <button type="button" class="nav-chip" id="lssLimpar" data-i18n="f.limpar">Restaurar padrão</button>
+        <button type="button" class="fs-btn js-full" aria-label="Tela cheia" title="Tela cheia (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div></div>
+    </section>
+
+    <div class="dsc-barra">
+      <div class="dsc-abas lss-abas" role="tablist" aria-label="Páginas do dashboard" data-i18n-aria="aba.aria">
+        <button type="button" class="dsc-aba" role="tab" id="aba-geral" data-aba="geral" aria-controls="painel-geral" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM9 9h4.5v4.5H9z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg><span data-i18n="aba.geral">Visão geral</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="aba-detalhe" data-aba="detalhe" aria-controls="painel-detalhe" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5V8m3.7 5.5V4.5m3.6 9V7m3.7 6.5V2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span data-i18n="aba.detalhe">Projetos em detalhe</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="aba-bu" data-aba="bu" aria-controls="painel-bu" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11M4 13.5V6.5l4-3 4 3v7M6.5 13.5v-3h3v3" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg><span data-i18n="aba.bu">Por Business Unit</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="aba-gantt" data-aba="gantt" aria-controls="painel-gantt" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h6M5 8h7.5M3.5 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span data-i18n="aba.gantt">Timeline e coaching</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="aba-calendario" data-aba="calendario" aria-controls="painel-calendario" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="aba.calendario">Calendário de coaching</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="aba-treinamentos" data-aba="treinamentos" aria-controls="painel-treinamentos" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 6 8 3l6.5 3L8 9 1.5 6Z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/><path d="M4.5 7.5v3c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5v-3" stroke="currentColor" stroke-width="1.4" fill="none"/></svg><span data-i18n="aba.treinamentos">Treinamentos</span></button>
+        <button type="button" class="dsc-aba" role="tab" id="aba-tabela" data-aba="tabela" aria-controls="painel-tabela" aria-selected="false" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11zM2.5 6.5h11M2.5 9.5h11M6.5 6.5v6" stroke="currentColor" stroke-width="1.3" fill="none"/></svg><span data-i18n="aba.tabela">Tabela</span></button>
+      </div>
+      <span class="lss-aplica" id="lssAplica"></span>
+    </div>
+
+    <div class="dsc-vazio" id="lssEstado" data-i18n="ui.carregando">Carregando…</div>
+
+    <!-- 1. Visão geral (Project Overview) -->
+    <section class="lss-painel" id="painel-geral" role="tabpanel" aria-labelledby="aba-geral" hidden>
+      <div class="dsc-tiles lss-tiles" id="lssTiles"></div>
+      <div class="dsc-grade" style="margin-top:1.1rem">
+        <article class="dsc-card s4">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="g.etapas">Projetos em andamento por etapa</h3><p class="dsc-card-sub" data-i18n="g.etapasSub">Distribuição por fase do processo</p></div></div>
+          <div id="gEtapas"></div>
+        </article>
+        <article class="dsc-card s4">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="g.sites">Projetos em andamento por site</h3><p class="dsc-card-sub" data-i18n="g.sitesSub">Distribuição por site</p></div><div class="dsc-legenda" id="gSitesLeg"></div></div>
+          <div id="gSites"></div>
+        </article>
+        <article class="dsc-card s4">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="g.concluidos">Projetos concluídos por site</h3><p class="dsc-card-sub" data-i18n="g.sitesSub">Distribuição por site</p></div></div>
+          <div id="gConcluidos"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. Projetos em detalhe (Projects in Detail) -->
+    <section class="lss-painel" id="painel-detalhe" role="tabpanel" aria-labelledby="aba-detalhe" hidden>
+      <div class="dsc-grade">
+        <div class="s5" style="display:flex;flex-direction:column;gap:1.1rem;min-width:0">
+        <article class="dsc-card ">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="d.ciclo">Distribuição por ciclo e site</h3><p class="dsc-card-sub" data-i18n="d.cicloSub">Cada cor representa um site</p></div><div class="dsc-legenda" id="dCicloLeg"></div></div>
+          <div id="dCiclo"></div>
+        </article>
+        <article class="dsc-card ">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="d.insights">Insights</h3><p class="dsc-card-sub" id="dInsightsSub"></p></div><div class="dsc-seg" id="dInsightsMes" role="group" aria-label="Mês" data-i18n-aria="d.mes"></div></div>
+          <div id="dInsights"></div>
+        </article>
+        </div>
+        <article class="dsc-card s7">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="d.grade">Status dos projetos por site</h3><p class="dsc-card-sub" data-i18n="d.gradeSub">VBM e cada site, nos filtros de status, ciclo e etapa</p></div><div class="dsc-legenda" id="dGradeLeg"></div></div>
+          <div id="dGrade"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. Por Business Unit (Project View by Business Unit) -->
+    <section class="lss-painel" id="painel-bu" role="tabpanel" aria-labelledby="aba-bu" hidden>
+      <div class="dsc-grade">
+        <article class="dsc-card s5">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="b.status">Distribuição do status do projeto</h3><p class="dsc-card-sub" id="bStatusSub"></p></div></div>
+          <div id="bStatus"></div>
+        </article>
+        <article class="dsc-card s7">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="b.matriz">Status × etapa</h3><p class="dsc-card-sub" data-i18n="b.matrizSub">Quantidade de projetos por status e etapa DMAIC</p></div></div>
+          <div class="dsc-rolagem"><table class="lss-matriz" id="bMatriz"></table></div>
+        </article>
+        <article class="dsc-card s8">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="b.gantt">Timeline dos projetos</h3><p class="dsc-card-sub" data-i18n="b.ganttSub">Previsão por projeto, status e sessões de coaching</p></div><div class="gt-leg" id="bGanttLeg"></div></div>
+          <div id="bGantt"></div>
+        </article>
+        <article class="dsc-card s4">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="b.insights">Insights da Business Unit</h3><p class="dsc-card-sub" id="bInsightsSub"></p></div><div class="dsc-seg" id="bInsightsMes" role="group" aria-label="Mês" data-i18n-aria="d.mes"></div></div>
+          <div id="bInsights"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 4. Timeline e coaching (Tracking Gantt Chart) -->
+    <section class="lss-painel" id="painel-gantt" role="tabpanel" aria-labelledby="aba-gantt" hidden>
+      <div class="dsc-grade">
+        <article class="dsc-card s12">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="t.gantt">Timeline dos projetos e aderência ao coaching</h3><p class="dsc-card-sub" data-i18n="t.ganttSub">Progresso real × previsto por projeto, com as sessões de coaching e as etapas DMAIC</p></div><div class="gt-leg" id="tGanttLeg"></div></div>
+          <div id="tGantt"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 5. Calendário de coaching (Calendário Projeto) -->
+    <section class="lss-painel" id="painel-calendario" role="tabpanel" aria-labelledby="aba-calendario" hidden>
+      <div class="dsc-grade">
+        <article class="dsc-card s12">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="c.titulo">Calendário de sessões de coaching</h3><p class="dsc-card-sub" data-i18n="c.sub">Sessões previstas de cada projeto (a cada 15 dias a partir do início), por mês, na cor da etapa</p></div><div class="gt-leg" id="cCalLeg"></div></div>
+          <div class="dsc-rolagem"><div id="cCal"></div></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 6. Treinamentos -->
+    <section class="lss-painel" id="painel-treinamentos" role="tabpanel" aria-labelledby="aba-treinamentos" hidden>
+      <div class="dsc-grade">
+        <div class="s3" id="trTile"></div>
+        <article class="dsc-card s9">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="tr.graf">Certificação por site</h3><p class="dsc-card-sub" data-i18n="tr.grafSub">Green Belts certificados e em treinamento</p></div><div class="dsc-legenda" id="trGrafLeg"></div></div>
+          <div id="trGraf"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 7. Tabela -->
+    <section class="lss-painel" id="painel-tabela" role="tabpanel" aria-labelledby="aba-tabela" hidden>
+      <div class="dsc-grade">
+        <article class="dsc-card s12">
+          <div class="dsc-card-head"><div><h3 class="dsc-card-titulo" data-i18n="tb.titulo">Gestão de projetos</h3><p class="dsc-card-sub" id="tbTabelaSub"></p></div><label class="lss-busca"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input type="search" id="tbBusca" placeholder="Buscar projeto, responsável, site…" data-i18n-ph="tb.busca" aria-label="Buscar" data-i18n-aria="tb.buscaAria"></label></div>
+          <div class="dsc-tabela-wrap lss-tabela-wrap"><table class="dsc-tabela lss-tabela" id="tbTabela"></table></div>
+        </article>
+      </div>
+    </section>
+  </section>
+</main>
+<div class="lss-dica" id="lssDica" role="tooltip" hidden></div>
+
+<script src="assets/js/lss.js?v=20261106-1"></script>
+</body>
+</html>
