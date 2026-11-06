@@ -722,7 +722,7 @@ window.HOB_CARREGAR(function (aviso) {
   function doBancoCoo(bu, ind) { var C = window.HOB_COO; return !!(C && C.ok && C.series[bu + '.' + ind] && C.series[bu + '.' + ind].anos[state.ano]); }
 
   S.registrar({
-    'pt-BR': { 'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do COO (ID_DASH 15) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do COO', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+    'pt-BR': { 'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do dashboard (ID_DASH 16) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do ID_DASH 16', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período',
       'fcf.ref': 'ref. {ref}', 'fcf.semRef': 'IBP.WATERFALL sem referência até {mes}/{ano}',
@@ -730,7 +730,7 @@ window.HOB_CARREGAR(function (aviso) {
       'fcf.COLUNA': 'Coluna inexistente em IBP.WATERFALL: {detalhe}', 'fcf.TABELA': 'Tabela IBP.WATERFALL não encontrada',
       'fcf.PERMISSAO': 'Sem permissão de leitura em IBP.WATERFALL', 'fcf.LOGIN': 'Falha de login no banco', 'fcf.TEMPO': 'Banco não respondeu a tempo',
       'fcf.ERRO_BANCO': 'Erro ao ler IBP.WATERFALL', 'fcf.SEM_API': 'API do dashboard indisponível (publique a pasta e reinicie o app)', 'fcf.LIMITE': 'Muitos pedidos; tente em 1 minuto' },
-    en: { 'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No COO load (ID_DASH 15) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the COO load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+    en: { 'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No dashboard load (ID_DASH 16) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the ID_DASH 16 load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period',
       'fcf.ref': 'ref. {ref}', 'fcf.semRef': 'IBP.WATERFALL has no reference up to {mes}/{ano}',
@@ -881,32 +881,43 @@ window.HOB_CARREGAR(function (aviso) {
     { k: 'sus', lbl: 'Sustaining + Cap. Replac.', g: ['g-b', 'g-a'], cor: ['#BCBEC0', '#3CB5E5'], txt: ['s-escuro', 's-claro'] },
     { k: 'cost', lbl: 'Costs', g: ['g-b3', 'g-a3'], cor: ['#E3E4E5', '#A7DDF2'], txt: ['s-escuro', 's-escuro'] }
   ];
-  function empilhadoSvg(comp, W, H, cfg) {
-    var MT = (state.delta ? 50 : 24) * K, MB = Math.max(20 * K, MB_MIN), n = comp.sus.length, PW = W / n;
+  // camadas: de baixo para cima (padrão: as do All-in); totais: [{ b, a }] por grupo — total escrito por fora da
+  // coluna (ex.: o EBITDA do site 40, VBM) no lugar da soma das camadas; o Delta usa o mesmo total
+  // EBITDA VBM empilhado (PDF): Nickel embaixo (tom escuro), Copper em cima (tom claro), total VBM (site 40) por fora
+  var CAMADAS_EBITDA = [
+    { k: 'ni', lbl: 'Nickel', g: ['g-b2', 'g-a2'], cor: ['#7C7F82', '#1F6F99'], txt: ['s-claro', 's-claro'] },
+    { k: 'cu', lbl: 'Copper', g: ['g-b', 'g-a'], cor: ['#BCBEC0', '#3CB5E5'], txt: ['s-escuro', 's-claro'] }
+  ];
+  function empilhadoSvg(comp, W, H, cfg, camadas, totais) {
+    camadas = camadas || CAMADAS;
+    var base = comp[camadas[0].k];
+    var MT = (state.delta ? 50 : 24) * K, MB = Math.max(20 * K, MB_MIN), n = base.length, PW = W / n;
     var BW = Math.max(16, Math.min(72, PW * 0.34)), GAP = Math.max(6, Math.min(24, PW * 0.08));
     var vals = [], rot = [cfg.titulo + ' (' + cfg.unid + ').'];
-    comp.sus.forEach(function (_, i) { ['b', 'a'].forEach(function (l) {
-      var p = 0, ng = 0; CAMADAS.forEach(function (c) { var v = comp[c.k][i][l]; if (v >= 0) p += v; else ng += v; }); vals.push(p, ng);
+    base.forEach(function (_, i) { ['b', 'a'].forEach(function (l) {
+      var p = 0, ng = 0; camadas.forEach(function (c) { var v = comp[c.k][i][l]; if (v >= 0) p += v; else ng += v; }); vals.push(p, ng);
+      if (totais) vals.push(totais[i][l]);
     }); });
     var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '';
-    comp.sus.forEach(function (g, i) {
+    base.forEach(function (g, i) {
       var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, tot = {}, topo = {};
       [['b', xb, 0, g.lb], ['a', xa, 1, g.la]].forEach(function (l) {
         var lado = l[0], x = l[1], j = l[2], acP = 0, acN = 0, total = 0, partes = [];
-        CAMADAS.forEach(function (c) {
+        camadas.forEach(function (c) {
           var v = comp[c.k][i][lado], de = v >= 0 ? acP : acN, ate = de + v;
           if (v >= 0) acP = ate; else acN = ate;
           total += v;
           var ya = y(de), yb = y(ate), top = Math.min(ya, yb), h = Math.max(Math.abs(ya - yb), 1.5), txt = fmt(v, cfg.casas);
           out += '<rect class="b-bar' + (v < 0 ? ' neg' : '') + '" x="' + x + '" y="' + top + '" width="' + BW + '" height="' + h + '" fill="url(#' + c.g[j] + ')" data-tip="' + esc(l[3] + ' · ' + c.lbl + ': ' + txt + ' ' + cfg.unid) + '"/>';
           if (h >= 14 * K && (txt.length * 6 + 6) * K <= BW) out += '<text class="s-val ' + c.txt[j] + '" x="' + (x + BW / 2) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="middle">' + txt + '</text>';
-          else out += '<text class="s-val s-fora" x="' + (j ? x + BW + 3 : x - 3) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="' + (j ? 'start' : 'end') + '">' + txt + '</text>';
+          else if (cfg.rotuloFora !== false) out += '<text class="s-val s-fora" x="' + (j ? x + BW + 3 : x - 3) + '" y="' + (top + h / 2 + 3.5) + '" text-anchor="' + (j ? 'start' : 'end') + '">' + txt + '</text>';
           partes.push(c.lbl + ' ' + txt);
         });
-        tot[lado] = total; topo[lado] = y(acP);
-        out += '<text class="b-val s-tot" x="' + (x + BW / 2) + '" y="' + (y(acP) - 6) + '" text-anchor="middle">' + fmt(total, cfg.casas) + '</text>';
+        if (totais) total = totais[i][lado];
+        tot[lado] = total; topo[lado] = Math.min(y(acP), y(Math.max(0, total)));
+        out += '<text class="b-val s-tot" x="' + (x + BW / 2) + '" y="' + (topo[lado] - 6) + '" text-anchor="middle">' + fmt(total, cfg.casas) + '</text>';
         out += '<text class="b-axis" x="' + (x + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(l[3]) + '</text>';
-        rot.push(l[3] + ': All-in ' + fmt(total, cfg.casas) + ' (' + partes.join(', ') + ').');
+        rot.push(l[3] + ': ' + (totais ? 'Total ' : 'All-in ') + fmt(total, cfg.casas) + ' (' + partes.join(', ') + ').');
       });
       if (state.delta) {
         var dl = delta(tot.b, tot.a, cfg.pol, cfg.casas), cx = xb + BW + GAP / 2, ytop = Math.min(topo.b, topo.a) - 18 * K;
@@ -1059,7 +1070,9 @@ window.HOB_CARREGAR(function (aviso) {
     cfg = doCadastro(cfg);
     if (cfg.tipo === 'ponte') { var f = ponteAtual(cfg.ind); if (f && f.ref) cfg = Object.assign({}, cfg, { nota: (cfg.nota ? cfg.nota + ' · ' : '') + S.t('fcf.ref', { ref: f.ref }) }); }
     var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '';
-    if (cfg.tipo === 'ebitdaVbm') ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
+    if (cfg.tipo === 'ebitdaVbm') ctl = (state.sel.ebitda === 'vbm' ? '<ul class="legend legend-stack">' + CAMADAS_EBITDA.slice().reverse().map(function (c) {
+      return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
+    }).join('') + '</ul>' : '') + seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
     if (cfg.tipo === 'allin') ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
     if (cfg.tipo === 'allinStack') ctl = '<ul class="legend legend-stack">' + CAMADAS.slice().reverse().map(function (c) {
       return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
@@ -1097,7 +1110,13 @@ window.HOB_CARREGAR(function (aviso) {
     var d = dadosBu();
     if (cfg.tipo === 'ebitdaVbm') {
       if (ebitdaErro()) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ebitdaErro() }));
-      var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut, vbm: d.ebitdaVbm || somaSerie([d.ebitdaCu, d.ebitdaNi, d.ebitdaOut]) }[state.sel.ebitda]; // VBM: o site total do banco (40)
+      if (state.sel.ebitda === 'vbm') {
+        var cu = recortes(d.ebitdaCu), ni = recortes(d.ebitdaNi), tv = d.ebitdaVbm ? recortes(d.ebitdaVbm) : null;
+        var totais = cu.map(function (g, i) { return tv ? { b: tv[i].b, a: tv[i].a } : { b: g.b + ni[i].b, a: g.a + ni[i].a }; });
+        var pc = function (r) { return r.map(function (g) { return { lb: g.lb, la: g.la, b: g.b, a: g.a }; }); };
+        return empilhadoSvg({ cu: pc(cu), ni: pc(ni) }, W, H, Object.assign({}, cfg, { pol: 'up', rotuloFora: false }), CAMADAS_EBITDA, totais); // segmento fino: só o total
+      }
+      var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut }[state.sel.ebitda];
       return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', casas: state.sel.ebitda === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // Others pequeno: 2 casas só em US$ bn
     }
     if (cfg.tipo === 'allin') {
