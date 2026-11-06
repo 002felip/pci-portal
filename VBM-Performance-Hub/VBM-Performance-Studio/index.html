@@ -2388,6 +2388,7 @@ const I18N_UI = {
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
   'ui.grafico_vazio': ['Gráfico em branco: escolha o Produto e os Horizontes em Filtros.', 'Blank chart: choose the Product and Horizons in Filters.'],
+  'ui.novo_grafico': ['Novo gráfico', 'New chart'],
   'ui.grafico_vazio_criado': ['Gráfico adicionado: escolha os filtros para montá-lo.', 'Chart added: choose the filters to build it.'],
   'ui.sit_pendente': ['Atualizações finais pendentes', 'Pending final updates'],
   'ui.sit_ultima': ['Última atualização recebida: {dt}', 'Last update received: {dt}'],
@@ -2899,8 +2900,8 @@ function renderTurnoverChart(sourceRows) {
   if (!chartAreaEl) return; // nenhum gráfico selecionado
   chartAreaEl.closest('.main-wrapper').classList.toggle('qe-static', renderSemAnimacao);
 
-  // Sem horizonte escolhido (gráfico novo ou filtros limpos): gráfico em branco, não "tudo junto"
-  if (!filterState.horizontes.size) {
+  // Sem produto ou horizonte escolhido (gráfico novo ou filtros limpos): em branco, não "tudo junto"
+  if (graficoEmBranco()) {
     chartAreaEl.classList.remove('is-linhas', 'sem-delta');
     chartAreaEl.innerHTML = `<p class="chart-empty-state">${escapeHtml(tx('ui.grafico_vazio'))}</p>`;
     renderChartPager(0, 0, 0, 0);
@@ -3727,7 +3728,7 @@ function ordenarColunas(lista, cfg) {
 // obrigatória); fixo ou dinâmico (campos dos filtros) pelo painel de edição.
 function updateChartTitle() {
   const titleEl = document.getElementById('chartTitle');
-  titleEl.textContent = composeChartTitle(activeChartCfg());
+  titleEl.textContent = composeChartTitle(activeChartCfg()) || (graficoEmBranco() ? tx('ui.novo_grafico') : '');
 }
 
 // Unidade = SG_UNID do MESMO conjunto de linhas filtrado (Ano+Site+Visão+
@@ -4045,8 +4046,8 @@ function buildFiltersBar() {
   // e as buscas internas; refresh reconsulta o dataset completo e volta à pág. 1
   document.getElementById('qfClearBtn').addEventListener('click', (e) => {
     e.stopPropagation();
-    FILTER_DEFS.forEach(d => { filterState[d.key] = d.multiple ? new Set() : null; });
-    filterState.product = getDefaultProduct();
+    // Como um gráfico novo: nenhum filtro (os mesmos conjuntos, esvaziados) e o gráfico em branco
+    FILTER_DEFS.forEach(d => { if (d.multiple) filterState[d.key].clear(); else filterState[d.key] = null; });
     bar.querySelectorAll('.qf-search input').forEach(i => { i.value = ''; });
     closeAllPanels();
     refreshFiltersAndChart();
@@ -4193,8 +4194,11 @@ function loadFilters(obj) {
     const v = obj ? obj[d.key] : undefined;
     filterState[d.key] = d.multiple ? new Set(Array.isArray(v) ? v : []) : (v ?? null);
   });
-  if (!allRows.some(r => r.NM_KPI === filterState.product)) filterState.product = getDefaultProduct();
+  // Produto vazio é válido (gráfico novo ou filtros limpos: em branco); inexistente nos dados → padrão
+  if (filterState.product !== null && !allRows.some(r => r.NM_KPI === filterState.product)) filterState.product = getDefaultProduct();
 }
+// Gráfico em branco: sem Produto ou sem Horizonte escolhido (novo ou com filtros limpos)
+const graficoEmBranco = () => !filterState.product || !filterState.horizontes.size;
 
 function stashActive() {
   if (!activeChart) return;
@@ -4258,7 +4262,7 @@ function renderActiveChart() {
 function marcarSituacaoDoGrafico() {
   const c = activeChart;
   if (!c) return;
-  const linhas = filterState.horizontes.size ? getFilteredRows().filter(r => r.SG_STATUS) : []; // em branco: sem situação
+  const linhas = graficoEmBranco() ? [] : getFilteredRows().filter(r => r.SG_STATUS); // em branco: sem situação
   const pend = linhas.filter(r => r.SG_STATUS === 'N');
   const datas = pend.map(r => r.DT_ATU_KPI).filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d));
   c.situacao = !linhas.length ? null : pend.length ? { pendente: true, ultima: datas.length ? new Date(Math.max(...datas)) : null } : { pendente: false };
@@ -6700,7 +6704,7 @@ function dadosDosGraficosParaExcel() {
     ordem.forEach(c => {
       activateChart(c);
       const cfg = activeChartCfg();
-      if (!filterState.horizontes.size) return; // gráfico em branco: fora do Excel
+      if (graficoEmBranco()) return; // gráfico em branco: fora do Excel
       const linhas = getFilteredChartRows().map(r => ({ col: r.type.trim(), v: Number.isFinite(r.value) ? r.value * cfg.unidade.fator : null, cor: getBarColor(r.type) }));
       if (!linhas.length) return;
       const site = textoDoFiltro(c.filters || {}, defSites);
@@ -7432,7 +7436,8 @@ function nomeDoGrafico(c) {
 // ── Adicionar gráfico: nasce vazio (sem horizonte) e já abre em Filtros para ser montado ──
 function criarGraficoVazio() {
   addChart(); // cria, seleciona, desenha e grava o layout
-  filterState.horizontes.clear(); // vazio = sem horizonte escolhido
+  // Nenhum filtro: o usuário escolhe Produto, Site, Ano, Cenário e Horizonte
+  FILTER_DEFS.forEach(d => { if (d.multiple) filterState[d.key].clear(); else filterState[d.key] = null; });
   refreshFiltersAndChart();
   saveCharts();
   editor.chart = null;
