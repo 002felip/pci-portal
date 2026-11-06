@@ -1330,10 +1330,11 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-mini:disabled { opacity: .35; cursor: default; }
 
 .qe-preview {
-  min-height: 38px; padding: 9px 11px; border-radius: 8px; border: 1px dashed var(--qe-line-strong);
-  background: var(--qe-surface-alt); color: var(--qe-strong); font-size: .8rem; line-height: 1.35;
-  white-space: pre-line; overflow-wrap: anywhere;
+  min-height: 44px; padding: 11px 13px; border-radius: 10px; border: 1.5px solid #3CB5E5; border-left-width: 4px;
+  background: rgba(60,181,229,.08); color: var(--qe-strong); font-size: .92rem; font-weight: 600; line-height: 1.35;
+  white-space: pre-line; overflow-wrap: anywhere; box-shadow: 0 2px 8px rgba(60,181,229,.15);
 }
+.qe-subtit { margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid var(--qe-line); }
 .qe-preview.is-muted { color: var(--qe-muted); font-style: italic; }
 
 /* Cores */
@@ -1599,11 +1600,9 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <button type="button" class="qe-tool" id="qeFiltrosBtn" data-qe-view="filtros" aria-controls="qePanel" aria-expanded="false" aria-label="Filtros" data-tip="Filtros"><i class="fa-solid fa-filter" aria-hidden="true"></i><span class="qe-badge" id="qeFiltrosBadge" aria-hidden="true" hidden></span></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
   <button type="button" class="qe-tool" data-qe-go="tipo" aria-controls="qePanel" aria-expanded="false" aria-label="Tipo de Gráfico" data-tip="Tipo de Gráfico" data-i18n-tip="ui.tipo_de_grafico" data-i18n-aria="ui.tipo_de_grafico"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="ident" aria-controls="qePanel" aria-expanded="false" aria-label="Identificação" data-tip="Identificação" data-i18n-tip="ui.identificacao" data-i18n-aria="ui.identificacao"><i class="fa-solid fa-id-card" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="titulo" aria-controls="qePanel" aria-expanded="false" aria-label="Título" data-tip="Título" data-i18n-tip="ui.titulo" data-i18n-aria="ui.titulo"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="numeros" aria-controls="qePanel" aria-expanded="false" aria-label="Formatação numérica" data-tip="Formatação numérica" data-i18n-tip="ui.formatacao_numerica" data-i18n-aria="ui.formatacao_numerica"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="fontes" aria-controls="qePanel" aria-expanded="false" aria-label="Fontes" data-tip="Fontes" data-i18n-tip="ui.fontes" data-i18n-aria="ui.fontes"><i class="fa-solid fa-font" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade de medida" data-tip="Unidade de medida" data-i18n-tip="ui.unidade_de_medida" data-i18n-aria="ui.unidade_de_medida"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade e formatação numérica" data-tip="Unidade e formatação numérica" data-i18n-tip="ui.unidade_e_numeros" data-i18n-aria="ui.unidade_e_numeros"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="colunas" aria-controls="qePanel" aria-expanded="false" aria-label="Colunas" data-tip="Colunas" data-i18n-tip="ui.colunas" data-i18n-aria="ui.colunas"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="cores" aria-controls="qePanel" aria-expanded="false" aria-label="Cores" data-tip="Cores" data-i18n-tip="ui.cores" data-i18n-aria="ui.cores"><i class="fa-solid fa-palette" aria-hidden="true"></i></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
@@ -1928,6 +1927,10 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
       <section class="qe-sec" data-sec="titulo" hidden>
         <div class="qe-sec-body">
+          <div class="qe-field">
+            <span class="qe-label" id="qePreviewLbl" data-i18n="ui.pre_visualizacao">Pré-visualização</span>
+            <div class="qe-preview" id="qePreview" role="status" aria-labelledby="qePreviewLbl"></div>
+          </div>
           <fieldset class="qe-field">
             <legend class="qe-label" data-i18n="ui.tipo_de_titulo">Tipo de título</legend>
             <div class="qe-seg">
@@ -1962,10 +1965,6 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
               </div>
             </div>
           </div>
-          <div class="qe-field">
-            <span class="qe-label" id="qePreviewLbl" data-i18n="ui.pre_visualizacao">Pré-visualização</span>
-            <div class="qe-preview" id="qePreview" role="status" aria-labelledby="qePreviewLbl"></div>
-          </div>
         </div>
       </section>
 
@@ -1981,30 +1980,6 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           </div>
           <div class="qe-ft-lista" id="qeFontes"></div>
           <p class="qe-hint" data-i18n="ui.tamanho_relativo_ao_padrao_70_a_160_que_ja">Tamanho relativo ao padrão (70% a 160%), que já se ajusta à tela. Aplicado na hora; grave em Salvar.</p>
-        </div>
-      </section>
-
-      <section class="qe-sec" data-sec="numeros" hidden>
-        <div class="qe-sec-body">
-          <div class="qe-row">
-            <div class="qe-field">
-              <label class="qe-label" for="qeDecBar" data-i18n="ui.decimais_das_barras">Decimais das barras</label>
-              <div class="qe-stepper">
-                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)" data-i18n-aria="ui.menos_uma_casa_decimal_barras">&minus;</button>
-                <input class="qe-input qe-step-val" id="qeDecBar" type="number" min="0" max="3" step="1" inputmode="numeric">
-                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)" data-i18n-aria="ui.mais_uma_casa_decimal_barras">+</button>
-              </div>
-            </div>
-            <div class="qe-field">
-              <label class="qe-label" for="qeDecDelta" data-i18n="ui.decimais_do_delta">Decimais do delta</label>
-              <div class="qe-stepper">
-                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)" data-i18n-aria="ui.menos_uma_casa_decimal_delta">&minus;</button>
-                <input class="qe-input qe-step-val" id="qeDecDelta" type="number" min="0" max="3" step="1" inputmode="numeric">
-                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)" data-i18n-aria="ui.mais_uma_casa_decimal_delta">+</button>
-              </div>
-            </div>
-          </div>
-          <p class="qe-hint" id="qeNumExemplo"></p>
         </div>
       </section>
 
@@ -2031,6 +2006,26 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           </div>
           <label class="qe-check qe-field"><input type="checkbox" id="qeNosRotulos"> <span data-i18n="ui.exibir_a_unidade_nos_rotulos_das_barras">Exibir a unidade nos rótulos das barras</span></label>
           <p class="qe-hint" data-i18n="ui.aplicada_no_subtitulo_e_nos_valores_das_ba">Aplicada no subtítulo e nos valores das barras. Os dados de origem não mudam e os deltas (%) não usam unidade.</p>
+          <p class="qe-label qe-subtit" data-i18n="ui.formatacao_numerica">Formatação numérica</p>
+          <div class="qe-row">
+            <div class="qe-field">
+              <label class="qe-label" for="qeDecBar" data-i18n="ui.decimais_das_barras">Decimais das barras</label>
+              <div class="qe-stepper">
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)" data-i18n-aria="ui.menos_uma_casa_decimal_barras">&minus;</button>
+                <input class="qe-input qe-step-val" id="qeDecBar" type="number" min="0" max="3" step="1" inputmode="numeric">
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)" data-i18n-aria="ui.mais_uma_casa_decimal_barras">+</button>
+              </div>
+            </div>
+            <div class="qe-field">
+              <label class="qe-label" for="qeDecDelta" data-i18n="ui.decimais_do_delta">Decimais do delta</label>
+              <div class="qe-stepper">
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)" data-i18n-aria="ui.menos_uma_casa_decimal_delta">&minus;</button>
+                <input class="qe-input qe-step-val" id="qeDecDelta" type="number" min="0" max="3" step="1" inputmode="numeric">
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)" data-i18n-aria="ui.mais_uma_casa_decimal_delta">+</button>
+              </div>
+            </div>
+          </div>
+          <p class="qe-hint" id="qeNumExemplo"></p>
         </div>
       </section>
 
@@ -2236,6 +2231,7 @@ const I18N_UI = {
   'ui.formatacao_numerica': ['Formatação numérica', 'Number formatting'],
   'ui.fontes': ['Fontes', 'Fonts'],
   'ui.unidade_de_medida': ['Unidade de medida', 'Unit of measure'],
+  'ui.unidade_e_numeros': ['Unidade e formatação numérica', 'Unit and number formatting'],
   'ui.cores': ['Cores', 'Colors'],
   'ui.persistencia': ['Persistência', 'Persistence'],
   'ui.editando_grafico': ['Editando gráfico', 'Editing chart'],
@@ -2670,30 +2666,36 @@ const COL_PREFIXO = 'col:';
 const COR_COLUNA_RE = /^col:[A-Za-z0-9 ._\/-]{1,24}$/;
 const COR_COLUNA_MAX = 80;
 const PALETAS_COLUNAS = [
-  // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas
-  // (validada para daltonismo). Monocromáticas e gradiente: do mais claro ao
-  // mais escuro, com a ponta clara visível sobre o fundo #F6F6F6.
+  // Categórica: ordem fixa que maximiza a distinção entre colunas vizinhas (validada para daltonismo).
   { id: 'vale', label: 'Paleta VBM', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
-  { id: 'executiva', label: 'Paleta Executiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#747678', '#C5D0E3'] },
-  { id: 'azul', label: 'Azul Monocromático', de: '#5FB4DC', ate: '#0F3F5C' },
-  { id: 'verde', label: 'Verde Monocromático', de: '#6FAFAC', ate: '#023832' },
-  { id: 'performance', label: 'Escala de Performance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
-  { id: 'gradiente', label: 'Escala Gradiente', de: '#5FB4DC', ate: '#023832' }
+  // Por papel da coluna na comparação (ver papelDaColuna): realizado do período anterior,
+  // realizado/forecast do período atual, Budget atual, Budget do período anterior e Plan.
+  { id: 'executiva', label: 'Paleta Executiva', papeis: { anterior: '#007E7A', atual: '#3CB5E5', budget: '#BCBEC0', budgetAnterior: '#8E9093', plano: '#6E8CBA' } },
+  // Monocromáticas: a mesma regra, só com tons da própria cor
+  { id: 'azul', label: 'Azul Monocromático', papeis: { anterior: '#0F3F5C', atual: '#3CB5E5', budget: '#B9E2F4', budgetAnterior: '#7CC5E6', plano: '#1B5E80' } },
+  { id: 'verde', label: 'Verde Monocromático', papeis: { anterior: '#023832', atual: '#007E7A', budget: '#B5D8D6', budgetAnterior: '#6FAFAC', plano: '#034944' } }
 ];
-const misturarHex = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
+// Papel da coluna: Plan; Budget ou realizado/forecast do período atual (maior ano do mesmo
+// tipo de horizonte no gráfico) ou de um período anterior
+function papelDaColuna(t, cols) {
+  const info = rot => {
+    const { core, yearSuffix } = splitTypeLabel(String(rot).trim());
+    const anual = !yearSuffix && /^\d{2,4}[A-Z]$/i.test(core);
+    return { letra: core.slice(-1).toUpperCase(), tipo: getHorizonType(core) || 'OUTROS', ano: Number(anual ? core.slice(0, -1).slice(-2) : (yearSuffix || '').trim()) || 0 };
+  };
+  const x = info(t);
+  if (x.letra === 'P') return 'plano';
+  const maior = Math.max(x.ano, ...cols.map(c => info(c.t)).filter(c => c.tipo === x.tipo).map(c => c.ano));
+  const anterior = x.ano < maior;
+  return x.letra === 'B' ? (anterior ? 'budgetAnterior' : 'budget') : (anterior ? 'anterior' : 'atual');
+}
 
-// Cor da paleta para a coluna i de cols ([{ t, v }]); performance usa o valor (menor = vermelho, maior = verde)
+// Cor da paleta para a coluna i de cols ([{ t, v }]): categórica pela posição, as demais pelo papel
 function corDaPaleta(id, i, cols) {
   const p = PALETAS_COLUNAS.find(x => x.id === id);
   if (!p || i < 0) return null;
   if (p.cores) return p.cores[i % p.cores.length];
-  let t = cols.length > 1 ? i / (cols.length - 1) : 0;
-  if (p.escala) {
-    const vs = cols.map(c => c.v).filter(Number.isFinite), min = Math.min(...vs), max = Math.max(...vs);
-    t = Number.isFinite(cols[i].v) && max > min ? (cols[i].v - min) / (max - min) : 0.5;
-    return t <= 0.5 ? misturarHex(p.escala[0], p.escala[1], t * 2) : misturarHex(p.escala[1], p.escala[2], (t - 0.5) * 2);
-  }
-  return misturarHex(p.de, p.ate, t);
+  return p.papeis[papelDaColuna(cols[i].t, cols)];
 }
 
 // Cor própria da coluna (manual ou paleta) ou null = cor do grupo
@@ -5962,6 +5964,15 @@ function validateDraft(exigirNome) {
   if (cfg.unidade.valor === 'custom' && !cfg.unidade.custom.trim()) erros.push(['qeUnidadeCustom', 'qeUnidadeErr', 'Informe a unidade personalizada.', 'unidade']);
   if (!(Number.isFinite(cfg.unidade.fator) && cfg.unidade.fator > 0 && cfg.unidade.fator <= 1e9)) erros.push(['qeFator', 'qeFatorErr', 'Informe um fator maior que zero.', 'unidade']);
   if (exigirNome) {
+    // Sem a seção Identificação: o nome salvo no banco vem do título do gráfico (único entre os salvos)
+    if (!cfg.nome.trim()) {
+      const base = (composeChartTitle(cfg) || nomeDoGrafico(editor.chart) || 'Gráfico').replace(/\s+/g, ' ').trim().slice(0, chartNameMax);
+      const usado = n => editor.db.itens.some(i => i.id !== cfg.idConfig && i.nome.toLocaleLowerCase('pt-BR') === n.toLocaleLowerCase('pt-BR'));
+      let nome = base, k = 2;
+      while (usado(nome)) nome = `${base.slice(0, chartNameMax - 6)} (${k++})`;
+      cfg.nome = nome;
+      $qe('qeNome').value = nome;
+    }
     const nome = cfg.nome.trim();
     const igual = n => n.toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR');
     if (!nome) erros.push(['qeNome', 'qeNomeErr', 'Informe o nome do gráfico para salvar.', 'ident']);
@@ -6042,8 +6053,8 @@ async function gravarConfigBanco(c) {
 // ── Aplicar em lote: a configuração do gráfico em edição vai para os demais selecionados ──
 // O que cada seção copia (Identificação e Persistência são de cada gráfico: não entram)
 const LOTE_CHAVES = {
-  tipo: ['tipoGrafico', 'exibirDelta', 'linhas'], titulo: ['titulo'], fontes: ['fontes'], numeros: ['decBar', 'decDelta'],
-  unidade: ['unidade'], colunas: ['ordemColunas', 'deltasManuais'], cores: ['modoCor', 'paletaColunas']
+  tipo: ['tipoGrafico', 'exibirDelta', 'linhas'], titulo: ['titulo'], fontes: ['fontes'],
+  unidade: ['unidade', 'decBar', 'decDelta'], colunas: ['ordemColunas', 'deltasManuais'], cores: ['modoCor', 'paletaColunas']
 };
 // Cada alteração do painel (seção aberta) vale também para os outros gráficos selecionados;
 // gravação no banco dos vinculados: no Salvar (ou nos botões de aplicar)
@@ -6276,7 +6287,7 @@ function abrirVisao(view, btn, sec) {
   setEditorOpen(true);
   document.body.classList.toggle('qe-ctx-grafico', !['bg', 'add', 'excluir', 'dash'].includes(view));
   marcarFerramenta();
-  if (view === 'editar') irParaSecao(sec || editor.secao || 'ident');
+  if (view === 'editar') irParaSecao(sec || editor.secao || 'tipo');
   else $qe('qeHeading').textContent = PANEL_TITULOS[view];
   renderEditorTarget();
   if (view === 'filtros') abrirFiltros();
@@ -6287,7 +6298,7 @@ function abrirVisao(view, btn, sec) {
 }
 
 // Edição do gráfico: um ícone = uma seção; as demais ficam ocultas
-const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', numeros: 'Formatação numérica', unidade: 'Unidade de medida', colunas: 'Colunas', cores: 'Cores', persist: 'Persistência' };
+const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', unidade: 'Unidade e formatação numérica', colunas: 'Colunas', cores: 'Cores', persist: 'Persistência' };
 function irParaSecao(sec) {
   if (!SECOES_EDITOR[sec]) return;
   editor.secao = sec;
@@ -6355,7 +6366,7 @@ function confirmarExclusao() {
 // visões do quadro (Adicionar, Excluir, Background) voltam para a edição
 function abrirUltimaVisao() {
   if (editor.view === 'filtros') { abrirVisao('filtros', $qe('qeFiltrosBtn')); return; }
-  const sec = SECOES_EDITOR[editor.secao] ? editor.secao : 'ident';
+  const sec = SECOES_EDITOR[editor.secao] ? editor.secao : 'tipo';
   abrirVisao('editar', $qe('qeToolbar').querySelector(`[data-qe-go="${sec}"]`), sec);
 }
 
