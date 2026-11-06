@@ -31,6 +31,8 @@
  *   GET /indicadores?ciclo=      tudo o que a tela desenha, no formato de window.HOB_DATA do index.html
  *   GET /waterfall               FCF YEAR por ano, de IBP.WATERFALL
  *   GET /waterfall?bruto=1       colunas e linhas como vieram da tabela (só com HOB_DIAGNOSTICO=1)
+ *   GET /atualizacao?ciclo=      situação da atualização de cada gráfico da carga (SG_STATUS/DT_ATUALIZACAO,
+ *                                gravados por database/007_status_atualizacao_hob.sql, como o COO)
  */
 const fs = require('fs');
 const path = require('path');
@@ -405,6 +407,44 @@ function montarSerieCoo(linhas, site) {
   return { anos, meta };
 }
 
+// ── Situação de atualização (SG_STATUS 'S'/'N' e DT_ATUALIZACAO gravados por database/007_status_atualizacao_hob.sql,
+// como o 004 do COO) → situação de cada gráfico que vem da carga. Chave do gráfico:
+//   vbm.ebitda.vbm | vbm.ebitda.cu | vbm.ebitda.ni | vbm.ebitda.out (opções do seletor do EBITDA)
+//   <bu>.<série> de coo.kpis com ID_KPI (ex.: cu.ebitda, ni.ebitda), no site da página
+// Gráfico com algum KPI 'N' → pendente; sem linha com situação → fora (a tela não marca)
+const STATUS_SQL = `
+SELECT
+  R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+WHERE R.ID_DASH = @idDash
+  AND R.DT_REF = @dtRef
+  AND R.SG_STATUS IS NOT NULL
+GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+function montarAtualizacao(linhas, config, ciclo) {
+  const [anoC, mesC] = ciclo.split('-').map(Number);
+  const kpis = linhas.map(l => ({ site: Number(l.ID_SITE), op: Number(l.ID_OPERACAO), kpi: Number(l.ID_KPI),
+    ok: String(l.SG_STATUS).trim().toUpperCase() === 'S', dt: l.DT_ATUALIZACAO || null }));
+  const situacao = ({ sites, op, ids }) => {
+    const achados = kpis.filter(k => ids.includes(k.kpi) && (!sites || !sites.length || sites.includes(k.site)) && (op == null || k.op === op));
+    if (!achados.length) return null;
+    const pend = achados.filter(k => !k.ok), base = pend.length ? pend : achados;
+    const dts = base.map(k => k.dt).filter(Boolean).map(d => new Date(d).getTime()).filter(n => !isNaN(n));
+    // pendente: a última atualização recebida dos KPIs pendentes (algum sem registro → nenhuma)
+    const dt = pend.length && dts.length < pend.length ? null : dts.length ? new Date(Math.max(...dts)).toISOString() : null;
+    return { status: pend.length ? 'pendente' : 'ok', dt, kpis: achados.length, pendentes: pend.length };
+  };
+  const cards = {}, E = config.ebitda;
+  for (const seg of ['vbm', 'cu', 'ni']) cards[`vbm.ebitda.${seg}`] = situacao({ sites: E.sites[seg], ids: [E.idKpi] });
+  cards['vbm.ebitda.out'] = situacao({ sites: E.outros.sites, op: E.outros.idOperacao, ids: E.outros.kpis });
+  for (const [chave, idKpi] of Object.entries(config.coo.kpis)) {
+    if (idKpi) cards[chave] = situacao({ sites: [config.coo.sites[chave.split('.')[0]]], ids: [idKpi] });
+  }
+  for (const k of Object.keys(cards)) if (!cards[k]) delete cards[k];
+  // mês do ciclo da carga (carga 2026-11 → outubro): meses anteriores já fechados contam como atualizados
+  return { ciclo, mesCiclo: mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 }, cards, indicadores: kpis.length };
+}
+
 // Erro do banco → código para a tela (sem o texto do banco na resposta; o texto vai para o log)
 function codigoDoErro(err) {
   const m = String((err && err.message) || '');
@@ -658,6 +698,25 @@ function criarHobRouter({ runQuery, idDash }) {
     }
   });
 
+  // Situação de atualização dos gráficos da carga (Pending final updates, como o COO). ?ciclo= como em /ebitda.
+  // À parte: a tela desenha os gráficos e acrescenta o aviso; se falhar, fica sem ele
+  router.get('/atualizacao', async (req, res) => {
+    const pedido = lerCiclo(req.query.ciclo);
+    try {
+      const { config } = await lerConfig(fresco(req));
+      const idDash = config.ebitda.idDash;
+      const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, fresco(req))).map(l => cicloDe(l.DT_REF));
+      if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
+      const ciclo = pedido && ciclos.includes(pedido) ? pedido : ciclos[0];
+      const linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, fresco(req));
+      res.json({ idDash, ...montarAtualizacao(linhas, config, ciclo) });
+    } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
+      console.error(`${TAG} erro em /atualizacao:`, err.message);
+      res.status(500).json({ error: 'Failed to query the data update status.', ...codigoDoErro(err) });
+    }
+  });
+
   // EBITDA por segmento (carga do COO). ?ciclo= segue o ciclo da tela quando o COO tiver a mesma carga
   router.get('/ebitda', async (req, res) => {
     const pedido = lerCiclo(req.query.ciclo);
@@ -676,4 +735,4 @@ function criarHobRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { ID_DASH_PADRAO, criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { ID_DASH_PADRAO, montarAtualizacao, STATUS_SQL, criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
