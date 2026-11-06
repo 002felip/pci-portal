@@ -394,8 +394,7 @@ test('007 (status, como o 004 do COO) e 008 (verificação só leitura) do ID_DA
   const st = ler('007_status_atualizacao_hob.sql');
   assert.match(st, /DECLARE @ID_DASH\s+INT\s+=\s+16;/);
   assert.match(st, /IBP\.LOG_PEDRAVISAOCONSOLIDADA/);
-  assert.match(st, /DECLARE @DT_LIMITE DATE = DATEADD\(MONTH, 1, @DT_REF\);/);
-  assert.match(st, /R\.SG_STATUS = CASE WHEN A\.DT_ATUALIZACAO >= @DT_LIMITE THEN 'S' ELSE 'N' END/);
+  assert.match(st, /R\.SG_STATUS = CASE WHEN A\.DT_ATUALIZACAO >= @DT_REF THEN 'S' ELSE 'N' END/); // regra do 004 do COO
   const v = ler('008_verificacao_atualizacao_hob.sql');
   assert.match(v, /DECLARE @ID_DASH INT\s+=\s+16;/);
   const codigo = v.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
