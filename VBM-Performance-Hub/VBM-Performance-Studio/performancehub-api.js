@@ -335,6 +335,21 @@ WHERE R.DT_REF = @DT_CARGA
   AND R.ID_DASH = @idDash
 ORDER BY R.ORDEM_ANO, R.ORDEM_VISAO, R.ORDEM_PERIODO, R.ID_TIPO_VISAO`;
 
+// Situação de atualização dos KPIs da carga (SG_STATUS 'S'/'N' e DT_ATUALIZACAO, gravados
+// por database/006_status_atualizacao.sql, a mesma regra do COO). Um KPI com alguma linha
+// 'N' fica 'N' (MIN). Linhas ainda sem situação (SG_STATUS NULL) não entram.
+const STATUS_SQL = `
+DECLARE @DT_CARGA DATE = COALESCE(@dtRef,
+  (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @idDash))
+
+SELECT R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+WHERE R.DT_REF = @DT_CARGA
+  AND R.ID_DASH = @idDash
+  AND R.SG_STATUS IS NOT NULL
+GROUP BY R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+
 // Referências (meses de YTD) com carga gravada, da mais recente para a mais antiga.
 // NM_YTD é o rótulo para a escolha na tela (ex.: "YTD Jun 26").
 const REFERENCIAS_SQL = `
@@ -723,6 +738,29 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     }
   });
 
+  // Situação de atualização dos KPIs (?dtRef=AAAA-MM, como /chart-data); coluna SG_STATUS
+  // ou tabela ausente → [] (a tela só não mostra a situação)
+  router.get('/chart-data/status', async (req, res) => {
+    const dtRef = lerDtRef(req.query.dtRef);
+    if (dtRef === undefined) return res.status(400).json({ error: 'dtRef inválido: use AAAA-MM.', campo: 'dtRef' });
+    try {
+      const dados = await comCache(`status:${dtRef || 'ultima'}`, async () => {
+        try {
+          const r = await runQuery(STATUS_SQL, { dtRef: [sql.Date, dtRef && new Date(`${dtRef}T00:00:00Z`)], idDash: [sql.Int, ID_DASH] });
+          return r.recordset.map(l => ({ ID_SISTEMA: l.ID_SISTEMA, ID_SITE: l.ID_SITE, ID_OPERACAO: l.ID_OPERACAO, ID_KPI: l.ID_KPI,
+            SG_STATUS: String(l.SG_STATUS).trim().toUpperCase() === 'S' ? 'S' : 'N', DT_ATUALIZACAO: l.DT_ATUALIZACAO || null }));
+        } catch (err) {
+          if (tabelaInexistente(err) || (err.number ?? err.originalError?.info?.number) === 207) return []; // 207 = coluna inexistente
+          throw err;
+        }
+      });
+      res.json(dados);
+    } catch (err) {
+      console.error('[performance-hub] Erro ao buscar a situação de atualização:', err.message);
+      res.status(500).json({ error: 'Falha ao consultar a situação de atualização.' });
+    }
+  });
+
   // Meses de referência (YTD) com carga, para a escolha na tela; sem tabela → []
   rota('/chart-data/referencias', 'referencias', async () => {
     try {
@@ -1094,4 +1132,4 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
   return router;
 }
 
-module.exports = { criarPerformanceHubRouter, normalizarConfig, normalizarFundo, normalizarDashboard, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, REFERENCIAS_SQL, SITES_SQL, lerDtRef };
+module.exports = { STATUS_SQL, criarPerformanceHubRouter, normalizarConfig, normalizarFundo, normalizarDashboard, CHART_DATA_SQL, CHART_DATA_AO_VIVO_SQL, REFERENCIAS_SQL, SITES_SQL, lerDtRef };

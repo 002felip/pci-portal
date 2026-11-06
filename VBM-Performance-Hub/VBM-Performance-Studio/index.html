@@ -181,7 +181,28 @@ body {
 }
 
 /* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
-.dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 188px 4px; } /* espaço dos 4 ícones à direita */
+.dash-titulo { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; min-height: 52px; padding: 14px 188px 4px; } /* espaço dos 4 ícones à direita */
+/* Situação de atualização dos dados: mesma regra e mesmo visual do COO Business Units Dashboard
+   (resumo com uma marca por gráfico e selo "Atualizações finais pendentes" no card) */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --cyc-ok: #1B7F7B; }
+.dash-situacao { position: absolute; right: 16px; top: 52px; display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px; border: 0; border-radius: 6px;
+  background: transparent; color: #6B7280; font: italic 400 .7rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; }
+html[data-bg="dark"] .dash-situacao { color: rgba(255,255,255,.72); }
+.dash-situacao b { font-weight: 500; color: var(--wait); }
+html[data-bg="dark"] .dash-situacao b { color: #F5B94A; }
+.dash-situacao:hover:not(:disabled) > span:last-child { text-decoration: underline; text-underline-offset: 2px; }
+.dash-situacao[aria-pressed="true"] { background: var(--wait-bg); }
+.dash-situacao.is-ok { cursor: default; }
+.dash-situacao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
+.dash-situacao[hidden], .chart-situacao[hidden] { display: none; }
+.dash-titulo.com-situacao { padding-bottom: 26px; }
+.cycle-bar { display: inline-flex; gap: 2px; }
+.cycle-bar i { width: 3px; height: 9px; border-radius: 2px; background: var(--cyc-ok); opacity: .85; }
+.cycle-bar i.w { background: transparent; border: 1.3px dashed var(--wait); opacity: 1; }
+.chart-situacao { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 2px 10px 2px 7px; border-radius: 999px;
+  border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .68rem/1.4 'Poppins', 'Segoe UI', sans-serif; }
+.chart-situacao svg { width: 13px; height: 13px; flex-shrink: 0; }
+.charts-board.foco-pendentes > .main-wrapper:not(.is-pend) { opacity: .28; filter: grayscale(1); }
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
   font: 300 1.1rem/1.2 'Poppins', 'Segoe UI', sans-serif; letter-spacing: .08em; color: rgba(255,255,255,.88);
@@ -2090,6 +2111,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 <main class="app-main">
 <div class="dash-titulo">
   <h2 class="dash-titulo-nome" id="dashTituloNome" hidden></h2>
+  <button type="button" class="dash-situacao" id="dashSituacao" aria-pressed="false" hidden></button>
   <div class="dash-acoes" id="dashAcoes">
     <button type="button" class="dash-acao" id="dashSalvar" aria-label="Salvar dashboard no banco" title="Salvar dashboard no banco" data-i18n-aria="ui.dash_salvar" data-i18n-title="ui.dash_salvar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashDesfazer" aria-label="Desfazer alterações não salvas" title="Desfazer alterações não salvas" data-i18n-aria="ui.dash_desfazer" data-i18n-title="ui.dash_desfazer"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
@@ -2104,6 +2126,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <div class="chart-header">
         <p class="chart-title" id="chartTitle"></p>
         <p class="chart-subtitle" id="chartSubtitle">(%)</p>
+        <p class="chart-situacao" hidden></p>
       </div>
       <div class="chart-export">
         <button type="button" class="chart-export-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Exportar gráfico" title="Exportar gráfico" data-i18n-aria="ui.exportar_grafico" data-i18n-title="ui.exportar_grafico"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
@@ -2382,6 +2405,14 @@ const I18N_UI = {
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
+  'ui.sit_pendente': ['Atualizações finais pendentes', 'Pending final updates'],
+  'ui.sit_ultima': ['Última atualização recebida: {dt}', 'Last update received: {dt}'],
+  'ui.sit_nenhuma': ['Nenhuma atualização recebida neste ciclo', 'No update received for this cycle'],
+  'ui.sit_resumo': ['{n} de {total} gráficos', '{n} of {total} charts'],
+  'ui.sit_resumo_txt': ['com atualizações finais pendentes', 'pending final updates'],
+  'ui.sit_ok': ['Todos os gráficos atualizados', 'All charts updated'],
+  'ui.sit_destacar': ['Destacar os gráficos pendentes e ir até o primeiro', 'Highlight pending charts and go to the first one'],
+  'ui.sit_excel': ['Atenção: {n} gráfico(s) com atualizações finais pendentes no arquivo.', 'Warning: {n} chart(s) with pending final updates in the file.'],
   'ui.excel_sem_dados': ['Nenhum gráfico com dados para exportar.', 'No chart with data to export.'],
   'ui.excel_falhou': ['Não foi possível gerar o Excel. Tente novamente.', 'Could not generate the Excel file. Try again.'],
   'ui.sair_tela_cheia': ['Sair da tela cheia', 'Exit full screen'],
@@ -3411,16 +3442,23 @@ async function loadPerformanceHubData(dtRef) {
   const recursoDados = dtRef ? `chart-data?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data';
   for (const base of basesDaApiResolvidas()) {
     try {
-      const [chartRows, sitesList] = await Promise.all([
+      const [chartRows, sitesList, situacoes] = await Promise.all([
         buscarJsonDaApi(base, recursoDados),
-        buscarJsonDaApi(base, 'sites')
+        buscarJsonDaApi(base, 'sites'),
+        // Situação de atualização dos KPIs (mesma regra do COO); sem ela a tela só não marca pendências
+        buscarJsonDaApi(base, dtRef ? `chart-data/status?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data/status').catch(() => [])
       ]);
+      const chaveKpi = r => `${r.ID_SISTEMA}|${r.ID_SITE}|${r.ID_OPERACAO}|${r.ID_KPI}`;
+      const situacaoPorKpi = new Map((Array.isArray(situacoes) ? situacoes : []).map(x => [chaveKpi(x), x]));
       const siteNameById = new Map(sitesList.map(s => [s.ID_SITE ?? s.id_site, s.NM_SITE ?? s.nm_site]));
       performanceHubApiBase = base; // as rotas de configuração usam a mesma base
       setDataFallbackWarning(false);
       console.info(`[performance-hub] dados reais carregados de ${new URL(base).pathname}`);
       return {
-        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada),
+        linhas: chartRows.map(r => {
+          const st = situacaoPorKpi.get(chaveKpi(r));
+          return { ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null, SG_STATUS: st ? st.SG_STATUS : null, DT_ATU_KPI: st ? st.DT_ATUALIZACAO : null };
+        }).filter(isVisaoSuportada),
         semCarga: false
       };
     } catch (err) {
@@ -4197,6 +4235,59 @@ function renderActiveChart() {
   updateChartUnit();
   applyChartBackgroundColor();
   renderTurnoverChart(getFilteredChartRows());
+  marcarSituacaoDoGrafico();
+}
+
+// ── Situação de atualização (mesma regra do COO: 006_status_atualizacao.sql grava SG_STATUS
+// por KPI). Gráfico com algum KPI 'N' nas linhas filtradas = atualização final pendente.
+function marcarSituacaoDoGrafico() {
+  const c = activeChart;
+  if (!c) return;
+  const linhas = getFilteredRows().filter(r => r.SG_STATUS);
+  const pend = linhas.filter(r => r.SG_STATUS === 'N');
+  const datas = pend.map(r => r.DT_ATU_KPI).filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d));
+  c.situacao = !linhas.length ? null : pend.length ? { pendente: true, ultima: datas.length ? new Date(Math.max(...datas)) : null } : { pendente: false };
+  const selo = c.el.querySelector('.chart-situacao');
+  if (selo) {
+    selo.hidden = !(c.situacao && c.situacao.pendente);
+    if (!selo.hidden) {
+      selo.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.3 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+        + `<span>${escapeHtml(tx('ui.sit_pendente'))}</span>`;
+      selo.title = c.situacao.ultima ? tx('ui.sit_ultima', { dt: c.situacao.ultima.toLocaleDateString(idioma) }) : tx('ui.sit_nenhuma');
+    }
+  }
+  c.el.classList.toggle('is-pend', !!(c.situacao && c.situacao.pendente));
+  agendarResumoSituacao();
+}
+let resumoSituacaoTimer = 0;
+function agendarResumoSituacao() {
+  clearTimeout(resumoSituacaoTimer);
+  resumoSituacaoTimer = setTimeout(atualizarResumoSituacao, 0);
+}
+// Resumo sob o nome do dashboard: quantos gráficos estão pendentes (clique destaca e leva ao 1º)
+function atualizarResumoSituacao() {
+  const btn = document.getElementById('dashSituacao');
+  if (!btn) return;
+  const conhecidos = charts.filter(c => c.situacao), pend = conhecidos.filter(c => c.situacao.pendente);
+  btn.hidden = !conhecidos.length;
+  btn.classList.toggle('is-ok', !pend.length);
+  btn.disabled = !pend.length;
+  btn.closest('.dash-titulo').classList.toggle('com-situacao', !btn.hidden);
+  // Uma marca por gráfico (cheia = atualizado, tracejada = pendente), como no COO
+  const marcas = conhecidos.map(c => `<i class="${c.situacao.pendente ? 'w' : ''}"></i>`).join('');
+  btn.innerHTML = pend.length
+    ? `<span class="cycle-bar" aria-hidden="true">${marcas}</span><span><b>${escapeHtml(tx('ui.sit_resumo', { n: pend.length, total: conhecidos.length }))}</b> ${escapeHtml(tx('ui.sit_resumo_txt'))}</span>`
+    : `<span>${escapeHtml(tx('ui.sit_ok'))}</span>`;
+  btn.title = pend.length ? tx('ui.sit_destacar') : '';
+  if (!pend.length && board.classList.contains('foco-pendentes')) { board.classList.remove('foco-pendentes'); btn.setAttribute('aria-pressed', 'false'); }
+}
+function alternarFocoPendentes() {
+  const btn = document.getElementById('dashSituacao');
+  const ligar = !board.classList.contains('foco-pendentes');
+  board.classList.toggle('foco-pendentes', ligar);
+  btn.setAttribute('aria-pressed', String(ligar));
+  const primeiro = ligar && [...charts].sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x).find(c => c.situacao && c.situacao.pendente);
+  if (primeiro) { primeiro.el.scrollIntoView({ behavior: 'smooth', block: 'center' }); primeiro.el.focus({ preventScroll: true }); }
 }
 
 // Redesenha gráficos que não estão em edição sem fechar painéis nem trocar a seleção:
@@ -4462,6 +4553,7 @@ function onChartShortcut(e) {
 function updateChartActionButtons() {
   const xl = document.getElementById('dashExcel');
   if (xl) xl.disabled = !charts.length;
+  agendarResumoSituacao();
   const rm = document.getElementById('qeDel');
   if (!rm) return;
   rm.disabled = !charts.length;
@@ -6567,6 +6659,7 @@ function dadosDosGraficosParaExcel() {
       if (!linhas.length) return;
       const site = textoDoFiltro(c.filters || {}, defSites);
       out.push({ titulo: tituloDoCard(c), produto: (c.filters && c.filters.product) || '—', site, total: site === 'Todos',
+        situacao: !c.situacao ? '' : c.situacao.pendente ? 'Atualizações finais pendentes' : 'Atualizado',
         unidade: unitTextOf(cfg) || unidadeDosDados(c) || '', dec: cfg.decBar, linhas, comps: comparacoesDoGrafico(linhas) });
     });
   } finally {
@@ -6594,6 +6687,9 @@ async function baixarExcelDashboard() {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    // Risco de publicar dado inconsistente: avisa quando há gráfico com atualização pendente
+    const pend = graficos.filter(g => g.situacao === 'Atualizações finais pendentes').length;
+    if (pend) mostrarAviso(tx('ui.sit_excel', { n: pend }), true);
   } catch (err) {
     console.error('[performance-hub] exportar Excel:', err);
     mostrarAviso(tx('ui.excel_falhou'), true);
@@ -6635,7 +6731,7 @@ async function montarExcelDashboard(ExcelJS, G) {
   const legenda = (ws, linha, ult) => {
     ws.mergeCells(linha, 1, linha, ult);
     Object.assign(ws.getCell(linha, 1), {
-      value: 'Legenda: B = Budget · P = Plan · A = Actual (realizado) · F = Forecast (projeção) · Δ = 2ª coluna − 1ª · % = 2ª coluna ÷ 1ª (real ÷ Budget; ano atual ÷ ano anterior), verde a partir de 100%. Valores como exibidos no dashboard (filtros, unidade e escala de cada gráfico).',
+      value: 'Legenda: B = Budget · P = Plan · A = Actual (realizado) · F = Forecast (projeção) · Δ = 2ª coluna − 1ª · % = 2ª coluna ÷ 1ª (real ÷ Budget; ano atual ÷ ano anterior), verde a partir de 100%. ⚠ pendente = gráfico com KPI sem a atualização final do ciclo (não publicar sem conferir). Valores como exibidos no dashboard (filtros, unidade e escala de cada gráfico).',
       font: fonte({ size: 8, italic: true, color: { argb: C.suave } }), alignment: { wrapText: true, vertical: 'top' } });
     ws.getRow(linha).height = 28;
   };
@@ -6686,7 +6782,8 @@ async function montarExcelDashboard(ExcelJS, G) {
     Object.assign(ws.getCell(r, 1), { value: prod, font: fonte({ bold: true, italic: true, size: 10 }) });
     r++;
     G.filter(g => g.produto === prod).forEach(g => {
-      Object.assign(ws.getCell(r, 1), { value: (g.total ? '' : '   ') + g.titulo, font: fonte({ bold: g.total }) });
+      const pendente = g.situacao === 'Atualizações finais pendentes';
+      Object.assign(ws.getCell(r, 1), { value: (g.total ? '' : '   ') + g.titulo + (pendente ? '  ⚠ pendente' : ''), font: fonte({ bold: g.total, color: { argb: pendente ? 'FFB45309' : C.texto } }) });
       Object.assign(ws.getCell(r, 2), { value: g.unidade, font: fonte({ color: { argb: C.suave } }), alignment: { horizontal: 'center' } });
       visoes.forEach((v, i) => {
         const c0 = colIni[i], vb = valorDe(g, v.base), va = valorDe(g, v.atual), L = n => ws.getColumn(n).letter;
@@ -6718,7 +6815,7 @@ async function montarExcelDashboard(ExcelJS, G) {
   G.forEach(g => {
     wg.mergeCells(lg, 1, lg, 9);
     for (let c = 1; c <= 9; c++) wg.getCell(lg, c).fill = fill(C.cinza);
-    Object.assign(wg.getCell(lg, 1), { value: `${g.titulo}${g.unidade ? ` (${g.unidade})` : ''}`, font: fonte({ size: 10, bold: true, italic: true }), alignment: { vertical: 'middle' } });
+    Object.assign(wg.getCell(lg, 1), { value: `${g.titulo}${g.unidade ? ` (${g.unidade})` : ''}${g.situacao === 'Atualizações finais pendentes' ? '  ⚠ Atualizações finais pendentes' : ''}`, font: fonte({ size: 10, bold: true, italic: true }), alignment: { vertical: 'middle' } });
     wg.getRow(lg).height = 20;
     lg++;
     ['Coluna', 'Tipo', 'Valor', '', 'vs Budget/Plan', '%', '', 'vs ano anterior', '%'].forEach((h, k) => cabCelula(wg.getCell(lg, k + 1), h));
@@ -6760,17 +6857,17 @@ async function montarExcelDashboard(ExcelJS, G) {
       return cp && vb ? [cp.base, l.v / vb] : [null, null];
     };
     linhas.push([g.titulo, g.produto, g.site, t.periodo === 'ANO' ? 'Ano' : t.periodo === 'YTD' ? 'YTD' : /^Q\d$/i.test(t.periodo) ? 'Trimestre' : /^H\d$/i.test(t.periodo) ? 'Semestre' : 'Mês', t.periodo, t.ano, EXCEL_SERIE[t.letra] || t.letra,
-      l.col, l.v, g.unidade, ...vs('plano'), ...vs('ano')]);
+      l.col, l.v, g.unidade, ...vs('plano'), ...vs('ano'), g.situacao || '—']);
   }));
   wd.addTable({ name: 'DadosDashboard', ref: 'A5', headerRow: true, style: { theme: 'TableStyleLight1', showRowStripes: false },
-    columns: ['Gráfico', 'Produto', 'Site', 'Horizonte', 'Período', 'Ano', 'Tipo', 'Coluna', 'Valor', 'Unidade', 'vs Budget/Plan', '% vs Budget/Plan', 'vs ano anterior', '% vs ano anterior'].map(name => ({ name, filterButton: true })),
+    columns: ['Gráfico', 'Produto', 'Site', 'Horizonte', 'Período', 'Ano', 'Tipo', 'Coluna', 'Valor', 'Unidade', 'vs Budget/Plan', '% vs Budget/Plan', 'vs ano anterior', '% vs ano anterior', 'Situação'].map(name => ({ name, filterButton: true })),
     rows: linhas });
-  wd.columns = [36, 18, 14, 12, 9, 8, 11, 11, 12, 9, 15, 17, 16, 18].map(width => ({ width }));
-  cabecalho(wd, 14, 'Base para análise (filtros e tabela dinâmica)');
-  for (let c = 1; c <= 14; c++) cabCelula(wd.getCell(5, c), wd.getCell(5, c).value);
+  wd.columns = [36, 18, 14, 12, 9, 8, 11, 11, 12, 9, 15, 17, 16, 18, 24].map(width => ({ width }));
+  cabecalho(wd, 15, 'Base para análise (filtros e tabela dinâmica)');
+  for (let c = 1; c <= 15; c++) cabCelula(wd.getCell(5, c), wd.getCell(5, c).value);
   wd.getRow(5).height = 30;
   for (let i = 6; i < 6 + linhas.length; i++) {
-    for (let c = 1; c <= 14; c++) Object.assign(wd.getCell(i, c), { font: fonte(), border: pontilhada });
+    for (let c = 1; c <= 15; c++) Object.assign(wd.getCell(i, c), { font: fonte(), border: pontilhada });
     wd.getCell(i, 9).numFmt = '#,##0.0##';
     wd.getCell(i, 12).numFmt = wd.getCell(i, 14).numFmt = '0.0%';
   }
@@ -7247,6 +7344,7 @@ function initDashboards() {
   $qe('dashDesfazer').addEventListener('click', desfazerAlteracoesDash);
   iniciarTelaCheia();
   $qe('dashExcel').addEventListener('click', baixarExcelDashboard);
+  $qe('dashSituacao').addEventListener('click', alternarFocoPendentes);
   renderDash();
   // Nenhum dashboard abre sozinho: a lista fica pronta para o usuário escolher ou criar
   carregarDashboards().then(renderDash);
