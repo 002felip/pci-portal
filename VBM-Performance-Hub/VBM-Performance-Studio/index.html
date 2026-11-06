@@ -189,6 +189,8 @@ body {
   background: transparent; color: #6B7280; font: italic 400 .7rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; }
 html[data-bg="dark"] .dash-situacao { color: rgba(255,255,255,.72); }
 .dash-situacao b { font-weight: 500; color: var(--wait); }
+.dash-situacao .sit-ciclo { font-style: normal; font-weight: 600; color: #0B6E99; }
+html[data-bg="dark"] .dash-situacao .sit-ciclo { color: #7DD3F0; }
 html[data-bg="dark"] .dash-situacao b { color: #F5B94A; }
 .dash-situacao:hover:not(:disabled) > span:last-child { text-decoration: underline; text-underline-offset: 2px; }
 .dash-situacao[aria-pressed="true"] { background: var(--wait-bg); }
@@ -2413,6 +2415,9 @@ const I18N_UI = {
   'ui.sit_resumo': ['{n} de {total} gráficos', '{n} of {total} charts'],
   'ui.sit_resumo_txt': ['com atualizações finais pendentes', 'pending final updates'],
   'ui.sit_coluna': ['Aguardando a atualização final de {mes}', 'Waiting for the final update of {mes}'],
+  'ui.sit_ciclo': ['Ciclo {mes}', 'Cycle {mes}'],
+  'ui.sit_regra': ['Atualizado = KPI alterado a partir de {data} (carga de {carga}).', 'Up to date = KPI changed on or after {data} ({carga} load).'],
+  'ui.sit_sem_calculo': ['situação de atualização ainda não calculada para esta carga', 'update status not yet calculated for this load'],
   'ui.sit_ok': ['Todos os gráficos atualizados', 'All charts updated'],
   'ui.sit_destacar': ['Destacar os gráficos pendentes e ir até o primeiro', 'Highlight pending charts and go to the first one'],
   'ui.sit_excel': ['Atenção: {n} gráfico(s) com atualizações finais pendentes no arquivo.', 'Warning: {n} chart(s) with pending final updates in the file.'],
@@ -3455,6 +3460,8 @@ async function carregarSituacaoDepois(base, dtRef) {
   let situacoes = [];
   try { situacoes = await buscarJsonDaApi(base, dtRef ? `chart-data/status?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data/status'); } catch (e) { return; }
   if ((dtRef || null) !== (dadosCarga.dtRef || null)) return; // outra referência foi carregada nesse meio-tempo
+  // 'vazia' = a carga ainda não passou pelo 006: a tela avisa em vez de não mostrar nada
+  dadosCarga.situacao = Array.isArray(situacoes) && situacoes.length ? 'ok' : 'vazia';
   const chave = r => `${r.ID_SISTEMA}|${r.ID_SITE}|${r.ID_OPERACAO}|${r.ID_KPI}`;
   const porKpi = new Map((Array.isArray(situacoes) ? situacoes : []).map(x => [chave(x), x]));
   allRows.forEach(r => { const st = porKpi.get(chave(r)); r.SG_STATUS = st ? st.SG_STATUS : null; r.DT_ATU_KPI = st ? st.DT_ATUALIZACAO : null; });
@@ -4344,15 +4351,24 @@ function atualizarResumoSituacao() {
   const btn = document.getElementById('dashSituacao');
   if (!btn) return;
   const conhecidos = charts.filter(c => c.situacao), pend = conhecidos.filter(c => c.situacao.pendente);
-  btn.hidden = !conhecidos.length;
+  // Ciclo usado: mês aguardando a atualização final (referência − 1) e a data a partir da qual
+  // um KPI conta como atualizado (1º dia do mês da carga, regra do 006)
+  const mp = mesPendente(), fmtMes = (a, m) => `${new Date(a, m - 1, 1).toLocaleDateString(idioma, { month: 'short' }).replace('.', '').replace(/^./, x => x.toUpperCase())}/${a}`;
+  const ciclo = mp ? tx('ui.sit_ciclo', { mes: fmtMes(mp.ano, mp.mes) }) : '';
+  const desde = mp ? new Date(mp.mes === 12 ? mp.ano + 1 : mp.ano, mp.mes % 12, 1) : null;
+  const regra = desde ? tx('ui.sit_regra', { data: desde.toLocaleDateString(idioma), carga: fmtMes(desde.getFullYear(), desde.getMonth() + 1) }) : '';
+  const semCalculo = !conhecidos.length && dadosCarga.situacao === 'vazia' && charts.some(c => !c.el.querySelector('.chart-empty-state'));
+  btn.hidden = !conhecidos.length && !semCalculo;
   btn.classList.toggle('is-ok', !pend.length);
   btn.disabled = !pend.length;
+  const rotCiclo = ciclo ? `<span class="sit-ciclo">${escapeHtml(ciclo)}</span><span aria-hidden="true">·</span>` : '';
   // Uma marca por gráfico (cheia = atualizado, tracejada = pendente), como no COO
   const marcas = conhecidos.map(c => `<i class="${c.situacao.pendente ? 'w' : ''}"></i>`).join('');
-  btn.innerHTML = pend.length
-    ? `<span class="cycle-bar" aria-hidden="true">${marcas}</span><span><b>${escapeHtml(tx('ui.sit_resumo', { n: pend.length, total: conhecidos.length }))}</b> ${escapeHtml(tx('ui.sit_resumo_txt'))}</span>`
-    : `<span>${escapeHtml(tx('ui.sit_ok'))}</span>`;
-  btn.title = pend.length ? tx('ui.sit_destacar') : '';
+  btn.innerHTML = semCalculo ? `${rotCiclo}<span>${escapeHtml(tx('ui.sit_sem_calculo'))}</span>`
+    : pend.length
+    ? `<span class="cycle-bar" aria-hidden="true">${marcas}</span>${rotCiclo}<span><b>${escapeHtml(tx('ui.sit_resumo', { n: pend.length, total: conhecidos.length }))}</b> ${escapeHtml(tx('ui.sit_resumo_txt'))}</span>`
+    : `${rotCiclo}<span>${escapeHtml(tx('ui.sit_ok'))}</span>`;
+  btn.title = [regra, pend.length ? tx('ui.sit_destacar') : ''].filter(Boolean).join('\n');
   if (!pend.length && board.classList.contains('foco-pendentes')) { board.classList.remove('foco-pendentes'); btn.setAttribute('aria-pressed', 'false'); }
 }
 function alternarFocoPendentes() {
@@ -6572,6 +6588,7 @@ async function recarregarDadosDoDashboard(d) {
   if (alvo === dadosCarga.dtRef) return;
   const vez = (recarregarDadosDoDashboard.vez = (recarregarDadosDoDashboard.vez || 0) + 1);
   dadosCarga.dtRef = alvo;
+  dadosCarga.situacao = null; // a situação da nova carga ainda vai chegar
   setFiltersInitialLoading(true);
   try {
     const { linhas, semCarga } = await loadPerformanceHubData(alvo);
