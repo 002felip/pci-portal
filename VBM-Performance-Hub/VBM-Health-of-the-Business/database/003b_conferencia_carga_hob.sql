@@ -12,7 +12,8 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 -- VBM Health of the Business — CONFERÊNCIA da carga (só leitura, não grava nada)
 -- A mesma consulta de 003_carga_mensal_hob.sql, sem a parte de gravação: mostra as linhas, com os
 -- campos de IBP.PHUB_PERFORMANCESTUDIO (ID_TIPO_VISAO_VBM, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO,
--- ORDEM_PERIODO), que a carga gravaria para o ID_DASH 16.
+-- ORDEM_PERIODO) para o ID_DASH 16. A carga grava só CD_PERIODO MONTH, QUARTER, YTD e YEAR (o YTG,
+-- ORDEM_VISAO 6, aparece aqui para conferência) e, em QUARTER e YEAR, só ORDEM_ANO = ano do mês.
 -- ════════════════════════════════════════════════════════════════════
 DECLARE @ID_DASH INT = 16;
 
@@ -277,7 +278,7 @@ FROM (
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YTD' AS 'CD_PERIODO',
-		3 AS 'ORDEM_VISAO',
+		4 AS 'ORDEM_VISAO',
 		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
 		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
 		--,
@@ -358,7 +359,7 @@ SELECT
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YTG' AS 'CD_PERIODO',
-		4 AS 'ORDEM_VISAO',
+		6 AS 'ORDEM_VISAO',
 		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
 		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
 		--,(UnpivotedData.Value * 2.5) AS 'Range_Month',

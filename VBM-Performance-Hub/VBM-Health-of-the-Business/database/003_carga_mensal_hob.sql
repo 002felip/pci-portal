@@ -18,8 +18,14 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 --   DT_REF (tabela) = mês de GETDATE()-2, no dia 1 (ANO-MES-01), com realizado até o mês anterior
 --                     (ex.: 2026-10-01 = realizado até setembro) — a mesma regra do COO
 --   DT_IND (tabela) = DT_REF da linha da query
---   CD_PERIODO / ORDEM_VISAO: MONTH 1 · QUARTER 2 · YTD 3 · YTG 4 · YEAR 5
+--   CD_PERIODO / ORDEM_VISAO no padrão da tabela: MONTH 1 · QUARTER 2 · (SEMESTER 3) · YTD 4 · YEAR 5
+--   YTG (ORDEM_VISAO 6) fica na consulta, mas NÃO é gravado: a tabela aceita só MONTH, QUARTER,
+--   SEMESTER, YTD e YEAR em CD_PERIODO (a tela soma o YTG a partir dos meses)
 --   ID_TIPO_VISAO (padrão VBM): 1 Budget · 2 Plan · 3 Act/Fcst
+--   Chave da tabela: DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, CD_PERIODO,
+--   ID_TIPO_VISAO. Trimestre e ano só do mesmo ano do mês da linha (ORDEM_ANO = YEAR(DT_REF)), como
+--   o COO faz com YEAR(...) = YEAR(...): com @DT_FIM no ano seguinte, a mesma chave apareceria duas vezes
+--   Sem NM_USUARIO: a coluna não existe na tabela (SG_STATUS e DT_ATUALIZACAO ficam para o status)
 --   Rodar de novo no mesmo mês apaga e regrava só DT_REF + ID_DASH 16.
 -- ════════════════════════════════════════════════════════════════════
 SET XACT_ABORT ON;
@@ -35,11 +41,11 @@ WHERE DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH;
 INSERT INTO IBP.PHUB_PERFORMANCESTUDIO
   (DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI,
    ID_TIPO_VISAO, NM_TIPO_VISAO, NM_VISAO, VL_KPI,
-   CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO, NM_USUARIO)
+   CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO)
 SELECT
   @DT_CARGA, HOB.DT_REF, @ID_DASH, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
   HOB.ID_TIPO_VISAO_VBM, MAX(HOB.NM_TYPE), MAX(HOB.[Type]), SUM(ISNULL(HOB.[Value], 0)),
-  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO, SUSER_SNAME()
+  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
 FROM (
 
 ----------------------------------------------------------------------------------------------------------------------------------
@@ -303,7 +309,7 @@ FROM (
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YTD' AS 'CD_PERIODO',
-		3 AS 'ORDEM_VISAO',
+		4 AS 'ORDEM_VISAO',
 		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
 		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
 		--,
@@ -384,7 +390,7 @@ SELECT
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YTG' AS 'CD_PERIODO',
-		4 AS 'ORDEM_VISAO',
+		6 AS 'ORDEM_VISAO',
 		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
 		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
 		--,(UnpivotedData.Value * 2.5) AS 'Range_Month',
@@ -496,6 +502,8 @@ WHERE
 	AND DASH.ID_DASH = @ID_DASH
 
 ) AS HOB
+WHERE HOB.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YEAR')                               -- YTG não entra (CD_PERIODO da tabela)
+  AND (HOB.CD_PERIODO NOT IN ('QUARTER', 'YEAR') OR HOB.ORDEM_ANO = YEAR(HOB.DT_REF))   -- trimestre/ano do mesmo ano do mês
 GROUP BY
   HOB.DT_REF, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
   HOB.ID_TIPO_VISAO_VBM, HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO;
