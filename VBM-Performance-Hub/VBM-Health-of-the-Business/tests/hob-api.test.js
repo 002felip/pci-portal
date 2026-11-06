@@ -65,9 +65,11 @@ test('003_carga_mensal_hob.sql: query do Health of the Business (ID_DASH 16) no 
     assert.ok(s.includes(`'${cd}' AS 'CD_PERIODO'`), cd);
     assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), `${cd} ORDEM_VISAO ${ordem}`);
   }
-  // colunas da tabela (sem NM_USUARIO), CD_PERIODO aceito (YTG fora) e chave única entre anos
+  // colunas da tabela (sem NM_USUARIO), YTG gravado (regra de CD_PERIODO ajustada) e chave única entre anos
   assert.ok(!/NM_USUARIO/.test(s.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n')), 'NM_USUARIO não existe na tabela');
-  assert.match(s, /WHERE HOB\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YEAR'\)/);
+  assert.match(s, /WHERE HOB\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YEAR', 'YTG'\)/);
+  assert.match(s, /CHECK \(CD_PERIODO IN \('MONTH', 'QUARTER', 'SEMESTER', 'YTD', 'YEAR', 'YTG'\)\)/);
+  assert.ok(s.indexOf('ADD CONSTRAINT CK_PHUB_PERFORMANCESTUDIO_PERIODO') < s.indexOf('BEGIN TRANSACTION'), 'regra ajustada antes da carga');
   assert.match(s, /HOB\.ORDEM_ANO = YEAR\(HOB\.DT_IND\)/);
   // DT_IND explícito em cada um dos 5 blocos (o mês da linha) e gravado pelo nome
   assert.strictEqual((s.match(/DT_REF AS 'DT_IND'/g) || []).length, 5);
