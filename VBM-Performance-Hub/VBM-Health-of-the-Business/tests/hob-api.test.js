@@ -265,7 +265,7 @@ test('SQL do EBITDA: carga do COO em IBP.PHUB_PERFORMANCESTUDIO, KPI por @idKpi,
   const s = carregarSql(EBITDA.arquivo, EBITDA.parametros);
   assert.match(s, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
   assert.match(s, /R\.ID_KPI = @idKpi/);
-  assert.match(s, /R\.CD_PERIODO = 'MONTH'/);
+  assert.match(s, /R\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YTG', 'YEAR'\)/);
   assert.match(s, /OUTER APPLY \([\s\S]*FROM IBP\.DASHBOARD D[\s\S]*\) DASH/);
   assert.ok(!/ID_DASH\s*=\s*\d/.test(s));
   assert.deepStrictEqual(CONFIG_PADRAO.ebitda, { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [45, 102, 46], sites: [] } });
@@ -394,10 +394,27 @@ test('007 (status, como o 004 do COO) e 008 (verificação só leitura) do ID_DA
   const st = ler('007_status_atualizacao_hob.sql');
   assert.match(st, /DECLARE @ID_DASH\s+INT\s+=\s+16;/);
   assert.match(st, /IBP\.LOG_PEDRAVISAOCONSOLIDADA/);
-  assert.match(st, /R\.SG_STATUS = CASE WHEN A\.DT_ATUALIZACAO >= @DT_REF THEN 'S' ELSE 'N' END/);
+  assert.match(st, /DECLARE @DT_LIMITE DATE = DATEADD\(MONTH, 1, @DT_REF\);/);
+  assert.match(st, /R\.SG_STATUS = CASE WHEN A\.DT_ATUALIZACAO >= @DT_LIMITE THEN 'S' ELSE 'N' END/);
   const v = ler('008_verificacao_atualizacao_hob.sql');
   assert.match(v, /DECLARE @ID_DASH INT\s+=\s+16;/);
   const codigo = v.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!/\b(INSERT|UPDATE|DELETE|ALTER|MERGE)\b/i.test(codigo), '008 não grava');
   for (const t of ['PEDRAVISAOCONSOLIDADA', 'PEDRAVISAOTRIMESTRE', 'PEDRAVISAOYEARTODATE', 'PEDRAVISAOYEARTOGO', 'PEDRAVISAOANO', 'LOG_PEDRAVISAOCONSOLIDADA']) assert.ok(v.includes('IBP.' + t), t);
+});
+
+test('montarEbitda/montarSerieCoo: QUARTER, YTD, YTG e YEAR gravados no mês (DT_IND) vão para per[mês]', () => {
+  const { montarEbitda, montarSerieCoo } = require('../hob-api');
+  const linhas = [
+    lin({ ANO: 2026, MES: 10, ID_SITE: 40, ID_KPI: 73, SERIE: 'B', CD_PERIODO: 'MONTH', VL_KPI: 0.34 }),
+    lin({ ANO: 2026, MES: 10, ID_SITE: 40, ID_KPI: 73, SERIE: 'B', CD_PERIODO: 'YTG', VL_KPI: 1.5 }),
+    lin({ ANO: 2026, MES: 10, ID_SITE: 40, ID_KPI: 73, SERIE: 'AF', CD_PERIODO: 'YTG', VL_KPI: 1.2 }),
+    lin({ ANO: 2026, MES: 10, ID_SITE: 40, ID_KPI: 73, SERIE: 'B', CD_PERIODO: 'YEAR', VL_KPI: 4.94 }),
+  ];
+  const e = montarEbitda(linhas, [], CONFIG_PADRAO, '2026-11');
+  const s = e.anos[2026].ebitdaVbm;
+  assert.strictEqual(s.b[9], 0.34);
+  assert.deepStrictEqual(s.per[10].YTG, { b: 1.5, a: 1.2 });
+  assert.deepStrictEqual(s.per[10].YEAR, { b: 4.94, a: null });
+  assert.deepStrictEqual(montarSerieCoo(linhas, 40).anos[2026].per[10].YTG, { b: 1.5, a: 1.2 });
 });

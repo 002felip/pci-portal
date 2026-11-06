@@ -8,7 +8,8 @@
    @dtRef = ciclo (DT_REF da carga, dia 1); a API usa o mais recente.
 
    Regras:
-     só o mês (CD_PERIODO 'MONTH'); a tela soma trimestre, YTD, YTG e ano.
+     CD_PERIODO: MONTH (a série mês a mês) e QUARTER, YTD, YTG e YEAR gravados pela carga para cada mês (DT_IND):
+     a tela usa os gravados no mês escolhido; sem eles (mês fora da carga), soma os meses.
      ID_TIPO_VISAO (padrão VBM da tabela): 1 = Budget, 3 = Act/Fcst (Plan não é usado).
      KPI 73: VBM = site 40, Copper = site 38, Nickel = site 39 (um negócio por vez no seletor da tela).
      Others = soma dos KPIs 45 + 102 + 46 da operação 11 (ebitda.outros) — por isso ID_OPERACAO no resultado.
@@ -19,7 +20,7 @@
 SELECT
   YEAR(R.DT_IND) AS ANO, MONTH(R.DT_IND) AS MES, R.ID_SITE, LTRIM(RTRIM(S.NM_SITE)) AS NM_SITE, R.ID_OPERACAO, R.ID_KPI,
   COALESCE(LTRIM(RTRIM(DASH.NM_KPIS_DASH)), 'EBITDA') AS NM_KPI, LTRIM(RTRIM(DASH.SG_UNID)) AS SG_UNID, DASH.VL_CASADECIMAL,
-  CASE R.ID_TIPO_VISAO WHEN 1 THEN 'B' ELSE 'AF' END AS SERIE,
+  CASE R.ID_TIPO_VISAO WHEN 1 THEN 'B' ELSE 'AF' END AS SERIE, R.CD_PERIODO,
   R.NM_VISAO, R.VL_KPI
 FROM IBP.PHUB_PERFORMANCESTUDIO R
 OUTER APPLY (
@@ -37,6 +38,6 @@ LEFT JOIN IBP.SITES S
 WHERE R.ID_DASH = @idDash
   AND R.ID_KPI = @idKpi
   AND R.DT_REF = @dtRef
-  AND R.CD_PERIODO = 'MONTH'
+  AND R.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YTG', 'YEAR')
   AND R.ID_TIPO_VISAO IN (1, 3)
-ORDER BY R.ID_SITE, ANO, MES
+ORDER BY R.ID_SITE, R.ORDEM_VISAO, ANO, MES

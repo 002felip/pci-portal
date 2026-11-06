@@ -351,6 +351,17 @@ function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
   return { anos, referencias, colunas: col, avisos: [...new Set(avisos)] };
 }
 
+// Linha de período (QUARTER, YTD, YTG, YEAR) gravada pela carga para o mês DT_IND → s.per[mês][período] = { b, a }
+// (sem CD_PERIODO, a linha é do mês). A tela usa estes valores no mês escolhido em vez de somar os meses.
+const PERIODOS = ['QUARTER', 'YTD', 'YTG', 'YEAR'];
+function periodoDe(l) { const p = String(l.CD_PERIODO || 'MONTH').trim().toUpperCase(); return p === 'MONTH' || PERIODOS.includes(p) ? p : null; }
+function somarPeriodo(s, l, cd, m) {
+  s.per = s.per || {};
+  const g = s.per[m + 1] = s.per[m + 1] || {};
+  const v = g[cd] = g[cd] || { b: null, a: null }, k = l.SERIE === 'B' ? 'b' : 'a';
+  v[k] = (v[k] || 0) + (l.VL_KPI == null ? 0 : Number(l.VL_KPI));
+}
+
 // ── EBITDA (004_hob_ebitda.sql) → séries mensais por segmento ──
 // KPI 73 (ebitda.idKpi) por ID_SITE: VBM 40, Copper 38 e Nickel 39 (cada um é uma opção do seletor).
 // Others: soma dos KPIs de ebitda.outros (45, 102 e 46) na operação 11; com outros.sites vazio, de qualquer site.
@@ -368,6 +379,9 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
     if (!Number.isInteger(ano) || m < 0 || m > 11) return;
     sitesUsados[seg] = sitesUsados[seg] || new Set(); sitesUsados[seg].add(rotulo);
     if (!anos[ano]) { anos[ano] = {}; for (const k of Object.values(SEG)) anos[ano][k] = { b: Array(12).fill(0), a: Array(12).fill(0) }; }
+    const cd = periodoDe(l);
+    if (!cd) return;
+    if (cd !== 'MONTH') return somarPeriodo(anos[ano][SEG[seg]], l, cd, m);
     anos[ano][SEG[seg]][l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
   };
   for (const l of linhas) {
@@ -402,6 +416,9 @@ function montarSerieCoo(linhas, site) {
     if (!Number.isInteger(ano) || m < 0 || m > 11) continue;
     meta = melhorMeta(meta, l, '');
     const s = anos[ano] = anos[ano] || { b: Array(12).fill(0), a: Array(12).fill(0) };
+    const cd = periodoDe(l);
+    if (!cd) continue;
+    if (cd !== 'MONTH') { somarPeriodo(s, l, cd, m); continue; }
     s[l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
   }
   return { anos, meta };
@@ -467,7 +484,7 @@ function carregarSql(arquivo, parametros) {
   return textoSql;
 }
 const LEITURA = { arquivo: '001_hob_dashboard.sql', parametros: ['@idDash', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD'] };
-const EBITDA = { arquivo: '004_hob_ebitda.sql', parametros: ['@idDash', '@idKpi', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD', "CD_PERIODO = 'MONTH'"] };
+const EBITDA = { arquivo: '004_hob_ebitda.sql', parametros: ['@idDash', '@idKpi', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD', "CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YTG', 'YEAR')"] };
 const WATERFALL = { arquivo: '002_hob_waterfall.sql', parametros: ['IBP.WATERFALL', '@site', '@tipo', '@anoIni'] };
 
 // Cargas do Health of the Business em IBP.PHUB_PERFORMANCESTUDIO (uma por DT_REF), com a hora da gravação
