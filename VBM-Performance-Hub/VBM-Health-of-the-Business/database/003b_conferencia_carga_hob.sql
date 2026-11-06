@@ -11,9 +11,9 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 -- ════════════════════════════════════════════════════════════════════
 -- VBM Health of the Business — CONFERÊNCIA da carga (só leitura, não grava nada)
 -- A mesma consulta de 003_carga_mensal_hob.sql, sem a parte de gravação: mostra as linhas, com os
--- campos de IBP.PHUB_PERFORMANCESTUDIO (ID_TIPO_VISAO_VBM, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO,
+-- campos de IBP.PHUB_PERFORMANCESTUDIO (DT_IND, ID_TIPO_VISAO_VBM, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO,
 -- ORDEM_PERIODO) para o ID_DASH 16. A carga grava só CD_PERIODO MONTH, QUARTER, YTD e YEAR (o YTG,
--- ORDEM_VISAO 6, aparece aqui para conferência) e, em QUARTER e YEAR, só ORDEM_ANO = ano do mês.
+-- ORDEM_VISAO 6, aparece aqui para conferência) e, em QUARTER e YEAR, só ORDEM_ANO = ano de DT_IND.
 -- ════════════════════════════════════════════════════════════════════
 DECLARE @ID_DASH INT = 16;
 
@@ -59,6 +59,7 @@ DECLARE @ID_DASH INT = 16;
 
 		UnpivotedData.Value,
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+		PVC.DT_REF AS 'DT_IND',
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'MONTH' AS 'CD_PERIODO',
 		1 AS 'ORDEM_VISAO',
@@ -119,6 +120,7 @@ NM_TYPE,
 [Type],
 [Value],
 -- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+DT_REF AS 'DT_IND',
 ID_TYPE_VBM AS 'ID_TIPO_VISAO_VBM',
 'QUARTER' AS 'CD_PERIODO',
 2 AS 'ORDEM_VISAO',
@@ -276,6 +278,7 @@ FROM (
 
 		UnpivotedData.Value,
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+		PVC.DT_REF AS 'DT_IND',
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YTD' AS 'CD_PERIODO',
 		4 AS 'ORDEM_VISAO',
@@ -357,6 +360,7 @@ SELECT
 
 		UnpivotedData.Value,
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+		PVC.DT_REF AS 'DT_IND',
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YTG' AS 'CD_PERIODO',
 		6 AS 'ORDEM_VISAO',
@@ -435,6 +439,7 @@ SELECT
 	END AS 'Type',
 		UnpivotedData.Value,
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+		PVC.DT_REF AS 'DT_IND',
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'YEAR' AS 'CD_PERIODO',
 		5 AS 'ORDEM_VISAO',
