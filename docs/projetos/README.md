@@ -12,6 +12,7 @@ projeto: arquivos, rotas, dados, variáveis, fluxos, testes e pontos de atençã
 | ↳ VBM Performance Studio | `/VBM-Performance-Hub/VBM-Performance-Studio/` | idem | [performance-studio.md](performance-studio.md) |
 | ↳ COO Business Units Dashboard (atual e Historical) | `/VBM-Performance-Hub/COO-Business-Units-Dashboard*/` | idem | [coo-dashboards.md](coo-dashboards.md) |
 | ↳ VBM Health of the Business | `/VBM-Performance-Hub/VBM-Health-of-the-Business/` | idem | [health-of-the-business.md](health-of-the-business.md) |
+| ↳ VBM Lean Six Sigma | `/VBM-Performance-Hub/VBM-Lean-Six-Sigma/` | Node/Express + planilhas Excel (sem banco) | [lean-six-sigma.md](lean-six-sigma.md) |
 | VBM Stable & Capable | `/VBM-Stable-and-Capable/` | Node/Express + Python + HTML/JS | [stable-and-capable.md](stable-and-capable.md) |
 | VBM Value Driver Tree (VDT) | `/VBM-Vdt/` | Python/FastAPI + SQLite | [vdt.md](vdt.md) |
 | VBM Strategic Cockpit | `/VBM-Cockpit/` | Python/FastAPI + React + Lakebase | [cockpit.md](cockpit.md) |

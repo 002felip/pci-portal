@@ -65,7 +65,7 @@ pci-portal/
 ├── index.html, assets/     ← página inicial do Portal
 ├── VBM-Kaizen-App-DEV/     ← Kaizen (pasta ativa definida por KAIZEN_PASTA)
 ├── VBM-Kaizen-App-PROD/    ← Kaizen, versão de produção
-├── VBM-Performance-Hub/    ← Hub + VBM-Performance-Studio, COO, COO Historical, Health of the Business
+├── VBM-Performance-Hub/    ← Hub + VBM-Performance-Studio, COO, COO Historical, Health of the Business, Lean Six Sigma
 ├── VBM-Stable-and-Capable/ ← SPC: PDFs, importação do PCI Master e dashboard
 ├── VBM-Vdt/                ← Value Driver Tree (Python)
 ├── VBM-Cockpit/            ← Strategic Cockpit (Python + React)
@@ -217,6 +217,7 @@ contrato: um módulo `*-api.js` com o router, montado por `portal.js` (dentro do
 | **COO-Business-Units-Dashboard** | dashboard do COO por BU e site: Budget × Act/Fcst, ciclos de carga | `indicadores`, `filtros`, `ciclos`, `config`, `atualizacao`, `ping` |
 | **COO-Business-Units-Dashboard-Historical** | série histórica do COO (desde `COO_HIST_ANO_INICIAL`, padrão 2017) | `indicadores`, `filtros`, `ciclos`, `config`, `ping` |
 | **VBM-Health-of-the-Business** | saúde do negócio: indicadores, EBITDA, waterfall de FCF | `indicadores`, `ebitda`, `waterfall`, `coo`, `ciclos`, `config`, `ping` |
+| **VBM-Lean-Six-Sigma** | portfólio de projetos Green Belt (LSS): status, etapas DMAIC, Gantt de coaching. **Sem banco:** lê as planilhas versionadas em `data/` | `dados`, `health`, `ping` |
 
 - **Fonte comum:** as cargas mensais em `IBP.PHUB_PERFORMANCESTUDIO`, identificadas por
   `IBP.DASHBOARD.ID_DASH` (`COO_ID_DASH` padrão 15; `HOB_ID_DASH` ainda pendente, e sem ele o Health of the Business

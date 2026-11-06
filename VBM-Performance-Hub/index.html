@@ -410,6 +410,8 @@
   .acesso-btn:focus-visible { outline: 3px solid var(--vbm-blue-light); outline-offset: 2px; }
   .acesso-btn[hidden] { display: none; }
   .cards-hub { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-width: 920px; }
+  /* Número ímpar de aplicações: o último card fica centralizado (mesmo critério da tela inicial do Portal) */
+  @media (min-width: 761px) { .cards-hub > .card:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - .45rem); } }
   @media (max-width: 760px) { .cards-hub { grid-template-columns: 1fr !important; } }
   .topo-voltar { display: inline-flex; align-items: center; }
   /* 4 cards passam da altura da tela no celular: a página cresce e rola
@@ -509,6 +511,14 @@
         <p data-i18n="hub.healthDesc">Saúde do negócio: visão consolidada dos principais indicadores.</p>
         <span class="acessar"><span data-i18n="portal.open">Acessar</span> <span aria-hidden="true">→</span></span>
       </a>
+      <a class="card" href="VBM-Lean-Six-Sigma/">
+        <span class="icone" aria-hidden="true">
+          <svg viewBox="0 0 512 512"><path d="M256 32a224 224 0 1 1 0 448 224 224 0 1 1 0-448zm0 64a160 160 0 1 0 0 320 160 160 0 1 0 0-320zm0 64a96 96 0 1 1 0 192 96 96 0 1 1 0-192zm0 64a32 32 0 1 0 0 64 32 32 0 1 0 0-64z"/></svg>
+        </span>
+        <h2>VBM - Lean Six Sigma</h2>
+        <p data-i18n="hub.lssDesc">Portfólio de projetos Green Belt: status, etapas DMAIC, timeline e coaching.</p>
+        <span class="acessar"><span data-i18n="portal.open">Acessar</span> <span aria-hidden="true">→</span></span>
+      </a>
     </nav>
   </main>
 
@@ -603,7 +613,8 @@
         'hub.studioDesc': 'Acompanhamento de indicadores e dashboards estratégicos.',
         'hub.cooDesc': 'Indicadores das Business Units da COO.',
         'hub.cooHistDesc': 'Histórico dos indicadores das Business Units da COO.',
-        'hub.healthDesc': 'Saúde do negócio: visão consolidada dos principais indicadores.' },
+        'hub.healthDesc': 'Saúde do negócio: visão consolidada dos principais indicadores.',
+        'hub.lssDesc': 'Portfólio de projetos Green Belt: status, etapas DMAIC, timeline e coaching.' },
       'en': { 'settings.btnTitle': 'Settings', 'settings.title': 'Settings', 'settings.close': 'Close', 'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.languageInfo': 'Interface language', 'theme.white': 'Light', 'theme.dark': 'Dark',
         'portal.subtitle': 'Select the application', 'portal.apps': 'Applications', 'portal.open': 'Open',
         'portal.kaizenDesc': 'Kaizen Program management: registration, approval, library and indicators.',
@@ -611,7 +622,8 @@
         'hub.studioDesc': 'Tracking of indicators and strategic dashboards.',
         'hub.cooDesc': 'COO Business Units indicators.',
         'hub.cooHistDesc': 'Historical COO Business Units indicators.',
-        'hub.healthDesc': 'Health of the business: consolidated view of the main indicators.' }
+        'hub.healthDesc': 'Health of the business: consolidated view of the main indicators.',
+        'hub.lssDesc': 'Green Belt project portfolio: status, DMAIC stages, timeline and coaching.' }
     };
     var ALVOS = [['data-i18n', null], ['data-i18n-title', 'title'], ['data-i18n-aria', 'aria-label']];
     var select = document.getElementById('langSelect');

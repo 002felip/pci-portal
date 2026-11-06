@@ -25,6 +25,7 @@ Página que reúne os dashboards de performance e "casca" que monta as aplicaç�
 | `COO-Business-Units-Dashboard` | [coo-dashboards.md](coo-dashboards.md) |
 | `COO-Business-Units-Dashboard-Historical` | [coo-dashboards.md](coo-dashboards.md#coo-business-units-dashboard-historical) |
 | `VBM-Health-of-the-Business` | [health-of-the-business.md](health-of-the-business.md) |
+| `VBM-Lean-Six-Sigma` | [lean-six-sigma.md](lean-six-sigma.md) (sem banco: lê as planilhas de `data/`) |
 
 A **primeira** da lista (`VBM-Performance-Studio`) também empresta a conexão PRD ao controle de
 acesso do Portal. Mudar a ordem muda quem fornece essa conexão.
