@@ -4,7 +4,7 @@
 
    Fonte: a carga do Health of the Business em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 16, gravada por
    003_carga_mensal_hob.sql), um KPI por consulta (@idKpi) — configuração da tela: ebitda.idDash e ebitda.idKpi.
-   A API lê o KPI 73 (EBITDA) e os KPIs de Others (45, 102 e 46, filtrados pela operação 11).
+   A API lê o KPI 73 (EBITDA); Others = o mesmo KPI 73 nos sites 45, 102 e 46 (operação 11).
    @dtRef = ciclo (DT_REF da carga, dia 1); a API usa o mais recente.
 
    Regras:
@@ -12,7 +12,7 @@
      a tela usa os gravados no mês escolhido; sem eles (mês fora da carga), soma os meses.
      ID_TIPO_VISAO (padrão VBM da tabela): 1 = Budget, 3 = Act/Fcst (Plan não é usado).
      KPI 73: VBM = site 40, Copper = site 38, Nickel = site 39 (um negócio por vez no seletor da tela).
-     Others = soma dos KPIs 45 + 102 + 46 da operação 11 (ebitda.outros) — por isso ID_OPERACAO no resultado.
+     Others = soma do KPI 73 dos sites 45 + 102 + 46 da operação 11 (ebitda.outros) — por isso ID_OPERACAO no resultado.
      IBP.DASHBOARD entra só para unidade e casas decimais (OUTER APPLY TOP 1: o KPI não precisa estar
      cadastrado no ID_DASH para ser lido, e cadastro repetido não duplica valores). Prefere o cadastro do
      mesmo site e operação; sem ele, o do mesmo KPI em outro site do ID_DASH.
