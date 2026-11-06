@@ -3448,10 +3448,10 @@ async function carregarSituacaoDepois(base, dtRef) {
 }
 // Selo de cada gráfico com os filtros dele (o contexto do gráfico ativo é emprestado e devolvido)
 function marcarSituacaoDeTodos() {
-  const ativo = activeChart;
+  const ativo = activeChart, filtros = { ...filterState }; // devolve os mesmos objetos de filtro
   if (ativo) stashActive();
-  try { charts.forEach(c => { activeChart = c; loadFilters(c.filters); marcarSituacaoDoGrafico(); }); }
-  finally { activeChart = ativo; if (ativo) loadFilters(ativo.filters); }
+  try { charts.forEach(c => { activeChart = c; if (c === ativo) Object.assign(filterState, filtros); else loadFilters(c.filters); marcarSituacaoDoGrafico(); }); }
+  finally { activeChart = ativo; Object.assign(filterState, filtros); }
 }
 
 // Referência (mês/ano = mês final do YTD) dos dados em allRows. dtRef null =
@@ -3904,10 +3904,11 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
 
   // Rótulo ou grupo: tudo marcado → desmarca; senão marca
   const alternar = itens => {
-    if (itens.every(marcado)) {
-      itens.forEach(p => p.tipos.forEach(t => sel.delete(t)));
+    const atual = filterState.horizontes; // o conjunto vigente no clique, não o da montagem da lista
+    if (itens.every(p => p.tipos.every(t => atual.has(t)))) {
+      itens.forEach(p => p.tipos.forEach(t => atual.delete(t)));
     } else {
-      itens.forEach(p => p.tipos.forEach(t => sel.add(t)));
+      itens.forEach(p => p.tipos.forEach(t => atual.add(t)));
     }
     onFilterChanged(def.key);
   };
@@ -4313,18 +4314,23 @@ function redesenharEmSilencio(lista) {
   const ativo = activeChart;
   if (!ativo || !lista.length) return;
   stashActive();
-  const cores = { ...COLORS }, pagina = chartPage;
-  const usar = (c, cs) => { Object.keys(COLORS).forEach(k => delete COLORS[k]); Object.assign(COLORS, cs); activeChart = c; loadFilters(c.filters); };
+  // Devolve os MESMOS objetos de filtro do gráfico ativo (as listas abertas no painel apontam para eles)
+  const cores = { ...COLORS }, pagina = chartPage, filtros = { ...filterState };
+  const usarCores = cs => { Object.keys(COLORS).forEach(k => delete COLORS[k]); Object.assign(COLORS, cs); };
   setChartIds(ativo, false);
   try {
     lista.forEach(c => {
-      usar(c, { bgChart: '#F6F6F6', ...c.colors });
+      usarCores({ bgChart: '#F6F6F6', ...c.colors });
+      activeChart = c;
+      loadFilters(c.filters);
       chartPage = c.page || 0;
       setChartIds(c, true);
       try { renderActiveChart(); } finally { setChartIds(c, false); }
     });
   } finally {
-    usar(ativo, cores);
+    activeChart = ativo;
+    Object.assign(filterState, filtros);
+    usarCores(cores);
     chartPage = pagina;
     setChartIds(ativo, true);
   }
