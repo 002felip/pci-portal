@@ -1845,7 +1845,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <button type="button" class="qe-btn" id="qeLoteSecao">Aplicar esta seção</button>
           <button type="button" class="qe-btn" id="qeLoteTudo">Aplicar todas</button>
         </div>
-        <p class="qe-hint">Copia a configuração do gráfico em edição (selo “Editando”, o último clicado) para os demais selecionados com Ctrl/Shift + clique. Gráficos vinculados ao banco são gravados na hora.</p>
+        <p class="qe-hint">Com vários gráficos selecionados (Ctrl/Shift + clique), cada alteração de filtro ou da seção aberta vale para todos. Os botões copiam a seção inteira ou todas as configurações do gráfico em edição (selo “Editando”). Salvar grava no banco também os vinculados do grupo.</p>
       </div>
       <section class="qe-sec" data-sec="tipo" hidden>
         <div class="qe-sec-body">
@@ -3538,6 +3538,7 @@ function onFilterChanged(key) {
   // Aplicação automática: cada clique já atualiza opções dependentes e gráfico
   refreshFiltersAndChart();
   if (filtrosAplicados) filtrosAplicadosAgora('');
+  propagarFiltrosAoGrupo([key]);
 }
 
 // linhas que passam em TODOS os filtros — usadas para montar o gráfico e
@@ -3998,6 +3999,7 @@ function buildFiltersBar() {
     closeAllPanels();
     refreshFiltersAndChart();
     filtrosAplicadosAgora('Filtros limpos e aplicados.');
+    propagarFiltrosAoGrupo(FILTER_DEFS.map(d => d.key));
   });
 }
 
@@ -4195,6 +4197,41 @@ function renderActiveChart() {
   updateChartUnit();
   applyChartBackgroundColor();
   renderTurnoverChart(getFilteredChartRows());
+}
+
+// Redesenha gráficos que não estão em edição sem fechar painéis nem trocar a seleção:
+// o contexto do gráfico ativo (filtros, cores, página) é emprestado só durante o desenho
+function redesenharEmSilencio(lista) {
+  const ativo = activeChart;
+  if (!ativo || !lista.length) return;
+  stashActive();
+  const cores = { ...COLORS }, pagina = chartPage;
+  const usar = (c, cs) => { Object.keys(COLORS).forEach(k => delete COLORS[k]); Object.assign(COLORS, cs); activeChart = c; loadFilters(c.filters); };
+  setChartIds(ativo, false);
+  try {
+    lista.forEach(c => {
+      usar(c, { bgChart: '#F6F6F6', ...c.colors });
+      chartPage = c.page || 0;
+      setChartIds(c, true);
+      try { renderActiveChart(); } finally { setChartIds(c, false); }
+    });
+  } finally {
+    usar(ativo, cores);
+    chartPage = pagina;
+    setChartIds(ativo, true);
+  }
+}
+// Vários gráficos selecionados: o gráfico em edição e os demais do grupo
+const grupoSelecionado = () => (activeChart && multiSel.size > 1 && multiSel.has(activeChart) ? charts.filter(c => multiSel.has(c) && c !== activeChart) : []);
+// Filtro alterado no gráfico em edição vale para todo o grupo (só os campos alterados)
+function propagarFiltrosAoGrupo(chaves) {
+  const outros = grupoSelecionado();
+  if (!outros.length) return;
+  const f = serializeFilters();
+  outros.forEach(c => { c.filters = { ...(c.filters || {}) }; chaves.forEach(k => { c.filters[k] = JSON.parse(JSON.stringify(f[k] ?? null)); }); });
+  redesenharEmSilencio(outros);
+  saveCharts();
+  msgEm('qeFiltrosMsg', `Filtro aplicado a ${outros.length + 1} gráficos selecionados.`, 'ok');
 }
 
 function deselectChart() {
@@ -5432,6 +5469,7 @@ function aplicarCoresAoVivo() {
   c.cfg = { ...c.cfg, linhas: JSON.parse(JSON.stringify(d.cfg.linhas)) };
   if (c === activeChart) renderActiveChart();
   saveCharts();
+  agendarPropagacaoConfig();
 }
 
 // Unidade ↔ escala: mesma família (toneladas, dólares) → fator = base dos dados ÷ unidade escolhida
@@ -5495,6 +5533,7 @@ function aplicarUnidadeAoVivo() {
   if (c === activeChart) renderActiveChart();
   saveCharts();
   labelCharts();
+  agendarPropagacaoConfig();
 }
 
 function aplicarColunasAoVivo(msg) {
@@ -5507,6 +5546,7 @@ function aplicarColunasAoVivo(msg) {
   setChartColors(c, cores);
   if (c === activeChart) renderTurnoverChart(getFilteredChartRows());
   saveCharts();
+  agendarPropagacaoConfig();
   renderColors();
   if (msg) editorMsg(msg, 'ok');
 }
@@ -5673,6 +5713,7 @@ function aplicarFontesAoVivo(foco) {
     // Só variáveis CSS: troca a tipografia sem redesenhar nem reanimar o gráfico
     if (c === activeChart) aplicarFontesVars(document.getElementById('chartWrapper'), f);
     saveCharts();
+    agendarPropagacaoConfig();
   }
   renderFontes();
   if (foco) $qe('qeFontes').querySelector(foco)?.focus();
@@ -5855,6 +5896,7 @@ function aplicarRascunhoAoVivo(atraso) {
   setChartColors(c, { ...d.colors });
   if (c === activeChart) { if (soTitulo) updateChartTitle(); else renderActiveChart(); }
   saveCharts();
+  agendarPropagacaoConfig();
   labelCharts();
   renderEditorTarget();
   renderDbStatus();
@@ -5893,6 +5935,27 @@ const LOTE_CHAVES = {
   tipo: ['tipoGrafico', 'exibirDelta', 'linhas'], titulo: ['titulo'], fontes: ['fontes'], numeros: ['decBar', 'decDelta'],
   unidade: ['unidade'], colunas: ['ordemColunas', 'deltasManuais'], cores: ['modoCor', 'paletaColunas']
 };
+// Cada alteração do painel (seção aberta) vale também para os outros gráficos selecionados;
+// gravação no banco dos vinculados: no Salvar (ou nos botões de aplicar)
+let propagarTimer = 0;
+function agendarPropagacaoConfig() {
+  const origem = editor.chart, secao = editor.secao;
+  if (!LOTE_CHAVES[secao] || !alvosDoLote().length) return;
+  clearTimeout(propagarTimer);
+  propagarTimer = setTimeout(() => {
+    const alvos = multiSel.size > 1 && multiSel.has(origem) ? charts.filter(c => multiSel.has(c) && c !== origem) : [];
+    if (!alvos.length) return;
+    alvos.forEach(c => {
+      const cfg = { ...c.cfg };
+      LOTE_CHAVES[secao].forEach(k => { cfg[k] = JSON.parse(JSON.stringify(origem.cfg[k])); });
+      c.cfg = normalizeChartCfg(cfg);
+      if (secao === 'cores') c.colors = { ...origem.colors };
+    });
+    if (activeChart === origem) redesenharEmSilencio(alvos);
+    saveCharts();
+    labelCharts();
+  }, 80);
+}
 const alvosDoLote = () => (multiSel.size > 1 && multiSel.has(editor.chart) ? charts.filter(c => multiSel.has(c) && c !== editor.chart) : []);
 function atualizarLote() {
   const n = alvosDoLote().length, secao = !!LOTE_CHAVES[editor.secao];
@@ -5956,9 +6019,15 @@ async function salvarEditor() {
         editor.draft.cfg.nome = c.cfg.nome;
       }
       if (editor.chart === c) guardarBaseEditor();
+      // Grupo selecionado: os outros gráficos vinculados ao banco também são gravados
+      const grupo = alvosDoLote().filter(o => o.cfg.idConfig);
+      let falhas = 0;
+      for (const o of grupo) { const rg = await gravarConfigBanco(o); if (!rg.ok) falhas++; }
+      if (grupo.length) saveCharts();
       renderEditorTarget();
       renderDbStatus();
-      editorMsg(`Configuração “${c.cfg.nome}” salva no banco.`, 'ok');
+      editorMsg(falhas ? `Configuração “${c.cfg.nome}” salva no banco; ${falhas} gráfico(s) do grupo não foram gravados: tente de novo.`
+        : `Configuração “${c.cfg.nome}” salva no banco${grupo.length ? ` (e mais ${grupo.length} do grupo)` : ''}.`, falhas ? 'err' : 'ok');
     } else if (r.status === 409 || r.corpo.campo === 'nome') {
       if (editor.chart === c) { showFieldError('qeNome', 'qeNomeErr', r.corpo.error, 'ident'); irParaSecao('ident'); $qe('qeNome').focus(); }
       editorMsg(r.corpo.error || 'Nome inválido.', 'err');
