@@ -195,7 +195,13 @@ function cicloDe(dt) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 // Casas decimais do KPI (IBP.DASHBOARD.VL_CASADECIMAL): inteiro de 0 a 6; fora disso, null (padrão da página)
-function casasDe(v) { const n = Number(v); return v != null && Number.isInteger(n) && n >= 0 && n <= 6 ? n : null; }
+function casasDe(v) { const n = Number(v); return v != null && v !== '' && Number.isInteger(n) && n >= 0 && n <= 6 ? n : null; }
+// Cadastro do KPI a partir das linhas: fica o primeiro com casas decimais e unidade; linha sem eles não apaga o anterior
+function melhorMeta(atual, l, nomePadrao) {
+  const novo = { nome: String(l.NM_KPI || nomePadrao).trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+  if (!atual) return novo;
+  return { nome: atual.nome || novo.nome, unid: atual.unid || novo.unid, casas: atual.casas != null ? atual.casas : novo.casas };
+}
 
 // Linhas da carga (001_hob_dashboard.sql) + configuração → formato da página (window.HOB_DATA).
 // Mês sem valor vira 0 e entra em avisos; KPI não encontrado também (o card mostra 0, o log diz qual falta).
@@ -352,7 +358,9 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
   const ultimoReal = mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 };
   const SEG = { vbm: 'ebitdaVbm', cu: 'ebitdaCu', ni: 'ebitdaNi', out: 'ebitdaOut' };
   const avisos = [], anos = {}, sitesUsados = {}, fora = new Set();
-  let meta = null;
+  // cadastro (IBP.DASHBOARD) de cada opção do seletor, pelas linhas dela: unidade e casas decimais próprias
+  const metas = {};
+  const metaDe = (seg, l) => { metas[seg] = melhorMeta(metas[seg], l, seg === 'out' ? 'Others' : 'EBITDA'); };
   const somar = (seg, l, rotulo) => {
     const ano = Number(l.ANO), m = Number(l.MES) - 1;
     if (!Number.isInteger(ano) || m < 0 || m > 11) return;
@@ -363,7 +371,7 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
   for (const l of linhas) {
     const site = Number(l.ID_SITE), seg = ['vbm', 'cu', 'ni'].find(k => config.ebitda.sites[k].includes(site));
     if (!seg) { fora.add(String(site)); continue; }
-    if (!meta || (!meta.unid && l.SG_UNID)) meta = { nome: String(l.NM_KPI || 'EBITDA').trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+    metaDe(seg, l);
     somar(seg, l, l.NM_SITE ? `${site} ${String(l.NM_SITE).trim()}` : String(site));
   }
   const O = config.ebitda.outros, sitesOutros = new Set();
@@ -371,6 +379,7 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
     if (Number(l.ID_OPERACAO) !== O.idOperacao || !O.kpis.includes(Number(l.ID_KPI))) continue;
     if (O.sites.length && !O.sites.includes(Number(l.ID_SITE))) continue;
     sitesOutros.add(Number(l.ID_SITE));
+    metaDe('out', l);
     somar('out', l, `KPI ${l.ID_KPI}${l.NM_KPI ? ' ' + String(l.NM_KPI).trim() : ''}`);
   }
   if (sitesOutros.size > 1 && !O.sites.length) avisos.push(`Others: KPIs ${O.kpis.join(', ')} em ${sitesOutros.size} sites (${[...sitesOutros].join(', ')}), somados; defina ebitda.outros.sites para limitar`);
@@ -378,7 +387,7 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
   for (const k of ['vbm', 'cu', 'ni']) if (!sitesUsados[k] && Object.keys(anos).length) avisos.push(`${k}: nenhum dos sites ${config.ebitda.sites[k].join(', ')} tem o KPI ${config.ebitda.idKpi} no ciclo ${ciclo}`);
   if (!sitesUsados.out && Object.keys(anos).length) avisos.push(`out: KPIs ${O.kpis.join(', ')} da operação ${O.idOperacao} sem linhas no ciclo ${ciclo}`);
   if (!Object.keys(anos).length) avisos.push(`KPI ${config.ebitda.idKpi} sem linhas no ciclo ${ciclo} (ID_DASH ${config.ebitda.idDash})`);
-  return { ciclo, ultimoReal, anos, meta, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
+  return { ciclo, ultimoReal, anos, meta: metas.vbm || metas.cu || metas.ni || null, metas, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
 }
 
 // ── Demais séries da carga do COO: linhas de 004 (um KPI por consulta) → série mensal do site da página ──
@@ -389,7 +398,7 @@ function montarSerieCoo(linhas, site) {
     if (Number(l.ID_SITE) !== site) continue;
     const ano = Number(l.ANO), m = Number(l.MES) - 1;
     if (!Number.isInteger(ano) || m < 0 || m > 11) continue;
-    if (!meta || (!meta.unid && l.SG_UNID)) meta = { nome: String(l.NM_KPI || '').trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+    meta = melhorMeta(meta, l, '');
     const s = anos[ano] = anos[ano] || { b: Array(12).fill(0), a: Array(12).fill(0) };
     s[l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
   }

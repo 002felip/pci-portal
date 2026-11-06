@@ -264,7 +264,7 @@ test('SQL do EBITDA: carga do COO em IBP.PHUB_PERFORMANCESTUDIO, KPI por @idKpi,
   assert.match(s, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
   assert.match(s, /R\.ID_KPI = @idKpi/);
   assert.match(s, /R\.CD_PERIODO = 'MONTH'/);
-  assert.match(s, /LEFT JOIN IBP\.DASHBOARD DASH/);
+  assert.match(s, /OUTER APPLY \([\s\S]*FROM IBP\.DASHBOARD D[\s\S]*\) DASH/);
   assert.ok(!/ID_DASH\s*=\s*\d/.test(s));
   assert.deepStrictEqual(CONFIG_PADRAO.ebitda, { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [45, 102, 46], sites: [] } });
   assert.deepStrictEqual(CONFIG_PADRAO.ebitdaPonte, { site: 40, tipo: 3, anoInicial: 2025 });
@@ -351,4 +351,19 @@ test('normalizarConfigHob: coo.kpis aceita só as séries conhecidas, inteiro ou
   assert.strictEqual(c.coo.kpis['cu.ebitda'], null);
   assert.strictEqual(c.coo.kpis['xx.yy'], undefined);
   assert.strictEqual(c.coo.kpis['ni.sales'], null); // inválido: mantém o padrão
+});
+
+test('montarEbitda: casas decimais do cadastro por opção do seletor (linha sem cadastro não apaga o anterior)', () => {
+  const { montarEbitda } = require('../hob-api');
+  const linhas = [
+    lin({ ANO: 2026, MES: 1, ID_SITE: 38, NM_SITE: 'Copper', ID_KPI: 73, SERIE: 'B', VL_KPI: 1.25, VL_CASADECIMAL: 0 }),
+    lin({ ANO: 2026, MES: 1, ID_SITE: 40, NM_SITE: 'VBM', ID_KPI: 73, SERIE: 'B', VL_KPI: 2.5, SG_UNID: null, VL_CASADECIMAL: null }),
+    lin({ ANO: 2026, MES: 2, ID_SITE: 40, NM_SITE: 'VBM', ID_KPI: 73, SERIE: 'B', VL_KPI: 2.5, SG_UNID: 'US$ bn', VL_CASADECIMAL: 1 })
+  ];
+  const outros = [lin({ ANO: 2026, MES: 1, ID_SITE: 40, ID_KPI: 45, NM_KPI: 'Outro', SERIE: 'B', VL_KPI: 0.1, SG_UNID: 'US$ bn', VL_CASADECIMAL: 2 })];
+  const e = montarEbitda(linhas, outros, CONFIG_PADRAO, '2026-10');
+  assert.deepStrictEqual(e.metas.vbm, { nome: 'EBITDA', unid: 'US$ bn', casas: 1 });
+  assert.strictEqual(e.metas.cu.casas, 0);
+  assert.strictEqual(e.metas.out.casas, 2);
+  assert.strictEqual(e.meta.casas, 1); // compatibilidade: meta = VBM
 });
