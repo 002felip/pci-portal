@@ -14,12 +14,13 @@
  * do Portal (AZURE_SQL_USER / AZURE_SQL_PASSWORD, por valueFrom no app.yaml).
  * Dados: as cargas do dashboard em IBP.PHUB_PERFORMANCESTUDIO, lidas por hob-api.js
  * (SQL em database/), como no COO.
- * HOB_ID_DASH: IBP.DASHBOARD.ID_DASH do Health of the Business. Sem ele, as rotas de
+ * HOB_ID_DASH (opcional): IBP.DASHBOARD.ID_DASH do Health of the Business (padrão 16, o da
+ * carga database/003_carga_mensal_hob.sql). Sem carga gravada, as rotas de
  * dados respondem 503 (ID_DASH_PENDENTE) e a página usa os dados de demonstração.
  */
 const path = require('path');
 const sql = require('mssql');
-const { criarHobRouter } = require('./hob-api');
+const { criarHobRouter, ID_DASH_PADRAO } = require('./hob-api');
 
 const PRD_SERVER = 'rdb-ibp-bmsa-prd.database.windows.net';
 const PRD_DATABASE = 'BDIBPBMSA_PRD';
@@ -93,7 +94,7 @@ module.exports = function montarHealthOfTheBusinessNoPortal(app) {
       res.status(503).json({ status: 'unhealthy' });
     }
   });
-  app.use(BASE + '/api', semCache, criarHobRouter({ runQuery, idDash: env.HOB_ID_DASH }));
+  app.use(BASE + '/api', semCache, criarHobRouter({ runQuery, idDash: env.HOB_ID_DASH || ID_DASH_PADRAO }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
   // server.js, portal.js, hob-api.js, database/, docs/, tests/, package*.json, .env*
@@ -106,7 +107,7 @@ module.exports = function montarHealthOfTheBusinessNoPortal(app) {
   });
 
   console.log(`${TAG} rotas em ${BASE}/api — banco ${DB.server}/${DB.database} — ` +
-    (env.HOB_ID_DASH ? `ID_DASH ${env.HOB_ID_DASH}` : 'HOB_ID_DASH não definido: página com dados de demonstração'));
+    `ID_DASH ${env.HOB_ID_DASH || ID_DASH_PADRAO}`);
   if (!env.PERFORMANCEHUB_SQL_SERVER || !(env.PERFORMANCEHUB_AZURE_SQL_DATABASE || env.PERFORMANCEHUB_SQL_DATABASE)) {
     console.warn(`${TAG} ATENÇÃO: servidor/base não definidos por variável — usando o padrão de PRODUÇÃO (${PRD_SERVER}/${PRD_DATABASE}). Em DEV/HML defina PERFORMANCEHUB_SQL_SERVER e PERFORMANCEHUB_AZURE_SQL_DATABASE.`);
   }

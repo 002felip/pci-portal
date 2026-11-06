@@ -407,7 +407,9 @@ WHERE R.ID_DASH = @idDash
 GROUP BY R.DT_REF
 ORDER BY R.DT_REF DESC`;
 
-// ID_DASH do dashboard em IBP.DASHBOARD (HOB_ID_DASH). Sem ele: null (rotas de dados pendentes)
+// ID_DASH do dashboard em IBP.DASHBOARD: 16 (o da carga 003_carga_mensal_hob.sql), trocável por HOB_ID_DASH.
+// O router aceita sem ID (null: rotas da carga pendentes); portal.js e server.js passam o padrão.
+const ID_DASH_PADRAO = 16;
 function lerIdDash(valor) {
   if (valor === undefined || valor === null || valor === '') return null;
   const n = Number(valor);
@@ -642,4 +644,4 @@ function criarHobRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { ID_DASH_PADRAO, criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };

@@ -54,11 +54,22 @@ test('005_config_hob.sql grava o mesmo JSON do padrão do código, no registro d
   assert.deepStrictEqual(normalizarConfigHob(json), normalizarConfigHob(CONFIG_PADRAO)); // mesma configuração efetiva
 });
 
-test('003_carga_mensal_hob.sql: mesmo DELETE/INSERT da carga do COO e trava sem @ID_DASH', () => {
+test('003_carga_mensal_hob.sql: query do Health of the Business (ID_DASH 16) no envoltório da carga do COO', () => {
   const s = fs.readFileSync(path.join(__dirname, '..', 'database', '003_carga_mensal_hob.sql'), 'utf8');
+  assert.match(s, /DECLARE @ID_DASH\s+INT\s+=\s+16;/);
   assert.match(s, /DELETE FROM IBP\.PHUB_PERFORMANCESTUDIO\s+WHERE DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH/);
   assert.match(s, /INSERT INTO IBP\.PHUB_PERFORMANCESTUDIO/);
-  assert.match(s, /IF @ID_DASH IS NULL THROW/);
+  assert.ok(!/DASH\.ID_DASH\s*=\s*\d/.test(s), 'ID_DASH fixo nos blocos');
+  assert.strictEqual((s.match(/DASH\.ID_DASH = @ID_DASH/g) || []).length, 5);
+  for (const [cd, ordem] of [['MONTH', 1], ['QUARTER', 2], ['YTD', 3], ['YTG', 4], ['YEAR', 5]]) {
+    assert.ok(s.includes(`'${cd}' AS 'CD_PERIODO'`), cd);
+    assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), `${cd} ORDEM_VISAO ${ordem}`);
+  }
+  // fontes da query original
+  for (const t of ['PEDRAVISAOCONSOLIDADA', 'PEDRAVISAOTRIMESTRE', 'PEDRAVISAOYEARTODATE', 'PEDRAVISAOYEARTOGO', 'PEDRAVISAOANO']) assert.ok(s.includes('IBP.' + t), t);
+  // junções com separador (sem colisão de CONCAT), como no COO
+  const ativas = s.split('\n').filter((l) => !l.trim().startsWith('--'));
+  for (const l of ativas) if (/CONCAT\([^)]*\.ID_SITE/.test(l)) assert.match(l, /'\|'/, l.trim());
 });
 
 test('montarDados: séries mensais por BU (sites da configuração), último mês real e cadastro do KPI', () => {
