@@ -181,11 +181,11 @@ body {
 }
 
 /* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
-.dash-titulo { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; min-height: 52px; padding: 14px 188px 4px; } /* espaço dos 4 ícones à direita */
+.dash-titulo { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; min-height: 96px; padding: 14px 188px 46px; } /* espaço dos 4 ícones à direita e, embaixo, da linha de pendências */
 /* Situação de atualização dos dados: mesma regra e mesmo visual do COO Business Units Dashboard
    (resumo com uma marca por gráfico e selo "Atualizações finais pendentes" no card) */
 :root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --cyc-ok: #1B7F7B; }
-.dash-situacao { position: absolute; right: 16px; top: 52px; display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px; border: 0; border-radius: 6px;
+.dash-situacao { position: absolute; right: 16px; bottom: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px; border: 0; border-radius: 6px;
   background: transparent; color: #6B7280; font: italic 400 .7rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; }
 html[data-bg="dark"] .dash-situacao { color: rgba(255,255,255,.72); }
 .dash-situacao b { font-weight: 500; color: var(--wait); }
@@ -228,7 +228,7 @@ html:-webkit-full-screen .topnav { display: none; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-acao:disabled { opacity: .45; cursor: not-allowed; }
 .dash-acao.is-pendente { background: #0B6E99; color: #fff; border-color: #0B6E99; }
-@media (max-width: 760px) { .dash-titulo { padding: 12px 178px 4px 16px; } .dash-titulo-nome { font-size: .92rem; } }
+@media (max-width: 760px) { .dash-titulo { padding: 12px 178px 46px 16px; min-height: 112px; } .dash-titulo-nome { font-size: .92rem; } }
 .settings-btn {
   display: flex;
   align-items: center;
