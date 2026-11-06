@@ -696,7 +696,9 @@ window.HOB_CARREGAR(function (aviso) {
   if (E && E.ok) {
     Object.keys(E.anos).forEach(function (ano) { if (D.bu.vbm[ano]) ['ebitdaVbm', 'ebitdaCu', 'ebitdaNi', 'ebitdaOut'].forEach(function (k) { if (E.anos[ano][k]) D.bu.vbm[ano][k] = E.anos[ano][k]; }); });
     D.meta = D.meta || {}; D.meta.vbm = D.meta.vbm || {};
-    if (E.meta) D.meta.vbm.ebitdaCu = E.meta;
+    // unidade e casas decimais de IBP.DASHBOARD, uma por opção do seletor (VBM, Copper, Nickel, Others)
+    var EM = E.metas || (E.meta ? { vbm: E.meta } : {});
+    Object.keys(EM).forEach(function (k) { if (EM[k]) D.meta.vbm['ebitda.' + k] = EM[k]; });
     if (D.fonte === 'demo' && E.ultimoReal) D.ultimoReal = E.ultimoReal;
   }
   // Séries da carga do COO configuradas (coo.kpis): substituem a demonstração no gráfico da página
@@ -1048,11 +1050,11 @@ window.HOB_CARREGAR(function (aviso) {
   }
   // Unidade e casas decimais do KPI: as de IBP.DASHBOARD (D.meta, dados do banco); sem elas, as do código
   function doCadastro(cfg) {
-    var m = D.meta && D.meta[state.bu] && D.meta[state.bu][cfg.ind || (cfg.tipo === 'ebitdaVbm' ? 'ebitdaCu' : '')];
+    var m = D.meta && D.meta[state.bu] && D.meta[state.bu][cfg.ind || (cfg.tipo === 'ebitdaVbm' ? 'ebitda.' + state.sel.ebitda : '')];
     if (!m) return cfg;
     var c = Object.assign({}, cfg);
     if (m.unid) c.unid = m.unid;
-    if (m.casas != null) c.casas = m.casas;
+    if (m.casas != null) { c.casas = m.casas; c.doBanco = true; }
     return c;
   }
   function cardHtml(cfg, i) {
@@ -1099,7 +1101,7 @@ window.HOB_CARREGAR(function (aviso) {
       if (ebitdaErro()) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ebitdaErro() }));
       // um negócio por vez (seletor): VBM = site 40 do banco (sem ele, na demonstração, a soma dos segmentos)
       var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut, vbm: d.ebitdaVbm || somaSerie([d.ebitdaCu, d.ebitdaNi, d.ebitdaOut]) }[state.sel.ebitda];
-      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', casas: state.sel.ebitda === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // Others pequeno: 2 casas só em US$ bn
+      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', casas: cfg.doBanco ? cfg.casas : state.sel.ebitda === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // casas do cadastro; sem ele, Others pequeno: 2 casas em US$ bn
     }
     if (cfg.tipo === 'allin') {
       var c = allinComp(), k = state.sel.allin;
