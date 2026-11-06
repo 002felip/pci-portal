@@ -181,11 +181,11 @@ body {
 }
 
 /* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
-.dash-titulo { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; min-height: 96px; padding: 14px 188px 46px; } /* espaço dos 4 ícones à direita e, embaixo, da linha de pendências */
+.dash-titulo { position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; min-height: var(--titulo-h, 66px); padding: 24px 188px 0; } /* respiro acima do título (também em tela cheia) e espaço dos 4 ícones à direita */
 /* Situação de atualização dos dados: mesma regra e mesmo visual do COO Business Units Dashboard
    (resumo com uma marca por gráfico e selo "Atualizações finais pendentes" no card) */
 :root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --cyc-ok: #1B7F7B; }
-.dash-situacao { position: absolute; right: 16px; bottom: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px; border: 0; border-radius: 6px;
+.dash-situacao { position: absolute; right: 16px; top: var(--situacao-top, 70px); display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px; border: 0; border-radius: 6px;
   background: transparent; color: #6B7280; font: italic 400 .7rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; }
 html[data-bg="dark"] .dash-situacao { color: rgba(255,255,255,.72); }
 .dash-situacao b { font-weight: 500; color: var(--wait); }
@@ -218,7 +218,11 @@ html[data-bg="dark"] .dash-situacao b { color: #F5B94A; }
 }
 html[data-bg="light"] .dash-titulo-nome { color: #0B3A50; }
 /* Salvar no banco / desfazer alterações não salvas (mesmo visual do botão de exportar) */
-.dash-acoes { position: absolute; right: 16px; top: 12px; display: flex; gap: 8px; }
+.dash-acoes { position: absolute; right: 16px; top: 20px; display: flex; gap: 8px; }
+/* Linha de pendências com o mesmo espaço (16px) até os ícones e até os gráficos:
+   ícones terminam em 54px; texto de 70px a 86px; gráficos começam 16px abaixo (altura da faixa = --titulo-h) */
+:root { --titulo-h: 97px; --situacao-top: 70px; }
+@media (max-width: 768px) { :root { --titulo-h: 106px; } }
 .dash-acoes[hidden], .dash-acao[hidden] { display: none; }
 /* Tela cheia: sem o topo (logo, nome do app e usuário) */
 html:fullscreen .topnav { display: none; }
@@ -228,7 +232,7 @@ html:-webkit-full-screen .topnav { display: none; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-acao:disabled { opacity: .45; cursor: not-allowed; }
 .dash-acao.is-pendente { background: #0B6E99; color: #fff; border-color: #0B6E99; }
-@media (max-width: 760px) { .dash-titulo { padding: 12px 178px 46px 16px; min-height: 112px; } .dash-titulo-nome { font-size: .92rem; } }
+@media (max-width: 760px) { .dash-titulo { padding: 24px 178px 0 16px; } .dash-titulo-nome { font-size: .92rem; } }
 .settings-btn {
   display: flex;
   align-items: center;
@@ -1121,7 +1125,11 @@ body.qe-on .app-main { margin-left: calc(var(--qe-left) + var(--qe-bar-w) + 8px)
   body.qe-on.qe-open .app-main { margin-left: calc(var(--qe-left) + var(--qe-bar-w) + 16px + var(--qe-panel-w)); }
 }
 
+/* Barra lateral só com gráfico selecionado, painel aberto ou sem dashboard aberto (1º acesso);
+   some sem mexer no quadro (os gráficos não se reorganizam) */
+body.qe-barra-oculta .qe-toolbar { opacity: 0; visibility: hidden; transform: translateX(-10px); pointer-events: none; }
 .qe-toolbar {
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
   position: fixed; z-index: 16; left: var(--qe-left); top: var(--qe-top);
   width: var(--qe-bar-w); padding: 6px;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -4247,6 +4255,7 @@ function activateChart(c) {
   refreshFilterBar();
   updateChartActionButtons();
   editorSync();
+  atualizarBarraLateral();
 }
 
 function renderActiveChart() {
@@ -4359,6 +4368,7 @@ function deselectChart() {
   activeChart = null;
   updateChartActionButtons();
   editorSync();
+  atualizarBarraLateral();
 }
 
 // Percorre os cards ativando um a um: o painel de edição fica parado
@@ -6265,6 +6275,7 @@ function setEditorOpen(open) {
   if (!open) closeChartPalette();
   updateEditorTop();
   relayoutBoard();
+  atualizarBarraLateral();
 }
 
 function abrirVisao(view, btn, sec) {
@@ -6571,9 +6582,15 @@ function lembrarDashNaUrl(d) {
     if (url.href !== location.href) history.replaceState(history.state, '', url);
   } catch (e) { /* sem History API: só não lembra */ }
 }
+// Barra lateral visível: sem dashboard aberto, com gráfico selecionado ou com painel aberto
+function atualizarBarraLateral() {
+  const aberto = typeof editor !== 'undefined' && editor.open;
+  document.body.classList.toggle('qe-barra-oculta', !!dash.atual && !activeChart && !aberto);
+}
 function definirDashAtual(d) {
   dash.atual = d || null;
   lembrarDashNaUrl(dash.atual);
+  atualizarBarraLateral();
   updateChartActionButtons(); // texto do quadro vazio depende de haver dashboard
   // Leitor: só Dashboards e Filtros; o que mudar no quadro não é gravado
   document.body.classList.toggle('is-somente-leitura', !!d && !podeAlterar(d));
