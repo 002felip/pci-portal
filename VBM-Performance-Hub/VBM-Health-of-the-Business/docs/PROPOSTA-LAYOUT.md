@@ -84,11 +84,11 @@ Variáveis (no `app.yaml` do Portal):
 
 | Gráfico | Fonte |
 |---|---|
-| EBITDA (US$, seletor VBM, Copper, Nickel, Others) | `IBP.PHUB_PERFORMANCESTUDIO`, carga do COO (`ID_DASH` 15), `ID_KPI` 73, mês a mês; sites VBM 40 (total), Copper 38, Nickel 39, Others 45 + 102 + 46 (`database/004_hob_ebitda.sql`) |
+| EBITDA (US$, seletor VBM, Copper, Nickel, Others) | `IBP.PHUB_PERFORMANCESTUDIO`, carga do Health of the Business (`ID_DASH` 16), mês a mês: `ID_KPI` 73 nos sites Copper 38 e Nickel 39 (barras; na opção VBM, empilhadas) e VBM 40 (o total, escrito por fora da coluna); Others = soma dos `ID_KPI` 45 + 102 + 46 da operação 11 (`database/004_hob_ebitda.sql`) |
 | 2026 EBITDA YEAR | `IBP.WATERFALL`, `ID_SITE` 40, `ID_TIPO` 3, desde 2025 (`database/002_hob_waterfall.sql`) |
 | FCF YEAR | `IBP.WATERFALL`, `ID_SITE` 40, `ID_TIPO` 2, desde 2025 |
-| Copper e Nickel: EBITDA | Mesma carga do COO, `ID_KPI` 73, site 38 (Copper) e 39 (Nickel) |
-| Demais gráficos (Capex do consolidado; Production, Sales, All-In, Capex e FCF de Copper e Nickel) | Mesma carga do COO, assim que o `ID_KPI` de cada um for definido em `coo.kpis` (`005_config_hob.sql`); até lá, demonstração |
+| Copper e Nickel: EBITDA | Mesma carga (`ID_DASH` 16), `ID_KPI` 73, site 38 (Copper) e 39 (Nickel) |
+| Demais gráficos (Capex do consolidado; Production, Sales, All-In, Capex e FCF de Copper e Nickel) | Mesma carga (`ID_DASH` 16), assim que o `ID_KPI` de cada um for definido em `coo.kpis` (`005_config_hob.sql`); até lá, demonstração |
 
 Nas pontes, a tela mostra a referência (`DT_REF`) mais recente do Ano escolhido até o Mês escolhido, e o título indica qual (ex.: "ref. Sep/2026"). No EBITDA, o ciclo é o mais recente da carga do COO (ou o da tela, quando existe nos dois). No Portal esses gráficos nunca usam a demonstração: sem dado, o card mostra o motivo (coluna inexistente, tabela não encontrada, sem permissão, sem referência até o mês, sem carga do COO, API não publicada…). Rótulo, valor e ordem das pontes saem das colunas de `IBP.WATERFALL` (padrão de nomes do IBP: `DS_`/`NM_`, `VL_`, `ORDEM`); tipo e cinza de cada degrau, da configuração; subtotais calculados pela tela.
 

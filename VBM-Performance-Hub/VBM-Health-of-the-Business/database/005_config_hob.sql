@@ -11,9 +11,9 @@
    Conteúdo (o mesmo de CONFIG_PADRAO em hob-api.js; sem registro, a tela usa o código):
      fcf          FCF YEAR: site, tipo (ID_TIPO 2) e ano inicial da consulta em IBP.WATERFALL (database/002_hob_waterfall.sql)
      ebitdaPonte  2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO 3
-     ebitda       EBITDA por período: ID_DASH (15) e ID_KPI (73) da carga do COO em IBP.PHUB_PERFORMANCESTUDIO e
-                  ID_SITE de cada opção: vbm 40 (total), cu 38, ni 39, out 45 + 102 + 46
-     coo          demais gráficos mês a mês: ID_KPI da carga do COO (ID_DASH 15) por série, no site da página
+     ebitda       EBITDA por período: ID_DASH 16 (carga do Health of the Business), ID_KPI 73 nos sites
+                  cu 38 e ni 39 (barras) e vbm 40 (total, por fora); outros = KPIs 45 + 102 + 46 da operação 11
+     coo          demais gráficos mês a mês: ID_KPI da carga do dashboard (ID_DASH 16) por série, no site da página
                   (vbm 40, cu 38, ni 39). Ex.: "cu.prod": <ID_KPI de Production>. null = segue na demonstração.
                   Séries: vbm.capex; cu/ni: prod, sales, ebitda (73), capex, fcf e o All-in: sus, cost, byp
      bus          sites (IBP.DASHBOARD.ID_SITE) de cada Business Unit: vbm, cu (Copper), ni (Nickel).
@@ -46,7 +46,7 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
     "anoInicial": 2025
   },
   "ebitda": {
-    "idDash": 15,
+    "idDash": 16,
     "idKpi": 73,
     "sites": {
       "vbm": [
@@ -57,16 +57,20 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
       ],
       "ni": [
         39
-      ],
-      "out": [
+      ]
+    },
+    "outros": {
+      "idOperacao": 11,
+      "kpis": [
         45,
         102,
         46
-      ]
+      ],
+      "sites": []
     }
   },
   "coo": {
-    "idDash": 15,
+    "idDash": 16,
     "sites": {
       "vbm": 40,
       "cu": 38,
