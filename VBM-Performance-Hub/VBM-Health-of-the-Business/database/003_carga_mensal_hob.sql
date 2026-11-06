@@ -26,12 +26,14 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 --   Chave da tabela: DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, CD_PERIODO,
 --   ID_TIPO_VISAO. Trimestre e ano só do mesmo ano do mês da linha (ORDEM_ANO = YEAR(DT_IND)), como
 --   o COO faz com YEAR(...) = YEAR(...): com @DT_FIM no ano seguinte, a mesma chave apareceria duas vezes
---   Sem NM_USUARIO: a coluna não existe na tabela (SG_STATUS e DT_ATUALIZACAO ficam para o status)
+--   Sem NM_USUARIO: a coluna não existe na tabela. DT_ATUALIZACAO = data e hora da gravação (para conferir)
 --   Rodar de novo no mesmo mês apaga e regrava só DT_REF + ID_DASH 16.
 -- ════════════════════════════════════════════════════════════════════
 SET XACT_ABORT ON;
 
--- CD_PERIODO aceita YTG (uma vez só): troca a regra de CD_PERIODO que ainda não tem YTG pela mesma lista + YTG
+-- CD_PERIODO aceita YTG (uma vez só): troca a regra de CD_PERIODO que ainda não tem YTG pela mesma lista + YTG.
+-- Sem permissão de ALTER, a carga para aqui com a mensagem abaixo (e a tabela fica como estava): rode uma vez
+-- 006_cd_periodo_ytg.sql com um usuário que tenha a permissão e depois rode esta carga de novo.
 DECLARE @CK SYSNAME = (
   SELECT TOP 1 CC.name
   FROM sys.check_constraints CC
@@ -39,10 +41,17 @@ DECLARE @CK SYSNAME = (
     AND CC.definition LIKE '%CD_PERIODO%' AND CC.definition NOT LIKE '%YTG%');
 IF @CK IS NOT NULL
 BEGIN
+BEGIN TRY
   DECLARE @DROP NVARCHAR(400) = N'ALTER TABLE IBP.PHUB_PERFORMANCESTUDIO DROP CONSTRAINT ' + QUOTENAME(@CK);
   EXEC sp_executesql @DROP;
   ALTER TABLE IBP.PHUB_PERFORMANCESTUDIO ADD CONSTRAINT CK_PHUB_PERFORMANCESTUDIO_PERIODO
     CHECK (CD_PERIODO IN ('MONTH', 'QUARTER', 'SEMESTER', 'YTD', 'YEAR', 'YTG'));
+  PRINT 'Regra de CD_PERIODO ajustada: YTG aceito.';
+END TRY
+BEGIN CATCH
+  DECLARE @ERRO NVARCHAR(2048) = N'Carga NÃO executada: a regra ' + @CK + N' de IBP.PHUB_PERFORMANCESTUDIO não aceita YTG e não foi possível alterá-la (' + ERROR_MESSAGE() + N'). Rode 006_cd_periodo_ytg.sql com um usuário com permissão de ALTER e rode a carga de novo.';
+  THROW 50001, @ERRO, 1;
+END CATCH;
 END;
 
 DECLARE @ID_DASH  INT  = 16;
@@ -56,11 +65,11 @@ WHERE DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH;
 INSERT INTO IBP.PHUB_PERFORMANCESTUDIO
   (DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI,
    ID_TIPO_VISAO, NM_TIPO_VISAO, NM_VISAO, VL_KPI,
-   CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO)
+   CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO, DT_ATUALIZACAO)
 SELECT
   @DT_CARGA, HOB.DT_IND, @ID_DASH, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
   HOB.ID_TIPO_VISAO_VBM, MAX(HOB.NM_TYPE), MAX(HOB.[Type]), SUM(ISNULL(HOB.[Value], 0)),
-  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
+  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO, GETDATE()
 FROM (
 
 ----------------------------------------------------------------------------------------------------------------------------------
