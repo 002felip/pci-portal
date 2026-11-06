@@ -8,14 +8,30 @@ SET @DT_INI = '2026-01-01'
 SET @DT_FIM =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
 SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
 
+
 -- ════════════════════════════════════════════════════════════════════
 -- VBM Health of the Business — CONFERÊNCIA da carga (só leitura, não grava nada)
--- A mesma consulta de 003_carga_mensal_hob.sql, sem a parte de gravação: mostra as linhas, com os
--- campos de IBP.PHUB_PERFORMANCESTUDIO (DT_IND, ID_TIPO_VISAO_VBM, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO,
--- ORDEM_PERIODO) para o ID_DASH 16. A carga grava CD_PERIODO MONTH, QUARTER, YTD, YEAR e YTG
--- (ORDEM_VISAO 6) e, em QUARTER e YEAR, só ORDEM_ANO = ano de DT_IND.
+-- A mesma consulta de 003_carga_mensal_hob.sql, sem DELETE, INSERT e sem o ajuste da regra de CD_PERIODO:
+-- mostra exatamente as linhas que a carga gravaria em IBP.PHUB_PERFORMANCESTUDIO para o ID_DASH 16,
+-- com as colunas da tabela, na mesma ordem do INSERT:
+--   DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, ID_TIPO_VISAO, NM_TIPO_VISAO,
+--   NM_VISAO, VL_KPI, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO
+-- CD_PERIODO: MONTH 1 · QUARTER 2 · YTD 4 · YEAR 5 · YTG 6 (QUARTER e YEAR só do ano de DT_IND).
+-- Resumo por CD_PERIODO no fim.
 -- ════════════════════════════════════════════════════════════════════
-DECLARE @ID_DASH INT = 16;
+DECLARE @ID_DASH  INT  = 16;
+DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);  -- ex.: 28/10/2026 → 2026-10-01
+
+IF OBJECT_ID('tempdb..#CONFERENCIA_HOB') IS NOT NULL DROP TABLE #CONFERENCIA_HOB;
+
+SELECT CONF.*
+INTO #CONFERENCIA_HOB
+FROM (
+SELECT
+  @DT_CARGA AS DT_REF, HOB.DT_IND, @ID_DASH AS ID_DASH, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
+  HOB.ID_TIPO_VISAO_VBM AS ID_TIPO_VISAO, MAX(HOB.NM_TYPE) AS NM_TIPO_VISAO, MAX(HOB.[Type]) AS NM_VISAO, SUM(ISNULL(HOB.[Value], 0)) AS VL_KPI,
+  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
+FROM (
 
 ----------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------
@@ -474,3 +490,27 @@ WHERE
     1 = 1
 	AND PVA.ANO BETWEEN YEAR(@DT_INI)  AND YEAR(@DT_FIM)
 	AND DASH.ID_DASH = @ID_DASH
+
+) AS HOB
+WHERE HOB.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YEAR', 'YTG')
+  AND (HOB.CD_PERIODO NOT IN ('QUARTER', 'YEAR') OR HOB.ORDEM_ANO = YEAR(HOB.DT_IND))   -- trimestre/ano do mesmo ano do mês
+GROUP BY
+  HOB.DT_IND, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
+  HOB.ID_TIPO_VISAO_VBM, HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
+) AS CONF;
+
+-- linhas que a carga gravaria
+SELECT * FROM #CONFERENCIA_HOB
+ORDER BY ORDEM_VISAO, ID_SITE, ID_OPERACAO, ID_KPI, DT_IND, ORDEM_PERIODO, ID_TIPO_VISAO;
+
+-- resumo por período (o YTG deve aparecer com ORDEM_VISAO 6)
+SELECT CD_PERIODO, ORDEM_VISAO, ID_TIPO_VISAO, NM_TIPO_VISAO, COUNT(*) AS LINHAS
+FROM #CONFERENCIA_HOB
+GROUP BY CD_PERIODO, ORDEM_VISAO, ID_TIPO_VISAO, NM_TIPO_VISAO
+ORDER BY ORDEM_VISAO, ID_TIPO_VISAO;
+
+-- chave duplicada (deve vir vazio: a carga falharia na chave primária)
+SELECT DT_IND, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, ID_TIPO_VISAO, CD_PERIODO, COUNT(*) AS VEZES
+FROM #CONFERENCIA_HOB
+GROUP BY DT_IND, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, ID_TIPO_VISAO, CD_PERIODO
+HAVING COUNT(*) > 1;
