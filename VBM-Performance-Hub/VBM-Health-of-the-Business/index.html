@@ -714,10 +714,15 @@ window.HOB_CARREGAR(function (aviso) {
     var s = C.series[chave];
     return s && !s.anos[state.ano] ? S.t('g.semDados') : null;
   }
+  // Carga do Health of the Business (ID_DASH 16) lida, mas a série não achou o KPI no cadastro: o motivo, não zeros
+  function kpiAusente(bu, ind) {
+    if (D.fonte !== 'db' || doBancoCoo(bu, ind)) return null;
+    return D.meta && D.meta[bu] && !D.meta[bu][ind] ? S.t('db.semKpi', { ind: ind }) : null;
+  }
   function doBancoCoo(bu, ind) { var C = window.HOB_COO; return !!(C && C.ok && C.series[bu + '.' + ind] && C.series[bu + '.' + ind].anos[state.ano]); }
 
   S.registrar({
-    'pt-BR': { 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do COO (ID_DASH 15) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do COO', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+    'pt-BR': { 'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do COO (ID_DASH 15) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do COO', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período',
       'fcf.ref': 'ref. {ref}', 'fcf.semRef': 'IBP.WATERFALL sem referência até {mes}/{ano}',
@@ -725,7 +730,7 @@ window.HOB_CARREGAR(function (aviso) {
       'fcf.COLUNA': 'Coluna inexistente em IBP.WATERFALL: {detalhe}', 'fcf.TABELA': 'Tabela IBP.WATERFALL não encontrada',
       'fcf.PERMISSAO': 'Sem permissão de leitura em IBP.WATERFALL', 'fcf.LOGIN': 'Falha de login no banco', 'fcf.TEMPO': 'Banco não respondeu a tempo',
       'fcf.ERRO_BANCO': 'Erro ao ler IBP.WATERFALL', 'fcf.SEM_API': 'API do dashboard indisponível (publique a pasta e reinicie o app)', 'fcf.LIMITE': 'Muitos pedidos; tente em 1 minuto' },
-    en: { 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No COO load (ID_DASH 15) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the COO load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+    en: { 'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No COO load (ID_DASH 15) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the COO load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period',
       'fcf.ref': 'ref. {ref}', 'fcf.semRef': 'IBP.WATERFALL has no reference up to {mes}/{ano}',
@@ -1100,10 +1105,10 @@ window.HOB_CARREGAR(function (aviso) {
       var gs = k === 'allin' ? c.sus.map(function (g, i) { return { lb: g.lb, la: g.la, b: g.b + c.cost[i].b + c.byp[i].b, a: g.a + c.cost[i].a + c.byp[i].a }; }) : c[k];
       return paresSvg(gs, W, H, cfg);
     }
-    var ae = (cfg.tipo === 'allin' || cfg.tipo === 'allinStack') && ['sus', 'cost', 'byp'].map(function (k) { return cooErro(state.bu, k); }).filter(Boolean)[0];
+    var ae = (cfg.tipo === 'allin' || cfg.tipo === 'allinStack') && ['sus', 'cost', 'byp'].map(function (k) { return cooErro(state.bu, k) || kpiAusente(state.bu, k); }).filter(Boolean)[0];
     if (ae) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ae }));
     if (cfg.tipo === 'allinStack') return empilhadoSvg(allinComp(), W, H, cfg);
-    var ce = cfg.ind && cooErro(state.bu, cfg.ind);
+    var ce = cfg.ind && (cooErro(state.bu, cfg.ind) || kpiAusente(state.bu, cfg.ind));
     if (ce && /^(pares|scurve|acum)$/.test(cfg.tipo)) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ce }));
     if (cfg.tipo === 'pares') return paresSvg(recortes(d[cfg.ind]), W, H, cfg);
     if (cfg.tipo === 'scurve') return scurveSvg(d[cfg.ind], W, H, cfg, false);

@@ -12,15 +12,14 @@
  *   AZURE_SQL_USER, AZURE_SQL_PASSWORD   ← secrets (valueFrom), nunca em texto puro
  *   HOB_ACESSO_LOCAL_EMAIL               ← só com NODE_ENV=development e fora do
  *                                          Databricks: simula o X-Forwarded-Email
- *   HOB_ID_DASH                          ← IBP.DASHBOARD.ID_DASH do Health of the Business
- *                                          (sem ele: dados de demonstração)
+ *   HOB_ID_DASH                          ← opcional: IBP.DASHBOARD.ID_DASH do Health of the Business (padrão 16)
  *   HOB_CACHE_TTL_S / HOB_FRESCO_S / HOB_DESATUALIZADO_MAX_S ← ver hob-api.js
  */
 const path = require('path');
 const express = require('express');
 const compression = require('compression');
 const sql = require('mssql');
-const { criarHobRouter } = require('./hob-api');
+const { criarHobRouter, ID_DASH_PADRAO } = require('./hob-api');
 const criarControleDeAcesso = require(path.join(__dirname, '..', '..', 'portal-acesso'));
 
 const PASTA = path.basename(__dirname);
@@ -97,7 +96,7 @@ const assets = express.static(path.join(__dirname, 'assets'), { index: false, ma
 app.use('/assets', assets);
 app.use(`/${PASTA}/assets`, assets);
 
-const router = criarHobRouter({ runQuery, idDash: process.env.HOB_ID_DASH });
+const router = criarHobRouter({ runQuery, idDash: process.env.HOB_ID_DASH || ID_DASH_PADRAO });
 for (const base of BASES_API) app.use(base, (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, router);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
