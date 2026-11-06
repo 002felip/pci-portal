@@ -61,10 +61,14 @@ test('003_carga_mensal_hob.sql: query do Health of the Business (ID_DASH 16) no 
   assert.match(s, /INSERT INTO IBP\.PHUB_PERFORMANCESTUDIO/);
   assert.ok(!/DASH\.ID_DASH\s*=\s*\d/.test(s), 'ID_DASH fixo nos blocos');
   assert.strictEqual((s.match(/DASH\.ID_DASH = @ID_DASH/g) || []).length, 5);
-  for (const [cd, ordem] of [['MONTH', 1], ['QUARTER', 2], ['YTD', 3], ['YTG', 4], ['YEAR', 5]]) {
+  for (const [cd, ordem] of [['MONTH', 1], ['QUARTER', 2], ['YTD', 4], ['YEAR', 5], ['YTG', 6]]) {
     assert.ok(s.includes(`'${cd}' AS 'CD_PERIODO'`), cd);
     assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), `${cd} ORDEM_VISAO ${ordem}`);
   }
+  // colunas da tabela (sem NM_USUARIO), CD_PERIODO aceito (YTG fora) e chave única entre anos
+  assert.ok(!/NM_USUARIO/.test(s.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n')), 'NM_USUARIO não existe na tabela');
+  assert.match(s, /WHERE HOB\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YEAR'\)/);
+  assert.match(s, /HOB\.ORDEM_ANO = YEAR\(HOB\.DT_REF\)/);
   // fontes da query original
   for (const t of ['PEDRAVISAOCONSOLIDADA', 'PEDRAVISAOTRIMESTRE', 'PEDRAVISAOYEARTODATE', 'PEDRAVISAOYEARTOGO', 'PEDRAVISAOANO']) assert.ok(s.includes('IBP.' + t), t);
   // junções com separador (sem colisão de CONCAT), como no COO
