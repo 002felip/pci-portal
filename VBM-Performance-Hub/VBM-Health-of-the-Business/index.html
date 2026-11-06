@@ -868,13 +868,16 @@ window.HOB_CARREGAR(function (aviso) {
       return media ? v / (ate - de) : v;
     }
     function af(de, ate) { for (var i = de + 1; i <= ate; i++) if (!ehReal(i)) return 'F'; return 'A'; }
+    // Trimestre, YTD, YTG e ano: os gravados pela carga para o mês escolhido (s.per, do banco); sem eles, a soma dos meses
+    var P = !media && s.per && s.per[m] || {};
+    function de(cd, serie, calc) { var v = P[cd] && P[cd][serie]; return v == null ? calc : v; }
     var g = [
       { lb: l[m - 1] + ' B', la: l[m - 1] + ' ' + af(m - 1, m), b: s.b[m - 1], a: s.a[m - 1] },
-      { lb: 'Q' + t + 'B', la: 'Q' + t + af(t * 3 - 3, t * 3), b: ag(s.b, t * 3 - 3, t * 3), a: ag(s.a, t * 3 - 3, t * 3) },
-      { lb: 'YTD B', la: 'YTD ' + af(0, m), b: ag(s.b, 0, m), a: ag(s.a, 0, m) }
+      { lb: 'Q' + t + 'B', la: 'Q' + t + af(t * 3 - 3, t * 3), b: de('QUARTER', 'b', ag(s.b, t * 3 - 3, t * 3)), a: de('QUARTER', 'a', ag(s.a, t * 3 - 3, t * 3)) },
+      { lb: 'YTD B', la: 'YTD ' + af(0, m), b: de('YTD', 'b', ag(s.b, 0, m)), a: de('YTD', 'a', ag(s.a, 0, m)) }
     ];
-    if (m < 12) g.push({ lb: 'YTG B', la: 'YTG ' + af(m, 12), b: ag(s.b, m, 12), a: ag(s.a, m, 12) });
-    g.push({ lb: aa() + 'B', la: aa() + af(0, 12), b: ag(s.b, 0, 12), a: ag(s.a, 0, 12) });
+    if (m < 12) g.push({ lb: 'YTG B', la: 'YTG ' + af(m, 12), b: de('YTG', 'b', ag(s.b, m, 12)), a: de('YTG', 'a', ag(s.a, m, 12)) });
+    g.push({ lb: aa() + 'B', la: aa() + af(0, 12), b: de('YEAR', 'b', ag(s.b, 0, 12)), a: de('YEAR', 'a', ag(s.a, 0, 12)) });
     return g;
   }
 

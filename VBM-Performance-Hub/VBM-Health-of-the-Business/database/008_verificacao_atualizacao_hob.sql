@@ -4,7 +4,8 @@
 
    Uma linha por indicador do dashboard (IBP.DASHBOARD, ID_DASH 16), com:
      DT_ULTIMO_LOG / SG_STATUS  última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA e a situação na
-                                mesma regra do 007 (e do COO): 'S' se >= referência, senão 'N'
+                                mesma regra do 007: 'S' se o log é do mês seguinte à referência em diante
+                                (DT_LIMITE; o dado de outubro chega em novembro), senão 'N'
      ULT_MES ... ULT_ANO        último período que cada tabela de origem tem para o indicador
                                 (CONSOLIDADA = mês, TRIMESTRE, YEARTODATE = YTD, YEARTOGO = YTG, ANO)
      TEM_MES / TEM_YTD / TEM_YTG  'S' se a origem já tem o mês de referência
@@ -21,6 +22,7 @@ DECLARE @ID_DASH INT  = 16;
 DECLARE @DT_REF  DATE = DATEADD(MONTH, -1, GETDATE() - 2);
 SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
 DECLARE @DT_ANT  DATE = DATEADD(MONTH, -1, @DT_REF);
+DECLARE @DT_LIMITE DATE = DATEADD(MONTH, 1, @DT_REF);
 DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);
 
 IF OBJECT_ID('tempdb..#V') IS NOT NULL DROP TABLE #V;
@@ -35,7 +37,7 @@ WITH K AS (
 SELECT
   K.ID_ORDEM, K.ID_SISTEMA, K.ID_SITE, LTRIM(RTRIM(S.NM_SITE)) AS NM_SITE, K.ID_OPERACAO, K.ID_KPI, K.NM_KPI,
   LG.DT_ULTIMO_LOG,
-  CASE WHEN LG.DT_ULTIMO_LOG >= @DT_REF THEN 'S' ELSE 'N' END AS SG_STATUS,
+  CASE WHEN LG.DT_ULTIMO_LOG >= @DT_LIMITE THEN 'S' ELSE 'N' END AS SG_STATUS,
   MES.ULT_MES, TRI.ULT_TRIMESTRE, YTD.ULT_YTD, YTG.ULT_YTG, ANO.ULT_ANO,
   CASE WHEN MES.ULT_MES >= @DT_REF THEN 'S' ELSE 'N' END AS TEM_MES,
   CASE WHEN YTD.ULT_YTD >= @DT_REF THEN 'S' ELSE 'N' END AS TEM_YTD,
@@ -62,10 +64,10 @@ OUTER APPLY (SELECT SUM(P.VL_ORC) AS ORC, SUM(P.VL_REAL) AS REAL FROM IBP.PEDRAV
              WHERE P.ID_SISTEMA = K.ID_SISTEMA AND P.ID_SITE = K.ID_SITE AND P.ID_OPERACAO = K.ID_OPERACAO AND P.ID_KPI = K.ID_KPI AND P.DT_REF = @DT_ANT) YA;
 
 -- 1) situação por indicador
-SELECT DT_REFERENCIA = @DT_REF, V.*,
+SELECT DT_REFERENCIA = @DT_REF, DT_LIMITE = @DT_LIMITE, V.*,
   DS_SITUACAO = CASE WHEN V.SG_STATUS = 'S' AND V.TEM_MES = 'S' AND V.TEM_YTD = 'S' AND V.TEM_YTG = 'S' AND V.YTD_REPETIDO = 'N' THEN 'Atualizado'
     ELSE STUFF(
-      CASE WHEN V.SG_STATUS = 'N' THEN ' · ' + CASE WHEN V.DT_ULTIMO_LOG IS NULL THEN 'sem registro no log' ELSE 'log anterior à referência' END ELSE '' END +
+      CASE WHEN V.SG_STATUS = 'N' THEN ' · ' + CASE WHEN V.DT_ULTIMO_LOG IS NULL THEN 'sem registro no log' ELSE 'log anterior a ' + CONVERT(VARCHAR(10), @DT_LIMITE, 120) END ELSE '' END +
       CASE WHEN V.TEM_MES = 'N' THEN ' · sem o mês na CONSOLIDADA' ELSE '' END +
       CASE WHEN V.TEM_YTD = 'N' THEN ' · sem o mês no YTD' ELSE '' END +
       CASE WHEN V.YTD_REPETIDO = 'S' THEN ' · YTD igual ao mês anterior' ELSE '' END +
