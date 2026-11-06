@@ -1733,29 +1733,6 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
     </footer>
   </section>
 
-  <section class="qe-view" id="qeViewAdd" data-view="add" hidden>
-    <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
-      <div class="qe-field">
-        <label class="qe-label" for="qeAddNome" data-i18n="ui.nome_do_grafico_opcional">Nome do gráfico (opcional)</label>
-        <input class="qe-input" id="qeAddNome" type="text" maxlength="100" autocomplete="off">
-      </div>
-      <div class="qe-field">
-        <label class="qe-label" for="qeAddProduto" data-i18n="ui.produto">Produto</label>
-        <select class="qe-select" id="qeAddProduto"></select>
-      </div>
-      <div class="qe-field">
-        <label class="qe-label" for="qeAddSalvo" data-i18n="ui.comecar_de_uma_configuracao_salva_opcional">Começar de uma configuração salva (opcional)</label>
-        <select class="qe-select" id="qeAddSalvo"></select>
-      </div>
-      <p class="qe-hint" data-i18n="ui.o_novo_grafico_usa_os_filtros_padrao_do_da">O novo gráfico usa os filtros padrão do dashboard (o Site acompanha o Produto escolhido) e o tamanho típico dos gráficos do quadro. Depois de criado, ele fica selecionado para configuração.</p>
-    </div></div>
-    <p class="qe-msg" id="qeAddMsg" role="status" aria-live="polite"></p>
-    <footer class="qe-foot">
-      <button type="button" class="qe-btn" id="qeAddCancelar" data-i18n="ui.cancelar">Cancelar</button>
-      <button type="button" class="qe-btn primary" id="qeAddConfirmar" data-i18n="ui.adicionar">Adicionar</button>
-    </footer>
-  </section>
-
   <!-- Filtros do gráfico selecionado (mesmo componente da antiga barra superior) -->
   <section class="qe-view" id="qeViewFiltros" data-view="filtros" hidden>
     <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
@@ -2269,10 +2246,7 @@ const I18N_UI = {
   'ui.o_grafico_sai_do_quadro_uma_configuracao_s': ['O gráfico sai do quadro. Uma configuração salva no banco é mantida e pode ser carregada em outro gráfico.', 'The chart is removed from the board. A configuration saved in the database is kept and can be loaded into another chart.'],
   'ui.cancelar': ['Cancelar', 'Cancel'],
   'ui.excluir': ['Excluir', 'Delete'],
-  'ui.nome_do_grafico_opcional': ['Nome do gráfico (opcional)', 'Chart name (optional)'],
   'ui.produto': ['Produto', 'Product'],
-  'ui.comecar_de_uma_configuracao_salva_opcional': ['Começar de uma configuração salva (opcional)', 'Start from a saved configuration (optional)'],
-  'ui.o_novo_grafico_usa_os_filtros_padrao_do_da': ['O novo gráfico usa os filtros padrão do dashboard (o Site acompanha o Produto escolhido) e o tamanho típico dos gráficos do quadro. Depois de criado, ele fica selecionado para configuração.', 'The new chart uses the dashboard default filters (the Site follows the chosen Product) and the typical size of the charts on the board. Once created, it stays selected for configuration.'],
   'ui.adicionar': ['Adicionar', 'Add'],
   'ui.selecione_um_grafico_para_filtrar': ['Selecione um gráfico para filtrar', 'Select a chart to filter'],
   'ui.filtros_aplicados': ['Filtros aplicados', 'Applied filters'],
@@ -2417,6 +2391,8 @@ const I18N_UI = {
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
+  'ui.grafico_vazio': ['Gráfico em branco: escolha o Produto e os Horizontes em Filtros.', 'Blank chart: choose the Product and Horizons in Filters.'],
+  'ui.grafico_vazio_criado': ['Gráfico adicionado: escolha os filtros para montá-lo.', 'Chart added: choose the filters to build it.'],
   'ui.sit_pendente': ['Atualizações finais pendentes', 'Pending final updates'],
   'ui.sit_ultima': ['Última atualização recebida: {dt}', 'Last update received: {dt}'],
   'ui.sit_nenhuma': ['Nenhuma atualização recebida neste ciclo', 'No update received for this cycle'],
@@ -2921,6 +2897,15 @@ function renderTurnoverChart(sourceRows) {
   if (!chartAreaEl) return; // nenhum gráfico selecionado
   chartAreaEl.closest('.main-wrapper').classList.toggle('qe-static', renderSemAnimacao);
 
+  // Sem horizonte escolhido (gráfico novo ou filtros limpos): gráfico em branco, não "tudo junto"
+  if (!filterState.horizontes.size) {
+    chartAreaEl.classList.remove('is-linhas', 'sem-delta');
+    chartAreaEl.innerHTML = `<p class="chart-empty-state">${escapeHtml(tx('ui.grafico_vazio'))}</p>`;
+    renderChartPager(0, 0, 0, 0);
+    if (activeChart) activeChart.colunas = [];
+    return;
+  }
+
   // Combinação de filtros sem nenhuma linha correspondente — estado vazio,
   // não um gráfico quebrado (pode acontecer com filtros muito restritivos).
   if (!sourceRows.length) {
@@ -3270,7 +3255,7 @@ const FILTER_DEFS = [
   { key: 'sites',      label: 'Site',       icon: 'fa-location-dot',  multiple: true,  allLabel: 'Todos os sites',      searchable: true  },
   { key: 'ano',        label: 'Ano',        icon: 'fa-calendar-days', multiple: true,  allLabel: 'Todos os anos',       searchable: false },
   { key: 'visoes',     label: 'Visão',      icon: 'fa-eye',           multiple: true,  allLabel: 'Todas as visões',     searchable: false },
-  { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Todos os horizontes', searchable: true  }
+  { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Selecione os horizontes', searchable: true  }
 ];
 
 // filterState: Set vazio (multi) ou null (single) == "Todos" (sem restrição)
@@ -4271,7 +4256,7 @@ function renderActiveChart() {
 function marcarSituacaoDoGrafico() {
   const c = activeChart;
   if (!c) return;
-  const linhas = getFilteredRows().filter(r => r.SG_STATUS);
+  const linhas = filterState.horizontes.size ? getFilteredRows().filter(r => r.SG_STATUS) : []; // em branco: sem situação
   const pend = linhas.filter(r => r.SG_STATUS === 'N');
   const datas = pend.map(r => r.DT_ATU_KPI).filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d));
   c.situacao = !linhas.length ? null : pend.length ? { pendente: true, ultima: datas.length ? new Date(Math.max(...datas)) : null } : { pendente: false };
@@ -6281,6 +6266,7 @@ function setEditorOpen(open) {
 function abrirVisao(view, btn, sec) {
   // Dashboard só para leitura: só Dashboards e Filtros
   if (document.body.classList.contains('is-somente-leitura') && !['dash', 'filtros'].includes(view)) { mostrarAviso(tx('ui.dash_somente_leitura')); return; }
+  if (view === 'add') { criarGraficoVazio(); return; } // sem formulário: o gráfico vazio abre em Filtros
   // Clicar de novo na opção ativa recolhe o painel
   if (editor.open && editor.tool === btn) { setEditorOpen(false); btn.focus(); return; }
   if (editor.view !== view) sairDaVisao(editor.view);
@@ -6293,8 +6279,7 @@ function abrirVisao(view, btn, sec) {
   if (view === 'editar') irParaSecao(sec || editor.secao || 'ident');
   else $qe('qeHeading').textContent = PANEL_TITULOS[view];
   renderEditorTarget();
-  if (view === 'add') abrirAdicionar();
-  else if (view === 'filtros') abrirFiltros();
+  if (view === 'filtros') abrirFiltros();
   else if (view === 'bg') abrirFundo();
   else if (view === 'excluir') abrirExcluir();
   else if (view === 'dash') abrirDashView();
@@ -6704,6 +6689,7 @@ function dadosDosGraficosParaExcel() {
     ordem.forEach(c => {
       activateChart(c);
       const cfg = activeChartCfg();
+      if (!filterState.horizontes.size) return; // gráfico em branco: fora do Excel
       const linhas = getFilteredChartRows().map(r => ({ col: r.type.trim(), v: Number.isFinite(r.value) ? r.value * cfg.unidade.fator : null, cor: getBarColor(r.type) }));
       if (!linhas.length) return;
       const site = textoDoFiltro(c.filters || {}, defSites);
@@ -7432,66 +7418,16 @@ function nomeDoGrafico(c) {
   return c.cfg.nome || (titulo || '').replace(/\s+/g, ' ').trim() || (c.filters && c.filters.product) || `Gráfico ${charts.indexOf(c) + 1}`;
 }
 
-// ── Adicionar gráfico (reaproveita addChart: mesmo fluxo de criação) ──
-let adicionandoGrafico = false;
-
-function abrirAdicionar() {
-  $qe('qeAddNome').maxLength = chartNameMax;
-  $qe('qeAddNome').value = '';
-  const prod = $qe('qeAddProduto');
-  prod.innerHTML = '';
-  extractOptions('product', allRows).forEach(o => prod.add(new Option(o.label, o.value)));
-  prod.value = (defaultFilters && defaultFilters.product) || '';
-  const sal = $qe('qeAddSalvo');
-  sal.innerHTML = '';
-  sal.add(new Option(editor.db.itens.length ? 'Nenhuma (padrão)' : editor.db.ok ? 'Nenhuma configuração salva' : 'Banco indisponível', ''));
-  editor.db.itens.forEach(i => sal.add(new Option(i.nome, String(i.id))));
-  sal.disabled = !editor.db.itens.length;
-  msgEm('qeAddMsg', '');
-}
-
-async function confirmarAdicionar() {
-  if (adicionandoGrafico) return; // uma inclusão por vez
-  adicionandoGrafico = true;
-  const btn = $qe('qeAddConfirmar');
-  btn.disabled = true;
-  btn.setAttribute('aria-busy', 'true');
-  btn.innerHTML = '<span class="qe-spin" aria-hidden="true"></span>Adicionando…';
-  msgEm('qeAddMsg', 'Adicionando gráfico…', 'info');
-  try {
-    await new Promise(r => requestAnimationFrame(() => r())); // mostra o carregamento antes do trabalho
-    const nome = $qe('qeAddNome').value.trim().slice(0, chartNameMax);
-    const produto = $qe('qeAddProduto').value;
-    const rec = editor.db.itens.find(i => String(i.id) === $qe('qeAddSalvo').value);
-    addChart(); // cria, seleciona, desenha e grava o layout
-    const c = activeChart;
-    if (rec) {
-      // Copia a apresentação, sem vincular ao registro (é um gráfico novo)
-      const conf = rec.config || {};
-      c.cfg = normalizeChartCfg({ ...conf, nome, idConfig: null });
-      setChartColors(c, { bgChart: '#F6F6F6', ...editorColorsOf(conf.cores) });
-    } else if (nome) {
-      c.cfg = { ...c.cfg, nome };
-    }
-    if (produto && produto !== filterState.product) {
-      filterState.product = produto;
-      podarSelecoesSemDados('product'); // Site/Ano/Cenário/Horizonte seguem o Produto escolhido
-    }
-    refreshFiltersAndChart();
-    editor.chart = null;
-    editorSync();
-    abrirVisao('editar', $qe('qeToolbar').querySelector('[data-qe-go="ident"]'), 'ident');
-    editorMsg('Gráfico adicionado e selecionado. Configure-o abaixo.', 'ok');
-    mostrarAviso('Gráfico adicionado.');
-  } catch (err) {
-    console.error('[performance-hub] falha ao adicionar gráfico:', err);
-    msgEm('qeAddMsg', 'Não foi possível adicionar o gráfico. Tente novamente.', 'err');
-  } finally {
-    adicionandoGrafico = false;
-    btn.disabled = false;
-    btn.removeAttribute('aria-busy');
-    btn.textContent = 'Adicionar';
-  }
+// ── Adicionar gráfico: nasce vazio (sem horizonte) e já abre em Filtros para ser montado ──
+function criarGraficoVazio() {
+  addChart(); // cria, seleciona, desenha e grava o layout
+  filterState.horizontes.clear(); // vazio = sem horizonte escolhido
+  refreshFiltersAndChart();
+  saveCharts();
+  editor.chart = null;
+  editorSync();
+  abrirVisao('filtros', $qe('qeFiltrosBtn'));
+  mostrarAviso(tx('ui.grafico_vazio_criado'));
 }
 
 // ── Filtros (mesmo componente/estado da antiga barra; aplicação automática a cada clique) ──
@@ -8002,8 +7938,6 @@ function initEditor() {
   });
   document.addEventListener('qtr:idioma', () => { updateChartActionButtons(); renderOrdemColunas(); if (editor.open && editor.view === 'excluir') abrirExcluir(true); });
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
-  $qe('qeAddConfirmar').addEventListener('click', confirmarAdicionar);
-  $qe('qeAddCancelar').addEventListener('click', recolherPainel);
   const viewBg = $qe('qeViewBg');
   viewBg.addEventListener('input', e => onFundoInput(e.target, 'input'));
   viewBg.addEventListener('change', e => onFundoInput(e.target, 'change'));
