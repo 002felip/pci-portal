@@ -205,7 +205,15 @@ html[data-bg="dark"] .dash-situacao b { color: #F5B94A; }
 .chart-header { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; }
 .chart-header > .chart-title { grid-column: 1 / -1; }
 .chart-situacao svg { width: 13px; height: 13px; flex-shrink: 0; }
-.charts-board.is-carregando > .main-wrapper { visibility: hidden; } /* abrindo: só aparece com os dados da referência do dashboard */
+.charts-board.is-carregando > .main-wrapper { visibility: hidden; }
+/* Colunas do mês pendente (mesmo visual do COO): o realizado do mês vira barra tracejada,
+   sem valor nem delta; períodos que incluem o mês ficam esmaecidos */
+.col-wrapper.is-pend-mes .bar { height: max(var(--h-ghost, 12%), 6px); animation: none; background: repeating-linear-gradient(45deg, rgba(217,140,10,.18) 0 2.4px, transparent 2.4px 6px); border: 1.2px dashed rgba(217,140,10,.55); box-shadow: none; }
+.col-wrapper.is-pend-mes .value-label { bottom: calc(max(var(--h-ghost, 12%), 6px) + 7px); color: #9A5B00; font-size: 0; }
+.col-wrapper.is-pend-mes .value-label::after { content: '—'; font-size: calc(.8rem * var(--ft-valores-s, 1)); }
+.col-wrapper.is-pend-mes .dcnx { display: none; }
+.col-wrapper.is-pend-col .bar, .col-wrapper.is-pend-col::after { filter: opacity(.45) saturate(.7); }
+.col-wrapper.is-pend-col .value-label { opacity: .55; } /* abrindo: só aparece com os dados da referência do dashboard */
 .charts-board.foco-pendentes > .main-wrapper:not(.is-pend) { opacity: .28; filter: grayscale(1); }
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
@@ -1334,7 +1342,11 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   background: rgba(60,181,229,.08); color: var(--qe-strong); font-size: .92rem; font-weight: 600; line-height: 1.35;
   white-space: pre-line; overflow-wrap: anywhere; box-shadow: 0 2px 8px rgba(60,181,229,.15);
 }
-.qe-subtit { margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid var(--qe-line); }
+/* Títulos dos blocos da seção Unidade e formatação: a formatação numérica fica num cartão destacado */
+.qe-bloco-tit { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font: 700 .78rem 'Poppins', sans-serif; letter-spacing: .02em; color: var(--qe-strong); }
+.qe-bloco-tit i { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: rgba(60,181,229,.14); color: #0B6E99; font-size: .72rem; }
+.qe-bloco { margin-top: 18px; padding: 14px 14px 10px; border-radius: 12px; border: 1.5px solid #3CB5E5; background: rgba(60,181,229,.06); box-shadow: 0 2px 8px rgba(60,181,229,.12); }
+.qe-bloco .qe-bloco-dica { margin: -4px 0 12px; }
 .qe-preview.is-muted { color: var(--qe-muted); font-style: italic; }
 
 /* Cores */
@@ -1985,6 +1997,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
       <section class="qe-sec" data-sec="unidade" hidden>
         <div class="qe-sec-body">
+          <h3 class="qe-bloco-tit"><i class="fa-solid fa-ruler" aria-hidden="true"></i><span data-i18n="ui.unidade_de_medida">Unidade de medida</span></h3>
           <div class="qe-field">
             <label class="qe-label" for="qeUnidade" data-i18n="ui.unidade">Unidade</label>
             <select class="qe-select" id="qeUnidade" aria-describedby="qeUnidadeDados"></select>
@@ -2006,7 +2019,9 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           </div>
           <label class="qe-check qe-field"><input type="checkbox" id="qeNosRotulos"> <span data-i18n="ui.exibir_a_unidade_nos_rotulos_das_barras">Exibir a unidade nos rótulos das barras</span></label>
           <p class="qe-hint" data-i18n="ui.aplicada_no_subtitulo_e_nos_valores_das_ba">Aplicada no subtítulo e nos valores das barras. Os dados de origem não mudam e os deltas (%) não usam unidade.</p>
-          <p class="qe-label qe-subtit" data-i18n="ui.formatacao_numerica">Formatação numérica</p>
+          <div class="qe-bloco" role="group" aria-labelledby="qeNumTit">
+          <h3 class="qe-bloco-tit" id="qeNumTit"><i class="fa-solid fa-hashtag" aria-hidden="true"></i><span data-i18n="ui.formatacao_numerica">Formatação numérica</span></h3>
+          <p class="qe-hint qe-bloco-dica" data-i18n="ui.formatacao_numerica_dica">Defina quantas casas decimais aparecem nos valores das barras e nos deltas (%).</p>
           <div class="qe-row">
             <div class="qe-field">
               <label class="qe-label" for="qeDecBar" data-i18n="ui.decimais_das_barras">Decimais das barras</label>
@@ -2026,6 +2041,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
             </div>
           </div>
           <p class="qe-hint" id="qeNumExemplo"></p>
+          </div>
         </div>
       </section>
 
@@ -2231,6 +2247,7 @@ const I18N_UI = {
   'ui.formatacao_numerica': ['Formatação numérica', 'Number formatting'],
   'ui.fontes': ['Fontes', 'Fonts'],
   'ui.unidade_de_medida': ['Unidade de medida', 'Unit of measure'],
+  'ui.formatacao_numerica_dica': ['Defina quantas casas decimais aparecem nos valores das barras e nos deltas (%).', 'Set how many decimal places the bar values and deltas (%) show.'],
   'ui.unidade_e_numeros': ['Unidade e formatação numérica', 'Unit and number formatting'],
   'ui.cores': ['Cores', 'Colors'],
   'ui.persistencia': ['Persistência', 'Persistence'],
@@ -2395,6 +2412,7 @@ const I18N_UI = {
   'ui.sit_nenhuma': ['Nenhuma atualização recebida neste ciclo', 'No update received for this cycle'],
   'ui.sit_resumo': ['{n} de {total} gráficos', '{n} of {total} charts'],
   'ui.sit_resumo_txt': ['com atualizações finais pendentes', 'pending final updates'],
+  'ui.sit_coluna': ['Aguardando a atualização final de {mes}', 'Waiting for the final update of {mes}'],
   'ui.sit_ok': ['Todos os gráficos atualizados', 'All charts updated'],
   'ui.sit_destacar': ['Destacar os gráficos pendentes e ir até o primeiro', 'Highlight pending charts and go to the first one'],
   'ui.sit_excel': ['Atenção: {n} gráfico(s) com atualizações finais pendentes no arquivo.', 'Warning: {n} chart(s) with pending final updates in the file.'],
@@ -4276,7 +4294,45 @@ function marcarSituacaoDoGrafico() {
     }
   }
   c.el.classList.toggle('is-pend', !!(c.situacao && c.situacao.pendente));
+  marcarColunasPendentes(c);
   agendarResumoSituacao();
+}
+// Mês ainda sem a atualização final = último mês realizado da carga (referência − 1 mês)
+function mesPendente() {
+  const ref = dadosCarga.dtRef || (allRows[0] && allRows[0].DT_REF && new Date(allRows[0].DT_REF).toISOString().slice(0, 7));
+  const m = /^(\d{4})-(\d{2})/.exec(ref || '');
+  if (!m) return null;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 2, 1));
+  return { ano: d.getUTCFullYear(), mes: d.getUTCMonth() + 1 };
+}
+const MESES_CURTOS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Como no COO: a coluna realizada do mês pendente vira barra tracejada, sem valor nem delta;
+// trimestre, semestre, YTD e ano que incluem esse mês ficam esmaecidos
+function marcarColunasPendentes(c) {
+  const cols = [...c.el.querySelectorAll('.col-wrapper')];
+  cols.forEach(w => { w.classList.remove('is-pend-mes', 'is-pend-col'); w.removeAttribute('title'); w.style.removeProperty('--h-ghost'); });
+  const mp = c.situacao && c.situacao.pendente && mesPendente();
+  if (!mp) return;
+  const yy = String(mp.ano).slice(-2), dica = tx('ui.sit_coluna', { mes: `${MESES_CURTOS[mp.mes - 1]}/${yy}` });
+  cols.forEach(w => {
+    const { core, yearSuffix } = splitTypeLabel(w.dataset.type || '');
+    const letra = core.slice(-1).toUpperCase(), tipo = getHorizonType(core);
+    if (letra !== 'A' && letra !== 'F') return;
+    const ano = tipo === 'YEAR' ? 2000 + Number(core.slice(0, -1).slice(-2)) : 2000 + Number((yearSuffix || '').trim());
+    if (ano !== mp.ano) return;
+    const per = core.slice(0, -1);
+    const inclui = tipo === 'MONTH' ? per.toLowerCase() === MESES_CURTOS[mp.mes - 1].toLowerCase()
+      : tipo === 'QUARTER' ? Number(per.slice(1)) === Math.ceil(mp.mes / 3)
+      : tipo === 'SEMESTER' ? Number(per.slice(1)) === (mp.mes <= 6 ? 1 : 2)
+      : tipo === 'YTD' || tipo === 'YEAR';
+    if (!inclui) return;
+    w.title = dica;
+    if (tipo !== 'MONTH') { w.classList.add('is-pend-col'); return; }
+    // Barra fantasma na altura do Budget do mesmo mês (como no COO); sem Budget, uma altura mínima
+    const bud = cols.find(o => o !== w && splitTypeLabel(o.dataset.type || '').core.toLowerCase() === (per + 'B').toLowerCase() && splitTypeLabel(o.dataset.type || '').yearSuffix === yearSuffix);
+    w.style.setProperty('--h-ghost', bud ? bud.style.getPropertyValue('--h') || '12%' : '12%');
+    w.classList.add('is-pend-mes');
+  });
 }
 let resumoSituacaoTimer = 0;
 function agendarResumoSituacao() {
