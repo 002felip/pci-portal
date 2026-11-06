@@ -268,12 +268,12 @@ test('SQL do EBITDA: carga do COO em IBP.PHUB_PERFORMANCESTUDIO, KPI por @idKpi,
   assert.match(s, /R\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YTG', 'YEAR'\)/);
   assert.match(s, /OUTER APPLY \([\s\S]*FROM IBP\.DASHBOARD D[\s\S]*\) DASH/);
   assert.ok(!/ID_DASH\s*=\s*\d/.test(s));
-  assert.deepStrictEqual(CONFIG_PADRAO.ebitda, { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [45, 102, 46], sites: [] } });
+  assert.deepStrictEqual(CONFIG_PADRAO.ebitda, { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [73], sites: [45, 102, 46] } });
   assert.deepStrictEqual(CONFIG_PADRAO.ebitdaPonte, { site: 40, tipo: 3, anoInicial: 2025 });
 });
 
 // Linhas no formato de 004_hob_ebitda.sql (carga do ID_DASH 16): KPI 73 nos sites 38/39/40 e site fora (6);
-// KPIs 45/102/46 na operação 11 (Others) e o KPI 45 numa operação que não conta (12)
+// Others: KPI 73 nos sites 45/102/46 da operação 11 e o site 45 numa operação que não conta (12)
 const EB = [];
 const lin = (o) => Object.assign({ ID_OPERACAO: 11, NM_KPI: 'EBITDA', SG_UNID: 'US$ M', VL_CASADECIMAL: 0 }, o);
 for (let m = 1; m <= 12; m++) {
@@ -281,14 +281,14 @@ for (let m = 1; m <= 12; m++) {
     EB.push(lin({ ANO: 2026, MES: m, ID_SITE: site, NM_SITE: nome, ID_KPI: 73, SERIE: 'B', VL_KPI: v }));
     EB.push(lin({ ANO: 2026, MES: m, ID_SITE: site, NM_SITE: nome, ID_KPI: 73, SERIE: 'AF', VL_KPI: v + 1 }));
   }
-  for (const [kpi, v, op] of [[45, 10, 11], [102, 5, 11], [46, 2, 11], [45, 777, 12]]) {
-    EB.push(lin({ ANO: 2026, MES: m, ID_SITE: 40, NM_SITE: 'VBM', ID_KPI: kpi, ID_OPERACAO: op, NM_KPI: 'Outro ' + kpi, SERIE: 'B', VL_KPI: v }));
-    EB.push(lin({ ANO: 2026, MES: m, ID_SITE: 40, NM_SITE: 'VBM', ID_KPI: kpi, ID_OPERACAO: op, NM_KPI: 'Outro ' + kpi, SERIE: 'AF', VL_KPI: v }));
+  for (const [site, v, op] of [[45, 10, 11], [102, 5, 11], [46, 2, 11], [45, 777, 12]]) {
+    EB.push(lin({ ANO: 2026, MES: m, ID_SITE: site, NM_SITE: 'Outro ' + site, ID_KPI: 73, ID_OPERACAO: op, SERIE: 'B', VL_KPI: v }));
+    EB.push(lin({ ANO: 2026, MES: m, ID_SITE: site, NM_SITE: 'Outro ' + site, ID_KPI: 73, ID_OPERACAO: op, SERIE: 'AF', VL_KPI: v }));
   }
 }
-const EB73 = EB.filter((l) => l.ID_KPI === 73), EBOUT = EB.filter((l) => l.ID_KPI !== 73);
+const EB73 = EB, EBOUT = EB; // Others também é o KPI 73 (a API lê o KPI uma vez só)
 
-test('montarEbitda: KPI 73 por site (Copper 38, Nickel 39, VBM 40 = total) e Others = KPIs 45+102+46 da operação 11', () => {
+test('montarEbitda: KPI 73 por site (Copper 38, Nickel 39, VBM 40 = total) e Others = sites 45+102+46 da operação 11', () => {
   const { montarEbitda } = require('../hob-api');
   const e = montarEbitda(EB73, EBOUT, CONFIG_PADRAO, '2026-10');
   assert.deepStrictEqual(e.ultimoReal, { ano: 2026, mes: 9 });
@@ -297,7 +297,8 @@ test('montarEbitda: KPI 73 por site (Copper 38, Nickel 39, VBM 40 = total) e Oth
   assert.strictEqual(e.anos[2026].ebitdaNi.a[0], 151);
   assert.strictEqual(e.anos[2026].ebitdaOut.b[0], 17); // 10 + 5 + 2 (a operação 12 não entra)
   assert.deepStrictEqual(e.meta, { nome: 'EBITDA', unid: 'US$ M', casas: 0 });
-  assert.deepStrictEqual(e.sites.out, ['KPI 45 Outro 45', 'KPI 102 Outro 102', 'KPI 46 Outro 46']);
+  assert.deepStrictEqual(e.sites.out, ['site 45 Outro 45 · KPI 73', 'site 102 Outro 102 · KPI 73', 'site 46 Outro 46 · KPI 73']);
+  assert.ok(!e.avisos.some((a) => /fora da configuração.*\b(45|102|46)\b/.test(a)), 'sites de Others não são avisados');
   assert.ok(e.avisos.some((a) => a.includes('fora da configuração') && a.includes('6')));
 });
 
@@ -318,7 +319,7 @@ test('/ebitda: ciclo mais recente do ID_DASH 16 (ou o da tela, se existir), KPI 
   assert.strictEqual(r.json.anos['2026'].ebitdaVbm.b[0], 500);
   assert.strictEqual(r.json.anos['2026'].ebitdaOut.b[0], 17);
   const kpisLidos = chamadas.filter((c) => c.params && c.params.idKpi).map((c) => c.params.idKpi[1]).sort((x, y) => x - y);
-  assert.deepStrictEqual([...new Set(kpisLidos)], [45, 46, 73, 102]);
+  assert.deepStrictEqual([...new Set(kpisLidos)], [73]); // Others também é o KPI 73 (sites 45, 102 e 46)
   assert.ok(chamadas.filter((c) => c.params && c.params.idKpi).every((c) => c.params.idDash[1] === 16));
   assert.strictEqual((await chamar(router, '/ebitda?ciclo=2026-09')).json.ciclo, '2026-09');
   assert.strictEqual((await chamar(router, '/ebitda?ciclo=2020-01')).json.ciclo, '2026-10'); // ciclo inexistente no COO: o mais recente
@@ -362,7 +363,7 @@ test('montarEbitda: casas decimais do cadastro por opção do seletor (linha sem
     lin({ ANO: 2026, MES: 1, ID_SITE: 40, NM_SITE: 'VBM', ID_KPI: 73, SERIE: 'B', VL_KPI: 2.5, SG_UNID: null, VL_CASADECIMAL: null }),
     lin({ ANO: 2026, MES: 2, ID_SITE: 40, NM_SITE: 'VBM', ID_KPI: 73, SERIE: 'B', VL_KPI: 2.5, SG_UNID: 'US$ bn', VL_CASADECIMAL: 1 })
   ];
-  const outros = [lin({ ANO: 2026, MES: 1, ID_SITE: 40, ID_KPI: 45, NM_KPI: 'Outro', SERIE: 'B', VL_KPI: 0.1, SG_UNID: 'US$ bn', VL_CASADECIMAL: 2 })];
+  const outros = [lin({ ANO: 2026, MES: 1, ID_SITE: 45, ID_KPI: 73, NM_KPI: 'Outro', SERIE: 'B', VL_KPI: 0.1, SG_UNID: 'US$ bn', VL_CASADECIMAL: 2 })];
   const e = montarEbitda(linhas, outros, CONFIG_PADRAO, '2026-10');
   assert.deepStrictEqual(e.metas.vbm, { nome: 'EBITDA', unid: 'US$ bn', casas: 1 });
   assert.strictEqual(e.metas.cu.casas, 0);
@@ -375,9 +376,9 @@ test('montarAtualizacao: situação por gráfico (opções do EBITDA e coo.kpis)
   const linhas = [
     { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'N', DT_ATUALIZACAO: new Date(Date.UTC(2026, 8, 28)) },
     { ID_SITE: 38, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 5)) },
-    { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 45, SG_STATUS: 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 3)) },
-    { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 46, SG_STATUS: 'N', DT_ATUALIZACAO: null },
-    { ID_SITE: 40, ID_OPERACAO: 12, ID_KPI: 102, SG_STATUS: 'N', DT_ATUALIZACAO: null }, // operação fora de Others
+    { ID_SITE: 45, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 3)) },
+    { ID_SITE: 46, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'N', DT_ATUALIZACAO: null },
+    { ID_SITE: 102, ID_OPERACAO: 12, ID_KPI: 73, SG_STATUS: 'N', DT_ATUALIZACAO: null }, // operação fora de Others
   ];
   const a = montarAtualizacao(linhas, CONFIG_PADRAO, '2026-11');
   assert.deepStrictEqual(a.mesCiclo, { ano: 2026, mes: 10 });

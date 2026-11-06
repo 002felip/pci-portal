@@ -65,8 +65,9 @@ const CONFIG_PADRAO = {
   ebitdaPonte: { site: 40, tipo: 3, anoInicial: 2025 },
   // EBITDA (gráfico por período, seletor VBM | Copper | Nickel | Others): carga do Health of the Business em
   // IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 16). KPI EBITDA (ID_KPI 73) por site, um negócio por vez no seletor:
-  // VBM 40, Copper 38, Nickel 39; Others = soma dos KPIs 45, 102 e 46 da operação 11
-  ebitda: { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [45, 102, 46], sites: [] } },
+  // VBM 40, Copper 38, Nickel 39; Others = EBITDA (KPI 73) dos sites 45, 102 e 46 da operação 11, somados
+  // (outros.kpis e outros.sites ajustáveis no 005; sites vazio = qualquer site)
+  ebitda: { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [73], sites: [45, 102, 46] } },
   // Demais gráficos mês a mês: um KPI (ID_KPI) da carga do dashboard (ID_DASH 16) por série, no site da página
   // (VBM 40, Copper 38, Nickel 39). null = ainda sem KPI definido (o gráfico segue na demonstração)
   coo: { idDash: 16, sites: { vbm: 40, cu: 38, ni: 39 }, kpis: {
@@ -364,7 +365,7 @@ function somarPeriodo(s, l, cd, m) {
 
 // ── EBITDA (004_hob_ebitda.sql) → séries mensais por segmento ──
 // KPI 73 (ebitda.idKpi) por ID_SITE: VBM 40, Copper 38 e Nickel 39 (cada um é uma opção do seletor).
-// Others: soma dos KPIs de ebitda.outros (45, 102 e 46) na operação 11; com outros.sites vazio, de qualquer site.
+// Others: soma de ebitda.outros (KPI 73 nos sites 45, 102 e 46) na operação 11; com outros.sites vazio, de qualquer site.
 // Linha fora da configuração entra em avisos (não é somada).
 function montarEbitda(linhas, linhasOutros, config, ciclo) {
   const [anoC, mesC] = ciclo.split('-').map(Number);
@@ -386,7 +387,7 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
   };
   for (const l of linhas) {
     const site = Number(l.ID_SITE), seg = ['vbm', 'cu', 'ni'].find(k => config.ebitda.sites[k].includes(site));
-    if (!seg) { fora.add(String(site)); continue; }
+    if (!seg) { if (!config.ebitda.outros.sites.includes(site)) fora.add(String(site)); continue; }
     metaDe(seg, l);
     somar(seg, l, l.NM_SITE ? `${site} ${String(l.NM_SITE).trim()}` : String(site));
   }
@@ -396,7 +397,7 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
     if (O.sites.length && !O.sites.includes(Number(l.ID_SITE))) continue;
     sitesOutros.add(Number(l.ID_SITE));
     metaDe('out', l);
-    somar('out', l, `KPI ${l.ID_KPI}${l.NM_KPI ? ' ' + String(l.NM_KPI).trim() : ''}`);
+    somar('out', l, `site ${l.ID_SITE}${l.NM_SITE ? ' ' + String(l.NM_SITE).trim() : ''} · KPI ${l.ID_KPI}`);
   }
   if (sitesOutros.size > 1 && !O.sites.length) avisos.push(`Others: KPIs ${O.kpis.join(', ')} em ${sitesOutros.size} sites (${[...sitesOutros].join(', ')}), somados; defina ebitda.outros.sites para limitar`);
   if (fora.size) avisos.push(`sites com o KPI ${config.ebitda.idKpi} fora da configuração (não usados): ${[...fora].join(', ')}`);
