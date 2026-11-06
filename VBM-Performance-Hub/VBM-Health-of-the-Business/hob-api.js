@@ -62,8 +62,8 @@ const CONFIG_PADRAO = {
   // 2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO = 3
   ebitdaPonte: { site: 40, tipo: 3, anoInicial: 2025 },
   // EBITDA (gráfico por período, seletor VBM | Copper | Nickel | Others): carga do Health of the Business em
-  // IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 16). KPI EBITDA (ID_KPI 73) nos sites Copper 38 e Nickel 39 (barras) e
-  // VBM 40 (o total, por fora da coluna empilhada); Others = soma dos KPIs 45, 102 e 46 da operação 11
+  // IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 16). KPI EBITDA (ID_KPI 73) por site, um negócio por vez no seletor:
+  // VBM 40, Copper 38, Nickel 39; Others = soma dos KPIs 45, 102 e 46 da operação 11
   ebitda: { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [45, 102, 46], sites: [] } },
   // Demais gráficos mês a mês: um KPI (ID_KPI) da carga do dashboard (ID_DASH 16) por série, no site da página
   // (VBM 40, Copper 38, Nickel 39). null = ainda sem KPI definido (o gráfico segue na demonstração)
@@ -344,7 +344,7 @@ function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
 }
 
 // ── EBITDA (004_hob_ebitda.sql) → séries mensais por segmento ──
-// KPI 73 (ebitda.idKpi) por ID_SITE: Copper 38 e Nickel 39 (as barras) e VBM 40 (o total, mostrado por fora).
+// KPI 73 (ebitda.idKpi) por ID_SITE: VBM 40, Copper 38 e Nickel 39 (cada um é uma opção do seletor).
 // Others: soma dos KPIs de ebitda.outros (45, 102 e 46) na operação 11; com outros.sites vazio, de qualquer site.
 // Linha fora da configuração entra em avisos (não é somada).
 function montarEbitda(linhas, linhasOutros, config, ciclo) {
