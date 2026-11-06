@@ -88,7 +88,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .card-name { min-width: 0; }
 .card-title { margin: 0; font: 400 1rem/1.2 var(--font-display); color: var(--chart-title); }
 .card-title em { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
-.card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
+.card-unit { font: inherit; color: inherit; }
 .card .seg { flex-wrap: nowrap; flex-shrink: 0; }
 .card .seg button { min-height: 22px; padding: 1px 8px; font-size: .68rem; }
 .chart { position: relative; height: var(--chart-h, 210px); }
@@ -150,7 +150,6 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .head { padding-bottom: 8px; }
   .head h2 { font-size: 1.55rem; top: -3px; }
   .panel-title { font-size: 1rem; }
-  .card-unit { font-size: .68rem; }
 }
 @media (max-width: 1600px) {
   .card-title { font-size: .88rem; }
@@ -1048,12 +1047,16 @@ window.HOB_CARREGAR(function (aviso) {
       return '<button type="button" data-sel="' + chave + '" data-v="' + o.chave + '" aria-pressed="' + (state.sel[chave] === o.chave) + '">' + esc(o.lbl) + '</button>';
     }).join('') + '</div>';
   }
-  // Unidade e casas decimais do KPI: as de IBP.DASHBOARD (D.meta, dados do banco); sem elas, as do código
+  // Nome, unidade e casas decimais do KPI: os de IBP.DASHBOARD (D.meta, dados do banco); sem eles, os do código
+  function semParenteses(u) { return String(u).trim().replace(/^\((.*)\)$/, '$1').trim(); }
   function doCadastro(cfg) {
-    var m = D.meta && D.meta[state.bu] && D.meta[state.bu][cfg.ind || (cfg.tipo === 'ebitdaVbm' ? 'ebitda.' + state.sel.ebitda : '')];
+    var M = D.meta && D.meta[state.bu], m = M && M[cfg.ind || (cfg.tipo === 'ebitdaVbm' ? 'ebitda.' + state.sel.ebitda : '')];
     if (!m) return cfg;
     var c = Object.assign({}, cfg);
-    if (m.unid) c.unid = m.unid;
+    // Others soma vários KPIs: o título segue o nome do EBITDA (KPI 73); unidade e casas, as de Others
+    var nome = cfg.tipo === 'ebitdaVbm' && state.sel.ebitda === 'out' ? (M['ebitda.vbm'] || M['ebitda.cu'] || {}).nome : m.nome;
+    if (nome) c.titulo = nome;
+    if (m.unid) c.unid = semParenteses(m.unid);
     if (m.casas != null) { c.casas = m.casas; c.doBanco = true; }
     return c;
   }
@@ -1067,8 +1070,7 @@ window.HOB_CARREGAR(function (aviso) {
       return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
     }).join('') + '</ul>';
     return '<article class="card" style="grid-area:' + cfg.area + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4>' +
-      '<p class="card-unit">(' + esc(cfg.unid) + ')</p></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.unid ? ' <span class="card-unit">(' + esc(semParenteses(cfg.unid)) + ')</span>' : '') + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4></div>' + ctl + '</div>' +
       '<div class="chart" data-card="' + i + '"></div></article>';
   }
   function dadosBu() { return D.bu[state.bu][state.ano]; }
