@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════
    VBM Performance Studio — situação de atualização dos KPIs na carga do ciclo
    Banco: BDIBPBMSA_PRD · agendar no Data Factory depois de 003_carga_mensal.sql
-   Mesma regra do COO (COO-Business-Units-Dashboard/database/004_status_atualizacao_coo.sql);
+   Baseado no 004 do COO (COO-Business-Units-Dashboard/database/004_status_atualizacao_coo.sql);
    a tela do Studio marca os gráficos com KPI pendente (rota /chart-data/status).
 
    Para cada indicador (ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI) da carga do Studio em
@@ -12,11 +12,12 @@
      sem registro no log           → SG_STATUS = 'N' e DT_ATUALIZACAO NULL
    A situação vale para todas as linhas do indicador na carga (meses, trimestres e anos).
 
-   Referência = mês do ciclo = DATEADD(MONTH, -1, GETDATE()-2), no 1º dia do mês
-     ex.: 05/11/2026 → 2026-10-01 (indicador atualizado a partir de 01/10/2026 = 'S')
+   Referência = DT_REF da carga (1º dia do mês do dashboard): só conta como atualizado o
+   indicador alterado A PARTIR desse dia. Ex.: carga 2026-11-01 → atualizado em 01/11/2026
+   ou depois = 'S'; atualizado em outubro (ciclo anterior) = 'N'.
 
-   Linhas atualizadas: carga DT_REF = mês de GETDATE()-2 (ex.: 2026-11-01); sem ela ainda
-   gravada, a carga mais recente do dashboard.
+   Carga a atualizar: @DT_CARGA_PARAM (ex.: '2026-11-01'); NULL = carga do mês de
+   GETDATE()-2 (ex.: 2026-11-01) ou, sem ela gravada, a mais recente do dashboard.
 
    Indicadores consolidados (gravados pela carga automática 'Carga_Auto', que soma os sites
    e registra no log a data da própria execução): a data do consolidado não diz nada sobre
@@ -35,16 +36,17 @@
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
-DECLARE @ID_DASH  INT  = 21;
--- Data de referência: 1º dia do mês do ciclo (05/11/2026 → 2026-10-01)
-DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, GETDATE() - 2);
-SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
--- Carga a atualizar: a do mês (2026-11-01); ainda não gravada, a mais recente do dashboard
-DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);
+DECLARE @ID_DASH        INT  = 21;
+DECLARE @DT_CARGA_PARAM DATE = NULL;   -- ex.: '2026-11-01' para reprocessar uma carga
+-- Carga a atualizar: a informada; senão a do mês (2026-11-01); ainda não gravada, a mais recente
+DECLARE @DT_CARGA DATE = COALESCE(@DT_CARGA_PARAM, DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1));
+SET @DT_CARGA = DATEFROMPARTS(YEAR(@DT_CARGA), MONTH(@DT_CARGA), 1);
 IF NOT EXISTS (SELECT 1 FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF = @DT_CARGA)
   SET @DT_CARGA = (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF <= @DT_CARGA);
 IF @DT_CARGA IS NULL
   THROW 50020, 'Nenhuma carga do dashboard em IBP.PHUB_PERFORMANCESTUDIO: rode antes o 003_carga_mensal.sql.', 1;
+-- Data de referência: 1º dia do mês da carga (carga 2026-11-01 → atualizado a partir de 01/11/2026)
+DECLARE @DT_REF   DATE = @DT_CARGA;
 DECLARE @LINHAS   INT;
 
 -- Última atualização de cada indicador da carga (log)
@@ -80,7 +82,7 @@ FROM #COMPOSICAO C
 INNER JOIN (
   SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
   FROM IBP.PEDRAVISAOCONSOLIDADA
-  WHERE YEAR(DT_REF) = YEAR(@DT_REF) AND ID_OPERACAO <> 10
+  WHERE YEAR(DT_REF) = YEAR(DATEADD(MONTH, -1, @DT_REF)) AND ID_OPERACAO <> 10  -- ano do último mês realizado, como a carga automática
 ) P ON P.ID_SITE = C.ID_SITE AND P.ID_KPI = C.ID_KPI
 LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
   ON L.ID_SISTEMA = P.ID_SISTEMA AND L.ID_SITE = P.ID_SITE
