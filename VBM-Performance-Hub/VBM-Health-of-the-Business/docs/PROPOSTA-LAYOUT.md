@@ -67,6 +67,7 @@ Mesma estrutura dos demais dashboards do Hub (COO e COO Historical):
 | `database/002_hob_waterfall.sql` | Pontes: `IBP.WATERFALL` do site 40 desde 2025 — tipo 2 = FCF YEAR, tipo 3 = 2026 EBITDA YEAR (`@site`, `@tipo`, `@anoIni`) |
 | `database/004_hob_ebitda.sql` | Um KPI da carga do COO em `IBP.PHUB_PERFORMANCESTUDIO` (`@idDash` 15, `@idKpi`, `@dtRef`): EBITDA (73) e as séries de `coo.kpis` (rotas `api/ebitda` e `api/coo`) |
 | `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO`, `ID_DASH` 16: a query do time de dados (`IBP.PEDRAVISAO*`, blocos MONTH, QUARTER, YTD, YTG e YEAR) no mesmo `DELETE`/`INSERT`/`GROUP BY` do COO, com os campos `ID_TIPO_VISAO_VBM`, `CD_PERIODO`, `ORDEM_VISAO` (1 a 5), `ORDEM_ANO` e `ORDEM_PERIODO` |
+| `database/003b_conferencia_carga_hob.sql` | A mesma consulta da carga, só leitura (sem gravar): mostra as linhas e os campos que o `003` gravaria |
 | `database/005_config_hob.sql` | Configuração da tela em `IBP.PHUB_PS_SETUP` (`CD_VISAO 'VBM_HEALTH_OF_THE_BUSINESS'`): sites de cada BU, KPI de cada gráfico, degraus das pontes e origem do FCF |
 | `server.js`, `package.json` | App independente (desenvolvimento), igual ao do COO |
 | `tests/hob-api.test.js` | `npm test`: banco simulado, sem rede |
