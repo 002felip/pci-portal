@@ -369,3 +369,35 @@ test('montarEbitda: casas decimais do cadastro por opção do seletor (linha sem
   assert.strictEqual(e.metas.out.casas, 2);
   assert.strictEqual(e.meta.casas, 1); // compatibilidade: meta = VBM
 });
+
+test('montarAtualizacao: situação por gráfico (opções do EBITDA e coo.kpis), como o COO', () => {
+  const { montarAtualizacao } = require('../hob-api');
+  const linhas = [
+    { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'N', DT_ATUALIZACAO: new Date(Date.UTC(2026, 8, 28)) },
+    { ID_SITE: 38, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 5)) },
+    { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 45, SG_STATUS: 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 3)) },
+    { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 46, SG_STATUS: 'N', DT_ATUALIZACAO: null },
+    { ID_SITE: 40, ID_OPERACAO: 12, ID_KPI: 102, SG_STATUS: 'N', DT_ATUALIZACAO: null }, // operação fora de Others
+  ];
+  const a = montarAtualizacao(linhas, CONFIG_PADRAO, '2026-11');
+  assert.deepStrictEqual(a.mesCiclo, { ano: 2026, mes: 10 });
+  assert.strictEqual(a.cards['vbm.ebitda.vbm'].status, 'pendente');
+  assert.strictEqual(a.cards['vbm.ebitda.vbm'].dt, '2026-09-28T00:00:00.000Z');
+  assert.strictEqual(a.cards['vbm.ebitda.cu'].status, 'ok');
+  assert.strictEqual(a.cards['cu.ebitda'].status, 'ok');
+  assert.ok(!a.cards['vbm.ebitda.ni'] && !a.cards['ni.ebitda'], 'sem situação: fora');
+  assert.deepStrictEqual(a.cards['vbm.ebitda.out'], { status: 'pendente', dt: null, kpis: 2, pendentes: 1 });
+});
+
+test('007 (status, como o 004 do COO) e 008 (verificação só leitura) do ID_DASH 16', () => {
+  const ler = (f) => fs.readFileSync(path.join(__dirname, '..', 'database', f), 'utf8');
+  const st = ler('007_status_atualizacao_hob.sql');
+  assert.match(st, /DECLARE @ID_DASH\s+INT\s+=\s+16;/);
+  assert.match(st, /IBP\.LOG_PEDRAVISAOCONSOLIDADA/);
+  assert.match(st, /R\.SG_STATUS = CASE WHEN A\.DT_ATUALIZACAO >= @DT_REF THEN 'S' ELSE 'N' END/);
+  const v = ler('008_verificacao_atualizacao_hob.sql');
+  assert.match(v, /DECLARE @ID_DASH INT\s+=\s+16;/);
+  const codigo = v.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(!/\b(INSERT|UPDATE|DELETE|ALTER|MERGE)\b/i.test(codigo), '008 não grava');
+  for (const t of ['PEDRAVISAOCONSOLIDADA', 'PEDRAVISAOTRIMESTRE', 'PEDRAVISAOYEARTODATE', 'PEDRAVISAOYEARTOGO', 'PEDRAVISAOANO', 'LOG_PEDRAVISAOCONSOLIDADA']) assert.ok(v.includes('IBP.' + t), t);
+});

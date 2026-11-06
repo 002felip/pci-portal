@@ -68,6 +68,9 @@ Mesma estrutura dos demais dashboards do Hub (COO e COO Historical):
 | `database/004_hob_ebitda.sql` | Um KPI da carga do COO em `IBP.PHUB_PERFORMANCESTUDIO` (`@idDash` 15, `@idKpi`, `@dtRef`): EBITDA (73) e as séries de `coo.kpis` (rotas `api/ebitda` e `api/coo`) |
 | `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO`, `ID_DASH` 16: a query do time de dados (`IBP.PEDRAVISAO*`, blocos MONTH, QUARTER, YTD, YTG e YEAR) no mesmo `DELETE`/`INSERT`/`GROUP BY` do COO, com os campos `ID_TIPO_VISAO_VBM`, `CD_PERIODO`, `ORDEM_VISAO` (1 a 5), `ORDEM_ANO` e `ORDEM_PERIODO` |
 | `database/003b_conferencia_carga_hob.sql` | A mesma consulta da carga, só leitura (sem gravar): mostra as linhas e os campos que o `003` gravaria |
+| `database/006_cd_periodo_ytg.sql` | Uma vez só: a regra de `CD_PERIODO` da tabela passa a aceitar `YTG` |
+| `database/007_status_atualizacao_hob.sql` | Depois da carga (como o `004` do COO): grava `SG_STATUS` (S/N) e `DT_ATUALIZACAO` de cada KPI pelo `IBP.LOG_PEDRAVISAOCONSOLIDADA`; a tela mostra "Pending final updates" (rota `api/atualizacao`) |
+| `database/008_verificacao_atualizacao_hob.sql` | Só leitura: o que está atualizado por KPI (log, último mês de cada tabela de origem, YTD repetido, YTG ausente) |
 | `database/005_config_hob.sql` | Configuração da tela em `IBP.PHUB_PS_SETUP` (`CD_VISAO 'VBM_HEALTH_OF_THE_BUSINESS'`): sites de cada BU, KPI de cada gráfico, degraus das pontes e origem do FCF |
 | `server.js`, `package.json` | App independente (desenvolvimento), igual ao do COO |
 | `tests/hob-api.test.js` | `npm test`: banco simulado, sem rede |
@@ -95,7 +98,7 @@ Nas pontes, a tela mostra a referência (`DT_REF`) mais recente do Ano escolhido
 **Conferir no Portal:** `…/VBM-Health-of-the-Business/api/waterfall/estrutura` (FCF YEAR) e `…/api/waterfall/estrutura?ponte=ebitdaYear` (EBITDA YEAR) mostram as colunas, como a API as entendeu e as referências encontradas — sem os valores.
 
 **Para o restante vir do banco:**
-1. Agendar `003_carga_mensal_hob.sql` no Data Factory, como a carga do COO (grava o ciclo do mês para o `ID_DASH` 16).
+1. Agendar `003_carga_mensal_hob.sql` e, logo depois, `007_status_atualizacao_hob.sql` no Data Factory, como a carga do COO (grava o ciclo do mês para o `ID_DASH` 16 e a situação de atualização).
 2. Conferir que os nomes dos KPIs do `ID_DASH` 16 em `IBP.DASHBOARD.NM_KPIS_DASH` batem com `indicadores` do `005_config_hob.sql` (ou ajustar o JSON) e rodar o `005` com os sites de cada BU em `bus`.
 3. Redeploy do Portal. KPI esperado que não estiver no cadastro aparece no card como "KPI … não encontrado no cadastro".
 

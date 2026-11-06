@@ -285,6 +285,44 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .topnav-user-avatar { width: 30px; height: 30px; }
 }
 /* ═══ fim Setup Dashboards ═══ */
+/* Situação do ciclo (Pending final updates), como o COO */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
+:root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }
+.cyc-faixa rect { fill: var(--wait-bg); stroke: var(--wait-line); stroke-width: 1; }
+.cyc-faixa text { fill: var(--wait); font: italic 500 10.5px var(--font-ui); letter-spacing: .01em; }
+.cyc-faixa g { color: var(--wait); }
+.cyc-faixa { cursor: default; outline: none; }
+.cyc-faixa:focus-visible rect { stroke: var(--focus); stroke-width: 2; }
+.cycle:focus-visible, .cyc-item:focus-visible, .cyc-foco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.b-ghost { fill: url(#hatch-wait); stroke: var(--wait-line); stroke-dasharray: 3 2.5; stroke-width: 1.2; }
+.b-ghost-txt { fill: var(--wait); font: 500 10px var(--font-ui); }
+.b-stale { opacity: .45; }
+.meta { position: relative; }
+.cycle { display: inline-flex; align-items: center; gap: 6px; padding: 1px 2px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font: italic 400 .66rem var(--font-ui); cursor: pointer; }
+.cycle:hover span:last-child { text-decoration: underline; text-underline-offset: 2px; }
+.cycle[aria-expanded="true"] { background: var(--wait-bg); }
+.cycle b { font-weight: 500; color: var(--wait); }
+.cycle-bar { display: inline-flex; gap: 2px; }
+.cycle-bar i { width: 3px; height: 9px; border-radius: 2px; background: var(--cyc-ok); opacity: .85; }
+.cycle-bar i.w { background: transparent; border: 1.3px dashed var(--wait); opacity: 1; }
+.cycle-ok { font: italic 400 .7rem var(--font-display); color: var(--text-faint); }
+.cycle-pop { position: absolute; z-index: 70; top: calc(100% + 6px); right: 0; width: min(400px, calc(100vw - 32px)); max-height: min(60vh, 460px); overflow: auto; padding: 12px 12px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: var(--cyc-shadow); text-align: left; }
+.cycle-pop h4 { margin: 0 0 2px; font: 500 .84rem var(--font-ui); color: var(--text); }
+.cycle-pop > p { margin: 0 0 8px; font-size: .7rem; color: var(--text-soft); }
+.cyc-item { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 0 8px; width: 100%; padding: 7px 4px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; font: 400 .74rem var(--font-ui); cursor: pointer; }
+.cyc-item:hover { background: var(--wait-bg); }
+.cyc-item .dot { width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; border: 1.4px dashed var(--wait); }
+.cyc-item .sub { grid-column: 2; color: var(--text-faint); font-size: .68rem; font-variant-numeric: tabular-nums; }
+.cyc-foot { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); }
+.cyc-foco { border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); border-radius: 8px; padding: 4px 10px; font: 500 .7rem var(--font-ui); cursor: pointer; }
+.cyc-foco[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); border-color: transparent; }
+.card { transition: opacity .25s, filter .25s; }
+.foco-pendentes .card:not(.is-pend) { opacity: .28; filter: grayscale(1); }
+.card.cyc-flash { animation: cycflash 1.2s ease-out; }
+@keyframes cycflash { 0%, 40% { box-shadow: 0 0 0 3px var(--wait-line); border-radius: 10px; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card.cyc-flash { animation: none; } }
+@media (max-width: 1000px) { .cycle-pop { right: auto; left: 0; } }
 </style>
 </head>
 <body>
@@ -380,6 +418,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
     <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
     <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
+    <pattern id="hatch-wait" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.4" height="6" fill="rgba(217,140,10,.18)"/></pattern>
   </defs>
 </svg>
 <main class="page" id="page">
@@ -409,6 +448,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
         <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
         <li><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
       </ul>
+      <div id="cycleBox" hidden></div>
       <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
     </div>
   </div>
@@ -666,7 +706,7 @@ window.HOB_CARREGAR = function (iniciar) {
   }
   var q = ciclo ? '?ciclo=' + encodeURIComponent(ciclo) : '';
   function falha(r) { return { ok: false, codigo: (r.j && r.j.codigo) || (r.status === 404 ? 'SEM_API' : r.status ? 'ERRO_BANCO' : 'SEM_API'), detalhe: r.j && r.j.detalhe }; }
-  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q)]).then(function (rs) {
+  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q), ler('api/atualizacao' + q)]).then(function (rs) {
     var x = rs[0];
     // pontes de IBP.WATERFALL: uma por referência (DT_REF)
     window.HOB_PONTES = {};
@@ -680,6 +720,9 @@ window.HOB_CARREGAR = function (iniciar) {
     // Demais séries da carga do COO (Copper, Nickel e Capex): só as configuradas com ID_KPI
     var c = rs[4];
     window.HOB_COO = c.ok && c.j && c.j.series ? Object.assign({ ok: true }, c.j) : Object.assign(falha(c), { configuradas: (c.j && c.j.configuradas) || [] });
+    // Situação da atualização (SG_STATUS/DT_ATUALIZACAO do 007): sem ela, a tela fica sem o aviso
+    var at = rs[5];
+    window.HOB_ATUALIZACAO = at.ok && at.j && at.j.cards ? Object.assign({ ok: true }, at.j) : falha(at);
     if (x.ok && x.j && x.j.anos && x.j.anos.length && x.j.ultimoReal) { window.HOB_DATA = x.j; return iniciar(null); }
     iniciar((x.j && x.j.codigo) || 'SEM_API');
   });
@@ -723,7 +766,10 @@ window.HOB_CARREGAR(function (aviso) {
   function doBancoCoo(bu, ind) { var C = window.HOB_COO; return !!(C && C.ok && C.series[bu + '.' + ind] && C.series[bu + '.' + ind].anos[state.ano]); }
 
   S.registrar({
-    'pt-BR': { 'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do dashboard (ID_DASH 16) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do ID_DASH 16', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+    'pt-BR': { 'c.pendente': 'Atualizações finais pendentes', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
+      'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
+      'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
+      'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do dashboard (ID_DASH 16) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do ID_DASH 16', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período',
       'fcf.ref': 'ref. {ref}', 'fcf.semRef': 'IBP.WATERFALL sem referência até {mes}/{ano}',
@@ -731,7 +777,10 @@ window.HOB_CARREGAR(function (aviso) {
       'fcf.COLUNA': 'Coluna inexistente em IBP.WATERFALL: {detalhe}', 'fcf.TABELA': 'Tabela IBP.WATERFALL não encontrada',
       'fcf.PERMISSAO': 'Sem permissão de leitura em IBP.WATERFALL', 'fcf.LOGIN': 'Falha de login no banco', 'fcf.TEMPO': 'Banco não respondeu a tempo',
       'fcf.ERRO_BANCO': 'Erro ao ler IBP.WATERFALL', 'fcf.SEM_API': 'API do dashboard indisponível (publique a pasta e reinicie o app)', 'fcf.LIMITE': 'Muitos pedidos; tente em 1 minuto' },
-    en: { 'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No dashboard load (ID_DASH 16) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the ID_DASH 16 load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+    en: { 'c.pendente': 'Pending final updates', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
+      'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
+      'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
+      'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No dashboard load (ID_DASH 16) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the ID_DASH 16 load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period',
       'fcf.ref': 'ref. {ref}', 'fcf.semRef': 'IBP.WATERFALL has no reference up to {mes}/{ano}',
@@ -856,21 +905,31 @@ window.HOB_CARREGAR(function (aviso) {
       '<text class="b-val" x="' + (x + BW / 2) + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(v, dec) + '</text>';
   }
   function paresSvg(grupos, W, H, cfg) {
-    var MT = (state.delta ? 46 : 20) * K, MB = Math.max(16 * K, MB_MIN), n = grupos.length, PW = W / n;
+    var pend = pendente(cfg.at), MT = ((state.delta ? 46 : 20) + (pend ? 24 : 0)) * K, MB = Math.max(16 * K, MB_MIN), n = grupos.length, PW = W / n;
     // largura proporcional ao espaço de cada janela (cresce com a tela; o COO limita a 30 px por ser um card estreito)
     var BW = Math.max(16, Math.min(72, PW * 0.36)), GAP = Math.max(8, Math.min(28, PW * 0.1));
     var vals = []; grupos.forEach(function (g) { vals.push(g.b, g.a); });
     var y = escalaY(vals, MT, MB, H), y0 = y(0), rot = [cfg.titulo + ' (' + cfg.unid + ').'];
     var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+    // Ciclo pendente (como o COO): a barra A|F do mês fica tracejada, sem valor nem delta; os demais períodos esmaecidos
     grupos.forEach(function (g, i) {
-      var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, dl = delta(g.b, g.a, cfg.pol, cfg.casas);
-      out += barra(xb, BW, y, y0, g.b, 'g-b', cfg.casas, g.lb + ' · Budget: ' + fmt(g.b, cfg.casas) + ' ' + cfg.unid);
-      out += barra(xa, BW, y, y0, g.a, 'g-a', cfg.casas, g.la + ': ' + fmt(g.a, cfg.casas) + ' ' + cfg.unid);
-      out += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(g.lb) + '</text>';
-      out += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(g.la) + '</text>';
-      if (state.delta) out += cota(y, y0, xb + BW, xa, g.b, g.a, dl);
-      rot.push(g.lb + ' ' + fmt(g.b, cfg.casas) + ', ' + g.la + ' ' + fmt(g.a, cfg.casas) + (state.delta ? ', ' + S.t('g.var') + ' ' + dl.txt : '') + '.');
+      var xb = i * PW + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP, dl = delta(g.b, g.a, cfg.pol, cfg.casas), vazio = pend && i === 0, o = '';
+      o += barra(xb, BW, y, y0, g.b, 'g-b', cfg.casas, g.lb + ' · Budget: ' + fmt(g.b, cfg.casas) + ' ' + cfg.unid);
+      if (vazio) {
+        var yg = y(g.b);
+        o += '<rect class="b-ghost" x="' + (xa + .6) + '" y="' + Math.min(yg, y0) + '" width="' + (BW - 1.2) + '" height="' + Math.max(Math.abs(y0 - yg), 6) + '" rx="3" data-tip="' + esc(g.la + ' · ' + S.t('c.mesVazio')) + '"/>';
+        o += '<text class="b-ghost-txt" x="' + (xa + BW / 2) + '" y="' + (Math.min(yg, y0) - 6) + '" text-anchor="middle">—</text>';
+      } else o += barra(xa, BW, y, y0, g.a, 'g-a', cfg.casas, g.la + ': ' + fmt(g.a, cfg.casas) + ' ' + cfg.unid);
+      o += '<text class="b-axis" x="' + (xb + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(g.lb) + '</text>';
+      o += '<text class="b-axis" x="' + (xa + BW / 2) + '" y="' + (H - MB + 13 * K) + '" text-anchor="middle">' + esc(g.la) + '</text>';
+      if (state.delta && !vazio) o += cota(y, y0, xb + BW, xa, g.b, g.a, dl);
+      out += pend && i > 0 ? '<g class="b-stale">' + o + '</g>' : o;
+      rot.push(g.lb + ' ' + fmt(g.b, cfg.casas) + ', ' + g.la + ' ' + (vazio ? S.t('c.mesVazio') : fmt(g.a, cfg.casas) + (state.delta ? ', ' + S.t('g.var') + ' ' + dl.txt : '')) + '.');
     });
+    if (pend) {
+      rot.unshift(S.t('c.pendente') + '. ' + detalheCiclo(cfg.at) + '.');
+      out += faixaCiclo(cfg.at, Math.max(2, PW / 2 - GAP / 2 - BW - 2), W);
+    }
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rot.join(' ')) + '">' + out + '</svg>';
   }
 
@@ -1069,7 +1128,7 @@ window.HOB_CARREGAR(function (aviso) {
     if (cfg.tipo === 'allinStack') ctl = '<ul class="legend legend-stack">' + CAMADAS.slice().reverse().map(function (c) {
       return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
     }).join('') + '</ul>';
-    return '<article class="card" style="grid-area:' + cfg.area + '">' +
+    return '<article class="card' + (pendente(situacao(cfg)) ? ' is-pend' : '') + '" id="card-' + i + '" style="grid-area:' + cfg.area + '">' +
       '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.unid ? ' <span class="card-unit">(' + esc(semParenteses(cfg.unid)) + ')</span>' : '') + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4></div>' + ctl + '</div>' +
       '<div class="chart" data-card="' + i + '"></div></article>';
   }
@@ -1096,14 +1155,49 @@ window.HOB_CARREGAR(function (aviso) {
     var d = dadosBu();
     return { sus: recortes(d.sus, true), cost: recortes(d.cost, true), byp: recortes(d.byp, true) };
   }
+  // ── Situação do ciclo (SG_STATUS/DT_ATUALIZACAO da carga, api/atualizacao), como o COO ──
+  // Chave do gráfico: opção do seletor do EBITDA (vbm.ebitda.<opção>) ou <bu>.<série>. Mês anterior ao mês do
+  // ciclo da carga já está fechado (atualizado); do mês do ciclo em diante vale a situação gravada
+  function situacao(cfg) {
+    var A = window.HOB_ATUALIZACAO;
+    if (!A || !A.ok || !A.cards) return null;
+    var k = cfg.tipo === 'ebitdaVbm' ? 'vbm.ebitda.' + state.sel.ebitda : cfg.ind ? state.bu + '.' + cfg.ind : null, s = k && A.cards[k];
+    if (!s) return null;
+    var mc = A.mesCiclo;
+    if (mc && state.ano * 12 + state.mes < mc.ano * 12 + mc.mes) return { status: 'ok', dt: s.dt };
+    return s;
+  }
+  function pendente(at) { return !!(at && at.status !== 'ok'); }
+  var ICO_RELOGIO = '<circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.3 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>';
+  // Data como gravada no banco (o mssql entrega datetime como UTC)
+  function dataCarga(dt) {
+    var d = new Date(dt);
+    if (!dt || isNaN(d)) return null;
+    var l = S.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l, { timeZone: 'UTC' }) + ' ' + d.toLocaleTimeString(l, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+  }
+  function detalheCiclo(at) { var dt = dataCarga(at.dt); return dt ? S.t('c.ultima', { dt: dt }) : S.t('c.nenhuma'); }
+  // Faixa "Pending final updates" no alto do gráfico
+  function faixaCiclo(at, fx, W) {
+    var txtC = S.t('c.pendente'), detC = detalheCiclo(at), fw = Math.min(W - fx - 2, txtC.length * 5.7 + 30);
+    return '<g class="cyc-faixa" tabindex="0" data-tip="' + esc(detC) + '" aria-label="' + esc(txtC + '. ' + detC) + '">' +
+      '<rect x="' + fx + '" y="2" width="' + fw + '" height="19" rx="9.5"/>' +
+      '<g fill="none" transform="translate(' + (fx + 7) + ' 5.5) scale(.75)">' + ICO_RELOGIO + '</g>' +
+      '<text x="' + (fx + 23) + '" y="15.2">' + esc(txtC) + '</text></g>';
+  }
   function svgDoCard(cfg, W, H) {
+    var at = situacao(cfg), svg = svgDoCard0(Object.assign({}, cfg, { at: at }), W, H);
+    // gráficos sem marcação própria (curva, pontes): só a faixa no alto
+    return pendente(at) && svg.indexOf('cyc-faixa') < 0 ? svg.replace(/<\/svg>$/, faixaCiclo(at, 2, W) + '</svg>') : svg;
+  }
+  function svgDoCard0(cfg, W, H) {
     cfg = doCadastro(cfg);
     var d = dadosBu();
     if (cfg.tipo === 'ebitdaVbm') {
       if (ebitdaErro()) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ebitdaErro() }));
       // um negócio por vez (seletor): VBM = site 40 do banco (sem ele, na demonstração, a soma dos segmentos)
       var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut, vbm: d.ebitdaVbm || somaSerie([d.ebitdaCu, d.ebitdaNi, d.ebitdaOut]) }[state.sel.ebitda];
-      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', casas: cfg.doBanco ? cfg.casas : state.sel.ebitda === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // casas do cadastro; sem ele, Others pequeno: 2 casas em US$ bn
+      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', at: cfg.at, casas: cfg.doBanco ? cfg.casas : state.sel.ebitda === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // casas do cadastro; sem ele, Others pequeno: 2 casas em US$ bn
     }
     if (cfg.tipo === 'allin') {
       var c = allinComp(), k = state.sel.allin;
@@ -1220,8 +1314,72 @@ window.HOB_CARREGAR(function (aviso) {
     dash.innerHTML = b.cards.map(cardHtml).join('');
     dash.querySelectorAll('.chart').forEach(function (el) { ro.observe(el); });
     desenharTodos(true);
+    renderCiclo();
     if (primeira) { primeira = false; setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600); }
   }
+
+  // ── Resumo do ciclo no cabeçalho (como o COO): quantos gráficos aguardam a atualização final do mês ──
+  var cicloFoco = false;
+  function renderCiclo() {
+    var box = document.getElementById('cycleBox'), total = 0, pend = [], marcas = '';
+    bu().cards.forEach(function (c, i) {
+      var at = situacao(c);
+      if (!at) return; // sem situação conhecida: fora da conta
+      total++;
+      marcas += '<i class="' + (at.status === 'ok' ? '' : 'w') + '"></i>';
+      if (at.status !== 'ok') pend.push({ i: i, t: doCadastro(c).titulo.replace('{ano}', state.ano), at: at });
+    });
+    var mes = (MESES_LONGOS[S.idioma] || MESES_LONGOS.en)[state.mes - 1];
+    if (!pend.length) cicloFoco = false;
+    dash.classList.toggle('foco-pendentes', cicloFoco);
+    box.hidden = !total;
+    if (!total) { box.innerHTML = ''; return; }
+    if (!pend.length) { box.innerHTML = '<span class="cycle-ok">' + esc(S.t('c.tudoOk', { mes: mes })) + '</span>'; return; }
+    var aberto = box.querySelector('.cycle-pop') && !box.querySelector('.cycle-pop').hidden;
+    box.innerHTML = '<button type="button" class="cycle" id="cycleBtn" aria-expanded="' + !!aberto + '" aria-controls="cyclePop">' +
+      '<span class="cycle-bar" aria-hidden="true">' + marcas + '</span><span><b>' + esc(S.t('c.resumo', { n: pend.length, total: total })) + '</b> ' + esc(S.t('c.resumoTxt')) + '</span></button>' +
+      '<div class="cycle-pop" id="cyclePop" role="dialog" aria-label="' + esc(S.t('c.titulo', { mes: mes, ano: state.ano })) + '"' + (aberto ? '' : ' hidden') + '>' +
+      '<h4>' + esc(S.t('c.titulo', { mes: mes, ano: state.ano })) + '</h4><p>' + esc(S.t('c.info')) + '</p>' +
+      pend.map(function (it) {
+        return '<button type="button" class="cyc-item" data-card="' + it.i + '"><span class="dot" aria-hidden="true"></span>' +
+          '<span>' + esc(it.t) + '</span><span class="sub">' + esc(S.t('c.pendente') + ' · ' + detalheCiclo(it.at)) + '</span></button>';
+      }).join('') +
+      '<div class="cyc-foot"><button type="button" class="cyc-foco" aria-pressed="' + cicloFoco + '">' + esc(S.t('c.destacar')) + '</button></div></div>';
+  }
+  function abrirCiclo(sim, devolverFoco) {
+    var pop = document.getElementById('cyclePop'), btn = document.getElementById('cycleBtn');
+    if (!pop || !btn) return;
+    pop.hidden = !sim;
+    btn.setAttribute('aria-expanded', String(sim));
+    if (!sim && devolverFoco) btn.focus();
+  }
+  document.getElementById('cycleBox').addEventListener('click', function (e) {
+    if (e.target.closest('#cycleBtn')) { abrirCiclo(document.getElementById('cyclePop').hidden); return; }
+    var foco = e.target.closest('.cyc-foco');
+    if (foco) {
+      cicloFoco = !cicloFoco;
+      foco.setAttribute('aria-pressed', String(cicloFoco));
+      dash.classList.toggle('foco-pendentes', cicloFoco);
+      return;
+    }
+    var item = e.target.closest('.cyc-item');
+    if (item) {
+      var card = document.getElementById('card-' + item.getAttribute('data-card'));
+      abrirCiclo(false);
+      if (!card) return;
+      card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      card.classList.remove('cyc-flash'); void card.offsetWidth; card.classList.add('cyc-flash');
+      var selo = card.querySelector('.cyc-faixa'); if (selo) selo.focus({ preventScroll: true });
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var pop = document.getElementById('cyclePop');
+    if (pop && !pop.hidden && !e.target.closest('#cycleBox')) abrirCiclo(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    var pop = document.getElementById('cyclePop');
+    if (e.key === 'Escape' && pop && !pop.hidden) abrirCiclo(false, true);
+  });
 
   // Dica (data-tip) como no COO
   var tip = document.getElementById('tip');

@@ -26,7 +26,8 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 --   Chave da tabela: DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, CD_PERIODO,
 --   ID_TIPO_VISAO. Trimestre e ano só do mesmo ano do mês da linha (ORDEM_ANO = YEAR(DT_IND)), como
 --   o COO faz com YEAR(...) = YEAR(...): com @DT_FIM no ano seguinte, a mesma chave apareceria duas vezes
---   Sem NM_USUARIO: a coluna não existe na tabela. DT_ATUALIZACAO = data e hora da gravação (para conferir)
+--   Sem NM_USUARIO: a coluna não existe na tabela. SG_STATUS e DT_ATUALIZACAO: 007_status_atualizacao_hob.sql
+--   (agendar logo depois desta carga, como o 004 do COO)
 --   Rodar de novo no mesmo mês apaga e regrava só DT_REF + ID_DASH 16.
 -- ════════════════════════════════════════════════════════════════════
 SET XACT_ABORT ON;
@@ -65,11 +66,11 @@ WHERE DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH;
 INSERT INTO IBP.PHUB_PERFORMANCESTUDIO
   (DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI,
    ID_TIPO_VISAO, NM_TIPO_VISAO, NM_VISAO, VL_KPI,
-   CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO, DT_ATUALIZACAO)
+   CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO)
 SELECT
   @DT_CARGA, HOB.DT_IND, @ID_DASH, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
   HOB.ID_TIPO_VISAO_VBM, MAX(HOB.NM_TYPE), MAX(HOB.[Type]), SUM(ISNULL(HOB.[Value], 0)),
-  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO, GETDATE()
+  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
 FROM (
 
 ----------------------------------------------------------------------------------------------------------------------------------
