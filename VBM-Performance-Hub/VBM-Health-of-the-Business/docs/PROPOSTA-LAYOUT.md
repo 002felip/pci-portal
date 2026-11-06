@@ -84,7 +84,7 @@ Variáveis (no `app.yaml` do Portal):
 
 | Gráfico | Fonte |
 |---|---|
-| EBITDA (US$, seletor VBM, Copper, Nickel, Others) | `IBP.PHUB_PERFORMANCESTUDIO`, carga do Health of the Business (`ID_DASH` 16), mês a mês: `ID_KPI` 73 nos sites Copper 38 e Nickel 39 (barras; na opção VBM, empilhadas) e VBM 40 (o total, escrito por fora da coluna); Others = soma dos `ID_KPI` 45 + 102 + 46 da operação 11 (`database/004_hob_ebitda.sql`) |
+| EBITDA (US$, seletor VBM, Copper, Nickel, Others) | `IBP.PHUB_PERFORMANCESTUDIO`, carga do Health of the Business (`ID_DASH` 16), mês a mês: `ID_KPI` 73, um negócio por vez pelo seletor: VBM = site 40, Copper = site 38, Nickel = site 39 (barras B × A|F); Others = soma dos `ID_KPI` 45 + 102 + 46 da operação 11 (`database/004_hob_ebitda.sql`) |
 | 2026 EBITDA YEAR | `IBP.WATERFALL`, `ID_SITE` 40, `ID_TIPO` 3, desde 2025 (`database/002_hob_waterfall.sql`) |
 | FCF YEAR | `IBP.WATERFALL`, `ID_SITE` 40, `ID_TIPO` 2, desde 2025 |
 | Copper e Nickel: EBITDA | Mesma carga (`ID_DASH` 16), `ID_KPI` 73, site 38 (Copper) e 39 (Nickel) |

@@ -10,7 +10,7 @@
    Regras:
      só o mês (CD_PERIODO 'MONTH'); a tela soma trimestre, YTD, YTG e ano.
      ID_TIPO_VISAO (padrão VBM da tabela): 1 = Budget, 3 = Act/Fcst (Plan não é usado).
-     KPI 73: Copper = site 38, Nickel = site 39 (as barras), VBM = site 40 (o total, por fora da coluna).
+     KPI 73: VBM = site 40, Copper = site 38, Nickel = site 39 (um negócio por vez no seletor da tela).
      Others = soma dos KPIs 45 + 102 + 46 da operação 11 (ebitda.outros) — por isso ID_OPERACAO no resultado.
      IBP.DASHBOARD entra só para unidade e casas decimais (LEFT JOIN: o KPI não precisa estar
      cadastrado no ID_DASH para ser lido).
