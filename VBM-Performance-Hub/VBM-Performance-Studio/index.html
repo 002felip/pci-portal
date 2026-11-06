@@ -195,13 +195,17 @@ html[data-bg="dark"] .dash-situacao b { color: #F5B94A; }
 .dash-situacao.is-ok { cursor: default; }
 .dash-situacao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-situacao[hidden], .chart-situacao[hidden] { display: none; }
-.dash-titulo.com-situacao { padding-bottom: 26px; }
 .cycle-bar { display: inline-flex; gap: 2px; }
 .cycle-bar i { width: 3px; height: 9px; border-radius: 2px; background: var(--cyc-ok); opacity: .85; }
 .cycle-bar i.w { background: transparent; border: 1.3px dashed var(--wait); opacity: 1; }
-.chart-situacao { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 2px 10px 2px 7px; border-radius: 999px;
-  border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .68rem/1.4 'Poppins', 'Segoe UI', sans-serif; }
+.chart-situacao { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 1px 9px 1px 6px; border-radius: 999px;
+  border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .66rem/1.25 'Poppins', 'Segoe UI', sans-serif;
+  grid-column: 2; justify-self: start; white-space: nowrap; }
+/* Selo na linha da unidade: chegar depois dos dados não muda a altura do cabeçalho nem move as barras */
+.chart-header { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; }
+.chart-header > .chart-title { grid-column: 1 / -1; }
 .chart-situacao svg { width: 13px; height: 13px; flex-shrink: 0; }
+.charts-board.is-carregando > .main-wrapper { visibility: hidden; } /* abrindo: só aparece com os dados da referência do dashboard */
 .charts-board.foco-pendentes > .main-wrapper:not(.is-pend) { opacity: .28; filter: grayscale(1); }
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
@@ -3431,6 +3435,25 @@ async function buscarJsonDaApi(baseHref, recurso) {
   return res.json();
 }
 
+// Situação de atualização dos KPIs (mesma regra do COO), buscada depois dos dados: entra nas
+// linhas já carregadas e só atualiza selos e resumo, sem redesenhar os gráficos
+async function carregarSituacaoDepois(base, dtRef) {
+  let situacoes = [];
+  try { situacoes = await buscarJsonDaApi(base, dtRef ? `chart-data/status?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data/status'); } catch (e) { return; }
+  if ((dtRef || null) !== (dadosCarga.dtRef || null)) return; // outra referência foi carregada nesse meio-tempo
+  const chave = r => `${r.ID_SISTEMA}|${r.ID_SITE}|${r.ID_OPERACAO}|${r.ID_KPI}`;
+  const porKpi = new Map((Array.isArray(situacoes) ? situacoes : []).map(x => [chave(x), x]));
+  allRows.forEach(r => { const st = porKpi.get(chave(r)); r.SG_STATUS = st ? st.SG_STATUS : null; r.DT_ATU_KPI = st ? st.DT_ATUALIZACAO : null; });
+  marcarSituacaoDeTodos();
+}
+// Selo de cada gráfico com os filtros dele (o contexto do gráfico ativo é emprestado e devolvido)
+function marcarSituacaoDeTodos() {
+  const ativo = activeChart;
+  if (ativo) stashActive();
+  try { charts.forEach(c => { activeChart = c; loadFilters(c.filters); marcarSituacaoDoGrafico(); }); }
+  finally { activeChart = ativo; if (ativo) loadFilters(ativo.filters); }
+}
+
 // Referência (mês/ano = mês final do YTD) dos dados em allRows. dtRef null =
 // carga mais recente; semCarga = o banco não tem a carga do mês escolhido.
 const dadosCarga = { dtRef: null, semCarga: false };
@@ -3442,23 +3465,18 @@ async function loadPerformanceHubData(dtRef) {
   const recursoDados = dtRef ? `chart-data?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data';
   for (const base of basesDaApiResolvidas()) {
     try {
-      const [chartRows, sitesList, situacoes] = await Promise.all([
+      const [chartRows, sitesList] = await Promise.all([
         buscarJsonDaApi(base, recursoDados),
-        buscarJsonDaApi(base, 'sites'),
-        // Situação de atualização dos KPIs (mesma regra do COO); sem ela a tela só não marca pendências
-        buscarJsonDaApi(base, dtRef ? `chart-data/status?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data/status').catch(() => [])
+        buscarJsonDaApi(base, 'sites')
       ]);
-      const chaveKpi = r => `${r.ID_SISTEMA}|${r.ID_SITE}|${r.ID_OPERACAO}|${r.ID_KPI}`;
-      const situacaoPorKpi = new Map((Array.isArray(situacoes) ? situacoes : []).map(x => [chaveKpi(x), x]));
       const siteNameById = new Map(sitesList.map(s => [s.ID_SITE ?? s.id_site, s.NM_SITE ?? s.nm_site]));
       performanceHubApiBase = base; // as rotas de configuração usam a mesma base
       setDataFallbackWarning(false);
+      // Os gráficos aparecem já; a situação de atualização chega depois e só marca as pendências
+      setTimeout(() => carregarSituacaoDepois(base, dtRef), 0);
       console.info(`[performance-hub] dados reais carregados de ${new URL(base).pathname}`);
       return {
-        linhas: chartRows.map(r => {
-          const st = situacaoPorKpi.get(chaveKpi(r));
-          return { ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null, SG_STATUS: st ? st.SG_STATUS : null, DT_ATU_KPI: st ? st.DT_ATUALIZACAO : null };
-        }).filter(isVisaoSuportada),
+        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada),
         semCarga: false
       };
     } catch (err) {
@@ -4272,7 +4290,6 @@ function atualizarResumoSituacao() {
   btn.hidden = !conhecidos.length;
   btn.classList.toggle('is-ok', !pend.length);
   btn.disabled = !pend.length;
-  btn.closest('.dash-titulo').classList.toggle('com-situacao', !btn.hidden);
   // Uma marca por gráfico (cheia = atualizado, tracejada = pendente), como no COO
   const marcas = conhecidos.map(c => `<i class="${c.situacao.pendente ? 'w' : ''}"></i>`).join('');
   btn.innerHTML = pend.length
@@ -6491,7 +6508,7 @@ async function recarregarDadosDoDashboard(d) {
     renderAllCharts();
     if (semCarga) { mostrarAviso(tx('ui.dash_sem_carga', { ref: nomeDtRef(alvo) }), true); announce(tx('ui.dash_sem_carga', { ref: nomeDtRef(alvo) })); }
   } finally {
-    if (vez === recarregarDadosDoDashboard.vez) { setFiltersInitialLoading(false); renderDash(); }
+    if (vez === recarregarDadosDoDashboard.vez) { setFiltersInitialLoading(false); board.classList.remove('is-carregando'); renderDash(); }
   }
 }
 const baseDoNome = n => String(n || '').replace(/\s+-\s+[A-Za-z]+\s+\d{4}$/, '').trim() || DASH_NOME_BASE;
@@ -6540,8 +6557,17 @@ function lerDashboardsLocais() {
     return Array.isArray(v) ? v.filter(d => d && d.nome && d.mesRef && d.anoRef) : [];
   } catch (e) { return []; }
 }
+// Dashboard aberto fica no endereço (?dash=<id>): atualizar a página (F5) volta para ele
+function lembrarDashNaUrl(d) {
+  try {
+    const url = new URL(location.href);
+    if (d && d.id != null) url.searchParams.set('dash', String(d.id)); else url.searchParams.delete('dash');
+    if (url.href !== location.href) history.replaceState(history.state, '', url);
+  } catch (e) { /* sem History API: só não lembra */ }
+}
 function definirDashAtual(d) {
   dash.atual = d || null;
+  lembrarDashNaUrl(dash.atual);
   updateChartActionButtons(); // texto do quadro vazio depende de haver dashboard
   // Leitor: só Dashboards e Filtros; o que mudar no quadro não é gravado
   document.body.classList.toggle('is-somente-leitura', !!d && !podeAlterar(d));
@@ -6949,6 +6975,8 @@ function abrirDashboard(id, silencioso) {
   if (!d) { if (!silencioso) msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); return false; }
   if (!silencioso && !podeDescartarDash(`abrir:${d.id}`)) return false;
   definirDashAtual(null); // não grava o quadro antigo por cima do dashboard que vai abrir
+  // Referência diferente da carga na tela: os gráficos esperam os dados certos (uma animação só)
+  if (dtRefDe(d) !== dadosCarga.dtRef) board.classList.add('is-carregando');
   const layout = layoutNaReferencia(d);
   const ajustado = layout !== d.layout; // períodos levados para a referência do dashboard
   substituirQuadro(layout);
@@ -7346,8 +7374,12 @@ function initDashboards() {
   $qe('dashExcel').addEventListener('click', baixarExcelDashboard);
   $qe('dashSituacao').addEventListener('click', alternarFocoPendentes);
   renderDash();
-  // Nenhum dashboard abre sozinho: a lista fica pronta para o usuário escolher ou criar
-  carregarDashboards().then(renderDash);
+  // Nenhum dashboard abre sozinho, exceto o que estava aberto antes de atualizar a página (?dash=)
+  const doEndereco = new URLSearchParams(location.search).get('dash');
+  carregarDashboards().then(() => {
+    renderDash();
+    if (doEndereco && !dash.atual && !abrirDashboard(doEndereco, true)) lembrarDashNaUrl(null); // excluído ou sem acesso
+  });
 }
 
 function recolherPainel() {
