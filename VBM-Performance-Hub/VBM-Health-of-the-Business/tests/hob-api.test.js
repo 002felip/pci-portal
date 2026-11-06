@@ -68,7 +68,10 @@ test('003_carga_mensal_hob.sql: query do Health of the Business (ID_DASH 16) no 
   // colunas da tabela (sem NM_USUARIO), CD_PERIODO aceito (YTG fora) e chave única entre anos
   assert.ok(!/NM_USUARIO/.test(s.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n')), 'NM_USUARIO não existe na tabela');
   assert.match(s, /WHERE HOB\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YEAR'\)/);
-  assert.match(s, /HOB\.ORDEM_ANO = YEAR\(HOB\.DT_REF\)/);
+  assert.match(s, /HOB\.ORDEM_ANO = YEAR\(HOB\.DT_IND\)/);
+  // DT_IND explícito em cada um dos 5 blocos (o mês da linha) e gravado pelo nome
+  assert.strictEqual((s.match(/DT_REF AS 'DT_IND'/g) || []).length, 5);
+  assert.match(s, /@DT_CARGA, HOB\.DT_IND, @ID_DASH/);
   // fontes da query original
   for (const t of ['PEDRAVISAOCONSOLIDADA', 'PEDRAVISAOTRIMESTRE', 'PEDRAVISAOYEARTODATE', 'PEDRAVISAOYEARTOGO', 'PEDRAVISAOANO']) assert.ok(s.includes('IBP.' + t), t);
   // junções com separador (sem colisão de CONCAT), como no COO
