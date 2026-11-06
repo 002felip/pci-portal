@@ -62,7 +62,6 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; transition: background-color .18s ease, color .18s ease; }
 .seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
 .seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
-.ciclo-sel { min-height: 32px; padding: 2px 8px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; }
 .switch { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); cursor: pointer; }
 .switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
 .switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
@@ -285,6 +284,20 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .topnav-user-avatar { width: 30px; height: 30px; }
 }
 /* ═══ fim Setup Dashboards ═══ */
+/* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro (como o COO) */
+.unit { position: relative; }
+.unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.unit-trigger:hover, .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.unit-caret { color: var(--text-soft); transition: transform .18s ease; }
+.unit-trigger[aria-expanded="true"] .unit-caret { transform: rotate(180deg); }
+.unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; padding: 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: 0 14px 34px rgba(15,23,42,.16); }
+.unit-pop[hidden] { display: none; }
+.unit-list { display: flex; flex-direction: column; gap: 2px; }
+.unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; white-space: nowrap; }
+.unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.ciclo-pop { width: auto; min-width: 120px; }
+.ciclo-pop .unit-list { max-height: min(60vh, 360px); overflow-y: auto; }
+.unit-list button[data-ciclo][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
 /* Situação do ciclo (Pending final updates), como o COO */
 :root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
@@ -425,7 +438,14 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
     <h2 id="buName">—</h2>
     <div class="filters">
-      <div class="filter" id="fCiclo" hidden><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span><select class="ciclo-sel" id="cicloSel" aria-labelledby="lblCiclo"></select></div>
+      <div class="filter" id="fCiclo" hidden><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span>
+        <div class="unit ciclo">
+          <button type="button" class="unit-trigger" id="cicloTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="cicloPop" aria-describedby="lblCiclo">
+            <span id="cicloTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop ciclo-pop" id="cicloPop" hidden><div class="unit-list" id="cicloLista" role="group" aria-labelledby="lblCiclo"></div></div>
+        </div>
+      </div>
       <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span><div class="seg" role="group" aria-labelledby="lblBu" data-filter="bu"></div></div>
       <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
       <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
@@ -706,7 +726,7 @@ window.HOB_CARREGAR = function (iniciar) {
   }
   var q = ciclo ? '?ciclo=' + encodeURIComponent(ciclo) : '';
   function falha(r) { return { ok: false, codigo: (r.j && r.j.codigo) || (r.status === 404 ? 'SEM_API' : r.status ? 'ERRO_BANCO' : 'SEM_API'), detalhe: r.j && r.j.detalhe }; }
-  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q), ler('api/atualizacao' + q)]).then(function (rs) {
+  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q), ler('api/atualizacao' + q), ler('api/ciclos')]).then(function (rs) {
     var x = rs[0];
     // pontes de IBP.WATERFALL: uma por referência (DT_REF)
     window.HOB_PONTES = {};
@@ -720,6 +740,9 @@ window.HOB_CARREGAR = function (iniciar) {
     // Demais séries da carga do COO (Copper, Nickel e Capex): só as configuradas com ID_KPI
     var c = rs[4];
     window.HOB_COO = c.ok && c.j && c.j.series ? Object.assign({ ok: true }, c.j) : Object.assign(falha(c), { configuradas: (c.j && c.j.configuradas) || [] });
+    // Ciclos = cargas gravadas (DT_REF 'AAAA-MM'), a mais recente primeiro; o escolhido vem de ?ciclo= (sem ele, o mais recente)
+    var cs = rs[6], lista = cs.ok && cs.j && cs.j.ciclos ? cs.j.ciclos.map(function (c) { return c.ciclo; }) : [];
+    window.HOB_CICLOS = { lista: lista, atual: lista.indexOf(ciclo) >= 0 ? ciclo : lista[0] || null };
     // Situação da atualização (SG_STATUS/DT_ATUALIZACAO do 007): sem ela, a tela fica sem o aviso
     var at = rs[5];
     window.HOB_ATUALIZACAO = at.ok && at.j && at.j.cards ? Object.assign({ ok: true }, at.j) : falha(at);
@@ -830,6 +853,7 @@ window.HOB_CARREGAR(function (aviso) {
   ];
 
   // ── Estado (na URL, para o link poder ser compartilhado) ──
+  var CICLO = window.HOB_CICLOS || { lista: D.ciclos || [], atual: D.ciclo || null };
   var U = D.ultimoReal, q = new URLSearchParams(location.search);
   var state = {
     bu: BUS.some(function (b) { return b.chave === q.get('bu'); }) ? q.get('bu') : 'vbm',
@@ -840,7 +864,7 @@ window.HOB_CARREGAR(function (aviso) {
   };
   function gravarUrl() {
     var p = { bu: state.bu, ano: state.ano, mes: state.mes, ebitda: state.sel.ebitda, allin: state.sel.allin };
-    if (D.ciclo) p.ciclo = D.ciclo;
+    if (CICLO.atual && new URLSearchParams(location.search).get('ciclo')) p.ciclo = CICLO.atual;
     if (!state.delta) p.delta = 'off';
     history.replaceState(null, '', '?' + new URLSearchParams(p));
   }
@@ -1283,9 +1307,44 @@ window.HOB_CARREGAR(function (aviso) {
     state.sel[b.getAttribute('data-sel')] = b.getAttribute('data-v');
     gravarUrl(); render();
   });
-  // Trocar o ciclo relê a carga daquele mês (nova ida à API), mantendo os demais filtros
-  document.getElementById('cicloSel').addEventListener('change', function (e) {
-    var p = new URLSearchParams(location.search); p.set('ciclo', e.target.value); location.search = p.toString();
+  // ── Ciclo (como o COO): carga gravada (DT_REF). Trocar o ciclo relê os dados daquela carga; a BU e os
+  // seletores continuam, e ano e mês voltam ao último realizado do ciclo
+  var cicloTrigger = document.getElementById('cicloTrigger'), cicloPop = document.getElementById('cicloPop');
+  function rotuloCiclo(c) { var p = String(c || '').split('-'); return p.length === 2 ? mesesCurtos()[Number(p[1]) - 1] + '/' + p[0].slice(2) : '—'; }
+  function renderCicloSel() {
+    document.getElementById('fCiclo').hidden = !CICLO.lista.length;
+    document.getElementById('cicloTxt').textContent = rotuloCiclo(CICLO.atual);
+    document.getElementById('cicloLista').innerHTML = CICLO.lista.map(function (c) {
+      return '<button type="button" data-ciclo="' + esc(c) + '" aria-pressed="' + (c === CICLO.atual) + '">' + esc(rotuloCiclo(c)) + '</button>';
+    }).join('');
+  }
+  function abrirCicloSel(abrir) {
+    cicloPop.hidden = !abrir;
+    cicloTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) {
+      renderCicloSel();
+      var sel = cicloPop.querySelector('button[aria-pressed="true"]') || cicloPop.querySelector('button');
+      if (sel) sel.focus();
+    }
+  }
+  cicloTrigger.addEventListener('click', function () { abrirCicloSel(cicloPop.hidden && CICLO.lista.length > 0); });
+  cicloPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var b = e.target.closest('button[data-ciclo]');
+    if (!b) return;
+    var c = b.getAttribute('data-ciclo');
+    abrirCicloSel(false);
+    cicloTrigger.focus();
+    if (c === CICLO.atual) return;
+    var p = new URLSearchParams(location.search);
+    p.set('ciclo', c); p.delete('ano'); p.delete('mes');
+    location.search = p.toString();
+  });
+  document.addEventListener('click', function (e) {
+    if (!cicloPop.hidden && !e.target.closest('.ciclo')) abrirCicloSel(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !cicloPop.hidden) { abrirCicloSel(false); cicloTrigger.focus(); }
   });
   var pend = 0, ro = new ResizeObserver(function () { cancelAnimationFrame(pend); pend = requestAnimationFrame(function () { desenharTodos(false); }); });
   var primeira = true;
@@ -1308,9 +1367,7 @@ window.HOB_CARREGAR(function (aviso) {
       }
       return S.t('l.demo') + (doBanco.length ? ' · ' + S.t('l.doBanco', { lista: doBanco.join(', ') }) : '');
     })();
-    var fc = document.getElementById('fCiclo'), cs = document.getElementById('cicloSel');
-    fc.hidden = !(D.ciclos && D.ciclos.length);
-    if (!fc.hidden) cs.innerHTML = D.ciclos.map(function (c) { return '<option value="' + esc(c) + '"' + (c === D.ciclo ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
+    renderCicloSel();
     document.getElementById('updTxt').textContent = D.atualizado ? S.dataHora(new Date(D.atualizado)) : '—';
     ro.disconnect();
     dash.style.gridTemplateAreas = b.areas;
