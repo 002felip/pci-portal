@@ -18,9 +18,10 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 --   DT_REF (tabela) = mês de GETDATE()-2, no dia 1 (ANO-MES-01), com realizado até o mês anterior
 --                     (ex.: 2026-10-01 = realizado até setembro) — a mesma regra do COO
 --   DT_IND (tabela) = DT_IND da query: o DT_REF (mês) da linha
---   CD_PERIODO / ORDEM_VISAO no padrão da tabela: MONTH 1 · QUARTER 2 · (SEMESTER 3) · YTD 4 · YEAR 5
---   YTG (ORDEM_VISAO 6) fica na consulta, mas NÃO é gravado: a tabela aceita só MONTH, QUARTER,
---   SEMESTER, YTD e YEAR em CD_PERIODO (a tela soma o YTG a partir dos meses)
+--   CD_PERIODO / ORDEM_VISAO: MONTH 1 · QUARTER 2 · (SEMESTER 3) · YTD 4 · YEAR 5 · YTG 6
+--   YTG é gravado. A regra de CD_PERIODO da tabela (CHECK de MONTH, QUARTER, SEMESTER, YTD e YEAR, do
+--   Performance Studio) passa a aceitar também YTG: o passo abaixo ajusta a regra só se ela ainda não
+--   aceita (nas próximas execuções não faz nada). Os demais valores continuam aceitos.
 --   ID_TIPO_VISAO (padrão VBM): 1 Budget · 2 Plan · 3 Act/Fcst
 --   Chave da tabela: DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, CD_PERIODO,
 --   ID_TIPO_VISAO. Trimestre e ano só do mesmo ano do mês da linha (ORDEM_ANO = YEAR(DT_IND)), como
@@ -29,6 +30,20 @@ SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP
 --   Rodar de novo no mesmo mês apaga e regrava só DT_REF + ID_DASH 16.
 -- ════════════════════════════════════════════════════════════════════
 SET XACT_ABORT ON;
+
+-- CD_PERIODO aceita YTG (uma vez só): troca a regra de CD_PERIODO que ainda não tem YTG pela mesma lista + YTG
+DECLARE @CK SYSNAME = (
+  SELECT TOP 1 CC.name
+  FROM sys.check_constraints CC
+  WHERE CC.parent_object_id = OBJECT_ID('IBP.PHUB_PERFORMANCESTUDIO')
+    AND CC.definition LIKE '%CD_PERIODO%' AND CC.definition NOT LIKE '%YTG%');
+IF @CK IS NOT NULL
+BEGIN
+  DECLARE @DROP NVARCHAR(400) = N'ALTER TABLE IBP.PHUB_PERFORMANCESTUDIO DROP CONSTRAINT ' + QUOTENAME(@CK);
+  EXEC sp_executesql @DROP;
+  ALTER TABLE IBP.PHUB_PERFORMANCESTUDIO ADD CONSTRAINT CK_PHUB_PERFORMANCESTUDIO_PERIODO
+    CHECK (CD_PERIODO IN ('MONTH', 'QUARTER', 'SEMESTER', 'YTD', 'YEAR', 'YTG'));
+END;
 
 DECLARE @ID_DASH  INT  = 16;
 DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);  -- ex.: 28/10/2026 → 2026-10-01
@@ -507,7 +522,7 @@ WHERE
 	AND DASH.ID_DASH = @ID_DASH
 
 ) AS HOB
-WHERE HOB.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YEAR')                               -- YTG não entra (CD_PERIODO da tabela)
+WHERE HOB.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YEAR', 'YTG')
   AND (HOB.CD_PERIODO NOT IN ('QUARTER', 'YEAR') OR HOB.ORDEM_ANO = YEAR(HOB.DT_IND))   -- trimestre/ano do mesmo ano do mês
 GROUP BY
   HOB.DT_IND, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
