@@ -418,3 +418,21 @@ test('montarEbitda/montarSerieCoo: QUARTER, YTD, YTG e YEAR gravados no mês (DT
   assert.deepStrictEqual(s.per[10].YEAR, { b: 4.94, a: null });
   assert.deepStrictEqual(montarSerieCoo(linhas, 40).anos[2026].per[10].YTG, { b: 1.5, a: 1.2 });
 });
+
+test('/atualizacao: sem SG_STATUS gravado no ciclo, usa a mesma regra direto do log (origem log)', async () => {
+  const { STATUS_SQL, STATUS_LOG_SQL } = require('../hob-api');
+  const chamadas = [];
+  const runQuery = async (q, params) => {
+    chamadas.push({ q, params });
+    if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)) }] };
+    if (q === STATUS_SQL) return { recordset: [] };
+    if (q === STATUS_LOG_SQL) return { recordset: [{ ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'N', DT_ATUALIZACAO: null }] };
+    return { recordset: [] };
+  };
+  const r = await chamar(criarHobRouter({ runQuery, idDash: 16 }), '/atualizacao');
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(r.json.origem, 'log');
+  assert.strictEqual(r.json.cards['vbm.ebitda.vbm'].status, 'pendente');
+  const log = chamadas.find((c) => c.q === STATUS_LOG_SQL);
+  assert.strictEqual(log.params.dtMes[1].toISOString().slice(0, 10), '2026-09-01'); // mês do ciclo 2026-10
+});
