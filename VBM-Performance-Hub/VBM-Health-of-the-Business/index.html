@@ -87,7 +87,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .card-name { min-width: 0; }
 .card-title { margin: 0; font: 400 1rem/1.2 var(--font-display); color: var(--chart-title); }
 .card-title em { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
-.card-unit { font: inherit; color: inherit; }
+.card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); } /* abaixo do título, como o COO */
 .card .seg { flex-wrap: nowrap; flex-shrink: 0; }
 .card .seg button { min-height: 22px; padding: 1px 8px; font-size: .68rem; }
 .chart { position: relative; height: var(--chart-h, 210px); }
@@ -152,6 +152,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 }
 @media (max-width: 1600px) {
   .card-title { font-size: .88rem; }
+  .card-unit { font-size: .68rem; }
   .card .seg button { padding: 1px 5px; font-size: .62rem; }
   .head h2 { font-size: 1.75rem; }
   .filters { gap: 8px 10px; }
@@ -1156,7 +1157,8 @@ window.HOB_CARREGAR(function (aviso) {
       return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
     }).join('') + '</ul>';
     return '<article class="card' + (pendente(situacao(cfg)) ? ' is-pend' : '') + '" id="card-' + i + '" style="grid-area:' + cfg.area + '">' +
-      '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.unid ? ' <span class="card-unit">(' + esc(semParenteses(cfg.unid)) + ')</span>' : '') + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4></div>' + ctl + '</div>' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title">' + esc(titulo) + (cfg.nota ? ' <em>' + esc(cfg.nota) + '</em>' : '') + '</h4>' +
+      '<p class="card-unit">' + (cfg.unid ? '(' + esc(semParenteses(cfg.unid)) + ')' : '&nbsp;') + '</p></div>' + ctl + '</div>' +
       '<div class="chart" data-card="' + i + '"></div></article>';
   }
   function dadosBu() { return D.bu[state.bu][state.ano]; }

@@ -439,6 +439,22 @@ WHERE R.ID_DASH = @idDash
   AND R.DT_REF = @dtRef
   AND R.SG_STATUS IS NOT NULL
 GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+// Sem situação gravada na carga (007 ainda não rodou para o ciclo): a mesma regra do 007 (e do 004 do COO), lida na hora
+// do log — última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês do ciclo (@dtMes) → 'S'
+const STATUS_LOG_SQL = `
+SELECT
+  R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  CASE WHEN MAX(L.DT_ATUALIZACAO) >= @dtMes THEN 'S' ELSE 'N' END AS SG_STATUS,
+  MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+FROM (
+  SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
+  FROM IBP.PHUB_PERFORMANCESTUDIO
+  WHERE ID_DASH = @idDash AND DT_REF = @dtRef
+) R
+LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
+  ON L.ID_SISTEMA = R.ID_SISTEMA AND L.ID_SITE = R.ID_SITE
+  AND L.ID_OPERACAO = R.ID_OPERACAO AND L.ID_KPI = R.ID_KPI
+GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
 function montarAtualizacao(linhas, config, ciclo) {
   const [anoC, mesC] = ciclo.split('-').map(Number);
   const kpis = linhas.map(l => ({ site: Number(l.ID_SITE), op: Number(l.ID_OPERACAO), kpi: Number(l.ID_KPI),
@@ -726,8 +742,18 @@ function criarHobRouter({ runQuery, idDash }) {
       const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, fresco(req))).map(l => cicloDe(l.DT_REF));
       if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
       const ciclo = pedido && ciclos.includes(pedido) ? pedido : ciclos[0];
-      const linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, fresco(req));
-      res.json({ idDash, ...montarAtualizacao(linhas, config, ciclo) });
+      const dtRef = new Date(`${ciclo}-01T00:00:00Z`);
+      let origem = 'carga';
+      let linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef] })).recordset, fresco(req));
+      if (!linhas.length) {
+        // 007 ainda não gravou SG_STATUS neste ciclo: a mesma regra, direto do log
+        origem = 'log';
+        const dtMes = new Date(Date.UTC(dtRef.getUTCFullYear(), dtRef.getUTCMonth() - 1, 1));
+        linhas = await comCache(`/status-log:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_LOG_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
+      }
+      const a = montarAtualizacao(linhas, config, ciclo);
+      if (!Object.keys(a.cards).length) console.warn(`${TAG} /atualizacao: nenhum gráfico com situação no ciclo ${ciclo} (origem ${origem}, ${linhas.length} KPIs)`);
+      res.json({ idDash, origem, ...a });
     } catch (err) {
       if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
       console.error(`${TAG} erro em /atualizacao:`, err.message);
@@ -753,4 +779,4 @@ function criarHobRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { ID_DASH_PADRAO, montarAtualizacao, STATUS_SQL, criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { ID_DASH_PADRAO, montarAtualizacao, STATUS_SQL, STATUS_LOG_SQL, criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
