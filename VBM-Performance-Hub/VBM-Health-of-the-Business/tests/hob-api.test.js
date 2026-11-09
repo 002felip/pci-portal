@@ -436,3 +436,15 @@ test('/atualizacao: sem SG_STATUS gravado no ciclo, usa a mesma regra direto do 
   const log = chamadas.find((c) => c.q === STATUS_LOG_SQL);
   assert.strictEqual(log.params.dtMes[1].toISOString().slice(0, 10), '2026-09-01'); // mês do ciclo 2026-10
 });
+
+test('montarAtualizacao: KPI com log em dia mas sem o realizado do mês do ciclo (SEM_REAL) fica pendente', () => {
+  const { montarAtualizacao, STATUS_SQL, STATUS_LOG_SQL } = require('../hob-api');
+  const a = montarAtualizacao([
+    { ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', SEM_REAL: 1, DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 7)) },
+    { ID_SITE: 38, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', SEM_REAL: 0, DT_ATUALIZACAO: new Date(Date.UTC(2026, 10, 3)) },
+  ], CONFIG_PADRAO, '2026-11');
+  assert.strictEqual(a.cards['vbm.ebitda.vbm'].status, 'pendente');
+  assert.strictEqual(a.cards['vbm.ebitda.vbm'].semReal, true);
+  assert.strictEqual(a.cards['vbm.ebitda.cu'].status, 'ok');
+  for (const q of [STATUS_SQL, STATUS_LOG_SQL]) assert.match(q, /R\.CD_PERIODO = 'MONTH' AND R\.ID_TIPO_VISAO = 3 AND R\.DT_IND = @dtMes/);
+});

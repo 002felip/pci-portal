@@ -429,11 +429,14 @@ function montarSerieCoo(linhas, site) {
 // como o 004 do COO) → situação de cada gráfico que vem da carga. Chave do gráfico:
 //   vbm.ebitda.vbm | vbm.ebitda.cu | vbm.ebitda.ni | vbm.ebitda.out (opções do seletor do EBITDA)
 //   <bu>.<série> de coo.kpis com ID_KPI (ex.: cu.ebitda, ni.ebitda), no site da página
-// Gráfico com algum KPI 'N' → pendente; sem linha com situação → fora (a tela não marca)
+// Gráfico com algum KPI 'N' → pendente; também pendente o KPI sem o realizado (Act) do mês do ciclo na carga
+// (SEM_REAL: valor nulo ou 0 em MONTH/ID_TIPO_VISAO 3 no mês do ciclo), mesmo com o log em dia.
+// Sem linha com situação → fora (a tela não marca)
 const STATUS_SQL = `
 SELECT
   R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
-  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO,
+  CASE WHEN ISNULL(MAX(CASE WHEN R.CD_PERIODO = 'MONTH' AND R.ID_TIPO_VISAO = 3 AND R.DT_IND = @dtMes THEN ABS(R.VL_KPI) END), 0) = 0 THEN 1 ELSE 0 END AS SEM_REAL
 FROM IBP.PHUB_PERFORMANCESTUDIO R
 WHERE R.ID_DASH = @idDash
   AND R.DT_REF = @dtRef
@@ -445,11 +448,14 @@ const STATUS_LOG_SQL = `
 SELECT
   R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
   CASE WHEN MAX(L.DT_ATUALIZACAO) >= @dtMes THEN 'S' ELSE 'N' END AS SG_STATUS,
-  MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+  MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO,
+  MAX(R.SEM_REAL) AS SEM_REAL
 FROM (
-  SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
-  FROM IBP.PHUB_PERFORMANCESTUDIO
-  WHERE ID_DASH = @idDash AND DT_REF = @dtRef
+  SELECT R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  CASE WHEN ISNULL(MAX(CASE WHEN R.CD_PERIODO = 'MONTH' AND R.ID_TIPO_VISAO = 3 AND R.DT_IND = @dtMes THEN ABS(R.VL_KPI) END), 0) = 0 THEN 1 ELSE 0 END AS SEM_REAL
+  FROM IBP.PHUB_PERFORMANCESTUDIO R
+  WHERE R.ID_DASH = @idDash AND R.DT_REF = @dtRef
+  GROUP BY R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI
 ) R
 LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
   ON L.ID_SISTEMA = R.ID_SISTEMA AND L.ID_SITE = R.ID_SITE
@@ -458,7 +464,7 @@ GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
 function montarAtualizacao(linhas, config, ciclo) {
   const [anoC, mesC] = ciclo.split('-').map(Number);
   const kpis = linhas.map(l => ({ site: Number(l.ID_SITE), op: Number(l.ID_OPERACAO), kpi: Number(l.ID_KPI),
-    ok: String(l.SG_STATUS).trim().toUpperCase() === 'S', dt: l.DT_ATUALIZACAO || null }));
+    ok: String(l.SG_STATUS).trim().toUpperCase() === 'S' && !Number(l.SEM_REAL), semReal: !!Number(l.SEM_REAL), dt: l.DT_ATUALIZACAO || null }));
   const situacao = ({ sites, op, ids }) => {
     const achados = kpis.filter(k => ids.includes(k.kpi) && (!sites || !sites.length || sites.includes(k.site)) && (op == null || k.op === op));
     if (!achados.length) return null;
@@ -466,7 +472,7 @@ function montarAtualizacao(linhas, config, ciclo) {
     const dts = base.map(k => k.dt).filter(Boolean).map(d => new Date(d).getTime()).filter(n => !isNaN(n));
     // pendente: a última atualização recebida dos KPIs pendentes (algum sem registro → nenhuma)
     const dt = pend.length && dts.length < pend.length ? null : dts.length ? new Date(Math.max(...dts)).toISOString() : null;
-    return { status: pend.length ? 'pendente' : 'ok', dt, kpis: achados.length, pendentes: pend.length };
+    return { status: pend.length ? 'pendente' : 'ok', dt, kpis: achados.length, pendentes: pend.length, ...(pend.some(k => k.semReal) ? { semReal: true } : {}) };
   };
   const cards = {}, E = config.ebitda;
   for (const seg of ['vbm', 'cu', 'ni']) cards[`vbm.ebitda.${seg}`] = situacao({ sites: E.sites[seg], ids: [E.idKpi] });
@@ -742,13 +748,12 @@ function criarHobRouter({ runQuery, idDash }) {
       const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, fresco(req))).map(l => cicloDe(l.DT_REF));
       if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
       const ciclo = pedido && ciclos.includes(pedido) ? pedido : ciclos[0];
-      const dtRef = new Date(`${ciclo}-01T00:00:00Z`);
+      const dtRef = new Date(`${ciclo}-01T00:00:00Z`), dtMes = new Date(Date.UTC(dtRef.getUTCFullYear(), dtRef.getUTCMonth() - 1, 1));
       let origem = 'carga';
-      let linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef] })).recordset, fresco(req));
+      let linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
       if (!linhas.length) {
         // 007 ainda não gravou SG_STATUS neste ciclo: a mesma regra, direto do log
         origem = 'log';
-        const dtMes = new Date(Date.UTC(dtRef.getUTCFullYear(), dtRef.getUTCMonth() - 1, 1));
         linhas = await comCache(`/status-log:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_LOG_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
       }
       const a = montarAtualizacao(linhas, config, ciclo);
