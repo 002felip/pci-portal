@@ -448,3 +448,15 @@ test('montarAtualizacao: KPI com log em dia mas sem o realizado do mês do ciclo
   assert.strictEqual(a.cards['vbm.ebitda.cu'].status, 'ok');
   for (const q of [STATUS_SQL, STATUS_LOG_SQL]) assert.match(q, /R\.CD_PERIODO = 'MONTH' AND R\.ID_TIPO_VISAO = 3 AND R\.DT_IND = @dtMes/);
 });
+
+test('mapearWaterfall: 2026 EBITDA YEAR com a quebra (zero) depois de FY Act/Fcst — Copper começa outro gráfico', () => {
+  const { mapearWaterfall } = require('../hob-api');
+  const linhas = [['FY M-1 (Act/Fcst)', 4874], ['FX impact', 16], ['Price', -200], ['Volume', -17], ['Unit COGS', -58], ['Other', 49], ['Copper', 3881], ['Nickel', 963], ['Other Seg.', -179], ['Non-Alloc.', 0]]
+    .map(([n, v], i) => ({ DT_REF: new Date(Date.UTC(2026, 8, 1)), ID_SITE: 40, ID_ORDEM: i + 1, DS_ITEM: n, VL_ITEM: v }));
+  const r = mapearWaterfall(linhas, CONFIG_PADRAO, 'ebitdaYear');
+  const itens = r.anos[2026].itens, tipos = itens.map((i) => i.tipo + ':' + (i.lbl || ''));
+  const iSub = tipos.indexOf('sub:FY Act/Fcst');
+  assert.ok(iSub > 0, tipos.join(' | '));
+  assert.strictEqual(itens[iSub + 1].tipo, 'zero');
+  assert.strictEqual(itens[iSub + 2].lbl, 'Copper');
+});

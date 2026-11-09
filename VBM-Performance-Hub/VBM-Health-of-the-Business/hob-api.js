@@ -342,6 +342,15 @@ function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
       const onde = ant ? itens.findIndex(y => semAno(y.lbl) === semAno(ant.lbl)) + 1 : 0;
       itens.splice(onde, 0, { tipo: 'sub', lbl: i.lbl, ...(i.cinza ? { cinza: true } : {}) });
     });
+    // quebras da configuração ('zero': começa outro gráfico, do 0 e sem fio do anterior), depois do degrau que as
+    // antecede na configuração — ex.: 2026 EBITDA YEAR, FY Act/Fcst | Copper, Nickel, Other Seg., Non-Allocated
+    const cfgPonte = config.pontes[ponte];
+    cfgPonte.forEach((i, pos) => {
+      if (i.tipo !== 'zero') return;
+      const ant = cfgPonte.slice(0, pos).reverse().find(x => x.tipo !== 'zero' && itens.some(y => semAno(y.lbl || '') === semAno(x.lbl)));
+      const onde = ant ? itens.findIndex(y => semAno(y.lbl || '') === semAno(ant.lbl)) : -1;
+      if (onde >= 0 && onde < itens.length - 1 && itens[onde + 1].tipo !== 'zero') itens.splice(onde + 1, 0, { tipo: 'zero' });
+    });
     return itens;
   }
   for (const [chave, g] of [...porRef].sort((x, y) => x[0].localeCompare(y[0]))) {
