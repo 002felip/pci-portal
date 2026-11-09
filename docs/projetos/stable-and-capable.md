@@ -116,6 +116,8 @@ e sem depender de licença do Power BI.
   - interruptores Remover zeros e Remover outliers (média ± 3,5 desvios).
 
   Os padrões são os do `.pbix`: Salobo / Salobo / Ore Mined, sem remover nada.
+- **Cabeçalho:** sem banner. Abaixo dos filtros, uma linha no padrão do COO com o site, KPI e
+  unidade à esquerda e o período, a data de carga e o botão Atualizar à direita.
 - **Tela cheia:** botão no fim da barra de filtros, como nos dashboards do Hub. Em tela cheia (botão ou F11)
   saem a barra superior e o cabeçalho da página; `Esc` volta.
 - **Responsividade:**

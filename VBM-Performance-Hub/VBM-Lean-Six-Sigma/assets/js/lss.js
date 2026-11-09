@@ -32,7 +32,7 @@
     'pt-BR': {
       'hero.ante': 'Melhoria contínua · Lean Six Sigma', 'hero.sub': 'Green Belt · portfólio de projetos e coaching',
       'hero.desc': 'Acompanhamento dos projetos Green Belt por site, etapa DMAIC e ciclo, com a timeline de coaching de cada projeto.',
-      'hero.projetos': 'Projetos', 'hero.site': 'Site', 'hero.atualizado': 'Planilhas: Training Tracker {t} · Coach Manager {c}',
+      'hero.projetos': 'Projetos', 'hero.projetosMin': 'projetos', 'hero.site': 'Site', 'hero.atualizado': 'Planilhas: Training Tracker {t} · Coach Manager {c}',
       'f.aria': 'Filtros', 'f.site': 'Site:', 'f.status': 'Status:', 'f.ciclo': 'Ciclo:', 'f.etapa': 'Etapa:', 'f.limpar': 'Restaurar padrão', 'f.todos': 'Todos',
       'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
       'aba.aria': 'Páginas do dashboard', 'aba.geral': 'Visão geral', 'aba.detalhe': 'Projetos em detalhe', 'aba.bu': 'Por Business Unit',
@@ -72,7 +72,7 @@
     en: {
       'hero.ante': 'Continuous improvement · Lean Six Sigma', 'hero.sub': 'Green Belt · project portfolio and coaching',
       'hero.desc': 'Green Belt projects by site, DMAIC stage and cycle, with the coaching timeline of each project.',
-      'hero.projetos': 'Projects', 'hero.site': 'Site', 'hero.atualizado': 'Spreadsheets: Training Tracker {t} · Coach Manager {c}',
+      'hero.projetos': 'Projects', 'hero.projetosMin': 'projects', 'hero.site': 'Site', 'hero.atualizado': 'Spreadsheets: Training Tracker {t} · Coach Manager {c}',
       'f.aria': 'Filters', 'f.site': 'Site:', 'f.status': 'Status:', 'f.ciclo': 'Cycle:', 'f.etapa': 'Stage:', 'f.limpar': 'Reset', 'f.todos': 'All',
       'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
       'aba.aria': 'Dashboard pages', 'aba.geral': 'Overview', 'aba.detalhe': 'Projects in detail', 'aba.bu': 'By Business Unit',
