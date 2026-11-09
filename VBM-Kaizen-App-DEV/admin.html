@@ -38,7 +38,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>VBM Kaizen — Administração</title>
-<link href="css/fontawesome-subset.css?v=20261109-1" rel="stylesheet"/>
+<link href="css/fontawesome-subset.css?v=20261109-3" rel="stylesheet"/>
 <link href="css/vbm-app.css?v=20261006-1" rel="stylesheet"/>
 <!-- Poppins servida pelo próprio app (css/poppins.css + assets/fonts/poppins).
      Vinha de fonts.googleapis.com: em rede sem saída para a internet o
@@ -1420,15 +1420,18 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
         <label for="resAddTipoResultado" class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="replAddIconGrid">
           <button type="button" class="icon-swatch active" data-icon="fa-solid fa-globe" onclick="pickCategoryIcon(this,'replAdd')" title="Global" aria-label="Global"><i class="fa-solid fa-globe"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-map-location-dot" onclick="pickCategoryIcon(this,'replAdd')" title="País / região" aria-label="País / região"><i class="fa-solid fa-map-location-dot"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-building" onclick="pickCategoryIcon(this,'replAdd')" title="Unidade" aria-label="Unidade"><i class="fa-solid fa-building"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'replAdd')" title="Site" aria-label="Site"><i class="fa-solid fa-industry"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-sitemap" onclick="pickCategoryIcon(this,'replAdd')" title="Área / processo" aria-label="Área / processo"><i class="fa-solid fa-sitemap"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-clone" onclick="pickCategoryIcon(this,'replAdd')" title="Replicável" aria-label="Replicável"><i class="fa-solid fa-clone"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-high" onclick="pickCategoryIcon(this,'replAdd')" title="Alto" aria-label="Alto"><i class="fa-solid fa-gauge-high"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge" onclick="pickCategoryIcon(this,'replAdd')" title="Médio" aria-label="Médio"><i class="fa-solid fa-gauge"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-simple" onclick="pickCategoryIcon(this,'replAdd')" title="Baixo" aria-label="Baixo"><i class="fa-solid fa-gauge-simple"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'replAdd')" title="Não replicável" aria-label="Não replicável"><i class="fa-solid fa-ban"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-filter" onclick="pickCategoryIcon(this,'replAdd')" title="Concentração" aria-label="Concentração"><i class="fa-solid fa-filter"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-hammer" onclick="pickCategoryIcon(this,'replAdd')" title="Britagem" aria-label="Britagem"><i class="fa-solid fa-hammer"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-mountain" onclick="pickCategoryIcon(this,'replAdd')" title="Mina a céu aberto" aria-label="Mina a céu aberto"><i class="fa-solid fa-mountain"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-person-digging" onclick="pickCategoryIcon(this,'replAdd')" title="Mina subterrânea" aria-label="Mina subterrânea"><i class="fa-solid fa-person-digging"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-fire-flame-curved" onclick="pickCategoryIcon(this,'replAdd')" title="Fundição (smelter)" aria-label="Fundição (smelter)"><i class="fa-solid fa-fire-flame-curved"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'replAdd')" title="Refinaria" aria-label="Refinaria"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gears" onclick="pickCategoryIcon(this,'replAdd')" title="Usina / planta" aria-label="Usina / planta"><i class="fa-solid fa-gears"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ship" onclick="pickCategoryIcon(this,'replAdd')" title="Porto" aria-label="Porto"><i class="fa-solid fa-ship"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-train" onclick="pickCategoryIcon(this,'replAdd')" title="Ferrovia" aria-label="Ferrovia"><i class="fa-solid fa-train"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-diagram-project" onclick="pickCategoryIcon(this,'replAdd')" title="Projetos" aria-label="Projetos"><i class="fa-solid fa-diagram-project"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-shapes" onclick="pickCategoryIcon(this,'replAdd')" title="Outros" aria-label="Outros"><i class="fa-solid fa-shapes"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'replAdd')" title="Sem replicação" aria-label="Sem replicação"><i class="fa-solid fa-ban"></i></button>
         </div>
         <input type="hidden" id="replAddIconInput" value="fa-solid fa-globe"/>
       </div>
@@ -1483,15 +1486,18 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="replEditIconGrid">
           <button type="button" class="icon-swatch active" data-icon="fa-solid fa-globe" onclick="pickCategoryIcon(this,'replEdit')" title="Global" aria-label="Global"><i class="fa-solid fa-globe"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-map-location-dot" onclick="pickCategoryIcon(this,'replEdit')" title="País / região" aria-label="País / região"><i class="fa-solid fa-map-location-dot"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-building" onclick="pickCategoryIcon(this,'replEdit')" title="Unidade" aria-label="Unidade"><i class="fa-solid fa-building"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'replEdit')" title="Site" aria-label="Site"><i class="fa-solid fa-industry"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-sitemap" onclick="pickCategoryIcon(this,'replEdit')" title="Área / processo" aria-label="Área / processo"><i class="fa-solid fa-sitemap"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-clone" onclick="pickCategoryIcon(this,'replEdit')" title="Replicável" aria-label="Replicável"><i class="fa-solid fa-clone"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-high" onclick="pickCategoryIcon(this,'replEdit')" title="Alto" aria-label="Alto"><i class="fa-solid fa-gauge-high"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge" onclick="pickCategoryIcon(this,'replEdit')" title="Médio" aria-label="Médio"><i class="fa-solid fa-gauge"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-simple" onclick="pickCategoryIcon(this,'replEdit')" title="Baixo" aria-label="Baixo"><i class="fa-solid fa-gauge-simple"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'replEdit')" title="Não replicável" aria-label="Não replicável"><i class="fa-solid fa-ban"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-filter" onclick="pickCategoryIcon(this,'replEdit')" title="Concentração" aria-label="Concentração"><i class="fa-solid fa-filter"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-hammer" onclick="pickCategoryIcon(this,'replEdit')" title="Britagem" aria-label="Britagem"><i class="fa-solid fa-hammer"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-mountain" onclick="pickCategoryIcon(this,'replEdit')" title="Mina a céu aberto" aria-label="Mina a céu aberto"><i class="fa-solid fa-mountain"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-person-digging" onclick="pickCategoryIcon(this,'replEdit')" title="Mina subterrânea" aria-label="Mina subterrânea"><i class="fa-solid fa-person-digging"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-fire-flame-curved" onclick="pickCategoryIcon(this,'replEdit')" title="Fundição (smelter)" aria-label="Fundição (smelter)"><i class="fa-solid fa-fire-flame-curved"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'replEdit')" title="Refinaria" aria-label="Refinaria"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gears" onclick="pickCategoryIcon(this,'replEdit')" title="Usina / planta" aria-label="Usina / planta"><i class="fa-solid fa-gears"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ship" onclick="pickCategoryIcon(this,'replEdit')" title="Porto" aria-label="Porto"><i class="fa-solid fa-ship"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-train" onclick="pickCategoryIcon(this,'replEdit')" title="Ferrovia" aria-label="Ferrovia"><i class="fa-solid fa-train"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-diagram-project" onclick="pickCategoryIcon(this,'replEdit')" title="Projetos" aria-label="Projetos"><i class="fa-solid fa-diagram-project"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-shapes" onclick="pickCategoryIcon(this,'replEdit')" title="Outros" aria-label="Outros"><i class="fa-solid fa-shapes"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'replEdit')" title="Sem replicação" aria-label="Sem replicação"><i class="fa-solid fa-ban"></i></button>
         </div>
         <input type="hidden" id="replEditIconInput" value="fa-solid fa-globe"/>
       </div>
@@ -2100,7 +2106,7 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
      os 6 arquivos seguintes só configuram sua própria aba com ele. -->
 <script src="js/cadastro-bilingue.js?v=20261109-2"></script>
 <script src="js/categorias.js?v=20261109-2"></script>
-<script src="js/replicacao.js?v=20261109-2"></script>
+<script src="js/replicacao.js?v=20261109-3"></script>
 <script src="js/desperdicios.js?v=20261109-2"></script>
 <script src="js/resultados.js?v=20261109-2"></script>
 <script src="js/tiporesultados.js?v=20261109-1"></script>
