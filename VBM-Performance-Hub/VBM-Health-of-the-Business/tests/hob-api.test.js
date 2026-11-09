@@ -330,13 +330,13 @@ test('/ebitda: ciclo mais recente do ID_DASH 16 (ou o da tela, se existir), KPI 
   assert.strictEqual(consulta.params.tipo[1], 3);
 });
 
-test('/coo: séries da carga do COO por ID_KPI no site da página; KPI null fica pendente', async () => {
+test('/coo: séries da carga por ID_KPI no site da página (cadastro do ID_DASH 16)', async () => {
   const chamadas = [];
   const runQuery = async (q, params) => {
     chamadas.push({ q, params });
     if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)) }] };
     if (/PHUB_PS_SETUP/.test(q)) return { recordset: [] };
-    return { recordset: EB };
+    return { recordset: params.idKpi[1] === 73 ? EB : [lin({ ANO: 2026, MES: 1, ID_SITE: 38, ID_OPERACAO: 12, ID_KPI: params.idKpi[1], SERIE: 'B', VL_KPI: 30.5, SG_UNID: 'kt', VL_CASADECIMAL: 1, NM_KPI: 'Copper Contained in Concentrate' })] };
   };
   const r = await chamar(criarHobRouter({ runQuery }), '/coo');
   assert.strictEqual(r.status, 200);
@@ -344,8 +344,14 @@ test('/coo: séries da carga do COO por ID_KPI no site da página; KPI null fica
   assert.strictEqual(r.json.series['cu.ebitda'].anos['2026'].b[0], 300); // site 38
   assert.strictEqual(r.json.series['ni.ebitda'].anos['2026'].a[0], 151); // site 39
   assert.deepStrictEqual(r.json.series['cu.ebitda'].meta, { nome: 'EBITDA', unid: 'US$ M', casas: 0 });
-  assert.ok(r.json.pendentes.includes('cu.prod') && r.json.pendentes.includes('vbm.capex'));
-  assert.strictEqual(chamadas.filter((c) => c.params && c.params.idKpi).length, 1); // KPI 73 lido uma vez para os dois sites
+  assert.deepStrictEqual(r.json.pendentes, []);
+  assert.strictEqual(r.json.series['cu.prod'].idKpi, 22);
+  assert.strictEqual(r.json.series['cu.prod'].anos['2026'].b[0], 30.5);
+  assert.deepStrictEqual(r.json.series['cu.prod'].meta, { nome: 'Copper Contained in Concentrate', unid: 'kt', casas: 1 });
+  assert.strictEqual(r.json.series['cu.sales'].idKpi, 34);
+  assert.strictEqual(r.json.series['ni.prod'].idKpi, 51);
+  const lidos = chamadas.filter((c) => c.params && c.params.idKpi).map((c) => c.params.idKpi[1]);
+  assert.strictEqual(lidos.filter((k) => k === 73).length, 1); // KPI 73 lido uma vez para os dois sites
 });
 
 test('normalizarConfigHob: coo.kpis aceita só as séries conhecidas, inteiro ou null', () => {
@@ -353,7 +359,7 @@ test('normalizarConfigHob: coo.kpis aceita só as séries conhecidas, inteiro ou
   assert.strictEqual(c.coo.kpis['cu.prod'], 12);
   assert.strictEqual(c.coo.kpis['cu.ebitda'], null);
   assert.strictEqual(c.coo.kpis['xx.yy'], undefined);
-  assert.strictEqual(c.coo.kpis['ni.sales'], null); // inválido: mantém o padrão
+  assert.strictEqual(c.coo.kpis['ni.sales'], 41); // inválido: mantém o padrão
 });
 
 test('montarEbitda: casas decimais do cadastro por opção do seletor (linha sem cadastro não apaga o anterior)', () => {

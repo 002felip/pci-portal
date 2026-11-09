@@ -71,9 +71,11 @@ const CONFIG_PADRAO = {
   // Demais gráficos mês a mês: um KPI (ID_KPI) da carga do dashboard (ID_DASH 16) por série, no site da página
   // (VBM 40, Copper 38, Nickel 39). null = ainda sem KPI definido (o gráfico segue na demonstração)
   coo: { idDash: 16, sites: { vbm: 40, cu: 38, ni: 39 }, kpis: {
-    'vbm.capex': null,
-    'cu.prod': null, 'cu.sales': null, 'cu.ebitda': 73, 'cu.capex': null, 'cu.fcf': null, 'cu.sus': null, 'cu.cost': null, 'cu.byp': null,
-    'ni.prod': null, 'ni.sales': null, 'ni.ebitda': 73, 'ni.capex': null, 'ni.fcf': null, 'ni.sus': null, 'ni.cost': null, 'ni.byp': null,
+    // IBP.DASHBOARD (ID_DASH 16): Copper 38 · Production 22 (op. 12), Sales 34 (op. 8); Nickel 39 · Production 51
+    // (op. 12), Sales 41 (op. 8); nos três sites: EBITDA 73, Capex 83, FCF 733; All-in: Sustaining 102, Cost 45, By Product 46
+    'vbm.capex': 83,
+    'cu.prod': 22, 'cu.sales': 34, 'cu.ebitda': 73, 'cu.capex': 83, 'cu.fcf': 733, 'cu.sus': 102, 'cu.cost': 45, 'cu.byp': 46,
+    'ni.prod': 51, 'ni.sales': 41, 'ni.ebitda': 73, 'ni.capex': 83, 'ni.fcf': 733, 'ni.sus': 102, 'ni.cost': 45, 'ni.byp': 46,
   } },
   bus: { vbm: { sites: [] }, cu: { sites: [] }, ni: { sites: [] } },
   indicadores: {
