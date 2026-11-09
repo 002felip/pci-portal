@@ -235,7 +235,10 @@ function criarImportacaoRouter({ runQuery, obterPool, store, pasta, python }) {
 
       tx = new sql.Transaction(pool);
       await tx.begin();
-      await new sql.Request(tx).query(`CREATE TABLE #imp (DT_REF date NOT NULL, ID_SISTEMA int NOT NULL, ID_SITE int NOT NULL,
+      // batch(), e não query(): o query() do mssql roda via sp_executesql, e a tabela temporária
+      // criada dentro dele some quando o sp_executesql termina ("Invalid object name '#imp'" no
+      // INSERT seguinte). Em batch ela fica na sessão da transação até o DROP.
+      await new sql.Request(tx).batch(`CREATE TABLE #imp (DT_REF date NOT NULL, ID_SISTEMA int NOT NULL, ID_SITE int NOT NULL,
         ID_OPERACAO int NOT NULL, ID_KPI int NOT NULL, VL_REAL float NOT NULL)`);
       for (let i = 0; i < p.dados.linhas.length; i += LOTE) {
         const lote = p.dados.linhas.slice(i, i + LOTE);
