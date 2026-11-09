@@ -466,3 +466,19 @@ test('mapearWaterfall: 2026 EBITDA YEAR com a quebra (zero) depois de FY Act/Fcs
   assert.strictEqual(itens[iSub + 1].tipo, 'zero');
   assert.strictEqual(itens[iSub + 2].lbl, 'Copper');
 });
+
+test('montarEbitda: sem Other Segments cadastrado, Others = VBM − Copper − Nickel (meses e períodos gravados)', () => {
+  const { montarEbitda, montarAtualizacao } = require('../hob-api');
+  const linhas = [];
+  for (const [site, v] of [[40, 4.9], [38, 3.8], [39, 1.3]]) {
+    linhas.push(lin({ ANO: 2026, MES: 9, ID_SITE: site, ID_KPI: 73, SERIE: 'B', CD_PERIODO: 'MONTH', VL_KPI: v / 10 }));
+    linhas.push(lin({ ANO: 2026, MES: 9, ID_SITE: site, ID_KPI: 73, SERIE: 'B', CD_PERIODO: 'YEAR', VL_KPI: v }));
+  }
+  const e = montarEbitda(linhas, linhas, CONFIG_PADRAO, '2026-10');
+  assert.strictEqual(e.outrosCalculado, true);
+  const o = e.anos[2026].ebitdaOut;
+  assert.ok(Math.abs(o.b[8] - (-0.02)) < 1e-9, String(o.b[8]));
+  assert.ok(Math.abs(o.per[9].YEAR.b - (-0.2)) < 1e-9, String(o.per[9].YEAR.b));
+  const a = montarAtualizacao([{ ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', SEM_REAL: 0 }, { ID_SITE: 39, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'N', SEM_REAL: 0 }], CONFIG_PADRAO, '2026-10');
+  assert.strictEqual(a.cards['vbm.ebitda.out'].status, 'pendente');
+});

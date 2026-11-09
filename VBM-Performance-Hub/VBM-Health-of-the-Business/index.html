@@ -793,7 +793,7 @@ window.HOB_CARREGAR(function (aviso) {
     'pt-BR': { 'c.pendente': 'Atualizações finais pendentes', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
       'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
       'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
-      'c.ultimaRef': 'Última referência no banco: {ref}', 'c.semRef': 'Sem referência no banco para o mês', 'c.indisp': 'Situação da atualização indisponível', 'c.semReal': 'Realizado de {mes} ainda não carregado',
+      'c.ultimaRef': 'Última referência no banco: {ref}', 'c.semRef': 'Sem referência no banco para o mês', 'c.indisp': 'Situação da atualização indisponível', 'c.semReal': 'Realizado de {mes} ainda não carregado', 'eb.outCalc': 'Others = VBM − Copper − Nickel',
       'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do dashboard (ID_DASH 16) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do ID_DASH 16', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período',
@@ -805,7 +805,7 @@ window.HOB_CARREGAR(function (aviso) {
     en: { 'c.pendente': 'Pending final updates', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
       'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
       'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
-      'c.ultimaRef': 'Latest reference in the database: {ref}', 'c.semRef': 'No reference in the database for the month', 'c.indisp': 'Update status unavailable', 'c.semReal': '{mes} actual not loaded yet',
+      'c.ultimaRef': 'Latest reference in the database: {ref}', 'c.semRef': 'No reference in the database for the month', 'c.indisp': 'Update status unavailable', 'c.semReal': '{mes} actual not loaded yet', 'eb.outCalc': 'Others = VBM − Copper − Nickel',
       'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No dashboard load (ID_DASH 16) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the ID_DASH 16 load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period',
@@ -1157,6 +1157,7 @@ window.HOB_CARREGAR(function (aviso) {
     if (cfg.tipo === 'ponte') { var f = ponteAtual(cfg.ind); if (f && f.ref) cfg = Object.assign({}, cfg, { nota: (cfg.nota ? cfg.nota + ' · ' : '') + S.t('fcf.ref', { ref: f.ref }) }); }
     var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '';
     if (cfg.tipo === 'ebitdaVbm' && !cfg.seg) ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
+    if (cfg.tipo === 'ebitdaVbm' && segEbitda(cfg) === 'out' && window.HOB_EBITDA && window.HOB_EBITDA.outrosCalculado) cfg = Object.assign({}, cfg, { nota: S.t('eb.outCalc') });
     if (cfg.tipo === 'allin') ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
     if (cfg.tipo === 'allinStack') ctl = '<ul class="legend legend-stack">' + CAMADAS.slice().reverse().map(function (c) {
       return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
