@@ -896,8 +896,8 @@ window.HOB_CARREGAR(function (aviso) {
       return media ? v / (ate - de) : v;
     }
     function af(de, ate) { for (var i = de + 1; i <= ate; i++) if (!ehReal(i)) return 'F'; return 'A'; }
-    // Trimestre, YTD, YTG e ano: os gravados pela carga para o mês escolhido (s.per, do banco); sem eles, a soma dos meses
-    var P = !media && s.per && s.per[m] || {};
+    // Trimestre, YTD, YTG e ano: os gravados pela carga para o mês escolhido (s.per, do banco); sem eles, a soma (ou média) dos meses
+    var P = s.per && s.per[m] || {}; // custo unitário (All-in) também: o período gravado já vem ponderado
     function de(cd, serie, calc) { var v = P[cd] && P[cd][serie]; return v == null ? calc : v; }
     var g = [
       { lb: l[m - 1] + ' B', la: l[m - 1] + ' ' + af(m - 1, m), b: s.b[m - 1], a: s.a[m - 1] },
