@@ -167,7 +167,10 @@ renomeada por uma variável `AZURE_SQL_*_TABLE`.
   - Resultados: 13, de Redução de custo a Satisfação;
   - Status: Aprovado, Reprovado, Em aprovação, Rascunho, Revisado, Pendente, Implementado e Cancelado.
 
-  O ícone escolhido vai para `URL_ICONE`. Tipo Resultados e Tipo Kaizen não têm essa coluna: o ícone
+  O ícone escolhido vai para `URL_ICONE`. Quando o registro não tem escolha de verdade (sem ícone, com o
+  padrão da aba, com um ícone da paleta antiga ou com o mesmo ícone de outro registro), o cartão mostra o
+  ícone pelo nome (`iconesPorNome` em cada `js/<aba>.js` e em `js/categorias.js`, PT e EN), e editar
+  grava esse ícone. `database/atualizar_icones_desperdicios.sql` grava de uma vez os de Waste Reduction. Tipo Resultados e Tipo Kaizen não têm essa coluna: o ícone
   sai do nome (`iconesPorNome` em `js/tiporesultados.js` e `js/tiposkaizen.js`; Financeiro = saco de
   dinheiro, Simples = raio, Complexo = engrenagens…). Para um ícone novo: incluir em
   `ABAS`/paleta, gerar o SVG no mesmo formato e regerar o subconjunto da fonte
