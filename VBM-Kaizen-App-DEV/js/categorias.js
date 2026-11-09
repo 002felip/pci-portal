@@ -189,6 +189,52 @@
       'title="Tradução em inglês não cadastrada — mostrando o texto em português"></i>';
   }
 
+  // ── Ícone que faz sentido para o registro ──
+  // O ícone gravado (URL_ICONE) só vale quando foi escolhido de fato. Quando o registro não tem
+  // ícone, está com o padrão da aba, com um ícone LEGADO (da paleta antiga, sem relação com a aba)
+  // ou com o MESMO ícone de outro registro da lista, o ícone sai do NOME, pelas regras de
+  // REGRAS_ICONE abaixo (PT e EN). Assim "Defects" mostra o triângulo de alerta e "Waiting" a
+  // ampulheta, em vez de todos com o mesmo raio. Ao abrir a edição, a paleta já acende esse ícone
+  // e salvar grava no banco.
+  var REGRAS_ICONE = [
+    { re: /seguran|safety|\bsst\b|\bhse\b|sa[uú]de|health/i, icone: "helmet-safety" },
+    { re: /\b5s\b|organiza|housekeep|limpeza|clean/i, icone: "broom" },
+    { re: /energ/i, icone: "bolt" },
+    { re: /manuten|maint|confiabil|reliab/i, icone: "screwdriver-wrench" },
+    { re: /qualid|quality/i, icone: "circle-check" },
+    { re: /[áa]gua|water|h[íi]dric/i, icone: "droplet" },
+    { re: /meio ambiente|ambient|environment|sustent|emiss/i, icone: "leaf" },
+    { re: /log[íi]st|supply|suprimento|transport/i, icone: "truck" },
+    { re: /recicl|recycl|res[íi]duo|waste/i, icone: "recycle" },
+    { re: /produtiv|productiv|throughput|desempenho|performance/i, icone: "gauge-high" },
+    { re: /custo|cost|financ|saving/i, icone: "dollar-sign" },
+    { re: /pessoa|people|gente|\brh\b|\bhr\b|engaj|engag|equipe|team/i, icone: "people-group" },
+    { re: /automa|digital|rob[ôo]|tecnolog|technolog/i, icone: "robot" },
+    { re: /processo|process/i, icone: "gears" },
+    { re: /opera[çc]|operation|ind[úu]stri|industr|produ[çc][ãa]o|production/i, icone: "industry" },
+    { re: /outr|other|geral|general/i, icone: "tag" },
+  ];
+  var ICONES_LEGADOS = [];
+  var contagemIcones = {};
+  function contarIcones(registros) {
+    contagemIcones = {};
+    registros.forEach(function (r) { if (r.URL_ICONE) contagemIcones[r.URL_ICONE] = (contagemIcones[r.URL_ICONE] || 0) + 1; });
+  }
+  function iconePeloNome(reg) {
+    var nome = String((reg && reg.NM) || "");
+    for (var i = 0; i < REGRAS_ICONE.length; i++) {
+      if (REGRAS_ICONE[i].re.test(nome)) return PASTA_ICONES + "fa-solid-" + REGRAS_ICONE[i].icone + ".svg";
+    }
+    return null;
+  }
+  function iconeDoRegistro(reg) {
+    var gravado = reg.URL_ICONE || "";
+    var arquivo = gravado.split("/").pop().replace(/^fa-solid-|\.svg$/g, "");
+    var porNome = iconePeloNome(reg);
+    var semEscolha = !gravado || gravado === ICONE_PADRAO || ICONES_LEGADOS.indexOf(arquivo) >= 0 || contagemIcones[gravado] > 1;
+    return (porNome && semEscolha) ? porNome : (gravado || porNome || ICONE_PADRAO);
+  }
+
   function renderItem(reg) {
     var item = document.createElement("div");
     item.className = "admin-item" + (reg.ATIVO ? "" : " admin-item-inactive");
@@ -198,7 +244,7 @@
         // Os dois lados são URL de assets/icons: o banco (URL_ICONE) quando
         // o registro tem ícone próprio, senão o ícone padrão da aba. Mesmo
         // <img> nos dois casos — só muda de onde vem o endereço.
-        '<img src="' + escapeHtml(reg.URL_ICONE || ICONE_PADRAO) + '" alt="" loading="lazy">' +
+        '<img src="' + escapeHtml(iconeDoRegistro(reg)) + '" alt="" loading="lazy">' +
       "</div>" +
       '<div class="admin-item-body">' +
         '<div class="admin-item-name">' + escapeHtml(reg.NM) + semTraducaoHtml(reg) + "</div>" +
@@ -238,6 +284,7 @@
           list.appendChild(statusEl(TEXTO_VAZIO, false));
           return;
         }
+        contarIcones(registros);
         registros.forEach(function (reg) { list.appendChild(renderItem(reg)); });
       })
       .catch(function (err) {
@@ -263,10 +310,11 @@
   // ── Editar ──
   function abrirEdicao(reg) {
     idEmEdicao = reg.ID;
-    iconeAlterado = false;
-    // Já acende com o que a listagem trouxe do banco; o GET abaixo
-    // confirma. Sem isso a paleta abriria no valor fixo do HTML.
-    aplicarIconeNaPaleta("catEdit", reg.URL_ICONE || ICONE_PADRAO);
+    // Já acende o ícone mostrado no cartão; se ele difere do gravado (registro sem escolha, ver
+    // iconeDoRegistro), conta como alterado e salvar grava o ícone que faz sentido.
+    var mostrado = iconeDoRegistro(reg);
+    iconeAlterado = mostrado !== (reg.URL_ICONE || "");
+    aplicarIconeNaPaleta("catEdit", mostrado);
     if (window.openModal) openModal("modalEditCategoria");
 
     fetch("/api/" + ROTA + "/" + encodeURIComponent(reg.ID))

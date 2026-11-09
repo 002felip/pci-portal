@@ -265,16 +265,33 @@ window.criarCadastroBilingue = function (cfg) {
       'title="Tradução em inglês não cadastrada — mostrando o texto em português"></i>';
   }
 
-  // Abas sem coluna URL_ICONE (Tipo Resultados, Tipo Kaizen): o ícone sai do NOME do registro,
-  // pela lista cfg.iconesPorNome ([{ re: /financ/i, icone: "sack-dollar" }, …], PT e EN no mesmo
-  // padrão). Sem correspondência, vale o ícone padrão da aba.
+  // ── Ícone que faz sentido para o registro ──
+  // O ícone gravado (URL_ICONE) só vale quando foi escolhido de fato. Quando o registro não tem
+  // ícone, está com o padrão da aba, com um ícone LEGADO (da paleta antiga, sem relação com a aba)
+  // ou com o MESMO ícone de outro registro da lista, o ícone sai do NOME, pelas regras de
+  // cfg.iconesPorNome, no arquivo da aba (PT e EN). Assim "Defects" mostra o triângulo de alerta e "Waiting" a
+  // ampulheta, em vez de todos com o mesmo raio. Ao abrir a edição, a paleta já acende esse ícone
+  // e salvar grava no banco.
+  var REGRAS_ICONE = cfg.iconesPorNome || [];
+  var ICONES_LEGADOS = cfg.iconesLegados || [];
+  var contagemIcones = {};
+  function contarIcones(registros) {
+    contagemIcones = {};
+    registros.forEach(function (r) { if (r.URL_ICONE) contagemIcones[r.URL_ICONE] = (contagemIcones[r.URL_ICONE] || 0) + 1; });
+  }
   function iconePeloNome(reg) {
-    var regras = cfg.iconesPorNome || [];
     var nome = String((reg && reg.NM) || "");
-    for (var i = 0; i < regras.length; i++) {
-      if (regras[i].re.test(nome)) return PASTA_ICONES + "fa-solid-" + regras[i].icone + ".svg";
+    for (var i = 0; i < REGRAS_ICONE.length; i++) {
+      if (REGRAS_ICONE[i].re.test(nome)) return PASTA_ICONES + "fa-solid-" + REGRAS_ICONE[i].icone + ".svg";
     }
     return null;
+  }
+  function iconeDoRegistro(reg) {
+    var gravado = reg.URL_ICONE || "";
+    var arquivo = gravado.split("/").pop().replace(/^fa-solid-|\.svg$/g, "");
+    var porNome = iconePeloNome(reg);
+    var semEscolha = !gravado || gravado === cfg.iconePadrao || ICONES_LEGADOS.indexOf(arquivo) >= 0 || contagemIcones[gravado] > 1;
+    return (porNome && semEscolha) ? porNome : (gravado || porNome || cfg.iconePadrao);
   }
 
   function renderItem(reg) {
@@ -286,7 +303,7 @@ window.criarCadastroBilingue = function (cfg) {
         // Os dois lados são URL de assets/icons: o banco (URL_ICONE) quando
         // o registro tem ícone próprio, senão o ícone padrão da aba. Mesmo
         // <img> nos dois casos — só muda de onde vem o endereço.
-        '<img src="' + escapeHtml(reg.URL_ICONE || iconePeloNome(reg) || cfg.iconePadrao) + '" alt="" loading="lazy">' +
+        '<img src="' + escapeHtml(iconeDoRegistro(reg)) + '" alt="" loading="lazy">' +
       "</div>" +
       '<div class="admin-item-body">' +
         '<div class="admin-item-name">' + escapeHtml(reg.NM) + semTraducaoHtml(reg) + "</div>" +
@@ -351,6 +368,7 @@ window.criarCadastroBilingue = function (cfg) {
           list.appendChild(statusEl(cfg.textoVazio, false));
           return;
         }
+        contarIcones(registros);
         registros.forEach(function (reg) { list.appendChild(renderItem(reg)); });
       })
       .catch(function (err) {
@@ -377,10 +395,12 @@ window.criarCadastroBilingue = function (cfg) {
   // ── Editar ──
   function abrirEdicao(reg) {
     idEmEdicao = reg.ID;
-    iconeAlterado = false;
-    // Já acende com o que a listagem trouxe do banco; o GET abaixo
-    // confirma. Sem isso a paleta abriria no valor fixo do HTML.
-    aplicarIconeNaPaleta(cfg.prefixoEdit, reg.URL_ICONE || cfg.iconePadrao);
+    // Já acende o ícone mostrado no cartão. Se ele difere do gravado (registro sem escolha, ver
+    // iconeDoRegistro), conta como alterado: salvar grava o ícone que faz sentido. Aba sem coluna
+    // de ícone não tem paleta, e nada é enviado.
+    var mostrado = iconeDoRegistro(reg);
+    iconeAlterado = mostrado !== (reg.URL_ICONE || "");
+    aplicarIconeNaPaleta(cfg.prefixoEdit, mostrado);
     if (window.openModal) openModal(cfg.modalEditId);
 
     fetch("/api/" + cfg.rota + "/" + encodeURIComponent(reg.ID))
