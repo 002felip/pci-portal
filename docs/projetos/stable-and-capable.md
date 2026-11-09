@@ -141,7 +141,7 @@ O `portal.js` bloqueia na pasta o que não é tela: `python/`, `database/` e os 
 
 | O quê | Onde |
 |---|---|
-| PDFs e importação (leitura e gravação) | base do Kaizen (`STABLECAPABLE_AZURE_SQL_DATABASE` → `KAIZEN_AZURE_SQL_DATABASE`, hoje **DEV**) |
+| PDFs e importação (leitura e gravação) | **PRD** (`STABLECAPABLE_AZURE_SQL_DATABASE = BDIBPBMSA_PRD`; sem ela, cai na base do Kaizen) |
 | Tabela da importação | `IBP.PEDRAVISAODIARIA` (`STABLECAPABLE_TABELA_IMPORTACAO`) |
 | Dashboard | **PRD** (`STABLECAPABLE_BI_SQL_DATABASE`, `STABLECAPABLE_BI_SQL_SERVER`) |
 | Arquivos | Azure Blob do Kaizen (`azure-blob.js` da pasta do Kaizen), em `<AZURE_STORAGE_CONTAINER>/01 - Imagens/Stable & Capable/` (`STABLECAPABLE_BLOB_PASTA`). Sem Blob, usa o disco local (`STABLECAPABLE_PASTA_LOCAL`), e os arquivos se perdem ao reiniciar |
@@ -160,7 +160,7 @@ O `portal.js` bloqueia na pasta o que não é tela: `python/`, `database/` e os 
 
 | Variável | Padrão |
 |---|---|
-| `STABLECAPABLE_AZURE_SQL_DATABASE` | a do Kaizen |
+| `STABLECAPABLE_AZURE_SQL_DATABASE` | a do Kaizen (no `app.yaml`: `BDIBPBMSA_PRD`) |
 | `STABLECAPABLE_BI_SQL_DATABASE` / `_BI_SQL_SERVER` / `_BI_CACHE_MIN` | `BDIBPBMSA_PRD` / `AZURE_SQL_SERVER` / 60 |
 | `STABLECAPABLE_TABELA_IMPORTACAO` | `IBP.PEDRAVISAODIARIA` |
 | `STABLECAPABLE_BLOB_PASTA` | `01 - Imagens/Stable & Capable` |
