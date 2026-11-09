@@ -18,7 +18,15 @@
     modalAddId: "modalAddTipoKaizen", modalEditId: "modalEditTipoKaizen",
     prefixoAdd: "tipokznAdd", prefixoEdit: "tipokznEdit",
     btnSalvarAddId: "btnSaveAddTipoKaizen", btnSalvarEditId: "btnSaveEditTipoKaizen",
-    classeIcone: "teal", iconePadrao: "assets/icons/tiporesultados/fa-solid-layer-group.svg",
+    classeIcone: "teal", iconePadrao: "assets/icons/tiposkaizen/fa-solid-clipboard-list.svg",
+    // Sem URL_ICONE na tabela: ícone pelo nome do tipo (PT e EN)
+    iconesPorNome: [
+      { re: /simples|simple|quick/i, icone: "bolt" },
+      { re: /complex/i, icone: "gears" },
+      { re: /inova/i, icone: "lightbulb" },
+      { re: /seguran|safety/i, icone: "shield-halved" },
+      { re: /evento|event|equipe|team|blitz/i, icone: "people-group" },
+    ],
     palavraBadge: null, palavraBadgeSingular: null,
     // Mesmo tamanho de nome/descrição do DER (server.js espelha isso em
     // CADASTRO_LIMITES_DER).

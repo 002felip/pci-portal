@@ -157,6 +157,21 @@ renomeada por uma variável `AZURE_SQL_*_TABLE`.
   (modais, abas, toasts).
 - Uma aba do admin = um arquivo em `js/`. As abas bilíngues usam `cadastro-bilingue.js`; `categorias.js`
   é autossuficiente de propósito.
+- **Ícones dos cadastros do admin** (`assets/icons/<aba>/`, catálogo em `assets/icons/icones.json`):
+  SVG do Font Awesome Free 6.6.0 com o azul `#1a8bbf` gravado (no tema escuro o CSS clareia). A paleta
+  de cada aba está no modal do `admin.html`:
+  - Categorias: 16, de Segurança e 5S a Automação e Água;
+  - Pot. Replicação: Global, País/região, Unidade, Site, Área/processo, Replicável e Não replicável;
+  - Red. Desperdícios: os 8 desperdícios do Lean (Defeitos, Superprodução, Espera, Talento não utilizado,
+    Transporte, Estoque, Movimentação, Processamento extra) e Energia, Ideia, Segurança e Manutenção;
+  - Resultados: 13, de Redução de custo a Satisfação;
+  - Status: Aprovado, Reprovado, Em aprovação, Rascunho, Revisado, Pendente, Implementado e Cancelado.
+
+  O ícone escolhido vai para `URL_ICONE`. Tipo Resultados e Tipo Kaizen não têm essa coluna: o ícone
+  sai do nome (`iconesPorNome` em `js/tiporesultados.js` e `js/tiposkaizen.js`; Financeiro = saco de
+  dinheiro, Simples = raio, Complexo = engrenagens…). Para um ícone novo: incluir em
+  `ABAS`/paleta, gerar o SVG no mesmo formato e regerar o subconjunto da fonte
+  (`database/README-subset-fontawesome.md`), senão a paleta mostra um quadrado vazio.
 - Impressão do Kaizen (`js/impressao-kaizen.js`): folha A4/A3/A2 em PDF (html2canvas-pro + jsPDF) e PPT
   (`js/vendor/pptxgenjs-3.12.0.bundle.min.js`), carregados sob demanda.
 - Cache: arquivos com hash no nome são `immutable` (1 ano); o resto é `no-cache` + ETag.

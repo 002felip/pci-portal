@@ -69,6 +69,11 @@ medida DAX de origem no comentário.
 - **Gantt e Calendário:** respondem só ao Site, como no `.pbix`, porque a planilha de coaching não tem
   status, ciclo nem etapa.
 - **Cartões por site** (Projetos em detalhe): não usam o filtro de site, porque cada cartão já é um site.
+- **Altura da tela:** em telas grandes e em tela cheia, a página ocupa a altura toda (`preencher()` em
+  `lss.js`, no lugar do `ajustarAltura` do COO). Os gráficos de colunas crescem até a página encostar na
+  base. Gantt, Calendário e Tabela rolam dentro do card, que desce até a base. Refaz ao redimensionar e ao
+  entrar ou sair da tela cheia. No celular, a página rola normalmente.
+- **Telas 2K e 4K:** o texto escala junto (`font-size` do `html` em 18 e 24 px).
 - **Idioma:** PT e EN pela engrenagem (o slicer "Idioma" do `.pbix`).
 
 ### Regras do Gantt (`Grafico_Gantt_Projetos_2`)
