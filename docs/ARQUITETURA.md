@@ -150,11 +150,11 @@ Cada aplicação abre o **próprio pool** e escolhe a base pela variável com o 
 | VBM-Kaizen-App | `BDIBPBMSA_DEV` hoje | `KAIZEN_AZURE_SQL_DATABASE` | esquema `ci`: `kzn_pedravisaoconsolidada` (+ `kzn_hist_*`), `kzn_aprovador`, `kzn_admin`, `kzn_status`, `kzn_categoria`, `kzn_mdm_hierarquia`, `kzn_kaizen_hierarquia`, `kzn_resultado_kaizen`, `kzn_membros_equipe`… |
 | Performance Hub (Studio, COO, COO Historical, Health of the Business) | `BDIBPBMSA_PRD` | `PERFORMANCEHUB_AZURE_SQL_DATABASE` | `IBP.PHUB_PERFORMANCESTUDIO` (cargas), `IBP.DASHBOARD`, `IBP.PHUB_PS_SETUP`, `IBP.PHUB_PS_ACESSO`, `IBP.WATERFALL`, `IBP.SITES`, `IBP.KPI` |
 | Controle de acesso | `BDIBPBMSA_PRD` | (conexão do Hub) | `IBP.USERS` |
-| Stable & Capable: PDFs e importação | base do Kaizen (`BDIBPBMSA_DEV` hoje) | `STABLECAPABLE_AZURE_SQL_DATABASE` (opcional) → `KAIZEN_AZURE_SQL_DATABASE` | `IBP.PEDRAVISAODIARIA`, `IBP.CONTROLE_PROCESSOS` |
+| Stable & Capable: PDFs e importação | `BDIBPBMSA_PRD` | `STABLECAPABLE_AZURE_SQL_DATABASE` (sem ela, cai no `KAIZEN_AZURE_SQL_DATABASE`) | `IBP.PEDRAVISAODIARIA`, `IBP.CONTROLE_PROCESSOS` |
 | Stable & Capable: aba Dashboard | `BDIBPBMSA_PRD` | `STABLECAPABLE_BI_SQL_DATABASE` | consulta da tabela `base` do `.pbix` (`IBP.PEDRAVISAO*`) |
 
-> **Atenção:** com `KAIZEN_PASTA=VBM-Kaizen-App-DEV`, o Kaizen e a importação do Stable & Capable
-> gravam na base **DEV**. Ao promover o Kaizen para PROD, troque `KAIZEN_PASTA` e
+> **Atenção:** com `KAIZEN_PASTA=VBM-Kaizen-App-DEV`, o Kaizen grava na base **DEV**. O Stable &
+> Capable (importação e PDFs) tem a base própria, PRD (`STABLECAPABLE_AZURE_SQL_DATABASE`). Ao promover o Kaizen para PROD, troque `KAIZEN_PASTA` e
 > `KAIZEN_AZURE_SQL_DATABASE` juntos (o `app.yaml` pede coerência entre os dois).
 
 Os `.sql` das pastas `database/` são **scripts operacionais** rodados à mão (SSMS): criação de
@@ -328,7 +328,7 @@ flowchart TB
 | SAS do Blob em texto puro no `app.yaml`, sem permissão de delete (`sp=racw`) | tratar como comprometido: revogar, reemitir com `sp=racwd`, criar o resource `azure-storage-sas` e só então usar `valueFrom` | `app.yaml`, `VBM-Kaizen-App-DEV/docs/evidencias-secrets.md` |
 | Senha do SQL e SAS antigos no histórico do git | rotacionar os dois | `VBM-Kaizen-App-DEV/README.md` |
 | E-mails do Kaizen não saem | falta o consentimento de administrador no Entra (Graph) | `app.yaml` |
-| Kaizen e importação do S&C na base DEV | coerente com `KAIZEN_PASTA=VBM-Kaizen-App-DEV`; revisar na promoção | §5.1 |
+| Kaizen na base DEV | coerente com `KAIZEN_PASTA=VBM-Kaizen-App-DEV`; revisar na promoção | §5.1 |
 | `vdt.db` volta ao arquivo do repositório a cada deploy | apontar `VDT_DB_PATH` para armazenamento persistente | `VBM-Vdt/PORTAL.md` |
 | `HOB_ID_DASH` não definido | Health of the Business com dados de demonstração | `app.yaml` |
 | Cockpit depende de `GRANT` / dono das tabelas no Lakebase para o service principal do Portal | sem isso: `Could not ensure schema` no log | `VBM-Cockpit/PORTAL.md` |
