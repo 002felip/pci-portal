@@ -251,8 +251,11 @@
   }
   /** Colunas simples ou empilhadas, ajustadas à largura do card (sem rolagem lateral).
    *  cols: [{ rot, segs: [{ v, c, nome, hachura }] }] */
+  /** Altura a mais (px) por linha de gráficos de colunas, para a página preencher a tela (ver preencher()) */
+  var EXTRA = 0;
   function colunas(alvo, cols, op) {
-    op = op || {};
+    op = Object.assign({}, op || {});
+    op.altura = (op.altura || 210) + EXTRA;
     if (!cols.length) { alvo.innerHTML = vazio(t('ui.semDados')); return; }
     var max = Math.max.apply(null, cols.map(function (c) { return c.segs.reduce(function (s, x) { return s + (x.v || 0); }, 0); })) || 1;
     var larg = Math.max(alvo.clientWidth, 160), porCol = larg / cols.length;
@@ -556,7 +559,7 @@
         '<div class="gt-tempo">' + grade + (hojeP != null ? '<i class="gt-hoje" style="left:' + hojeP + '%"></i>' : '') +
         '<div class="gt-trilha real" data-r="R">' + real + '</div><div class="gt-trilha plan" data-r="P">' + plan + '</div></div></div>';
     }).join('');
-    alvo.innerHTML = '<div class="gt-rolagem' + (compacto ? ' compacto' : '') + '"><div class="gt gt-min"' + (compacto ? ' style="--col-proj:minmax(130px,2fr);--col-coach:104px"' : '') + '>' + cab + '<div class="gt-corpo">' + corpo + '</div></div></div>';
+    alvo.innerHTML = '<div class="gt-rolagem' + (compacto ? ' compacto' : ' lss-enche') + '"><div class="gt gt-min"' + (compacto ? ' style="--col-proj:minmax(130px,2fr);--col-coach:104px"' : '') + '>' + cab + '<div class="gt-corpo">' + corpo + '</div></div></div>';
   }
   function dicaDaLinha(l) {
     var c = l.c;
@@ -677,8 +680,51 @@
     if (st.erro) { est.hidden = false; est.textContent = t('ui.erro', { m: st.erro }); return; }
     if (!st.dados) { est.hidden = false; est.textContent = t('ui.carregando'); return; }
     est.hidden = true;
+    EXTRA = 0;
+    desenharAba();
+    preencher();
+  }
+  function desenharAba() {
     ({ geral: desenharGeral, detalhe: desenharDetalhe, bu: desenharBU, gantt: function () { gantt($('tGantt'), $('tGanttLeg'), false); },
       calendario: desenharCalendario, treinamentos: desenharTreinamentos, tabela: desenharTabela })[st.aba]();
+  }
+  /** Preenche a altura da tela (telas grandes e tela cheia), como o ajustarAltura do COO:
+   *  - Gantt, calendário e tabela: a caixa com rolagem interna desce até a base da tela;
+   *  - demais páginas: a sobra de altura é dividida entre as linhas de gráficos de colunas.
+   *  No celular (≤ 720 px) a página segue com rolagem normal. */
+  function preencher() {
+    var pag = document.querySelector('.pagina'), painel = $('painel-' + st.aba);
+    if (!pag || !painel || window.innerWidth <= 720) {
+      document.querySelectorAll('#lss .lss-enche').forEach(function (el) { el.style.maxHeight = ''; });
+      return;
+    }
+    var topo = function (el) { return el.getBoundingClientRect().top + window.scrollY; };
+    var fim = function () { return pag.getBoundingClientRect().bottom + window.scrollY; };
+    var caixas = painel.querySelectorAll('.lss-enche');
+    if (caixas.length) {
+      caixas.forEach(function (el) {
+        el.style.maxHeight = 'none';
+        var abaixo = fim() - (topo(el) + el.offsetHeight);
+        el.style.maxHeight = Math.max(320, Math.floor(window.innerHeight - topo(el) - abaixo)) + 'px';
+      });
+      return;
+    }
+    var sobra = Math.floor(window.innerHeight - fim());
+    if (sobra < 16) return;
+    var linhas = {};
+    painel.querySelectorAll('.lc-area').forEach(function (a) { linhas[Math.round(topo(a) / 8)] = 1; });
+    var n = Object.keys(linhas).length;
+    if (!n) return;
+    // Linhas lado a lado (ex.: ciclo à esquerda e a grade de sites à direita) contam como uma só na
+    // altura; por isso a sobra é repartida em até 4 passadas, até a página encostar na base da tela
+    for (var i = 0; i < 4 && sobra >= 16; i++) {
+      EXTRA += Math.floor(sobra / n);
+      desenharAba();
+      sobra = Math.floor(window.innerHeight - fim());
+    }
+    // segurança: se algo passou da tela (quebra de rótulo), devolve a diferença
+    var passou = Math.ceil(fim() - window.innerHeight);
+    if (passou > 0) { EXTRA = Math.max(0, EXTRA - Math.ceil(passou / n)); desenharAba(); }
   }
 
   // ═════════════════════════════ eventos ═════════════════════════════
@@ -736,7 +782,7 @@
       var on = !!document.fullscreenElement;
       document.querySelectorAll('#lss .js-full').forEach(function (b) { b.setAttribute('aria-label', t(on ? 'fs.off' : 'fs.on')); b.title = t(on ? 'fs.offTitle' : 'fs.onTitle'); });
     };
-    document.addEventListener('fullscreenchange', rotuloFs);
+    document.addEventListener('fullscreenchange', function () { rotuloFs(); clearTimeout(pend); pend = setTimeout(desenhar, 60); });
 
     var pend = null;
     window.addEventListener('resize', function () { clearTimeout(pend); pend = setTimeout(desenhar, 150); });

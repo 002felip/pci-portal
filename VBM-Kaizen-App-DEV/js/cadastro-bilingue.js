@@ -265,6 +265,18 @@ window.criarCadastroBilingue = function (cfg) {
       'title="Tradução em inglês não cadastrada — mostrando o texto em português"></i>';
   }
 
+  // Abas sem coluna URL_ICONE (Tipo Resultados, Tipo Kaizen): o ícone sai do NOME do registro,
+  // pela lista cfg.iconesPorNome ([{ re: /financ/i, icone: "sack-dollar" }, …], PT e EN no mesmo
+  // padrão). Sem correspondência, vale o ícone padrão da aba.
+  function iconePeloNome(reg) {
+    var regras = cfg.iconesPorNome || [];
+    var nome = String((reg && reg.NM) || "");
+    for (var i = 0; i < regras.length; i++) {
+      if (regras[i].re.test(nome)) return PASTA_ICONES + "fa-solid-" + regras[i].icone + ".svg";
+    }
+    return null;
+  }
+
   function renderItem(reg) {
     var item = document.createElement("div");
     item.className = "admin-item" + (reg.ATIVO ? "" : " admin-item-inactive");
@@ -274,7 +286,7 @@ window.criarCadastroBilingue = function (cfg) {
         // Os dois lados são URL de assets/icons: o banco (URL_ICONE) quando
         // o registro tem ícone próprio, senão o ícone padrão da aba. Mesmo
         // <img> nos dois casos — só muda de onde vem o endereço.
-        '<img src="' + escapeHtml(reg.URL_ICONE || cfg.iconePadrao) + '" alt="" loading="lazy">' +
+        '<img src="' + escapeHtml(reg.URL_ICONE || iconePeloNome(reg) || cfg.iconePadrao) + '" alt="" loading="lazy">' +
       "</div>" +
       '<div class="admin-item-body">' +
         '<div class="admin-item-name">' + escapeHtml(reg.NM) + semTraducaoHtml(reg) + "</div>" +

@@ -38,7 +38,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>VBM Kaizen — Administração</title>
-<link href="css/fontawesome-subset.css?v=20260923-1" rel="stylesheet"/>
+<link href="css/fontawesome-subset.css?v=20261109-1" rel="stylesheet"/>
 <link href="css/vbm-app.css?v=20261006-1" rel="stylesheet"/>
 <!-- Poppins servida pelo próprio app (css/poppins.css + assets/fonts/poppins).
      Vinha de fonts.googleapis.com: em rede sem saída para a internet o
@@ -411,6 +411,8 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
 [data-bg="dark"] .admin-item-icon.orange{ color:var(--vbm-blue-light); }
 [data-bg="dark"] .admin-item-icon.yellow{ color:var(--vbm-blue-light); }
 [data-bg="dark"] .admin-item-icon.teal{ color:var(--vbm-blue-light); }
+/* Os SVG de assets/icons vêm com o azul #1a8bbf gravado; no tema escuro clareia para o tom das letras */
+[data-bg="dark"] .admin-item-icon img{ filter:brightness(1.55) saturate(.9); }
 [data-bg="dark"] .admin-item:hover .admin-item-icon{
   box-shadow:0 6px 18px -4px rgba(var(--hue),.5);
   border-color:rgba(var(--hue),.55);
@@ -1197,7 +1199,7 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
       <div class="form-group">
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="catAddIconGrid">
-          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-tag" onclick="pickCategoryIcon(this,'catAdd')" title="Tag" aria-label="Tag"><i class="fa-solid fa-tag"></i></button>
+          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-tag" onclick="pickCategoryIcon(this,'catAdd')" title="Geral" aria-label="Geral"><i class="fa-solid fa-tag"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-helmet-safety" onclick="pickCategoryIcon(this,'catAdd')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-helmet-safety"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-broom" onclick="pickCategoryIcon(this,'catAdd')" title="5S" aria-label="5S"><i class="fa-solid fa-broom"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'catAdd')" title="Energia" aria-label="Energia"><i class="fa-solid fa-bolt"></i></button>
@@ -1206,7 +1208,13 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-leaf" onclick="pickCategoryIcon(this,'catAdd')" title="Meio Ambiente" aria-label="Meio Ambiente"><i class="fa-solid fa-leaf"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-truck" onclick="pickCategoryIcon(this,'catAdd')" title="Logística" aria-label="Logística"><i class="fa-solid fa-truck"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-recycle" onclick="pickCategoryIcon(this,'catAdd')" title="Reciclagem" aria-label="Reciclagem"><i class="fa-solid fa-recycle"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'catAdd')" title="Indústria" aria-label="Indústria"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'catAdd')" title="Operação" aria-label="Operação"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-high" onclick="pickCategoryIcon(this,'catAdd')" title="Produtividade" aria-label="Produtividade"><i class="fa-solid fa-gauge-high"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-dollar-sign" onclick="pickCategoryIcon(this,'catAdd')" title="Custo" aria-label="Custo"><i class="fa-solid fa-dollar-sign"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-people-group" onclick="pickCategoryIcon(this,'catAdd')" title="Pessoas" aria-label="Pessoas"><i class="fa-solid fa-people-group"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gears" onclick="pickCategoryIcon(this,'catAdd')" title="Processo" aria-label="Processo"><i class="fa-solid fa-gears"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-robot" onclick="pickCategoryIcon(this,'catAdd')" title="Automação" aria-label="Automação"><i class="fa-solid fa-robot"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-droplet" onclick="pickCategoryIcon(this,'catAdd')" title="Água" aria-label="Água"><i class="fa-solid fa-droplet"></i></button>
         </div>
         <input type="hidden" id="catAddIconInput" value="fa-solid fa-tag"/>
       </div>
@@ -1262,8 +1270,8 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
       <div class="form-group">
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="catEditIconGrid">
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-tag" onclick="pickCategoryIcon(this,'catEdit')" title="Tag" aria-label="Tag"><i class="fa-solid fa-tag"></i></button>
-          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-helmet-safety" onclick="pickCategoryIcon(this,'catEdit')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-helmet-safety"></i></button>
+          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-tag" onclick="pickCategoryIcon(this,'catEdit')" title="Geral" aria-label="Geral"><i class="fa-solid fa-tag"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-helmet-safety" onclick="pickCategoryIcon(this,'catEdit')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-helmet-safety"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-broom" onclick="pickCategoryIcon(this,'catEdit')" title="5S" aria-label="5S"><i class="fa-solid fa-broom"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'catEdit')" title="Energia" aria-label="Energia"><i class="fa-solid fa-bolt"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-screwdriver-wrench" onclick="pickCategoryIcon(this,'catEdit')" title="Manutenção" aria-label="Manutenção"><i class="fa-solid fa-screwdriver-wrench"></i></button>
@@ -1271,9 +1279,15 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-leaf" onclick="pickCategoryIcon(this,'catEdit')" title="Meio Ambiente" aria-label="Meio Ambiente"><i class="fa-solid fa-leaf"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-truck" onclick="pickCategoryIcon(this,'catEdit')" title="Logística" aria-label="Logística"><i class="fa-solid fa-truck"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-recycle" onclick="pickCategoryIcon(this,'catEdit')" title="Reciclagem" aria-label="Reciclagem"><i class="fa-solid fa-recycle"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'catEdit')" title="Indústria" aria-label="Indústria"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'catEdit')" title="Operação" aria-label="Operação"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-high" onclick="pickCategoryIcon(this,'catEdit')" title="Produtividade" aria-label="Produtividade"><i class="fa-solid fa-gauge-high"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-dollar-sign" onclick="pickCategoryIcon(this,'catEdit')" title="Custo" aria-label="Custo"><i class="fa-solid fa-dollar-sign"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-people-group" onclick="pickCategoryIcon(this,'catEdit')" title="Pessoas" aria-label="Pessoas"><i class="fa-solid fa-people-group"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gears" onclick="pickCategoryIcon(this,'catEdit')" title="Processo" aria-label="Processo"><i class="fa-solid fa-gears"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-robot" onclick="pickCategoryIcon(this,'catEdit')" title="Automação" aria-label="Automação"><i class="fa-solid fa-robot"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-droplet" onclick="pickCategoryIcon(this,'catEdit')" title="Água" aria-label="Água"><i class="fa-solid fa-droplet"></i></button>
         </div>
-        <input type="hidden" id="catEditIconInput" value="fa-solid fa-helmet-safety"/>
+        <input type="hidden" id="catEditIconInput" value="fa-solid fa-tag"/>
       </div>
 
       <div class="form-group">
@@ -1406,8 +1420,11 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
         <label for="resAddTipoResultado" class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="replAddIconGrid">
           <button type="button" class="icon-swatch active" data-icon="fa-solid fa-globe" onclick="pickCategoryIcon(this,'replAdd')" title="Global" aria-label="Global"><i class="fa-solid fa-globe"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-map-location-dot" onclick="pickCategoryIcon(this,'replAdd')" title="País / região" aria-label="País / região"><i class="fa-solid fa-map-location-dot"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-building" onclick="pickCategoryIcon(this,'replAdd')" title="Unidade" aria-label="Unidade"><i class="fa-solid fa-building"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-map-location-dot" onclick="pickCategoryIcon(this,'replAdd')" title="País" aria-label="País"><i class="fa-solid fa-map-location-dot"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'replAdd')" title="Site" aria-label="Site"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-sitemap" onclick="pickCategoryIcon(this,'replAdd')" title="Área / processo" aria-label="Área / processo"><i class="fa-solid fa-sitemap"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-clone" onclick="pickCategoryIcon(this,'replAdd')" title="Replicável" aria-label="Replicável"><i class="fa-solid fa-clone"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'replAdd')" title="Não replicável" aria-label="Não replicável"><i class="fa-solid fa-ban"></i></button>
         </div>
         <input type="hidden" id="replAddIconInput" value="fa-solid fa-globe"/>
@@ -1463,8 +1480,11 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="replEditIconGrid">
           <button type="button" class="icon-swatch active" data-icon="fa-solid fa-globe" onclick="pickCategoryIcon(this,'replEdit')" title="Global" aria-label="Global"><i class="fa-solid fa-globe"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-map-location-dot" onclick="pickCategoryIcon(this,'replEdit')" title="País / região" aria-label="País / região"><i class="fa-solid fa-map-location-dot"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-building" onclick="pickCategoryIcon(this,'replEdit')" title="Unidade" aria-label="Unidade"><i class="fa-solid fa-building"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-map-location-dot" onclick="pickCategoryIcon(this,'replEdit')" title="País" aria-label="País"><i class="fa-solid fa-map-location-dot"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-industry" onclick="pickCategoryIcon(this,'replEdit')" title="Site" aria-label="Site"><i class="fa-solid fa-industry"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-sitemap" onclick="pickCategoryIcon(this,'replEdit')" title="Área / processo" aria-label="Área / processo"><i class="fa-solid fa-sitemap"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-clone" onclick="pickCategoryIcon(this,'replEdit')" title="Replicável" aria-label="Replicável"><i class="fa-solid fa-clone"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'replEdit')" title="Não replicável" aria-label="Não replicável"><i class="fa-solid fa-ban"></i></button>
         </div>
         <input type="hidden" id="replEditIconInput" value="fa-solid fa-globe"/>
@@ -1519,12 +1539,21 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
       <div class="form-group">
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="despAddIconGrid">
-          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'despAdd')" title="Kaizen Simples" aria-label="Kaizen Simples"><i class="fa-solid fa-bolt"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-wrench" onclick="pickCategoryIcon(this,'despAdd')" title="Kaizen Complexo" aria-label="Kaizen Complexo"><i class="fa-solid fa-wrench"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-lightbulb" onclick="pickCategoryIcon(this,'despAdd')" title="Inovação" aria-label="Inovação"><i class="fa-solid fa-lightbulb"></i></button>
+          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-recycle" onclick="pickCategoryIcon(this,'despAdd')" title="Geral" aria-label="Geral"><i class="fa-solid fa-recycle"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-triangle-exclamation" onclick="pickCategoryIcon(this,'despAdd')" title="Defeitos" aria-label="Defeitos"><i class="fa-solid fa-triangle-exclamation"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-boxes-stacked" onclick="pickCategoryIcon(this,'despAdd')" title="Superprodução" aria-label="Superprodução"><i class="fa-solid fa-boxes-stacked"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-hourglass-half" onclick="pickCategoryIcon(this,'despAdd')" title="Espera" aria-label="Espera"><i class="fa-solid fa-hourglass-half"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-user-graduate" onclick="pickCategoryIcon(this,'despAdd')" title="Talento não utilizado" aria-label="Talento não utilizado"><i class="fa-solid fa-user-graduate"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-truck-fast" onclick="pickCategoryIcon(this,'despAdd')" title="Transporte" aria-label="Transporte"><i class="fa-solid fa-truck-fast"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-warehouse" onclick="pickCategoryIcon(this,'despAdd')" title="Estoque" aria-label="Estoque"><i class="fa-solid fa-warehouse"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-person-walking" onclick="pickCategoryIcon(this,'despAdd')" title="Movimentação" aria-label="Movimentação"><i class="fa-solid fa-person-walking"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gears" onclick="pickCategoryIcon(this,'despAdd')" title="Processamento extra" aria-label="Processamento extra"><i class="fa-solid fa-gears"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'despAdd')" title="Energia" aria-label="Energia"><i class="fa-solid fa-bolt"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-lightbulb" onclick="pickCategoryIcon(this,'despAdd')" title="Ideia / inovação" aria-label="Ideia / inovação"><i class="fa-solid fa-lightbulb"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-shield-halved" onclick="pickCategoryIcon(this,'despAdd')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-shield-halved"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-wrench" onclick="pickCategoryIcon(this,'despAdd')" title="Manutenção" aria-label="Manutenção"><i class="fa-solid fa-wrench"></i></button>
         </div>
-        <input type="hidden" id="despAddIconInput" value="fa-solid fa-bolt"/>
+        <input type="hidden" id="despAddIconInput" value="fa-solid fa-recycle"/>
       </div>
       <div class="form-group">
         <label class="form-label" data-i18n="adm.wasteTypeName">Potencial de Desperdício <span class="req">*</span></label>
@@ -1576,12 +1605,21 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
       <div class="form-group">
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="despEditIconGrid">
-          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'despEdit')" title="Kaizen Simples" aria-label="Kaizen Simples"><i class="fa-solid fa-bolt"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-wrench" onclick="pickCategoryIcon(this,'despEdit')" title="Kaizen Complexo" aria-label="Kaizen Complexo"><i class="fa-solid fa-wrench"></i></button>
-          <button type="button" class="icon-swatch" data-icon="fa-solid fa-lightbulb" onclick="pickCategoryIcon(this,'despEdit')" title="Inovação" aria-label="Inovação"><i class="fa-solid fa-lightbulb"></i></button>
+          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-recycle" onclick="pickCategoryIcon(this,'despEdit')" title="Geral" aria-label="Geral"><i class="fa-solid fa-recycle"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-triangle-exclamation" onclick="pickCategoryIcon(this,'despEdit')" title="Defeitos" aria-label="Defeitos"><i class="fa-solid fa-triangle-exclamation"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-boxes-stacked" onclick="pickCategoryIcon(this,'despEdit')" title="Superprodução" aria-label="Superprodução"><i class="fa-solid fa-boxes-stacked"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-hourglass-half" onclick="pickCategoryIcon(this,'despEdit')" title="Espera" aria-label="Espera"><i class="fa-solid fa-hourglass-half"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-user-graduate" onclick="pickCategoryIcon(this,'despEdit')" title="Talento não utilizado" aria-label="Talento não utilizado"><i class="fa-solid fa-user-graduate"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-truck-fast" onclick="pickCategoryIcon(this,'despEdit')" title="Transporte" aria-label="Transporte"><i class="fa-solid fa-truck-fast"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-warehouse" onclick="pickCategoryIcon(this,'despEdit')" title="Estoque" aria-label="Estoque"><i class="fa-solid fa-warehouse"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-person-walking" onclick="pickCategoryIcon(this,'despEdit')" title="Movimentação" aria-label="Movimentação"><i class="fa-solid fa-person-walking"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gears" onclick="pickCategoryIcon(this,'despEdit')" title="Processamento extra" aria-label="Processamento extra"><i class="fa-solid fa-gears"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'despEdit')" title="Energia" aria-label="Energia"><i class="fa-solid fa-bolt"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-lightbulb" onclick="pickCategoryIcon(this,'despEdit')" title="Ideia / inovação" aria-label="Ideia / inovação"><i class="fa-solid fa-lightbulb"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-shield-halved" onclick="pickCategoryIcon(this,'despEdit')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-shield-halved"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-wrench" onclick="pickCategoryIcon(this,'despEdit')" title="Manutenção" aria-label="Manutenção"><i class="fa-solid fa-wrench"></i></button>
         </div>
-        <input type="hidden" id="despEditIconInput" value="fa-solid fa-bolt"/>
+        <input type="hidden" id="despEditIconInput" value="fa-solid fa-recycle"/>
       </div>
       <div class="form-group">
         <label class="form-label" data-i18n="adm.name">Nome <span class="req">*</span></label>
@@ -1633,14 +1671,21 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
       <div class="form-group">
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="resAddIconGrid">
-          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-dollar-sign" onclick="pickCategoryIcon(this,'resAdd')" title="Redução de Custo" aria-label="Redução de Custo"><i class="fa-solid fa-dollar-sign"></i></button>
+          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-trophy" onclick="pickCategoryIcon(this,'resAdd')" title="Resultado" aria-label="Resultado"><i class="fa-solid fa-trophy"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-dollar-sign" onclick="pickCategoryIcon(this,'resAdd')" title="Redução de custo" aria-label="Redução de custo"><i class="fa-solid fa-dollar-sign"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-sack-dollar" onclick="pickCategoryIcon(this,'resAdd')" title="Ganho financeiro" aria-label="Ganho financeiro"><i class="fa-solid fa-sack-dollar"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-chart-line" onclick="pickCategoryIcon(this,'resAdd')" title="Produtividade" aria-label="Produtividade"><i class="fa-solid fa-chart-line"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-high" onclick="pickCategoryIcon(this,'resAdd')" title="Desempenho" aria-label="Desempenho"><i class="fa-solid fa-gauge-high"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-clock" onclick="pickCategoryIcon(this,'resAdd')" title="Tempo" aria-label="Tempo"><i class="fa-solid fa-clock"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-shield-halved" onclick="pickCategoryIcon(this,'resAdd')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-shield-halved"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-leaf" onclick="pickCategoryIcon(this,'resAdd')" title="Sustentabilidade" aria-label="Sustentabilidade"><i class="fa-solid fa-leaf"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-droplet" onclick="pickCategoryIcon(this,'resAdd')" title="Água" aria-label="Água"><i class="fa-solid fa-droplet"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'resAdd')" title="Energia" aria-label="Energia"><i class="fa-solid fa-bolt"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-circle-check" onclick="pickCategoryIcon(this,'resAdd')" title="Qualidade" aria-label="Qualidade"><i class="fa-solid fa-circle-check"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-hand-holding-hand" onclick="pickCategoryIcon(this,'resAdd')" title="Engajamento" aria-label="Engajamento"><i class="fa-solid fa-hand-holding-hand"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-face-smile" onclick="pickCategoryIcon(this,'resAdd')" title="Satisfação" aria-label="Satisfação"><i class="fa-solid fa-face-smile"></i></button>
         </div>
-        <input type="hidden" id="resAddIconInput" value="fa-solid fa-dollar-sign"/>
+        <input type="hidden" id="resAddIconInput" value="fa-solid fa-trophy"/>
       </div>
       <div class="form-group">
         <label class="form-label" data-i18n="adm.resultTypeName">Resultados Alcançados <span class="req">*</span></label>
@@ -1698,14 +1743,21 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
       <div class="form-group">
         <label class="form-label" data-i18n="adm.icons">Ícones</label>
         <div class="icon-swatch-row" id="resEditIconGrid">
-          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-dollar-sign" onclick="pickCategoryIcon(this,'resEdit')" title="Redução de Custo" aria-label="Redução de Custo"><i class="fa-solid fa-dollar-sign"></i></button>
+          <button type="button" class="icon-swatch active" data-icon="fa-solid fa-trophy" onclick="pickCategoryIcon(this,'resEdit')" title="Resultado" aria-label="Resultado"><i class="fa-solid fa-trophy"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-dollar-sign" onclick="pickCategoryIcon(this,'resEdit')" title="Redução de custo" aria-label="Redução de custo"><i class="fa-solid fa-dollar-sign"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-sack-dollar" onclick="pickCategoryIcon(this,'resEdit')" title="Ganho financeiro" aria-label="Ganho financeiro"><i class="fa-solid fa-sack-dollar"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-chart-line" onclick="pickCategoryIcon(this,'resEdit')" title="Produtividade" aria-label="Produtividade"><i class="fa-solid fa-chart-line"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-gauge-high" onclick="pickCategoryIcon(this,'resEdit')" title="Desempenho" aria-label="Desempenho"><i class="fa-solid fa-gauge-high"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-clock" onclick="pickCategoryIcon(this,'resEdit')" title="Tempo" aria-label="Tempo"><i class="fa-solid fa-clock"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-shield-halved" onclick="pickCategoryIcon(this,'resEdit')" title="Segurança" aria-label="Segurança"><i class="fa-solid fa-shield-halved"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-leaf" onclick="pickCategoryIcon(this,'resEdit')" title="Sustentabilidade" aria-label="Sustentabilidade"><i class="fa-solid fa-leaf"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-droplet" onclick="pickCategoryIcon(this,'resEdit')" title="Água" aria-label="Água"><i class="fa-solid fa-droplet"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-bolt" onclick="pickCategoryIcon(this,'resEdit')" title="Energia" aria-label="Energia"><i class="fa-solid fa-bolt"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-circle-check" onclick="pickCategoryIcon(this,'resEdit')" title="Qualidade" aria-label="Qualidade"><i class="fa-solid fa-circle-check"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-hand-holding-hand" onclick="pickCategoryIcon(this,'resEdit')" title="Engajamento" aria-label="Engajamento"><i class="fa-solid fa-hand-holding-hand"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-face-smile" onclick="pickCategoryIcon(this,'resEdit')" title="Satisfação" aria-label="Satisfação"><i class="fa-solid fa-face-smile"></i></button>
         </div>
-        <input type="hidden" id="resEditIconInput" value="fa-solid fa-dollar-sign"/>
+        <input type="hidden" id="resEditIconInput" value="fa-solid fa-trophy"/>
       </div>
       <div class="form-group">
         <label class="form-label" data-i18n="adm.name">Nome <span class="req">*</span></label>
@@ -1923,6 +1975,10 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-circle-xmark" onclick="pickCategoryIcon(this,'statusAdd')" title="Reprovado" aria-label="Reprovado"><i class="fa-solid fa-circle-xmark"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-clipboard-check" onclick="pickCategoryIcon(this,'statusAdd')" title="Em aprovação" aria-label="Em aprovação"><i class="fa-solid fa-clipboard-check"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-pen" onclick="pickCategoryIcon(this,'statusAdd')" title="Rascunho" aria-label="Rascunho"><i class="fa-solid fa-pen"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-rotate" onclick="pickCategoryIcon(this,'statusAdd')" title="Revisado" aria-label="Revisado"><i class="fa-solid fa-rotate"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-hourglass-half" onclick="pickCategoryIcon(this,'statusAdd')" title="Pendente" aria-label="Pendente"><i class="fa-solid fa-hourglass-half"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-flag-checkered" onclick="pickCategoryIcon(this,'statusAdd')" title="Implementado" aria-label="Implementado"><i class="fa-solid fa-flag-checkered"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'statusAdd')" title="Cancelado" aria-label="Cancelado"><i class="fa-solid fa-ban"></i></button>
         </div>
         <input type="hidden" id="statusAddIconInput" value="fa-solid fa-circle-check"/>
       </div>
@@ -1980,6 +2036,10 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-circle-xmark" onclick="pickCategoryIcon(this,'statusEdit')" title="Reprovado" aria-label="Reprovado"><i class="fa-solid fa-circle-xmark"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-clipboard-check" onclick="pickCategoryIcon(this,'statusEdit')" title="Em aprovação" aria-label="Em aprovação"><i class="fa-solid fa-clipboard-check"></i></button>
           <button type="button" class="icon-swatch" data-icon="fa-solid fa-pen" onclick="pickCategoryIcon(this,'statusEdit')" title="Rascunho" aria-label="Rascunho"><i class="fa-solid fa-pen"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-rotate" onclick="pickCategoryIcon(this,'statusEdit')" title="Revisado" aria-label="Revisado"><i class="fa-solid fa-rotate"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-hourglass-half" onclick="pickCategoryIcon(this,'statusEdit')" title="Pendente" aria-label="Pendente"><i class="fa-solid fa-hourglass-half"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-flag-checkered" onclick="pickCategoryIcon(this,'statusEdit')" title="Implementado" aria-label="Implementado"><i class="fa-solid fa-flag-checkered"></i></button>
+          <button type="button" class="icon-swatch" data-icon="fa-solid fa-ban" onclick="pickCategoryIcon(this,'statusEdit')" title="Cancelado" aria-label="Cancelado"><i class="fa-solid fa-ban"></i></button>
         </div>
         <input type="hidden" id="statusEditIconInput" value="fa-solid fa-circle-check"/>
       </div>
@@ -2032,14 +2092,14 @@ div.admin-hero-title{font-size:min(clamp(1.6rem,1rem + 1.6vw,2.5rem),max(1.35rem
 <script src="js/usuarios.js?v=20261001-3"></script>
 <!-- cadastro-bilingue.js define o motor compartilhado (window.criarCadastroBilingue);
      os 6 arquivos seguintes só configuram sua própria aba com ele. -->
-<script src="js/cadastro-bilingue.js?v=20260912-1"></script>
+<script src="js/cadastro-bilingue.js?v=20261109-1"></script>
 <script src="js/categorias.js?v=20260912-1"></script>
 <script src="js/replicacao.js?v=20260912-1"></script>
 <script src="js/desperdicios.js?v=20260912-1"></script>
 <script src="js/resultados.js?v=20260912-1"></script>
-<script src="js/tiporesultados.js?v=20260912-1"></script>
+<script src="js/tiporesultados.js?v=20261109-1"></script>
 <script src="js/status.js?v=20260912-1"></script>
-<script src="js/tiposkaizen.js?v=20260928-1"></script>
+<script src="js/tiposkaizen.js?v=20261109-1"></script>
 <script>
 (function(){
   var tabs = document.querySelectorAll('[data-admin-tab]');
