@@ -413,9 +413,31 @@ function montarEbitda(linhas, linhasOutros, config, ciclo) {
   if (sitesOutros.size > 1 && !O.sites.length) avisos.push(`Others: KPIs ${O.kpis.join(', ')} em ${sitesOutros.size} sites (${[...sitesOutros].join(', ')}), somados; defina ebitda.outros.sites para limitar`);
   if (fora.size) avisos.push(`sites com o KPI ${config.ebitda.idKpi} fora da configuração (não usados): ${[...fora].join(', ')}`);
   for (const k of ['vbm', 'cu', 'ni']) if (!sitesUsados[k] && Object.keys(anos).length) avisos.push(`${k}: nenhum dos sites ${config.ebitda.sites[k].join(', ')} tem o KPI ${config.ebitda.idKpi} no ciclo ${ciclo}`);
-  if (!sitesUsados.out && Object.keys(anos).length) avisos.push(`out: KPIs ${O.kpis.join(', ')} da operação ${O.idOperacao} sem linhas no ciclo ${ciclo}`);
+  // Sem Other Segments cadastrado (nenhuma linha de ebitda.outros): Others = VBM − Copper − Nickel, mês a mês e nos
+  // períodos gravados (mesmo fator em IBP.DASHBOARD.VL_FATOR nos três sites)
+  let outrosCalculado = false;
+  if (!sitesUsados.out && sitesUsados.vbm && sitesUsados.cu && sitesUsados.ni) {
+    outrosCalculado = true;
+    const menos = (v, c, n) => (v == null ? null : v - (c || 0) - (n || 0));
+    for (const a of Object.values(anos)) {
+      const V = a.ebitdaVbm, C = a.ebitdaCu, N = a.ebitdaNi, Ot = a.ebitdaOut;
+      for (const k of ['b', 'a']) Ot[k] = V[k].map((v, i) => v - C[k][i] - N[k][i]);
+      if (V.per) {
+        Ot.per = {};
+        for (const [m, g] of Object.entries(V.per)) {
+          Ot.per[m] = {};
+          for (const [cd, x] of Object.entries(g)) {
+            const c = (C.per && C.per[m] && C.per[m][cd]) || {}, n = (N.per && N.per[m] && N.per[m][cd]) || {};
+            Ot.per[m][cd] = { b: menos(x.b, c.b, n.b), a: menos(x.a, c.a, n.a) };
+          }
+        }
+      }
+    }
+    metas.out = metas.vbm ? { ...metas.vbm } : metas.out;
+    avisos.push(`Others calculado (VBM − Copper − Nickel): ebitda.outros sem linhas no ciclo ${ciclo}`);
+  } else if (!sitesUsados.out && Object.keys(anos).length) avisos.push(`out: KPIs ${O.kpis.join(', ')} da operação ${O.idOperacao} sem linhas no ciclo ${ciclo}`);
   if (!Object.keys(anos).length) avisos.push(`KPI ${config.ebitda.idKpi} sem linhas no ciclo ${ciclo} (ID_DASH ${config.ebitda.idDash})`);
-  return { ciclo, ultimoReal, anos, meta: metas.vbm || metas.cu || metas.ni || null, metas, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
+  return { ciclo, ultimoReal, anos, outrosCalculado, meta: metas.vbm || metas.cu || metas.ni || null, metas, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
 }
 
 // ── Demais séries da carga do COO: linhas de 004 (um KPI por consulta) → série mensal do site da página ──
@@ -487,7 +509,9 @@ function montarAtualizacao(linhas, config, ciclo) {
   };
   const cards = {}, E = config.ebitda;
   for (const seg of ['vbm', 'cu', 'ni']) cards[`vbm.ebitda.${seg}`] = situacao({ sites: E.sites[seg], ids: [E.idKpi] });
-  cards['vbm.ebitda.out'] = situacao({ sites: E.outros.sites, op: E.outros.idOperacao, ids: E.outros.kpis });
+  // Others calculado (VBM − Copper − Nickel, sem Other Segments cadastrado): a situação dos três sites
+  cards['vbm.ebitda.out'] = situacao({ sites: E.outros.sites, op: E.outros.idOperacao, ids: E.outros.kpis })
+    || situacao({ sites: [...E.sites.vbm, ...E.sites.cu, ...E.sites.ni], ids: [E.idKpi] });
   for (const [chave, idKpi] of Object.entries(config.coo.kpis)) {
     if (idKpi) cards[chave] = situacao({ sites: [config.coo.sites[chave.split('.')[0]]], ids: [idKpi] });
   }
