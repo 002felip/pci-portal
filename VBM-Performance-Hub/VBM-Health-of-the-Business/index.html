@@ -832,7 +832,8 @@ window.HOB_CARREGAR(function (aviso) {
         { area: 'prod', tipo: 'pares', titulo: 'Production', unid: 'Kt', ind: 'prod', casas: 0, pol: 'up' },
         { area: 'sales', tipo: 'pares', titulo: 'Sales', unid: 'Kt', ind: 'sales', casas: 0, pol: 'up' },
         { area: 'allin', tipo: allin, titulo: 'All-In (AISC)', unid: 'US$ k/t', casas: 1, pol: 'down' },
-        { area: 'ebitda', tipo: 'pares', titulo: 'EBITDA', unid: 'US$ M', ind: 'ebitda', casas: 0, pol: 'up' },
+        // o mesmo gráfico de EBITDA do consolidado, só com o negócio da página (sem o seletor)
+        { area: 'ebitda', tipo: 'ebitdaVbm', seg: chave, titulo: 'EBITDA', unid: 'US$ bn', casas: 1, pol: 'up' },
         { area: 'capex', tipo: 'scurve', titulo: 'Capex | S Curve', unid: 'US$ M', ind: 'capex', pol: 'down' },
         { area: 'fcf', tipo: 'acum', titulo: 'FCF', unid: 'US$ M', ind: 'fcf' }
       ] };
@@ -1138,12 +1139,14 @@ window.HOB_CARREGAR(function (aviso) {
   }
   // Nome, unidade e casas decimais do KPI: os de IBP.DASHBOARD (D.meta, dados do banco); sem eles, os do código
   function semParenteses(u) { return String(u).trim().replace(/^\((.*)\)$/, '$1').trim(); }
+  // Opção do EBITDA no gráfico: a fixa da página (Copper/Nickel) ou a do seletor do consolidado
+  function segEbitda(cfg) { return cfg.seg || state.sel.ebitda; }
   function doCadastro(cfg) {
-    var M = D.meta && D.meta[state.bu], m = M && M[cfg.ind || (cfg.tipo === 'ebitdaVbm' ? 'ebitda.' + state.sel.ebitda : '')];
+    var eb = cfg.tipo === 'ebitdaVbm', M = D.meta && D.meta[eb ? 'vbm' : state.bu], m = M && M[cfg.ind || (eb ? 'ebitda.' + segEbitda(cfg) : '')];
     if (!m) return cfg;
     var c = Object.assign({}, cfg);
     // Others soma vários KPIs: o título segue o nome do EBITDA (KPI 73); unidade e casas, as de Others
-    var nome = cfg.tipo === 'ebitdaVbm' && state.sel.ebitda === 'out' ? (M['ebitda.vbm'] || M['ebitda.cu'] || {}).nome : m.nome;
+    var nome = eb && segEbitda(cfg) === 'out' ? (M['ebitda.vbm'] || M['ebitda.cu'] || {}).nome : m.nome;
     if (nome) c.titulo = nome;
     if (m.unid) c.unid = semParenteses(m.unid);
     if (m.casas != null) { c.casas = m.casas; c.doBanco = true; }
@@ -1153,7 +1156,7 @@ window.HOB_CARREGAR(function (aviso) {
     cfg = doCadastro(cfg);
     if (cfg.tipo === 'ponte') { var f = ponteAtual(cfg.ind); if (f && f.ref) cfg = Object.assign({}, cfg, { nota: (cfg.nota ? cfg.nota + ' · ' : '') + S.t('fcf.ref', { ref: f.ref }) }); }
     var titulo = cfg.titulo.replace('{ano}', state.ano), ctl = '';
-    if (cfg.tipo === 'ebitdaVbm') ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
+    if (cfg.tipo === 'ebitdaVbm' && !cfg.seg) ctl = seletorHtml('ebitda', OPC_EBITDA, 'EBITDA');
     if (cfg.tipo === 'allin') ctl = seletorHtml('allin', OPC_ALLIN, 'All-in');
     if (cfg.tipo === 'allinStack') ctl = '<ul class="legend legend-stack">' + CAMADAS.slice().reverse().map(function (c) {
       return '<li><span class="swatch sw2"><i style="background:' + c.cor[0] + '"></i><i style="background:' + c.cor[1] + '"></i></span>' + esc(c.lbl) + '</li>';
@@ -1210,7 +1213,7 @@ window.HOB_CARREGAR(function (aviso) {
     if (cfg.tipo === 'ponte') return situacaoPonte(cfg);
     var A = window.HOB_ATUALIZACAO;
     if (!A || !A.ok || !A.cards) return null;
-    var k = cfg.tipo === 'ebitdaVbm' ? 'vbm.ebitda.' + state.sel.ebitda : cfg.ind ? state.bu + '.' + cfg.ind : null, s = k && A.cards[k];
+    var k = cfg.tipo === 'ebitdaVbm' ? 'vbm.ebitda.' + segEbitda(cfg) : cfg.ind ? state.bu + '.' + cfg.ind : null, s = k && A.cards[k];
     if (!s) return null;
     var mc = A.mesCiclo;
     if (mc && state.ano * 12 + state.mes < mc.ano * 12 + mc.mes) return { status: 'ok', dt: s.dt };
@@ -1249,8 +1252,10 @@ window.HOB_CARREGAR(function (aviso) {
     if (cfg.tipo === 'ebitdaVbm') {
       if (ebitdaErro()) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: ebitdaErro() }));
       // um negócio por vez (seletor): VBM = site 40 do banco (sem ele, na demonstração, a soma dos segmentos)
-      var seg = { cu: d.ebitdaCu, ni: d.ebitdaNi, out: d.ebitdaOut, vbm: d.ebitdaVbm || somaSerie([d.ebitdaCu, d.ebitdaNi, d.ebitdaOut]) }[state.sel.ebitda];
-      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', at: cfg.at, casas: cfg.doBanco ? cfg.casas : state.sel.ebitda === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // casas do cadastro; sem ele, Others pequeno: 2 casas em US$ bn
+      var dv = D.bu.vbm[state.ano] || d, op = segEbitda(cfg);
+      var seg = { cu: dv.ebitdaCu, ni: dv.ebitdaNi, out: dv.ebitdaOut, vbm: dv.ebitdaVbm || somaSerie([dv.ebitdaCu, dv.ebitdaNi, dv.ebitdaOut]) }[op];
+      if (!seg) return ponteSvg([], W, H, Object.assign({}, cfg, { msg: S.t('g.semDados') }));
+      return paresSvg(recortes(seg), W, H, { titulo: cfg.titulo, unid: cfg.unid, pol: 'up', at: cfg.at, casas: cfg.doBanco ? cfg.casas : op === 'out' && /bn/i.test(cfg.unid) ? 2 : cfg.casas }); // casas do cadastro; sem ele, Others pequeno: 2 casas em US$ bn
     }
     if (cfg.tipo === 'allin') {
       var c = allinComp(), k = state.sel.allin;
@@ -1389,7 +1394,7 @@ window.HOB_CARREGAR(function (aviso) {
         if (doBancoCoo('vbm', 'capex')) doBanco.push('Capex');
         if (P.fcfYear && P.fcfYear.ok) doBanco.push('FCF YEAR');
       } else {
-        [['prod', 'Production'], ['sales', 'Sales'], ['sus', 'All-In'], ['ebitda', 'EBITDA'], ['capex', 'Capex'], ['fcf', 'FCF']].forEach(function (x) { if (doBancoCoo(state.bu, x[0])) doBanco.push(x[1]); });
+        [['prod', 'Production'], ['sales', 'Sales'], ['sus', 'All-In'], ['ebitda', 'EBITDA'], ['capex', 'Capex'], ['fcf', 'FCF']].forEach(function (x) { if (doBancoCoo(state.bu, x[0]) || (x[0] === 'ebitda' && window.HOB_EBITDA && window.HOB_EBITDA.ok)) doBanco.push(x[1]); });
       }
       return S.t('l.demo') + (doBanco.length ? ' · ' + S.t('l.doBanco', { lista: doBanco.join(', ') }) : '');
     })();
