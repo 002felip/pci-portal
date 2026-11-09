@@ -174,7 +174,7 @@ renomeada por uma variável `AZURE_SQL_*_TABLE`.
   grava esse ícone. `database/atualizar_icones_desperdicios.sql` e `atualizar_icones_replicacao.sql` gravam de uma vez os
   de Waste Reduction e de Replication Potential. Tipo Resultados e Tipo Kaizen não têm essa coluna: o ícone
   sai do nome (`iconesPorNome` em `js/tiporesultados.js` e `js/tiposkaizen.js`; Financeiro = saco de
-  dinheiro, Simples = raio, Complexo = engrenagens…). Para um ícone novo: incluir em
+  dinheiro; New = lâmpada, Replication = cópia, Scope = setas de expansão…). Para um ícone novo: incluir em
   `ABAS`/paleta, gerar o SVG no mesmo formato e regerar o subconjunto da fonte
   (`database/README-subset-fontawesome.md`), senão a paleta mostra um quadrado vazio.
 - Impressão do Kaizen (`js/impressao-kaizen.js`): folha A4/A3/A2 em PDF (html2canvas-pro + jsPDF) e PPT
