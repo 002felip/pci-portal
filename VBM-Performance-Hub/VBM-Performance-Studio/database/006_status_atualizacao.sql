@@ -27,6 +27,7 @@
      Copper  site 38 · KPI 22  = sites 1, 2, 14, 32, 33
      Nickel  site 39 · KPI 51  = sites 3, 14, 16, 26, 32, 33   (sem Onça Puma)
      Cobalt  site 35 · KPI 722 = sites 14, 32, 33
+     Global  site 40 · KPI 22, 51 e 722 = os mesmos sites do 38, 39 e 35 (38 pendente → 40 Copper pendente)
    Mudou a carga automática? Atualize a lista #COMPOSICAO abaixo.
 
    Pré-requisitos na tabela (os mesmos do COO; se o COO já roda, já existem):
@@ -73,6 +74,9 @@ INSERT INTO #COMPOSICAO (ID_SITE_AGREGADO, ID_KPI, ID_SITE) VALUES
   (38, 22, 1), (38, 22, 2), (38, 22, 14), (38, 22, 32), (38, 22, 33),                -- Copper
   (39, 51, 3), (39, 51, 14), (39, 51, 16), (39, 51, 26), (39, 51, 32), (39, 51, 33), -- Nickel (sem Onça Puma)
   (35, 722, 14), (35, 722, 32), (35, 722, 33);                                        -- Cobalt
+-- Global (site 40): Copper, Nickel e Cobalt com os mesmos sites do 38, 39 e 35
+INSERT INTO #COMPOSICAO (ID_SITE_AGREGADO, ID_KPI, ID_SITE)
+SELECT 40, ID_KPI, ID_SITE FROM #COMPOSICAO WHERE ID_SITE_AGREGADO IN (38, 39, 35);
 
 -- Última atualização de cada componente que existe no ano da referência (como na carga automática)
 IF OBJECT_ID('tempdb..#COMP') IS NOT NULL DROP TABLE #COMP;

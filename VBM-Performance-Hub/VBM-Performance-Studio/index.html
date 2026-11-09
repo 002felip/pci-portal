@@ -1138,6 +1138,8 @@ body.qe-on .app-main { margin-left: calc(var(--qe-left) + var(--qe-bar-w) + 8px)
 /* Barra lateral só com gráfico selecionado, painel aberto ou sem dashboard aberto (1º acesso);
    some sem mexer no quadro (os gráficos não se reorganizam) */
 body.qe-barra-oculta .qe-toolbar { opacity: 0; visibility: hidden; transform: translateX(-10px); pointer-events: none; }
+/* Mouse junto à lateral esquerda: a barra aparece mesmo oculta (atualizarBarraLateral) */
+body.qe-barra-oculta.qe-barra-perto .qe-toolbar { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
 .qe-toolbar {
   transition: opacity .2s ease, transform .2s ease, visibility .2s;
   position: fixed; z-index: 16; left: var(--qe-left); top: var(--qe-top);
@@ -6660,6 +6662,16 @@ function atualizarBarraLateral() {
   const aberto = typeof editor !== 'undefined' && editor.open;
   document.body.classList.toggle('qe-barra-oculta', !!dash.atual && !activeChart && !aberto);
 }
+// Barra oculta reaparece com o mouse a até 32px da borda esquerda e some ao afastar da barra
+document.addEventListener('mousemove', e => {
+  if (!document.body.classList.contains('qe-barra-oculta')) return;
+  const perto = document.body.classList.contains('qe-barra-perto');
+  const bar = perto && document.querySelector('.qe-toolbar');
+  const limite = bar ? bar.getBoundingClientRect().right + 32 : 32;
+  const agora = e.clientX <= limite;
+  if (agora !== perto) document.body.classList.toggle('qe-barra-perto', agora);
+}, { passive: true });
+document.documentElement.addEventListener('mouseleave', () => document.body.classList.remove('qe-barra-perto'));
 function definirDashAtual(d) {
   dash.atual = d || null;
   lembrarDashNaUrl(dash.atual);

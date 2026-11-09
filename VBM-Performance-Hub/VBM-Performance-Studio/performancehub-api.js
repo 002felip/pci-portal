@@ -335,20 +335,70 @@ WHERE R.DT_REF = @DT_CARGA
   AND R.ID_DASH = @idDash
 ORDER BY R.ORDEM_ANO, R.ORDEM_VISAO, R.ORDEM_PERIODO, R.ID_TIPO_VISAO`;
 
-// Situação de atualização dos KPIs da carga (SG_STATUS 'S'/'N' e DT_ATUALIZACAO, gravados
-// por database/006_status_atualizacao.sql, a mesma regra do COO). Um KPI com alguma linha
-// 'N' fica 'N' (MIN). Linhas ainda sem situação (SG_STATUS NULL) não entram.
+// Situação de atualização dos KPIs da carga, calculada na hora a partir do log (mesma regra do
+// COO e de database/006_status_atualizacao.sql, sem depender de o 006 ter rodado):
+//   última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês da carga → 'S'; antes ou sem log → 'N'
+// Consolidados (gravados pela carga automática, cujo log só tem a data da execução): 'S' só com
+// TODOS os sites que os compõem atualizados; a data é a do componente mais atrasado.
+//   38 Copper (KPI 22) · 39 Nickel (KPI 51) · 35 Cobalt (KPI 722) · 40 Global = os mesmos sites do 38, 39 e 35
+// Mudou a composição? Atualize aqui e no #COMPOSICAO do 006.
 const STATUS_SQL = `
 DECLARE @DT_CARGA DATE = COALESCE(@dtRef,
-  (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @idDash))
+  (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @idDash));
 
-SELECT R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
-  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO
-FROM IBP.PHUB_PERFORMANCESTUDIO R
-WHERE R.DT_REF = @DT_CARGA
-  AND R.ID_DASH = @idDash
-  AND R.SG_STATUS IS NOT NULL
-GROUP BY R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+WITH IND AS (
+  SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
+  FROM IBP.PHUB_PERFORMANCESTUDIO
+  WHERE ID_DASH = @idDash AND DT_REF = @DT_CARGA
+),
+LOGI AS (
+  SELECT I.ID_SISTEMA, I.ID_SITE, I.ID_OPERACAO, I.ID_KPI, MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+  FROM IND I
+  LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
+    ON L.ID_SISTEMA = I.ID_SISTEMA AND L.ID_SITE = I.ID_SITE
+   AND L.ID_OPERACAO = I.ID_OPERACAO AND L.ID_KPI = I.ID_KPI
+  GROUP BY I.ID_SISTEMA, I.ID_SITE, I.ID_OPERACAO, I.ID_KPI
+),
+BASE AS (
+  SELECT * FROM (VALUES
+    (38, 22, 1), (38, 22, 2), (38, 22, 14), (38, 22, 32), (38, 22, 33),
+    (39, 51, 3), (39, 51, 14), (39, 51, 16), (39, 51, 26), (39, 51, 32), (39, 51, 33),
+    (35, 722, 14), (35, 722, 32), (35, 722, 33)
+  ) V (ID_SITE_AGREGADO, ID_KPI, ID_SITE)
+),
+COMPOSICAO AS (
+  SELECT ID_SITE_AGREGADO, ID_KPI, ID_SITE FROM BASE
+  UNION ALL
+  SELECT 40, ID_KPI, ID_SITE FROM BASE
+),
+COMP AS (
+  SELECT C.ID_SITE_AGREGADO, C.ID_KPI, P.ID_SISTEMA, P.ID_SITE, P.ID_OPERACAO, MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO
+  FROM COMPOSICAO C
+  INNER JOIN (
+    SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
+    FROM IBP.PEDRAVISAOCONSOLIDADA
+    WHERE YEAR(DT_REF) = YEAR(DATEADD(MONTH, -1, @DT_CARGA)) AND ID_OPERACAO <> 10
+  ) P ON P.ID_SITE = C.ID_SITE AND P.ID_KPI = C.ID_KPI
+  LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
+    ON L.ID_SISTEMA = P.ID_SISTEMA AND L.ID_SITE = P.ID_SITE
+   AND L.ID_OPERACAO = P.ID_OPERACAO AND L.ID_KPI = P.ID_KPI
+  GROUP BY C.ID_SITE_AGREGADO, C.ID_KPI, P.ID_SISTEMA, P.ID_SITE, P.ID_OPERACAO
+),
+AGREGADO AS (
+  SELECT ID_SITE_AGREGADO, ID_KPI,
+    CASE WHEN COUNT(*) = COUNT(DT_ATUALIZACAO) THEN MIN(DT_ATUALIZACAO) END AS DT_ATUALIZACAO
+  FROM COMP
+  GROUP BY ID_SITE_AGREGADO, ID_KPI
+),
+SITUACAO AS (
+  SELECT I.ID_SISTEMA, I.ID_SITE, I.ID_OPERACAO, I.ID_KPI,
+    CASE WHEN A.ID_SITE_AGREGADO IS NOT NULL THEN A.DT_ATUALIZACAO ELSE I.DT_ATUALIZACAO END AS DT_ATUALIZACAO
+  FROM LOGI I
+  LEFT JOIN AGREGADO A ON A.ID_SITE_AGREGADO = I.ID_SITE AND A.ID_KPI = I.ID_KPI
+)
+SELECT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, DT_ATUALIZACAO,
+  CASE WHEN DT_ATUALIZACAO >= @DT_CARGA THEN 'S' ELSE 'N' END AS SG_STATUS
+FROM SITUACAO`;
 
 // Referências (meses de YTD) com carga gravada, da mais recente para a mais antiga.
 // NM_YTD é o rótulo para a escolha na tela (ex.: "YTD Jun 26").
@@ -738,8 +788,8 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     }
   });
 
-  // Situação de atualização dos KPIs (?dtRef=AAAA-MM, como /chart-data); coluna SG_STATUS
-  // ou tabela ausente → [] (a tela só não mostra a situação)
+  // Situação de atualização dos KPIs (?dtRef=AAAA-MM, como /chart-data), calculada na hora a
+  // partir do log (STATUS_SQL); tabela ou coluna ausente → [] (a tela só não mostra a situação)
   router.get('/chart-data/status', async (req, res) => {
     const dtRef = lerDtRef(req.query.dtRef);
     if (dtRef === undefined) return res.status(400).json({ error: 'dtRef inválido: use AAAA-MM.', campo: 'dtRef' });
