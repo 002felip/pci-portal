@@ -6,7 +6,7 @@
 <title>VBM Lean Six Sigma — Vale Base Metals</title>
 <link rel="stylesheet" href="../assets/css/poppins.css">
 <link rel="stylesheet" href="assets/css/setup-dashboards.css">
-<link rel="stylesheet" href="assets/css/lss.css?v=20261106-1">
+<link rel="stylesheet" href="assets/css/lss.css?v=20261109-1">
 </head>
 <body>
 
@@ -99,25 +99,10 @@
 
 <main class="pagina">
   <section class="dsc" id="lss" aria-labelledby="lssTitulo">
-    <!-- Hero (mesma linguagem do Kaizen e do Stable & Capable) -->
-    <div class="dsc-hero">
-      <div class="dsc-hero-orb" aria-hidden="true"></div>
-      <div class="dsc-hero-texto">
-        <div class="dsc-hero-ante" data-i18n="hero.ante">Melhoria contínua · Lean Six Sigma</div>
-        <h2 class="dsc-hero-titulo" id="lssTitulo">Lean Six Sigma</h2>
-        <div class="dsc-hero-sub" id="lssSub" data-i18n="hero.sub">Green Belt · portfólio de projetos e coaching</div>
-        <p class="dsc-hero-desc" data-i18n="hero.desc">Acompanhamento dos projetos Green Belt por site, etapa DMAIC e ciclo, com a timeline de coaching de cada projeto.</p>
-      </div>
-      <div class="dsc-hero-box">
-        <div class="dsc-base">
-          <span data-i18n="hero.projetos">Projetos</span><b id="lssQtd">—</b>
-          <span data-i18n="hero.site">Site</span><b id="lssSiteHero">—</b>
-        </div>
-        <div class="dsc-atualizado" id="lssAtualizado"></div>
-      </div>
-    </div>
-
-    <!-- Filtros no padrão dos reports do Performance Hub (COO) -->
+    <!-- Cabeçalho no padrão do COO – Business Units Dashboard: título em itálico à esquerda,
+         filtros à direita e uma linha embaixo; depois a linha do site (sem banner) -->
+    <header class="lss-head">
+      <div class="title-block"><h2 id="lssTitulo">VBM – Lean Six Sigma</h2></div>
     <section class="filters" aria-label="Filtros" data-i18n-aria="f.aria">
       <div class="filter" data-filtro="site"><span class="filter-label" id="lbl-site" data-i18n="f.site">Site:</span>
         <div class="unit">
@@ -148,6 +133,15 @@
         <button type="button" class="fs-btn js-full" aria-label="Tela cheia" title="Tela cheia (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div></div>
     </section>
+    </header>
+
+    <div class="dsc-siterow">
+      <div class="dsc-site-id">
+        <h3 class="dsc-site" id="lssSiteHero">—</h3>
+        <p class="dsc-site-sub"><span data-i18n="hero.sub">Green Belt · portfólio de projetos e coaching</span> · <b id="lssQtd">—</b> <span data-i18n="hero.projetosMin">projetos</span></p>
+      </div>
+      <div class="dsc-meta"><div class="dsc-meta-txt"><p class="dsc-updated" id="lssAtualizado"></p></div></div>
+    </div>
 
     <div class="dsc-barra">
       <div class="dsc-abas lss-abas" role="tablist" aria-label="Páginas do dashboard" data-i18n-aria="aba.aria">
@@ -269,6 +263,6 @@
 </main>
 <div class="lss-dica" id="lssDica" role="tooltip" hidden></div>
 
-<script src="assets/js/lss.js?v=20261106-1"></script>
+<script src="assets/js/lss.js?v=20261109-1"></script>
 </body>
 </html>

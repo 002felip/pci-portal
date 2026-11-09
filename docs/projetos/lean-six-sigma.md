@@ -113,7 +113,7 @@ medida DAX de origem no comentário.
 
 ```
 VBM-Lean-Six-Sigma/
-├── index.html              tela (setup-dashboards + hero + filtros + 7 páginas)
+├── index.html              tela (setup-dashboards + cabeçalho no padrão do COO + filtros + 7 páginas)
 ├── assets/css/lss.css      estilos (base do Dashboard do Stable & Capable + componentes do LSS)
 ├── assets/js/lss.js        cálculos e desenho de todos os visuais
 ├── assets/css|js/setup-dashboards.*   barra superior e Configurações (skill)
