@@ -20,11 +20,11 @@ END) AS 'BUSINESS UNIT',
 
 SIT.NM_SITE as 'NAME SITE',
 KPI.NM_KPI AS 'NAME KPI',
-(CASE WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
+(CASE WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' -- Lateral Development: o banco marca t, o valor é eqm
+      WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
       WHEN KPI.SG_UNID_KPI = '%' THEN '%/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm' THEN 'eqm/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm/d' THEN 'eqm/day' 
-      WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' 
  ELSE KPI.SG_UNID_KPI END) AS 'UNIT',
 
 PVC.DT_REF,
@@ -60,11 +60,11 @@ WHERE PVC.DT_REF BETWEEN convert(datetime,'2025-01-01',121) AND convert(datetime
 group by SIST.NM_REGIAOGLOBAL,
 SIT.NM_PAIS,
 OPE.TP_OPERACAO,
-(CASE WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
+(CASE WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' -- Lateral Development: o banco marca t, o valor é eqm
+      WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
       WHEN KPI.SG_UNID_KPI = '%' THEN '%/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm' THEN 'eqm/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm/d' THEN 'eqm/day' 
-      WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' 
  ELSE KPI.SG_UNID_KPI END),
 
 (CASE 
