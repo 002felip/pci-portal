@@ -630,6 +630,9 @@ function criarHobRouter({ runQuery, idDash }) {
     const linhas = await comCache(`/waterfall:${site}:${tipo}:${anoInicial}`, async () => (await runQuery(WATERFALL_SQL, { site: [sql.Int, site], tipo: [sql.Int, tipo], anoIni: [sql.Int, anoInicial] })).recordset, f);
     return { linhas, ...mapearWaterfall(linhas, config, ponte) };
   }
+  // A carga inteira do ciclo (004 com @idKpi NULL), numa ida ao banco e em cache: EBITDA, Others e todas as séries
+  // de coo.kpis saem daqui (antes era uma consulta por KPI, ~12 idas ao banco por carregamento da página)
+  const lerCarga = (idDash, ciclo, f) => comCache(`/carga:${idDash}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, null], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
   // EBITDA da carga do COO: o ciclo pedido, se existir no dashboard de origem; senão, o mais recente
   async function lerEbitda(config, f, cicloPedido) {
     const idDash = config.ebitda.idDash;
@@ -637,8 +640,8 @@ function criarHobRouter({ runQuery, idDash }) {
     if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
     const ciclo = cicloPedido && ciclos.includes(cicloPedido) ? cicloPedido : ciclos[0];
     const idKpi = config.ebitda.idKpi;
-    const lerKpi = (k) => comCache(`/ebitda:${idDash}:${k}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, k], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
-    const [linhas, ...outros] = await Promise.all([lerKpi(idKpi), ...config.ebitda.outros.kpis.map(lerKpi)]);
+    const carga = await lerCarga(idDash, ciclo, f), lerKpi = (k) => carga.filter(l => Number(l.ID_KPI) === k);
+    const linhas = lerKpi(idKpi), outros = config.ebitda.outros.kpis.map(lerKpi);
     return { idDash, idKpi, ...montarEbitda(linhas, [].concat(...outros), config, ciclo) };
   }
   // Séries da carga do COO configuradas em coo.kpis (uma consulta por ID_KPI, a mesma do EBITDA)
@@ -650,9 +653,8 @@ function criarHobRouter({ runQuery, idDash }) {
     const [anoC, mesC] = ciclo.split('-').map(Number);
     const ids = [...new Set(Object.values(kpis).filter(v => v))];
     const porKpi = {};
-    await Promise.all(ids.map(async (idKpi) => {
-      porKpi[idKpi] = await comCache(`/ebitda:${idDash}:${idKpi}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, idKpi], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
-    }));
+    const carga = await lerCarga(idDash, ciclo, f);
+    for (const idKpi of ids) porKpi[idKpi] = carga.filter(l => Number(l.ID_KPI) === idKpi);
     const series = {}, pendentes = [], avisos = [];
     for (const [chave, idKpi] of Object.entries(kpis)) {
       if (!idKpi) { pendentes.push(chave); continue; }

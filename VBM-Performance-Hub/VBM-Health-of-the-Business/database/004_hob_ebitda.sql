@@ -36,7 +36,7 @@ OUTER APPLY (
 LEFT JOIN IBP.SITES S
   ON S.ID_SITE = R.ID_SITE
 WHERE R.ID_DASH = @idDash
-  AND R.ID_KPI = @idKpi
+  AND (@idKpi IS NULL OR R.ID_KPI = @idKpi)  -- NULL = a carga inteira do ciclo, numa ida só (a API separa por KPI)
   AND R.DT_REF = @dtRef
   AND R.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YTG', 'YEAR')
   AND R.ID_TIPO_VISAO IN (1, 3)
