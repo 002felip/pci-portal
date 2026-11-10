@@ -1680,9 +1680,10 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         <select class="qe-select" id="qeDashLista" aria-describedby="qeDashListaHint"></select>
         <div class="qe-dash-acoes">
           <button type="button" class="qe-btn" id="qeDashAbrir" data-i18n="ui.abrir">Abrir</button>
+          <button type="button" class="qe-btn" id="qeDashRenomear" aria-controls="qeDashForm" data-i18n="ui.dash_renomear">Renomear</button>
           <button type="button" class="qe-btn" id="qeDashExcluir" aria-controls="qeDashExcluirBox" data-i18n="ui.excluir">Excluir</button>
+          <button type="button" class="qe-btn" id="qeDashAtivo">Desativar</button>
           <button type="button" class="qe-btn qe-dash-largo" id="qeDashReutilizar" data-i18n="ui.dash_reutilizar">Reutilizar em novo período</button>
-          <button type="button" class="qe-btn qe-dash-largo" id="qeDashAtivo">Desativar</button>
         </div>
         <div class="qe-alerta qe-dash-confirma" id="qeDashExcluirBox" role="alertdialog" aria-labelledby="qeDashExcluirTexto" hidden>
           <p id="qeDashExcluirTexto"></p>
@@ -2480,6 +2481,7 @@ const I18N_UI = {
   'ui.dash_abrir_reutilizar': ['Abrir, reutilizar ou excluir um dashboard', 'Open, reuse or delete a dashboard'],
   'ui.dash_excluir_confirma': ['Excluir de vez o dashboard “{nome}”? Ele sai do banco junto com os editores. Para só tirá-lo da lista dos outros usuários, use Desativar.', 'Permanently delete the dashboard “{nome}”? It is removed from the database together with its editors. To just hide it from other users, use Deactivate.'],
   'ui.dash_excluido': ['Dashboard “{nome}” excluído.', 'Dashboard “{nome}” deleted.'],
+  'ui.dash_renomear': ['Renomear', 'Rename'],
   'ui.dash_reutilizar': ['Reutilizar em novo período', 'Reuse for a new period'],
   'ui.dash_reutilizar_hint': ['Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.', 'Reuse copies the charts of the chosen dashboard into a new dashboard; adjust the dates below and click Create.'],
   'ui.dash_editar': ['Renomear ou alterar datas deste dashboard', 'Rename or change this dashboard\'s dates'],
@@ -7361,7 +7363,7 @@ function renderDash() {
 function atualizarBotoesDash() {
   const d = dashSelecionado();
   $qe('qeDashAbrir').disabled = !d;
-  $qe('qeDashReutilizar').disabled = !podeAlterar(d);
+  $qe('qeDashReutilizar').disabled = $qe('qeDashRenomear').disabled = !podeAlterar(d);
   $qe('qeDashExcluir').hidden = $qe('qeDashAtivo').hidden = !ehDono(d);
   if (ehDono(d)) $qe('qeDashAtivo').textContent = tx(d.status === 'S' ? 'ui.dash_desativar' : 'ui.dash_ativar');
 }
@@ -7513,6 +7515,16 @@ function initDashboards() {
   });
   $qe('qeDashAbrir').addEventListener('click', () => { fecharExclusaoDash(); const d = escolhido(); if (d) abrirDashboard(d.id); });
   $qe('qeDashExcluir').addEventListener('click', () => { const d = escolhido(); if (d) pedirExclusaoDash(d); });
+  // Renomear o dashboard escolhido: abre-o (se ainda não estiver aberto) e mostra o formulário com o foco no nome
+  $qe('qeDashRenomear').addEventListener('click', () => {
+    fecharExclusaoDash();
+    const d = escolhido();
+    if (!podeAlterar(d)) return;
+    if ((!dash.atual || dash.atual.id !== d.id) && !abrirDashboard(d.id)) return;
+    prepararFormDash('editar');
+    mostrarFormDash(true);
+    msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
+  });
   $qe('qeDashExcluirSim').addEventListener('click', excluirDashboard);
   $qe('qeDashExcluirNao').addEventListener('click', () => { fecharExclusaoDash(); $qe('qeDashExcluir').focus(); });
   $qe('qeDashExcluirBox').addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); fecharExclusaoDash(); $qe('qeDashExcluir').focus(); } });
