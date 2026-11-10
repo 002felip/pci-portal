@@ -1673,7 +1673,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <div class="qe-status" id="qeDashInfo" aria-live="polite"></div>
       <div class="qe-dash-topo">
         <button type="button" class="qe-btn primary" id="qeDashNovo" aria-controls="qeDashForm"><i class="fa-solid fa-plus" aria-hidden="true"></i> <span data-i18n="ui.dash_novo">Novo dashboard</span></button>
-        <button type="button" class="qe-btn" id="qeDashEditar" aria-controls="qeDashForm" data-i18n="ui.dash_editar">Alterar parâmetros de data deste dashboard</button>
+        <button type="button" class="qe-btn" id="qeDashEditar" aria-controls="qeDashForm" data-i18n="ui.dash_editar">Renomear ou alterar datas deste dashboard</button>
       </div>
       <div class="qe-field qe-dash-bloco">
         <label class="qe-label" for="qeDashLista" data-i18n="ui.dash_abrir_reutilizar">Abrir, reutilizar ou excluir um dashboard</label>
@@ -2430,7 +2430,7 @@ const I18N_UI = {
   'ui.dash_desfeito': ['“{nome}” voltou à última versão salva.', '“{nome}” is back to its last saved version.'],
   'ui.dash_salvo': ['Dashboard “{nome}” salvo no banco.', 'Dashboard “{nome}” saved to the database.'],
   'ui.dash_descartar': ['“{nome}” tem alterações não salvas. Salve (ícone de disquete) ou clique de novo para descartá-las.', '“{nome}” has unsaved changes. Save them (disk icon) or click again to discard them.'],
-  'ui.dash_parametros_aplicados': ['Parâmetros de “{nome}” aplicados na tela. Use o ícone de disquete para gravar no banco.', '“{nome}” parameters applied on screen. Use the disk icon to save them.'],
+  'ui.dash_parametros_aplicados': ['Alterações de “{nome}” aplicadas na tela. Use o ícone de disquete para gravar no banco.', '“{nome}” changes applied on screen. Use the disk icon to save them.'],
   'ui.dash_migrar_texto': ['{n} dashboard(s) estão salvos só neste navegador. Envie para o banco para não perder e poder compartilhar.', '{n} dashboard(s) are saved in this browser only. Send them to the database to keep and share them.'],
   'ui.dash_migrado': ['Envio concluído: {ok} gravado(s) no banco, {pulados} já existia(m) com o mesmo nome, {erros} com erro.', 'Done: {ok} saved to the database, {pulados} already existed with the same name, {erros} failed.'],
   'ui.dash_banco_erro': ['Não foi possível acessar os dashboards no banco: {erro}', 'Could not reach the dashboards in the database: {erro}'],
@@ -2482,13 +2482,13 @@ const I18N_UI = {
   'ui.dash_excluido': ['Dashboard “{nome}” excluído.', 'Dashboard “{nome}” deleted.'],
   'ui.dash_reutilizar': ['Reutilizar em novo período', 'Reuse for a new period'],
   'ui.dash_reutilizar_hint': ['Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.', 'Reuse copies the charts of the chosen dashboard into a new dashboard; adjust the dates below and click Create.'],
-  'ui.dash_editar': ['Alterar parâmetros de data deste dashboard', 'Change this dashboard\'s date parameters'],
-  'ui.dash_form_editar': ['Alterar parâmetros: {nome}', 'Change parameters: {nome}'],
+  'ui.dash_editar': ['Renomear ou alterar datas deste dashboard', 'Rename or change this dashboard\'s dates'],
+  'ui.dash_form_editar': ['Renomear ou alterar datas: {nome}', 'Rename or change dates: {nome}'],
   'ui.dash_form_reuso': ['Novo período a partir de: {nome}', 'New period from: {nome}'],
   'ui.dash_salvar_alteracoes': ['Salvar alterações', 'Save changes'],
   'ui.dash_novo_msg': ['Preencha o novo dashboard e clique em Criar dashboard.', 'Fill in the new dashboard and click Create dashboard.'],
   'ui.dash_reuso_msg': ['Gráficos de “{nome}” serão reaproveitados. Ajuste mês, ano e anos (o YTD acompanha o mês) e clique em Criar dashboard.', 'Charts from “{nome}” will be reused. Adjust month, year and years (YTD follows the month), then click Create dashboard.'],
-  'ui.dash_editar_msg': ['Altere mês, ano ou anos extraídos (o YTD acompanha o mês) e clique em Salvar alterações.', 'Change month, year or extracted years (YTD follows the month), then click Save changes.'],
+  'ui.dash_editar_msg': ['Altere o nome e/ou o mês e ano (o YTD acompanha o mês) e clique em Salvar alterações.', 'Change the name and/or the month and year (YTD follows the month), then click Save changes.'],
   'ui.dash_parametros_salvos': ['Parâmetros de “{nome}” atualizados.', '“{nome}” parameters updated.'],
   'ui.dash_visao_hint': ['Usa a consulta atual de produção (dados dos gráficos).', 'Uses the current production query (chart data).'],
   'ui.dash_status': ['Status', 'Status'],
@@ -7179,7 +7179,10 @@ function mostrarFormDash(aberto) {
   dash.formAberto = !!aberto;
   $qe('qeDashForm').hidden = !aberto;
   $qe('qeDashFoot').hidden = !aberto;
-  if (aberto) { $qe('qeDashForm').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); $qe('qeDashMes').focus(); }
+  if (aberto) {
+    $qe('qeDashForm').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (dash.modo === 'editar') { $qe('qeDashNome').focus(); $qe('qeDashNome').select(); } else $qe('qeDashMes').focus(); // editar: pronto para renomear
+  }
 }
 function prepararFormDash(modo, origem) {
   dash.modo = modo || 'novo';
@@ -7202,13 +7205,18 @@ function prepararFormDash(modo, origem) {
   $qe('qeDashCriar').textContent = dash.modo === 'editar' ? tx('ui.dash_salvar_alteracoes') : tx('ui.dash_criar');
   $qe('qeDashCancelar').textContent = tx('ui.cancelar');
   dash.nomeEditado = false;
-  if (dash.modo === 'editar') { $qe('qeDashNome').value = base.nome; dash.nomeEditado = true; } else atualizarNomeSugerido();
+  atualizarNomeSugerido();
   limparErrosDash();
 }
 function atualizarNomeSugerido() {
   if (dash.nomeEditado) return;
   const fonte = dash.modo === 'reuso' ? dash.origem : dash.atual;
   const para = { mes: Number($qe('qeDashMes').value), ano: Number($qe('qeDashAno').value) };
+  // Renomear/alterar datas: o nome atual, com os períodos andando junto se a data mudar (até o usuário digitar)
+  if (dash.modo === 'editar' && fonte) {
+    $qe('qeDashNome').value = deslocarTexto(fonte.nome, deltasPeriodo({ mes: fonte.mesRef, ano: fonte.anoRef }, para), para);
+    return;
+  }
   // Reutilizar: o nome de origem com os períodos da nova referência ("Q3 2026 - October 2026" → "Q4 2026 - November 2026")
   if (dash.modo === 'reuso' && fonte && fonte.mesRef && fonte.anoRef) {
     const nome = semPapel(fonte.nome), novo = deslocarTexto(nome, deltasPeriodo({ mes: fonte.mesRef, ano: fonte.anoRef }, para), para);
@@ -7258,6 +7266,7 @@ async function salvarFormDash() {
   } finally {
     dash.gravando = false;
     $qe('qeDashCriar').disabled = Array.isArray(dashReferencias) && !dashReferencias.length;
+    if (dash.atual) atualizarEstadoDash(); // disquete liberado para gravar o que acabou de mudar
   }
 }
 // Alterar parâmetros do aberto: data nova → gráficos nos períodos da nova referência
