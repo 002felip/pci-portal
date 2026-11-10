@@ -35,6 +35,7 @@ from .chart_generator import (
     create_process_capability_moshe,
 )
 from .page_composer import compose_page3, generate_cover_page, generate_kpi_list_page
+from . import visual as V
 from .pdf_compiler import compile_multi_page_pdf
 from .utils import sanitize_filename, build_output_path
 
@@ -414,7 +415,7 @@ class ReportBuilder:
             self._temp_dir,
             f"page_{file_num:03d}_{safe_kpi}_{safe_phase}_{safe_site}.png",
         )
-        page_img.save(temp_file, format='PNG', dpi=(96, 96))
+        V.salvar_png(page_img, temp_file)
         logger.info("    Saved: %s", os.path.basename(temp_file))
 
         return temp_file
