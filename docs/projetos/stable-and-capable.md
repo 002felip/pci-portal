@@ -57,6 +57,16 @@ sequenceDiagram
   - `config/report_config.yaml`: página de 452×254 mm;
   - `data/kpi_list.xlsx`: ordem e filtro dos KPIs por BU;
   - `data/images/cover_template.png`.
+- **Visual do PDF:** o mesmo do Dashboard (`src/report/visual.py`, com as cores e a tipografia copiadas do
+  `index.html` e do `painel-spc.js`). Usa a Poppins de `data/fonts` e cards brancos com borda e sombra. A
+  página tem um cabeçalho com o site em itálico azul e quatro cards:
+  - carta de controle (pílulas dos trimestres, CL azul, UCL/LCL tracejados, faixa dos melhores 30 dias,
+    sinais das regras de Nelson);
+  - histograma, com a tabela por ano de cabeçalho azul-marinho;
+  - medidas por trimestre, com a caixa "Mean variation";
+  - comentários.
+
+  Os gráficos são desenhados em matplotlib, e a página em 2×, para o texto sair nítido no PDF.
 - **Execução:**
   - uma por vez (a segunda recebe 409);
   - pode ser cancelada (`POST /execucoes/:id/cancelar`);
@@ -177,6 +187,6 @@ O `portal.js` bloqueia na pasta o que não é tela: `python/`, `database/` e os 
 
 ## Pontos de atenção
 
-- PDFs e importação usam a base **DEV** enquanto o Kaizen estiver na pasta DEV.
+- PDFs e importação usam a base **PRD** (`STABLECAPABLE_AZURE_SQL_DATABASE`), a mesma do Dashboard.
 - O histórico depende de JSON no Blob, porque o SAS não tem listar nem apagar.
 - A primeira subida depois de um deploy pode instalar as bibliotecas Python (lenta).

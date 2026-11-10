@@ -1,13 +1,17 @@
 """
 Chart Generator Module
 
-All chart-creation functions for the Multi-KPI PDF report:
-    1. create_control_chart      — I-MR Control Chart grouped by Quarter (Plotly)
-    2. create_histogram_table2   — Histogram with statistics table (Plotly)
-    3. create_process_capability — Process Performance with Mean/Budget/P75/Best30 (Plotly)
-    4. create_process_capability_moshe — Grouped bar chart with variation table (Matplotlib)
+All chart-creation functions for the Multi-KPI PDF report, drawn in the visual of the
+app's Dashboard (Stable & Capable → Dashboard tab; tokens in visual.py):
+    1. create_control_chart      — I-MR Control Chart grouped by Quarter      → GraficoSPC
+    2. create_histogram_table2   — Histogram with statistics table            → GraficoHistograma
+    3. create_process_capability — Process Performance (Plotly — kept for reference, unused)
+    4. create_process_capability_moshe — Grouped bars + mean variation        → GraficoMedidas
 
-Extracted from notebook 05_multi_kpi_pdf_generator.ipynb
+The calculations are the same as before (notebook 05_multi_kpi_pdf_generator.ipynb).
+Each function returns an object with the computed data and a ``desenhar(w, h)`` method
+that renders the chart (matplotlib, Poppins) at the size of its card; titles, legends,
+tables and the variation box are drawn by page_composer.compose_page3.
 """
 
 import datetime
@@ -20,17 +24,160 @@ from scipy.stats import norm
 
 from src.spc_functions import calculate_xam_limits
 from .utils import format_value_with_unit, get_display_unit
+from . import visual as V
 
 logger = logging.getLogger(__name__)
+
+
+def _rotulo_trimestre(periodo):
+    """'2025Q1' → 'Q1 2025' (como no Dashboard)."""
+    p = str(periodo)
+    return f"{p[4:]} {p[:4]}" if len(p) == 6 and p[4] == 'Q' else p
+
+
+def _estilo_eixo(ax, grade_y=True):
+    """Eixo no estilo do Dashboard: sem molduras, grade horizontal clara, base #e8edf3."""
+    for lado in ('top', 'right', 'left'):
+        ax.spines[lado].set_visible(False)
+    ax.spines['bottom'].set_color(V.LINHA)
+    ax.spines['bottom'].set_linewidth(V.pt(1))
+    ax.tick_params(axis='both', length=0, labelsize=V.pt(10.5), labelcolor=V.TINTA_SUAVE, pad=V.pt(6))
+    if grade_y:
+        ax.yaxis.grid(True, color=V.LINHA_SUAVE, linewidth=V.pt(1))
+    ax.xaxis.grid(False)
+    ax.set_axisbelow(True)
+    ax.set_facecolor(V.SUPERFICIE)
+
+
+def _contorno(px):
+    import matplotlib.patheffects as pe
+    return [pe.withStroke(linewidth=V.pt(px), foreground=V.SUPERFICIE)]
+
+
+def _fmt_eixo(v, faixa):
+    return f"{v:,.2f}" if faixa < 10 else f"{v:,.0f}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. CONTROL CHART
 # ═══════════════════════════════════════════════════════════════════════════
 
+REGRAS_SPC = [
+    ('r1', 'Rule 1: point outside control limits'),
+    ('r2', 'Rule 2: 7 points on same side of CL'),
+    ('r3', 'Rule 3: 6 points increasing or decreasing'),
+    ('r4', 'Rule 4: 14 points alternating up and down'),
+]
+
+
+class GraficoSPC:
+    """Carta de controle por trimestre, desenhada como a do Dashboard."""
+
+    def __init__(self, serie, grupos, sinais, separadores, unit, kpi_name):
+        self.serie = serie                # DataFrame DT_REF, ACTUAL (com NaN: a linha quebra)
+        self.grupos = grupos              # [dict(rotulo, x0, x1, cl, ucl, lcl, best)]
+        self.sinais = sinais              # {'r1': [(data, valor)], …}
+        self.separadores = separadores    # datas de início dos trimestres (menos o 1º)
+        self.unit = unit
+        self.kpi_name = kpi_name
+        self.violations_by_quarter = {}
+
+    legenda = (
+        [('linha', V.C_SERIE, 'Values'), ('linha', V.C_CL, 'CL'), ('tracejada', V.C_LIM, 'UCL / LCL'),
+         ('faixa', '#dff2fb', 'Best 30 days')]
+        + [('ponto', V.C_REGRA[k], rot) for k, rot in REGRAS_SPC]
+    )
+
+    def desenhar(self, w, h):
+        import matplotlib.dates as mdates
+        import matplotlib.transforms as mtrans
+        from matplotlib.ticker import MaxNLocator
+
+        fig = V.figura_px(w, h)
+        m = dict(l=54, r=10, t=34, b=26)
+        ax = fig.add_axes([m['l'] / w, m['b'] / h, (w - m['l'] - m['r']) / w, (h - m['t'] - m['b']) / h])
+        _estilo_eixo(ax)
+        larg_px = w - m['l'] - m['r']
+        alt_px = h - m['t'] - m['b']
+
+        datas = pd.to_datetime(self.serie['DT_REF'])
+        valores = self.serie['ACTUAL'].astype(float)
+        t0, t1 = datas.min(), datas.max()
+        ax.set_xlim(t0 - pd.Timedelta(hours=12), t1 + pd.Timedelta(hours=12))
+
+        refs = list(valores.dropna())
+        for g in self.grupos:
+            refs += [g['ucl'], g['lcl']]
+        ymin, ymax = (min(refs), max(refs)) if refs else (0, 1)
+        pad = (ymax - ymin or abs(ymax) or 1) * 0.06
+        ymin, ymax = ymin - pad, ymax + pad
+        ax.set_ylim(ymin, ymax)
+        ax.yaxis.set_major_locator(MaxNLocator(5))
+        faixa = ymax - ymin
+        ax.yaxis.set_major_formatter(lambda v, _: _fmt_eixo(v, faixa))
+
+        # meses no eixo x, espaçados para caber
+        meses = pd.date_range(t0.normalize().replace(day=1), t1, freq='MS')
+        meses = [d for d in meses if d >= t0] or [t0]
+        passo = max(1, int(np.ceil(len(meses) / max(1, larg_px // 70))))
+        ax.set_xticks(meses[::passo])
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+
+        x_dados_y_eixo = mtrans.blended_transform_factory(ax.transData, ax.transAxes)
+        dias_por_px = (t1 - t0).days / max(1, larg_px)
+
+        # melhores 30 dias e separadores de trimestre
+        for g in self.grupos:
+            if g['best']:
+                b0, b1 = g['best']
+                ax.axvspan(b0, b1, color=tuple(c / 255 for c in V.C_BEST), linewidth=0, zorder=0)
+                if (b1 - b0).days / max(dias_por_px, 1e-9) > 48:
+                    ax.text(b0 + (b1 - b0) / 2, 0.012, f"{b0:%d/%m}–{b1:%d/%m}", transform=x_dados_y_eixo,
+                            ha='center', va='bottom', fontsize=V.pt(9), color=V.AZUL_ESCURO, zorder=3)
+        for d in self.separadores:
+            ax.axvline(d, color=V.LINHA, linewidth=V.pt(1), linestyle=(0, (3, 4)), zorder=1)
+
+        # série diária
+        ax.plot(datas, valores, color=V.C_SERIE, linewidth=V.pt(1.2), solid_joinstyle='round', zorder=2)
+
+        # limites, rótulos e pílula do trimestre
+        for g in self.grupos:
+            xm = g['x0'] + (g['x1'] - g['x0']) / 2
+            ax.text(xm, 1 + 17 / alt_px, g['rotulo'], transform=x_dados_y_eixo, ha='center', va='center',
+                    fontsize=V.pt(10.5), fontweight='semibold', color=V.AZUL_ESCURO, clip_on=False, zorder=6,
+                    bbox=dict(boxstyle='round,pad=0.38,rounding_size=0.85', fc=V.PILULA, ec='none'))
+            if g['cl'] is None:
+                continue
+            for val, estilo in ((g['ucl'], 'lim'), (g['lcl'], 'lim'), (g['cl'], 'cl')):
+                if estilo == 'lim':
+                    ax.hlines(val, g['x0'], g['x1'], colors=V.C_LIM, linewidth=V.pt(1.2), linestyles=(0, (5, 4)), zorder=3)
+                else:
+                    ax.hlines(val, g['x0'], g['x1'], colors=V.C_CL, linewidth=V.pt(2.5), zorder=4, capstyle='round')
+            desloc = lambda dy: mtrans.offset_copy(ax.transData, fig=fig, x=V.pt(6), y=V.pt(dy), units='points')
+            ax.text(g['x0'], g['ucl'], f"UCL {format_value_with_unit(g['ucl'], self.unit)}", transform=desloc(4),
+                    va='bottom', ha='left', fontsize=V.pt(9.5), color=V.C_LIM, path_effects=_contorno(3), zorder=8)
+            ax.text(g['x0'], g['cl'], f"CL {format_value_with_unit(g['cl'], self.unit)}", transform=desloc(5),
+                    va='bottom', ha='left', fontsize=V.pt(11.5), fontweight='semibold', color=V.C_CL,
+                    path_effects=_contorno(4), zorder=9)
+            ax.text(g['x0'], g['lcl'], f"LCL {format_value_with_unit(g['lcl'], self.unit)}", transform=desloc(-4),
+                    va='top', ha='left', fontsize=V.pt(9.5), color=V.C_LIM, path_effects=_contorno(3), zorder=8)
+
+        # sinais: a regra 1 por cima (ordem do script: 4, 3, 2, 1)
+        for k in ('r4', 'r3', 'r2', 'r1'):
+            pts = self.sinais.get(k) or []
+            if not pts:
+                continue
+            raio = 3.8 if k == 'r1' else 3.2
+            ax.scatter([p[0] for p in pts], [p[1] for p in pts], s=V.pt(2 * raio) ** 2, c=V.C_REGRA[k],
+                       edgecolors=V.SUPERFICIE, linewidths=V.pt(1), zorder=7)
+
+        return V.figura_para_imagem(fig)
+
+
 def create_control_chart(df_kpi, unit, kpi_name, config, colors):
     """
-    Generate I-MR Control Chart grouped by Quarter — Power BI style.
+    Compute the I-MR Control Chart grouped by Quarter (limits per quarter, Best 30 Days,
+    Nelson rules 1–4) and return a GraficoSPC ready to be drawn.
 
     Parameters
     ----------
@@ -39,26 +186,15 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
     unit : str
         Unit of measurement (already transformed).
     kpi_name : str
-        KPI name for axis label.
-    config : dict
-        Chart configuration.
-    colors : dict
-        Color scheme.
-
-    Returns
-    -------
-    plotly.graph_objects.Figure
+        KPI name.
+    config, colors : dict
+        Kept for compatibility (the visual comes from visual.py).
     """
     df_hist = df_kpi.copy()
     df_hist['Quarter'] = df_hist['DT_REF'].dt.to_period('Q').astype(str)
 
     groupby_col = 'Quarter'
     groups = sorted(df_hist[groupby_col].unique())
-    unit_kpi = unit
-
-    df_all = df_hist.dropna(subset=['ACTUAL']).sort_values('DT_REF').reset_index(drop=True)
-    dates = df_all['DT_REF']
-    data_series = df_all['ACTUAL']
 
     # Control limits per quarter
     limits_by_group = {}
@@ -68,16 +204,6 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
             limits_by_group[group] = calculate_xam_limits(data_group)
         else:
             limits_by_group[group] = None
-
-    fig_control = go.Figure()
-
-    # Main line (light gray)
-    fig_control.add_trace(go.Scatter(
-        x=dates, y=data_series,
-        mode='lines', name='Values',
-        line=dict(color='#d3d3d3', width=1),
-        showlegend=True,
-    ))
 
     # Best 30 Days helper
     def best_30_days_period(df_period):
@@ -93,120 +219,47 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
         best_mean = roll.max()
         return best_start, best_end, best_mean
 
-    # Violation lists
-    viol1_dates, viol1_vals = [], []
-    viol2_dates, viol2_vals = [], []
-    viol3_dates, viol3_vals = [], []
-    viol4_dates, viol4_vals = [], []
-
+    sinais = {'r1': [], 'r2': [], 'r3': [], 'r4': []}
+    grupos = []
     violations_by_quarter = {}
 
-    for idx, group in enumerate(groups):
-        limits = limits_by_group.get(group)
-        if limits is None:
-            continue
-
+    for group in groups:
         group_data = df_hist[df_hist[groupby_col] == group].sort_values('DT_REF').reset_index(drop=True)
         group_data_clean = group_data.dropna(subset=['ACTUAL']).reset_index(drop=True)
+        if len(group_data_clean) == 0:
+            continue
         group_dates = group_data_clean['DT_REF']
         group_values = group_data_clean['ACTUAL']
-
-        if len(group_values) < 7:
-            continue
-
         x_start = pd.Timestamp(group_dates.min()).to_pydatetime()
         x_end = pd.Timestamp(group_dates.max()).to_pydatetime()
-        mid_idx = len(group_dates) // 2
-        x_mid = pd.Timestamp(group_dates.iloc[mid_idx]).to_pydatetime()
+
+        limits = limits_by_group.get(group)
+        if limits is None or len(group_values) < 7:
+            # como antes: trimestre sem limites fica sem linhas, sinais e faixa
+            grupos.append(dict(rotulo=_rotulo_trimestre(group), x0=x_start, x1=x_end, cl=None, ucl=None, lcl=None, best=None))
+            continue
 
         cl = limits['CL']
         ucl = limits['UCL']
         lcl = max(limits['LCL'], 0)
 
-        # Best 30 Days
-        best_start, best_end, best_mean = best_30_days_period(group_data)
-        if best_start is not None:
-            fig_control.add_vrect(
-                x0=best_start, x1=best_end,
-                fillcolor='gold', opacity=0.1,
-                layer='below', line_width=0,
-            )
-            x_mid_best = best_start + datetime.timedelta(days=(best_end - best_start).days // 2)
-            fig_control.add_annotation(
-                x=x_mid_best, y=0.02, yref='paper',
-                text=f"{best_start.strftime('%d/%m')} - {best_end.strftime('%d/%m')}",
-                showarrow=False,
-                font=dict(size=6, color='#5C4305'),
-                bgcolor='white', bordercolor='#B8860B',
-                borderwidth=1, borderpad=2, yanchor='bottom',
-            )
-
-        # Control limit lines
-        fig_control.add_trace(go.Scatter(
-            x=[x_start, x_end], y=[cl, cl],
-            mode='lines', name='CL',
-            line=dict(color='green', width=3), showlegend=False,
-        ))
-        fig_control.add_trace(go.Scatter(
-            x=[x_start, x_end], y=[ucl, ucl],
-            mode='lines', name='UCL',
-            line=dict(color='red', width=1, dash='dot'), showlegend=False,
-        ))
-        fig_control.add_trace(go.Scatter(
-            x=[x_start, x_end], y=[lcl, lcl],
-            mode='lines', name='LCL',
-            line=dict(color='red', width=1, dash='dot'), showlegend=False,
-        ))
-
-        # Limit labels
-        fig_control.add_annotation(
-            x=x_start, y=ucl,
-            text=f"UCL = {format_value_with_unit(ucl, unit_kpi)}",
-            showarrow=False,
-            font=dict(size=7, color='red', family='Arial Black'),
-            bgcolor='rgba(255,255,255,0.6)', borderpad=4, xanchor='left',
-        )
-        fig_control.add_annotation(
-            x=x_start, y=cl,
-            text=f"CL = {format_value_with_unit(cl, unit_kpi)}",
-            showarrow=False,
-            font=dict(size=10, color='green', family='Arial Black'),
-            bgcolor='rgba(255,255,255,0.6)', borderpad=4, yshift=10, xanchor='left',
-        )
-        fig_control.add_annotation(
-            x=x_start, y=lcl,
-            text=f"LCL = {format_value_with_unit(lcl, unit_kpi)}",
-            showarrow=False,
-            font=dict(size=7, color='red', family='Arial Black'),
-            bgcolor='rgba(255,255,255,0.6)', borderpad=4, xanchor='left',
-        )
-
-        # Quarter label
-        fig_control.add_annotation(
-            x=x_mid, y=1.03,
-            text=group, showarrow=False,
-            xref='x', yref='paper',
-            font=dict(size=10, color='#1D1C1C'),
-            bgcolor='#f2f2f2', bordercolor='#8A8989',
-            borderwidth=0.8, borderpad=4,
-        )
+        best_start, best_end, _ = best_30_days_period(group_data)
+        grupos.append(dict(rotulo=_rotulo_trimestre(group), x0=x_start, x1=x_end, cl=cl, ucl=ucl, lcl=lcl,
+                           best=(best_start, best_end) if best_start is not None else None))
 
         # Violation detection
         values = group_values.values
         dates_list = pd.to_datetime(group_dates).tolist()
-
-        if group not in violations_by_quarter:
-            violations_by_quarter[group] = {
-                'Rule 1': 0, 'Rule 2': 0, 'Rule 3': 0, 'Rule 4': 0,
-                'Rule 2 Points': 0, 'Rule 3 Points': 0, 'Rule 4 Points': 0,
-            }
+        violations_by_quarter[group] = {
+            'Rule 1': 0, 'Rule 2': 0, 'Rule 3': 0, 'Rule 4': 0,
+            'Rule 2 Points': 0, 'Rule 3 Points': 0, 'Rule 4 Points': 0,
+        }
 
         # RULE 1: point outside limits
         mask1 = (values > ucl) | (values < lcl)
         for i, include in enumerate(mask1):
             if include:
-                viol1_dates.append(dates_list[i])
-                viol1_vals.append(values[i])
+                sinais['r1'].append((dates_list[i], values[i]))
                 violations_by_quarter[group]['Rule 1'] += 1
 
         # RULE 2: 7 consecutive on same side of CL
@@ -218,8 +271,7 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
             if run >= 7:
                 for j in range(i - 6, i + 1):
                     if j < len(dates_list) and j not in rule2_detected:
-                        viol2_dates.append(dates_list[j])
-                        viol2_vals.append(values[j])
+                        sinais['r2'].append((dates_list[j], values[j]))
                         rule2_detected.add(j)
                         violations_by_quarter[group]['Rule 2 Points'] += 1
 
@@ -233,8 +285,7 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
                 if is_inc or is_dec:
                     for j in range(i, i + 6):
                         if j < len(dates_list) and j not in rule3_detected:
-                            viol3_dates.append(dates_list[j])
-                            viol3_vals.append(values[j])
+                            sinais['r3'].append((dates_list[j], values[j]))
                             rule3_detected.add(j)
                             violations_by_quarter[group]['Rule 3 Points'] += 1
 
@@ -250,8 +301,7 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
                 if is_alt:
                     for j in range(i, i + 14):
                         if j < len(dates_list) and j not in rule4_detected:
-                            viol4_dates.append(dates_list[j])
-                            viol4_vals.append(values[j])
+                            sinais['r4'].append((dates_list[j], values[j]))
                             rule4_detected.add(j)
                             violations_by_quarter[group]['Rule 4 Points'] += 1
 
@@ -261,107 +311,101 @@ def create_control_chart(df_kpi, unit, kpi_name, config, colors):
         violations_by_quarter[quarter]['Rule 3'] = violations_by_quarter[quarter]['Rule 3 Points'] // 6
         violations_by_quarter[quarter]['Rule 4'] = violations_by_quarter[quarter]['Rule 4 Points'] // 14
 
-    # Plot violations
-    for vd, vv, name, color, sz in [
-        (viol4_dates, viol4_vals, 'Rule 4', 'orange', 5),
-        (viol3_dates, viol3_vals, 'Rule 3', 'black', 5),
-        (viol2_dates, viol2_vals, 'Rule 2', '#007e7a', 5),
-        (viol1_dates, viol1_vals, 'Rule 1', 'red', 5),
-    ]:
-        fig_control.add_trace(go.Scatter(
-            x=vd if vd else [None], y=vv if vv else [None],
-            mode='markers', name=name,
-            marker=dict(size=sz, color=color, line=dict(width=1, color=color)),
-            showlegend=True,
-        ))
-
-    fig_control.add_trace(go.Scatter(
-        x=[None], y=[None], mode='lines', name='Best 30 Days',
-        line=dict(color='gold', width=10), opacity=0.2, showlegend=True,
-    ))
-
-    # Quarter separators
     quarter_boundaries = df_hist.groupby('Quarter')['DT_REF'].min().sort_values()
-    for quarter_date in quarter_boundaries[1:]:
-        fig_control.add_vline(
-            x=pd.Timestamp(quarter_date).to_pydatetime(),
-            line=dict(color='#c0c0c0', width=1.1), layer='below',
-        )
+    separadores = [pd.Timestamp(d).to_pydatetime() for d in quarter_boundaries[1:]]
 
-    # Layout
-    fig_control.update_layout(
-        title='',
-        xaxis=dict(
-            title='', tickformat='%Y-%m',
-            tickfont=dict(size=10, color='#6E6E6E'),
-            linecolor='#6E6E6E', showgrid=False, showline=True, mirror=True,
-        ),
-        yaxis=dict(
-            title=dict(text=f"{kpi_name} ({unit})", font=dict(size=11, color='#6E6E6E')),
-            tickfont=dict(size=11, color='#6E6E6E'),
-            linecolor='#6E6E6E', showgrid=False, showline=True, mirror=True,
-        ),
-        width=900, height=400, hovermode='x unified', showlegend=True,
-        legend=dict(
-            orientation='h', yanchor='bottom', y=1.05,
-            xanchor='center', x=0.5, font=dict(size=12),
-            bgcolor='rgba(0,0,0,0)',
-        ),
-        font=dict(size=10),
-        margin=dict(l=10, r=10, t=10, b=50),
-        plot_bgcolor='white', paper_bgcolor='white',
-    )
-
-    # Separator line
-    fig_control.add_shape(
-        type='line', xref='paper', yref='paper',
-        x0=0, x1=1, y0=-0.08, y1=-0.08,
-        line=dict(color='#CCCCCC', width=1),
-    )
-
-    # Footer with rule definitions
-    fig_control.add_annotation(
-        text=(
-            "<span style='font-size:11px; color:#666'>"
-            "<b>Rule 1:</b> Point outside control limits  |  "
-            "<b>Rule 2:</b> 7 points on same side of center line  |  "
-            "<b>Rule 3:</b> 6 points increasing or decreasing  |  "
-            "<b>Rule 4:</b> 14 points alternating up and down"
-            "</span>"
-        ),
-        xref='paper', yref='paper', x=0.5, y=-0.18,
-        showarrow=False, xanchor='center', align='center',
-    )
-
-    return fig_control
+    serie = df_hist[['DT_REF', 'ACTUAL']].sort_values('DT_REF').reset_index(drop=True)
+    grafico = GraficoSPC(serie, grupos, sinais, separadores, unit, kpi_name)
+    grafico.violations_by_quarter = violations_by_quarter
+    return grafico
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. HISTOGRAM WITH STATISTICS TABLE
 # ═══════════════════════════════════════════════════════════════════════════
 
+class GraficoHistograma:
+    """Histograma do último ano + curvas normais por ano, linhas de Budget e limites."""
+
+    def __init__(self, unit, years, anos, bin_edges, barras, budget, upper, lower):
+        self.unit = unit
+        self.years = years
+        self.anos = anos          # [dict(year, mean, std, cv, budget, n, days_out, cor, curva=(x, y))]
+        self.bin_edges = bin_edges
+        self.barras = barras      # (centros, percentuais, cor) do último ano, ou None
+        self.budget, self.upper, self.lower = budget, upper, lower
+
+    @property
+    def notas(self):
+        return [
+            f"1. Budget line, control limits and the bars are based on year {self.years[-1]}. "
+            f"Limits calculated as Budget ±3·StdDev.",
+            "2. Days Out: number of days where actual values fall outside the control limits.",
+        ]
+
+    def linhas_tabela(self):
+        return [[{'texto': str(a['year']), 'marca': a['cor'], 'peso': 'semibold', 'cor': V.AZUL_ESCURO},
+                 {'texto': a['mean'], 'peso': 'semibold'}, a['std'], f"{a['cv']:.1f}%", a['budget'],
+                 str(a['n']), {'texto': str(a['days_out']), 'cor': V.CAIU if a['days_out'] else V.TINTA}]
+                for a in self.anos]
+
+    def desenhar(self, w, h):
+        import matplotlib.transforms as mtrans
+        from matplotlib.ticker import MaxNLocator
+
+        fig = V.figura_px(w, h)
+        m = dict(l=40, r=12, t=12, b=26)
+        ax = fig.add_axes([m['l'] / w, m['b'] / h, (w - m['l'] - m['r']) / w, (h - m['t'] - m['b']) / h])
+        _estilo_eixo(ax)
+        largura = self.bin_edges[1] - self.bin_edges[0]
+        ymax = 0
+        if self.barras is not None:
+            centros, pct, cor = self.barras
+            ax.bar(centros, pct, width=largura * 0.88, color=cor, alpha=0.55 if len(self.anos) > 1 else 0.78,
+                   linewidth=0, zorder=2)
+            ymax = max(ymax, float(np.max(pct)) if len(pct) else 0)
+        for a in self.anos:
+            xs, ys = a['curva']
+            ax.plot(xs, ys, color=a['cor'], linewidth=V.pt(2.2), linestyle=(0, (6, 4)), zorder=3)
+            ymax = max(ymax, float(np.max(ys)) if len(ys) else 0)
+        ax.set_ylim(0, (ymax or 1) * 1.08)
+        ax.yaxis.set_major_locator(MaxNLocator(4))
+        ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0f}%")
+        x0, x1 = self.bin_edges[0], self.bin_edges[-1]
+        for v in (self.upper, self.lower):
+            if v is not None:
+                x0, x1 = min(x0, v), max(x1, v)
+        ax.set_xlim(x0 - largura, x1 + largura)
+        ax.xaxis.set_major_locator(MaxNLocator(max(3, int(w // 90))))
+        faixa = x1 - x0
+        ax.xaxis.set_major_formatter(lambda v, _: f"{v:,.1f}" if faixa < 10 else f"{v:,.0f}")
+
+        if self.budget is not None:
+            topo = mtrans.blended_transform_factory(ax.transData, ax.transAxes)
+            desloc = lambda dx: mtrans.offset_copy(topo, fig=fig, x=V.pt(dx), y=0, units='points')
+            xmin_ax, xmax_ax = ax.get_xlim()
+            ax.axvline(self.budget, color=V.AZUL_PROFUNDO, linewidth=V.pt(1.6), zorder=4)
+            for v in (self.upper, self.lower):
+                ax.axvline(v, color=V.C_LIM, linewidth=V.pt(1.2), linestyle=(0, (5, 4)), zorder=4)
+            for v, rot, cor, peso in ((self.budget, f"Budget {self.years[-1]}", V.AZUL_PROFUNDO, 'semibold'),
+                                      (self.upper, 'Upper', V.C_LIM, 'medium'),
+                                      (self.lower, 'Lower', V.C_LIM, 'medium')):
+                # perto da borda direita, o rótulo vai para a esquerda da linha (não sai do card)
+                direita = (v - xmin_ax) / (xmax_ax - xmin_ax) > 0.82
+                ax.text(v, 0.98, f"{rot}\n{format_value_with_unit(v, self.unit)}", transform=desloc(-4 if direita else 4),
+                        ha='right' if direita else 'left', va='top', fontsize=V.pt(9.5), color=cor, fontweight=peso,
+                        linespacing=1.25, path_effects=_contorno(3), zorder=6)
+        return V.figura_para_imagem(fig)
+
+
 def create_histogram_table2(df_kpi, unit_kpi, kpi_name):
     """
-    Generate histogram with statistics table — Power BI style.
-
-    Parameters
-    ----------
-    df_kpi : DataFrame
-        DataFrame containing KPI values with DT_REF, ACTUAL, BUDGET columns.
-    unit_kpi : str
-        Unit of measurement.
-    kpi_name : str
-        Name of the KPI for axis label.
-
-    Returns
-    -------
-    plotly.graph_objects.Figure
+    Compute the capability histogram (bars of the latest year, one normal curve per year,
+    Budget ±3·StdDev lines and the statistics table) and return a GraficoHistograma.
     """
     df_hist = df_kpi.copy()
     df_hist['Year'] = df_hist['DT_REF'].dt.year
     years = sorted(df_hist['Year'].unique())
-
-    fig_hist_table = go.Figure()
 
     all_values = df_hist['ACTUAL'].dropna()
     global_min = all_values.min()
@@ -370,11 +414,9 @@ def create_histogram_table2(df_kpi, unit_kpi, kpi_name):
     bin_edges = np.linspace(global_min, global_max, nbins + 1)
     bin_width = bin_edges[1] - bin_edges[0]
 
-    colors_powerbi = ['#e5e7eb', '#f6caca', '#e9f0f8', '#D5F5E3']
-    line_colors_powerbi = ['#ff7f0e', '#e56768', '#3985e4', '#006D5B']
-
-    stats_table = []
-    mean_values = {}
+    validos = [y for y in years if len(df_hist[df_hist['Year'] == y]['ACTUAL'].dropna()) >= 5]
+    anos = []
+    barras = None
     std_last_year = None
 
     for idx, year in enumerate(years):
@@ -382,36 +424,18 @@ def create_histogram_table2(df_kpi, unit_kpi, kpi_name):
         if len(data_year) < 5:
             continue
 
-        line_color = line_colors_powerbi[idx % len(line_colors_powerbi)]
+        cor = V.cor_do_ano(validos.index(year), len(validos))
         mean = data_year.mean()
         std = data_year.std()
         n = len(data_year)
         cv = (std / mean) * 100 if mean != 0 else 0
-        mean_values[year] = (mean, line_color)
         if idx == len(years) - 1:
             std_last_year = std
-
-        # Histogram bars only for the most recent year
-        if idx == len(years) - 1:
             hist, _ = np.histogram(data_year, bins=bin_edges)
-            hist_percent = (hist / len(data_year)) * 100
-            fig_hist_table.add_trace(go.Bar(
-                x=(bin_edges[:-1] + bin_edges[1:]) / 2,
-                y=hist_percent, width=bin_width * 0.95,
-                name=str(year),
-                marker=dict(color=line_color, line=dict(color='black', width=1.5)),
-                opacity=0.2, showlegend=False,
-            ))
+            barras = ((bin_edges[:-1] + bin_edges[1:]) / 2, (hist / len(data_year)) * 100, cor)
 
-        # Normal curve
         x_range = np.linspace(data_year.min(), data_year.max(), 300)
-        y_normal = norm.pdf(x_range, mean, std)
-        y_normal_scaled = y_normal * 100 * bin_width
-        fig_hist_table.add_trace(go.Scatter(
-            x=x_range, y=y_normal_scaled,
-            mode='lines', name=str(year),
-            line=dict(color=line_color, width=2.5), showlegend=False,
-        ))
+        y_normal_scaled = norm.pdf(x_range, mean, std) * 100 * bin_width
 
         budget_year = df_hist[df_hist['Year'] == year]['BUDGET'].iloc[0] if len(df_hist[df_hist['Year'] == year]) > 0 else None
         budget_formatted = format_value_with_unit(budget_year, unit_kpi) if not pd.isna(budget_year) else '-'
@@ -420,24 +444,12 @@ def create_histogram_table2(df_kpi, unit_kpi, kpi_name):
         if not pd.isna(budget_year) and std > 0:
             upper_limit_year = budget_year + 3 * std
             lower_limit_year = max(budget_year - 3 * std, 0)
-            days_out = ((data_year < lower_limit_year) | (data_year > upper_limit_year)).sum()
+            days_out = int(((data_year < lower_limit_year) | (data_year > upper_limit_year)).sum())
 
-        stats_table.append({
-            'year': year,
-            'mean': format_value_with_unit(mean, unit_kpi),
-            'std': format_value_with_unit(std, unit_kpi),
-            'cv': cv,
-            'budget': budget_formatted,
-            'n': n,
-            'days_out': days_out,
-            'line_color': line_color,
-        })
+        anos.append(dict(year=year, mean=format_value_with_unit(mean, unit_kpi), std=format_value_with_unit(std, unit_kpi),
+                         cv=cv, budget=budget_formatted, n=n, days_out=days_out, cor=cor, curva=(x_range, y_normal_scaled)))
 
-    # Budget and control limit lines
-    budget_line_value = None
-    upper_limit_value = None
-    lower_limit_value = None
-
+    budget_line_value = upper_limit_value = lower_limit_value = None
     try:
         last_year = years[-1]
         budget_value = df_hist[df_hist['Year'] == last_year]['BUDGET'].iloc[0]
@@ -445,83 +457,126 @@ def create_histogram_table2(df_kpi, unit_kpi, kpi_name):
             budget_line_value = budget_value
             upper_limit_value = budget_value + 3 * std_last_year
             lower_limit_value = max(budget_value - 3 * std_last_year, 0)
-            fig_hist_table.add_vline(x=budget_value, line=dict(color='#505050', width=2))
-            fig_hist_table.add_vline(x=upper_limit_value, line=dict(color='#909090', width=1.5, dash='dot'))
-            fig_hist_table.add_vline(x=lower_limit_value, line=dict(color='#909090', width=1.5, dash='dot'))
     except Exception:
         pass
 
-    # Legend / table block
-    legend_text = "<span style='font-size:10px; color:#2a3f5f;'><b>            Year                Mean                  StDev                 CV(%)               Budget               Days             Days Out</b></span><br>"
-    legend_text += "<span style='color:#E8E8E8; line-height:0.7;'><b>─────────────────────────────────────────────────────────────────────────</b></span><br>"
+    return GraficoHistograma(unit_kpi, years, anos, bin_edges, barras,
+                             budget_line_value, upper_limit_value, lower_limit_value)
 
-    for i, stat in enumerate(stats_table):
-        circle_icon = f"<span style='color:{stat['line_color']}; font-size:16px;'>●</span>"
-        year_colored = f"<b>{stat['year']}</b>"
-        legend_text += (
-            f"<span style='line-height:0.8;'>{circle_icon}     {year_colored}"
-            f"     {stat['mean']:>13}     {stat['std']:>14}     {stat['cv']:>13.1f}"
-            f"     {stat['budget']:>13}     {stat['n']:>12}     {stat['days_out']:>11}</span><br>"
-        )
-        if i < len(stats_table) - 1:
-            legend_text += "<span style='color:#E8E8E8; line-height:0.8;'>─────────────────────────────────────────────────────────────────────────</span><br>"
 
-    annotations = [
-        dict(
-            text=legend_text, xref='paper', yref='paper',
-            x=0.07, y=1.07, xanchor='left', yanchor='bottom',
-            font=dict(size=12, family='Calibri, monospace', color='#333333'),
-            showarrow=False, bgcolor='white', borderwidth=0, borderpad=1, align='left',
-        ),
-        dict(
-            text=(
-                f"<b>1.</b> Budget line, control limits and the bars are based on year {years[-1]}. "
-                f"Limits calculated as Budget ±3*StdDev <br>"
-                f"<b>2.</b> Days Out: Number of days where actual values fall outside the control limits "
-            ),
-            xref='paper', yref='paper', x=0.0, y=-0.15,
-            xanchor='left', yanchor='top', showarrow=False,
-            font=dict(size=11, family='Calibri', color='#808495'),
-            bgcolor='white', align='left',
-        ),
-    ]
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. PROCESS CAPABILITY MOSHE (grouped bars + mean variation — active version)
+# ═══════════════════════════════════════════════════════════════════════════
 
-    fig_hist_table.update_layout(
-        title='',
-        yaxis_title=dict(text='Percent (%)', font=dict(size=12, color='#6E6E6E')),
-        xaxis=dict(
-            tickfont=dict(size=12, color='#6E6E6E'), showgrid=False,
-            showline=True, linewidth=1, linecolor='#6E6E6E', mirror=True,
-            ticks='outside', ticklen=5, tickwidth=1, tickcolor='#6E6E6E',
-        ),
-        yaxis=dict(
-            tickfont=dict(size=12, color='#6E6E6E'), showgrid=False,
-            showline=True, linewidth=1, linecolor='#6E6E6E', mirror=True,
-            ticks='outside', ticklen=5, tickwidth=1, tickcolor='#6E6E6E',
-        ),
-        width=700, height=430, barmode='overlay', showlegend=False,
-        font=dict(size=12, family='Calibri, monospace', color='#6E6E6E'),
-        plot_bgcolor='white', paper_bgcolor='white',
-        margin=dict(l=5, r=5, t=120, b=60),
-        annotations=annotations,
-    )
+class GraficoMedidas:
+    """Quatro colunas por trimestre (Mean, Best 30 Days, P75, Budget), como no Dashboard."""
 
-    # Labels beside budget/limit lines
-    if budget_line_value is not None:
-        y_pos = 0.95
-        for val, label, color in [
-            (budget_line_value, f'<b>Budget {years[-1]}</b><br>{format_value_with_unit(budget_line_value, unit_kpi)}', '#505050'),
-            (upper_limit_value, f'Upper<br>{format_value_with_unit(upper_limit_value, unit_kpi)}', '#909090'),
-            (lower_limit_value, f'Lower<br>{format_value_with_unit(lower_limit_value, unit_kpi)}', '#909090'),
-        ]:
-            fig_hist_table.add_annotation(
-                x=val, y=y_pos, xref='x', yref='paper',
-                text=label, showarrow=False,
-                font=dict(size=10, color=color, family='Arial'),
-                xanchor='left', yanchor='top', xshift=5,
-            )
+    SERIES = ['Mean', 'Best 30 Days', 'P75', 'Budget']
+    legenda = [('quadrado', V.M_COR[k], k) for k in SERIES]
 
-    return fig_hist_table
+    def __init__(self, agg, decimals, variacao):
+        self.agg = agg              # DataFrame Quarter + as 4 séries
+        self.decimals = decimals
+        self.variacao = variacao    # [(de, para, pct)]
+
+    def desenhar(self, w, h):
+        from matplotlib.patches import FancyBboxPatch, Rectangle
+
+        fig = V.figura_px(w, h)
+        m = dict(l=4, r=4, t=24, b=28)
+        ax = fig.add_axes([m['l'] / w, m['b'] / h, (w - m['l'] - m['r']) / w, (h - m['t'] - m['b']) / h])
+        _estilo_eixo(ax, grade_y=False)
+        ax.set_yticks([])
+        larg_px, alt_px = w - m['l'] - m['r'], h - m['t'] - m['b']
+
+        agg = self.agg
+        n = len(agg)
+        vals = agg[self.SERIES]
+        y_min, y_max = vals.min().min(), vals.max().max()
+        if pd.isna(y_min) or pd.isna(y_max) or y_min == y_max:
+            if pd.notna(y_min):
+                y_max = y_min * 1.1 if y_min > 0 else y_min + 1
+            elif pd.notna(y_max):
+                y_min = y_max * 0.9 if y_max > 0 else y_max - 1
+            else:
+                y_min, y_max = 0, 100
+        padding = (y_max - y_min) * 0.15
+        base, topo = y_min - padding, y_max + padding
+        ax.set_ylim(base, topo)
+        ax.set_xlim(-0.5, n - 0.5)
+
+        # grupo: até 150 px, colunas de até 30 px com 3 px entre elas (como .cg-grupo / .cg-col)
+        grupo_px = min(150, larg_px / max(n, 1) * 0.82)
+        col_px = min(30, (grupo_px - 9) / 4)
+        px_x = larg_px / n
+        px_y = alt_px / (topo - base)
+        col_w = col_px / px_x
+        passo = (col_px + 3) / px_x
+        raio = 4
+        fv = 9 if col_px >= 24 else (8.5 if col_px >= 16 else 7.5)
+
+        # rótulo que não cabe sobre a coluna: fonte menor e, se ainda não couber, em milhares (k)
+        maior = vals.abs().max().max()
+        rotulo = lambda v: f"{v:,.{self.decimals}f}"
+        largura_rot = lambda t, f: len(t) * f * 0.6
+        if pd.notna(maior):
+            while fv > 7 and largura_rot(rotulo(maior), fv) > col_px + 3:
+                fv -= 0.5
+            if largura_rot(rotulo(maior), fv) > col_px + 3 and maior >= 1000:
+                rotulo = lambda v: f"{v / 1000:,.1f}k"
+
+        for i, row in agg.iterrows():
+            for j, k in enumerate(self.SERIES):
+                v = row[k]
+                if pd.isna(v):
+                    continue
+                x0 = i + (j - 1.5) * passo - col_w / 2
+                alt = v - base
+                if alt <= 0:
+                    continue
+                cor = V.M_COR[k]
+                ax.add_patch(FancyBboxPatch((x0, base), col_w, alt, boxstyle=f"round,pad=0,rounding_size={raio / px_x}",
+                                            mutation_aspect=px_x / px_y, fc=cor, ec='none', zorder=2))
+                ax.add_patch(Rectangle((x0, base), col_w, min(alt, alt / 2), fc=cor, ec='none', zorder=2))
+                ax.text(x0 + col_w / 2, v + 4 / px_y, rotulo(v), ha='center', va='bottom',
+                        fontsize=V.pt(fv), fontweight='semibold', color=V.TINTA, zorder=3)
+
+        ax.set_xticks(range(n))
+        ax.set_xticklabels([_rotulo_trimestre(q) for q in agg['Quarter']])
+        return V.figura_para_imagem(fig)
+
+
+def create_process_capability_moshe(df_kpi, unit, kpi_name, config, colors):
+    """
+    Compute Mean / Best 30 Days / P75 / Budget per quarter and the quarter-over-quarter
+    mean variation, and return a GraficoMedidas.
+    """
+    df_hist = df_kpi.copy()
+    df_hist['Quarter'] = df_hist['DT_REF'].dt.to_period('Q').astype(str)
+    groups = sorted(df_hist['Quarter'].unique())
+    window_size = 30
+
+    media, budget_l, p75_l, best_l = _compute_period_metrics(df_hist, groups, 'Quarter', window_size)
+
+    agg = pd.DataFrame({
+        'Quarter': groups,
+        'Mean': media,
+        'Best 30 Days': best_l,
+        'P75': p75_l,
+        'Budget': budget_l,
+    }).replace({None: np.nan})
+    for k in GraficoMedidas.SERIES:
+        agg[k] = pd.to_numeric(agg[k], errors='coerce')
+
+    agg['Mean_Pct_Change'] = agg['Mean'].pct_change() * 100
+    variacao = []
+    for i in range(1, len(agg)):
+        pct = agg.iloc[i]['Mean_Pct_Change']
+        if pd.notna(pct) and np.isfinite(pct):
+            variacao.append((_rotulo_trimestre(agg.iloc[i - 1]['Quarter']), _rotulo_trimestre(agg.iloc[i]['Quarter']), pct))
+
+    decimals = 2 if unit == '%/day' else 0
+    return GraficoMedidas(agg, decimals, variacao)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -675,138 +730,10 @@ def create_process_capability(df_kpi, unit, kpi_name, config, colors):
     return fig_process
 
 
+
 # ═══════════════════════════════════════════════════════════════════════════
-# 4. PROCESS CAPABILITY MOSHE (Matplotlib — active version)
+# Internal helpers
 # ═══════════════════════════════════════════════════════════════════════════
-
-def create_process_capability_moshe(df_kpi, unit, kpi_name, config, colors):
-    """
-    Generate Process Performance chart — Matplotlib version with grouped bars
-    and a QoQ variation table on the right side.
-
-    Returns
-    -------
-    matplotlib.figure.Figure
-    """
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    df_hist = df_kpi.copy()
-    df_hist['Quarter'] = df_hist['DT_REF'].dt.to_period('Q').astype(str)
-    groups = sorted(df_hist['Quarter'].unique())
-    group_labels = groups
-    groupby_col = 'Quarter'
-    window_size = 30
-    unit_kpi = unit
-
-    media, budget_l, p75_l, best_l = _compute_period_metrics(df_hist, groups, groupby_col, window_size)
-
-    agg = pd.DataFrame({
-        'Quarter': group_labels,
-        'Mean': media,
-        'Best 30 Days': best_l,
-        'P75': p75_l,
-        'Budget': budget_l,
-    }).replace({None: np.nan})
-
-    agg['Mean_Pct_Change'] = agg['Mean'].pct_change() * 100
-
-    labels = agg['Quarter']
-    x = np.arange(len(labels))
-    width = 0.21
-
-    fig, ax = plt.subplots(figsize=(12, 4))
-
-    bar_colors = {
-        'Mean': '#0B3C5D',
-        'Best 30 Days': '#6C83B5',
-        'P75': '#A6B1D9',
-        'Budget': '#00A3E0',
-    }
-
-    ax.bar(x - 1.5 * width, agg['Mean'], width, label='Mean', color=bar_colors['Mean'])
-    ax.bar(x - 0.5 * width, agg['Best 30 Days'], width, label='Best 30 Days', color=bar_colors['Best 30 Days'])
-    ax.bar(x + 0.5 * width, agg['P75'], width, label='P75', color=bar_colors['P75'])
-    ax.bar(x + 1.5 * width, agg['Budget'], width, label='Budget', color=bar_colors['Budget'])
-
-    ax.set_xlim(-0.5, len(x) - 0.02)
-
-    if unit_kpi == '%/day':
-        decimals = 2
-    elif unit_kpi in ('ton/day', 'tonnes/day', 'ktonnes/day', 'eqm/day'):
-        decimals = 0
-    else:
-        decimals = 0
-
-    for i, row in agg.iterrows():
-        for offset, col in zip([-1.5, -0.5, 0.5, 1.5], ['Mean', 'Best 30 Days', 'P75', 'Budget']):
-            val = row[col]
-            if pd.notna(val):
-                ax.text(
-                    x[i] + offset * width, val,
-                    f"{val:,.{decimals}f}",
-                    ha='center', va='bottom', fontsize=8, fontweight='bold',
-                    color=bar_colors[col],
-                )
-
-    y_min = agg[['Mean', 'Best 30 Days', 'P75', 'Budget']].min().min()
-    y_max = agg[['Mean', 'Best 30 Days', 'P75', 'Budget']].max().max()
-
-    if pd.isna(y_min) or pd.isna(y_max) or y_min == y_max:
-        if pd.notna(y_min):
-            y_max = y_min * 1.1 if y_min > 0 else y_min + 1
-        elif pd.notna(y_max):
-            y_min = y_max * 0.9 if y_max > 0 else y_max - 1
-        else:
-            y_min, y_max = 0, 100
-
-    padding = (y_max - y_min) * 0.15
-    ax.set_ylim(y_min - padding, y_max + padding)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels, fontsize=9)
-    ax.set_yticks([])
-    ax.set_ylabel('')
-
-    ax.spines['left'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.spines['bottom'].set_visible(True)
-
-    ax.legend(ncol=4, fontsize=12, loc='upper center', bbox_to_anchor=(0.5, 1.10), frameon=False)
-
-    # QoQ variation table on the right
-    rows = []
-    for i in range(1, len(agg)):
-        q_from = agg.iloc[i - 1]['Quarter']
-        q_to = agg.iloc[i]['Quarter']
-        pct = agg.iloc[i]['Mean_Pct_Change']
-        if pd.notna(pct):
-            rows.append((q_from, q_to, pct))
-
-    if rows:
-        x_box = 1.15
-        y_box = 0.98
-        line_step = 0.09
-        ax.text(x_box, y_box, '', transform=ax.transAxes, ha='right', va='top',
-                bbox=dict(boxstyle='round, pad=0.45', facecolor='white', edgecolor='#D0D0D0'))
-        ax.text(x_box - 0.05, y_box + 0.08, 'Mean variation', transform=ax.transAxes,
-                ha='right', va='top', fontsize=9, fontweight='bold', color='#4D4D4D')
-        for i, (q_from, q_to, pct) in enumerate(rows):
-            arrow = '▲' if pct > 0 else '▼'
-            sign = '+' if pct > 0 else ''
-            color = '#1F77B4' if pct > 0 else '#D62728'
-            ax.text(
-                x_box - 0.01, y_box - i * line_step,
-                f"{q_from} → {q_to}   {arrow} {sign}{pct:.1f}%",
-                transform=ax.transAxes, ha='right', va='top',
-                fontsize=9, fontweight='normal', color=color,
-            )
-
-    plt.tight_layout()
-    return fig
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Internal helpers
