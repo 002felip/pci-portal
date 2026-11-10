@@ -285,6 +285,12 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .topnav-user-avatar { width: 30px; height: 30px; }
 }
 /* ═══ fim Setup Dashboards ═══ */
+/* Carregando: só a mensagem até os dados chegarem (sem filtros vazios) */
+.carregando .filters, .carregando .sub-row .meta, .carregando #buName { visibility: hidden; }
+.msg-carga { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 18vh 0 0; font: italic 400 .9rem var(--font-display); color: var(--text-soft); }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ctl-on-bg); animation: girar .8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 /* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro (como o COO) */
 .unit { position: relative; }
 .unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
@@ -339,7 +345,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 @media (max-width: 1000px) { .cycle-pop { right: auto; left: 0; } }
 </style>
 </head>
-<body>
+<body class="carregando">
 <nav class="topnav" id="topnav">
   <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
     <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
@@ -474,7 +480,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
     </div>
   </div>
 
-  <div class="dash" id="dash"></div>
+  <div class="dash" id="dash"><p class="msg-carga" role="status"><span class="spin" aria-hidden="true"></span>Loading data…</p></div>
 </main>
 <div class="tip" id="tip" hidden></div>
 
@@ -535,9 +541,10 @@ window.VBMSetup = (function () {
   }
   function traduzir(raiz) {
     raiz = raiz || document;
-    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    // chave ainda sem tradução registrada (página carregando): fica o texto do HTML, nunca o nome da chave
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { var k = el.getAttribute('data-i18n'), v = t(k); if (v !== k) el.textContent = v; });
     [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
-      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { var k = el.getAttribute(par[0]), v = t(k); if (v !== k) el.setAttribute(par[1], v); });
     });
   }
   function fmt(v, casas) {
@@ -726,8 +733,14 @@ window.HOB_CARREGAR = function (iniciar) {
         function () { return { ok: false, status: 0, j: null }; });
   }
   var q = ciclo ? '?ciclo=' + encodeURIComponent(ciclo) : '';
+  // Situação da atualização (SG_STATUS/DT_ATUALIZACAO ou o log): à parte, como no COO — a página desenha os gráficos
+  // sem esperar por ela e acrescenta o aviso quando a resposta chega
+  window.HOB_ATUALIZACAO_P = ler('api/atualizacao' + q).then(function (at) {
+    window.HOB_ATUALIZACAO = at.ok && at.j && at.j.cards ? Object.assign({ ok: true }, at.j)
+      : { ok: false, codigo: (at.j && at.j.codigo) || (at.status === 404 ? 'SEM_API' : at.status ? 'ERRO_BANCO' : 'SEM_API') };
+  });
   function falha(r) { return { ok: false, codigo: (r.j && r.j.codigo) || (r.status === 404 ? 'SEM_API' : r.status ? 'ERRO_BANCO' : 'SEM_API'), detalhe: r.j && r.j.detalhe }; }
-  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q), ler('api/atualizacao' + q), ler('api/ciclos')]).then(function (rs) {
+  Promise.all([ler('api/indicadores' + q), ler('api/waterfall?ponte=fcfYear'), ler('api/waterfall?ponte=ebitdaYear'), ler('api/ebitda' + q), ler('api/coo' + q), null, ler('api/ciclos')]).then(function (rs) {
     var x = rs[0];
     // pontes de IBP.WATERFALL: uma por referência (DT_REF)
     window.HOB_PONTES = {};
@@ -745,8 +758,6 @@ window.HOB_CARREGAR = function (iniciar) {
     var cs = rs[6], lista = cs.ok && cs.j && cs.j.ciclos ? cs.j.ciclos.map(function (c) { return c.ciclo; }) : [];
     window.HOB_CICLOS = { lista: lista, atual: lista.indexOf(ciclo) >= 0 ? ciclo : lista[0] || null };
     // Situação da atualização (SG_STATUS/DT_ATUALIZACAO do 007): sem ela, a tela fica sem o aviso
-    var at = rs[5];
-    window.HOB_ATUALIZACAO = at.ok && at.j && at.j.cards ? Object.assign({ ok: true }, at.j) : falha(at);
     if (x.ok && x.j && x.j.anos && x.j.anos.length && x.j.ultimoReal) { window.HOB_DATA = x.j; return iniciar(null); }
     iniciar((x.j && x.j.codigo) || 'SEM_API');
   });
@@ -1101,7 +1112,7 @@ window.HOB_CARREGAR(function (aviso) {
     });
     var slots = bs.length + gap * 0.5, gw = W / slots, BW = ponteBW(itens, W);
     // tela estreita: rótulos na diagonal, em uma linha; senão, até 2-3 linhas na horizontal
-    var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = Math.max(ponteMB(itens, W), MB_MIN), MT = 20 * K;
+    var giro = gw < 46, linhas = giro ? 1 : gw < 70 ? 3 : 2, MB = Math.max(ponteMB(itens, W), MB_MIN), MT = (20 + (pendente(cfg.at) ? 26 : 0)) * K; // faixa Pending no alto
     if (!bs.length) return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(cfg.titulo + ': ' + (cfg.msg || S.t('g.semDados'))) + '"><line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + (H - MB) + '" y2="' + (H - MB) + '"/><text class="b-val" x="' + W / 2 + '" y="' + (H / 2) + '" text-anchor="middle">' + esc(cfg.msg || S.t('g.semDados')) + '</text></svg>';
     var vals = []; bs.forEach(function (p) { vals.push(p.de, p.ate); });
     var y = escalaY(vals, MT, MB, H), y0 = y(0), out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
@@ -1407,7 +1418,13 @@ window.HOB_CARREGAR(function (aviso) {
     dash.querySelectorAll('.chart').forEach(function (el) { ro.observe(el); });
     desenharTodos(true);
     renderCiclo();
-    if (primeira) { primeira = false; setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600); }
+    if (primeira) {
+      primeira = false;
+      document.body.classList.remove('carregando');
+      setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600);
+      // aviso de atualização quando api/atualizacao responder (não segura os gráficos)
+      if (window.HOB_ATUALIZACAO_P && !window.HOB_ATUALIZACAO) window.HOB_ATUALIZACAO_P.then(function () { render(); });
+    }
   }
 
   // ── Resumo do ciclo no cabeçalho (como o COO): quantos gráficos aguardam a atualização final do mês ──

@@ -309,7 +309,7 @@ test('/ebitda: ciclo mais recente do ID_DASH 16 (ou o da tela, se existir), KPI 
     if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)) }, { DT_REF: new Date(Date.UTC(2026, 8, 1)) }] };
     if (/IBP\.WATERFALL/.test(q)) return { recordset: WF };
     if (/PHUB_PS_SETUP/.test(q)) return { recordset: [] };
-    return { recordset: EB.filter((l) => l.ID_KPI === params.idKpi[1]) };
+    return { recordset: params.idKpi[1] == null ? EB : EB.filter((l) => l.ID_KPI === params.idKpi[1]) };
   };
   const router = criarHobRouter({ runQuery });
   const r = await chamar(router, '/ebitda');
@@ -318,8 +318,8 @@ test('/ebitda: ciclo mais recente do ID_DASH 16 (ou o da tela, se existir), KPI 
   assert.deepStrictEqual([r.json.idDash, r.json.idKpi], [16, 73]);
   assert.strictEqual(r.json.anos['2026'].ebitdaVbm.b[0], 500);
   assert.strictEqual(r.json.anos['2026'].ebitdaOut.b[0], 17);
-  const kpisLidos = chamadas.filter((c) => c.params && c.params.idKpi).map((c) => c.params.idKpi[1]).sort((x, y) => x - y);
-  assert.deepStrictEqual([...new Set(kpisLidos)], [73]); // Others também é o KPI 73 (sites 45, 102 e 46)
+  const kpisLidos = chamadas.filter((c) => c.params && c.params.idKpi).map((c) => c.params.idKpi[1]);
+  assert.deepStrictEqual(kpisLidos, [null]); // a carga inteira do ciclo, numa ida só
   assert.ok(chamadas.filter((c) => c.params && c.params.idKpi).every((c) => c.params.idDash[1] === 16));
   assert.strictEqual((await chamar(router, '/ebitda?ciclo=2026-09')).json.ciclo, '2026-09');
   assert.strictEqual((await chamar(router, '/ebitda?ciclo=2020-01')).json.ciclo, '2026-10'); // ciclo inexistente no COO: o mais recente
@@ -336,7 +336,7 @@ test('/coo: séries da carga por ID_KPI no site da página (cadastro do ID_DASH 
     chamadas.push({ q, params });
     if (q === CICLOS_SQL) return { recordset: [{ DT_REF: new Date(Date.UTC(2026, 9, 1)) }] };
     if (/PHUB_PS_SETUP/.test(q)) return { recordset: [] };
-    return { recordset: params.idKpi[1] === 73 ? EB : [lin({ ANO: 2026, MES: 1, ID_SITE: 38, ID_OPERACAO: 12, ID_KPI: params.idKpi[1], SERIE: 'B', VL_KPI: 30.5, SG_UNID: 'kt', VL_CASADECIMAL: 1, NM_KPI: 'Copper Contained in Concentrate' })] };
+    return { recordset: EB.concat([22, 34, 51].map((k) => lin({ ANO: 2026, MES: 1, ID_SITE: k === 51 ? 39 : 38, ID_OPERACAO: 12, ID_KPI: k, SERIE: 'B', VL_KPI: 30.5, SG_UNID: 'kt', VL_CASADECIMAL: 1, NM_KPI: 'Copper Contained in Concentrate' }))) };
   };
   const r = await chamar(criarHobRouter({ runQuery }), '/coo');
   assert.strictEqual(r.status, 200);
@@ -351,7 +351,7 @@ test('/coo: séries da carga por ID_KPI no site da página (cadastro do ID_DASH 
   assert.strictEqual(r.json.series['cu.sales'].idKpi, 34);
   assert.strictEqual(r.json.series['ni.prod'].idKpi, 51);
   const lidos = chamadas.filter((c) => c.params && c.params.idKpi).map((c) => c.params.idKpi[1]);
-  assert.strictEqual(lidos.filter((k) => k === 73).length, 1); // KPI 73 lido uma vez para os dois sites
+  assert.deepStrictEqual(lidos, [null]); // todas as séries numa consulta só (a carga do ciclo)
 });
 
 test('normalizarConfigHob: coo.kpis aceita só as séries conhecidas, inteiro ou null', () => {
