@@ -332,7 +332,7 @@ FROM (
 
     -- YTG (year to go): IBP.PEDRAVISAOYEARTOGO é gravada por mês do ciclo (DT_REF = último mês
     -- fechado): usa a linha do mês de @DT_REAL em cada ano, mesmo mês em todos os anos, como o YTD.
-    -- Act/Fcst: ano de @DT_REAL = 'F'; anos anteriores = 'A'. Valor pela mesma regra das demais visões.
+    -- Act/Fcst: ano de @DT_REAL = 'F'; anos anteriores = 'A'. Valor do Act/Fcst: VL_PROJ (o YTG não tem realizado).
     SELECT
       DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), 1) AS DT_REF,
       PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
@@ -359,12 +359,9 @@ FROM (
         UNION ALL
         SELECT 'Supply' AS Type, PVC.VL_SUPPLY * DASH.VL_FATOR AS Value
         UNION ALL
-        SELECT 'Forecast' AS Type,
-        CASE
-          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
-          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
-          ELSE PVC.VL_PROJ * DASH.VL_FATOR
-        END AS Value
+        -- YTG é o restante do ano: o Forecast é sempre a projeção (VL_PROJ); com a regra do mês
+        -- (realizado até @DT_REAL) gravava 0, porque VL_REAL do YTG é sempre vazio
+        SELECT 'Forecast' AS Type, PVC.VL_PROJ * DASH.VL_FATOR AS Value
       ) AS UnpivotedData
     WHERE
       PVC.DT_REF BETWEEN @DT_INI AND @DT_REAL

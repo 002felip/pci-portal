@@ -439,10 +439,9 @@ SELECT
 			--UNION ALL
 			--SELECT 'Actual' AS Type, PVC.VL_REAL  * DASH.VL_FATOR AS Value 
 			UNION ALL
-			SELECT 'Forecast' AS Type, 
-			CASE WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS NULL THEN 0
-						WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS  NOT NULL THEN PVC.VL_REAL  * DASH.VL_FATOR 
-			ELSE PVC.VL_PROJ  * DASH.VL_FATOR END AS Value 
+			-- YTG é o restante do ano: o Forecast é sempre a projeção (VL_PROJ). A regra do mês (realizado até o
+			-- mês fechado) gravava 0, porque VL_REAL do YTG é sempre vazio
+			SELECT 'Forecast' AS Type, PVC.VL_PROJ * DASH.VL_FATOR AS Value
 			--DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1)
 		) AS UnpivotedData
 	WHERE 
