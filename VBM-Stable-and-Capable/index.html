@@ -1000,6 +1000,12 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
           <div class="chips" id="chipsBus" role="group" aria-label="Business Units"></div>
         </div>
 
+        <div class="campo-grupo">
+          <div class="campo-rotulo"><span data-i18n="form.formato">Formato</span></div>
+          <div class="chips" id="chipsFormato" role="radiogroup" aria-label="Formato" data-i18n-aria="form.formato"></div>
+          <p class="resumo-periodo" id="dicaFormato"></p>
+        </div>
+
         <button type="submit" class="btn-primario" id="btnGerar">
           <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2.5v11l9-5.5-9-5.5Z" fill="currentColor"/></svg>
           <span data-i18n="form.run">Gerar relatórios</span>
@@ -1408,6 +1414,10 @@ window.VBMSetup = (function () {
       'form.monthly': 'Fechamento mensal', 'form.last12': 'Últimos 12 meses', 'form.ytd': 'Ano atual',
       'form.bus': 'Business Units', 'form.all': 'Selecionar todas', 'form.none': 'Limpar', 'form.run': 'Gerar relatórios', 'form.running': 'Execução em andamento…',
       'form.footer': 'Leva cerca de 30 segundos por Business Unit. Uma execução por vez.',
+      'form.formato': 'Formato', 'form.f.separados': 'Um PDF por BU', 'form.f.consolidado': 'Consolidado',
+      'form.f.separadosDica': 'Um relatório para cada Business Unit selecionada.',
+      'form.f.consolidadoDica': 'Um PDF só, com o resumo dos Stability & Capability Scores no início e, em seguida, o relatório de cada Business Unit selecionada.',
+      'bu.montando': 'Páginas prontas',
       'periodo.resumo': '<strong>{meses}</strong> · gráficos com <strong>{anos}</strong> ({a1}–{a2})',
       'periodo.mes': '{n} mês', 'periodo.meses': '{n} meses', 'periodo.dias': '{n} dias', 'periodo.ano': '1 ano', 'periodo.anos': '{n} anos',
       'erro.datas': 'Informe as duas datas.', 'erro.ordem': 'A data fim deve ser igual ou posterior à data início.', 'erro.futuro': 'A data fim não pode estar no futuro.',
@@ -1476,6 +1486,10 @@ window.VBMSetup = (function () {
       'form.monthly': 'Monthly close', 'form.last12': 'Last 12 months', 'form.ytd': 'Year to date',
       'form.bus': 'Business Units', 'form.all': 'Select all', 'form.none': 'Clear', 'form.run': 'Generate reports', 'form.running': 'Run in progress…',
       'form.footer': 'Takes about 30 seconds per Business Unit. One run at a time.',
+      'form.formato': 'Format', 'form.f.separados': 'One PDF per BU', 'form.f.consolidado': 'Consolidated',
+      'form.f.separadosDica': 'One report for each selected Business Unit.',
+      'form.f.consolidadoDica': 'A single PDF: the Stability & Capability Scores summary first, then the report of each selected Business Unit.',
+      'bu.montando': 'Pages ready',
       'periodo.resumo': '<strong>{meses}</strong> · charts with <strong>{anos}</strong> ({a1}–{a2})',
       'periodo.mes': '{n} month', 'periodo.meses': '{n} months', 'periodo.dias': '{n} days', 'periodo.ano': '1 year', 'periodo.anos': '{n} years',
       'erro.datas': 'Enter both dates.', 'erro.ordem': 'End date must be on or after the start date.', 'erro.futuro': 'End date cannot be in the future.',
@@ -1532,7 +1546,7 @@ window.VBMSetup = (function () {
   };
 
   // ─── Estado ───
-  var estado = { config: null, bus: [], selecionadas: [], atual: null, historico: [], timer: null };
+  var estado = { config: null, bus: [], selecionadas: [], formato: 'separados', atual: null, historico: [], timer: null };
 
   // ─── Formulário ───
   function lerDatas() { return { inicio: $('dtInicio').value, fim: $('dtFim').value }; }
@@ -1579,7 +1593,16 @@ window.VBMSetup = (function () {
     }).join('');
     var todas = estado.selecionadas.length === estado.bus.length;
     $('todasBus').textContent = todas ? t('form.none') : t('form.all');
+    desenharFormato();
     atualizarResumo();
+  }
+  /** Um PDF por BU, ou o consolidado (um PDF só, com o resumo dos scores no início) */
+  function desenharFormato() {
+    $('chipsFormato').innerHTML = ['separados', 'consolidado'].map(function (f) {
+      var on = estado.formato === f;
+      return '<button type="button" class="chip" role="radio" aria-checked="' + on + '" aria-pressed="' + on + '" data-formato="' + f + '"><span class="marca">' + ICONE.check + '</span>' + esc(t('form.f.' + f)) + '</button>';
+    }).join('');
+    $('dicaFormato').textContent = t('form.f.' + estado.formato + 'Dica');
   }
 
   // ─── Execução ───
@@ -1614,7 +1637,7 @@ window.VBMSetup = (function () {
       return '<div class="etapa ' + cls + '"><span class="bola">' + (cls === 'feita' ? '✓' : i + 1) + '</span>' + esc(t('etapa.' + n)) + '</div>';
     }).join('');
     var bus = (mostrar.bus || []).map(function (b) {
-      var pct = b.status === 'ok' ? 100 : (b.paginas && b.paginas.total ? Math.round(100 * b.paginas.atual / (b.paginas.total + 1)) : 0);
+      var pct = b.status === 'ok' ? 100 : (b.status === 'montando' ? 96 : (b.paginas && b.paginas.total ? Math.round(100 * b.paginas.atual / (b.paginas.total + 1)) : 0));
       var clsBarra = b.status === 'ok' ? 'ok' : (b.status === 'erro' ? 'erro' : (b.status === 'gerando' && !b.paginas ? 'indeterminada' : ''));
       if (b.status === 'erro') pct = 100;
       var txt = b.status === 'gerando' && b.paginas ? t('bu.paginas', { a: b.paginas.atual, t: b.paginas.total }) : t('bu.' + b.status);
@@ -1624,6 +1647,7 @@ window.VBMSetup = (function () {
     var meta = '<div class="exec-meta">' +
       (fim ? '<span><strong>' + esc(t('exec.ultima')) + '</strong></span>' : '') +
       '<span>' + esc(t('exec.period')) + ': <strong>' + dataBR(mostrar.inicio) + ' → ' + dataBR(mostrar.fim) + '</strong></span>' +
+      (mostrar.formato === 'consolidado' ? '<span>' + esc(t('form.formato')) + ': <strong>' + esc(t('form.f.consolidado')) + '</strong></span>' : '') +
       '<span>' + esc(t('exec.started')) + ': <strong>' + dataHora(mostrar.criadaEm) + '</strong></span>' +
       (mostrar.usuario ? '<span>' + esc(t('exec.by')) + ': <strong>' + quem(mostrar.usuario) + '</strong></span>' : '') +
       (mostrar.linhas != null ? '<span>' + esc(t('exec.rows')) + ': <strong>' + num(mostrar.linhas) + '</strong></span>' : '') + '</div>';
@@ -1677,6 +1701,11 @@ window.VBMSetup = (function () {
     if (i >= 0) estado.selecionadas.splice(i, 1); else estado.selecionadas.push(bu);
     desenharChips();
   });
+  $('chipsFormato').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-formato]'); if (!c) return;
+    estado.formato = c.getAttribute('data-formato');
+    desenharFormato();
+  });
   $('todasBus').addEventListener('click', function () {
     estado.selecionadas = estado.selecionadas.length === estado.bus.length ? [] : estado.bus.slice();
     desenharChips();
@@ -1688,7 +1717,7 @@ window.VBMSetup = (function () {
     if (erro) return;
     var d = lerDatas();
     $('btnGerar').disabled = true;
-    api('execucoes', { method: 'POST', body: { inicio: d.inicio, fim: d.fim, bus: estado.selecionadas } })
+    api('execucoes', { method: 'POST', body: { inicio: d.inicio, fim: d.fim, bus: estado.selecionadas, formato: estado.formato } })
       .then(function (ex) { estado.atual = ex; desenharExecucao(); atualizarBotao(); agendar(800); })
       .catch(function (err) {
         if (err.status === 409 && err.dados && err.dados.emExecucao) { estado.atual = err.dados.emExecucao; agendar(300); }

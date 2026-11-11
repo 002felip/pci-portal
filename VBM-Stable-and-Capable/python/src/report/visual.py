@@ -286,7 +286,11 @@ def tabela(pagina, x, y, w, colunas, linhas, tam=11, alt_linha=26, alt_cab=28, r
             x0 = alinhar(a, b, lt, al)
             if c.get('pilula'):
                 fundo, cor = c['pilula']
-                pilula(d, x0 + lt / 2, ym, conteudo, f, fundo, cor, pad_x=7, alt=min(20, alt_linha - 6))
+                largura_min = c.get('largura_min', 0)
+                pad_p = max(7, (largura_min - largura_texto(conteudo, f)) / 2)
+                lt = largura_texto(conteudo, f) + 2 * pad_p - 14
+                x0 = alinhar(a, b, lt, al)
+                pilula(d, x0 + lt / 2, ym, conteudo, f, fundo, cor, pad_x=pad_p, alt=min(20, alt_linha - 6))
                 continue
             if marca:
                 d.rounded_rectangle((s(x0), s(ym - 5), s(x0 + 10), s(ym + 5)), radius=s(3), fill=rgb(marca))
@@ -304,3 +308,18 @@ def salvar_png(img, caminho):
     tamanho de antes, mesmo com a página desenhada em ESCALA×."""
     img.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(
         caminho, format='PNG', optimize=True, dpi=(96 * ESCALA, 96 * ESCALA))
+
+
+def quebrar(conteudo, f, largura):
+    """Quebra o texto em linhas que caibam na largura (px lógicos)."""
+    linhas, atual = [], ''
+    for palavra in str(conteudo).split():
+        teste = (atual + ' ' + palavra).strip()
+        if atual and largura_texto(teste, f) > largura:
+            linhas.append(atual)
+            atual = palavra
+        else:
+            atual = teste
+    if atual:
+        linhas.append(atual)
+    return linhas
