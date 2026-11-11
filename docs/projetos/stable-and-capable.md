@@ -59,12 +59,12 @@ sequenceDiagram
   - `data/images/cover_template.png`.
 - **Visual do PDF:** o mesmo do Dashboard (`src/report/visual.py`, com as cores e a tipografia copiadas do
   `index.html` e do `painel-spc.js`). Usa a Poppins de `data/fonts` e cards brancos com borda e sombra. A
-  página tem um cabeçalho com o site em itálico azul e quatro cards:
-  - carta de controle (pílulas dos trimestres, CL azul, UCL/LCL tracejados, faixa dos melhores 30 dias,
-    sinais das regras de Nelson);
-  - histograma, com a tabela por ano de cabeçalho azul-marinho;
+  página tem um cabeçalho com o site em itálico azul e, ao lado, o indicador em destaque com a unidade.
+  Abaixo vêm três cards:
+  - carta de controle, na largura toda (pílulas dos trimestres, CL azul, UCL/LCL tracejados, faixa dos
+    melhores 30 dias, sinais das regras de Nelson);
   - medidas por trimestre, com a caixa "Mean variation";
-  - comentários.
+  - histograma ao lado, com a tabela por ano de cabeçalho azul-marinho.
 
   Os gráficos são desenhados em matplotlib, e a página em 2×, para o texto sair nítido no PDF.
 - **Execução:**
