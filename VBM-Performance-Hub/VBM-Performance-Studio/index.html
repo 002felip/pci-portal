@@ -2909,6 +2909,7 @@ function getDefaultColorForBar(barType) {
 function getHorizonType(core) {
   if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[A-Z]$/i.test(core)) return 'MONTH';
   if (/^YTD[A-Z]$/i.test(core)) return 'YTD';
+  if (/^YTG[A-Z]$/i.test(core)) return 'YTG';
   if (/^Q\d/i.test(core)) return 'QUARTER';
   if (/^H\d/i.test(core)) return 'SEMESTER';
   if (/^\d{2,4}[A-Z]/i.test(core)) return 'YEAR';
@@ -3411,9 +3412,11 @@ function buildFallbackRows() {
 }
 
 // Granularidades exibidas: Mensal (bloco MONTH da query, rótulos "JanB 26"),
-// Trimestral, Semestral, Anual e YTD ("YTDB 26"). Outro CD_VISAO é ignorado.
-const VISOES_SUPORTADAS = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD'];
+// Trimestral, Semestral, Anual, YTD ("YTDB 26") e YTG ("YTGF 26"). Outro CD_VISAO é ignorado.
+const VISOES_SUPORTADAS = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD', 'YTG'];
 function isVisaoSuportada(row) { return VISOES_SUPORTADAS.includes(row.CD_VISAO); }
+// YTG fica antes do ano na tela (a carga grava ORDEM_VISAO 6, depois do YEAR 5)
+const ordemNaTela = r => (r.CD_VISAO === 'YTG' ? { ...r, ORDEM_VISAO: 4.5 } : r);
 
 // ── Carga de dados: API real, com fallback local ────────────────────────
 // Mostra/esconde o aviso de "dado de exemplo" — precisa ser visível na
@@ -3501,7 +3504,7 @@ async function loadPerformanceHubData(dtRef) {
       setTimeout(() => carregarSituacaoDepois(base, dtRef), 0);
       console.info(`[performance-hub] dados reais carregados de ${new URL(base).pathname}`);
       return {
-        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada),
+        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada).map(ordemNaTela),
         semCarga: false
       };
     } catch (err) {
@@ -3868,14 +3871,15 @@ function selectOption(def, value) {
 //    Anual, recolhíveis, com UM item por rótulo ("Q2A 25", "Q2B 25", "Q2P 25").
 //    As opções vêm da cascata (filterOptions): só aparecem os rótulos dos
 //    Cenários escolhidos, na ordem das barras. O estado é o Set de Types.
-const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date (YTD)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
+const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date / Year to Go (YTD · YTG)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
 const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
 
 function periodosDoHorizonte(options) {
   const mapa = new Map();
   options.forEach(o => {
     const { core } = splitTypeLabel(o.value.trim());
-    const grupo = getHorizonType(core) || 'OUTROS';
+    const tipo = getHorizonType(core);
+    const grupo = tipo === 'YTG' ? 'YTD' : tipo || 'OUTROS'; // YTG fica no grupo do YTD
     const rotulo = o.value;
     const chave = `${grupo}|${rotulo}`;
     if (!mapa.has(chave)) mapa.set(chave, { grupo, rotulo, tipos: [], semDados: true });
@@ -4335,7 +4339,7 @@ function marcarColunasPendentes(c) {
     const inclui = tipo === 'MONTH' ? per.toLowerCase() === MESES_CURTOS[mp.mes - 1].toLowerCase()
       : tipo === 'QUARTER' ? Number(per.slice(1)) === Math.ceil(mp.mes / 3)
       : tipo === 'SEMESTER' ? Number(per.slice(1)) === (mp.mes <= 6 ? 1 : 2)
-      : tipo === 'YTD' || tipo === 'YEAR';
+      : tipo === 'YTD' || tipo === 'YTG' || tipo === 'YEAR';
     if (!inclui) return;
     w.title = dica;
     if (tipo !== 'MONTH') { w.classList.add('is-pend-col'); return; }
@@ -6507,6 +6511,10 @@ function deslocarRotulo(rotulo, d, ref) {
     return `H${h}${letra(m[2], ano, h * 6)}${m[3]}${yy(ano)}`;
   }
   if ((m = /^YTD([BPA])( ?)(\d{2})$/.exec(t))) return `YTD${m[1]}${m[2]}${yy(2000 + Number(m[3]) + d.y)}`; // YTD: só meses fechados
+  if ((m = /^YTG([BPAF])( ?)(\d{2})$/.exec(t))) { // YTG: ano do mês do ciclo = F; anteriores = A
+    const ano = 2000 + Number(m[3]) + d.y, anoCiclo = ref.mes === 1 ? ref.ano - 1 : ref.ano;
+    return `YTG${m[1] === 'A' || m[1] === 'F' ? (ano < anoCiclo ? 'A' : 'F') : m[1]}${m[2]}${yy(ano)}`;
+  }
   if ((m = /^(\d{2})([BPAF])$/.exec(t))) { const ano = 2000 + Number(m[1]) + d.y; return `${yy(ano)}${letra(m[2], ano, 12)}`; }
   return t; // rótulo desconhecido: fica como está
 }
@@ -6520,7 +6528,7 @@ const MESES_TEXTO = [
 ];
 const RE_PERIODO_TEXTO = new RegExp([
   String.raw`\b(?:[A-Z][a-z]{2}|Q[1-4]|H[12])[BPAF] ?\d{2}\b`,          // rótulo de mês/trimestre/semestre
-  String.raw`\bYTD[BPA] ?\d{2}\b`, String.raw`\b\d{2}[BPAF]\b`,          // YTD e ano
+  String.raw`\bYT[DG][BPAF] ?\d{2}\b`, String.raw`\b\d{2}[BPAF]\b`,     // YTD, YTG e ano
   String.raw`\b[QH][1-4](?:[\s/'-]*)(?:20)?\d{2}\b`,                     // "Q3 2026", "Q3'26", "H2 26"
   String.raw`\b(?:${MESES_TEXTO.flat().sort((a, b) => b.length - a.length).join('|')})\.?(?:\s*de\s+|[\s/.-]+)(?:20\d{2}|\d{2})\b`, // "October 2026", "out/26"
   String.raw`\b20\d{2}\b`                                                // ano solto
@@ -6815,14 +6823,15 @@ function horizonteExcel(p, ano) {
   const yy = String(ano).slice(-2);
   if (p === 'ANO') return `ANO ${ano}`;
   if (p === 'YTD') return `YTD ${yy}`;
+  if (p === 'YTG') return `YTG ${yy}`;
   if (/^Q\d$/i.test(p)) return `TRIMESTRE · ${p} ${yy}`;
   if (/^H\d$/i.test(p)) return `SEMESTRE · ${p} ${yy}`;
   return `${p} ${yy}`;
 }
-// Ordem dos horizontes na planilha: meses, trimestres, semestres, YTD e ano (e o ano dentro de cada um)
+// Ordem dos horizontes na planilha: meses, trimestres, semestres, YTD, YTG e ano (e o ano dentro de cada um)
 function ordemHorizonteExcel(p, ano) {
   const n = Number((String(p).match(/\d+/) || [0])[0]);
-  const tipo = p === 'ANO' ? 4 : p === 'YTD' ? 3 : /^H\d$/i.test(p) ? 2 : /^Q\d$/i.test(p) ? 1 : 0;
+  const tipo = p === 'ANO' ? 5 : p === 'YTG' ? 4 : p === 'YTD' ? 3 : /^H\d$/i.test(p) ? 2 : /^Q\d$/i.test(p) ? 1 : 0;
   return tipo * 1e6 + ano * 100 + n;
 }
 // Comparações de cada gráfico: real (A/F) ÷ Budget/Plan do mesmo período e ÷ real do ano anterior
@@ -7055,7 +7064,7 @@ async function montarExcelDashboard(ExcelJS, G) {
       const cp = g.comps.find(x => x.atual === l.col && x.tipo === tipo), vb = cp ? valorDe(g, cp.base) : null;
       return cp && vb ? [cp.base, l.v / vb] : [null, null];
     };
-    linhas.push([g.titulo, g.produto, g.site, t.periodo === 'ANO' ? 'Ano' : t.periodo === 'YTD' ? 'YTD' : /^Q\d$/i.test(t.periodo) ? 'Trimestre' : /^H\d$/i.test(t.periodo) ? 'Semestre' : 'Mês', t.periodo, t.ano, EXCEL_SERIE[t.letra] || t.letra,
+    linhas.push([g.titulo, g.produto, g.site, t.periodo === 'ANO' ? 'Ano' : t.periodo === 'YTD' ? 'YTD' : t.periodo === 'YTG' ? 'YTG' : /^Q\d$/i.test(t.periodo) ? 'Trimestre' : /^H\d$/i.test(t.periodo) ? 'Semestre' : 'Mês', t.periodo, t.ano, EXCEL_SERIE[t.letra] || t.letra,
       l.col, l.v, g.unidade, ...vs('plano'), ...vs('ano'), g.situacao || '—']);
   }));
   wd.addTable({ name: 'DadosDashboard', ref: 'A5', headerRow: true, style: { theme: 'TableStyleLight1', showRowStripes: false },

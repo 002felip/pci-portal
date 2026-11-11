@@ -29,6 +29,9 @@
      até @DT_REAL.
      Ex.: carga '2026-10-01' = Quartely com @DT_REF '2026-10-01'.
 
+   YTG (year to go): IBP.PEDRAVISAOYEARTOGO, linha do mês de @DT_REAL de cada ano
+     (CD_PERIODO 'YTG', ORDEM_VISAO 6; rótulos "YTGB 26", "YTGP 26", "YTGF 26", "YTGA 25").
+
    Atenção: reprocessar um mês antigo usa os valores ATUAIS de
    PEDRAVISAOCONSOLIDADA (projeções e realizados de hoje), não os da época.
    ════════════════════════════════════════════════════════════════════ */
@@ -43,7 +46,7 @@ DECLARE @ANOS_ANTES INT           = 1;
 
 -- ── Datas da carga ───────────────────────────────────────────────────
 IF @DT_REF IS NULL
-  SET @DT_REF = (SELECT DATEADD(MONTH, -1, DT_INI) FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2);
+  SET @DT_REF = DATEADD(MONTH, 0, GETDATE()-2) --(SELECT DATEADD(MONTH, -1, DT_INI) FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2);
 IF @DT_REF IS NULL
   THROW 50001, 'DT_REF não informado e não encontrado em IBP.CONTROLE_PROCESSOS (ID_PROCESSO = 2).', 1;
 SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
@@ -324,6 +327,52 @@ FROM (
     GROUP BY
       YEAR(PVC.DT_REF), PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
       DASH.NM_KPIS_DASH, DASH.SG_UNID, UnpivotedData.Type
+
+    UNION ALL
+
+    -- YTG (year to go): IBP.PEDRAVISAOYEARTOGO é gravada por mês do ciclo (DT_REF = último mês
+    -- fechado): usa a linha do mês de @DT_REAL em cada ano, mesmo mês em todos os anos, como o YTD.
+    -- Act/Fcst: ano de @DT_REAL = 'F'; anos anteriores = 'A'. Valor pela mesma regra das demais visões.
+    SELECT
+      DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), 1) AS DT_REF,
+      PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
+      DASH.NM_KPIS_DASH AS 'NM_KPI', DASH.SG_UNID,
+      CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' WHEN UnpivotedData.Type = 'Supply' THEN 'Plan' ELSE 'Act/Fcst' END AS 'NM_TYPE',
+      CONCAT('YTG',
+        CASE
+          WHEN UnpivotedData.Type = 'Budget' THEN 'B'
+          WHEN UnpivotedData.Type = 'Supply' THEN 'P'
+          WHEN YEAR(PVC.DT_REF) < YEAR(@DT_REAL) THEN 'A'
+          ELSE 'F'
+        END, ' ', RIGHT(YEAR(PVC.DT_REF), 2)) AS 'Type',
+      SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
+      'YTG' AS CD_VISAO, 6 AS ORDEM_VISAO,
+      YEAR(PVC.DT_REF) AS ORDEM_ANO, YEAR(PVC.DT_REF) AS ORDEM_PERIODO,
+      CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 3 END AS ORDEM_SERIE
+    FROM
+      IBP.PEDRAVISAOYEARTOGO PVC
+      INNER JOIN IBP.DASHBOARD DASH
+        ON PVC.ID_SISTEMA = DASH.ID_SISTEMA
+        AND CONCAT(PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI) = CONCAT(DASH.ID_SITE, DASH.ID_OPERACAO, DASH.ID_KPI)
+      CROSS APPLY (
+        SELECT 'Budget' AS Type, PVC.VL_ORC * DASH.VL_FATOR AS Value
+        UNION ALL
+        SELECT 'Supply' AS Type, PVC.VL_SUPPLY * DASH.VL_FATOR AS Value
+        UNION ALL
+        SELECT 'Forecast' AS Type,
+        CASE
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NULL THEN 0
+          WHEN PVC.DT_REF <= @DT_REAL AND PVC.VL_REAL IS NOT NULL THEN PVC.VL_REAL * DASH.VL_FATOR
+          ELSE PVC.VL_PROJ * DASH.VL_FATOR
+        END AS Value
+      ) AS UnpivotedData
+    WHERE
+      PVC.DT_REF BETWEEN @DT_INI AND @DT_REAL
+      AND MONTH(PVC.DT_REF) = MONTH(@DT_REAL)
+      AND DASH.ID_DASH = @ID_DASH
+    GROUP BY
+      YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
+      DASH.NM_KPIS_DASH, DASH.SG_UNID, UnpivotedData.Type
 ) AS Q;
 
 DECLARE @LINHAS INT = (SELECT COUNT(*) FROM #R);
@@ -348,11 +397,11 @@ BEGIN TRY
   INSERT INTO IBP.PHUB_PERFORMANCESTUDIO
     (DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI,
      ID_TIPO_VISAO, NM_TIPO_VISAO, NM_VISAO, VL_KPI,
-     CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO, NM_USUARIO)
+     CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO)
   SELECT
      @DT_REF, DT_IND, @ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI,
      ID_TIPO_VISAO, NM_TIPO_VISAO, NM_VISAO, VL_KPI,
-     CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO, @NM_USUARIO
+     CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO
   FROM #R;
 
   COMMIT TRANSACTION;
@@ -362,9 +411,9 @@ BEGIN CATCH
   THROW;
 END CATCH;
 
--- ── 3. Resumo da carga ───────────────────────────────────────────────
-SELECT @DT_REF AS DT_REF, @ID_DASH AS ID_DASH, @LINHAS AS LINHAS_GRAVADAS,
-       @DT_INI AS DT_INI, @DT_FIM AS DT_FIM, @YTD_FIM AS YTD_FIM, @DT_REAL AS DT_REAL, @NM_USUARIO AS NM_USUARIO;
+---- ── 3. Resumo da carga ───────────────────────────────────────────────
+--SELECT @DT_REF AS DT_REF, @ID_DASH AS ID_DASH, @LINHAS AS LINHAS_GRAVADAS,
+--       @DT_INI AS DT_INI, @DT_FIM AS DT_FIM, @YTD_FIM AS YTD_FIM, @DT_REAL AS DT_REAL, @NM_USUARIO AS NM_USUARIO;
 
 SELECT CD_PERIODO, NM_TIPO_VISAO, COUNT(*) AS LINHAS
 FROM IBP.PHUB_PERFORMANCESTUDIO
