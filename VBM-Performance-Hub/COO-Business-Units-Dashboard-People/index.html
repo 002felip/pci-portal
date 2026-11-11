@@ -161,6 +161,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .b-ghost { fill: url(#hatch-wait); stroke: var(--wait-line); stroke-dasharray: 3 2.5; stroke-width: 1.2; }
 .b-ghost-txt { fill: var(--wait); font: 500 10px var(--font-ui); }
 .b-stale { opacity: .45; }
+/* Propostas de gráfico (?proposta=1 colunas por período · ?proposta=2 barras horizontais) */
+.b-sep { stroke: var(--line); stroke-dasharray: 2 3; }
+.b-per { fill: var(--ink-soft); font: italic 400 10px var(--font-display); }
+.b-rot { fill: var(--ink-strong); font: 500 10.5px var(--font-display); }
 .panel-meta { position: relative; }
 .cycle { display: inline-flex; align-items: center; gap: 6px; padding: 1px 2px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font: italic 400 .66rem var(--font-ui); cursor: pointer; }
 .cycle:hover span:last-child { text-decoration: underline; text-underline-offset: 2px; }
@@ -344,6 +348,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .b-bar { transform-box: fill-box; transform-origin: 50% 100%; animation: grow .9s cubic-bezier(.16,.84,.28,1) both; }
 .b-bar.neg { transform-origin: 50% 0%; }
 @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.b-bar.h { transform-origin: 0 50%; animation-name: growx; }
+@keyframes growx { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .b-val { fill: var(--ink-strong); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 .b-axis { fill: var(--ink-soft); font-size: 9.5px; }
 .b-base { stroke: var(--base-line); }
@@ -1099,9 +1105,12 @@ window.VBMSetup = (function () {
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
-  var MAX_W = 380, MAX_H = 190; // mesmo tamanho no modo normal e em tela cheia
+  // Proposta de gráfico em avaliação (?proposta=1 ou 2); sem o parâmetro, o gráfico do COO
+  var PROPOSTA = (function () { try { var n = Number(new URLSearchParams(location.search).get('proposta')); return n === 1 || n === 2 ? n : 0; } catch (e) { return 0; } })();
+  var MAX_W = PROPOSTA ? 560 : 380, MAX_H = 190; // mesmo tamanho no modo normal e em tela cheia
   function chartSvg(ind, W, H) {
     var v = view(ind), ax = axis();
+    if (PROPOSTA && v.d) return PROPOSTA === 1 ? chartColunas(ind, v, ax, W, H) : chartBarras(ind, v, ax, W, H);
     var showDelta = state.delta === 'on';
     var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
     // Com o Plan, o mês tem duas cotas (B→P e P→A) com as pílulas em degraus: mais espaço no topo
@@ -1243,6 +1252,89 @@ window.VBMSetup = (function () {
       out += faixaCiclo(v.at, Math.max(2, (POS ? POS[0].xb : PW / 2 - GAP / 2 - BW) - 2), W);
     }
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // ── Pílula do delta no padrão do COO (mesmas classes: cor pela regra do KPI) ──
+  function pilula(dl, cx, y, alinhar) {
+    var h = 17, w = Math.max(38, dl.txt.length * 5.8 + 14), x = alinhar === 'dir' ? cx - w : cx - w / 2;
+    return '<g class="cota ' + dl.cls + '"><rect class="d-pill" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8.5"/>' +
+      '<text class="d-txt" x="' + (x + w / 2) + '" y="' + (y + 12) + '" text-anchor="middle">' + esc(dl.txt) + '</text></g>';
+  }
+  function num(x) { return x !== null && x !== undefined && isFinite(x); }
+  function rotuloAria(v, ax) {
+    return [v.t + ' (' + v.u + ').'].concat(v.d.map(function (p, i) {
+      return PER(i) + ': Budget ' + (num(p[0]) ? fmt(p[0], v.dec) : T('g.semDado')) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (num(p[1]) ? fmt(p[1], v.dec) : T('g.semDado')) + '.';
+    })).join(' ');
+  }
+
+  // Proposta 1 — colunas por período: B×A lado a lado, cada período com a própria escala (o par
+  // ocupa a altura do gráfico, também no mês), divisória fina entre períodos e pílula do delta no topo
+  function chartColunas(ind, v, ax, W, H) {
+    var pend = pendente(v), showDelta = state.delta === 'on';
+    var TOPO = pend ? 24 : 0, MT = TOPO + (showDelta ? 40 : 18), MB = 16, PW = W / 3;
+    var BW = Math.max(16, Math.min(40, PW * 0.3)), GAP = 4, out = '';
+    v.d.forEach(function (par, i) {
+      var b = par[0], a = pend && i === 0 ? null : par[1], x0 = i * PW, g = '';
+      var vals = [b, a].filter(num), lo = Math.min.apply(null, [0].concat(vals)), hi = Math.max.apply(null, [0].concat(vals));
+      if (hi === lo) hi = lo + 1;
+      var y = function (val) { return MT + (hi - val) / (hi - lo) * (H - MT - MB); }, y0 = y(0);
+      var xb = x0 + PW / 2 - GAP / 2 - BW, xa = xb + BW + GAP;
+      if (i > 0) g += '<line class="b-sep" x1="' + x0 + '" x2="' + x0 + '" y1="' + (TOPO + 6) + '" y2="' + (H - 2) + '"/>';
+      g += '<line class="b-base" x1="' + (x0 + 8) + '" x2="' + (x0 + PW - 8) + '" y1="' + y0 + '" y2="' + y0 + '"/>';
+      [[xb, b, 'g-b', ax[i][0], 'Budget'], [xa, a, 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']].forEach(function (bar) {
+        var bx = bar[0] + BW / 2;
+        g += '<text class="b-axis" x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
+        if (!num(bar[1])) {
+          if (pend && i === 0 && bar[2] === 'g-a' && num(b)) {
+            var yg = y(b);
+            g += '<rect class="b-ghost" x="' + (bar[0] + .6) + '" y="' + Math.min(yg, y0) + '" width="' + (BW - 1.2) + '" height="' + Math.max(Math.abs(y0 - yg), 6) + '" rx="3" data-tip="' + esc(bar[3] + ' · ' + T('c.mesVazio')) + '"/>' +
+              '<text class="b-ghost-txt" x="' + bx + '" y="' + (Math.min(yg, y0) - 6) + '" text-anchor="middle">—</text>';
+          }
+          return;
+        }
+        var yv = y(bar[1]), neg = bar[1] < 0;
+        g += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + bar[0] + '" y="' + Math.min(yv, y0) + '" width="' + BW + '" height="' + Math.max(Math.abs(yv - y0), 1.5) + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u) + '"/>';
+        g += '<text class="b-val" x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
+      });
+      if (showDelta && num(b) && num(a)) g += pilula(delta(b, a, ind), x0 + PW / 2, TOPO + 4);
+      out += pend && i > 0 ? '<g class="b-stale">' + g + '</g>' : g;
+    });
+    if (pend) out += faixaCiclo(v.at, 2, W);
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rotuloAria(v, ax)) + '">' + out + '</svg>';
+  }
+
+  // Proposta 2 — barras horizontais: uma linha por período (mês, trimestre, ano), Budget (cinza) sobre
+  // Actual/Forecast (azul), valores na ponta das barras e a pílula do delta alinhada à direita.
+  // Cada linha tem a própria escala: a comparação é sempre B × A dentro do período
+  function chartBarras(ind, v, ax, W, H) {
+    var pend = pendente(v), showDelta = state.delta === 'on';
+    var TOPO = pend ? 26 : 2, L = 50, PILL = showDelta ? 62 : 0, VAL = 8 + Math.max.apply(null, v.d.map(function (p) {
+      return Math.max(num(p[0]) ? fmt(p[0], v.dec).length : 1, num(p[1]) ? fmt(p[1], v.dec).length : 1);
+    })) * 6.4;
+    var x0 = L, larg = Math.max(40, W - L - VAL - PILL), rh = (H - TOPO) / 3, bh = Math.max(7, Math.min(14, rh * 0.27)), out = '';
+    v.d.forEach(function (par, i) {
+      var b = par[0], a = pend && i === 0 ? null : par[1], top = TOPO + i * rh, mid = top + rh / 2, g = '';
+      var mx = Math.max.apply(null, [0].concat([b, a].filter(num).map(Math.abs))) || 1;
+      var w = function (val) { return Math.max(1.5, Math.abs(val) / mx * larg); };
+      if (i > 0) g += '<line class="b-sep" x1="0" x2="' + W + '" y1="' + top + '" y2="' + top + '"/>';
+      g += '<text class="b-rot" x="0" y="' + (mid - 1) + '">' + esc(i === 0 ? mesCurto(state.mes - 1) : i === 1 ? 'Q' + state.tri : String(state.ano)) + '</text>' +
+        '<text class="b-per" x="0" y="' + (mid + 11) + '">' + esc(PER(i).charAt(0).toUpperCase() + PER(i).slice(1)) + '</text>';
+      g += '<line class="b-base" x1="' + x0 + '" x2="' + x0 + '" y1="' + (mid - bh - 4) + '" y2="' + (mid + bh + 4) + '"/>';
+      [[mid - bh - 1, b, 'g-b', ax[i][0], 'Budget'], [mid + 1, a, 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']].forEach(function (bar) {
+        if (!num(bar[1])) {
+          if (pend && i === 0 && bar[2] === 'g-a') g += '<rect class="b-ghost" x="' + x0 + '" y="' + bar[0] + '" width="' + (num(b) ? w(b) : 30) + '" height="' + bh + '" rx="3" data-tip="' + esc(bar[3] + ' · ' + T('c.mesVazio')) + '"/>' +
+            '<text class="b-ghost-txt" x="' + (x0 + (num(b) ? w(b) : 30) + 6) + '" y="' + (bar[0] + bh - 2) + '">—</text>';
+          return;
+        }
+        var bw = w(bar[1]);
+        g += '<rect class="b-bar h" x="' + x0 + '" y="' + bar[0] + '" width="' + bw + '" height="' + bh + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u) + '"/>';
+        g += '<text class="b-val" x="' + (x0 + bw + 6) + '" y="' + (bar[0] + bh - 2) + '">' + fmt(bar[1], v.dec) + '</text>';
+      });
+      if (showDelta && num(b) && num(a)) g += pilula(delta(b, a, ind), W, mid - 8.5, 'dir');
+      out += pend && i > 0 ? '<g class="b-stale">' + g + '</g>' : g;
+    });
+    if (pend) out += faixaCiclo(v.at, 2, W);
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(rotuloAria(v, ax)) + '">' + out + '</svg>';
   }
 
   // ── Sinal de ciclo: KPI que ainda não recebeu a atualização final do mês selecionado ──
