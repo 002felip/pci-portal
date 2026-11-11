@@ -153,14 +153,19 @@ class GraficoSPC:
                     ax.hlines(val, g['x0'], g['x1'], colors=V.C_LIM, linewidth=V.pt(1.2), linestyles=(0, (5, 4)), zorder=3)
                 else:
                     ax.hlines(val, g['x0'], g['x1'], colors=V.C_CL, linewidth=V.pt(2.5), zorder=4, capstyle='round')
-            desloc = lambda dy: mtrans.offset_copy(ax.transData, fig=fig, x=V.pt(6), y=V.pt(dy), units='points')
-            ax.text(g['x0'], g['ucl'], f"UCL {format_value_with_unit(g['ucl'], self.unit)}", transform=desloc(4),
-                    va='bottom', ha='left', fontsize=V.pt(9.5), color=V.C_LIM, path_effects=_contorno(3), zorder=8)
-            ax.text(g['x0'], g['cl'], f"CL {format_value_with_unit(g['cl'], self.unit)}", transform=desloc(5),
-                    va='bottom', ha='left', fontsize=V.pt(11.5), fontweight='semibold', color=V.C_CL,
+            # rótulos no início do trimestre; num trimestre curto no fim do eixo (ex.: o mês em
+            # andamento) eles sairiam da imagem, então vão alinhados à direita, no fim da linha
+            restante = (t1 - pd.Timestamp(g['x0'])).days / max(dias_por_px, 1e-9)
+            no_fim = restante < 110
+            xr, ha, dx = (g['x1'], 'right', -6) if no_fim else (g['x0'], 'left', 6)
+            desloc = lambda dy: mtrans.offset_copy(ax.transData, fig=fig, x=V.pt(dx), y=V.pt(dy), units='points')
+            ax.text(xr, g['ucl'], f"UCL {format_value_with_unit(g['ucl'], self.unit)}", transform=desloc(4),
+                    va='bottom', ha=ha, fontsize=V.pt(9.5), color=V.C_LIM, path_effects=_contorno(3), zorder=8)
+            ax.text(xr, g['cl'], f"CL {format_value_with_unit(g['cl'], self.unit)}", transform=desloc(5),
+                    va='bottom', ha=ha, fontsize=V.pt(11.5), fontweight='semibold', color=V.C_CL,
                     path_effects=_contorno(4), zorder=9)
-            ax.text(g['x0'], g['lcl'], f"LCL {format_value_with_unit(g['lcl'], self.unit)}", transform=desloc(-4),
-                    va='top', ha='left', fontsize=V.pt(9.5), color=V.C_LIM, path_effects=_contorno(3), zorder=8)
+            ax.text(xr, g['lcl'], f"LCL {format_value_with_unit(g['lcl'], self.unit)}", transform=desloc(-4),
+                    va='top', ha=ha, fontsize=V.pt(9.5), color=V.C_LIM, path_effects=_contorno(3), zorder=8)
 
         # sinais: a regra 1 por cima (ordem do script: 4, 3, 2, 1)
         for k in ('r4', 'r3', 'r2', 'r1'):

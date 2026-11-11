@@ -35,15 +35,25 @@ def draw_rounded_rectangle(draw, xy, radius, fill=None, outline=None, width=1):
 # PAGE 3 — KPI detail page
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _cabecalho_pagina(page, W, titulo, subtitulo, meta):
-    """Cabeçalho como a linha do site do Dashboard: título em itálico azul, subtítulo e,
-    à direita, as informações do período."""
+def _cabecalho_pagina(page, W, titulo, kpi, unidade, meta, y=40):
+    """Cabeçalho como a linha do site do Dashboard: o site em itálico azul e, ao lado, separado por
+    um traço, o indicador em destaque (Poppins 500, azul-marinho) com a unidade; à direita, o período."""
     d = ImageDraw.Draw(page)
-    V.texto(d, (32, 20), titulo, V.fonte('italic', 30), V.ACENTO)
-    V.texto(d, (34, 66), subtitulo, V.fonte('regular', 12.5), V.TEXTO_SUAVE)
+    f_tit = V.fonte('italic', 30)
+    V.texto(d, (32, y), titulo, f_tit, V.ACENTO, 'lm')
+    x = 32 + V.largura_texto(titulo, f_tit) + 16
+    if kpi:
+        d.line((V.s(x), V.s(y - 13), V.s(x), V.s(y + 13)), fill=V.rgb(V.LINHA), width=V.s(1.5))
+        x += 16
+        f_kpi = V.fonte('medium', 19)
+        V.texto(d, (x, y + 1), kpi, f_kpi, V.AZUL_PROFUNDO, 'lm')
+        x += V.largura_texto(kpi, f_kpi) + 10
+        if unidade:
+            V.pilula(d, x + (V.largura_texto(unidade, V.fonte('semibold', 11.5)) + 20) / 2, y + 1, unidade,
+                     V.fonte('semibold', 11.5), V.PILULA, V.AZUL_ESCURO, pad_x=10, alt=24)
     f = V.fonte('italic', 11)
     for i, linha in enumerate(meta):
-        V.texto(d, (W - 32, 36 + i * 18), linha, f, V.TINTA_FRACA, 'ra')
+        V.texto(d, (W - 32, y - 9 + i * 18), linha, f, V.TINTA_FRACA, 'rm')
     return d
 
 
@@ -97,9 +107,9 @@ def compose_page3(fig_control, fig_hist_table, fig_process2, kpi_metadata, confi
     Compose a single KPI detail page in the visual of the app's Dashboard.
 
     Layout: 452 mm × 254 mm (1707×960 logical px, drawn at visual.ESCALA×)
-        - Header:  site title (italic blue), KPI · unit · phase, period on the right
-        - Row 1:   Control Chart (65%) | Capability Histogram (35%)
-        - Row 2:   Statistical Measures + Mean variation (65%) | Comments (35%)
+        - Header:  site title (italic blue) | KPI (highlighted) + unit pill; period on the right
+        - Row 1:   Control Chart (full width)
+        - Row 2:   Statistical Measures + Mean variation (65%) | Capability Histogram (35%)
 
     Parameters
     ----------
@@ -122,31 +132,43 @@ def compose_page3(fig_control, fig_hist_table, fig_process2, kpi_metadata, confi
     kpi = kpi_metadata.get('kpi', '')
     unidade = kpi_metadata.get('display_unit', kpi_metadata.get('unit', ''))
     titulo = f"{site} {phase}".strip()
-    sub = ' · '.join(p for p in (kpi, unidade) if p)
     meta = [f"Period: {_periodo(kpi_metadata)}", f"Business Unit: {kpi_metadata.get('business_unit', '')}"]
-    _cabecalho_pagina(page, W, titulo, sub, meta)
+    _cabecalho_pagina(page, W, titulo, kpi, unidade, meta)
 
-    MX, GAP, TOPO, BASE = 28, 18, 100, 22
-    total_w = W - 2 * MX - GAP
-    c1 = int(total_w * 0.65)
-    c2 = total_w - c1
+    MX, GAP, TOPO, BASE = 28, 18, 80, 22
+    largura = W - 2 * MX
+    c1 = int((largura - GAP) * 0.65)
+    c2 = largura - GAP - c1
     lin_h = (H - TOPO - BASE - GAP) // 2
     x1, x2 = MX, MX + c1 + GAP
     y1, y2 = TOPO, TOPO + lin_h + GAP
     PX, PY = 22, 18
 
-    # ── Carta de controle ──────────────────────────────────────────
-    d = V.card(page, x1, y1, c1, lin_h)
-    yy = V.cabecalho_card(d, x1 + PX, y1 + PY, c1 - 2 * PX, 'Statistical Process Control (SPC) Chart',
+    # ── Linha 1: carta de controle na largura toda ─────────────────
+    d = V.card(page, x1, y1, largura, lin_h)
+    yy = V.cabecalho_card(d, x1 + PX, y1 + PY, largura - 2 * PX, 'Statistical Process Control (SPC) Chart',
                           'Limits per quarter: CL = mean, UCL / LCL = CL ± 3 sigma (moving range). Special causes by the Nelson rules')
-    yy += 4 + V.legenda(d, x1 + PX, yy + 4, fig_control.legenda, tamanho=10.5, largura_max=c1 - 2 * PX)
-    img = fig_control.desenhar(c1 - 2 * PX + 8, y1 + lin_h - 10 - (yy + 4))
+    yy += 4 + V.legenda(d, x1 + PX, yy + 4, fig_control.legenda, tamanho=10.5, largura_max=largura - 2 * PX)
+    img = fig_control.desenhar(largura - 2 * PX + 8, y1 + lin_h - 10 - (yy + 4))
     V.colar(page, img, x1 + PX - 4, yy + 4)
 
-    # ── Histograma ─────────────────────────────────────────────────
-    d = V.card(page, x2, y1, c2, lin_h)
-    yy = V.cabecalho_card(d, x2 + PX, y1 + PY, c2 - 2 * PX, 'Capability Histogram',
-                          'How the process results are distributed over the years')
+    # ── Linha 2, à esquerda: medidas ───────────────────────────────
+    d = V.card(page, x1, y2, c1, lin_h)
+    larg_leg = 420
+    yy = V.cabecalho_card(d, x1 + PX, y2 + PY, c1 - 2 * PX - larg_leg - 12, 'Statistical Measures and Comparisons')
+    V.legenda(d, x1 + c1 - PX - larg_leg, y2 + PY + 2, fig_process2.legenda, tamanho=10.5,
+              largura_max=larg_leg, alinhar_direita=True)
+    caixa_w = 220
+    corpo_top = yy + 8
+    corpo_h = y2 + lin_h - 12 - corpo_top
+    img = fig_process2.desenhar(c1 - 2 * PX - caixa_w - 16, corpo_h)
+    V.colar(page, img, x1 + PX, corpo_top)
+    _caixa_variacao(page, x1 + c1 - PX - caixa_w, corpo_top + 6, caixa_w,
+                    min(corpo_h - 12, 40 + 32 * max(1, len(fig_process2.variacao)) + 8), fig_process2.variacao)
+
+    # ── Linha 2, à direita: histograma (no lugar dos comentários) ──
+    d = V.card(page, x2, y2, c2, lin_h)
+    yy = V.cabecalho_card(d, x2 + PX, y2 + PY, c2 - 2 * PX, 'Capability Histogram')
     cols = [('Year', .15, 'l'), ('Mean', .15, 'r'), ('StDev', .15, 'r'), ('CV', .12, 'r'),
             ('Budget', .16, 'r'), ('Days', .11, 'r'), ('Days Out', .16, 'r')]
     linhas = fig_hist_table.linhas_tabela()
@@ -155,29 +177,10 @@ def compose_page3(fig_control, fig_hist_table, fig_process2, kpi_metadata, confi
     f_nota = V.fonte('regular', 9.5)
     notas = fig_hist_table.notas
     alt_notas = 16 * len(notas)
-    img = fig_hist_table.desenhar(c2 - 2 * PX + 8, y1 + lin_h - 12 - alt_notas - (yy + 8))
+    img = fig_hist_table.desenhar(c2 - 2 * PX + 8, y2 + lin_h - 12 - alt_notas - (yy + 8))
     V.colar(page, img, x2 + PX - 4, yy + 8)
     for i, n in enumerate(notas):
-        V.texto(d, (x2 + PX, y1 + lin_h - 10 - alt_notas + i * 16), V.encurtar(n, f_nota, c2 - 2 * PX), f_nota, V.TINTA_SUAVE)
-
-    # ── Medidas ────────────────────────────────────────────────────
-    d = V.card(page, x1, y2, c1, lin_h)
-    larg_leg = 420
-    yy = V.cabecalho_card(d, x1 + PX, y2 + PY, c1 - 2 * PX - larg_leg - 12, 'Statistical Measures and Comparisons',
-                          'Quarterly performance: is the budget being met consistently?')
-    V.legenda(d, x1 + c1 - PX - larg_leg, y2 + PY + 2, fig_process2.legenda, tamanho=10.5,
-              largura_max=larg_leg, alinhar_direita=True)
-    caixa_w = 220
-    corpo_top = yy + 8
-    corpo_h = y2 + lin_h - 12 - corpo_top
-    img = fig_process2.desenhar(c1 - 2 * PX - caixa_w - 16, corpo_h)
-    V.colar(page, img, x1 + PX, corpo_top)
-    _caixa_variacao(page, x1 + c1 - PX - caixa_w, corpo_top + 6, caixa_w, min(corpo_h - 12, 40 + 32 * max(1, len(fig_process2.variacao)) + 8),
-                    fig_process2.variacao)
-
-    # ── Comentários ────────────────────────────────────────────────
-    d = V.card(page, x2, y2, c2, lin_h)
-    V.cabecalho_card(d, x2 + PX, y2 + PY, c2 - 2 * PX, 'Comments')
+        V.texto(d, (x2 + PX, y2 + lin_h - 10 - alt_notas + i * 16), V.encurtar(n, f_nota, c2 - 2 * PX), f_nota, V.TINTA_SUAVE)
 
     return page
 
