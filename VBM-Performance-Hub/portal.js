@@ -5,6 +5,7 @@
  *   /VBM-Performance-Hub/VBM-Performance-Studio/            Performance Studio
  *   /VBM-Performance-Hub/COO-Business-Units-Dashboard/      COO Business Units Dashboard
  *   /VBM-Performance-Hub/COO-Business-Units-Dashboard-Historical/
+ *   /VBM-Performance-Hub/COO-Business-Units-Dashboard-People/       COO Business Units People Dashboard
  *   /VBM-Performance-Hub/VBM-Health-of-the-Business/
  *
  * Cada subpasta tem a MESMA estrutura (index.html, portal.js,
@@ -21,6 +22,7 @@ const APLICACOES = [
   'VBM-Performance-Studio',          // a primeira também empresta a conexão PRD ao controle de acesso
   'COO-Business-Units-Dashboard',
   'COO-Business-Units-Dashboard-Historical',
+  'COO-Business-Units-Dashboard-People',  // KPIs de People (ID_DASH 20)
   'VBM-Health-of-the-Business',
   'VBM-Lean-Six-Sigma',               // sem banco: planilhas do programa LSS em data/
 ];

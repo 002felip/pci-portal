@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head>
+<body>
+<title>COO Business Units People</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="assets/css/poppins.css"/>
+<style>
+/* Layout: tela única com o ritmo do print original — título editorial em itálico,
+   painel cinza de Produção (3×3) e Financeiro solto
+   na página (2×3). Gráficos com altura contida e barras estreitas; o espaço
+   em branco entre as linhas é parte do desenho. Padrão de séries e cota de
+   diferença do VBM Performance Hub. */
+:root {
+  --page: #FFFFFF;
+  --text: #1F2937;
+  --text-soft: #6B7280;
+  --text-faint: #9CA3AF;
+  --line: #E5E7EB;
+  --accent: #1E8FC4;          /* títulos grandes (3,9:1 em branco, uso só em ≥24px) */
+  --accent-strong: #0B6E99;
+  --panel: #F3F4F5;
+  --chart-title: #1B7F7B;
+  --ink-strong: #111827;
+  --ink-soft: #6B7280;
+  --base-line: #D1D5DB;
+  --pill-bg: #FFFFFF;
+  --pill-line: rgba(15,23,42,.06);
+  --d-stroke: rgba(116,118,120,.45);
+  --d-hair: rgba(116,118,120,.30);
+  --badge-bg: rgba(31,41,55,.58);
+  --badge-text: #FFFFFF;
+  --serie-b: #BCBEC0;
+  --serie-a: #3CB5E5;
+  --serie-p: #9DB1CF;
+  --good: #007E7A;
+  --good-bg: rgba(0,126,122,.10);
+  --bad: #B91C1C;
+  --bad-bg: rgba(220,38,38,.09);
+  --flat: #5B5E61;
+  --flat-bg: rgba(116,118,120,.12);
+  --ctl-bg: #FFFFFF;
+  --ctl-border: rgba(13,38,64,.16);
+  --ctl-text: #1F2937;
+  --ctl-on-bg: #0B6E99;
+  --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --nav-bg: linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%);
+  --table-head: #0B6E99;
+
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B;
+    --text: #E8EEF5;
+    --text-soft: rgba(232,238,245,.66);
+    --text-faint: rgba(232,238,245,.42);
+    --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE;
+    --accent-strong: #7DD3F0;
+    --panel: #0C2438;
+    --chart-title: #5FD0C9;
+    --ink-strong: #F1F5F9;
+    --ink-soft: rgba(241,245,249,.62);
+    --base-line: rgba(255,255,255,.22);
+    --pill-bg: #0F2C44;
+    --pill-line: rgba(255,255,255,.10);
+    --d-stroke: rgba(226,232,240,.45);
+    --d-hair: rgba(226,232,240,.28);
+    --badge-bg: rgba(2,10,20,.55);
+    --serie-b: #8E949B;
+    --serie-p: #9DB1CF;
+    --good: #34C3B8;
+    --good-bg: rgba(52,195,184,.14);
+    --bad: #F87171;
+    --bad-bg: rgba(248,113,113,.14);
+    --flat: #B0B5BA;
+    --flat-bg: rgba(176,181,186,.14);
+    --ctl-bg: rgba(255,255,255,.05);
+    --ctl-border: rgba(255,255,255,.16);
+    --ctl-text: #E5EDF5;
+    --ctl-on-bg: #3CB5E5;
+    --ctl-on-text: #02101c;
+    --focus: #7DD3F0;
+    --table-head: #11577A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B;
+  --text: #E8EEF5;
+  --text-soft: rgba(232,238,245,.66);
+  --text-faint: rgba(232,238,245,.42);
+  --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE;
+  --accent-strong: #7DD3F0;
+  --panel: #0C2438;
+  --chart-title: #5FD0C9;
+  --ink-strong: #F1F5F9;
+  --ink-soft: rgba(241,245,249,.62);
+  --base-line: rgba(255,255,255,.22);
+  --pill-bg: #0F2C44;
+  --pill-line: rgba(255,255,255,.10);
+  --d-stroke: rgba(226,232,240,.45);
+  --d-hair: rgba(226,232,240,.28);
+  --badge-bg: rgba(2,10,20,.55);
+  --serie-b: #8E949B;
+  --serie-p: #9DB1CF;
+  --good: #34C3B8;
+  --good-bg: rgba(52,195,184,.14);
+  --bad: #F87171;
+  --bad-bg: rgba(248,113,113,.14);
+  --flat: #B0B5BA;
+  --flat-bg: rgba(176,181,186,.14);
+  --ctl-bg: rgba(255,255,255,.05);
+  --ctl-border: rgba(255,255,255,.16);
+  --ctl-text: #E5EDF5;
+  --ctl-on-bg: #3CB5E5;
+  --ctl-on-text: #02101c;
+  --focus: #7DD3F0;
+  --table-head: #11577A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; display: flex; flex-direction: column; min-height: 0;
+  background: var(--page); color: var(--text);
+  font-family: var(--font-display); font-size: 14px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 110; background: #041523; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ── Página ── */
+.page {
+  flex: 1 1 auto; min-height: 0; width: 100%;
+  padding-block: 12px 16px;
+  padding-left: max(28px, env(safe-area-inset-left, 0px));
+  padding-right: max(28px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* Cabeçalho editorial + filtros */
+/* Sinal de ciclo (atualização dos dados): âmbar, fora do par verde/vermelho que já indica desempenho */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
+:root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }
+.cyc-faixa rect { fill: var(--wait-bg); stroke: var(--wait-line); stroke-width: 1; }
+.cyc-faixa text { fill: var(--wait); font: italic 500 10.5px var(--font-ui); letter-spacing: .01em; }
+.cyc-faixa g { color: var(--wait); }
+.cyc-faixa.late rect { fill: var(--late-bg); stroke: none; }
+.cyc-faixa.late text { fill: var(--late); }
+.cyc-faixa.late g { color: var(--late); }
+.cyc-faixa { cursor: default; outline: none; }
+.cyc-faixa:focus-visible rect { stroke: var(--focus); stroke-width: 2; }
+.cycle:focus-visible, .cyc-item:focus-visible, .cyc-foco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.b-ghost { fill: url(#hatch-wait); stroke: var(--wait-line); stroke-dasharray: 3 2.5; stroke-width: 1.2; }
+.b-ghost-txt { fill: var(--wait); font: 500 10px var(--font-ui); }
+.b-stale { opacity: .45; }
+.panel-meta { position: relative; }
+.cycle { display: inline-flex; align-items: center; gap: 6px; padding: 1px 2px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font: italic 400 .66rem var(--font-ui); cursor: pointer; }
+.cycle:hover span:last-child { text-decoration: underline; text-underline-offset: 2px; }
+.cycle[aria-expanded="true"] { background: var(--wait-bg); }
+.cycle b { font-weight: 500; color: var(--wait); }
+.cycle-bar { display: inline-flex; gap: 2px; }
+.cycle-bar i { width: 3px; height: 9px; border-radius: 2px; background: var(--cyc-ok); opacity: .85; }
+.cycle-bar i.w { background: transparent; border: 1.3px dashed var(--wait); opacity: 1; }
+.cycle-bar i.l { background: var(--late-bg); opacity: 1; }
+.cycle-ok { font: italic 400 .7rem var(--font-display); color: var(--text-faint); }
+.cycle-pop { position: absolute; z-index: 70; top: calc(100% + 6px); right: 0; width: min(400px, calc(100vw - 32px)); max-height: min(60vh, 460px); overflow: auto; padding: 12px 12px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: var(--cyc-shadow); text-align: left; }
+.cycle-pop h4 { margin: 0 0 2px; font: 500 .84rem var(--font-ui); color: var(--text); }
+.cycle-pop > p { margin: 0 0 8px; font-size: .7rem; color: var(--text-soft); }
+.cyc-item { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 0 8px; width: 100%; padding: 7px 4px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; font: 400 .74rem var(--font-ui); cursor: pointer; }
+.cyc-item:hover { background: var(--wait-bg); }
+.cyc-item .dot { width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; border: 1.4px dashed var(--wait); }
+.cyc-item .dot.l { background: var(--late-bg); border: 0; }
+.cyc-item .sub { grid-column: 2; color: var(--text-faint); font-size: .68rem; font-variant-numeric: tabular-nums; }
+.cyc-foot { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); }
+.cyc-foco { border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); border-radius: 8px; padding: 4px 10px; font: 500 .7rem var(--font-ui); cursor: pointer; }
+.cyc-foco[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); border-color: transparent; }
+.card { transition: opacity .25s, filter .25s; }
+.foco-pendentes .card:not(.is-pend) { opacity: .28; filter: grayscale(1); }
+.card.cyc-flash { animation: cycflash 1.2s ease-out; }
+@keyframes cycflash { 0%, 40% { box-shadow: 0 0 0 3px var(--wait-line); border-radius: 10px; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card.cyc-flash { animation: none; } }
+.head { position: relative; flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 32px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.title-block { min-width: 0; margin-bottom: -4px; position: relative; top: -7px; } /* título um pouco acima: centrado entre o topo e a linha do cabeçalho */
+.title-block h2 { margin: 0; font: italic 300 clamp(1.7rem, 2.6vw, 2.5rem)/1.05 var(--font-display); color: var(--accent); letter-spacing: -.01em; text-wrap: balance; }
+/* Unidade em linha própria (como no print), legenda e atualização alinhadas à direita */
+/* Nome do site centralizado entre a linha do cabeçalho e o topo dos painéis: o mesmo espaço acima e abaixo (gap da página) */
+.site-row { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; }
+.site-id { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; min-width: 0; }
+.site-nav { display: inline-flex; align-items: center; gap: 8px; position: relative; top: 6px; }
+.site-nav[hidden] { display: none; }
+.pager { display: inline-flex; gap: 4px; }
+.nav-chip { min-height: 28px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.nav-chip:disabled { opacity: .4; cursor: default; }
+.pager .nav-chip { width: 28px; padding: 0; }
+.site { margin: 0; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+/* Unidade: drill-down País → Site */
+.unit { position: relative; }
+.unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.unit-trigger:hover, .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.unit-pais { color: var(--text-soft); }
+.unit-sep { color: var(--text-faint); }
+.unit-site { color: var(--ctl-on-bg); font-weight: 600; }
+.unit-caret { color: var(--text-soft); transition: transform .18s ease; }
+.unit-trigger[aria-expanded="true"] .unit-caret { transform: rotate(180deg); }
+.unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 360px; display: grid; grid-template-columns: 1fr 1.15fr; gap: 0; padding: 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: 0 14px 34px rgba(15,23,42,.16); }
+.unit-pop[hidden] { display: none; } /* fechado de verdade também fora do visualizador */
+.unit-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; }
+.unit-col + .unit-col { border-left: 1px solid var(--line); padding-left: 10px; }
+.unit-h { font: 600 .62rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); padding: 2px 8px 4px; }
+.unit-list { display: flex; flex-direction: column; gap: 2px; }
+.unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; }
+.unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.unit-list button .n { color: var(--text-faint); font-size: .68rem; }
+.unit-list button.sub { justify-content: flex-start; padding: 5px 10px 5px 22px; font-weight: 400; font-size: .72rem; color: var(--text-soft); }
+.unit-list button.sub::before { content: '›'; margin-right: 6px; color: var(--text-faint); }
+.unit-pop #unitSites { max-height: min(60vh, 420px); overflow-y: auto; }
+.unit-list button[data-pais][aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
+.unit-list button[data-site][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+/* Ciclo: cargas gravadas (DT_REF) em uma coluna, a mais recente primeiro */
+.ciclo-pop { width: auto; min-width: 120px; grid-template-columns: 1fr; }
+.ciclo-pop .unit-list { max-height: min(60vh, 360px); overflow-y: auto; }
+.unit-list button[data-ciclo][aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+/* Delta: interruptor liga/desliga */
+.switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+@media (prefers-reduced-motion: reduce) { .switch-track, .switch-thumb, .unit-caret { transition: none; } }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+
+/* Painéis */
+.dash { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 32px; }
+.panel { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.panel-prod { background: var(--panel); border-radius: 20px; padding: 16px 22px 14px; }
+.panel-fin { padding: 16px 4px 14px; }
+.panel-head { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.panel-title { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--text); }
+.panel-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: .74rem; color: var(--text-soft); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.swatch { width: 14px; height: 9px; border-radius: 2px; }
+.updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.demo { font-style: normal; margin-right: 6px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(245,158,11,.6); color: #B45309; }
+:root[data-theme="dark"] .demo { color: #FCD34D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .demo { color: #FCD34D; } }
+
+.panel-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); column-gap: 28px; row-gap: 8px; }
+.panel-prod .panel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.panel-fin .panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
+/* Minas (Production e Financial 2×2): bloco centralizado na altura, linhas mais próximas e gráficos no centro de cada coluna */
+.dash--mina .panel-prod .panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
+.dash--mina .panel-grid { align-content: center; justify-items: center; row-gap: clamp(36px, 7vh, 76px) !important; }
+.dash--mina .panel .card { width: 100%; max-width: 380px; }
+.dash--ir { grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); column-gap: 56px; }
+/* IR: colunas financeiras largas; cada card na largura do gráfico e centralizado, com o seletor do All-in junto ao título */
+.dash--ir .panel-fin .panel-grid { justify-items: center; }
+.dash--ir .panel-fin .card { width: 100%; max-width: 380px; }
+.dash--ir .panel-prod .panel-grid { grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; }
+/* IR: os dois gráficos centralizados no painel, na largura máxima do gráfico (título alinhado à barra) */
+.dash--ir .panel-prod .card { width: 100%; max-width: 380px; }
+/* IR: só dois gráficos no painel; mais ar entre eles (vence o espaçamento comum calculado em ajustarAltura) */
+.dash--ir .panel-prod .panel-grid { row-gap: clamp(40px, 8vh, 90px) !important; }
+/* Minas em colunas (VNL Mines): uma coluna por mina, gráficos empilhados na ordem do ID_ORDEM */
+.dash--colunas { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); column-gap: 24px; }
+.dash--colunas .panel { padding-inline: 22px; }
+.dash--colunas .panel .panel-grid { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.dash--colunas .panel .card { width: 100%; max-width: 380px; }
+.dash--people { grid-template-columns: minmax(0, 1fr); } /* People: um painel só, 3 colunas */
+.panel-vazio { margin: auto; padding: 24px; font: italic 400 .95rem var(--font-display); color: var(--text-soft); text-align: center; }
+.panel-sub { font: italic 400 .8rem var(--font-display); color: var(--text-faint); }
+
+/* Indicador: título + unidade, gráfico com altura contida, espaço livre abaixo */
+/* Título + gráfico centralizados na faixa da linha: em telas altas a sobra se divide acima e abaixo,
+   e o bloco desce em direção à base sem aumentar os gráficos */
+#dash .panel-grid { justify-items: center; }
+#dash .card { width: 100%; max-width: var(--chart-w, none); }
+.card { min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; padding-top: 16px; }
+.card-head { flex-shrink: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 4px 8px; }
+.card-name { flex: 1 0 auto; max-width: 100%; min-width: 0; }
+/* Card com seletor (Cu/Au, All-in…): seletor na linha do título, à direita; sem espaço, o título
+   ("All-in | By Product") quebra em duas linhas em vez de empurrar o seletor para baixo */
+.card-head:has(.seg) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; align-items: start; align-content: start; column-gap: 8px; row-gap: 1px; }
+.card-head:has(.seg) .card-name { display: contents; }
+.card-head:has(.seg) .card-title { grid-area: 1 / 1; white-space: normal; }
+.card-head:has(.seg) .seg { grid-area: 1 / 2 / 4 / 3; display: inline-flex; flex-wrap: nowrap; } /* sempre em uma linha */
+.card-head:has(.seg) .seg button { min-height: 20px; padding: 1px 6px; font-size: .62rem; }
+.card-head:has(.seg) .card-unit { grid-area: 2 / 1; }
+/* Cabeçalhos com a mesma altura na página (ajustarAltura): os gráficos de uma linha começam na mesma altura */
+.card-head { min-height: var(--head-h, 0px); }
+.card-title { margin: 0; font: 400 1rem/1.2 var(--font-display); color: var(--chart-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Mesmo arranjo no modo normal e em tela cheia: cada linha tem a altura do conteúdo, a 1ª logo abaixo
+   do título do painel e a última junto à base. A altura dos gráficos (--chart-h, até 190 px, sem esticar)
+   é calculada em ajustarAltura() para as três linhas caberem no painel */
+.panel-grid { grid-template-rows: repeat(var(--rows, 3), auto); align-content: start; row-gap: 10px; }
+.card-head:has(.seg) .card-chk { grid-area: 3 / 1 / 4 / 3; }
+.card-chk { margin: 2px 0 0; font: italic 500 .6rem/1.3 var(--font-ui); color: var(--wait); white-space: normal; }
+.card-nota { flex-shrink: 0; margin: 2px 0 0; font: italic 400 .56rem/1.3 var(--font-display); letter-spacing: -.005em; color: var(--text-soft); }
+.card-nota sup { font-size: .85em; line-height: 0; }
+/* Tela larga: a nota de rodapé fica no espaço abaixo do card e não muda a grade — os gráficos ficam
+   nas mesmas posições de uma BU sem nota (Salobo). Telas estreitas/baixas: nota no fluxo do card */
+@media (min-width: 1181px) and (min-height: 701px) {
+  #dash .card:has(.card-nota) { position: relative; }
+  #dash .card-nota { position: absolute; left: 0; right: 0; top: 100%; }
+}
+.card-unit { margin: 1px 0 0; font: 400 .74rem var(--font-display); color: var(--text-faint); }
+/* Tela cheia (botão ou F11): sem o cabeçalho azul; tela cheia e tema descem para o canto direito */
+.fs-tools { display: flex; align-self: flex-end; gap: 4px; margin-left: 4px; }
+.fs-btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--text-soft); cursor: pointer; }
+.fs-btn:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
+.ico-exit { display: none; }
+.is-fs .ico-exit { display: block; }
+.is-fs .ico-enter { display: none; }
+.is-fs .fs-tools { display: flex; }
+.page { padding-top: 22px; }
+.is-fs .card { justify-content: flex-start; }
+@media (display-mode: fullscreen) {
+  .fs-tools { display: flex; }
+  .page { padding-top: 22px; }
+  .card { justify-content: flex-start; }
+}
+.card .seg button { transition: background-color .18s ease, color .18s ease; }
+.card .seg button { min-height: 22px; padding: 1px 8px; font-size: .68rem; }
+.chart { flex: none; height: var(--chart-h, 190px); min-height: 56px; position: relative; }
+.chart svg { display: block; overflow: visible; font-family: var(--font-display); }
+
+/* SVG */
+.b-bar { transform-box: fill-box; transform-origin: 50% 100%; animation: grow .9s cubic-bezier(.16,.84,.28,1) both; }
+.b-bar.neg { transform-origin: 50% 0%; }
+@keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.b-val { fill: var(--ink-strong); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.b-axis { fill: var(--ink-soft); font-size: 9.5px; }
+.b-base { stroke: var(--base-line); }
+.b-vazio { fill: var(--text-soft); font: italic 400 15px var(--font-display); }
+.cota { animation: fade .5s .6s ease-out both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.is-static .card:not(.replay) .b-bar, .is-static .card:not(.replay) .cota { animation: none; }
+.d-ref { stroke: var(--d-stroke); stroke-dasharray: 3 2; }
+.d-now { stroke: var(--d-stroke); }
+.d-track { stroke: var(--d-hair); }
+.d-pill { fill: var(--pill-bg); stroke: var(--pill-line); filter: drop-shadow(0 2px 6px rgba(15,23,42,.06)); }
+.d-txt { font-size: 10.5px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.d-span { stroke-opacity: .6; }
+.is-good .d-txt { fill: var(--good); } .is-good .d-span { stroke: var(--good); } .is-good .d-up { fill: var(--good-bg); } .is-good .d-dn { fill: url(#hatch-good); }
+.is-bad .d-txt { fill: var(--bad); } .is-bad .d-span { stroke: var(--bad); } .is-bad .d-up { fill: var(--bad-bg); } .is-bad .d-dn { fill: url(#hatch-bad); }
+.is-warn .d-txt { fill: var(--wait); } .is-warn .d-span { stroke: var(--wait); } .is-warn .d-up { fill: var(--wait-bg); } .is-warn .d-dn { fill: url(#hatch-wait); }
+.card-leg { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 10px; margin: 3px 0 0; padding: 0; list-style: none; font: italic 400 .58rem/1.3 var(--font-ui); color: var(--text-soft); }
+.card-leg li { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.card-leg i { width: 8px; height: 8px; border-radius: 2px; }
+.card-leg .g { background: var(--good); } .card-leg .w { background: var(--wait-line); } .card-leg .b { background: var(--bad); }
+.is-flat .d-txt { fill: var(--flat); } .is-flat .d-span { stroke: var(--flat); } .is-flat .d-up { fill: var(--flat-bg); } .is-flat .d-dn { fill: url(#hatch-flat); }
+.cota .d-ref, .cota .d-now { animation: dline .55s .34s cubic-bezier(.22,.9,.24,1) both; transform-box: fill-box; transform-origin: center; }
+.cota .d-span { animation: dspan .55s .48s cubic-bezier(.2,.85,.25,1) both; transform-box: fill-box; transform-origin: 50% 100%; }
+.cota .d-pill, .cota .d-txt { animation: dpill .5s .78s cubic-bezier(.2,.85,.25,1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes dline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes dspan { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes dpill { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+.is-static .card:not(.replay) .cota * { animation: none; }
+
+
+.tip { position: fixed; z-index: 200; pointer-events: none; padding: 6px 10px; border-radius: 8px; background: #0B3A50; color: #fff; font: 500 .74rem var(--font-ui); box-shadow: 0 6px 18px rgba(15,23,42,.25); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.card .seg { flex-wrap: nowrap; flex-shrink: 0; }
+
+/* Monitores de notebook (1366–1600 px, até ~950 px de altura): tudo mais compacto para caber */
+@media (max-width: 1600px) {
+  .card-title { font-size: .88rem; }
+  .card .seg { gap: 1px; }
+  .card .seg button { padding: 1px 5px; font-size: .62rem; }
+  .card-head:has(.seg) .seg button { padding: 1px 4px; font-size: .58rem; }
+  .card-head { column-gap: 4px; }
+  .title-block h2 { font-size: 1.75rem; }
+  .site { font-size: 1.7rem; }
+  .filters { gap: 8px 10px; }
+  .seg button { padding: 2px 8px; font-size: .7rem; }
+  .head { gap: 10px 20px; }
+}
+@media (max-height: 960px) {
+  .page { padding-block: 8px 10px; gap: 10px; }
+  .head { padding-bottom: 10px; }
+  .panel-prod { padding: 12px 18px 10px; }
+  .panel-fin { padding: 12px 4px 10px; }
+  .card { padding-top: 10px; }
+}
+
+@media (max-width: 1180px), (max-height: 700px) {
+  html, body { height: auto; }
+  body { display: block; }
+  .dash { grid-template-columns: minmax(0, 1fr); }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; } /* cresce com a nota de rodapé */
+  .chart { height: 150px; }
+}
+/* People: 4 linhas de cards (12 KPIs em 3 colunas). Em telas com menos de ~1000 px de altura as 4
+   linhas não cabem numa tela só: mesma disposição em fluxo das telas baixas (a página rola), em 3 colunas */
+@media (max-height: 1000px) {
+  html, body { height: auto; }
+  body { display: block; }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; }
+  .chart { height: 150px; }
+}
+@media (max-width: 720px) {
+  .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .panel-prod .panel-grid, .panel-fin .panel-grid, .dash .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
+  .panel-prod { padding: 14px; }
+  .panel-meta { align-items: flex-start; }
+}
+/* [RESPONSIVO] toque (tablet/celular) — filtros, seletores dos cards e tela cheia com alvo de 44 px */
+@media (pointer: coarse) {
+  .seg button, .card-head:has(.seg) .seg button, .card .seg button { min-height: 44px; }
+  .fs-btn { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .b-bar, .cota, .cota * { animation: none !important; } }
+
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
+:root {
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.topnav {
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
+.topnav-logo svg { height: 26px; width: auto; display: block; }
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
+.topnav-user[hidden] { display: none; }
+.topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+/* [RESPONSIVO] barra superior em celular — o nome encolhe com reticências em vez de empurrar o avatar
+   para fora da tela; abaixo de 420 px ele sai (o título da página, logo abaixo, já diz o nome) */
+@media (max-width: 540px) {
+  .topnav-brand { flex: 1 1 auto; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; text-align: center; margin: 0 12px; }
+  .topnav-brand::after { display: none; }
+}
+@media (max-width: 420px) { .topnav-brand { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
+
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
+.settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
+.settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+}
+/* Telas menores: respiro entre a barra e o título, e título um pouco menor. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .page { padding-top: 14px; }
+  .title-block h2 { font-size: 1.5rem; }
+  .site { font-size: 1.45rem; }
+}
+/* ═══ fim Setup Dashboards ═══ */
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CBCDCF"/><stop offset=".42" stop-color="#BCBEC0"/><stop offset="1" stop-color="#B2B4B6"/>
+    </linearGradient>
+    <linearGradient id="g-a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#62C6EC"/><stop offset=".42" stop-color="#3CB5E5"/><stop offset="1" stop-color="#36A9D8"/>
+    </linearGradient>
+    <linearGradient id="g-p" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" style="stop-color: var(--serie-p)"/><stop offset="1" style="stop-color: var(--serie-p)"/>
+    </linearGradient>
+    <pattern id="hatch-good" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(0,126,122,.24)"/></pattern>
+    <pattern id="hatch-bad" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(220,38,38,.22)"/></pattern>
+    <pattern id="hatch-wait" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.4" height="6" fill="rgba(217,140,10,.18)"/></pattern>
+    <pattern id="hatch-flat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="6" fill="rgba(116,118,120,.24)"/></pattern>
+  </defs>
+</svg>
+
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Trocar COO Business Units Dashboard pelo nome do dashboard (ex.: "COO Business Units Dashboard").
+     Logo: "../" volta ao Hub; ajuste se o dashboard morar em outro lugar. -->
+<nav class="topnav" id="topnav">
+  <a href="../" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">COO Business Units People Dashboard</span></h1>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+
+<main class="page">
+  <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
+    <div class="title-block">
+      <h2>COO – Business Units People Dashboard</h2>
+    </div>
+    <div class="filters">
+      <div class="filter"><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span>
+        <div class="unit ciclo">
+          <button type="button" class="unit-trigger" id="cicloTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="cicloPop" aria-describedby="lblCiclo">
+            <span id="cicloTxt">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop ciclo-pop" id="cicloPop" hidden><div class="unit-list" id="cicloLista" role="group" aria-labelledby="lblCiclo"></div></div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblBu" data-i18n="f.unit">Business Units:</span>
+        <div class="unit">
+          <button type="button" class="unit-trigger" id="unitTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="unitPop" aria-describedby="lblBu">
+            <span class="unit-pais" id="unitPais">—</span><span class="unit-sep" aria-hidden="true">›</span><span class="unit-site" id="unitSite">—</span><svg class="unit-caret" width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-pop" id="unitPop" role="dialog" aria-label="Select unit: country and site" data-i18n-aria="a.unidade" hidden>
+            <div class="unit-col"><span class="unit-h" id="unitHPais" data-i18n="u.pais">Country</span><div class="unit-list" id="unitPaises" role="group" aria-labelledby="unitHPais"></div></div>
+            <div class="unit-col"><span class="unit-h" id="unitHSite">Site</span><div class="unit-list" id="unitSites" role="group" aria-labelledby="unitHSite"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter"><span class="filter-label" id="lblVisao" data-i18n="f.view">View:</span><div class="seg" role="group" aria-labelledby="lblVisao" data-filter="visao"></div></div>
+      <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
+      <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
+      <div class="filter"><span class="filter-label" id="lblMes" data-i18n="f.month">Month:</span><div class="seg" role="group" aria-labelledby="lblMes" data-filter="mes"></div></div>
+      <div class="filter"><span class="filter-label" id="lblDelta">Delta:</span>
+        <button type="button" class="switch" id="deltaSwitch" role="switch" aria-checked="true" aria-labelledby="lblDelta"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button>
+      </div>
+      <div class="fs-tools" aria-label="Full screen actions" data-i18n-aria="a.fs">
+      <button type="button" class="fs-btn js-full" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-row">
+    <div class="site-id">
+      <h3 class="site" id="buName">—</h3>
+      <nav class="site-nav" id="siteNav" aria-label="Navigation between BU and mines" data-i18n-aria="a.nav" hidden></nav>
+    </div>
+    <div class="panel-meta">
+          <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
+            <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+            <li id="legPlan" hidden><span class="swatch" style="background:var(--serie-p)"></span>Plan (P)</li>
+            <li><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
+          </ul>
+          <div id="cycleBox" hidden></div>
+          <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
+    </div>
+  </div>
+
+  <div class="dash" id="dash"></div>
+</main>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>window.VBM_SETUP = { idiomaPadrao: 'en' }; /* COO: inglês até a pessoa escolher outro idioma */</script>
+<script>
+/* ═══ Setup Dashboards — barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Colar num <script> logo depois da marcação (setup-dashboards.html), ANTES do script do dashboard.
+   Configuração opcional, declarada antes deste script:
+     window.VBM_SETUP = {
+       idiomaPadrao: 'pt-BR' | 'en',          // sem escolha salva; padrão 'pt-BR'
+       numeroPadrao: 'pt-BR' | 'en-CA',       // sem escolha salva; padrão: pelo idioma do navegador
+       urlUsuario: '/api/me'                  // { nome, email, cargo } — rota do Portal (Kaizen)
+     };
+   Preferências por pessoa no navegador, com as MESMAS chaves do Kaizen e do Studio,
+   para valerem em todas as aplicações do Portal: vdt-theme, vdt-lang, vdt-num.
+   API para o dashboard (window.VBMSetup):
+     t(chave, vars)         texto no idioma atual ('Olá {nome}' + { nome: 'Ana' })
+     registrar(dic)         { 'pt-BR': { chave: texto }, en: { … } } — textos do dashboard
+     traduzir(raiz?)        aplica data-i18n / -aria / -title / -ph em raiz (padrão: document)
+     fmt(valor, casas)      número no formato escolhido (Brasil 1.234,56 · Canadá 1,234.56)
+     dataHora(data)         data e hora no idioma escolhido
+     on('tema'|'idioma'|'numero', fn)   redesenhar o que o JS monta
+     tema / idioma / numero (leitura) */
+window.VBMSetup = (function () {
+  'use strict';
+  var CFG = window.VBM_SETUP || {};
+  var CHAVES = { tema: 'vdt-theme', idioma: 'vdt-lang', numero: 'vdt-num' };
+  var IDIOMAS = ['pt-BR', 'en'], NUMEROS = ['pt-BR', 'en-CA'];
+  var DIC = {
+    'pt-BR': { 'sd.menu': 'Menu', 'sd.configuracoes': 'Configurações', 'sd.fechar': 'Fechar', 'sd.tema': 'Tema', 'sd.claro': 'Claro', 'sd.escuro': 'Escuro',
+      'sd.idioma': 'Idioma', 'sd.idiomaInfo': 'Idioma da interface', 'sd.numero': 'Formato numérico', 'sd.numeroInfo': 'Separador decimal e de milhar dos gráficos',
+      'sd.numeroBR': 'Brasil — 1.234,56', 'sd.numeroCA': 'Canadá — 1,234.56' },
+    en: { 'sd.menu': 'Menu', 'sd.configuracoes': 'Settings', 'sd.fechar': 'Close', 'sd.tema': 'Theme', 'sd.claro': 'Light', 'sd.escuro': 'Dark',
+      'sd.idioma': 'Language', 'sd.idiomaInfo': 'Interface language', 'sd.numero': 'Number format', 'sd.numeroInfo': 'Decimal and thousands separators in charts',
+      'sd.numeroBR': 'Brazil — 1.234,56', 'sd.numeroCA': 'Canada — 1,234.56' }
+  };
+  var ouvintes = { tema: [], idioma: [], numero: [] };
+  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* só nesta sessão */ } }
+  function avisar(evt) { ouvintes[evt].forEach(function (fn) { try { fn(estado[evt]); } catch (e) { console.error('[setup-dashboards]', e); } }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  var estado = {
+    tema: ler(CHAVES.tema) === 'dark' ? 'dark' : 'light',
+    idioma: IDIOMAS.indexOf(ler(CHAVES.idioma)) >= 0 ? ler(CHAVES.idioma) : (IDIOMAS.indexOf(CFG.idiomaPadrao) >= 0 ? CFG.idiomaPadrao : 'pt-BR'),
+    numero: NUMEROS.indexOf(ler(CHAVES.numero)) >= 0 ? ler(CHAVES.numero)
+      : NUMEROS.indexOf(CFG.numeroPadrao) >= 0 ? CFG.numeroPadrao : (/^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR')
+  };
+
+  function t(chave, vars) {
+    var s = (DIC[estado.idioma] || {})[chave];
+    if (s == null) s = DIC['pt-BR'][chave];
+    if (s == null) return chave;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : s;
+  }
+  function registrar(dic) {
+    Object.keys(dic || {}).forEach(function (l) { DIC[l] = DIC[l] || {}; for (var k in dic[l]) DIC[l][k] = dic[l][k]; });
+  }
+  function traduzir(raiz) {
+    raiz = raiz || document;
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+    });
+  }
+  function fmt(v, casas) {
+    return Number(v).toLocaleString(estado.numero, { minimumFractionDigits: casas, maximumFractionDigits: casas }).replace('-', '−');
+  }
+  function dataHora(d) {
+    var l = estado.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l) + ' ' + d.toLocaleTimeString(l);
+  }
+
+  // ── Tema: data-bg (barra e painel) + data-theme (tokens do dashboard) ──
+  function aplicarTema(tema, salvar) {
+    estado.tema = tema === 'dark' ? 'dark' : 'light';
+    var html = document.documentElement;
+    html.setAttribute('data-bg', estado.tema);
+    html.setAttribute('data-theme', estado.tema);
+    if ($('btnWhite')) $('btnWhite').classList.toggle('active', estado.tema === 'light');
+    if ($('btnBusiness')) $('btnBusiness').classList.toggle('active', estado.tema === 'dark');
+    if (salvar) { gravar(CHAVES.tema, estado.tema); avisar('tema'); }
+  }
+  function aplicarIdioma(l, salvar) {
+    estado.idioma = IDIOMAS.indexOf(l) >= 0 ? l : 'pt-BR';
+    document.documentElement.lang = estado.idioma;
+    if ($('langSelect')) $('langSelect').value = estado.idioma;
+    traduzir();
+    if (salvar) { gravar(CHAVES.idioma, estado.idioma); avisar('idioma'); }
+  }
+  function aplicarNumero(n, salvar) {
+    estado.numero = NUMEROS.indexOf(n) >= 0 ? n : 'pt-BR';
+    if ($('numSelect')) $('numSelect').value = estado.numero;
+    if (salvar) { gravar(CHAVES.numero, estado.numero); avisar('numero'); }
+  }
+
+  // ── Painel de Configurações (engrenagem) ──
+  var btn = $('settingsBtn'), painel = $('settingsPanel'), fundo = $('settingsBackdrop');
+  function abrir(sim) {
+    if (!painel) return;
+    painel.classList.toggle('open', sim); fundo.classList.toggle('open', sim);
+    btn.setAttribute('aria-expanded', String(sim)); painel.setAttribute('aria-hidden', String(!sim));
+    if (sim) { var f = painel.querySelector('.theme-toggle-btn.active') || painel.querySelector('button'); if (f) f.focus(); } else btn.focus();
+  }
+  if (btn && painel && fundo) {
+    btn.addEventListener('click', function () { abrir(!painel.classList.contains('open')); });
+    $('settingsClose').addEventListener('click', function () { abrir(false); });
+    fundo.addEventListener('click', function () { abrir(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && painel.classList.contains('open')) abrir(false); });
+    $('btnWhite').addEventListener('click', function () { aplicarTema('light', true); });
+    $('btnBusiness').addEventListener('click', function () { aplicarTema('dark', true); });
+    $('langSelect').addEventListener('change', function (e) { aplicarIdioma(e.target.value, true); });
+    $('numSelect').addEventListener('change', function (e) { aplicarNumero(e.target.value, true); });
+  }
+
+  // ── Tela cheia: html.is-fs (a barra superior sai de cena pelo CSS) ──
+  document.addEventListener('fullscreenchange', function () {
+    document.documentElement.classList.toggle('is-fs', !!document.fullscreenElement);
+    if (document.fullscreenElement) abrir(false);
+  });
+
+  // ── Usuário logado: nome, cargo e iniciais (rota do Portal) ──
+  fetch(CFG.urlUsuario || '/api/me', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (me) {
+      if (!me || !$('topnavUser')) return;
+      var nome = String(me.nome || me.email || '').trim();
+      if (!nome) return;
+      var partes = nome.split(/\s+/);
+      $('topnavUserName').textContent = nome;
+      $('topnavUserRole').textContent = me.cargo || '';
+      $('topnavUserAvatar').textContent = ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+      $('topnavUserAvatar').title = nome;
+      $('topnavUser').hidden = false;
+    })
+    .catch(function () { /* sem a rota (ex.: fora do Portal): a barra fica sem o usuário */ });
+
+  aplicarTema(estado.tema, false);
+  aplicarNumero(estado.numero, false);
+  aplicarIdioma(estado.idioma, false);
+
+  return {
+    t: t, registrar: registrar, traduzir: traduzir, fmt: fmt, dataHora: dataHora,
+    on: function (evt, fn) { if (ouvintes[evt]) ouvintes[evt].push(fn); },
+    get tema() { return estado.tema; }, get idioma() { return estado.idioma; }, get numero() { return estado.numero; }
+  };
+})();
+/* ═══ fim Setup Dashboards ═══ */
+</script>
+<script>
+(function () {
+  'use strict';
+  // ── Textos do dashboard nos dois idiomas (Setup Dashboards: VBMSetup) ──
+  var T = VBMSetup.t;
+  VBMSetup.registrar({
+    'pt-BR': { 'f.ciclo': 'Ciclo:', 's.semCiclo': 'Nenhum ciclo gravado para o dashboard', 'f.unit': 'Business Units:', 'f.view': 'Visão:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
+      'a.filtros': 'Dashboard e filtros', 'a.unidade': 'Selecionar unidade: país e site', 'u.pais': 'País', 'a.fs': 'Ações da tela cheia',
+      'fs.on': 'Tela cheia', 'fs.onTitle': 'Tela cheia (F11)', 'fs.off': 'Sair da tela cheia', 'fs.offTitle': 'Sair da tela cheia (Esc)',
+      'a.nav': 'Navegação entre BU e minas', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:',
+      'q.semKpi': 'KPI não retornado pela query (layout: {nome})', 'q.semUnid': 'unidade ausente na query (SG_UNID)', 'q.semDec': 'casas decimais ausentes na query (VL_CASADECIMAL) — usando {n}',
+      'q.via': 'ligado por {via} ao card "{nome}"', 'q.viaApelido': 'apelido do código', 'q.viaOrdem': 'ID_ORDEM (nome diferente do layout)', 'q.viaRegra': 'regra do IR', 'q.vazio': 'Não retornado pela query',
+      'c.notaInterm': 'Os dados apresentados neste gráfico incluem a produção de intermediários.',
+      'c.pendente': 'Atualizações finais pendentes', 'c.atrasado': 'Atualização atrasada', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
+      'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
+      'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
+      'c.semDados': 'Sem dados', 'c.teor': 'Teor exibido', 'c.componente': 'Componente exibido', 'c.capex': 'CAPEX exibido',
+      'p.mes': 'mês', 'p.tri': 'trimestre', 'p.ano': 'ano', 'g.semDado': 'sem dado', 'g.variacao': 'variação',
+      'n.minas': 'Minas', 'n.voltar': 'Voltar para {bu}', 'n.minasDe': 'Minas de {bu}', 'n.anterior': 'Mina anterior', 'n.proxima': 'Próxima mina',
+      'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
+      's.consultando': 'Consultando o banco de dados…', 's.semConexao': 'Sem conexão com o banco de dados.', 's.semIndicadores': 'A consulta não trouxe indicadores para este período.',
+      's.semValores': 'A consulta não trouxe valores para {bu} em {mes} de {ano}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).',
+      'b.erro': 'sem conexão com o banco', 'b.carregando': 'carregando…', 'b.vazio': 'sem dados no período',
+      'b.desatualizado': 'banco indisponível: últimos dados lidos', 's.desatualizado': 'O banco não respondeu; estes são os últimos dados lidos (veja a hora em Última atualização).' },
+    en: { 'f.ciclo': 'Cycle:', 's.semCiclo': 'No cycle loaded for the dashboard', 'f.unit': 'Business Units:', 'f.view': 'View:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
+      'a.filtros': 'Dashboard and filters', 'a.unidade': 'Select unit: country and site', 'u.pais': 'Country', 'a.fs': 'Full screen actions',
+      'fs.on': 'Full screen', 'fs.onTitle': 'Full screen (F11)', 'fs.off': 'Exit full screen', 'fs.offTitle': 'Exit full screen (Esc)',
+      'a.nav': 'Navigation between BU and mines', 'a.legenda': 'Legend', 'l.upd': 'Last updated:',
+      'q.semKpi': 'KPI not returned by the query (layout: {nome})', 'q.semUnid': 'unit missing in the query (SG_UNID)', 'q.semDec': 'decimals missing in the query (VL_CASADECIMAL) — using {n}',
+      'q.via': 'linked by {via} to card "{nome}"', 'q.viaApelido': 'code alias', 'q.viaOrdem': 'ID_ORDEM (name differs from layout)', 'q.viaRegra': 'IR rule', 'q.vazio': 'Not returned by the query',
+      'c.notaInterm': 'The data presented in this chart includes intermediates production.',
+      'c.pendente': 'Pending final updates', 'c.atrasado': 'Overdue update', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
+      'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
+      'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
+      'c.semDados': 'No data', 'c.teor': 'Grade shown', 'c.componente': 'Component shown', 'c.capex': 'CAPEX shown',
+      'p.mes': 'month', 'p.tri': 'quarter', 'p.ano': 'year', 'g.semDado': 'no data', 'g.variacao': 'variance',
+      'n.minas': 'Mines', 'n.voltar': 'Back to {bu}', 'n.minasDe': 'Mines of {bu}', 'n.anterior': 'Previous mine', 'n.proxima': 'Next mine',
+      'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
+      's.consultando': 'Querying the database…', 's.semConexao': 'No connection to the database.', 's.semIndicadores': 'The query returned no indicators for this period.',
+      's.semValores': 'The query returned no values for {bu} in {mes} {ano}.', 's.erro': 'Could not query the database ({msg}).',
+      'b.erro': 'no database connection', 'b.carregando': 'loading…', 'b.vazio': 'no data for this period',
+      'b.desatualizado': 'database unavailable: last data read', 's.desatualizado': 'The database did not respond; these are the last data read (see the time in Last updated).' }
+  });
+  VBMSetup.traduzir();
+
+  // ── Indicadores de cada BU: o conjunto e a ordem do PDF COO – Business Units ──
+  // O PDF define QUAIS indicadores aparecem e ONDE; o banco dá o nome (NM_KPI),
+  // a unidade (SG_UNID) e todos os valores. `kpi`: outros nomes com que o
+  // indicador pode estar cadastrado em IBP.DASHBOARD.NM_KPIS_DASH; `unid`:
+  // preferência quando o mesmo nome existe com unidades diferentes no site.
+  // Nenhum número fica no código; indicador do PDF sem dado no banco mostra "Sem dados".
+  var SEM_DADOS = 'c.semDados'; // chave do texto (VBMSetup.t)
+  // Cards de cada site vêm do cadastro do banco (IBP.DASHBOARD, ID_DASH do COO): um card por KPI,
+  // na ordem do ID_ORDEM, com título (NM_KPIS_DASH), unidade e casas decimais do banco (vazio = 0).
+  // Painel: ID_OPERACAO 11 = Financial Drivers; os demais, Production Drivers.
+  var OPERACAO_FINANCEIRA = 11, CASAS_PADRAO = 0;
+  function k(t, dec, pol, extra) {
+    var c = { t: t, dec: dec, pol: pol || 'up' };
+    for (var x in extra) c[x] = extra[x];
+    return c;
+  }
+  // ── KPIs de People: UMA tabela por ID_KPI (IBP.DASHBOARD), na ordem de apresentação ──
+  // A ordem da tela é a desta lista (não a do banco) e a mesma de KPIS_PEOPLE em coo-api.js.
+  // `regra` define a cor do delta (ver CORES_DELTA); o nome (`nome`) é só documentação: título,
+  // unidade e casas decimais dos cards continuam vindo do banco.
+  var REGRAS_KPI = [
+    { id: 717, nome: 'Headcount VBM', regra: 'faixa' },
+    { id: 768, nome: 'Headcount Secondees', regra: 'faixa' },
+    { id: 774, nome: 'Women', regra: 'maior' },
+    { id: 773, nome: 'Turnover', regra: 'menor' },
+    { id: 772, nome: 'Termination Rate', regra: 'menor' },
+    { id: 761, nome: 'Absenteeism', regra: 'menor' },
+    { id: 716, nome: 'Overtime', regra: 'menor' },
+    { id: 767, nome: 'Overtime Cost', regra: 'menor' },
+    { id: 766, nome: 'Custo Labour', regra: 'menor' },
+    { id: 769, nome: 'Overtime | Cost ratio', regra: 'menor' },
+    { id: 771, nome: 'Overtime | Hours Ratio', regra: 'menor' },
+    { id: 770, nome: 'Overtime | Hours per FTE', regra: 'menor' }
+  ];
+  var POS_KPI = {}; // ID_KPI → posição na ordem de apresentação
+  REGRAS_KPI.forEach(function (r, i) { POS_KPI[r.id] = i; });
+  function regraDe(idKpi) { var i = POS_KPI[Number(idKpi)]; return i == null ? null : REGRAS_KPI[i].regra; }
+  // Cor do delta por regra. d = delta em % (realizado contra a referência), já arredondado em DEC_DELTA
+  // casas; os limites entram na faixa mais favorável (2,5% ainda é verde na 'faixa'; −2,5% é âmbar em 'maior').
+  var TOL_1 = 2.5, TOL_2 = 5, DEC_DELTA = 1;
+  var CORES_DELTA = {
+    // Headcount: tolerância pelo valor absoluto do desvio (acima ou abaixo da referência)
+    faixa: function (d) { var a = Math.abs(d); return a <= TOL_1 ? 'is-good' : a <= TOL_2 ? 'is-warn' : 'is-bad'; },
+    // Women (quanto maior, melhor): na referência ou acima é verde
+    maior: function (d) { return d >= 0 ? 'is-good' : d >= -TOL_1 ? 'is-warn' : 'is-bad'; },
+    // Quanto menor, melhor: na referência ou abaixo é verde (espelho da regra de Women)
+    menor: function (d) { return d <= 0 ? 'is-good' : d <= TOL_1 ? 'is-warn' : 'is-bad'; }
+  };
+  // Legenda de cores no cabeçalho do card (Headcount e Women, como no layout de People)
+  var LEGENDAS = {
+    faixa: function () { return ['±' + fmt(TOL_1, 1) + '% vs Bdgt', '±' + fmt(TOL_2, 0) + '% vs Bdgt', '> ±' + fmt(TOL_2, 0) + '% vs Bdgt']; },
+    maior: function () { return ['≥ target', '≤ ' + fmt(TOL_1, 1) + '% target', '> ' + fmt(TOL_1, 1) + '% target']; }
+  };
+  // Sem seletores, notas, refinarias (IR) nem páginas de minas em People: um card por KPI
+  var SELETORES = {}, NOTAS = {};
+  var MODELO_IR = { cls: '', colsProd: 1, prod: [] };
+  function ehIR() { return false; }
+
+  function copiarCards(lista, prefixo) {
+    return lista.map(function (c, i) {
+      var card = {};
+      for (var x in c) card[x] = c[x];
+      if (c.alt) { card.alt = {}; for (var a in c.alt) { card.alt[a] = {}; for (var y in c.alt[a]) card.alt[a][y] = c.alt[a][y]; } }
+      card.id = prefixo + i;
+      card.vazio = SEM_DADOS;
+      return card;
+    });
+  }
+  // Visão de um site: os painéis são montados com o cadastro quando os indicadores chegam (preencher)
+  function criarVisao(nome) {
+    // People: um painel só, com os 12 KPIs em 3 colunas (linhas conforme a quantidade de cards)
+    return { cls: 'dash--people', colsProd: 3, rows: 3, titulo: nome, ir: false, paineis: [
+      { titulo: 'People', cls: 'panel-prod', cards: [] }
+    ] };
+  }
+  // Configuração gravada no banco (GET config → IBP.PHUB_PS_SETUP): substitui as opções dos
+  // seletores (pelo código do seletor) e os apelidos de KPI (pelo nome do card ou da opção).
+  // Aplicada uma vez, antes de montar as telas; sem configuração, valem as definições acima.
+  function aplicarConfig(cfg) {
+    if (!cfg) return;
+    var sels = cfg.seletores || {}, apel = cfg.apelidos || {};
+    Object.keys(sels).forEach(function (cod) {
+      var base = SELETORES[cod] || { label: 'c.componente', pol: 'up' };
+      SELETORES[cod] = { label: base.label, pol: base.pol, opcoes: sels[cod].opcoes.map(function (o) {
+        var antiga = (base.opcoes || []).filter(function (x) { return x.chave === o.chave; })[0];
+        return { chave: o.chave, lbl: o.lbl, kpi: [o.titulo].concat(o.kpi || []),
+          unid: o.unid ? new RegExp(o.unid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : antiga && antiga.unid };
+      }) };
+    });
+    MODELO_IR.prod.forEach(function (c) { if (apel[c.t]) c.kpi = apel[c.t].slice(); });
+  }
+  var VISOES = {}; // nome do site → visão (criada em aplicarFiltros, com os sites da consulta)
+  var VAZIA = criarVisao('');
+  function visao() { return VISOES[state.bu] || VAZIA; }
+  // Alternativa exibida num card com seletor (teores, All-in…): a escolhida ou a primeira
+  function selDe(ind) { var k = state.sel[ind.id]; return ind.alt[k] ? k : altChaves(ind)[0]; }
+  // Opções de um card com seletor na ordem do ID_ORDEM da query (sem dados: no fim, na ordem do PDF)
+  function altChaves(ind) {
+    var ks = Object.keys(ind.alt), o = function (k) { var v = ind.alt[k].ordem; return isNaN(v) || v == null ? Infinity : v; };
+    return ks.slice().sort(function (a, b) { return (o(a) - o(b)) || (ks.indexOf(a) - ks.indexOf(b)); });
+  }
+  // Nome comparável: sem acento, espaços, pontuação ou maiúsculas
+  function normalizar(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+
+  // ── Estado dos filtros ──
+  // Meses no idioma escolhido (Configurações)
+  var MESES_IDIOMA = {
+    'pt-BR': [['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+      ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']],
+    en: [['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']]
+  };
+  function mesCurto(i) { return (MESES_IDIOMA[VBMSetup.idioma] || MESES_IDIOMA.en)[0][i]; }
+  function mesLongo(i) { return (MESES_IDIOMA[VBMSetup.idioma] || MESES_IDIOMA.en)[1][i]; }
+  // Unidades e anos: preenchidos com o resultado da consulta (aplicarFiltros)
+  var UNIDADES = [];
+  var hoje = new Date(), mesRef = hoje.getMonth() || 12; // até a consulta responder: mês anterior ao atual
+  var ANOS = [mesRef === 12 ? hoje.getFullYear() - 1 : hoje.getFullYear()];
+  var state = { ciclo: '', pais: '', bu: '', visao: 'Plan', ano: ANOS[0], tri: Math.ceil(mesRef / 3), mes: mesRef, delta: 'on', plan: false, sel: {} };
+  // ── Navegação no endereço (?site=&ano=&mes=&plan=&delta=): o refresh volta à mesma tela e o link
+  // pode ser compartilhado. Lida uma vez na carga e validada contra os filtros da consulta (aplicarFiltros)
+  // Ciclo = carga gravada em IBP.PHUB_PERFORMANCESTUDIO (DT_REF 'AAAA-MM'), a mais recente primeiro
+  var CICLOS = [], CICLO_URL = (function () { try { return new URLSearchParams(location.search).get('ciclo') || ''; } catch (e) { return ''; } })();
+  // "Out/26" no idioma escolhido (mês do DT_REF da carga)
+  function rotuloCiclo(c) { var p = String(c || '').split('-'); return p.length === 2 ? mesCurto(Number(p[1]) - 1) + '/' + p[0].slice(2) : '—'; }
+  var URL_INI = (function () {
+    try {
+      var q = new URLSearchParams(location.search);
+      return q.has('site') || q.has('ano') ? { site: q.get('site'), ano: Number(q.get('ano')), mes: Number(q.get('mes')), plan: q.get('plan') === '1', delta: q.get('delta') !== 'off', sel: q.get('sel') || '' } : null;
+    } catch (e) { return null; }
+  })();
+  function salvarUrl() {
+    if (!state.bu) return; // ainda carregando: não apaga o endereço recebido
+    try {
+      var q = new URLSearchParams(location.search);
+      if (state.ciclo) q.set('ciclo', state.ciclo);
+      q.set('site', state.bu); q.set('ano', state.ano); q.set('mes', state.mes);
+      if (state.plan) q.set('plan', '1'); else q.delete('plan');
+      if (state.delta === 'off') q.set('delta', 'off'); else q.delete('delta');
+      var sel = Object.keys(state.sel).filter(function (k) { return state.sel[k]; }).map(function (k) { return k + '.' + state.sel[k]; }).join(',');
+      if (sel) q.set('sel', sel); else q.delete('sel');
+      // ?verificar=1 é preservado (o URLSearchParams parte do endereço atual)
+      var novo = location.pathname + '?' + q.toString() + location.hash;
+      if (novo !== location.pathname + location.search + location.hash) history.replaceState(null, '', novo);
+    } catch (e) { /* sem History API: segue sem guardar */ }
+  }
+  var OPTS = {
+    visao: function () { return [['Plan', 'Plan']]; },
+    ano: function () { return ANOS.map(function (a) { return [a, String(a)]; }); },
+    tri: function () { return [[1, 'Q1'], [2, 'Q2'], [3, 'Q3'], [4, 'Q4']]; },
+    mes: function () {
+      var first = (state.tri - 1) * 3;
+      return [0, 1, 2].map(function (i) { return [first + i + 1, mesLongo(first + i)]; });
+    }
+  };
+
+  function yy() { return String(state.ano).slice(2); }
+  // Rótulos do eixo no padrão do print: "Set B", "Q3A", "26F"
+  var LETRAS_AF = ['A', 'A', 'F']; // Actual ou Forecast por janela; com dados reais, vem do script (coluna Type)
+  function axis() {
+    var m = mesCurto(state.mes - 1), q = 'Q' + state.tri, y = yy();
+    return [[m + ' B', m + ' ' + LETRAS_AF[0]], [q + 'B', q + LETRAS_AF[1]], [y + 'B', y + LETRAS_AF[2]]];
+  }
+  function PER(i) { return T(['p.mes', 'p.tri', 'p.ano'][i]); }
+
+  // Formato numérico escolhido nas Configurações (Brasil 1.234,56 · Canadá 1,234.56)
+  function fmt(v, dec) { return VBMSetup.fmt(v, dec); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // Delta = (A/F − B) / |B|, em % com DEC_DELTA casas: o mesmo A/F − B do COO, relativo à referência.
+  // Sem referência ou sem realizado, valor inválido ou referência zero (divisão por zero): sem
+  // percentual ("—", neutro). A cor vem da regra do KPI (CORES_DELTA), sobre o valor arredondado exibido.
+  function delta(b, a, ind) {
+    var ok = function (x) { return x !== null && x !== undefined && isFinite(x); };
+    if (!ok(b) || !ok(a) || Number(b) === 0) return { txt: '—', cls: 'is-flat', d: null };
+    var f = Math.pow(10, DEC_DELTA), bruto = (a - b) / Math.abs(b) * 100;
+    var d = (bruto < 0 ? -1 : 1) * Math.round(Math.abs(bruto) * f) / f; // arredonda pelo módulo: simétrico em + e −
+    if (d === 0) d = 0; // −0 → 0
+    var txt = (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d), DEC_DELTA) + '%';
+    var cor = CORES_DELTA[ind.regra];
+    return { txt: txt, cls: cor ? cor(d) : 'is-flat', d: d };
+  }
+
+  function view(ind) {
+    if (!ind.alt) return { t: ind.t, d: ind.d || null, u: ind.u, pp: !!ind.pp, dec: ind.dec, at: ind.atual || null, falta: ind.falta || null, via: ind.via || '', tPdf: ind.tPdf || ind.t };
+    var alt = ind.alt[selDe(ind)];
+    return { t: alt.t || ind.t, d: alt.d, u: alt.u, pp: alt.pp !== false, dec: alt.dec != null ? alt.dec : ind.dec, at: alt.atual || null, falta: alt.falta || null, via: alt.via || '', tPdf: alt.tPdf || alt.t };
+  }
+
+  // ── Conferência com a query: o que o card mostra sem vir do banco ──
+  // Sempre visível: KPI não retornado, unidade (SG_UNID) e casas decimais (VL_CASADECIMAL) ausentes.
+  // Com ?verificar=1: também como o card foi ligado ao KPI quando não foi pelo nome exato.
+  var VERIFICAR = (function () { try { return new URLSearchParams(location.search).get('verificar') === '1'; } catch (e) { return false; } })();
+  function faltaNaQuery(l) { return { kpi: false, unid: !String(l.SG_UNID || '').trim(), dec: l.CASA_DECIMAL == null }; }
+  function avisosQuery(v) {
+    var f = v.falta, a = [];
+    if (f && f.kpi) a.push(T('q.semKpi', { nome: v.tPdf }));
+    else if (f) { if (f.unid) a.push(T('q.semUnid')); if (f.dec) a.push(T('q.semDec', { n: v.dec })); }
+    if (VERIFICAR && v.d && v.via && v.via !== 'nome') a.push(T('q.via', { via: v.via === 'apelido' ? T('q.viaApelido') : v.via === 'ID_ORDEM' ? T('q.viaOrdem') : T('q.viaRegra'), nome: v.tPdf }));
+    return a;
+  }
+
+  // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
+  var MAX_W = 520, MAX_H = 190; // People: 3 colunas largas (COO: 380) // mesmo tamanho no modo normal e em tela cheia
+  function chartSvg(ind, W, H) {
+    var v = view(ind), ax = axis();
+    var showDelta = state.delta === 'on';
+    var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
+    // Com o Plan, o mês tem duas cotas (B→P e P→A) com as pílulas em degraus: mais espaço no topo
+    var MT = showDelta ? (comPlan ? 66 : 46) : 20, MB = 16, PW = W / 3;
+    if (pendente(v)) MT += 24; // faixa "Pending final updates" no alto do gráfico
+    // Sem o Plan: o layout padrão (B·A centrado em cada terço). Com o Plan: sete barras
+    // (mês B·P·A, trimestre B·A, ano B·A) numa régua só, com a MESMA distância entre todas as colunas.
+    var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
+    var POS = null, stVal = '', stEixo = '';
+    if (comPlan) {
+      // passo proporcional à largura do card: todos os gráficos ocupam o card na mesma proporção
+      var passo = W / 7.4;
+      BW = passo * 0.62; GAP = passo - BW;
+      var x = (W - (6 * passo + BW)) / 2;
+      POS = [0, 1, 2].map(function (i) {
+        var n = i === 0 ? 3 : 2, xs = [];
+        for (var j = 0; j < n; j++) { xs.push(x); x += passo; }
+        return n === 3 ? { xb: xs[0], xp: xs[1], xa: xs[2] } : { xb: xs[0], xp: xs[0], xa: xs[1] };
+      });
+      // card estreito: valores e rótulos um pouco menores, para não encostarem
+      var FS_VAL = Math.max(8, Math.min(11, passo / 3.6)), FS_EIXO = Math.max(7.5, Math.min(9.5, passo / 3.7));
+      if (FS_VAL < 11) stVal = ' style="font-size:' + FS_VAL.toFixed(1) + 'px"';
+      if (FS_EIXO < 9.5) stEixo = ' style="font-size:' + FS_EIXO.toFixed(1) + 'px"';
+    }
+    // [RESPONSIVO] valores das barras — a fonte encolhe até o maior número caber entre duas barras
+    // vizinhas (card estreito, muitas casas decimais), sem nunca passar de 11 px nem ficar abaixo de 7 px
+    if (v.d) {
+      var maxCar = 1;
+      v.d.forEach(function (p) { p.forEach(function (x) { if (x != null) maxCar = Math.max(maxCar, fmt(x, v.dec).length); }); });
+      var cabe = ((comPlan ? passo : BW + GAP) - 3) / (maxCar * 0.6);
+      var fsAtual = stVal ? parseFloat(stVal.replace(/[^\d.]/g, '')) : 11;
+      if (cabe < fsAtual) stVal = ' style="font-size:' + Math.max(7, cabe).toFixed(1) + 'px"';
+    }
+    // Deltas: mesma regra dos valores das barras — quando a fonte dos valores encolhe, o texto do delta
+    // (10,5 px) e a pílula encolhem na mesma proporção, sem ficar abaixo de 7 px
+    var escDelta = stVal ? Math.max(7, 10.5 * parseFloat(stVal.replace(/[^\d.]/g, '')) / 11) / 10.5 : 1;
+    var stDelta = escDelta < 1 ? ' style="font-size:' + (10.5 * escDelta).toFixed(1) + 'px"' : '';
+    if (!v.d) { // sem dados: só a linha de base e, quando houver, o aviso (Pending / Not applicable)
+      var yv0 = H - MB;
+      return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.t + ' (' + v.u + '): ' + T(ind.vazio || 'c.semDados') + '.') + '">' +
+        '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yv0 + '" y2="' + yv0 + '"/>' +
+        (pendente(v) ? faixaCiclo(v.at, 2, W) : '') +
+        (ind.vazio ? '<text class="b-vazio" x="' + W / 2 + '" y="' + Math.round((MT + yv0) / 2) + '" text-anchor="middle">' + esc(T(v.falta && v.falta.kpi ? 'q.vazio' : ind.vazio)) + '</text>' : '') + '</svg>';
+    }
+    // escala: B e A/F das três janelas e, com o botão Plan, o Plan do mês
+    var all = [].concat.apply([], v.d.map(function (p, i) { return comPlan && i === 0 ? p : p.slice(0, 2); })).filter(function (x) { return x !== null && x !== undefined; });
+    var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
+    function dom(vals) {
+      var lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max(0, Math.max.apply(null, vals));
+      if (hi === lo) hi = lo + 1;
+      if (folgaTopo) hi = hi / 0.72; // a coluna mais alta usa ~72% da altura
+      return [lo, hi];
+    }
+    var label = [v.t + ' (' + v.u + ').'];
+    // Linha do eixo contínua sob os três períodos, com as mesmas pontas de antes (2 px das bordas)
+    var dm0 = dom(all), yZero = MT + dm0[1] / (dm0[1] - dm0[0]) * (H - MT - MB);
+    var out = '<line class="b-base" x1="2" x2="' + (W - 2) + '" y1="' + yZero + '" y2="' + yZero + '"/>';
+    // Ciclo pendente: a barra A do mês fica tracejada, sem valor nem delta; trimestre e ano esmaecidos
+    var pend = pendente(v);
+    function grupo(pair, i) {
+      if (pend && i === 0) pair = [pair[0], null, pair[2]];
+      var dm = dom(all); // escala única: as seis barras do gráfico na mesma régua
+      var y = function (val) { return MT + (dm[1] - val) / (dm[1] - dm[0]) * (H - MT - MB); };
+      // Com o Plan ligado, o mês tem três barras na ordem Budget, Plan, Actual/Forecast (trio centrado)
+      var trio = comPlan && i === 0, x0 = i * PW, y0 = y(0);
+      var xb = POS ? POS[i].xb : x0 + PW / 2 - GAP / 2 - BW;
+      var xp = POS ? POS[i].xp : xb, xa = POS ? POS[i].xa : xb + BW + GAP;
+      var dl = delta(pair[0], pair[1], ind, v.dec);
+      var semPar = pair[0] === null || pair[1] === null;
+      label.push(PER(i) + ': Budget ' + (pair[0] === null ? T('g.semDado') : fmt(pair[0], v.dec)) + ', ' + (i === 2 ? 'Forecast ' : 'Actual ') + (pair[1] === null ? T('g.semDado') : fmt(pair[1], v.dec)) + (showDelta && !semPar && !(comPlan && i === 0) ? ', ' + T('g.variacao') + ' ' + dl.txt : '') + '.');
+
+
+      var barras = [[xb, pair[0], 'g-b', ax[i][0], 'Budget'], [xa, pair[1], 'g-a', ax[i][1], i === 2 ? 'Forecast' : 'Actual']];
+      if (trio) {
+        // três barras no mês, na ordem Budget, Plan, Actual/Forecast
+        barras.splice(1, 0, [xp, pair[2], 'g-p', mesCurto(state.mes - 1) + ' P', 'Plan']);
+        label.push('Plan ' + fmt(pair[2], v.dec) + '.');
+      }
+      barras.forEach(function (bar) {
+        if (bar[1] === null && pend && i === 0 && bar[2] === 'g-a' && pair[0] !== null) {
+          var yg = y(pair[0]), tg = esc(bar[3] + ' · ' + T('c.mesVazio'));
+          out += '<rect class="b-ghost" x="' + (bar[0] + .6) + '" y="' + Math.min(yg, y0) + '" width="' + (BW - 1.2) + '" height="' + Math.max(Math.abs(y0 - yg), 6) + '" rx="3" data-tip="' + tg + '"/>';
+          out += '<text class="b-ghost-txt" x="' + (bar[0] + BW / 2) + '" y="' + (Math.min(yg, y0) - 6) + '" text-anchor="middle">—</text>';
+        }
+        if (bar[1] === null) { out += '<text class="b-axis"' + stEixo + ' x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
+        var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
+        var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
+        var bx = bar[0] + BW / 2;
+        out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + bar[0] + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + tip + '"/>';
+        // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
+        out += '<text class="b-val"' + stVal + ' x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
+        out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
+      });
+      if (!showDelta) return;
+
+      // Cota de diferença do Performance Hub: nível de referência tracejado, nível novo sólido, faixa,
+      // haste, fio guia e pílula. Sem o Plan: B → A/F. Com o Plan, no mês: B → P e P → A.
+      function cota(xEsq, xDir, vRef, vNovo, dlc, pillY) {
+        var x1 = xEsq + BW, x2 = xDir, cx = (x1 + x2) / 2, yr = y(vRef), yn = y(vNovo);
+        var ytop = Math.min(yr, yn, y0), pillH = 17 * escDelta, pillW = Math.max(38 * escDelta, (dlc.txt.length * 5.8 + 14) * escDelta);
+        if (pillY == null) pillY = Math.max(0, ytop - 22 - pillH);
+        var g = '<g class="cota ' + dlc.cls + '">';
+        g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
+        g += '<line class="d-now" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yn + '" y2="' + yn + '"/>';
+        if (Math.abs(yr - yn) > 0.5) {
+          g += '<rect class="' + (vNovo >= vRef ? 'd-up' : 'd-dn') + '" x="' + x1 + '" y="' + Math.min(yr, yn) + '" width="' + (x2 - x1) + '" height="' + Math.abs(yr - yn) + '"/>';
+          g += '<line class="d-span" stroke-width="2" x1="' + cx + '" x2="' + cx + '" y1="' + yr + '" y2="' + yn + '"/>';
+        }
+        g += '<line class="d-track" x1="' + cx + '" x2="' + cx + '" y1="' + (ytop - 2) + '" y2="' + (pillY + pillH) + '"/>';
+        g += '<rect class="d-pill" x="' + (cx - pillW / 2) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="' + (pillH / 2) + '"/>';
+        g += '<text class="d-txt"' + stDelta + ' x="' + cx + '" y="' + (pillY + 12 * escDelta) + '" text-anchor="middle">' + esc(dlc.txt) + '</text>';
+        return g + '</g>';
+      }
+      if (!trio) { if (!semPar) out += cota(xb, xa, pair[0], pair[1], dl); return; }
+
+      var bp = pair[0] !== null && pair[2] !== null, pa = pair[2] !== null && pair[1] !== null;
+      var dBP = bp && delta(pair[0], pair[2], ind, v.dec), dPA = pa && delta(pair[2], pair[1], ind, v.dec);
+      if (dBP) label.push('Budget → Plan: ' + dBP.txt + '.');
+      if (dPA) label.push('Plan → ' + (i === 2 ? 'Forecast' : 'Actual') + ': ' + dPA.txt + '.');
+      // As duas pílulas ficam a um passo de distância: se não couberem lado a lado, B→P sobe um degrau.
+      // P→A é desenhada depois, por cima do fio guia de B→P.
+      var topo = function (a, b) { return Math.max(0, Math.min(y(a), y(b), y0) - 39); };
+      var yPA = pa ? topo(pair[2], pair[1]) : null, yBP = bp ? topo(pair[0], pair[2]) : null;
+      if (bp && pa) {
+        var larg = function (d) { return Math.max(38, d.txt.length * 5.8 + 14) * escDelta; };
+        if (xa - xp < (larg(dBP) + larg(dPA)) / 2 + 4) yBP = Math.max(0, Math.min(yBP, yPA - 21 * escDelta));
+      }
+      if (bp) out += cota(xb, xp, pair[0], pair[2], dBP, yBP);
+      if (pa) out += cota(xp, xa, pair[2], pair[1], dPA, yPA);
+    }
+    v.d.forEach(function (pair, i) {
+      var antes = out; out = '';
+      grupo(pair, i);
+      out = antes + (pend && i > 0 ? '<g class="b-stale">' + out + '</g>' : out);
+    });
+    // Faixa do ciclo pendente: no alto, alinhada à 1ª barra, sobre o mês e o trimestre (área livre reservada no MT)
+    if (pend) {
+      label.unshift(textoCiclo(v.at) + '. ' + detalheCiclo(v.at) + '.');
+      out += faixaCiclo(v.at, Math.max(2, (POS ? POS[0].xb : PW / 2 - GAP / 2 - BW) - 2), W);
+    }
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label.join(' ')) + '">' + out + '</svg>';
+  }
+
+  // ── Sinal de ciclo: KPI que ainda não recebeu a atualização final do mês selecionado ──
+  function pendente(v) { return !!(v && v.at && v.at.status !== 'ok'); }
+  var ICO_RELOGIO = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.3 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  var ICO_ALERTA = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5v4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="11.2" r=".95" fill="currentColor"/></svg>';
+  // Data da carga como gravada no banco (o mssql entrega datetime como UTC)
+  function dataCarga(dt) {
+    var d = new Date(dt);
+    if (!dt || isNaN(d)) return null;
+    var l = VBMSetup.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l, { timeZone: 'UTC' }) + ' ' + d.toLocaleTimeString(l, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+  }
+  // Faixa "Pending final updates" no alto do gráfico (com ou sem valores)
+  function faixaCiclo(at, fx, W) {
+    var txtC = textoCiclo(at), detC = detalheCiclo(at), late = at.status === 'atrasado', fw = Math.min(W - fx - 2, txtC.length * 5.7 + 30);
+    return '<g class="cyc-faixa' + (late ? ' late' : '') + '" tabindex="0" data-tip="' + esc(detC) + '" aria-label="' + esc(txtC + '. ' + detC) + '">' +
+      '<rect x="' + fx + '" y="2" width="' + fw + '" height="19" rx="9.5"/>' +
+      '<g fill="none" transform="translate(' + (fx + 7) + ' 5.5) scale(.75)">' + (late ? ICO_ALERTA : ICO_RELOGIO).replace(/^<svg[^>]*>|<\/svg>$/g, '') + '</g>' +
+      '<text x="' + (fx + 23) + '" y="15.2">' + esc(txtC) + '</text></g>';
+  }
+  function textoCiclo(at) { return at.status === 'atrasado' ? T('c.atrasado') : T('c.pendente'); }
+  function detalheCiclo(at) { var dt = dataCarga(at.dt); return dt ? T('c.ultima', { dt: dt }) : T('c.nenhuma'); }
+
+  function cardHtml(ind) {
+    var v = view(ind), ctl = '';
+    if (ind.alt) {
+      ctl = '<div class="seg" role="group" aria-label="' + esc(T(ind.altLabel)) + '">' + altChaves(ind).map(function (k) {
+        return '<button type="button" data-alt="' + k + '" data-for="' + ind.id + '" aria-pressed="' + (selDe(ind) === k) + '">' + esc(ind.alt[k].lbl) + '</button>';
+      }).join('') + '</div>';
+    }
+    if (!ind.alt && LEGENDAS[ind.regra]) {
+      ctl = '<ul class="card-leg" aria-label="' + esc(T('a.legenda')) + '">' + LEGENDAS[ind.regra]().map(function (txt, i) {
+        return '<li><i class="' + 'gwb'.charAt(i) + '" aria-hidden="true"></i>' + esc(txt) + '</li>';
+      }).join('') + '</ul>';
+    }
+    var pend = pendente(v);
+    return '<article class="card card-' + ind.id + (pend ? ' is-pend' : '') + '" id="card-' + ind.id + '">' +
+      '<div class="card-head"><div class="card-name"><h4 class="card-title" title="' + esc(v.t) + '">' + esc(v.t) + '</h4><p class="card-unit">' + (v.u ? '(' + esc(String(v.u).replace(/^\s*\((.*)\)\s*$/, '$1')) + ')' : '&nbsp;') + '</p>' +
+      (function (a) { return a.length ? '<p class="card-chk" title="' + esc(a.join(' · ')) + '">⚠ ' + esc(a.join(' · ')) + '</p>' : ''; })(avisosQuery(v)) + '</div>' + ctl + '</div>' +
+      '<div class="chart" data-ind="' + ind.id + '"></div>' +
+      (ind.nota ? '<p class="card-nota"><sup>1</sup> ' + esc(T(ind.nota)) + '</p>' : '') +
+      '</article>';
+  }
+
+  function byId(id) {
+    var cards = [].concat.apply([], visao().paineis.map(function (p) { return p.cards; }));
+    return cards.filter(function (i) { return i.id === id; })[0];
+  }
+
+  function drawChart(el) {
+    var W = Math.min(MAX_W, Math.round(el.clientWidth)), H = Math.min(MAX_H, Math.round(el.clientHeight));
+    if (W < 60 || H < 44) return;
+    var key = W + 'x' + H + '|' + state.delta + '|' + state.plan + '|' + (state.sel[el.getAttribute('data-ind')] || '') + '|' + state.tri + state.mes + state.ano;
+    if (el._key === key) return;
+    el._key = key;
+    el.innerHTML = chartSvg(byId(el.getAttribute('data-ind')), W, H);
+  }
+
+  // Altura dos gráficos: até 190 px, o quanto couber para as três linhas ocuparem o painel
+  // Largura única dos gráficos: a coluna mais estreita entre todos os painéis (até MAX_W). Cards em
+  // colunas mais largas ficam com essa largura, centralizados — mesmo tamanho de barra e mesmo
+  // espaçamento entre mês, trimestre e ano em todos os gráficos da página
+  function igualarLarguras(grids) {
+    var menor = Infinity;
+    grids.forEach(function (g) {
+      getComputedStyle(g).gridTemplateColumns.split(' ').forEach(function (t) { var n = parseFloat(t); if (n > 0) menor = Math.min(menor, n); });
+    });
+    var dash = document.getElementById('dash');
+    if (isFinite(menor)) dash.style.setProperty('--chart-w', Math.min(MAX_W, Math.floor(menor)) + 'px');
+    else dash.style.removeProperty('--chart-w');
+  }
+
+  function ajustarAltura() {
+    var grids = [].slice.call(document.querySelectorAll('#dash .panel-grid')), N = visao().rows;
+    igualarLarguras(grids);
+    var gProd = grids[0], card = gProd && gProd.querySelector('.card');
+    if (!card) return;
+    // Telas estreitas ou baixas: painéis empilhados com altura fixa por linha (CSS). O cálculo abaixo
+    // aumentaria o espaçamento a cada redimensionamento do painel, sem fim
+    if (matchMedia('(max-width: 1180px), (max-height: 1000px)').matches) { // People: 4 linhas (ver o CSS)
+      grids.forEach(function (g) { g.style.rowGap = ''; });
+      document.documentElement.style.removeProperty('--head-h');
+      return;
+    }
+    var cs = getComputedStyle(card), GAP_MIN = 10;
+    var extra = parseFloat(cs.paddingTop) + (parseFloat(cs.rowGap) || 6);
+    function maiorCabeca(raiz) {
+      return Math.max.apply(null, [].map.call(raiz.querySelectorAll('.card-head'), function (h) { return h.offsetHeight; }));
+    }
+    // mede os cabeçalhos na altura natural e iguala todos pelo mais alto
+    document.documentElement.style.setProperty('--head-h', '0px');
+    document.documentElement.style.setProperty('--head-h', maiorCabeca(document) + 'px');
+    // altura única dos gráficos, pelo cabeçalho de card mais alto da página (ex.: seletor do All-in quebrando linha)
+    // nota de rodapé (alguns cards): fica abaixo do card, fora da grade (CSS), sem mudar a altura dos gráficos
+    var livre = (gProd.clientHeight - (N - 1) * GAP_MIN) / N - (maiorCabeca(document) + extra);
+    var h = Math.max(90, Math.min(MAX_H, Math.floor(livre)));
+    document.documentElement.style.setProperty('--chart-h', h + 'px');
+    // espaço entre as linhas: 80% da sobra dividida entre as duas separações (linhas um pouco mais
+    // próximas; o restante fica no rodapé). O mesmo valor nos dois painéis, para as linhas ficarem alinhadas
+    var gap = Math.min.apply(null, grids.map(function (g) {
+      return Math.floor((g.clientHeight - N * (h + maiorCabeca(g) + extra)) / (N - 1) * 0.8);
+    }));
+    grids.forEach(function (g) { g.style.rowGap = Math.max(GAP_MIN, gap) + 'px'; });
+  }
+  new ResizeObserver(ajustarAltura).observe(document.getElementById('dash'));
+
+  // Redesenha no tamanho real do espaço (sem distorcer texto); animação só no 1º desenho
+  var ro = new ResizeObserver(function (entries) { entries.forEach(function (en) { drawChart(en.target); }); });
+  var firstPaint = true;
+  function observeCharts() {
+    document.querySelectorAll('.chart[data-ind]').forEach(function (el) { ro.observe(el); drawChart(el); });
+    if (firstPaint) {
+      firstPaint = false;
+      setTimeout(function () { document.documentElement.classList.add('is-static'); }, 1600);
+    }
+  }
+
+  function renderFilters() {
+    document.querySelectorAll('[data-filter]').forEach(function (g) {
+      var k = g.getAttribute('data-filter');
+      g.innerHTML = OPTS[k]().map(function (o) {
+        var on = k === 'visao' ? state.plan : String(state[k]) === String(o[0]);
+        return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
+      }).join('');
+    });
+    larguraMeses();
+    renderCicloSel();
+  }
+  function renderCicloSel() {
+    document.getElementById('cicloTxt').textContent = rotuloCiclo(state.ciclo);
+    document.getElementById('cicloLista').innerHTML = CICLOS.map(function (c) {
+      return '<button type="button" data-ciclo="' + esc(c) + '" aria-pressed="' + (c === state.ciclo) + '">' + esc(rotuloCiclo(c)) + '</button>';
+    }).join('');
+  }
+
+  // Botões de mês com largura única: cabe o nome de mês mais longo do idioma (ex.: "September",
+  // "Fevereiro"), para a barra de filtros não mudar de tamanho ao trocar de trimestre
+  var reguaMes = document.createElement('canvas').getContext('2d');
+  function larguraMeses() {
+    var botoes = document.querySelectorAll('[data-filter="mes"] button');
+    if (!botoes.length) return;
+    var cs = getComputedStyle(botoes[0]);
+    reguaMes.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var maior = 0;
+    for (var i = 0; i < 12; i++) maior = Math.max(maior, reguaMes.measureText(mesLongo(i)).width);
+    var w = Math.ceil(maior + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + 'px';
+    botoes.forEach(function (b) { b.style.width = w; });
+  }
+  // a fonte (Poppins) chega depois: mede de novo quando carregar
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(larguraMeses);
+
+
+  function render() {
+    var vs = visao(), dash = document.getElementById('dash');
+    var bu = BU_DA_MINA[state.bu], irmas = bu ? MINAS[bu] : null;
+    document.getElementById('buName').textContent = !state.bu ? '—' : irmas && irmas.length > 1 ? state.bu + ' (' + (irmas.indexOf(state.bu) + 1) + '/' + irmas.length + ')' : state.bu;
+    document.getElementById('unitPais').textContent = state.pais ? T('pais.' + state.pais) : '—';
+    var siteTxt = !state.bu ? '—' : bu ? bu + ' › ' + state.bu : state.bu;
+    document.getElementById('unitSite').textContent = siteTxt;
+    // nome longo: o botão mostra só o site, para não empurrar os filtros
+    var longo = (state.pais + siteTxt).length > 30 || normalizar(T('pais.' + state.pais)) === normalizar(siteTxt); // ou igual ao país ("IR › IR")
+    document.getElementById('unitPais').hidden = longo;
+    unitTrigger.querySelector('.unit-sep').hidden = longo;
+    unitTrigger.title = (state.pais ? T('pais.' + state.pais) : '—') + ' › ' + siteTxt;
+    renderNav();
+    document.getElementById('legPlan').hidden = !state.plan;
+    ro.disconnect();
+    dash.className = 'dash ' + vs.cls;
+    dash.style.setProperty('--rows', vs.rows);
+    dash.style.setProperty('--cols', vs.paineis.length);
+    dash.innerHTML = vs.paineis.map(function (p, i) {
+      return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
+        '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
+        (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(T(MSG_PAINEL)) + '</p>') + '</section>';
+    }).join('');
+    renderCiclo();
+    ajustarAltura();
+    observeCharts();
+    salvarUrl();
+  }
+
+  // ── Resumo do ciclo no cabeçalho: quantos gráficos aguardam a atualização final do mês ──
+  var cicloFoco = false;
+  function renderCiclo() {
+    var box = document.getElementById('cycleBox'), total = 0, pend = [], marcas = '';
+    visao().paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        var v = view(c);
+        if (!v.at) return; // sem situação conhecida: fora da conta
+        total++;
+        var st = v.at.status;
+        marcas += '<i class="' + (st === 'atrasado' ? 'l' : st === 'ok' ? '' : 'w') + '"></i>';
+        if (st !== 'ok') pend.push({ id: c.id, t: v.t, at: v.at });
+      });
+    });
+    if (!total && (carregandoDados || aguardandoSituacao)) return; // carregando: o resumo anterior fica até a resposta chegar
+    var mes = mesLongo(state.mes - 1);
+    if (!pend.length) cicloFoco = false;
+    document.getElementById('dash').classList.toggle('foco-pendentes', cicloFoco);
+    box.hidden = !total;
+    if (!total) { box.innerHTML = ''; return; }
+    if (!pend.length) { box.innerHTML = '<span class="cycle-ok">' + esc(T('c.tudoOk', { mes: mes })) + '</span>'; return; }
+    pend.sort(function (a, b) { return (a.at.status === 'atrasado' ? 0 : 1) - (b.at.status === 'atrasado' ? 0 : 1); });
+    var aberto = box.querySelector('.cycle-pop') && !box.querySelector('.cycle-pop').hidden;
+    box.innerHTML = '<button type="button" class="cycle" id="cycleBtn" aria-expanded="' + aberto + '" aria-controls="cyclePop">' +
+      '<span class="cycle-bar" aria-hidden="true">' + marcas + '</span><span><b>' + esc(T('c.resumo', { n: pend.length, total: total })) + '</b> ' + esc(T('c.resumoTxt')) + '</span></button>' +
+      '<div class="cycle-pop" id="cyclePop" role="dialog" aria-label="' + esc(T('c.titulo', { mes: mes, ano: state.ano })) + '"' + (aberto ? '' : ' hidden') + '>' +
+      '<h4>' + esc(T('c.titulo', { mes: mes, ano: state.ano })) + '</h4><p>' + esc(T('c.info')) + '</p>' +
+      pend.map(function (it) {
+        return '<button type="button" class="cyc-item" data-card="' + esc(it.id) + '"><span class="dot' + (it.at.status === 'atrasado' ? ' l' : '') + '" aria-hidden="true"></span>' +
+          '<span>' + esc(it.t) + '</span><span class="sub">' + esc(textoCiclo(it.at) + ' · ' + detalheCiclo(it.at)) + '</span></button>';
+      }).join('') +
+      '<div class="cyc-foot"><button type="button" class="cyc-foco" aria-pressed="' + cicloFoco + '">' + esc(T('c.destacar')) + '</button></div></div>';
+  }
+  function abrirCiclo(sim, devolverFoco) {
+    var pop = document.getElementById('cyclePop'), btn = document.getElementById('cycleBtn');
+    if (!pop || !btn) return;
+    pop.hidden = !sim;
+    btn.setAttribute('aria-expanded', String(sim));
+    if (!sim && devolverFoco) btn.focus();
+  }
+  document.getElementById('cycleBox').addEventListener('click', function (e) {
+    if (e.target.closest('#cycleBtn')) { abrirCiclo(document.getElementById('cyclePop').hidden); return; }
+    var foco = e.target.closest('.cyc-foco');
+    if (foco) {
+      cicloFoco = !cicloFoco;
+      foco.setAttribute('aria-pressed', String(cicloFoco));
+      document.getElementById('dash').classList.toggle('foco-pendentes', cicloFoco);
+      return;
+    }
+    var item = e.target.closest('.cyc-item');
+    if (item) {
+      var card = document.getElementById('card-' + item.getAttribute('data-card'));
+      abrirCiclo(false);
+      if (!card) return;
+      card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      card.classList.remove('cyc-flash'); void card.offsetWidth; card.classList.add('cyc-flash');
+      var selo = card.querySelector('.cyc-faixa'); if (selo) selo.focus({ preventScroll: true });
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var pop = document.getElementById('cyclePop');
+    if (pop && !pop.hidden && !e.target.closest('#cycleBox')) abrirCiclo(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    var pop = document.getElementById('cyclePop');
+    if (e.key === 'Escape' && pop && !pop.hidden) abrirCiclo(false, true);
+  });
+
+  // ── Navegação do PDF: BU → minas (Ontario 1/6 a 6/6, VNL) e volta para a BU ──
+  function renderNav() {
+    var nav = document.getElementById('siteNav'), h = '', minas = MINAS[state.bu], bu = BU_DA_MINA[state.bu];
+    if (minas) {
+      h = '<button type="button" class="nav-chip" data-go="' + esc(minas[0]) + '">' + esc(T('n.minas')) + (minas.length > 1 ? ' (' + minas.length + ')' : '') + ' <span aria-hidden="true">›</span></button>';
+    } else if (bu) {
+      var irmas = MINAS[bu], i = irmas.indexOf(state.bu), n = irmas.length;
+      h = '<button type="button" class="nav-chip" data-go="' + esc(bu) + '" aria-label="' + esc(T('n.voltar', { bu: bu })) + '"><span aria-hidden="true">‹</span> ' + esc(bu) + '</button>';
+      if (n > 1) {
+        h += '<span class="pager" role="group" aria-label="' + esc(T('n.minasDe', { bu: bu })) + '">' +
+          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.max(0, i - 1)]) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + esc(T('n.anterior')) + '"><span aria-hidden="true">‹</span></button>' +
+          '<button type="button" class="nav-chip" data-go="' + esc(irmas[Math.min(n - 1, i + 1)]) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="' + esc(T('n.proxima')) + '"><span aria-hidden="true">›</span></button></span>';
+      }
+    }
+    nav.innerHTML = h;
+    nav.hidden = !h;
+  }
+  document.getElementById('siteNav').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-go]');
+    if (!b || b.disabled) return;
+    var lbl = b.getAttribute('aria-label');
+    state.bu = b.getAttribute('data-go');
+    atualizar();
+    // foco no botão equivalente da nova página (paginação contínua pelo teclado)
+    var nb = (lbl && document.querySelector('#siteNav button[aria-label="' + lbl + '"]:not([disabled])')) ||
+      document.querySelector('#siteNav .pager button:not([disabled])') || document.querySelector('#siteNav button');
+    if (nb) nb.focus();
+  });
+
+  // ── Unidade: drill-down País → Site ──
+  var unitTrigger = document.getElementById('unitTrigger'), unitPop = document.getElementById('unitPop');
+  var paisNav = state.pais; // país sendo navegado no painel (ainda não aplicado)
+  function renderUnit() {
+    document.getElementById('unitPaises').innerHTML = UNIDADES.map(function (u) {
+      return '<button type="button" data-pais="' + esc(u.pais) + '" aria-current="' + (u.pais === paisNav) + '">' + esc(T('pais.' + u.pais)) + '<span class="n">' + u.sites.length + ' ›</span></button>';
+    }).join('');
+    var atual = UNIDADES.filter(function (u) { return u.pais === paisNav; })[0] || { sites: [] };
+    function botao(site, sub) {
+      var on = site === state.bu && paisNav === state.pais;
+      return '<button type="button" data-site="' + esc(site) + '"' + (sub ? ' class="sub"' : '') + ' aria-pressed="' + on + '">' + esc(site) + '</button>';
+    }
+    // BU selecionável e, logo abaixo, as suas minas (drill-through do PDF)
+    document.getElementById('unitSites').innerHTML = atual.sites.map(function (site) {
+      return botao(site) + (MINAS[site] || []).map(function (m) { return botao(m, true); }).join('');
+    }).join('');
+  }
+  function abrirUnit(abrir) {
+    unitPop.hidden = !abrir;
+    unitTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) {
+      paisNav = state.pais;
+      renderUnit();
+      var sel = unitPop.querySelector('button[data-site][aria-pressed="true"]') || unitPop.querySelector('button[data-site]');
+      if (sel) sel.focus();
+    }
+  }
+  unitTrigger.addEventListener('click', function () { abrirUnit(unitPop.hidden); });
+  unitPop.addEventListener('click', function (e) {
+    // O painel é redesenhado ao escolher o país: sem isto, o clique chegaria ao
+    // documento com o alvo já fora da página e fecharia o painel.
+    e.stopPropagation();
+    var pb = e.target.closest('button[data-pais]'), sb = e.target.closest('button[data-site]');
+    if (pb) {
+      paisNav = pb.getAttribute('data-pais');
+      renderUnit();
+      var f = unitPop.querySelector('button[data-pais="' + paisNav + '"]');
+      if (f) f.focus();
+    } else if (sb) {
+      state.pais = paisNav;
+      state.bu = sb.getAttribute('data-site');
+      abrirUnit(false);
+      unitTrigger.focus();
+      atualizar();
+    }
+  });
+  document.addEventListener('click', function (e) {
+    if (!unitPop.hidden && !e.target.closest('.unit:not(.ciclo)')) abrirUnit(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !unitPop.hidden) { abrirUnit(false); unitTrigger.focus(); }
+  });
+
+  // ── Ciclo: carga gravada (DT_REF). Trocar o ciclo relê os filtros e os indicadores daquela carga;
+  // a unidade escolhida continua quando existir no ciclo, e o mês volta ao último realizado dele
+  var cicloTrigger = document.getElementById('cicloTrigger'), cicloPop = document.getElementById('cicloPop');
+  function abrirCicloSel(abrir) {
+    cicloPop.hidden = !abrir;
+    cicloTrigger.setAttribute('aria-expanded', String(abrir));
+    if (abrir) {
+      renderCicloSel();
+      var sel = cicloPop.querySelector('button[aria-pressed="true"]') || cicloPop.querySelector('button');
+      if (sel) sel.focus();
+    }
+  }
+  cicloTrigger.addEventListener('click', function () { abrirCicloSel(cicloPop.hidden && CICLOS.length > 0); });
+  cicloPop.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var b = e.target.closest('button[data-ciclo]');
+    if (!b) return;
+    var c = b.getAttribute('data-ciclo');
+    abrirCicloSel(false);
+    cicloTrigger.focus();
+    if (c === state.ciclo) return;
+    state.ciclo = c;
+    filtrosPromessa = null;
+    renderCicloSel();
+    atualizar();
+  });
+  document.addEventListener('click', function (e) {
+    if (!cicloPop.hidden && !e.target.closest('.ciclo')) abrirCicloSel(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !cicloPop.hidden) { abrirCicloSel(false); cicloTrigger.focus(); }
+  });
+
+  // ── Delta: interruptor liga/desliga ──
+  document.getElementById('deltaSwitch').addEventListener('click', function () {
+    state.delta = state.delta === 'on' ? 'off' : 'on';
+    this.setAttribute('aria-checked', String(state.delta === 'on'));
+    render();
+  });
+
+  // ── Dados: tudo vem da consulta do COO People Dashboard (coo-api.js → database/001_coo_people_dashboard.sql) ──
+  // De dentro do navegador não dá para saber se a página está no Portal
+  // (/VBM-Performance-Hub/COO-Business-Units-Dashboard-People/) ou num app próprio:
+  // tenta os caminhos na ordem e guarda o primeiro que responder.
+  // Só caminhos do COO: '/api/' na raiz do Portal é a API de OUTRA aplicação (Kaizen)
+  var API_BASES = ['api/', '/VBM-Performance-Hub/COO-Business-Units-Dashboard-People/api/', '/COO-Business-Units-Dashboard-People/api/'];
+  var API_TIMEOUT_MS = 75000; // acima do requestTimeout do banco (60 s): o servidor responde antes
+  var apiBase = null, SITE_ID = {}, seqDados = 0, filtrosPromessa = null, filtrosFresco = true, configPromessa = null;
+
+  // Próximo caminho só quando este não existe (404) ou a rede falhou; erro do servidor (5xx, 403,
+  // 429) é a resposta certa e não se repete — senão uma queda do banco viraria várias consultas
+  function apiGet(recurso) {
+    var bases = apiBase ? [apiBase] : API_BASES, i = 0;
+    function tentar() {
+      if (i >= bases.length) return Promise.reject(new Error('API unavailable'));
+      var b = bases[i++], ctrl = window.AbortController ? new AbortController() : null;
+      var limite = ctrl ? setTimeout(function () { ctrl.abort(); }, API_TIMEOUT_MS) : null;
+      return fetch(new URL(recurso, new URL(b, location.href)), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
+        .then(function (r) {
+          clearTimeout(limite);
+          if (r.status === 404 && !apiBase) return tentar();
+          if (!r.ok) { var e = new Error(recurso + ' → ' + r.status); e.final = true; throw e; }
+          return r.json().then(function (j) { apiBase = b; return j; });
+        }, function (err) {
+          clearTimeout(limite);
+          if (err && err.name === 'AbortError') { var t = new Error(recurso + ' → timeout'); t.final = true; throw t; }
+          return tentar(); // rede: tenta o próximo caminho
+        });
+    }
+    return tentar();
+  }
+
+  // Situação dos dados, sempre visível quando não há números: sem conexão ou sem dados no período
+  var MSG_PAINEL = 's.consultando', ultimoStatus = null, carregandoDados = false, aguardandoSituacao = false; // painel sem cards (sem conexão ou sem dados)
+  // detalhe: função que monta o texto (refeita ao trocar de idioma); upd: Date da consulta
+  function marcarStatus(tipo, detalhe, upd) {
+    ultimoStatus = [tipo, detalhe, upd];
+    carregandoDados = tipo === 'carregando';
+    if (typeof detalhe === 'function') detalhe = detalhe();
+    if (upd instanceof Date) upd = isNaN(upd) ? null : VBMSetup.dataHora(upd);
+    var b = document.getElementById('dataBadge');
+    MSG_PAINEL = tipo === 'erro' ? 's.semConexao' : tipo === 'carregando' ? 's.consultando' : 's.semIndicadores';
+    // Carregando: sem selo e a data anterior fica até a resposta chegar (troca de filtro sem "piscar")
+    b.hidden = tipo === 'ok' || tipo === 'carregando';
+    b.textContent = T(tipo === 'erro' ? 'b.erro' : tipo === 'desatualizado' ? 'b.desatualizado' : 'b.vazio');
+    b.title = detalhe || '';
+    if (tipo !== 'carregando') document.getElementById('updTxt').textContent = upd || '—';
+  }
+
+  // ── Unidades e filtros: sites, anos e mês inicial vêm do resultado da consulta (/api/filtros) ──
+  // País (a consulta não traz): IR agrupa as refinarias; Brasil, os sites brasileiros; o resto é Canadá
+  var SITES_IR = /^(internationalrefineries|ir|clydach|clydachcnr|matsusaka|matsuzaka|matsusakatonimet)$/;
+  // IR no seletor é só "International Refineries"; Clydach | CNR (ID_SITE 16) e Matsusaka (ID_SITE 26)
+  // alimentam os cards de produção dela e não aparecem como unidade
+  var IR_NOME = 'International Refineries', IR_IDS_FILHOS = [], IR_FILHOS = [];
+  function ehFilhoIR() { return false; } // People: cada site com dados é uma unidade do menu
+  var SITES_BRASIL = /^(salobo|sossego|oncapuma)$/;
+  function paisDo(nome) { var n = normalizar(nome); return SITES_IR.test(n) ? 'IR' : SITES_BRASIL.test(n) ? 'Brazil' : 'Canada'; }
+  var ORDEM_PAISES = ['Brazil', 'Canada', 'IR'];
+  // Minas de cada BU (navegação do PDF: BU → minas); só entram as que a consulta trouxer como site.
+  // Prefixo do nome normalizado: aceita variações como "Copper Cliff Mine" ou "Copper Clif"
+  var MINAS_DA_BU = {}, MINAS_EM_COLUNAS = {}; // People: sem drill-through de minas
+  var VNL_MINAS_DE = {}; // nome da mina → página em colunas que a mostra
+  function visaoColunas(nome, minas) {
+    return { cls: 'dash--colunas', colsProd: 1, rows: 4, titulo: nome, colunas: minas.map(function (m) { return { id: m.id, nome: m.nome }; }),
+      paineis: minas.map(function (m, i) { return { titulo: m.nome, sub: m.sub, cls: i % 2 ? 'panel-fin' : 'panel-prod', site: m.id, cards: [] }; }) };
+  }
+  var MINAS = {}, BU_DA_MINA = {}; // nome da BU → nomes das minas; nome da mina → BU
+
+  function aplicarFiltros(f) {
+    var grupos = {}, porChave = {};
+    SITE_ID = {}; MINAS = {}; BU_DA_MINA = {};
+    // Ordem de apresentação: ID_SITE (BUs, minas e refinarias); a IR sem site próprio vai ao fim
+    var porId = (f.sites || []).slice().sort(function (a, b) { return (a.id == null ? Infinity : a.id) - (b.id == null ? Infinity : b.id); });
+    IR_FILHOS = porId.filter(ehFilhoIR);
+    var sites = porId.filter(function (st) { return !ehFilhoIR(st); });
+    // refinarias com dados e sem o site da IR: a IR entra mesmo assim
+    if (IR_FILHOS.length && !sites.some(function (st) { return SITES_IR.test(normalizar(st.nome)) && !ehFilhoIR(st); })) sites.push({ id: null, nome: IR_NOME });
+    sites.forEach(function (st) {
+      VISOES[st.nome] = VISOES[st.nome] || criarVisao(st.nome);
+      SITE_ID[st.nome] = st.id;
+      porChave[normalizar(st.nome)] = st.nome;
+    });
+    var ocultos = {}; VNL_MINAS_DE = {}; // minas que só aparecem dentro da página em colunas
+    Object.keys(MINAS_EM_COLUNAS).forEach(function (chaveBu) {
+      var cfg = MINAS_EM_COLUNAS[chaveBu];
+      var minas = cfg.minas.map(function (mc) {
+        var c = Object.keys(porChave).filter(function (n) { return n.indexOf(mc.m) === 0; })[0];
+        return c && { id: SITE_ID[porChave[c]], nome: porChave[c], sub: mc.sub };
+      }).filter(Boolean);
+      if (!minas.length) return;
+      minas.forEach(function (m) { ocultos[m.nome] = true; VNL_MINAS_DE[m.nome] = cfg.nome; });
+      VISOES[cfg.nome] = visaoColunas(cfg.nome, minas);
+      SITE_ID[cfg.nome] = null;
+      var bu = porChave[chaveBu] ? chaveBu : Object.keys(porChave).filter(function (n) { return n.indexOf(chaveBu) === 0; })[0];
+      if (bu) { MINAS[porChave[bu]] = [cfg.nome]; BU_DA_MINA[cfg.nome] = porChave[bu]; }
+      else sites.push({ id: null, nome: cfg.nome }); // sem a BU no menu: a página entra solta
+    });
+    if (f.semNome && f.semNome.length) console.warn('[coo-people] ID_SITE with data but no name in IBP.SITES (left out of the menu): ' + f.semNome.join(', '));
+    Object.keys(MINAS_DA_BU).forEach(function (chaveBu) {
+      // BU pelo prefixo do nome normalizado ("Ontario", "Ontario Operations", "VNL | …")
+      var bu = porChave[chaveBu] ? chaveBu : Object.keys(porChave).filter(function (n) { return n.indexOf(chaveBu) === 0; })[0];
+      if (!bu) return;
+      var minas = MINAS_DA_BU[chaveBu].map(function (m) {
+        var c = Object.keys(porChave).filter(function (n) { return n.indexOf(m) === 0; })[0];
+        return c && porChave[c];
+      }).filter(Boolean).sort(function (a, b) { return SITE_ID[a] - SITE_ID[b]; });
+      if (minas.length) MINAS[porChave[bu]] = minas;
+      minas.forEach(function (m) { BU_DA_MINA[m] = porChave[bu]; });
+    });
+    sites.forEach(function (st) {
+      if (BU_DA_MINA[st.nome] || ocultos[st.nome]) return; // a mina aparece logo abaixo da sua BU
+      var pais = paisDo(st.nome);
+      (grupos[pais] = grupos[pais] || []).push(st.nome);
+    });
+    UNIDADES = ORDEM_PAISES.filter(function (p) { return grupos[p]; }).map(function (p) { return { pais: p, sites: grupos[p] }; });
+    if (!UNIDADES.length) throw new Error('The query returned no sites with data.');
+    ANOS = f.anos && f.anos.length ? f.anos : [state.ano];
+    // abre no último mês realizado (o mesmo corte A/F da consulta)
+    var ult = f.ultimoRealizado;
+    if (ult) { state.ano = ult.ano; state.mes = ult.mes; state.tri = Math.ceil(ult.mes / 3); }
+    else if (ANOS.indexOf(state.ano) < 0) state.ano = ANOS[ANOS.length - 1];
+    if (URL_INI) { // tela do endereço (refresh ou link), só com valores que a consulta tem
+      var u = URL_INI; URL_INI = null;
+      if (u.site && ocultos[u.site] && VNL_MINAS_DE[u.site]) u.site = VNL_MINAS_DE[u.site];
+      if (u.site === 'IR' && !(u.site in SITE_ID)) u.site = IR_NOME; // link salvo com o nome curto antigo // link antigo de uma mina → página em colunas
+      if (u.site && u.site in SITE_ID) { state.bu = u.site; state.pais = paisDo(BU_DA_MINA[u.site] || u.site); }
+      // seletores dos cards (All-in, CAPEX, Cu/Au): "id.opção" separados por vírgula; opção inválida é ignorada em selDe
+      u.sel.split(',').forEach(function (par) { var m = /^([a-z]\d+)\.([a-z]+)$/.exec(par); if (m) state.sel[m[1]] = m[2]; });
+      var mesesDoAno = (f.meses || {})[u.ano];
+      if (ANOS.indexOf(u.ano) >= 0 && mesesDoAno && mesesDoAno.indexOf(u.mes) >= 0) { state.ano = u.ano; state.mes = u.mes; state.tri = Math.ceil(u.mes / 3); }
+      state.plan = u.plan;
+      state.delta = u.delta ? 'on' : 'off';
+      document.getElementById('deltaSwitch').setAttribute('aria-checked', String(state.delta === 'on'));
+    }
+    if (!(state.bu in SITE_ID)) { state.pais = UNIDADES[0].pais; state.bu = UNIDADES[0].sites[0]; }
+    renderFilters();
+  }
+
+  function filtros() {
+    if (!filtrosPromessa) {
+      // 1ª carga da página (refresh): pede ao servidor para reler o banco (ver FRESCO_MS em coo-api.js)
+      // Ciclos gravados (uma vez); depois os filtros da carga escolhida. Sem carga gravada não há dados.
+      var fresco = filtrosFresco ? '&fresco=1' : '';
+      // Configuração do banco (seletores e apelidos): uma vez, antes da 1ª montagem; falha não bloqueia
+      // People não usa a configuração de tela do COO (seletores e apelidos de KPI): nada a ler
+      var cfg = configPromessa || (configPromessa = Promise.resolve());
+      filtrosPromessa = Promise.all([cfg, CICLOS.length ? null : apiGet('ciclos?fresco=1')]).then(function (rs) {
+        var r = rs[1];
+        if (!r) return;
+        CICLOS = ((r && r.ciclos) || []).map(function (c) { return c.ciclo; });
+        if (!CICLOS.length) throw new Error(T('s.semCiclo'));
+        if (CICLOS.indexOf(state.ciclo) < 0) state.ciclo = CICLOS.indexOf(CICLO_URL) >= 0 ? CICLO_URL : CICLOS[0];
+        renderCicloSel();
+      }).then(function () { return apiGet('filtros?ciclo=' + state.ciclo + fresco); }).then(function (f) {
+        filtrosFresco = false;
+        aplicarFiltros(f);
+      }).catch(function (e) { filtrosPromessa = null; throw e; });
+    }
+    return filtrosPromessa;
+  }
+
+  // ── Preenchimento dos cards com o resultado de /api/indicadores ──
+  var JANELA = { MONTH: 0, QUARTER: 1, YEAR: 2 };
+
+  // Preenche os indicadores do PDF com o resultado da consulta: nome, unidade e valores do banco.
+  // KPIs da consulta fora do PDF não entram na tela.
+  // Casas decimais vindas do banco (IBP.DASHBOARD.VL_CASADECIMAL, por KPI); sem valor, o padrão do card
+  function casasDe(s, l) {
+    if (!('decPdf' in s)) s.decPdf = s.dec;
+    return l && l.CASA_DECIMAL != null ? l.CASA_DECIMAL : s.decPdf;
+  }
+
+  // Ordem dos gráficos em cada painel: ID_ORDEM da query. A lista do PDF só diz quais gráficos
+  // entram e em qual painel; card com seletor usa a menor ordem das suas alternativas; card sem
+  // dados vai ao fim, na ordem do PDF
+  function ordenarCards(vs) {
+    vs.paineis.forEach(function (p) {
+      function ordem(c) {
+        var os = (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a].ordem; }) : [c.ordem]).filter(function (o) { return !isNaN(o); });
+        return os.length ? Math.min.apply(null, os) : Infinity;
+      }
+      var pdf = function (c) { return Number(String(c.id).slice(1)); };
+      p.cards.sort(function (a, b) { return (ordem(a) - ordem(b)) || (pdf(a) - pdf(b)); });
+    });
+  }
+
+  function preencher(vs, linhas, site, cadastro) {
+    if (vs.colunas) return 0; // página em colunas (VNL Mines): preencherColunas
+    var porKpi = {}, letras = ['A', 'A', 'F'], kpis = {}, achados = 0;
+    // KPIs do site: o cadastro (também os sem valor no período) e os que vieram na consulta
+    function kpi(l) {
+      var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
+      if (!kpis[chave]) kpis[chave] = { chave: chave, op: Number(l.ID_OPERACAO), id: l.ID_KPI, t: String(l.NM_KPI || '').trim(),
+        ordem: POS_KPI[Number(l.ID_KPI)], u: String(l.SG_UNID || '').trim(), casas: l.CASA_DECIMAL }; // ordem de People, não o ID_ORDEM do banco
+      return kpis[chave];
+    }
+    function dePeople(l) { return regraDe(l.ID_KPI) !== null; }
+    (cadastro || []).filter(dePeople).forEach(kpi);
+    (linhas || []).filter(dePeople).forEach(function (l) {
+      var k0 = kpi(l);
+      if (k0.casas == null && l.CASA_DECIMAL != null) k0.casas = l.CASA_DECIMAL;
+      if (!k0.u && l.SG_UNID) k0.u = String(l.SG_UNID).trim();
+      if (!porKpi[k0.chave]) porKpi[k0.chave] = [[null, null], [null, null], [null, null]];
+      porKpi[k0.chave][JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
+      if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
+    });
+    var lista = Object.keys(kpis).map(function (c) { return kpis[c]; }).filter(function (x) { return x.t; })
+      .sort(function (a, b) { return ((isNaN(a.ordem) ? Infinity : a.ordem) - (isNaN(b.ordem) ? Infinity : b.ordem)) || (a.op - b.op) || (a.id - b.id); });
+    // Dados de um KPI no card (ou na opção do seletor)
+    function aplicar(s, x) {
+      s.t = x.t; s.tPdf = x.t; s.u = x.u; s.ordem = x.ordem; s.via = 'nome';
+      s.dec = x.casas != null && !isNaN(x.casas) ? Number(x.casas) : CASAS_PADRAO;
+      s.d = porKpi[x.chave] || null;
+      s.ref = site ? site + '|' + x.op + '|' + x.id : null; s.atual = atualDe(s.ref); // situação do ciclo: já recebida ou aplicarAtualizacao
+      s.falta = { kpi: false, unid: !x.u, dec: x.casas == null };
+      if (s.d) achados++;
+    }
+    var nomeSite = normalizar(vs.titulo), notas = [];
+    Object.keys(NOTAS).forEach(function (pref) { if (nomeSite.indexOf(pref) === 0) notas = notas.concat(NOTAS[pref].map(normalizar)); });
+    var usados = {}, prod = [], fin = [];
+    function painelDe() { return prod; } // People: painel único
+    // Seletores: as opções existentes no site viram um card só (na posição da 1ª opção)
+    var grupos = [];
+    Object.keys(SELETORES).forEach(function (cod) {
+      var sel = SELETORES[cod], ops = [];
+      sel.opcoes.forEach(function (o) {
+        var nomes = (o.kpi || []).map(normalizar);
+        var x = lista.filter(function (y) { return !usados[y.chave] && nomes.indexOf(normalizar(y.t)) >= 0 && (!o.unid || o.unid.test(y.u)); })
+          .sort(function (a, b) { return nomes.indexOf(normalizar(a.t)) - nomes.indexOf(normalizar(b.t)); })[0];
+        if (x) ops.push({ o: o, x: x });
+      });
+      if (ops.length < 2) return;
+      ops.forEach(function (it) { usados[it.x.chave] = true; });
+      grupos.push({ cod: cod, sel: sel, ops: ops, ordem: Math.min.apply(null, ops.map(function (it) { return isNaN(it.x.ordem) ? Infinity : it.x.ordem; })) });
+    });
+    lista.forEach(function (x) {
+      if (usados[x.chave]) {
+        var g = grupos.filter(function (g0) { return !g0.feito && g0.ops.some(function (it) { return it.x === x; }); })[0];
+        if (!g) return;
+        g.feito = true;
+        var card = { pol: g.sel.pol, altLabel: g.sel.label, seletor: g.cod, alt: {}, vazio: SEM_DADOS };
+        g.ops.forEach(function (it) { var a = { lbl: it.o.lbl }; aplicar(a, it.x); a.ordem = it.x.ordem; card.alt[it.o.chave] = a; });
+        card.t = g.ops[0].x.t;
+        painelDe(x).push(card);
+        return;
+      }
+      var c = { regra: regraDe(x.id), vazio: SEM_DADOS }; // cor do delta: regra do ID_KPI (REGRAS_KPI)
+      if (notas.indexOf(normalizar(x.t)) >= 0) c.nota = 'c.notaInterm';
+      aplicar(c, x);
+      painelDe(x).push(c);
+    });
+    // IR: produção vem das refinarias (preencherFilhos); só o financeiro sai do cadastro da IR
+    var cardsProd = vs.ir ? vs.paineis[0].cards : prod;
+    cardsProd.forEach(function (c, i) { if (!vs.ir) c.id = 'p' + i; });
+    fin.forEach(function (c, i) { c.id = 'f' + i; });
+    vs.paineis[0].cards = cardsProd;
+    // Disposição fixa, igual à de Salobo: BU com produção em 3 colunas e financeiro em 2, sempre com
+    // 3 linhas (mesma posição, tamanho e distância entre os gráficos, mesmo com menos cards).
+    // Mina de uma BU: 2 colunas e 2 linhas. Mais cards que isso: novas linhas abaixo.
+    if (!vs.ir) {
+      var mina = !!BU_DA_MINA[vs.titulo];
+      vs.colsProd = 3; vs.cls = 'dash--people';
+      vs.rows = Math.max(3, Math.ceil(cardsProd.length / vs.colsProd));
+    } else vs.rows = Math.max(1, cardsProd.length, Math.ceil(fin.length / 2));
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (c) { if (c.alt) { var a0 = c.alt[altChaves(c)[0]]; c.t = a0.t; c.u = a0.u; } });
+    });
+    if (window.console && console.table && lista.length) {
+      console.groupCollapsed('[coo-people] ' + vs.titulo + ': cards from IBP.DASHBOARD (' + achados + ' with data)');
+      console.table(lista.map(function (x) { return { order: x.ordem + 1, rule: regraDe(x.id), NM_KPI: x.t, ID_OPERACAO: x.op, ID_KPI: x.id, ID_ORDEM: x.ordem, SG_UNID: x.u, VL_CASADECIMAL: x.casas, data: !!porKpi[x.chave] }; }));
+      console.groupEnd();
+    }
+    LETRAS_AF = letras;
+    return achados;
+  }
+
+  // Cards lidos de outro site (produção de cada refinaria na IR): o KPI de mesmo nome,
+  // senão o de produção, senão o primeiro pelo ID_ORDEM. Devolve quantos têm dados.
+  // Página em colunas: cada mina recebe um card por KPI da query, na ordem do ID_ORDEM, com
+  // nome, unidade e casas decimais do banco. Devolve quantos cards têm dados.
+  // Página em colunas (VNL Mines): uma coluna por mina com os KPIs de produção, na vertical. As linhas
+  // são as mesmas em todas as minas (um KPI por linha, na ordem do ID_ORDEM): KPI sem valor numa mina
+  // fica com o card vazio na mesma linha. Nome, unidade e casas decimais do banco (vazio = 0).
+  function preencherColunas(vs, respostas) {
+    var achados = 0, letras = ['A', 'A', 'F'], linhasKpi = {}, porMina = [];
+    function chaveDe(l) { return normalizar(l.NM_KPI); }
+    vs.paineis.forEach(function (p, i) {
+      var r = respostas.filter(function (x) { return Number(x.site) === Number(p.site); })[0], porKpi = {};
+      function guardar(l, d) {
+        if (Number(l.ID_OPERACAO) === OPERACAO_FINANCEIRA || !String(l.NM_KPI || '').trim()) return null;
+        var ch = chaveDe(l);
+        if (!porKpi[ch]) porKpi[ch] = { l: l, d: d };
+        var o = Number(l.ID_ORDEM), atual = linhasKpi[ch];
+        if (!atual) linhasKpi[ch] = { ch: ch, ordem: isNaN(o) ? Infinity : o };
+        else if (!isNaN(o) && o < atual.ordem) atual.ordem = o;
+        return porKpi[ch];
+      }
+      ((r && r.linhas) || []).forEach(function (l) {
+        var k0 = guardar(l, null);
+        if (!k0) return;
+        if (!k0.d) k0.d = [[null, null], [null, null], [null, null]];
+        k0.d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
+        if (l.LETRA_AF) letras[JANELA[l.CD_VISAO]] = l.LETRA_AF;
+      });
+      ((r && r.cadastro) || []).forEach(function (l) { guardar(l, null); }); // cadastrado sem linha no mês
+      porMina[i] = porKpi;
+    });
+    var ordem = Object.keys(linhasKpi).map(function (ch) { return linhasKpi[ch]; }).sort(function (a, b) { return a.ordem - b.ordem; });
+    vs.paineis.forEach(function (p, i) {
+      var porKpi = porMina[i] || {};
+      p.cards = ordem.map(function (lk, j) {
+        var item = porKpi[lk.ch], l = item ? item.l : null;
+        var base = l || (function () { for (var m = 0; m < porMina.length; m++) if (porMina[m] && porMina[m][lk.ch]) return porMina[m][lk.ch].l; return {}; })();
+        if (item && item.d) achados++;
+        return { id: 'm' + i + 'k' + j, t: String(base.NM_KPI || '').trim(), tPdf: String(base.NM_KPI || '').trim(), u: base.SG_UNID || '',
+          dec: base.CASA_DECIMAL != null ? Number(base.CASA_DECIMAL) : CASAS_PADRAO, regra: l ? regraDe(l.ID_KPI) : null,
+          d: item ? item.d : null, ordem: lk.ordem, ref: l ? p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null, atual: l ? atualDe(p.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI) : null, vazio: SEM_DADOS,
+          falta: l ? faltaNaQuery(l) : { kpi: true }, via: 'nome' };
+      });
+    });
+    vs.rows = Math.max(1, ordem.length);
+    LETRAS_AF = letras;
+    return achados;
+  }
+
+  function preencherFilhos(vs, respostas) {
+    var achados = 0;
+    vs.paineis.forEach(function (p) {
+      p.cards.forEach(function (s) {
+        if (!s.filho) return;
+        if (!s.tPdf) s.tPdf = s.t;
+        var r = respostas.filter(function (x) { return normalizar(x.nome).indexOf(s.filho) === 0; })[0];
+        var porKpi = {}, ordem = [];
+        ((r && r.linhas) || []).forEach(function (l) {
+          var chave = l.ID_OPERACAO + '-' + l.ID_KPI;
+          if (!porKpi[chave]) { porKpi[chave] = { l: l, d: [[null, null], [null, null], [null, null]] }; ordem.push(chave); }
+          porKpi[chave].d[JANELA[l.CD_VISAO]] = [l.VL_B == null ? null : Number(l.VL_B), l.VL_AF == null ? null : Number(l.VL_AF), l.VL_P == null ? null : Number(l.VL_P)];
+        });
+        ordem.sort(function (a, b) { return (porKpi[a].l.ID_ORDEM || 0) - (porKpi[b].l.ID_ORDEM || 0); });
+        var nomes = [s.tPdf].concat(s.kpi || []).map(normalizar);
+        var chave = ordem.filter(function (c) { return nomes.indexOf(normalizar(porKpi[c].l.NM_KPI)) >= 0; })[0] ||
+          ordem.filter(function (c) { return /prod/i.test(porKpi[c].l.NM_KPI || ''); })[0] || ordem[0];
+        if (!chave) { s.d = null; s.t = s.tPdf; s.u = ''; s.dec = casasDe(s, null); s.atual = null; s.ref = null; s.ordem = NaN; s.falta = { kpi: true }; s.via = ''; return; }
+        var l = porKpi[chave].l, nome = String(l.NM_KPI).trim();
+        s.falta = faltaNaQuery(l);
+        s.via = nomes.indexOf(normalizar(nome)) >= 0 ? (normalizar(nome) === normalizar(s.tPdf) ? 'nome' : 'apelido') : 'regra IR';
+        s.d = porKpi[chave].d;
+        s.dec = casasDe(s, l);
+        s.ref = r.site ? r.site + '|' + l.ID_OPERACAO + '|' + l.ID_KPI : null; s.atual = atualDe(s.ref);
+        s.t = nome; // nome do gráfico como vem da query
+        s.ordem = Number(l.ID_ORDEM);
+        s.u = l.SG_UNID || '';
+        achados++;
+      });
+    });
+    return achados;
+  }
+
+  // Busca os indicadores do site no mês escolhido; só a resposta mais recente é aplicada
+  function carregarIndicadores() {
+    var meu = ++seqDados, situacao = null;
+    aguardandoSituacao = true;
+    marcarStatus('carregando', function () { return T('s.consultando'); });
+    filtros().then(function () {
+      if (meu !== seqDados) return null;
+      render(); // os filtros podem ter definido o site e o mês iniciais
+      var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo, id = SITE_ID[state.bu];
+      var filhos = visao().colunas || (paisDo(state.bu) === 'IR' && !BU_DA_MINA[state.bu] ? IR_FILHOS : []);
+      // situação da atualização em paralelo com os indicadores (aplicada quando os cards estiverem prontos)
+      situacao = pedirAtualizacao([id].concat(filhos.map(function (f) { return f.id; })));
+      return Promise.all([id ? apiGet('indicadores?site=' + id + periodo) : { linhas: [], geradoEm: new Date().toISOString() }].concat(
+        filhos.map(function (f) { return apiGet('indicadores?site=' + f.id + periodo).then(function (r) { r.nome = f.nome; return r; }); })));
+    }).then(function (todas) {
+      if (!todas || meu !== seqDados) return;
+      var resp = todas[0], vs = visao(), n = preencher(vs, resp.linhas, resp.site, resp.cadastro) + (vs.colunas ? preencherColunas(vs, todas.slice(1)) : preencherFilhos(vs, todas.slice(1))), dt = new Date(resp.geradoEm);
+      if (!vs.colunas) ordenarCards(vs);
+      if (vs.colunas && todas[1]) dt = new Date(todas[1].geradoEm);
+      var bu = state.bu, mes = state.mes - 1, ano = state.ano;
+      if (n) marcarStatus(resp.desatualizado ? 'desatualizado' : 'ok', resp.desatualizado ? function () { return T('s.desatualizado'); } : '', dt);
+      else marcarStatus('vazio', function () { return T('s.semValores', { bu: bu, mes: mesLongo(mes), ano: ano }); }, dt);
+      // Daqui em diante os dados da query já estão nos cards: um erro de desenho fica no console
+      // e NÃO cai no catch abaixo (que limparia os cards como se o banco tivesse falhado)
+      try { render(); } catch (e) { console.error('[coo-people] render error:', e); }
+      if (n && situacao) situacao.then(function (mapa) { aplicarAtualizacao(meu, mapa); });
+      else { aguardandoSituacao = false; renderCiclo(); }
+    }).catch(function (e) {
+      if (meu !== seqDados) return;
+      console.error('[coo-people] failed to load indicators:', e);
+      preencher(visao(), []);
+      if (visao().colunas) preencherColunas(visao(), []); else preencherFilhos(visao(), []);
+      var msg = e.message;
+      aguardandoSituacao = false;
+      marcarStatus('erro', function () { return T('s.erro', { msg: msg }); });
+      render();
+    });
+  }
+
+  // Situação da atualização já recebida, por ciclo|ano|mês|site|operação|KPI: os cards (e o resumo
+  // "Todos os gráficos atualizados…") já nascem com ela ao voltar a uma tela; só mudam se a resposta mudar
+  var ATUAL = {};
+  function prefixoAtual() { return state.ciclo + '|' + state.ano + '|' + state.mes + '|'; }
+  function atualDe(ref) { return ref ? ATUAL[prefixoAtual() + ref] || null : null; }
+  // Situação da atualização do ciclo (consulta à parte): chega depois dos gráficos e só acrescenta
+  // o aviso; se falhar ou demorar, os gráficos continuam como estão
+  var atualizacaoFresca = false; // só a 1ª da carga da página relê o banco
+  function pedirAtualizacao(sites) {
+    var periodo = '&ano=' + state.ano + '&mes=' + state.mes + '&ciclo=' + state.ciclo + (atualizacaoFresca ? '' : '&fresco=1'), pref = prefixoAtual();
+    atualizacaoFresca = true;
+    return Promise.all(sites.filter(Boolean).map(function (id) {
+      return apiGet('atualizacao?site=' + id + periodo).catch(function (e) { console.warn('[coo-people] update status unavailable:', e.message); return null; });
+    })).then(function (resps) {
+      var mapa = {};
+      resps.forEach(function (r) { if (r && r.kpis) Object.keys(r.kpis).forEach(function (k) { mapa[r.site + '|' + k] = r.kpis[k]; ATUAL[pref + r.site + '|' + k] = r.kpis[k]; }); });
+      return mapa;
+    }, function (e) { console.error('[coo-people] update status:', e); return {}; });
+  }
+  // Só redesenha se a situação recebida for diferente da que os cards já mostram
+  function aplicarAtualizacao(meu, mapa) {
+    if (meu !== seqDados) return;
+    aguardandoSituacao = false;
+    if (!Object.keys(mapa).length) { renderCiclo(); return; } // sem resposta: fica a situação já conhecida
+    var mudou = false, chave = function (a) { return a ? a.status + '|' + (a.texto || '') + '|' + (a.dt || '') : ''; };
+    visao().paineis.forEach(function (p) {
+      p.cards.forEach(function (c) {
+        (c.alt ? Object.keys(c.alt).map(function (a) { return c.alt[a]; }) : [c]).forEach(function (s) {
+          var novo = s.ref ? mapa[s.ref] || null : null;
+          if (chave(novo) !== chave(s.atual)) mudou = true;
+          s.atual = novo;
+        });
+      });
+    });
+    if (!mudou) { renderCiclo(); return; }
+    try { render(); } catch (e) { console.error('[coo-people] render error (update status):', e); }
+  }
+
+  function atualizar() {
+    render();
+    carregarIndicadores();
+  }
+
+  // ── Eventos ──
+  document.querySelector('.filters').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-v]');
+    if (!btn) return;
+    var k = btn.parentElement.getAttribute('data-filter'), raw = btn.getAttribute('data-v');
+    if (k === 'visao') { // Plan: liga/desliga a barra do Plan (Supply) no mês; não refaz a consulta
+      state.plan = !state.plan;
+      renderFilters();
+      render();
+      return;
+    }
+    state[k] = isNaN(Number(raw)) ? raw : Number(raw);
+    if (k === 'tri') state.mes = (state.tri - 1) * 3 + 3; // cascata: último mês do trimestre
+    renderFilters();
+    atualizar();
+  });
+
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest('button[data-alt]');
+    if (!g) return;
+    var id = g.getAttribute('data-for'), k = g.getAttribute('data-alt');
+    if (state.sel[id] === k) return;
+    state.sel[id] = k;
+    salvarUrl();
+    var tmp = document.createElement('div');
+    tmp.innerHTML = cardHtml(byId(id));
+    var card = tmp.firstChild;
+    card.classList.add('replay');
+    document.getElementById('card-' + id).replaceWith(card);
+    renderCiclo(); // a alternativa escolhida pode ter outra situação de atualização
+    ajustarAltura(); // o novo título pode mudar a altura do cabeçalho
+    observeCharts();
+    setTimeout(function () { card.classList.remove('replay'); }, 1500);
+    var btn = card.querySelector('button[data-alt="' + k + '"]');
+    if (btn) btn.focus();
+  });
+
+  var tip = document.getElementById('tip');
+  document.addEventListener('pointermove', function (e) {
+    var t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip');
+    tip.hidden = false;
+    tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px';
+    tip.style.top = (e.clientY - 34) + 'px';
+  });
+
+  // Tela cheia: alterna; navegadores ou janelas que bloqueiam a API ficam com o F11
+  // (o F11 é tratado no CSS por display-mode: fullscreen)
+  document.querySelectorAll('.js-full').forEach(function (b) {
+    b.addEventListener('click', function () {
+      try {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+      } catch (e) { /* sem suporte */ }
+    });
+  });
+  document.addEventListener('fullscreenchange', function () {
+    var on = !!document.fullscreenElement;
+    document.documentElement.classList.toggle('is-fs', on);
+    document.querySelectorAll('.js-full').forEach(function (b) {
+      b.setAttribute('aria-label', T(on ? 'fs.off' : 'fs.on'));
+      b.title = T(on ? 'fs.offTitle' : 'fs.onTitle');
+    });
+  });
+
+  VBMSetup.on('idioma', function () {
+    renderFilters();
+    if (ultimoStatus) marcarStatus.apply(null, ultimoStatus);
+    if (!unitPop.hidden) renderUnit();
+    var fs = !!document.fullscreenElement;
+    document.querySelectorAll('.js-full').forEach(function (b) { b.setAttribute('aria-label', T(fs ? 'fs.off' : 'fs.on')); b.title = T(fs ? 'fs.offTitle' : 'fs.onTitle'); });
+    render();
+  });
+  VBMSetup.on('numero', function () { render(); });
+  VBMSetup.on('tema', function () { render(); });
+
+  renderFilters();
+  atualizar();
+})();
+</script>
+</body></html>
