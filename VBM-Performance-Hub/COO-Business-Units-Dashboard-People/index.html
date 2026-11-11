@@ -419,6 +419,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; } /* cresce com a nota de rodapé */
   .chart { height: 150px; }
 }
+/* People: em telas baixas (notebook, até ~940 px de altura) as 3 linhas não cabem sem achatar os
+   gráficos: a página rola, com gráficos de altura fixa (mesmo mecanismo do COO em telas muito baixas) */
+@media (max-height: 940px) {
+  html, body { height: auto; }
+  body { display: block; }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: auto; align-content: start; row-gap: 24px !important; }
+  .chart { height: 190px; }
+}
 @media (max-width: 720px) {
   .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .panel-prod .panel-grid, .panel-fin .panel-grid, .dash .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
@@ -1114,7 +1122,7 @@ window.VBMSetup = (function () {
     var showDelta = state.delta === 'on';
     var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
     // Com o Plan, o mês tem duas cotas (B→P e P→A) com as pílulas em degraus: mais espaço no topo
-    var MT = showDelta ? (comPlan ? 66 : 46) : 20, MB = 16, PW = W / 3;
+    var MT = showDelta ? (comPlan ? 66 : 64) : 36, MB = 16, PW = W / 3; // People: topo maior e igual em todos os gráficos (COO: 46 e 20)
     if (pendente(v)) MT += 24; // faixa "Pending final updates" no alto do gráfico
     // Sem o Plan: o layout padrão (B·A centrado em cada terço). Com o Plan: sete barras
     // (mês B·P·A, trimestre B·A, ano B·A) numa régua só, com a MESMA distância entre todas as colunas.
@@ -1159,11 +1167,11 @@ window.VBMSetup = (function () {
     }
     // escala: B e A/F das três janelas e, com o botão Plan, o Plan do mês
     var all = [].concat.apply([], v.d.map(function (p, i) { return comPlan && i === 0 ? p : p.slice(0, 2); })).filter(function (x) { return x !== null && x !== undefined; });
-    var folgaTopo = v.u === '%' || !!(ind.alt && ind.alt.cu);
+    var folgaTopo = false; // People: sem folga proporcional (no COO, só nos de %): a margem do topo (MT) é igual em todos
     function dom(vals) {
       var lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max(0, Math.max.apply(null, vals));
       if (hi === lo) hi = lo + 1;
-      if (folgaTopo) hi = hi / 0.72; // a coluna mais alta usa ~72% da altura
+      if (folgaTopo) hi = hi / 0.75; // a coluna mais alta usa ~75% da altura
       return [lo, hi];
     }
     var label = [v.t + ' (' + v.u + ').'];
@@ -1334,7 +1342,7 @@ window.VBMSetup = (function () {
     if (!card) return;
     // Telas estreitas ou baixas: painéis empilhados com altura fixa por linha (CSS). O cálculo abaixo
     // aumentaria o espaçamento a cada redimensionamento do painel, sem fim
-    if (matchMedia('(max-width: 1180px), (max-height: 700px)').matches) {
+    if (matchMedia('(max-width: 1180px), (max-height: 940px)').matches) { // People: notebook rola (ver o CSS)
       grids.forEach(function (g) { g.style.rowGap = ''; });
       document.documentElement.style.removeProperty('--head-h');
       return;
