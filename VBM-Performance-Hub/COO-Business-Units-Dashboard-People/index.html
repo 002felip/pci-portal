@@ -406,14 +406,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; } /* cresce com a nota de rodapé */
   .chart { height: 150px; }
 }
-/* People: 4 linhas de cards (12 KPIs em 3 colunas). Em telas com menos de ~1000 px de altura as 4
-   linhas não cabem numa tela só: mesma disposição em fluxo das telas baixas (a página rola), em 3 colunas */
-@media (max-height: 1000px) {
-  html, body { height: auto; }
-  body { display: block; }
-  .panel-grid { grid-template-rows: none; grid-auto-rows: minmax(210px, auto); align-content: start; }
-  .chart { height: 150px; }
-}
 @media (max-width: 720px) {
   .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .panel-prod .panel-grid, .panel-fin .panel-grid, .dash .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
@@ -550,6 +542,63 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .site { font-size: 1.45rem; }
 }
 /* ═══ fim Setup Dashboards ═══ */
+
+/* ═══ People — redesenho (cards, barras largas, cabeçalho em faixa) ═══
+   Fundo: off-white com cards brancos (opção b). Tokens novos só aqui; o resto herda do COO. */
+:root {
+  --canvas: #FAFAF8; --card: #FFFFFF; --card-line: #E2E5E9; --card-shadow: 0 1px 2px rgba(16,24,40,.04);
+  --good: #00696A; --good-bg: rgba(0,126,122,.12); --bad-bg: rgba(220,38,38,.10); --wait-bg: rgba(217,140,10,.14);
+  --gutter: 18px; --card-radius: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --canvas: #06192B; --card: #0C2438; --card-line: rgba(255,255,255,.10); --card-shadow: none; } }
+:root[data-theme="dark"] { --canvas: #06192B; --card: #0C2438; --card-line: rgba(255,255,255,.10); --card-shadow: none; }
+body { background: var(--canvas); }
+.page { gap: var(--gutter); }
+/* Cabeçalho: eyebrow · título · contexto (BU) à esquerda; legenda e atualização discretas à direita */
+.head { align-items: flex-end; padding-bottom: 0; border-bottom: 0; }
+.title-block { top: 0; margin: 0; }
+.eyebrow { margin: 0 0 3px; font: 600 .66rem/1.2 var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--text-soft); }
+.title-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; }
+.title-block h2 { font: 600 clamp(1.45rem, 1.9vw, 1.9rem)/1.1 var(--font-display); color: var(--ink-strong); letter-spacing: -.01em; }
+.site { padding-left: 14px; border-left: 1px solid var(--base-line); font: 400 clamp(1.05rem, 1.35vw, 1.3rem)/1.1 var(--font-display); color: var(--accent-strong); }
+.site-nav { top: 0; }
+.panel-meta { gap: 2px; }
+.legend { font-size: .7rem; }
+/* Filtros: uma faixa só, alinhada (Ciclo, BU, Ano, Trimestre, Mês, Delta) */
+.toolbar { flex-shrink: 0; position: relative; padding: 9px 14px 10px; border: 1px solid var(--card-line); border-radius: var(--card-radius); background: var(--card); box-shadow: var(--card-shadow); gap: 8px 22px; }
+.toolbar .fs-tools { margin-left: auto; }
+.filter-label { font: 500 .66rem var(--font-ui); font-style: normal; letter-spacing: .02em; color: var(--text-soft); }
+/* Grade 3×3 de cards: sem o painel cinza; cada KPI no seu card */
+.panel { gap: 0; }
+.panel-prod { padding: 0; border-radius: 0; background: transparent; }
+.panel-grid, .panel-prod .panel-grid { column-gap: var(--gutter); row-gap: var(--gutter); justify-items: stretch; }
+#dash .panel-grid { justify-items: stretch; }
+#dash .card { max-width: none; min-height: 0; padding: 14px 18px 10px; gap: 4px; border: 1px solid var(--card-line); border-radius: var(--card-radius); background: var(--card); box-shadow: var(--card-shadow); }
+.card-title { font: 600 1.15rem/1.2 var(--font-display); }
+.card-unit { margin-top: 2px; font-size: .74rem; color: var(--text-soft); }
+.card-leg { margin: 4px 0 0 auto; font-size: .6rem; }
+.chart { display: flex; align-items: flex-end; }
+/* Tela alta: as 3 linhas dividem a altura da tela e o gráfico ocupa o que sobra no card */
+@media (min-width: 1181px) and (min-height: 881px) {
+  .panel-grid { grid-template-rows: repeat(var(--rows, 3), minmax(0, 1fr)); align-content: stretch; }
+  #dash .chart { flex: 1 1 auto; height: auto; min-height: 0; }
+}
+/* Tela baixa (notebook) ou estreita: a página rola; cards com altura própria */
+@media (max-width: 1180px), (max-height: 880px) {
+  html, body { height: auto; }
+  body { display: block; }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: auto; align-content: start; }
+  .chart { height: 176px; }
+}
+@media (max-width: 1600px) { .card-title { font-size: 1.125rem; } .title-block h2 { font-size: 1.45rem; } .site { font-size: 1.05rem; } }
+/* Gráfico: rótulo por grupo (o período escolhido em destaque) e delta em pílula semântica */
+.b-val { font-size: 11.5px; font-weight: 500; }
+.b-axis { font-size: 10.5px; letter-spacing: .01em; }
+.b-axis.sel { fill: var(--ink-strong); font-weight: 600; }
+.d-pill { stroke: none; filter: none; }
+.d-txt { font-size: 11px; font-weight: 600; }
+.is-good .d-pill { fill: var(--good-bg); } .is-warn .d-pill { fill: var(--wait-bg); } .is-bad .d-pill { fill: var(--bad-bg); } .is-flat .d-pill { fill: var(--flat-bg); }
+@media print { body { background: #fff; } .toolbar, .topnav { display: none; } #dash .card { box-shadow: none; break-inside: avoid; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -658,9 +707,24 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <main class="page">
   <section class="head" aria-label="Dashboard and filters" data-i18n-aria="a.filtros">
     <div class="title-block">
-      <h2>COO – Business Units People Dashboard</h2>
+      <p class="eyebrow">COO / Business Units</p>
+      <div class="title-line">
+        <h2>People Dashboard</h2>
+        <h3 class="site" id="buName">—</h3>
+        <nav class="site-nav" id="siteNav" aria-label="Navigation between BU and mines" data-i18n-aria="a.nav" hidden></nav>
+      </div>
     </div>
-    <div class="filters">
+    <div class="panel-meta">
+      <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
+        <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
+        <li><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
+      </ul>
+      <div id="cycleBox" hidden></div>
+      <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
+    </div>
+  </section>
+
+  <div class="filters toolbar">
       <div class="filter"><span class="filter-label" id="lblCiclo" data-i18n="f.ciclo">Cycle:</span>
         <div class="unit ciclo">
           <button type="button" class="unit-trigger" id="cicloTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="cicloPop" aria-describedby="lblCiclo">
@@ -680,7 +744,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
           </div>
         </div>
       </div>
-      <div class="filter"><span class="filter-label" id="lblVisao" data-i18n="f.view">View:</span><div class="seg" role="group" aria-labelledby="lblVisao" data-filter="visao"></div></div>
       <div class="filter"><span class="filter-label" id="lblAno" data-i18n="f.year">Year:</span><div class="seg" role="group" aria-labelledby="lblAno" data-filter="ano"></div></div>
       <div class="filter"><span class="filter-label" id="lblTri" data-i18n="f.quarter">Quarter:</span><div class="seg" role="group" aria-labelledby="lblTri" data-filter="tri"></div></div>
       <div class="filter"><span class="filter-label" id="lblMes" data-i18n="f.month">Month:</span><div class="seg" role="group" aria-labelledby="lblMes" data-filter="mes"></div></div>
@@ -690,23 +753,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <div class="fs-tools" aria-label="Full screen actions" data-i18n-aria="a.fs">
       <button type="button" class="fs-btn js-full" aria-label="Full screen" title="Full screen (F11)" data-i18n-aria="fs.on" data-i18n-title="fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
-    </div>
-  </section>
-
-  <div class="site-row">
-    <div class="site-id">
-      <h3 class="site" id="buName">—</h3>
-      <nav class="site-nav" id="siteNav" aria-label="Navigation between BU and mines" data-i18n-aria="a.nav" hidden></nav>
-    </div>
-    <div class="panel-meta">
-          <ul class="legend" aria-label="Legend" data-i18n-aria="a.legenda">
-            <li><span class="swatch" style="background:var(--serie-b)"></span>Budget | Adjusted Budget (B)</li>
-            <li id="legPlan" hidden><span class="swatch" style="background:var(--serie-p)"></span>Plan (P)</li>
-            <li><span class="swatch" style="background:var(--serie-a)"></span>Actual | Forecast (A | F)</li>
-          </ul>
-          <div id="cycleBox" hidden></div>
-          <p class="updated"><span class="demo" id="dataBadge" hidden></span><span data-i18n="l.upd">Last updated:</span> <span id="updTxt"></span></p>
-    </div>
   </div>
 
   <div class="dash" id="dash"></div>
@@ -932,11 +978,8 @@ window.VBMSetup = (function () {
     { id: 773, nome: 'Turnover', regra: 'menor' },
     { id: 772, nome: 'Termination Rate', regra: 'menor' },
     { id: 761, nome: 'Absenteeism', regra: 'menor' },
-    { id: 716, nome: 'Overtime', regra: 'menor' },
-    { id: 767, nome: 'Overtime Cost', regra: 'menor' },
-    { id: 766, nome: 'Custo Labour', regra: 'menor' },
-    { id: 769, nome: 'Overtime | Cost ratio', regra: 'menor' },
     { id: 771, nome: 'Overtime | Hours Ratio', regra: 'menor' },
+    { id: 769, nome: 'Overtime | Cost ratio', regra: 'menor' },
     { id: 770, nome: 'Overtime | Hours per FTE', regra: 'menor' }
   ];
   var POS_KPI = {}; // ID_KPI → posição na ordem de apresentação
@@ -977,7 +1020,7 @@ window.VBMSetup = (function () {
   function criarVisao(nome) {
     // People: um painel só, com os 12 KPIs em 3 colunas (linhas conforme a quantidade de cards)
     return { cls: 'dash--people', colsProd: 3, rows: 3, titulo: nome, ir: false, paineis: [
-      { titulo: 'People', cls: 'panel-prod', cards: [] }
+      { titulo: '', cls: 'panel-prod', cards: [] } // grade 3×3 de cards, sem título de seção
     ] };
   }
   // Configuração gravada no banco (GET config → IBP.PHUB_PS_SETUP): substitui as opções dos
@@ -1069,6 +1112,11 @@ window.VBMSetup = (function () {
     return [[m + ' B', m + ' ' + LETRAS_AF[0]], [q + 'B', q + LETRAS_AF[1]], [y + 'B', y + LETRAS_AF[2]]];
   }
   function PER(i) { return T(['p.mes', 'p.tri', 'p.ano'][i]); }
+  // Rótulo do grupo no eixo: período · valor escolhido nos filtros
+  function rotuloGrupo(i) {
+    var p = PER(i);
+    return p.charAt(0).toUpperCase() + p.slice(1) + ' · ' + [mesCurto(state.mes - 1), 'Q' + state.tri, String(state.ano)][i];
+  }
 
   // Formato numérico escolhido nas Configurações (Brasil 1.234,56 · Canadá 1,234.56)
   function fmt(v, dec) { return VBMSetup.fmt(v, dec); }
@@ -1108,17 +1156,19 @@ window.VBMSetup = (function () {
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
-  var MAX_W = 520, MAX_H = 190; // People: 3 colunas largas (COO: 380) // mesmo tamanho no modo normal e em tela cheia
+  var MAX_W = 900, MAX_H = 250; // People: o gráfico ocupa a largura do card (COO: 380 × 190) // mesmo tamanho no modo normal e em tela cheia
   function chartSvg(ind, W, H) {
     var v = view(ind), ax = axis();
     var showDelta = state.delta === 'on';
     var comPlan = state.plan && v.d && v.d[0] && v.d[0][2] != null;
     // Com o Plan, o mês tem duas cotas (B→P e P→A) com as pílulas em degraus: mais espaço no topo
-    var MT = showDelta ? (comPlan ? 66 : 46) : 20, MB = 16, PW = W / 3;
+    var MT = showDelta ? (comPlan ? 66 : 46) : 20, MB = 22, PW = W / 3;
     if (pendente(v)) MT += 24; // faixa "Pending final updates" no alto do gráfico
     // Sem o Plan: o layout padrão (B·A centrado em cada terço). Com o Plan: sete barras
     // (mês B·P·A, trimestre B·A, ano B·A) numa régua só, com a MESMA distância entre todas as colunas.
-    var BW = Math.max(16, Math.min(30, PW * 0.3)), GAP = Math.max(14, Math.min(24, PW * 0.2));
+    // People: par B×A ocupa ~2/3 da largura do grupo (barras de 18 a 60 px), com 6–8 px entre as duas
+    // barras; os três grupos dividem o card por igual e o espaço entre grupos fica perto de 1 barra
+    var GAP = PW < 110 ? 6 : 8, BW = Math.max(18, Math.min(60, (PW * 0.66 - GAP) / 2));
     var POS = null, stVal = '', stEixo = '';
     if (comPlan) {
       // passo proporcional à largura do card: todos os gráficos ocupam o card na mesma proporção
@@ -1195,22 +1245,23 @@ window.VBMSetup = (function () {
           out += '<rect class="b-ghost" x="' + (bar[0] + .6) + '" y="' + Math.min(yg, y0) + '" width="' + (BW - 1.2) + '" height="' + Math.max(Math.abs(y0 - yg), 6) + '" rx="3" data-tip="' + tg + '"/>';
           out += '<text class="b-ghost-txt" x="' + (bar[0] + BW / 2) + '" y="' + (Math.min(yg, y0) - 6) + '" text-anchor="middle">—</text>';
         }
-        if (bar[1] === null) { out += '<text class="b-axis"' + stEixo + ' x="' + (bar[0] + BW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>'; return; }
+        if (bar[1] === null) return;
         var yv = y(bar[1]), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = bar[1] < 0;
         var tip = esc(bar[3] + ' · ' + bar[4] + ': ' + fmt(bar[1], v.dec) + ' ' + v.u);
         var bx = bar[0] + BW / 2;
         out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + bar[0] + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + bar[2] + ')" data-tip="' + tip + '"/>';
         // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
         out += '<text class="b-val"' + stVal + ' x="' + bx + '" y="' + ((neg ? y0 : yv) - 6) + '" text-anchor="middle">' + fmt(bar[1], v.dec) + '</text>';
-        out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(bar[3]) + '</text>';
       });
+      // Um rótulo por grupo ("Mês · Out", "Trimestre · Q4", "Ano · 2026"); o mês escolhido em destaque
+      out += '<text class="b-axis' + (i === 0 ? ' sel' : '') + '"' + stEixo + ' x="' + (x0 + PW / 2) + '" y="' + (H - 5) + '" text-anchor="middle">' + esc(rotuloGrupo(i)) + '</text>';
       if (!showDelta) return;
 
       // Cota de diferença do Performance Hub: nível de referência tracejado, nível novo sólido, faixa,
       // haste, fio guia e pílula. Sem o Plan: B → A/F. Com o Plan, no mês: B → P e P → A.
       function cota(xEsq, xDir, vRef, vNovo, dlc, pillY) {
         var x1 = xEsq + BW, x2 = xDir, cx = (x1 + x2) / 2, yr = y(vRef), yn = y(vNovo);
-        var ytop = Math.min(yr, yn, y0), pillH = 17 * escDelta, pillW = Math.max(38 * escDelta, (dlc.txt.length * 5.8 + 14) * escDelta);
+        var ytop = Math.min(yr, yn, y0), pillH = 17 * escDelta, pillW = Math.max(38 * escDelta, (dlc.txt.length * 6.3 + 14) * escDelta);
         if (pillY == null) pillY = Math.max(0, ytop - 22 - pillH);
         var g = '<g class="cota ' + dlc.cls + '">';
         g += '<line class="d-ref" x1="' + (x1 - 2) + '" x2="' + (x2 + 2) + '" y1="' + yr + '" y2="' + yr + '"/>';
@@ -1315,47 +1366,13 @@ window.VBMSetup = (function () {
   // Largura única dos gráficos: a coluna mais estreita entre todos os painéis (até MAX_W). Cards em
   // colunas mais largas ficam com essa largura, centralizados — mesmo tamanho de barra e mesmo
   // espaçamento entre mês, trimestre e ano em todos os gráficos da página
-  function igualarLarguras(grids) {
-    var menor = Infinity;
-    grids.forEach(function (g) {
-      getComputedStyle(g).gridTemplateColumns.split(' ').forEach(function (t) { var n = parseFloat(t); if (n > 0) menor = Math.min(menor, n); });
-    });
-    var dash = document.getElementById('dash');
-    if (isFinite(menor)) dash.style.setProperty('--chart-w', Math.min(MAX_W, Math.floor(menor)) + 'px');
-    else dash.style.removeProperty('--chart-w');
-  }
-
+  // People: a grade (CSS) divide a tela em 3 linhas de cards e o gráfico ocupa o que sobra em cada
+  // card; aqui só se igualam os cabeçalhos dos cards (título, unidade e legenda na mesma altura)
   function ajustarAltura() {
-    var grids = [].slice.call(document.querySelectorAll('#dash .panel-grid')), N = visao().rows;
-    igualarLarguras(grids);
-    var gProd = grids[0], card = gProd && gProd.querySelector('.card');
-    if (!card) return;
-    // Telas estreitas ou baixas: painéis empilhados com altura fixa por linha (CSS). O cálculo abaixo
-    // aumentaria o espaçamento a cada redimensionamento do painel, sem fim
-    if (matchMedia('(max-width: 1180px), (max-height: 1000px)').matches) { // People: 4 linhas (ver o CSS)
-      grids.forEach(function (g) { g.style.rowGap = ''; });
-      document.documentElement.style.removeProperty('--head-h');
-      return;
-    }
-    var cs = getComputedStyle(card), GAP_MIN = 10;
-    var extra = parseFloat(cs.paddingTop) + (parseFloat(cs.rowGap) || 6);
-    function maiorCabeca(raiz) {
-      return Math.max.apply(null, [].map.call(raiz.querySelectorAll('.card-head'), function (h) { return h.offsetHeight; }));
-    }
-    // mede os cabeçalhos na altura natural e iguala todos pelo mais alto
-    document.documentElement.style.setProperty('--head-h', '0px');
-    document.documentElement.style.setProperty('--head-h', maiorCabeca(document) + 'px');
-    // altura única dos gráficos, pelo cabeçalho de card mais alto da página (ex.: seletor do All-in quebrando linha)
-    // nota de rodapé (alguns cards): fica abaixo do card, fora da grade (CSS), sem mudar a altura dos gráficos
-    var livre = (gProd.clientHeight - (N - 1) * GAP_MIN) / N - (maiorCabeca(document) + extra);
-    var h = Math.max(90, Math.min(MAX_H, Math.floor(livre)));
-    document.documentElement.style.setProperty('--chart-h', h + 'px');
-    // espaço entre as linhas: 80% da sobra dividida entre as duas separações (linhas um pouco mais
-    // próximas; o restante fica no rodapé). O mesmo valor nos dois painéis, para as linhas ficarem alinhadas
-    var gap = Math.min.apply(null, grids.map(function (g) {
-      return Math.floor((g.clientHeight - N * (h + maiorCabeca(g) + extra)) / (N - 1) * 0.8);
-    }));
-    grids.forEach(function (g) { g.style.rowGap = Math.max(GAP_MIN, gap) + 'px'; });
+    var raiz = document.documentElement, heads = document.querySelectorAll('#dash .card-head');
+    if (!heads.length || matchMedia('(max-width: 720px)').matches) { raiz.style.removeProperty('--head-h'); return; }
+    raiz.style.setProperty('--head-h', '0px');
+    raiz.style.setProperty('--head-h', Math.max.apply(null, [].map.call(heads, function (h) { return h.offsetHeight; })) + 'px');
   }
   new ResizeObserver(ajustarAltura).observe(document.getElementById('dash'));
 
@@ -1418,14 +1435,13 @@ window.VBMSetup = (function () {
     unitTrigger.querySelector('.unit-sep').hidden = longo;
     unitTrigger.title = (state.pais ? T('pais.' + state.pais) : '—') + ' › ' + siteTxt;
     renderNav();
-    document.getElementById('legPlan').hidden = !state.plan;
     ro.disconnect();
     dash.className = 'dash ' + vs.cls;
     dash.style.setProperty('--rows', vs.rows);
     dash.style.setProperty('--cols', vs.paineis.length);
     dash.innerHTML = vs.paineis.map(function (p, i) {
-      return '<section class="panel ' + p.cls + '" aria-labelledby="hPanel' + i + '">' +
-        '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' +
+      return '<section class="panel ' + p.cls + '" aria-label="KPIs">' +
+        (p.titulo ? '<div class="panel-head"><h3 class="panel-title" id="hPanel' + i + '">' + esc(p.titulo) + (p.sub ? ' <span class="panel-sub">(' + esc(p.sub) + ')</span>' : '') + '</h3></div>' : '') +
         (p.cards.length ? '<div class="panel-grid">' + p.cards.map(cardHtml).join('') + '</div>' : '<p class="panel-vazio">' + esc(T(MSG_PAINEL)) + '</p>') + '</section>';
     }).join('');
     renderCiclo();
@@ -1755,7 +1771,7 @@ window.VBMSetup = (function () {
       u.sel.split(',').forEach(function (par) { var m = /^([a-z]\d+)\.([a-z]+)$/.exec(par); if (m) state.sel[m[1]] = m[2]; });
       var mesesDoAno = (f.meses || {})[u.ano];
       if (ANOS.indexOf(u.ano) >= 0 && mesesDoAno && mesesDoAno.indexOf(u.mes) >= 0) { state.ano = u.ano; state.mes = u.mes; state.tri = Math.ceil(u.mes / 3); }
-      state.plan = u.plan;
+      state.plan = false; // People: sem a visão Plan
       state.delta = u.delta ? 'on' : 'off';
       document.getElementById('deltaSwitch').setAttribute('aria-checked', String(state.delta === 'on'));
     }
