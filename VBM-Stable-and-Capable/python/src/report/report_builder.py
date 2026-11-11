@@ -37,6 +37,7 @@ from .chart_generator import (
 from .page_composer import compose_page3, generate_cover_page, generate_kpi_list_page
 from . import visual as V
 from .pdf_compiler import compile_multi_page_pdf
+from .scores import calcular_scores
 from .utils import sanitize_filename, build_output_path
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,8 @@ class ReportBuilder:
         self._df_bu = None
         self._kpi_list = None
         self._combinations = []
+        self._definicoes = {}
+        self.scores = []          # um dict por KPI: bu, kpi, phase, site, processo, stability, capability…
 
     # ═══════════════════════════════════════════════════════════════════
     # Public API
@@ -86,23 +89,10 @@ class ReportBuilder:
         logger.info("=" * 60)
 
         try:
-            self._temp_dir = tempfile.mkdtemp(prefix='kpi_pages_')
-            logger.info("Temporary directory: %s", self._temp_dir)
-
-            # Step 1 — Load data
-            self._load_data()
-
-            # Step 2 — Discover combinations
-            self._discover_combinations()
-
-            # Step 3 — Generate cover pages
-            cover_pages = self._generate_cover_pages()
-
-            # Step 4 — Generate KPI detail pages
-            kpi_pages = self._generate_kpi_pages()
+            # Steps 1–4 — data, combinations, cover pages and KPI pages
+            all_pages = self.build_pages()
 
             # Step 5 — Compile PDF
-            all_pages = cover_pages + kpi_pages
             pdf_path = self._compile_pdf(all_pages)
 
             logger.info("=" * 60)
@@ -123,18 +113,38 @@ class ReportBuilder:
         finally:
             self._cleanup()
 
+    def build_pages(self, df_raw=None):
+        """Generate all page images of this BU (cover, KPI list, one page per KPI) in a
+        temporary folder and return their paths, in order. Also fills self.scores.
+
+        Used by run() and by the consolidated report (consolidated.py), which joins the pages
+        of several BUs in one PDF. The caller must call cleanup() when done with the pages.
+        df_raw: data already loaded (the consolidated report reads the Excel only once)."""
+        self._temp_dir = tempfile.mkdtemp(prefix='kpi_pages_')
+        logger.info("Temporary directory: %s", self._temp_dir)
+        self._load_data(df_raw)
+        self._discover_combinations()
+        cover_pages = self._generate_cover_pages()
+        kpi_pages = self._generate_kpi_pages()
+        return cover_pages + kpi_pages
+
+    def cleanup(self):
+        self._cleanup()
+
     # ═══════════════════════════════════════════════════════════════════
     # Pipeline steps
     # ═══════════════════════════════════════════════════════════════════
 
-    def _load_data(self):
+    def _load_data(self, df_raw=None):
         """Load raw data from Excel and filter by business unit."""
         from src.data_loader import load_excel_data
 
-        data_file = self.config.data_file
-        logger.info("Loading data from %s ...", data_file)
-
-        self._df_raw = load_excel_data(data_file)
+        if df_raw is not None:
+            self._df_raw = df_raw
+        else:
+            data_file = self.config.data_file
+            logger.info("Loading data from %s ...", data_file)
+            self._df_raw = load_excel_data(data_file)
         logger.info("  Total records loaded: %d", len(self._df_raw))
 
         # Reference year = last year in the data (unless set explicitly), so
@@ -204,6 +214,7 @@ class ReportBuilder:
             )
 
         self._combinations = combinations
+        self._definicoes = self._load_definitions(kpi_list_file, bu)
         logger.info("Total combinations to generate: %d", len(combinations))
 
     def _generate_cover_pages(self):
@@ -396,6 +407,16 @@ class ReportBuilder:
                 f"Process capability chart failed for '{kpi_name}' ({site_name}): {e}"
             ) from e
 
+        # Stability & Capability Scores (ano de referência)
+        sc = calcular_scores(kpi_data['df_kpi'], self.config.reference_year)
+        chave = (kpi_name.strip().lower(), str(type_op or '').strip().lower(), str(site_name or '').strip().lower())
+        processo = self._definicoes.get(chave) or self._definicoes.get((chave[0], '', chave[2])) \
+            or f"{site_name} {kpi_name}"
+        self.scores.append({'bu': self.config.business_unit, 'kpi': kpi_name, 'phase': type_op, 'site': site_name,
+                            'processo': processo, 'unit': kpi_data['unit'], **sc})
+        kpi_data['metadata']['scores'] = sc
+        logger.info("    Scores %s: stability %s | capability %s", sc['ano'], sc['stability'], sc['capability'])
+
         # Compose page
         page_img = compose_page3(
             fig_control, fig_hist_table, fig_process,
@@ -452,6 +473,30 @@ class ReportBuilder:
     # ═══════════════════════════════════════════════════════════════════
     # Helper
     # ═══════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def _load_definitions(kpi_list_file, bu_name):
+        """(kpi, phase, site) → Definition of kpi_list.xlsx (the process name in the scores summary)."""
+        saida = {}
+        try:
+            df_xlsx = pd.read_excel(kpi_list_file)
+            col = {c.strip().lower(): c for c in df_xlsx.columns}
+            bu_col, kpi_col, def_col = col.get('business unit'), col.get('name kpi') or col.get('kpi'), col.get('definition')
+            op_col, site_col = col.get('type operation'), col.get('name site')
+            if not (bu_col and kpi_col and def_col):
+                return saida
+            df_bu = df_xlsx[df_xlsx[bu_col].astype(str).str.strip().str.lower() == bu_name.strip().lower()]
+            for _, r in df_bu.iterrows():
+                if pd.isna(r[def_col]) or pd.isna(r[kpi_col]):
+                    continue
+                k = str(r[kpi_col]).strip().lower()
+                o = str(r[op_col]).strip().lower() if op_col and pd.notna(r[op_col]) else ''
+                s = str(r[site_col]).strip().lower() if site_col and pd.notna(r[site_col]) else ''
+                saida.setdefault((k, o, s), str(r[def_col]).strip())
+                saida.setdefault((k, '', s), str(r[def_col]).strip())
+        except Exception as e:
+            logger.warning("  kpi_list.xlsx definitions not loaded: %s", e)
+        return saida
 
     @staticmethod
     def _load_kpi_order(kpi_list_from_data, kpi_list_file, bu_name):

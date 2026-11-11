@@ -18,6 +18,7 @@ from PIL import Image, ImageDraw
 
 from .utils import load_font
 from . import visual as V
+from .scores import FAIXAS_CAPABILIDADE, FAIXAS_ESTABILIDADE, classificar, faixas_texto
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,26 @@ def _cabecalho_pagina(page, W, titulo, kpi, unidade, meta, y=40):
     for i, linha in enumerate(meta):
         V.texto(d, (W - 32, y - 9 + i * 18), linha, f, V.TINTA_FRACA, 'rm')
     return d
+
+
+def _pilulas_score(d, x_dir, y, sc):
+    """Pílulas "Stability Score 83" e "Capability Score 88" na cor da classificação, terminando em
+    x_dir (alinhadas à direita). Devolve o x onde começam."""
+    if not sc:
+        return x_dir
+    itens = [('Stability Score', sc.get('stability'), FAIXAS_ESTABILIDADE),
+             ('Capability Score', sc.get('capability'), FAIXAS_CAPABILIDADE)]
+    f_rot, f_val = V.fonte('regular', 11), V.fonte('semibold', 13)
+    x = x_dir
+    for rotulo, valor, faixas in reversed(itens):
+        classe, fundo, cor = classificar(valor, faixas)
+        txt_val = '—' if valor is None else str(valor)
+        w = 14 + V.largura_texto(rotulo, f_rot) + 8 + V.largura_texto(txt_val, f_val) + 14
+        d.rounded_rectangle((V.s(x - w), V.s(y - 14), V.s(x), V.s(y + 14)), radius=V.s(14), fill=V.rgb(fundo))
+        V.texto(d, (x - w + 14, y), rotulo, f_rot, cor, 'lm')
+        V.texto(d, (x - 14, y + 0.5), txt_val, f_val, cor, 'rm')
+        x -= w + 10
+    return x
 
 
 def _periodo(meta):
@@ -133,7 +154,10 @@ def compose_page3(fig_control, fig_hist_table, fig_process2, kpi_metadata, confi
     unidade = kpi_metadata.get('display_unit', kpi_metadata.get('unit', ''))
     titulo = f"{site} {phase}".strip()
     meta = [f"Period: {_periodo(kpi_metadata)}", f"Business Unit: {kpi_metadata.get('business_unit', '')}"]
-    _cabecalho_pagina(page, W, titulo, kpi, unidade, meta)
+    d = _cabecalho_pagina(page, W, titulo, kpi, unidade, meta)
+    f_meta = V.fonte('italic', 11)
+    larg_meta = max(V.largura_texto(m, f_meta) for m in meta)
+    _pilulas_score(d, W - 32 - larg_meta - 24, 40, kpi_metadata.get('scores'))
 
     MX, GAP, TOPO, BASE = 28, 18, 80, 22
     largura = W - 2 * MX
@@ -366,5 +390,130 @@ def generate_kpi_list_page(kpi_list, site_name, config, temp_dir, df_bu, kpi_lis
     V.tabela(page, X, Y_TABLE, largura, colunas, linhas, tam=12, alt_linha=alt, alt_cab=ALT_CAB, raio=12)
 
     temp_file = os.path.join(temp_dir, '_page_01_kpi_list.png')
+    V.salvar_png(page, temp_file)
+    return temp_file
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONSOLIDATED — Stability & Capability Scores summary (first page)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _card_faixas(page, x, y, w, h, titulo, faixas, texto_interp, formula):
+    """Card da legenda: faixas com a cor de cada classificação, interpretação e fórmula."""
+    d = V.card(page, x, y, w, h)
+    PX = 22
+    V.cabecalho_card(d, x + PX, y + 16, w - 2 * PX, titulo)
+    larg_tab = 300
+    linhas = [[{'texto': intervalo, 'peso': 'medium'},
+               {'texto': rotulo, 'pilula': (fundo, cor), 'peso': 'semibold', 'tam': 10, 'largura_min': 150}]
+              for intervalo, rotulo, fundo, cor in faixas_texto(faixas)]
+    V.tabela(page, x + PX, y + 48, larg_tab, [('Score', .36, 'l'), ('Classification', .64, 'c')], linhas,
+             tam=10.5, alt_linha=22, alt_cab=24, raio=10)
+    d = ImageDraw.Draw(page)
+    xt, wt = x + PX + larg_tab + 22, w - 2 * PX - larg_tab - 22
+    f = V.fonte('regular', 10.5)
+    yy = y + 50
+    for linha in V.quebrar(texto_interp, f, wt):
+        V.texto(d, (xt, yy), linha, f, V.TINTA_SUAVE)
+        yy += 16
+    yy += 6
+    ff = V.fonte('medium', 11)
+    for linha in V.quebrar(formula, ff, wt):
+        V.texto(d, (xt, yy), linha, ff, V.AZUL_PROFUNDO)
+        yy += 17
+
+
+def generate_scores_page(grupos, ano, rotulo_periodo, config, temp_dir):
+    """
+    Página de resumo do relatório consolidado: Stability & Capability Scores de todos os
+    KPIs, um card por Business Unit, e a legenda das classificações com as fórmulas.
+
+    grupos : [(bu, [score dict de ReportBuilder.scores])]
+    Returns the path to the saved PNG file.
+    """
+    W = config['page3_width']
+    H = config['page3_height']
+    page = V.nova_pagina(W, H)
+
+    d = _cabecalho_pagina(page, W, 'Stability & Capability Scores', str(ano), rotulo_periodo,
+                          ['Stable & Capable · Consolidated', datetime.now().strftime('Generated on %B %d, %Y')])
+
+    MX, GAP, TOPO = 28, 18, 80
+    ALT_LEGENDA = 196
+    base_cards = H - 22 - ALT_LEGENDA - GAP
+    disponivel = base_cards - TOPO
+    grupos = [(bu, linhas) for bu, linhas in grupos if linhas]
+
+    def altura(n, alt):
+        return 16 + 24 + 8 + 24 + n * alt + 16
+
+    # 3 ou 4 colunas e a maior altura de linha que faça tudo caber (cada BU vai para a coluna
+    # mais baixa, na ordem das BUs)
+    escolha = None
+    for ncol in (3, 4):
+        for alt in (24, 23, 22, 21, 20, 19, 18):
+            colunas = [[] for _ in range(ncol)]
+            alturas = [0] * ncol
+            for bu, linhas in sorted(grupos, key=lambda g: -len(g[1])):
+                i = alturas.index(min(alturas))
+                colunas[i].append((bu, linhas))
+                alturas[i] += altura(len(linhas), alt) + GAP
+            if max(alturas) - GAP <= disponivel:
+                escolha = (ncol, alt, colunas)
+                break
+        if escolha:
+            break
+    if not escolha:  # muitos KPIs: 4 colunas na menor altura, mesmo passando um pouco
+        ncol, alt = 4, 18
+        colunas = [[] for _ in range(ncol)]
+        alturas = [0] * ncol
+        for bu, linhas in sorted(grupos, key=lambda g: -len(g[1])):
+            i = alturas.index(min(alturas))
+            colunas[i].append((bu, linhas))
+            alturas[i] += altura(len(linhas), alt) + GAP
+        escolha = (ncol, alt, colunas)
+    ncol, alt, colunas = escolha
+    larg = (W - 2 * MX - (ncol - 1) * GAP) / ncol
+
+    # ordem das colunas: a da 1ª BU de cada uma, para manter a sequência das BUs
+    ordem = [g[0] for g in grupos]
+    colunas.sort(key=lambda c: min(ordem.index(b) for b, _ in c) if c else 99)
+    for c in colunas:
+        c.sort(key=lambda g: ordem.index(g[0]))
+
+    for i, coluna in enumerate(colunas):
+        x = MX + i * (larg + GAP)
+        y = TOPO
+        for bu, linhas in coluna:
+            h = altura(len(linhas), alt)
+            dc = V.card(page, x, y, larg, h)
+            V.cabecalho_card(dc, x + 18, y + 16, larg - 36, bu)
+            cel = []
+            for r in linhas:
+                _, f1, c1 = classificar(r.get('stability'), FAIXAS_ESTABILIDADE)
+                _, f2, c2 = classificar(r.get('capability'), FAIXAS_CAPABILIDADE)
+                v1 = '—' if r.get('stability') is None else str(r['stability'])
+                v2 = '—' if r.get('capability') is None else str(r['capability'])
+                cel.append([{'texto': r.get('processo', ''), 'tam': 10.5},
+                            {'texto': v1, 'pilula': (f1, c1), 'peso': 'semibold', 'tam': 10.5, 'largura_min': 46},
+                            {'texto': v2, 'pilula': (f2, c2), 'peso': 'semibold', 'tam': 10.5, 'largura_min': 46}])
+            V.tabela(page, x + 14, y + 48, larg - 28, [('Process', .58, 'l'), ('Stability', .21, 'c'), ('Capability', .21, 'c')],
+                     cel, tam=10.5, alt_linha=alt, alt_cab=24, raio=10)
+            y += h + GAP
+
+    # Legenda e interpretação
+    y = H - 22 - ALT_LEGENDA
+    meia = (W - 2 * MX - GAP) / 2
+    _card_faixas(page, MX, y, meia, ALT_LEGENDA, 'Stability Score', FAIXAS_ESTABILIDADE,
+                 f"How consistently a process performed in {ano}. It starts at 100 and loses points for "
+                 f"out-of-control behaviour (days flagged by the Nelson rules on the {ano} control chart) and, "
+                 "partially, for high variation. Higher means a more predictable process.",
+                 "Stability = 100 × (1 - out-of-control days ÷ days - 0.3 × CV)")
+    _card_faixas(page, MX + meia + GAP, y, meia, ALT_LEGENDA, 'Capability Score', FAIXAS_CAPABILIDADE,
+                 f"Share of the {ano} results within the specification limits, based on the {ano} budget "
+                 f"using the current variation (Budget ± 2 sigma of {ano}). A score of 80 means 80% of the days "
+                 "were within the limits.",
+                 "Capability = 100 × days within the limits ÷ days")
+
+    temp_file = os.path.join(temp_dir, '_page_scores.png')
     V.salvar_png(page, temp_file)
     return temp_file

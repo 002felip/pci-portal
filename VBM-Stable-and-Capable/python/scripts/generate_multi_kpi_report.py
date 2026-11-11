@@ -9,6 +9,7 @@ Usage:
     python scripts/generate_multi_kpi_report.py --bu Ontario
     python scripts/generate_multi_kpi_report.py --bu Salobo --years 5
     python scripts/generate_multi_kpi_report.py --all-bus
+    python scripts/generate_multi_kpi_report.py --consolidated --bus "Salobo,Sossego,Ontario"
     python scripts/generate_multi_kpi_report.py --bu Ontario --config config/report_config.yaml
 
 Databricks (Python script task / spark_python_task):
@@ -134,6 +135,14 @@ def _parse_args():
         help='Generate reports for ALL available Business Units',
     )
     parser.add_argument(
+        '--consolidated', action='store_true', default=False,
+        help='One PDF with all the BUs (scores summary + each BU report). Use with --bus or alone (all BUs)',
+    )
+    parser.add_argument(
+        '--bus', dest='bus', type=str, default=None,
+        help='Comma-separated Business Units for --consolidated, in order (e.g. "Salobo,Sossego,Ontario")',
+    )
+    parser.add_argument(
         '--years', dest='max_years', type=int, default=None,
         help='Number of years to include (default: 3)',
     )
@@ -222,7 +231,17 @@ def main():
     logger.info("Output dir:   %s", temp_config.output_dir)
     _install_project_fonts()
 
-    if args.all_bus:
+    if args.consolidated:
+        from src.report.consolidated import generate_consolidated
+        bus = [b.strip() for b in (args.bus or '').split(',') if b.strip()] or None
+        try:
+            pdf_path = generate_consolidated(bus, cli_overrides, yaml_path)
+            logger.info("Report saved: %s", pdf_path)
+        except ReportGenerationError as e:
+            logger.error("Report generation FAILED: %s", e)
+            sys.exit(1)
+
+    elif args.all_bus:
         # Discover all BUs from data
         from src.data_loader import load_excel_data
 

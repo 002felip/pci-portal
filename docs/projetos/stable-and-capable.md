@@ -47,6 +47,22 @@ sequenceDiagram
   T->>A: GET /execucoes/:id/arquivos/:nome (download, sem expor o SAS ao navegador)
 ```
 
+- **Formato:** escolhido na tela.
+  - **Um PDF por BU** (padrão): um processo Python por BU.
+  - **Consolidado:** um processo só (`--consolidated --bus "A,B"`) gera um PDF com o resumo dos
+    Stability & Capability Scores no início e, depois, o relatório de cada BU selecionada (capa, lista de
+    KPIs e páginas). Ele vai para o Blob como `Stable_Capable_Consolidado_<início>_<fim>.pdf`. Uma BU com
+    erro fica de fora e as outras seguem.
+- **Scores** (`src/report/scores.py`): calculados no ano de referência, com uma carta X-AM do ano inteiro
+  (σ = amplitude móvel média ÷ 1,128). Aparecem nas pílulas do cabeçalho de cada página de KPI e no resumo
+  do consolidado.
+  - **Stability** = 100 × (1 − dias fora de controle ÷ dias − 0,3 × CV). Um dia está fora de controle
+    quando alguma regra de Nelson o marca: fora de ±3σ, 9 do mesmo lado, 6 em tendência ou 14 alternando.
+  - **Capability** = 100 × dias dentro de Budget ± 2σ ÷ dias.
+  - **Faixas:**
+    - Stability: 85 Very Stable, 60 Stable, 40 Moderately Stable, 15 Unstable, abaixo disso Very Unstable;
+    - Capability: 95 Very Capable, 80 Capable, 70 Moderately Capable, abaixo disso Incapable.
+  - **Nome do processo:** vem da coluna *Definition* do `kpi_list.xlsx`.
 - **Período padrão** ("Fechamento mensal"): de 1º de janeiro do ano anterior ao último dia do mês
   anterior. Aceita intervalos de até 10 anos.
 - **A consulta é a do time, como foi entregue:** `database/query_stable_and_capable.sql`. As datas do
