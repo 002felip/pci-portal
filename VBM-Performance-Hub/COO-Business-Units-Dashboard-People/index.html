@@ -1108,7 +1108,7 @@ window.VBMSetup = (function () {
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
-  var MAX_W = 900, MAX_H = 320; // People: o gráfico ocupa a largura da moldura e cresce em tela grande (COO: 380 × 190)
+  var MAX_W = 900, MAX_H = 250; // People: o gráfico ocupa a largura da moldura, com altura contida (COO: 380 × 190)
   function chartSvg(ind, W, H) {
     var v = view(ind), ax = axis();
     var showDelta = state.delta === 'on';
@@ -1118,8 +1118,9 @@ window.VBMSetup = (function () {
     if (pendente(v)) MT += 24; // faixa "Pending final updates" no alto do gráfico
     // Sem o Plan: o layout padrão (B·A centrado em cada terço). Com o Plan: sete barras
     // (mês B·P·A, trimestre B·A, ano B·A) numa régua só, com a MESMA distância entre todas as colunas.
-    // People: barras e espaço do delta crescem com o gráfico (COO: até 30 e 24 px)
-    var BW = Math.max(16, Math.min(46, PW * 0.24)), GAP = Math.max(14, Math.min(34, PW * 0.17));
+    // People: barras mais largas e par B×A mais próximo, para o espaço entre mês, trimestre e ano ficar
+    // perto do espaço do delta dentro do par (antes sobrava quase o dobro entre os grupos). COO: até 30 e 24 px
+    var BW = Math.max(16, Math.min(80, PW * 0.31)), GAP = Math.max(14, Math.min(36, PW * 0.14));
     var POS = null, stVal = '', stEixo = '';
     if (comPlan) {
       // passo proporcional à largura do card: todos os gráficos ocupam o card na mesma proporção
@@ -1338,7 +1339,7 @@ window.VBMSetup = (function () {
       document.documentElement.style.removeProperty('--head-h');
       return;
     }
-    var cs = getComputedStyle(card), GAP_MIN = 16; // People: respiro entre as molduras
+    var cs = getComputedStyle(card), GAP_MIN = 30; // People: respiro entre as linhas de molduras
     var extra = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + (parseFloat(cs.rowGap) || 6);
     function maiorCabeca(raiz) {
       return Math.max.apply(null, [].map.call(raiz.querySelectorAll('.card-head'), function (h) { return h.offsetHeight; }));
