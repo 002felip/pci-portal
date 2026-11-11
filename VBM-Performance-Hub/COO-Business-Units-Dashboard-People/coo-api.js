@@ -1,6 +1,6 @@
 /**
  * COO Business Units People Dashboard — rotas de dados como MÓDULO (cópia do coo-api.js do
- * COO-Business-Units-Dashboard, com o ID_DASH 20 e só os 12 KPIs de People, em ordem fixa).
+ * COO-Business-Units-Dashboard, com o ID_DASH 20 e só os 9 KPIs de People, em ordem fixa).
  *
  * Mesmo contrato do performancehub-api.js do VBM-Performance-Studio: os dois
  * pontos de entrada (portal.js, dentro do Portal; server.js, standalone)
@@ -68,11 +68,8 @@ const KPIS_PEOPLE = [
   773, // Turnover
   772, // Termination Rate
   761, // Absenteeism
-  716, // Overtime
-  767, // Overtime Cost
-  766, // Custo Labour
-  769, // Overtime | Cost ratio
   771, // Overtime | Hours Ratio
+  769, // Overtime | Cost ratio
   770, // Overtime | Hours per FTE
 ];
 const LISTA_KPIS = KPIS_PEOPLE.join(', '); // inteiros fixos do código (nada da requisição)

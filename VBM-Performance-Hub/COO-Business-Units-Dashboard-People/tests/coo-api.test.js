@@ -198,7 +198,7 @@ test('lerCiclo e mês do ciclo da carga (2026-10 = realizado até setembro; jane
 
 test('leitura da carga: só a tabela do VBM, filtrada por dashboard e DT_REF, ORDEM_GRAFICO refeito do período e da série', () => {
   assert.match(SNAPSHOT_SQL, /FROM IBP\.PHUB_PERFORMANCESTUDIO R/);
-  assert.match(SNAPSHOT_SQL, /R\.ID_DASH = @idDash\s+AND R\.DT_REF = @dtRef\s+AND R\.ID_KPI IN \(717, 768, 774, 773, 772, 761, 716, 767, 766, 769, 771, 770\)/);
+  assert.match(SNAPSHOT_SQL, /R\.ID_DASH = @idDash\s+AND R\.DT_REF = @dtRef\s+AND R\.ID_KPI IN \(717, 768, 774, 773, 772, 761, 771, 769, 770\)/);
   assert.doesNotMatch(SNAPSHOT_SQL, /PEDRAVISAO/);
   assert.match(SNAPSHOT_SQL, /'MONTH'\s+THEN CASE R\.ID_TIPO_VISAO WHEN 1 THEN 0 WHEN 2 THEN 1 ELSE 2 END/);
   assert.match(SNAPSHOT_SQL, /'QUARTER' THEN CASE R\.ID_TIPO_VISAO WHEN 1 THEN 3 ELSE 4 END/);
@@ -293,9 +293,9 @@ test('/filtros: só o ano do último mês realizado do ciclo e o anterior (carga
   } finally { s.close(); }
 });
 
-// ── People: ID_DASH 20, os 12 KPIs em ordem fixa e a formatação condicional por ID_KPI ──
+// ── People: ID_DASH 20, os 9 KPIs em ordem fixa e a formatação condicional por ID_KPI ──
 const { KPIS_PEOPLE, CADASTRO_SQL } = require('../coo-api');
-const ORDEM_PEOPLE = [717, 768, 774, 773, 772, 761, 716, 767, 766, 769, 771, 770];
+const ORDEM_PEOPLE = [717, 768, 774, 773, 772, 761, 771, 769, 770];
 const PAGINA = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 // Regras da página (REGRAS_KPI, CORES_DELTA e delta), avaliadas fora do navegador
 function regrasDaPagina() {
@@ -306,7 +306,7 @@ function regrasDaPagina() {
   return new Function('fmt', `${PAGINA.slice(a, b)}\n${PAGINA.slice(c, d)}\nreturn { REGRAS_KPI, regraDe, delta };`)(fmt);
 }
 
-test('People: ID_DASH padrão 20 e os 12 KPIs na ordem definida, iguais na API e na página', async () => {
+test('People: ID_DASH padrão 20 e os 9 KPIs na ordem definida, iguais na API e na página', async () => {
   assert.deepStrictEqual(KPIS_PEOPLE, ORDEM_PEOPLE);
   assert.deepStrictEqual(regrasDaPagina().REGRAS_KPI.map((r) => r.id), ORDEM_PEOPLE);
   for (const q of [SNAPSHOT_SQL, STATUS_SQL, CADASTRO_SQL]) assert.ok(q.includes(`IN (${ORDEM_PEOPLE.join(', ')})`));
@@ -329,10 +329,11 @@ test('People: a ordem de apresentação não depende da ordem (nem do ID_ORDEM) 
   assert.deepStrictEqual(agregarIndicadores(linhas, { site: 6, ano: 2026, mes: 8 }).map((x) => x.ID_KPI), ORDEM_PEOPLE);
 });
 
-test('People: regra de cor por ID_KPI (Headcount = faixa; Women = maior; os outros 9 = menor)', () => {
+test('People: regra de cor por ID_KPI (Headcount = faixa; Women = maior; os outros 6 = menor)', () => {
   const { regraDe } = regrasDaPagina();
-  assert.deepStrictEqual(ORDEM_PEOPLE.map(regraDe), ['faixa', 'faixa', 'maior', 'menor', 'menor', 'menor', 'menor', 'menor', 'menor', 'menor', 'menor', 'menor']);
+  assert.deepStrictEqual(ORDEM_PEOPLE.map(regraDe), ['faixa', 'faixa', 'maior', 'menor', 'menor', 'menor', 'menor', 'menor', 'menor']);
   assert.strictEqual(regraDe(10), null);
+  for (const fora of [716, 767, 766]) assert.strictEqual(regraDe(fora), null, `KPI ${fora} saiu do dashboard`);
 });
 
 test('People: delta em % sobre a referência e cores nos limites exatos (0%, ±2,5%, ±5%)', () => {
