@@ -424,9 +424,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (max-height: 940px) {
   html, body { height: auto; }
   body { display: block; }
-  .panel-grid { grid-template-rows: none; grid-auto-rows: auto; align-content: start; row-gap: 24px !important; }
+  .panel-grid { grid-template-rows: none; grid-auto-rows: auto; align-content: start; row-gap: 18px !important; }
   .chart { height: 190px; }
 }
+/* People: no tablet e no celular, o mesmo espaço de 18 px entre as linhas */
+@media (max-width: 1180px) { .dash--people .panel-grid { row-gap: 18px !important; } }
 @media (max-width: 720px) {
   .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .panel-prod .panel-grid, .panel-fin .panel-grid, .dash .panel .panel-grid { grid-template-columns: minmax(0, 1fr); }
@@ -1116,7 +1118,7 @@ window.VBMSetup = (function () {
   }
 
   // ── Gráfico: altura e largura contidas (ritmo do print); valores em selos dentro das barras ──
-  var MAX_W = 900, MAX_H = 250; // People: o gráfico ocupa a largura da moldura, com altura contida (COO: 380 × 190)
+  var MAX_W = 900, MAX_H = 270; // People: o gráfico ocupa a largura da moldura, com altura contida (COO: 380 × 190)
   function chartSvg(ind, W, H) {
     var v = view(ind), ax = axis();
     var showDelta = state.delta === 'on';
@@ -1347,7 +1349,7 @@ window.VBMSetup = (function () {
       document.documentElement.style.removeProperty('--head-h');
       return;
     }
-    var cs = getComputedStyle(card), GAP_MIN = 30; // People: respiro entre as linhas de molduras
+    var cs = getComputedStyle(card), GAP_MIN = 18; // People: entre as linhas, o mesmo espaço que entre as colunas
     var extra = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + (parseFloat(cs.rowGap) || 6);
     function maiorCabeca(raiz) {
       return Math.max.apply(null, [].map.call(raiz.querySelectorAll('.card-head'), function (h) { return h.offsetHeight; }));
@@ -1360,12 +1362,9 @@ window.VBMSetup = (function () {
     var livre = (gProd.clientHeight - (N - 1) * GAP_MIN) / N - (maiorCabeca(document) + extra);
     var h = Math.max(90, Math.min(MAX_H, Math.floor(livre)));
     document.documentElement.style.setProperty('--chart-h', h + 'px');
-    // espaço entre as linhas: 80% da sobra dividida entre as duas separações (linhas um pouco mais
-    // próximas; o restante fica no rodapé). O mesmo valor nos dois painéis, para as linhas ficarem alinhadas
-    var gap = Math.min.apply(null, grids.map(function (g) {
-      return Math.floor((g.clientHeight - N * (h + maiorCabeca(g) + extra)) / (N - 1) * 0.8);
-    }));
-    grids.forEach(function (g) { g.style.rowGap = Math.max(GAP_MIN, gap) + 'px'; });
+    // People: espaço fixo entre as linhas, igual ao das colunas (grade uniforme); a sobra vai para a
+    // altura dos gráficos (até MAX_H) e o que passar disso fica abaixo da última linha
+    grids.forEach(function (g) { g.style.rowGap = GAP_MIN + 'px'; });
   }
   new ResizeObserver(ajustarAltura).observe(document.getElementById('dash'));
 
