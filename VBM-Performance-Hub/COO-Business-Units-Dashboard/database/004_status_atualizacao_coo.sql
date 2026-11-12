@@ -11,11 +11,13 @@
    Regra = SQL - COO DASHBOARD ATUALIZACAO (por KPI e DT_IND):
      sem linha em PEDRAVISAOCONSOLIDADA no DT_IND ou sem log  → 'N'
      DT_IND anterior ao mês de @DT_REF                        → 'S'
-     DT_ATUALIZACAO >= @DT_REF (mês em fechamento)            → 'S'
+     mês de (DT_ATUALIZACAO - 1 mês) >= @DT_REF               → 'S'  (atualização a partir do mês seguinte ao fechamento)
      demais                                                   → 'N'
    @DT_CARGA = DT_REF da carga = mês em fechamento (M-1 de GETDATE()-2; ex.: 12/11/2026 → 2026-10-01)
    @DT_REF   = referência = o mesmo mês em fechamento (2026-10-01):
-               KPI atualizado = última atualização no log em 2026-10-01 ou depois.
+               o dado de outubro só existe depois que outubro acaba, então o KPI está atualizado
+               quando a última atualização no log é de 01/11/2026 em diante (uma atualização feita
+               em outubro ainda é do fechamento de setembro).
 
    Pré-requisitos na tabela: coluna SG_STATUS CHAR(1) NULL e DT_ATUALIZACAO
    aceitando NULL (hoje é NOT NULL com padrão SYSUTCDATETIME()):
@@ -62,7 +64,7 @@ SET
   R.SG_STATUS = CASE
     WHEN A.DT_ATUALIZACAO IS NULL THEN 'N'
     WHEN R.DT_IND < @DT_REF THEN 'S'
-    WHEN A.DT_ATUALIZACAO >= @DT_REF THEN 'S'  -- atualizado a partir do mês em fechamento (ex.: 2026-10-01)
+    WHEN DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, A.DT_ATUALIZACAO)), MONTH(DATEADD(MONTH, -1, A.DT_ATUALIZACAO)), 1) >= @DT_REF THEN 'S'  -- atualizado em 2026-11 ou depois
     ELSE 'N'
   END
 FROM IBP.PHUB_PERFORMANCESTUDIO R
