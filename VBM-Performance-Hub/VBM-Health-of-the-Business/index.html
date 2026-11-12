@@ -908,8 +908,10 @@ window.HOB_CARREGAR(function (aviso) {
     }
     function af(de, ate) { for (var i = de + 1; i <= ate; i++) if (!ehReal(i)) return 'F'; return 'A'; }
     // Trimestre, YTD, YTG e ano: os gravados pela carga para o mês escolhido (s.per, do banco); sem eles, a soma (ou média) dos meses
-    var P = s.per && s.per[m] || {}; // custo unitário (All-in) também: o período gravado já vem ponderado
-    function de(cd, serie, calc) { var v = P[cd] && P[cd][serie]; return v == null ? calc : v; }
+    // gravados pela carga: YTD, YTG e ano no mês da DT_REF; trimestre no 1º mês dele (como o COO)
+    var P = s.per && s.per[m] || {}, PQ = s.per && s.per[t * 3 - 2] || {}, PA = {};
+    if (s.per) Object.keys(s.per).forEach(function (k) { if (s.per[k].YEAR) PA = s.per[k]; });
+    function de(cd, serie, calc) { var g = P[cd] || (cd === 'QUARTER' ? PQ[cd] : cd === 'YEAR' ? PA[cd] : null), v = g && g[serie]; return v == null ? calc : v; }
     var g = [
       { lb: l[m - 1] + ' B', la: l[m - 1] + ' ' + af(m - 1, m), b: s.b[m - 1], a: s.a[m - 1] },
       { lb: 'Q' + t + 'B', la: 'Q' + t + af(t * 3 - 3, t * 3), b: de('QUARTER', 'b', ag(s.b, t * 3 - 3, t * 3)), a: de('QUARTER', 'a', ag(s.a, t * 3 - 3, t * 3)) },
@@ -1210,7 +1212,7 @@ window.HOB_CARREGAR(function (aviso) {
     if (A && A.ok && A.mesCiclo) return A.mesCiclo;
     if (!c) return null;
     var p = c.split('-').map(Number);
-    return p[1] === 1 ? { ano: p[0] - 1, mes: 12 } : { ano: p[0], mes: p[1] - 1 };
+    return { ano: p[0], mes: p[1] }; // DT_REF da carga = mês em fechamento (como o COO)
   }
   // Pontes (IBP.WATERFALL): pendente quando a referência (DT_REF) mais recente é anterior ao mês pedido (até o mês do ciclo)
   function situacaoPonte(cfg) {

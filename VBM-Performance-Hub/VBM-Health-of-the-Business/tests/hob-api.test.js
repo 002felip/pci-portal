@@ -54,36 +54,33 @@ test('005_config_hob.sql grava o mesmo JSON do padrão do código, no registro d
   assert.deepStrictEqual(normalizarConfigHob(json), normalizarConfigHob(CONFIG_PADRAO)); // mesma configuração efetiva
 });
 
-test('003_carga_mensal_hob.sql: query do Health of the Business (ID_DASH 16) no envoltório da carga do COO', () => {
-  const s = fs.readFileSync(path.join(__dirname, '..', 'database', '003_carga_mensal_hob.sql'), 'utf8');
+test('003_carga_mensal_hob.sql: a carga do COO (003_carga_mensal_coo.sql) com ID_DASH 16, desde 2025, mais YTD e YTG', () => {
+  const ler = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+  const s = ler('database/003_carga_mensal_hob.sql'), coo = ler('../COO-Business-Units-Dashboard/database/003_carga_mensal_coo.sql');
   assert.match(s, /DECLARE @ID_DASH\s+INT\s+=\s+16;/);
-  assert.match(s, /DELETE FROM IBP\.PHUB_PERFORMANCESTUDIO\s+WHERE DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH/);
-  assert.match(s, /INSERT INTO IBP\.PHUB_PERFORMANCESTUDIO/);
-  assert.ok(!/DASH\.ID_DASH\s*=\s*\d/.test(s), 'ID_DASH fixo nos blocos');
-  assert.strictEqual((s.match(/DASH\.ID_DASH = @ID_DASH/g) || []).length, 5);
-  for (const [cd, ordem] of [['MONTH', 1], ['QUARTER', 2], ['YTD', 4], ['YEAR', 5], ['YTG', 6]]) {
-    assert.ok(s.includes(`'${cd}' AS 'CD_PERIODO'`), cd);
-    assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), `${cd} ORDEM_VISAO ${ordem}`);
+  assert.strictEqual((s.match(/AND DASH\.ID_DASH = 16/g) || []).length, 5); // MONTH, QUARTER, YEAR, YTD e YTG
+  assert.ok(!/ID_DASH\s*(=|INT\s*=)\s*15\b/.test(s), 'sem ID_DASH 15');
+  assert.ok(!/@ANO_HIST_INI/.test(s), 'sem a série histórica');
+  assert.match(s, /PVA\.ANO BETWEEN YEAR\(@DT_INI\)\s+AND YEAR\(@DT_FIM\)/);
+  assert.match(s, /SET @DT_INI = '2025-01-01'/);
+  // DT_REF da carga e blocos MONTH/QUARTER/YEAR iguais aos do COO
+  const trecho = (t, a, b) => t.slice(t.indexOf(a), t.indexOf(b, t.indexOf(a)));
+  assert.strictEqual(trecho(s, 'DECLARE @DT_CARGA', ';'), trecho(coo, 'DECLARE @DT_CARGA', ';'));
+  assert.strictEqual(trecho(s, 'FROM (', 'AND DASH.ID_DASH = 16').replace(/16/g, 'X'), trecho(coo, 'FROM (', 'AND DASH.ID_DASH = 15').replace(/15/g, 'X'));
+  // YTD e YTG: uma linha por ano, no mês da DT_REF da carga (regra do YEAR); YTG Act/Fcst = VL_PROJ
+  for (const [cd, ordem, tab] of [['YTD', 4, 'PEDRAVISAOYEARTODATE PVD'], ['YTG', 6, 'PEDRAVISAOYEARTOGO PVG']]) {
+    assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), cd);
+    assert.ok(s.includes('IBP.' + tab), tab);
   }
-  // colunas da tabela (sem NM_USUARIO), YTG gravado (regra de CD_PERIODO ajustada) e chave única entre anos
-  assert.ok(!/NM_USUARIO/.test(s.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n')), 'NM_USUARIO não existe na tabela');
-  assert.match(s, /WHERE HOB\.CD_PERIODO IN \('MONTH', 'QUARTER', 'YTD', 'YEAR', 'YTG'\)/);
-  assert.match(s, /CHECK \(CD_PERIODO IN \('MONTH', 'QUARTER', 'SEMESTER', 'YTD', 'YEAR', 'YTG'\)\)/);
-  assert.ok(s.indexOf('ADD CONSTRAINT CK_PHUB_PERFORMANCESTUDIO_PERIODO') < s.indexOf('BEGIN TRANSACTION'), 'regra ajustada antes da carga');
-  assert.match(s, /HOB\.ORDEM_ANO = YEAR\(HOB\.DT_IND\)/);
-  // DT_IND explícito em cada um dos 5 blocos (o mês da linha) e gravado pelo nome
-  assert.strictEqual((s.match(/DT_REF AS 'DT_IND'/g) || []).length, 5);
-  assert.match(s, /@DT_CARGA, HOB\.DT_IND, @ID_DASH/);
-  // fontes da query original
-  for (const t of ['PEDRAVISAOCONSOLIDADA', 'PEDRAVISAOTRIMESTRE', 'PEDRAVISAOYEARTODATE', 'PEDRAVISAOYEARTOGO', 'PEDRAVISAOANO']) assert.ok(s.includes('IBP.' + t), t);
-  // junções com separador (sem colisão de CONCAT), como no COO
+  assert.strictEqual((s.match(/AND MONTH\(PV[DG]\.DT_REF\) = MONTH\(@DT_CARGA\)/g) || []).length, 2);
+  assert.match(s, /SELECT 'Forecast' AS Type, PVG\.VL_PROJ  \* DASH\.VL_FATOR AS Value/);
   const ativas = s.split('\n').filter((l) => !l.trim().startsWith('--'));
   for (const l of ativas) if (/CONCAT\([^)]*\.ID_SITE/.test(l)) assert.match(l, /'\|'/, l.trim());
 });
 
 test('montarDados: séries mensais por BU (sites da configuração), último mês real e cadastro do KPI', () => {
   const d = montarDados(LINHAS, CONFIG, '2026-10');
-  assert.deepStrictEqual(d.ultimoReal, { ano: 2026, mes: 9 });
+  assert.deepStrictEqual(d.ultimoReal, { ano: 2026, mes: 10 }); // DT_REF da carga = mês em fechamento (como o COO)
   assert.deepStrictEqual(d.anos, [2025, 2026]);
   assert.strictEqual(d.bu.vbm[2026].ebitdaCu.b[0], 0.3);
   assert.strictEqual(d.bu.vbm[2026].ebitdaCu.a[11], 0.32);
@@ -291,7 +288,7 @@ const EB73 = EB, EBOUT = EB; // Others também é o KPI 73 (a API lê o KPI uma 
 test('montarEbitda: KPI 73 por site (Copper 38, Nickel 39, VBM 40 = total) e Others = sites 45+102+46 da operação 11', () => {
   const { montarEbitda } = require('../hob-api');
   const e = montarEbitda(EB73, EBOUT, CONFIG_PADRAO, '2026-10');
-  assert.deepStrictEqual(e.ultimoReal, { ano: 2026, mes: 9 });
+  assert.deepStrictEqual(e.ultimoReal, { ano: 2026, mes: 10 });
   assert.strictEqual(e.anos[2026].ebitdaVbm.b[0], 500);
   assert.strictEqual(e.anos[2026].ebitdaCu.b[0], 300);
   assert.strictEqual(e.anos[2026].ebitdaNi.a[0], 151);
@@ -387,7 +384,7 @@ test('montarAtualizacao: situação por gráfico (opções do EBITDA e coo.kpis)
     { ID_SITE: 102, ID_OPERACAO: 12, ID_KPI: 73, SG_STATUS: 'N', DT_ATUALIZACAO: null }, // operação fora de Others
   ];
   const a = montarAtualizacao(linhas, CONFIG_PADRAO, '2026-11');
-  assert.deepStrictEqual(a.mesCiclo, { ano: 2026, mes: 10 });
+  assert.deepStrictEqual(a.mesCiclo, { ano: 2026, mes: 11 }); // o próprio DT_REF da carga
   assert.strictEqual(a.cards['vbm.ebitda.vbm'].status, 'pendente');
   assert.strictEqual(a.cards['vbm.ebitda.vbm'].dt, '2026-09-28T00:00:00.000Z');
   assert.strictEqual(a.cards['vbm.ebitda.cu'].status, 'ok');
@@ -401,7 +398,9 @@ test('007 (status, como o 004 do COO) e 008 (verificação só leitura) do ID_DA
   const st = ler('007_status_atualizacao_hob.sql');
   assert.match(st, /DECLARE @ID_DASH\s+INT\s+=\s+16;/);
   assert.match(st, /IBP\.LOG_PEDRAVISAOCONSOLIDADA/);
-  assert.match(st, /R\.SG_STATUS = CASE WHEN A\.DT_ATUALIZACAO >= @DT_REF THEN 'S' ELSE 'N' END/); // regra do 004 do COO
+  const coo = ler('../../COO-Business-Units-Dashboard/database/004_status_atualizacao_coo.sql');
+  const corpo = (t) => t.slice(t.indexOf('SET NOCOUNT ON;'));
+  assert.strictEqual(corpo(st).replace('= 16;', '= X;'), corpo(coo).replace('= 15;', '= X;')); // idêntico ao 004 do COO
   const v = ler('008_verificacao_atualizacao_hob.sql');
   assert.match(v, /DECLARE @ID_DASH INT\s+=\s+16;/);
   const codigo = v.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -440,7 +439,8 @@ test('/atualizacao: sem SG_STATUS gravado no ciclo, usa a mesma regra direto do 
   assert.strictEqual(r.json.origem, 'log');
   assert.strictEqual(r.json.cards['vbm.ebitda.vbm'].status, 'pendente');
   const log = chamadas.find((c) => c.q === STATUS_LOG_SQL);
-  assert.strictEqual(log.params.dtMes[1].toISOString().slice(0, 10), '2026-09-01'); // mês do ciclo 2026-10
+  assert.strictEqual(log.params.dtMes[1].toISOString().slice(0, 10), '2026-10-01'); // mês do ciclo = DT_REF da carga
+  assert.strictEqual(log.params.dtLimite[1].toISOString().slice(0, 10), '2026-11-01'); // atualizado com log a partir do mês seguinte
 });
 
 test('montarAtualizacao: KPI com log em dia mas sem o realizado do mês do ciclo (SEM_REAL) fica pendente', () => {
