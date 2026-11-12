@@ -883,8 +883,8 @@ window.VBMSetup = (function () {
       'k.semFundo': 'sem fundo', 'k.restaurarCol': 'Restaurar cores das colunas',
       'k.padrao': 'padrão', 'k.restaurar': 'Restaurar cores padrão', 'k.paleta': 'Paleta', 'k.escolher': 'Escolher a cor de {serie}',
       'k.modo': 'Modo de coloração', 'k.grupo': 'Por grupo', 'k.coluna': 'Por coluna', 'k.colunas': 'Cores das colunas', 'k.limpar': 'Restaurar a cor padrão de {serie}',
-      'k.tagPaleta': 'paleta', 'k.porValor': 'por valor', 'k.pNenhuma': 'Nenhuma', 'k.pVale': 'Paleta VBM', 'k.pExecutiva': 'Paleta Executiva',
-      'k.grade': 'Paleta de cores', 'k.pAzul': 'Azul Monocromático', 'k.pVerde': 'Verde Monocromático', 'k.pPerformance': 'Escala de Performance', 'k.pGradiente': 'Escala Gradiente',
+      'k.tagPaleta': 'paleta', 'k.pNenhuma': 'Nenhuma', 'k.pVale': 'Paleta VBM', 'k.pExecutiva': 'Paleta Executiva',
+      'k.grade': 'Paleta de cores', 'k.pAzul': 'Azul Monocromático', 'k.pVerde': 'Verde Monocromático',
       'pais.Brazil': 'Brasil', 'pais.Canada': 'Canadá', 'pais.IR': 'IR',
       's.consultando': 'Consultando o banco de dados…', 's.semConexao': 'Sem conexão com o banco de dados.', 's.semIndicadores': 'A consulta não trouxe indicadores anuais.',
       's.semValores': 'A consulta não trouxe valores anuais para {bu}.', 's.erro': 'Não foi possível consultar o banco de dados ({msg}).', 's.semSites': 'A consulta não trouxe Business Units com dados anuais.',
@@ -907,8 +907,8 @@ window.VBMSetup = (function () {
       'k.semFundo': 'none', 'k.restaurarCol': 'Restore column colors',
       'k.padrao': 'default', 'k.restaurar': 'Restore default colors', 'k.paleta': 'Palette', 'k.escolher': 'Choose the color of {serie}',
       'k.modo': 'Coloring mode', 'k.grupo': 'By group', 'k.coluna': 'By column', 'k.colunas': 'Column colors', 'k.limpar': 'Restore the default color of {serie}',
-      'k.tagPaleta': 'palette', 'k.porValor': 'by value', 'k.pNenhuma': 'None', 'k.pVale': 'VBM palette', 'k.pExecutiva': 'Executive palette',
-      'k.grade': 'Color palette', 'k.pAzul': 'Monochrome blue', 'k.pVerde': 'Monochrome green', 'k.pPerformance': 'Performance scale', 'k.pGradiente': 'Gradient scale',
+      'k.tagPaleta': 'palette', 'k.pNenhuma': 'None', 'k.pVale': 'VBM palette', 'k.pExecutiva': 'Executive palette',
+      'k.grade': 'Color palette', 'k.pAzul': 'Monochrome blue', 'k.pVerde': 'Monochrome green',
       'pais.Brazil': 'Brazil', 'pais.Canada': 'Canada', 'pais.IR': 'IR',
       's.consultando': 'Querying the database…', 's.semConexao': 'No connection to the database.', 's.semIndicadores': 'The query returned no annual indicators.',
       's.semValores': 'The query returned no annual values for {bu}.', 's.erro': 'Could not query the database ({msg}).', 's.semSites': 'The query returned no Business Units with annual data.',
@@ -1150,7 +1150,7 @@ window.VBMSetup = (function () {
       var rot = rotDe(c), bx = c.x + BW / 2;
       if (c.v === null) { out += '<text class="b-axis"' + stEixo + ' x="' + bx + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(rot) + '</text>'; return; }
       var yv = y(c.v), top = Math.min(yv, y0), h = Math.max(Math.abs(yv - y0), 1.5), neg = c.v < 0;
-      var fill = degradeDe(corDaColuna(cols, j, ind.pol), c.s === 'B' ? 'g-b' : 'g-a');
+      var fill = degradeDe(corDaColuna(cols, j), c.s === 'B' ? 'g-b' : 'g-a');
       var tip = esc(rot + ' · ' + nomeDe(c) + ': ' + fmt(c.v, v.dec) + ' ' + v.u);
       out += '<rect class="b-bar' + (neg ? ' neg' : '') + '" x="' + c.x + '" y="' + top + '" width="' + BW + '" height="' + h + '" rx="3" fill="url(#' + fill + ')" data-tip="' + tip + '"/>';
       // Valor acima da barra (negativo: acima da linha do zero, para não colidir com o eixo)
@@ -1435,17 +1435,16 @@ window.VBMSetup = (function () {
   // Preferência de cada pessoa, no navegador; sem escolha, as cores do COO.
   var PALETTE_COLORS = ['#FFFFFF', '#F6F6F6', '#E6E7E8', '#D9ECEB', '#D8F0FA', '#BCBEC0', '#7FBEBC', '#9DDAF2', '#3CB5E5', '#00B0F0', '#6E8CBA',
     '#747678', '#555555', '#007E7A', '#034944', '#1B5E80', '#3A4A6B', '#2626D1', '#DC2626'];
-  // As mesmas paletas do Studio, com tons ajustados para o Historical. Categóricas: ordem fixa que maximiza a
-  // distinção entre colunas vizinhas. Azul monocromático: do azul claro (#9DDAF2) ao azul-petróleo (#1B5E80),
-  // do mais claro ao mais escuro. Gradiente: o caminho inverso, do azul-petróleo caindo para o azul claro. Performance: pelo valor da coluna no gráfico, em três faixas de tons sóbrios —
-  // tijolo suave (terço pior), cinza claro (meio) e azul-petróleo (terço melhor)
+  // As MESMAS paletas do VBM Performance Studio (PALETAS_COLUNAS de lá, mesmas cores e mesma regra).
+  // Categórica: ordem fixa que maximiza a distinção entre colunas vizinhas (validada para daltonismo).
+  // As demais, pelo papel da coluna na comparação (papelDaColuna): realizado do período anterior,
+  // realizado/forecast do período atual, Budget atual e Budget do período anterior (o Plan do Studio não
+  // existe na visão anual). Monocromáticas: a mesma regra, só com tons da própria cor.
   var PALETAS_COLUNAS = [
     { id: 'vale', lbl: 'k.pVale', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
-    { id: 'executiva', lbl: 'k.pExecutiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#B4BAC2', '#C5D0E3'] },
-    { id: 'azul', lbl: 'k.pAzul', de: '#9DDAF2', ate: '#1B5E80' },
-    { id: 'verde', lbl: 'k.pVerde', de: '#6FAFAC', ate: '#023832' },
-    { id: 'performance', lbl: 'k.pPerformance', escala: ['#B86B63', '#CDD2D8', '#1B5E80'] },
-    { id: 'gradiente', lbl: 'k.pGradiente', de: '#1B5E80', ate: '#9DDAF2' }
+    { id: 'executiva', lbl: 'k.pExecutiva', papeis: { anterior: '#007E7A', atual: '#3CB5E5', budget: '#BCBEC0', budgetAnterior: '#8E9093', plano: '#6E8CBA' } },
+    { id: 'azul', lbl: 'k.pAzul', papeis: { anterior: '#0F3F5C', atual: '#3CB5E5', budget: '#B9E2F4', budgetAnterior: '#7CC5E6', plano: '#1B5E80' } },
+    { id: 'verde', lbl: 'k.pVerde', papeis: { anterior: '#023832', atual: '#007E7A', budget: '#B5D8D6', budgetAnterior: '#6FAFAC', plano: '#034944' } }
   ];
   // Cores do grupo e dos elementos do gráfico (EDIT_COLOR_DEFS do Studio, sem o Plan: o ano não tem Plan).
   // def = cor padrão do COO; o fundo padrão é o do painel (sem fundo próprio)
@@ -1490,26 +1489,24 @@ window.VBMSetup = (function () {
   // Coluna = ano + série: '25B', '25AF' (a cor manual vale também quando o Forecast vira Actual)
   function chaveColuna(ano, serie) { return String(ano).slice(2) + serie; }
   function rotuloColuna(k) { var yy = k.slice(0, 2); return /B$/.test(k) ? yy + 'B' : yy + letraPadrao(2000 + Number(yy)); }
-  // Cor da paleta para a coluna i de cols ([{ k, v }]); performance usa o valor (polaridade do KPI: custo menor = verde)
-  function corDaPaleta(id, i, cols, pol) {
+  // Papel da coluna (papelDaColuna do Studio): Budget ou realizado/forecast do ano atual (o maior ano exibido
+  // no gráfico) ou de um ano anterior
+  function papelDaColuna(k, cols) {
+    var ano = Number(k.slice(0, 2)), maior = Math.max.apply(null, cols.map(function (c) { return Number(c.k.slice(0, 2)); }));
+    var anterior = ano < maior;
+    return /B$/.test(k) ? (anterior ? 'budgetAnterior' : 'budget') : (anterior ? 'anterior' : 'atual');
+  }
+  // Cor da paleta para a coluna i de cols ([{ k, v }]): categórica pela posição, as demais pelo papel
+  function corDaPaleta(id, i, cols) {
     var p = PALETAS_COLUNAS.filter(function (x) { return x.id === id; })[0];
     if (!p || i < 0) return null;
     if (p.cores) return p.cores[i % p.cores.length];
-    var t = cols.length > 1 ? i / (cols.length - 1) : 0;
-    if (p.escala) {
-      var vs = cols.map(function (c) { return c.v; }).filter(function (x) { return x != null && isFinite(x); });
-      var min = Math.min.apply(null, vs), max = Math.max.apply(null, vs);
-      t = cols[i].v != null && max > min ? (cols[i].v - min) / (max - min) : 0.5;
-      if (pol === 'down') t = 1 - t;
-      // três faixas limpas (sem tons misturados): terço pior, terço do meio e terço melhor
-      return p.escala[t < 1 / 3 ? 0 : t > 2 / 3 ? 2 : 1];
-    }
-    return misturarHex(p.de, p.ate, t);
+    return p.papeis[papelDaColuna(cols[i].k, cols)];
   }
   // Cor própria da coluna (manual > paleta) ou null = cor do grupo
-  function corDaColuna(cols, i, pol) {
+  function corDaColuna(cols, i) {
     if (cores.modo !== 'coluna') return null;
-    return cores.col[cols[i].k] || (cores.paleta ? corDaPaleta(cores.paleta, i, cols, pol) : null);
+    return cores.col[cols[i].k] || (cores.paleta ? corDaPaleta(cores.paleta, i, cols) : null);
   }
   // Degradê da barra: o do grupo (#g-b / #g-a) ou um por cor, criado uma vez nas <defs> da página
   function degradeDe(cor, padrao) {
@@ -1574,16 +1571,15 @@ window.VBMSetup = (function () {
       '<button type="button" data-modo="grupo" aria-pressed="' + !coluna + '">' + esc(T('k.grupo')) + '</button>' +
       '<button type="button" data-modo="coluna" aria-pressed="' + coluna + '">' + esc(T('k.coluna')) + '</button></div>';
     if (coluna) {
-      var cols = colunasVisiveis(), perf = cores.paleta === 'performance';
+      var cols = colunasVisiveis();
       h += '<div class="cores-box"><p class="cores-box-tit" id="corColTit">' + esc(T('k.colunas')) + '</p>' +
         '<label class="cores-sub" for="corPaleta">' + esc(T('k.paleta')) + '</label>' +
         '<select class="cores-sel" id="corPaleta"><option value="">' + esc(T('k.pNenhuma')) + '</option>' +
         PALETAS_COLUNAS.map(function (p) { return '<option value="' + p.id + '"' + (p.id === cores.paleta ? ' selected' : '') + '>' + esc(T(p.lbl)) + '</option>'; }).join('') + '</select>' +
         '<div class="cores-cols" role="group" aria-labelledby="corColTit">' + cols.map(function (c, i) {
           var manual = cores.col[c.k], rot = rotuloColuna(c.k), grupo = corGrupo(/B$/.test(c.k) ? 'serie:B' : 'serie:AF');
-          // performance: a cor depende do valor de cada gráfico — o menu mostra a escala
-          var atual = manual || (perf ? (function (e) { return 'linear-gradient(90deg,' + e[0] + ' 0 33%,' + e[1] + ' 33% 67%,' + e[2] + ' 67%)'; })(PALETAS_COLUNAS.filter(function (x) { return x.id === 'performance'; })[0].escala) : cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
-          var tag = manual ? '' : perf ? T('k.porValor') : cores.paleta ? T('k.tagPaleta') : T('k.padrao');
+          var atual = manual || (cores.paleta ? corDaPaleta(cores.paleta, i, cols) : grupo);
+          var tag = manual ? '' : cores.paleta ? T('k.tagPaleta') : T('k.padrao');
           return '<div class="cor-row"><span id="colLbl-' + c.k + '">' + esc(rot) + '</span><span class="cor-acoes">' +
             botaoCor('data-col="' + c.k + '"', atual, tag, 'colLbl-' + c.k, 'colVal-' + c.k, T('k.escolher', { serie: rot })) +
             '<button type="button" class="cor-limpar" data-limpar="' + c.k + '"' + (manual ? '' : ' disabled') + ' aria-label="' + esc(T('k.limpar', { serie: rot })) + '" title="' + esc(T('k.limpar', { serie: rot })) + '">↺</button></span></div>';
