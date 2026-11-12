@@ -7,30 +7,30 @@
    DT_REF + ID_DASH, numa transação (tudo ou nada).
 
    Parâmetros (bloco abaixo):
-     @DT_REF     mês de referência do dashboard = mês atual (em aberto), o
-                 mesmo @DT_REF da Quartely (ex.: '2026-10-01' → "Outubro 2026":
-                 realizado até setembro, projeção a partir de outubro).
-                 NULL = IBP.CONTROLE_PROCESSOS.DT_INI - 1 mês (ID_PROCESSO = 2).
+     @DT_REF     mês de referência = mês de FECHAMENTO, como no COO (ex.: '2026-10-01' →
+                 fechamento de outubro: realizado até outubro, projeção a partir de novembro).
+                 NULL = mês anterior a GETDATE()-2 (rodando em nov/26 → 2026-10-01).
      @NM_USUARIO quem roda a carga. NULL = login da conexão (SUSER_SNAME()).
      @ID_DASH    dashboard de origem (21 = VBM Production Analytics).
      @ANOS_ANTES anos anteriores incluídos para comparação (1 = desde jan do ano anterior).
 
    Datas derivadas de @DT_REF (a query da API usa GETDATE(); aqui não, para
    que reprocessar um mês dê o mesmo recorte):
-     @DT_REAL = @DT_REF - 1 mês (último mês com REALIZADO)
-     @DT_INI  = 1º de janeiro de (ano de @DT_REAL - @ANOS_ANTES)
-     @DT_FIM  = dezembro do ano de @DT_REF (em jan/27 já inclui 2027, como a API)
-     @YTD_FIM = @DT_REAL (YTD de janeiro até o último mês fechado, só realizado)
+     @DT_REAL = @DT_REF (último mês com REALIZADO = o próprio fechamento)
+     @DT_INI  = 1º de janeiro de (ano de @DT_REF - @ANOS_ANTES)
+     @DT_FIM  = dezembro do ano de @DT_REF
+     @YTD_FIM = @DT_REF (YTD de janeiro até o fechamento, só realizado)
+
+   DT_IND (data de cada linha):
+     MONTH    todos os meses do período
+     QUARTER  1º mês do trimestre (01, 04, 07, 10)
+     SEMESTER 1º mês do semestre (01, 07)
+     YTD/YEAR mês de @DT_REF em cada ano (ex.: @DT_REF 2026-10-01 → 2025-10-01 e 2026-10-01)
 
    Regras = as da Quartely (quartely-queries.sql):
      Act/Fcst usa VL_REAL até @DT_REAL e VL_PROJ depois.
-     Rótulo A/F: trimestre e semestre são 'A' quando terminam antes de
-     @DT_REF; ano é 'A' quando é anterior ao ano de @DT_REF; mês é 'A'
-     até @DT_REAL.
-     Ex.: carga '2026-10-01' = Quartely com @DT_REF '2026-10-01'.
-
-   YTG (year to go): IBP.PEDRAVISAOYEARTOGO, linha do mês de @DT_REAL de cada ano
-     (CD_PERIODO 'YTG', ORDEM_VISAO 6; rótulos "YTGB 26", "YTGP 26", "YTGF 26", "YTGA 25").
+     Rótulo A/F: 'A' quando o último mês do período (mês, trimestre, semestre ou
+     ano) é <= @DT_REF; senão 'F'. Ex.: @DT_REF 2026-10-01 → OctA 26, Q3A 26, Q4F 26, 25A, 26F.
 
    Atenção: reprocessar um mês antigo usa os valores ATUAIS de
    PEDRAVISAOCONSOLIDADA (projeções e realizados de hoje), não os da época.
@@ -46,14 +46,12 @@ DECLARE @ANOS_ANTES INT           = 1;
 
 -- ── Datas da carga ───────────────────────────────────────────────────
 IF @DT_REF IS NULL
-  SET @DT_REF = DATEADD(MONTH, 0, GETDATE()-2) --(SELECT DATEADD(MONTH, -1, DT_INI) FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2);
-IF @DT_REF IS NULL
-  THROW 50001, 'DT_REF não informado e não encontrado em IBP.CONTROLE_PROCESSOS (ID_PROCESSO = 2).', 1;
+  SET @DT_REF = DATEADD(MONTH, -1, GETDATE() - 2);  -- fechamento (como no COO): nov/26 → 2026-10-01
 SET @DT_REF = DATEFROMPARTS(YEAR(@DT_REF), MONTH(@DT_REF), 1);
 SET @NM_USUARIO = COALESCE(@NM_USUARIO, SUSER_SNAME());
 
-DECLARE @DT_REAL DATE = DATEADD(MONTH, -1, @DT_REF);  -- último mês com realizado
-DECLARE @DT_INI  DATE = DATEFROMPARTS(YEAR(@DT_REAL) - @ANOS_ANTES, 1, 1);
+DECLARE @DT_REAL DATE = @DT_REF;                      -- último mês com realizado = fechamento
+DECLARE @DT_INI  DATE = DATEFROMPARTS(YEAR(@DT_REF) - @ANOS_ANTES, 1, 1);
 DECLARE @DT_FIM  DATE = DATEFROMPARTS(YEAR(@DT_REF), 12, 1);
 DECLARE @YTD_FIM DATE = @DT_REAL;
 
@@ -134,7 +132,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), DATEPART(QUARTER, PVC.DT_REF) * 3, 1)) <= @DT_REF
+               AND DATEFROMPARTS(YEAR(PVC.DT_REF), DATEPART(QUARTER, PVC.DT_REF) * 3, 1) <= @DT_REF
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -192,7 +190,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1)) <= @DT_REF
+               AND DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1) <= @DT_REF
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -236,7 +234,7 @@ FROM (
           WHEN UnpivotedData.Type = 'Budget' THEN 'B'
           WHEN UnpivotedData.Type = 'Supply' THEN 'P'
           WHEN UnpivotedData.Type = 'Forecast'
-               AND EOMONTH(DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1)) <= @DT_REF
+               AND DATEFROMPARTS(YEAR(PVC.DT_REF), CASE WHEN MONTH(PVC.DT_REF) BETWEEN 1 AND 6 THEN 6 ELSE 12 END, 1) <= @DT_REF
             THEN 'A'
           WHEN UnpivotedData.Type = 'Forecast' THEN 'F'
         END
@@ -244,16 +242,16 @@ FROM (
     
     UNION ALL
     
-    -- YEAR
+    -- YEAR (DT_IND = mês de @DT_REF em cada ano, como no COO)
     SELECT
-      DATEFROMPARTS(YEAR(PVC.DT_REF), 1, 1) AS DT_REF,
+      DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(@DT_REF), 1) AS DT_REF,
       PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
       DASH.NM_KPIS_DASH AS 'NM_KPI', DASH.SG_UNID,
       CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' WHEN UnpivotedData.Type = 'Supply' THEN 'Plan' ELSE 'Act/Fcst' END AS 'NM_TYPE',
       CASE
         WHEN UnpivotedData.Type = 'Budget' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'B')
         WHEN UnpivotedData.Type = 'Supply' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'P')
-        WHEN UnpivotedData.Type = 'Forecast' AND YEAR(PVC.DT_REF) < YEAR(@DT_REF) THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'A')
+        WHEN UnpivotedData.Type = 'Forecast' AND DATEFROMPARTS(YEAR(PVC.DT_REF), 12, 1) <= @DT_REF THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'A')
         WHEN UnpivotedData.Type = 'Forecast' THEN CONCAT(RIGHT(YEAR(PVC.DT_REF), 2), 'F')
       END AS 'Type',
       SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
@@ -287,8 +285,9 @@ FROM (
     UNION ALL
     
     -- YTD: jan até o mês de @YTD_FIM, mesmo limite de meses em todos os anos
+    -- (DT_IND = mês de @DT_REF em cada ano: até quando vai o YTD)
     SELECT
-      DATEFROMPARTS(YEAR(PVC.DT_REF), 1, 1) AS DT_REF,
+      DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(@DT_REF), 1) AS DT_REF,
       PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
       DASH.NM_KPIS_DASH AS 'NM_KPI', DASH.SG_UNID,
       CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' WHEN UnpivotedData.Type = 'Supply' THEN 'Plan' ELSE 'Act/Fcst' END AS 'NM_TYPE',
@@ -328,48 +327,6 @@ FROM (
       YEAR(PVC.DT_REF), PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
       DASH.NM_KPIS_DASH, DASH.SG_UNID, UnpivotedData.Type
 
-    UNION ALL
-
-    -- YTG (year to go): IBP.PEDRAVISAOYEARTOGO é gravada por mês do ciclo (DT_REF = último mês
-    -- fechado): usa a linha do mês de @DT_REAL em cada ano, mesmo mês em todos os anos, como o YTD.
-    -- Act/Fcst: ano de @DT_REAL = 'F'; anos anteriores = 'A'. Valor do Act/Fcst: VL_PROJ (o YTG não tem realizado).
-    SELECT
-      DATEFROMPARTS(YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), 1) AS DT_REF,
-      PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
-      DASH.NM_KPIS_DASH AS 'NM_KPI', DASH.SG_UNID,
-      CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' WHEN UnpivotedData.Type = 'Supply' THEN 'Plan' ELSE 'Act/Fcst' END AS 'NM_TYPE',
-      CONCAT('YTG',
-        CASE
-          WHEN UnpivotedData.Type = 'Budget' THEN 'B'
-          WHEN UnpivotedData.Type = 'Supply' THEN 'P'
-          WHEN YEAR(PVC.DT_REF) < YEAR(@DT_REAL) THEN 'A'
-          ELSE 'F'
-        END, ' ', RIGHT(YEAR(PVC.DT_REF), 2)) AS 'Type',
-      SUM(CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END) AS [Value],
-      'YTG' AS CD_VISAO, 6 AS ORDEM_VISAO,
-      YEAR(PVC.DT_REF) AS ORDEM_ANO, YEAR(PVC.DT_REF) AS ORDEM_PERIODO,
-      CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 3 END AS ORDEM_SERIE
-    FROM
-      IBP.PEDRAVISAOYEARTOGO PVC
-      INNER JOIN IBP.DASHBOARD DASH
-        ON PVC.ID_SISTEMA = DASH.ID_SISTEMA
-        AND CONCAT(PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI) = CONCAT(DASH.ID_SITE, DASH.ID_OPERACAO, DASH.ID_KPI)
-      CROSS APPLY (
-        SELECT 'Budget' AS Type, PVC.VL_ORC * DASH.VL_FATOR AS Value
-        UNION ALL
-        SELECT 'Supply' AS Type, PVC.VL_SUPPLY * DASH.VL_FATOR AS Value
-        UNION ALL
-        -- YTG é o restante do ano: o Forecast é sempre a projeção (VL_PROJ); com a regra do mês
-        -- (realizado até @DT_REAL) gravava 0, porque VL_REAL do YTG é sempre vazio
-        SELECT 'Forecast' AS Type, PVC.VL_PROJ * DASH.VL_FATOR AS Value
-      ) AS UnpivotedData
-    WHERE
-      PVC.DT_REF BETWEEN @DT_INI AND @DT_REAL
-      AND MONTH(PVC.DT_REF) = MONTH(@DT_REAL)
-      AND DASH.ID_DASH = @ID_DASH
-    GROUP BY
-      YEAR(PVC.DT_REF), MONTH(PVC.DT_REF), PVC.ID_SISTEMA, PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI,
-      DASH.NM_KPIS_DASH, DASH.SG_UNID, UnpivotedData.Type
 ) AS Q;
 
 DECLARE @LINHAS INT = (SELECT COUNT(*) FROM #R);

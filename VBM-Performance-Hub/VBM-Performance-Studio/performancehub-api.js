@@ -337,7 +337,8 @@ ORDER BY R.ORDEM_ANO, R.ORDEM_VISAO, R.ORDEM_PERIODO, R.ID_TIPO_VISAO`;
 
 // Situação de atualização dos KPIs da carga, calculada na hora a partir do log (mesma regra do
 // COO e de database/006_status_atualizacao.sql, sem depender de o 006 ter rodado):
-//   última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês da carga → 'S'; antes ou sem log → 'N'
+//   última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês da carga (mês de fechamento,
+//   como no COO: carga 2026-10-01 → atualizado a partir de 01/10/2026) → 'S'; antes ou sem log → 'N'
 // Consolidados (gravados pela carga automática, cujo log só tem a data da execução): 'S' só com
 // TODOS os sites que os compõem atualizados; a data é a do componente mais atrasado.
 //   38 Copper (KPI 22) · 39 Nickel (KPI 51) · 35 Cobalt (KPI 722) · 40 Global = os mesmos sites do 38, 39 e 35
@@ -377,7 +378,7 @@ COMP AS (
   INNER JOIN (
     SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
     FROM IBP.PEDRAVISAOCONSOLIDADA
-    WHERE YEAR(DT_REF) = YEAR(DATEADD(MONTH, -1, @DT_CARGA)) AND ID_OPERACAO <> 10
+    WHERE YEAR(DT_REF) = YEAR(@DT_CARGA) AND ID_OPERACAO <> 10  -- ano do fechamento
   ) P ON P.ID_SITE = C.ID_SITE AND P.ID_KPI = C.ID_KPI
   LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
     ON L.ID_SISTEMA = P.ID_SISTEMA AND L.ID_SITE = P.ID_SITE
@@ -811,16 +812,24 @@ function criarPerformanceHubRouter({ runQuery, tabelaConfiguracao, armazenamento
     }
   });
 
-  // Meses de referência (YTD) com carga, para a escolha na tela; sem tabela → []
-  rota('/chart-data/referencias', 'referencias', async () => {
+  // Meses de referência (DT_REF = fechamento) com carga, para a escolha na tela; sem tabela → [].
+  // Sem cache: uma carga recém-gravada aparece na hora ao abrir o painel Dashboards.
+  router.get('/chart-data/referencias', async (req, res) => {
     try {
-      const r = await runQuery(REFERENCIAS_SQL, { idDash: [sql.Int, ID_DASH] });
-      return r.recordset.map(l => ({ dtRef: new Date(l.DT_REF).toISOString().slice(0, 7), nome: l.NM_YTD, atualizadoEm: l.DT_ATUALIZACAO }));
+      let dados;
+      try {
+        const r = await runQuery(REFERENCIAS_SQL, { idDash: [sql.Int, ID_DASH] });
+        dados = r.recordset.map(l => ({ dtRef: new Date(l.DT_REF).toISOString().slice(0, 7), nome: l.NM_YTD, atualizadoEm: l.DT_ATUALIZACAO }));
+      } catch (err) {
+        if (!tabelaInexistente(err)) throw err;
+        dados = [];
+      }
+      res.json(dados);
     } catch (err) {
-      if (tabelaInexistente(err)) return [];
-      throw err;
+      console.error('[performance-hub] Erro ao buscar referencias:', err.message);
+      res.status(500).json({ error: 'Failed to fetch references', detalhe: err.message });
     }
-  }, 'Failed to fetch references');
+  });
   rota('/sites', 'sites', async () => (await runQuery(SITES_SQL)).recordset, 'Failed to fetch sites');
 
   // Lista das configurações salvas (sem cache: reflete a última gravação).

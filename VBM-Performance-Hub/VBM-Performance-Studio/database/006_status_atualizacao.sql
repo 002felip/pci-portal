@@ -12,12 +12,12 @@
      sem registro no log           → SG_STATUS = 'N' e DT_ATUALIZACAO NULL
    A situação vale para todas as linhas do indicador na carga (meses, trimestres e anos).
 
-   Referência = DT_REF da carga (1º dia do mês do dashboard): só conta como atualizado o
-   indicador alterado A PARTIR desse dia. Ex.: carga 2026-11-01 → atualizado em 01/11/2026
-   ou depois = 'S'; atualizado em outubro (ciclo anterior) = 'N'.
+   Referência = DT_REF da carga (mês de fechamento, como no COO): só conta como atualizado o
+   indicador alterado A PARTIR do 1º dia desse mês. Ex.: carga 2026-10-01 (fechamento de
+   outubro, rodando em novembro) → atualizado em 01/10/2026 ou depois = 'S'.
 
-   Carga a atualizar: @DT_CARGA_PARAM (ex.: '2026-11-01'); NULL = carga do mês de
-   GETDATE()-2 (ex.: 2026-11-01) ou, sem ela gravada, a mais recente do dashboard.
+   Carga a atualizar: @DT_CARGA_PARAM (ex.: '2026-10-01'); NULL = fechamento do mês anterior a
+   GETDATE()-2 (ex.: 2026-10-01) ou, sem ele gravado, a carga mais recente do dashboard.
 
    Indicadores consolidados (gravados pela carga automática 'Carga_Auto', que soma os sites
    e registra no log a data da própria execução): a data do consolidado não diz nada sobre
@@ -38,15 +38,15 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 DECLARE @ID_DASH        INT  = 21;
-DECLARE @DT_CARGA_PARAM DATE = NULL;   -- ex.: '2026-11-01' para reprocessar uma carga
--- Carga a atualizar: a informada; senão a do mês (2026-11-01); ainda não gravada, a mais recente
-DECLARE @DT_CARGA DATE = COALESCE(@DT_CARGA_PARAM, DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1));
+DECLARE @DT_CARGA_PARAM DATE = NULL;   -- ex.: '2026-10-01' para reprocessar uma carga
+-- Carga a atualizar: a informada; senão o fechamento (nov/26 → 2026-10-01); ainda não gravada, a mais recente
+DECLARE @DT_CARGA DATE = COALESCE(@DT_CARGA_PARAM, DATEADD(MONTH, -1, GETDATE() - 2));
 SET @DT_CARGA = DATEFROMPARTS(YEAR(@DT_CARGA), MONTH(@DT_CARGA), 1);
 IF NOT EXISTS (SELECT 1 FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF = @DT_CARGA)
   SET @DT_CARGA = (SELECT MAX(DT_REF) FROM IBP.PHUB_PERFORMANCESTUDIO WHERE ID_DASH = @ID_DASH AND DT_REF <= @DT_CARGA);
 IF @DT_CARGA IS NULL
   THROW 50020, 'Nenhuma carga do dashboard em IBP.PHUB_PERFORMANCESTUDIO: rode antes o 003_carga_mensal.sql.', 1;
--- Data de referência: 1º dia do mês da carga (carga 2026-11-01 → atualizado a partir de 01/11/2026)
+-- Data de referência: 1º dia do mês da carga (carga 2026-10-01 → atualizado a partir de 01/10/2026)
 DECLARE @DT_REF   DATE = @DT_CARGA;
 DECLARE @LINHAS   INT;
 
@@ -86,7 +86,7 @@ FROM #COMPOSICAO C
 INNER JOIN (
   SELECT DISTINCT ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI
   FROM IBP.PEDRAVISAOCONSOLIDADA
-  WHERE YEAR(DT_REF) = YEAR(DATEADD(MONTH, -1, @DT_REF)) AND ID_OPERACAO <> 10  -- ano do último mês realizado, como a carga automática
+  WHERE YEAR(DT_REF) = YEAR(@DT_REF) AND ID_OPERACAO <> 10  -- ano do fechamento (último mês realizado)
 ) P ON P.ID_SITE = C.ID_SITE AND P.ID_KPI = C.ID_KPI
 LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
   ON L.ID_SISTEMA = P.ID_SISTEMA AND L.ID_SITE = P.ID_SITE
