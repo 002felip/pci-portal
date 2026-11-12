@@ -17,8 +17,8 @@
  * Nova consulta = novo script em database/ + uma entrada em CONSULTAS.
  *
  * Fonte dos gráficos: as cargas gravadas em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH do COO) por
- * database/003_carga_mensal_coo.sql. Cada carga é um ciclo (DT_REF, dia 1 do mês; ex.: 2026-10-01 =
- * realizado até setembro). Sem carga gravada não há dados na tela: não há consulta ao vivo de reserva.
+ * database/003_carga_mensal_coo.sql. Cada carga é um ciclo (DT_REF = mês em fechamento, dia 1; ex.:
+ * 2026-10-01 = fechamento de outubro, realizado até outubro). Sem carga gravada não há dados na tela: não há consulta ao vivo de reserva.
  *
  * Rotas (ciclo = AAAA-MM de uma carga gravada; sem ele, a carga mais recente):
  *   GET /ping                         diagnóstico sem banco
@@ -164,10 +164,10 @@ function lerCiclo(valor) {
 }
 // DT_REF da carga → 'AAAA-MM'
 function cicloDe(dt) { const [a, m] = anoMes(dt); return `${a}-${String(m).padStart(2, '0')}`; }
-// Mês do ciclo de uma carga: o mês anterior ao DT_REF (carga 2026-10 → realizado até 09/2026)
+// Mês do ciclo de uma carga: o próprio DT_REF, que é o mês em fechamento (carga 2026-10 → realizado até 10/2026)
 function mesDoCicloDaCarga(ciclo) {
   const [a, m] = ciclo.split('-').map(Number);
-  return m === 1 ? { ano: a - 1, mes: 12 } : { ano: a, mes: m - 1 };
+  return { ano: a, mes: m };
 }
 
 // Situação do KPI no ciclo (script de atualização): VALIDATE 1 = atualizado, 0 = aguardando a

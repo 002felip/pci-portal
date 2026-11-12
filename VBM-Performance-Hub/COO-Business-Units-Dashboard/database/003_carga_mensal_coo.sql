@@ -25,7 +25,7 @@ DECLARE @ANO_HIST_INI INT = 2017;
 -- INSERT em IBP.PHUB_PERFORMANCESTUDIO (tabela do VBM Performance Studio)
 -- A query do COO abaixo é a original; só foram incluídos os campos
 -- ID_TIPO_VISAO_VBM, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO e ORDEM_PERIODO.
---   DT_REF (tabela) = mês de GETDATE()-2, no dia 1 (ANO-MES-01), com realizado até o mês anterior (ex.: 2026-10-01 = realizado até setembro)
+--   DT_REF (tabela) = mês em fechamento (M-1 de GETDATE()-2), no dia 1: ex.: em 12/11/2026 → 2026-10-01 (fechamento de outubro)
 --   DT_IND (tabela), tudo amarrado na DT_REF da carga (@DT_CARGA):
 --     MONTH   → todos os meses (DT_REF da linha)
 --     QUARTER → um por trimestre, no 1º mês dele (meses 1, 4, 7 e 10)
@@ -35,7 +35,7 @@ DECLARE @ANO_HIST_INI INT = 2017;
 SET XACT_ABORT ON;
 
 DECLARE @ID_DASH  INT  = 15;
-DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);  -- ex.: 28/10/2026 → 2026-10-01
+DECLARE @DT_CARGA DATE = DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1));  -- mês em fechamento: 12/11/2026 → 2026-10-01
 
 BEGIN TRANSACTION;
 

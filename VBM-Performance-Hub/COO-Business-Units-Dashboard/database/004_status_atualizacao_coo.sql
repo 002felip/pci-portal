@@ -11,10 +11,10 @@
    Regra = SQL - COO DASHBOARD ATUALIZACAO (por KPI e DT_IND):
      sem linha em PEDRAVISAOCONSOLIDADA no DT_IND ou sem log  → 'N'
      DT_IND anterior ao mês de @DT_REF                        → 'S'
-     DT_ATUALIZACAO >= @DT_REF (M-1 da carga)                 → 'S'
+     DT_ATUALIZACAO >= @DT_REF (mês em fechamento)            → 'S'
      demais                                                   → 'N'
-   @DT_CARGA = mês da carga (1º dia do mês de GETDATE()-2; ex.: 2026-11-01)
-   @DT_REF   = referência M-1 da carga, igual ao fechamento (ex.: 2026-10-01):
+   @DT_CARGA = DT_REF da carga = mês em fechamento (M-1 de GETDATE()-2; ex.: 12/11/2026 → 2026-10-01)
+   @DT_REF   = referência = o mesmo mês em fechamento (2026-10-01):
                KPI atualizado = última atualização no log em 2026-10-01 ou depois.
 
    Pré-requisitos na tabela: coluna SG_STATUS CHAR(1) NULL e DT_ATUALIZACAO
@@ -26,8 +26,8 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 DECLARE @ID_DASH  INT  = 15;
-DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);  -- ex.: 2026-11-01
-DECLARE @DT_REF   DATE = DATEADD(MONTH, -1, @DT_CARGA);                                   -- M-1 da carga: 2026-10-01
+DECLARE @DT_CARGA DATE = DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1));  -- mês em fechamento: 2026-10-01
+DECLARE @DT_REF   DATE = @DT_CARGA;                                                                          -- referência: 2026-10-01
 
 -- Última atualização por KPI e DT_IND (KPI com linha no mês em PEDRAVISAOCONSOLIDADA)
 IF OBJECT_ID('tempdb..#A') IS NOT NULL DROP TABLE #A;
@@ -62,7 +62,7 @@ SET
   R.SG_STATUS = CASE
     WHEN A.DT_ATUALIZACAO IS NULL THEN 'N'
     WHEN R.DT_IND < @DT_REF THEN 'S'
-    WHEN A.DT_ATUALIZACAO >= @DT_REF THEN 'S'  -- atualizado a partir da referência M-1 (ex.: 2026-10-01)
+    WHEN A.DT_ATUALIZACAO >= @DT_REF THEN 'S'  -- atualizado a partir do mês em fechamento (ex.: 2026-10-01)
     ELSE 'N'
   END
 FROM IBP.PHUB_PERFORMANCESTUDIO R

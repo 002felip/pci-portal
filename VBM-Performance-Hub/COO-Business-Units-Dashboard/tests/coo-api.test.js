@@ -200,13 +200,13 @@ test('carga do COO na tabela do VBM: dashboard 15, apaga só o próprio mês, pe
   assert.match(ativo, /DATEFROMPARTS\(PVA\.ANO, MONTH\(@DT_CARGA\), 1\) AS DT_REF/);
   assert.doesNotMatch(ativo, /\) AS PVC\b[\s\S]*\) AS COO/);
 });
-test('lerCiclo e mês do ciclo da carga (2026-10 = realizado até setembro; janeiro → dezembro anterior)', () => {
+test('lerCiclo e mês do ciclo da carga (DT_REF = mês em fechamento: 2026-10 = realizado até outubro)', () => {
   assert.strictEqual(lerCiclo('2026-10'), '2026-10');
   assert.strictEqual(lerCiclo('2026-10-01'), '2026-10');
   assert.strictEqual(lerCiclo(''), null);
   for (const v of ['2026-13', '26-10', '2026-10-02', ['2026-10', '2026-09']]) assert.strictEqual(lerCiclo(v), undefined, String(v));
-  assert.deepStrictEqual(mesDoCicloDaCarga('2026-10'), { ano: 2026, mes: 9 });
-  assert.deepStrictEqual(mesDoCicloDaCarga('2027-01'), { ano: 2026, mes: 12 });
+  assert.deepStrictEqual(mesDoCicloDaCarga('2026-10'), { ano: 2026, mes: 10 });
+  assert.deepStrictEqual(mesDoCicloDaCarga('2026-12'), { ano: 2026, mes: 12 });
 });
 
 test('leitura da carga: só a tabela do VBM, filtrada por dashboard e DT_REF, ORDEM_GRAFICO refeito do período e da série', () => {
@@ -257,13 +257,13 @@ test('/atualizacao: situação lida da carga (SG_STATUS), mês projetado segue o
     return banco()(q, p);
   });
   try {
-    const r = await get(s, '/api/atualizacao?site=6&ano=2026&mes=12&ciclo=2026-10');
+    const r = await get(s, '/api/atualizacao?site=6&ano=2026&mes=12&ciclo=2026-09');  // fechamento de setembro
     assert.deepStrictEqual(r.json.situacaoDe, { ano: 2026, mes: 9 });
     assert.strictEqual(r.json.kpis['1|10'].status, 'pendente');
     assert.strictEqual(r.json.kpis['1|10'].texto, 'Pending final updates');
     assert.strictEqual(r.json.kpis['1|11'].status, 'ok');
     assert.strictEqual(new Date(r.json.kpis['1|11'].dt).toISOString(), dt.toISOString());
-    assert.strictEqual(pedido, '2026-10-01');
+    assert.strictEqual(pedido, '2026-09-01');
     assert.strictEqual((await get(s, '/api/atualizacao?site=6&ano=2026&mes=9&ciclo=2025-01')).status, 404);
     assert.strictEqual(aoVivo, 0);
   } finally { s.close(); }
@@ -301,8 +301,9 @@ test('/filtros: só o ano do último mês realizado do ciclo e o anterior (carga
   const s = await servidor(banco(velhos));
   try {
     assert.deepStrictEqual((await get(s, '/api/filtros?ciclo=2026-10')).json.anos, [2025, 2026]);
-    const jan = await servidor(banco(velhos, [{ DT_REF: new Date(Date.UTC(2027, 0, 1)), DT_CARGA: null }]));
-    try { assert.deepStrictEqual((await get(jan, '/api/filtros?ciclo=2027-01')).json.anos, [2025, 2026]); } finally { jan.close(); }
+    // fechamento de dezembro/26 → 2025 e 2026; de janeiro/27 → 2026 e 2027
+    const dez = await servidor(banco(velhos, [{ DT_REF: new Date(Date.UTC(2026, 11, 1)), DT_CARGA: null }]));
+    try { assert.deepStrictEqual((await get(dez, '/api/filtros?ciclo=2026-12')).json.anos, [2025, 2026]); } finally { dez.close(); }
   } finally { s.close(); }
 });
 
