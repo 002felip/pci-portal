@@ -111,7 +111,7 @@ where KPI_FINAL IN
 
 --ONTARIO
 '8141', '9141', '10141', '11141', '12141', '31141', '81151', '91151', '101151', '111151', '121151', '152171', '152441', '152161', '3261291', '107511',
-'32141', '322161', -- Ontario Operations: Ore Mined (Mine) e Ore Milled (Mill), importados do PCI Master
+'32141', -- Ontario Operations: Ore Mined (Mine), importado do PCI Master
 
 -- VNL E IR
 '361151', '371151', '36141', '37141', '132161', '187511', '167513', '267512',
