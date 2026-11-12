@@ -1,9 +1,9 @@
 """
 Consolidated report — one PDF with all the selected Business Units.
 
-Order (as in "Stable & Capable Consolidated"):
-    1. Stability & Capability Scores summary (all KPIs of all BUs)
-    2. For each BU: cover, KPI list and one page per KPI (the same pages of the BU report)
+Order: for each BU, cover, KPI list and one page per KPI (the same pages of the BU report).
+The Stability & Capability Scores summary page (page_composer.generate_scores_page) is still
+in development and is left out of the PDF for now.
 
 The pages of each BU come from ReportBuilder.build_pages(); the Excel is read only once.
 A BU that fails is logged ("FAILED for BU '<bu>': …") and left out; the others go on.
@@ -16,7 +16,7 @@ import tempfile
 
 from .config import build_config
 from .exceptions import ReportGenerationError
-from .page_composer import generate_scores_page
+from .page_composer import generate_scores_page  # noqa: F401 — resumo dos scores, desligado por ora
 from .pdf_compiler import compile_multi_page_pdf
 from .report_builder import ReportBuilder
 from .utils import build_output_path
@@ -91,8 +91,10 @@ def generate_consolidated(bus, cli_overrides, yaml_path=None):
         temp = tempfile.mkdtemp(prefix='kpi_consolidado_')
         try:
             cfg = base.as_chart_config()
-            resumo = generate_scores_page(grupos, ano, _rotulo_periodo(df_raw, ano), cfg, temp)
-            todas = [resumo] + paginas
+            # Página de resumo dos Stability & Capability Scores: em desenvolvimento, fora do PDF
+            # por ora. Para voltar com ela: todas = [generate_scores_page(grupos, ano,
+            # _rotulo_periodo(df_raw, ano), cfg, temp)] + paginas
+            todas = list(paginas)
 
             output_path = build_output_path(base.output_dir, 'Consolidated')
             os.makedirs(base.output_dir, exist_ok=True)
