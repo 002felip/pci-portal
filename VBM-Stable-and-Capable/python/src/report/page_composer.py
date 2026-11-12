@@ -157,7 +157,8 @@ def compose_page3(fig_control, fig_hist_table, fig_process2, kpi_metadata, confi
     d = _cabecalho_pagina(page, W, titulo, kpi, unidade, meta)
     f_meta = V.fonte('italic', 11)
     larg_meta = max(V.largura_texto(m, f_meta) for m in meta)
-    _pilulas_score(d, W - 32 - larg_meta - 24, 40, kpi_metadata.get('scores'))
+    # Pílulas dos Stability & Capability Scores: em desenvolvimento, fora do PDF por ora.
+    # Para voltar com elas: _pilulas_score(d, W - 32 - larg_meta - 24, 40, kpi_metadata.get('scores'))
 
     MX, GAP, TOPO, BASE = 28, 18, 80, 22
     largura = W - 2 * MX

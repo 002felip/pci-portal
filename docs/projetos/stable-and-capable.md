@@ -54,7 +54,8 @@ sequenceDiagram
     (`generate_scores_page`) está em desenvolvimento e fica fora do PDF por ora. Ele vai para o Blob como `Stable_Capable_Consolidado_<início>_<fim>.pdf`. Uma BU com
     erro fica de fora e as outras seguem.
 - **Scores** (`src/report/scores.py`): calculados no ano de referência, com uma carta X-AM do ano inteiro
-  (σ = amplitude móvel média ÷ 1,128). Aparecem nas pílulas do cabeçalho de cada página de KPI.
+  (σ = amplitude móvel média ÷ 1,128). Ainda em desenvolvimento: o cálculo roda e vai para o log, mas não
+  aparece no PDF (nem no resumo do consolidado nem nas pílulas do cabeçalho do KPI).
   - **Stability** = 100 × (1 − dias fora de controle ÷ dias − 0,3 × CV). Um dia está fora de controle
     quando alguma regra de Nelson o marca: fora de ±3σ, 9 do mesmo lado, 6 em tendência ou 14 alternando.
   - **Capability** = 100 × dias dentro de Budget ± 2σ ÷ dias.
