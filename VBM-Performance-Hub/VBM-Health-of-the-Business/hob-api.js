@@ -213,7 +213,7 @@ function melhorMeta(atual, l, nomePadrao) {
 function montarDados(linhas, config, ciclo) {
   const [anoC, mesC] = ciclo.split('-').map(Number);
   // último mês realizado: o mês anterior ao do ciclo (2026-10 → setembro de 2026)
-  const ultimoReal = mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 };
+  const ultimoReal = { ano: anoC, mes: mesC }; // DT_REF da carga = mês em fechamento (como o COO)
   const avisos = [], anos = new Set(), meta = {};
   const porNome = new Map(); // nome normalizado → linhas
   for (const l of linhas) {
@@ -380,7 +380,7 @@ function somarPeriodo(s, l, cd, m) {
 // Linha fora da configuração entra em avisos (não é somada).
 function montarEbitda(linhas, linhasOutros, config, ciclo) {
   const [anoC, mesC] = ciclo.split('-').map(Number);
-  const ultimoReal = mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 };
+  const ultimoReal = { ano: anoC, mes: mesC }; // DT_REF da carga = mês em fechamento (como o COO)
   const SEG = { vbm: 'ebitdaVbm', cu: 'ebitdaCu', ni: 'ebitdaNi', out: 'ebitdaOut' };
   const avisos = [], anos = {}, sitesUsados = {}, fora = new Set();
   // cadastro (IBP.DASHBOARD) de cada opção do seletor, pelas linhas dela: unidade e casas decimais próprias
@@ -476,11 +476,11 @@ WHERE R.ID_DASH = @idDash
   AND R.SG_STATUS IS NOT NULL
 GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
 // Sem situação gravada na carga (007 ainda não rodou para o ciclo): a mesma regra do 007 (e do 004 do COO), lida na hora
-// do log — última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês do ciclo (@dtMes) → 'S'
+// do log — última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês seguinte ao do ciclo (@dtLimite) → 'S'
 const STATUS_LOG_SQL = `
 SELECT
   R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
-  CASE WHEN MAX(L.DT_ATUALIZACAO) >= @dtMes THEN 'S' ELSE 'N' END AS SG_STATUS,
+  CASE WHEN MAX(L.DT_ATUALIZACAO) >= @dtLimite THEN 'S' ELSE 'N' END AS SG_STATUS,
   MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO,
   MAX(R.SEM_REAL) AS SEM_REAL
 FROM (
@@ -517,7 +517,7 @@ function montarAtualizacao(linhas, config, ciclo) {
   }
   for (const k of Object.keys(cards)) if (!cards[k]) delete cards[k];
   // mês do ciclo da carga (carga 2026-11 → outubro): meses anteriores já fechados contam como atualizados
-  return { ciclo, mesCiclo: mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 }, cards, indicadores: kpis.length };
+  return { ciclo, mesCiclo: { ano: anoC, mes: mesC }, cards, indicadores: kpis.length };
 }
 
 // Erro do banco → código para a tela (sem o texto do banco na resposta; o texto vai para o log)
@@ -662,7 +662,7 @@ function criarHobRouter({ runQuery, idDash }) {
       if (!Object.keys(s.anos).length) avisos.push(`${chave}: KPI ${idKpi} sem linhas do site ${site} no ciclo ${ciclo}`);
       series[chave] = { idKpi, site, ...s };
     }
-    return { idDash, ciclo, ultimoReal: mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 }, series, pendentes, avisos };
+    return { idDash, ciclo, ultimoReal: { ano: anoC, mes: mesC }, series, pendentes, avisos };
   }
   const pontePedida = (req) => (req.query.ponte === 'ebitdaYear' ? 'ebitdaYear' : 'fcfYear');
   function responderErro(res, rotaNome, err, falha) {
@@ -785,13 +785,14 @@ function criarHobRouter({ runQuery, idDash }) {
       const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, fresco(req))).map(l => cicloDe(l.DT_REF));
       if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
       const ciclo = pedido && ciclos.includes(pedido) ? pedido : ciclos[0];
-      const dtRef = new Date(`${ciclo}-01T00:00:00Z`), dtMes = new Date(Date.UTC(dtRef.getUTCFullYear(), dtRef.getUTCMonth() - 1, 1));
+      // DT_REF da carga = mês do ciclo (dtMes); atualizado com log a partir do mês seguinte (dtLimite), regra do 004 do COO
+      const dtRef = new Date(`${ciclo}-01T00:00:00Z`), dtMes = dtRef, dtLimite = new Date(Date.UTC(dtRef.getUTCFullYear(), dtRef.getUTCMonth() + 1, 1));
       let origem = 'carga';
       let linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
       if (!linhas.length) {
         // 007 ainda não gravou SG_STATUS neste ciclo: a mesma regra, direto do log
         origem = 'log';
-        linhas = await comCache(`/status-log:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_LOG_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
+        linhas = await comCache(`/status-log:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_LOG_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes], dtLimite: [sql.Date, dtLimite] })).recordset, fresco(req));
       }
       const a = montarAtualizacao(linhas, config, ciclo);
       if (!Object.keys(a.cards).length) console.warn(`${TAG} /atualizacao: nenhum gráfico com situação no ciclo ${ciclo} (origem ${origem}, ${linhas.length} KPIs)`);

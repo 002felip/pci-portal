@@ -4,23 +4,28 @@ DECLARE
 @DT_FIM AS DATE,
 @DT_REF AS DATE
 
-SET @DT_INI = '2026-01-01'
-SET @DT_FIM =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
-SET @DT_REF =  (SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
+SET @DT_INI = '2025-01-01'
+SET @DT_FIM = CAST(DATEADD(MONTH, 0, CONCAT(YEAR(DATEFROMPARTS(YEAR(DATEADD(MONTH, 0, GETDATE()-1)), MONTH(DATEADD(MONTH, -1, GETDATE()-1)), 1)), '-12-01')) AS DATE)
+SET @DT_REF =  DATEADD(MONTH, -1, GETDATE()-2)  --(SELECT DATEADD(MONTH, -1, DT_INI) AS DT_INI_MENOS_1_MES FROM IBP.CONTROLE_PROCESSOS WHERE ID_PROCESSO = 2)
 
+
+
+-- select @DT_REF  -- (depuração: um 2º resultado quebraria o dashboard)
+----------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------                        DADOS DO SOUTH ATLANTIC                            -----------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------                                           MONTH                                               -----------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------
 
 -- ════════════════════════════════════════════════════════════════════
 -- VBM Health of the Business — CONFERÊNCIA da carga (só leitura, não grava nada)
--- A mesma consulta de 003_carga_mensal_hob.sql, sem DELETE, INSERT e sem o ajuste da regra de CD_PERIODO:
--- mostra exatamente as linhas que a carga gravaria em IBP.PHUB_PERFORMANCESTUDIO para o ID_DASH 16,
--- com as colunas da tabela, na mesma ordem do INSERT:
---   DT_REF, DT_IND, ID_DASH, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, ID_TIPO_VISAO, NM_TIPO_VISAO,
---   NM_VISAO, VL_KPI, CD_PERIODO, ORDEM_VISAO, ORDEM_ANO, ORDEM_PERIODO
--- CD_PERIODO: MONTH 1 · QUARTER 2 · YTD 4 · YEAR 5 · YTG 6 (QUARTER e YEAR só do ano de DT_IND).
--- Resumo por CD_PERIODO no fim.
+-- A mesma consulta de 003_carga_mensal_hob.sql, sem DELETE/INSERT: mostra as linhas que a carga gravaria
+-- em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 16), um resumo por período e a checagem de chave duplicada.
 -- ════════════════════════════════════════════════════════════════════
 DECLARE @ID_DASH  INT  = 16;
-DECLARE @DT_CARGA DATE = DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1);  -- ex.: 28/10/2026 → 2026-10-01
+DECLARE @DT_CARGA DATE = DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(GETDATE() - 2), MONTH(GETDATE() - 2), 1));  -- mês em fechamento: 12/11/2026 → 2026-10-01
 
 IF OBJECT_ID('tempdb..#CONFERENCIA_HOB') IS NOT NULL DROP TABLE #CONFERENCIA_HOB;
 
@@ -28,18 +33,12 @@ SELECT CONF.*
 INTO #CONFERENCIA_HOB
 FROM (
 SELECT
-  @DT_CARGA AS DT_REF, HOB.DT_IND, @ID_DASH AS ID_DASH, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
-  HOB.ID_TIPO_VISAO_VBM AS ID_TIPO_VISAO, MAX(HOB.NM_TYPE) AS NM_TIPO_VISAO, MAX(HOB.[Type]) AS NM_VISAO, SUM(ISNULL(HOB.[Value], 0)) AS VL_KPI,
-  HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
+  @DT_CARGA AS DT_REF, COO.DT_REF AS DT_IND, @ID_DASH AS ID_DASH, COO.ID_SISTEMA, COO.ID_SITE, COO.ID_OPERACAO, COO.ID_KPI,
+  COO.ID_TIPO_VISAO_VBM AS ID_TIPO_VISAO, MAX(COO.NM_TIPO_VISAO) AS NM_TIPO_VISAO, MAX(COO.NM_VISAO) AS NM_VISAO, SUM(ISNULL(COO.VL_KPI, 0)) AS VL_KPI,
+  COO.CD_PERIODO, COO.ORDEM_VISAO, COO.ORDEM_ANO, COO.ORDEM_PERIODO
 FROM (
 
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------                                           MONTH                                               -----------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-
-	SELECT 
+	SELECT
 		PVC.DT_REF,
 		PVC.ID_SISTEMA,
 		PVC.ID_SITE,
@@ -47,19 +46,17 @@ FROM (
 		PVC.ID_KPI,
 		DASH.NM_KPIS_DASH AS 'NM_KPI',
 		DASH.ID_ORDEM,
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 
-					WHEN UnpivotedData.Type = 'Supply' THEN 1 
+		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0
+					WHEN UnpivotedData.Type = 'Supply' THEN 1
 					ELSE 2 END AS 'ORDEM_GRAFICO',
 
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0
 					WHEN UnpivotedData.Type = 'Supply' THEN 2
-					ELSE 1 END AS 'ID_TYPE',
-		
-		'4' AS ID_VISAO,
+					ELSE 1 END AS 'ID_TIPO_VISAO',
 
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
+		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget'
 					WHEN UnpivotedData.Type = 'Supply' THEN 'Plan'
-					ELSE 'Act/Fcst' END AS 'NM_TYPE',
+					ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
 
 
 		CASE WHEN UnpivotedData.Type = 'Budget'  THEN CONCAT(FORMAT(DT_REF, 'MMM'),' B')
@@ -69,44 +66,38 @@ FROM (
 					WHEN UnpivotedData.Type = 'Forecast'  THEN CONCAT(FORMAT(DT_REF, 'MMM'),' F')
 					--ELSE CONCAT(FORMAT(DT_REF, 'MMM'),' A')
 					--ELSE '1'
-					END AS 'Type',
-
-
-
-		UnpivotedData.Value,
+					END AS 'NM_VISAO',
+		DASH.SG_UNID,
+		DASH.VL_CASADECIMAL,
+		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS VL_KPI,
 		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
-		PVC.DT_REF AS 'DT_IND',
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 WHEN UnpivotedData.Type = 'Supply' THEN 2 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 		'MONTH' AS 'CD_PERIODO',
 		1 AS 'ORDEM_VISAO',
 		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
 		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
-		--,(UnpivotedData.Value * 2.5) AS 'Range_Month',
-		--NULL AS 'Range_Quarter',
-		--NULL   AS 'Range_Year'
 
 
-	FROM 
-		IBP.PEDRAVISAOCONSOLIDADA PVC 
-		INNER JOIN IBP.DASHBOARD DASH 
-			ON PVC.ID_SISTEMA = DASH.ID_SISTEMA 
+	FROM
+		IBP.PEDRAVISAOCONSOLIDADA PVC
+		INNER JOIN IBP.DASHBOARD DASH
+			ON PVC.ID_SISTEMA = DASH.ID_SISTEMA
 			AND CONCAT(PVC.ID_SITE, '|', PVC.ID_OPERACAO, '|', PVC.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
 		CROSS APPLY (
 			SELECT 'Budget' AS Type, PVC.VL_ORC  * DASH.VL_FATOR AS Value
-			--UNION ALL
-			--SELECT 'Supply' AS Type, PVC.VL_SUPPLY  * DASH.VL_FATOR AS Value
-			--UNION ALL
-			--SELECT 'Actual' AS Type, PVC.VL_REAL  * DASH.VL_FATOR AS Value 
 			UNION ALL
-			SELECT 'Forecast' AS Type, 
+			SELECT 'Supply' AS Type, PVC.VL_SUPPLY  * DASH.VL_FATOR AS Value
+			--UNION ALL
+			--SELECT 'Actual' AS Type, PVC.VL_REAL  * DASH.VL_FATOR AS Value
+			UNION ALL
+			SELECT 'Forecast' AS Type,
 			CASE WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS NULL THEN 0
-						WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS  NOT NULL THEN PVC.VL_REAL  * DASH.VL_FATOR 
-			ELSE PVC.VL_PROJ  * DASH.VL_FATOR END AS Value 
-			--DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1)
+						WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS  NOT NULL THEN PVC.VL_REAL  * DASH.VL_FATOR
+			ELSE PVC.VL_PROJ  * DASH.VL_FATOR END AS Value
 		) AS UnpivotedData
-	WHERE 
-		PVC.DT_REF BETWEEN @DT_INI  AND @DT_FIM
-		AND DASH.ID_DASH = @ID_DASH
+	WHERE
+		PVC.DT_REF  BETWEEN @DT_INI  AND @DT_FIM
+		AND DASH.ID_DASH = 16
 
 
 
@@ -116,12 +107,14 @@ FROM (
 
 ----------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------                        DADOS DO SOUTH ATLANTIC                     --------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------                                          QUARTER                                             -----------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------
 
 
-SELECT  
+SELECT
 DT_REF,
 ID_SISTEMA,
 ID_SITE,
@@ -130,21 +123,18 @@ ID_KPI,
 NM_KPI,
 ID_ORDEM,
 ORDEM_GRAFICO,
-ID_TYPE,
-ID_VISAO,
-NM_TYPE,
-[Type],
-[Value],
+ID_TYPE AS 'ID_TIPO_VISAO',
+NM_TYPE AS 'NM_TIPO_VISAO',
+[Type] AS 'NM_VISAO',
+SG_UNID,
+VL_CASADECIMAL,
+[Value] AS 'VL_KPI',
 -- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
-DT_REF AS 'DT_IND',
 ID_TYPE_VBM AS 'ID_TIPO_VISAO_VBM',
 'QUARTER' AS 'CD_PERIODO',
 2 AS 'ORDEM_VISAO',
 YEAR(DT_REF_T) AS 'ORDEM_ANO',
 DATEPART(QUARTER, DT_REF_T) AS 'ORDEM_PERIODO'
---,Range_Month,
---Range_Quarter,
---Range_Year
 
 
 
@@ -152,13 +142,13 @@ DATEPART(QUARTER, DT_REF_T) AS 'ORDEM_PERIODO'
 FROM (
 
 
-	SELECT 
-		PVC.DT_REF,
+	SELECT
+		DATEFROMPARTS(YEAR(PVT.DT_REF), (DATEPART(QUARTER, PVT.DT_REF) - 1) * 3 + 1, 1) AS DT_REF,  -- 1º mês do trimestre (1, 4, 7, 10)
 		PVT.DT_REF AS 'DT_REF_T',
-		CASE WHEN  (MONTH(PVT.DT_REF) <= 3) AND (MONTH(PVC.DT_REF) <= 3)   THEN '1'
-					WHEN  (MONTH(PVT.DT_REF) > 3 AND MONTH(PVT.DT_REF) <= 6) AND (MONTH(PVC.DT_REF) > 3 AND MONTH(PVC.DT_REF) <= 6)  THEN '2'
-					WHEN  (MONTH(PVT.DT_REF) > 6 AND MONTH(PVT.DT_REF) <= 9) AND (MONTH(PVC.DT_REF) > 6 AND MONTH(PVC.DT_REF) <= 9)  THEN '3'
-					WHEN  (MONTH(PVT.DT_REF) > 9 AND MONTH(PVT.DT_REF) <= 12) AND (MONTH(PVC.DT_REF) > 9 AND MONTH(PVC.DT_REF) <= 12)  THEN '4'
+		CASE WHEN  (MONTH(PVT.DT_REF) <= 3) AND (MONTH(PVT.DT_REF) <= 3)   THEN '1'
+					WHEN  (MONTH(PVT.DT_REF) > 3 AND MONTH(PVT.DT_REF) <= 6) AND (MONTH(PVT.DT_REF) > 3 AND MONTH(PVT.DT_REF) <= 6)  THEN '2'
+					WHEN  (MONTH(PVT.DT_REF) > 6 AND MONTH(PVT.DT_REF) <= 9) AND (MONTH(PVT.DT_REF) > 6 AND MONTH(PVT.DT_REF) <= 9)  THEN '3'
+					WHEN  (MONTH(PVT.DT_REF) > 9 AND MONTH(PVT.DT_REF) <= 12) AND (MONTH(PVT.DT_REF) > 9 AND MONTH(PVT.DT_REF) <= 12)  THEN '4'
 		ELSE 0
 		END 'QREF',
 
@@ -172,10 +162,8 @@ FROM (
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TYPE',
 		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TYPE_VBM',  -- série no padrão do VBM
 
-		'5' AS ID_VISAO,
 
-
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
+		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget'
 					WHEN UnpivotedData.Type = 'Supply' THEN 'Plan'
 					ELSE 'Act/Fcst' END AS 'NM_TYPE',
 
@@ -184,8 +172,13 @@ FROM (
 					WHEN UnpivotedData.Type = 'Budget' AND (MONTH(PVT.DT_REF) > 3 AND MONTH(PVT.DT_REF) <= 6)  THEN 'Q2B'
 					WHEN UnpivotedData.Type = 'Budget' AND (MONTH(PVT.DT_REF) > 6 AND MONTH(PVT.DT_REF) <= 9)  THEN 'Q3B'
 					WHEN UnpivotedData.Type = 'Budget' AND (MONTH(PVT.DT_REF) > 9 AND MONTH(PVT.DT_REF) <= 12)  THEN 'Q4B'
-				
-				
+
+
+					--WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-04','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-03','-01')) as date) THEN 'Q1A'
+					--WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-07','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-06','-01')) as date) THEN 'Q2A'
+					--WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-10','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-09','-01')) as date) THEN 'Q3A'
+					--WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-12','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-12','-01')) as date)  THEN 'Q4A'
+
 					WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-03','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-03','-01')) as date) THEN 'Q1A'
 					WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-06','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-06','-01')) as date) THEN 'Q2A'
 					WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-09','-01')) as date) <= @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-09','-01')) as date) THEN 'Q3A'
@@ -196,30 +189,19 @@ FROM (
 					WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-07','-01')) as date) > @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-06','-01')) as date) THEN 'Q2F'
 					WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-10','-01')) as date) > @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-09','-01')) as date) THEN 'Q3F'
 					WHEN (UnpivotedData.Type = 'Forecast') AND  CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-12','-01')) as date) > @DT_REF AND  PVT.DT_REF < CAST (DATEADD ( MONTH ,0,CONCAT(YEAR(PVT.DT_REF),'-12','-01')) as date)  THEN 'Q4F'
-				
-
-					--WHEN (UnpivotedData.Type = 'Forecast') AND (YEAR(PVT.DT_REF) = YEAR(@DT_REF))  AND (MONTH(PVT.DT_REF) >= 1 AND MONTH(PVT.DT_REF) <= 3 ) THEN 'Q1A'
-					--WHEN (UnpivotedData.Type = 'Forecast') AND (YEAR(PVT.DT_REF) = YEAR(@DT_REF)) AND (MONTH(PVT.DT_REF) > 3 AND MONTH(PVT.DT_REF) <= 6)   THEN 'Q2A'
-					--WHEN (UnpivotedData.Type = 'Forecast') AND (YEAR(PVT.DT_REF) = YEAR(@DT_REF)) AND (MONTH(PVT.DT_REF) > 6 AND MONTH(PVT.DT_REF) <= 9)  THEN 'Q3A'
-					--WHEN (UnpivotedData.Type = 'Forecast') AND (YEAR(PVT.DT_REF) = YEAR(@DT_REF)) AND (MONTH(PVT.DT_REF) > 9 AND MONTH(PVT.DT_REF) <= 12)   THEN 'Q4A'
-
-
-
 
 					END AS 'Type',
 
-				
-		UnpivotedData.Value
-		--,
-		--NULL AS 'Range_Month',
-		--(UnpivotedData.Value * 1.4) AS 'Range_Quarter',
-		--NULL  AS 'Range_Year'
+		DASH.SG_UNID,
+		DASH.VL_CASADECIMAL,
+		CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS [Value]
 
 
-	FROM 
-		IBP.DASHBOARD DASH INNER JOIN
-		IBP.PEDRAVISAOTRIMESTRE PVT 
-			ON  CONCAT(PVT.ID_SISTEMA, '|', PVT.ID_SITE, '|', PVT.ID_OPERACAO, '|', PVT.ID_KPI) = CONCAT(DASH.ID_SISTEMA, '|', DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
+	FROM
+		IBP.PEDRAVISAOTRIMESTRE PVT
+		INNER JOIN IBP.DASHBOARD DASH
+			ON PVT.ID_SISTEMA = DASH.ID_SISTEMA
+			AND CONCAT(PVT.ID_SITE, '|', PVT.ID_OPERACAO, '|', PVT.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
 		CROSS APPLY (
 			SELECT 'Budget' AS Type, PVT.VL_ORC  * DASH.VL_FATOR AS Value
 			UNION ALL
@@ -229,106 +211,25 @@ FROM (
 			--UNION ALL
 			SELECT 'Forecast' AS Type, PVT.VL_PROJ  * DASH.VL_FATOR AS Value
 		) AS UnpivotedData
-		
-		CROSS APPLY (
-			SELECT DISTINCT DT_REF, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI FROM IBP.PEDRAVISAOCONSOLIDADA WHERE DT_REF BETWEEN @DT_INI  AND @DT_FIM 
-		) AS PVC
-		
-		
-		--LEFT JOIN IBP.PEDRAVISAOCONSOLIDADA PVC ON YEAR(PVC.DT_REF) = YEAR(PVT.DT_REF) AND CONCAT(PVT.ID_SITE, PVT.ID_OPERACAO, PVT.ID_KPI) = CONCAT(PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI)
-	
-	
-	WHERE 
-		PVT.DT_REF BETWEEN @DT_INI  AND @DT_FIM
-		AND CONCAT(PVT.ID_SISTEMA, '|', PVT.ID_SITE, '|', PVT.ID_OPERACAO, '|', PVT.ID_KPI) = CONCAT(PVC.ID_SISTEMA, '|', PVC.ID_SITE, '|', PVC.ID_OPERACAO, '|', PVC.ID_KPI)
-		AND DASH.ID_DASH = @ID_DASH
+
+		-- (sem repetir o trimestre em cada mês: uma linha por trimestre, no 1º mês dele)
+
+--		LEFT JOIN IBP.PEDRAVISAOCONSOLIDADA PVC ON YEAR(PVC.DT_REF) = YEAR(PVT.DT_REF) AND CONCAT(PVT.ID_SITE, PVT.ID_OPERACAO, PVT.ID_KPI) = CONCAT(PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI)
+
+
+	WHERE
+		PVT.DT_REF  BETWEEN @DT_INI  AND @DT_FIM
+		AND DASH.ID_DASH = 16
+		-- só trimestres com mês carregado na tabela mensal no período (como antes)
+		AND EXISTS (
+			SELECT 1 FROM IBP.PEDRAVISAOCONSOLIDADA M
+			WHERE M.DT_REF BETWEEN @DT_INI AND @DT_FIM
+				AND YEAR(M.DT_REF) = YEAR(PVT.DT_REF)
+				AND DATEPART(QUARTER, M.DT_REF) = DATEPART(QUARTER, PVT.DT_REF)
+		)
 
 		) AS QUERY
-		WHERE QREF <> 0 AND [Type] <> 'NULL'
-
-
-		UNION ALL
-
-
-
-
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------                                    YEAR TO DATE                                  -----------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-
-	SELECT 
-		PVC.DT_REF,
-		PVC.ID_SISTEMA,
-		PVC.ID_SITE,
-		PVC.ID_OPERACAO,
-		PVC.ID_KPI,
-		DASH.NM_KPIS_DASH AS 'NM_KPI',
-		DASH.ID_ORDEM,
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 5 
-					--WHEN UnpivotedData.Type = 'Supply' THEN 6 
-					ELSE 7 END AS 'ORDEM_GRAFICO',
-
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0
-					--WHEN UnpivotedData.Type = 'Supply' THEN 2
-					ELSE 1 END AS 'ID_TYPE',
-
-		'6' AS ID_VISAO,
-
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
-					--WHEN UnpivotedData.Type = 'Supply' THEN 'Plan'
-					ELSE 'Act/Fcst' END AS 'NM_TYPE',
-
-
-		CASE WHEN UnpivotedData.Type = 'Budget'  THEN CONCAT('YTD',' B')
-					WHEN UnpivotedData.Type = 'Supply'  THEN CONCAT('YTD',' P')
-					--WHEN UnpivotedData.Type = 'Forecast'  AND PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) THEN CONCAT(FORMAT(DT_REF, 'MMM'),' A')
-					--WHEN UnpivotedData.Type = 'Forecast'  AND PVC.DT_REF <= @DT_REF THEN CONCAT('YTD',' A')
-					WHEN UnpivotedData.Type = 'Actual'  THEN CONCAT('YTD',' A')
-					--ELSE CONCAT(FORMAT(DT_REF, 'MMM'),' A')
-					--ELSE '1'
-					END AS 'Type',
-
-
-
-		UnpivotedData.Value,
-		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
-		PVC.DT_REF AS 'DT_IND',
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
-		'YTD' AS 'CD_PERIODO',
-		4 AS 'ORDEM_VISAO',
-		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
-		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
-		--,
-		--(UnpivotedData.Value * 2.5) AS 'Range_Month',
-		--NULL AS 'Range_Quarter',
-		--NULL   AS 'Range_Year'
-
-
-	FROM 
-		IBP.PEDRAVISAOYEARTODATE PVC 
-		INNER JOIN IBP.DASHBOARD DASH 
-			ON PVC.ID_SISTEMA = DASH.ID_SISTEMA 
-			AND CONCAT(PVC.ID_SITE, '|', PVC.ID_OPERACAO, '|', PVC.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
-		CROSS APPLY (
-			SELECT 'Budget' AS Type, PVC.VL_ORC  * DASH.VL_FATOR AS Value
-			--UNION ALL
-			--SELECT 'Supply' AS Type, PVC.VL_SUPPLY  * DASH.VL_FATOR AS Value
-			UNION ALL
-			SELECT 'Actual' AS Type, PVC.VL_REAL  * DASH.VL_FATOR AS Value 
-			--------UNION ALL
-			--------SELECT 'Forecast' AS Type, 
-			--------CASE WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS NULL THEN 0
-			--------			WHEN PVC.DT_REF <= DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1) AND PVC.VL_REAL IS  NOT NULL THEN PVC.VL_REAL  * DASH.VL_FATOR 
-			--------ELSE PVC.VL_PROJ  * DASH.VL_FATOR END AS Value 
-			--DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1)
-		) AS UnpivotedData
-	WHERE 
-		PVC.DT_REF BETWEEN @DT_INI  AND @DT_FIM
-		AND DASH.ID_DASH = @ID_DASH
-
-
+		WHERE QREF <> 0
 
 
 
@@ -339,170 +240,192 @@ FROM (
 
 
 
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------                                      YEAR TO GO                                    -----------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-SELECT 
-		PVC.DT_REF,
-		PVC.ID_SISTEMA,
-		PVC.ID_SITE,
-		PVC.ID_OPERACAO,
-		PVC.ID_KPI,
-		DASH.NM_KPIS_DASH AS 'NM_KPI',
-		DASH.ID_ORDEM,
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 8 
-					ELSE 9 END AS 'ORDEM_GRAFICO',
-
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 0
-					ELSE 1 END AS 'ID_TYPE',
-
-		'7' AS ID_VISAO,
-
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
-					ELSE 'Act/Fcst' END AS 'NM_TYPE',
-
-
-		CASE WHEN UnpivotedData.Type = 'Budget'  THEN CONCAT('YTG',' B')
-					WHEN UnpivotedData.Type = 'Forecast'  THEN CONCAT('YTG',' F')
-
-					END AS 'Type',
-
-		UnpivotedData.Value,
-		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
-		PVC.DT_REF AS 'DT_IND',
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
-		'YTG' AS 'CD_PERIODO',
-		6 AS 'ORDEM_VISAO',
-		YEAR(PVC.DT_REF) AS 'ORDEM_ANO',
-		MONTH(PVC.DT_REF) AS 'ORDEM_PERIODO'
-		--,(UnpivotedData.Value * 2.5) AS 'Range_Month',
-		--NULL AS 'Range_Quarter',
-		--NULL   AS 'Range_Year'
-
-
-	FROM 
-		IBP.PEDRAVISAOYEARTOGO PVC 
-		INNER JOIN IBP.DASHBOARD DASH 
-			ON PVC.ID_SISTEMA = DASH.ID_SISTEMA 
-			AND CONCAT(PVC.ID_SITE, '|', PVC.ID_OPERACAO, '|', PVC.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
-		CROSS APPLY (
-			SELECT 'Budget' AS Type, PVC.VL_ORC  * DASH.VL_FATOR AS Value
-			--UNION ALL
-			--SELECT 'Supply' AS Type, PVC.VL_SUPPLY  * DASH.VL_FATOR AS Value
-			--UNION ALL
-			--SELECT 'Actual' AS Type, PVC.VL_REAL  * DASH.VL_FATOR AS Value 
-			UNION ALL
-			-- YTG é o restante do ano: o Forecast é sempre a projeção (VL_PROJ). A regra do mês (realizado até o
-			-- mês fechado) gravava 0, porque VL_REAL do YTG é sempre vazio
-			SELECT 'Forecast' AS Type, PVC.VL_PROJ * DASH.VL_FATOR AS Value
-			--DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, @DT_REF)), MONTH(DATEADD(MONTH, -1, @DT_REF)), 1)
-		) AS UnpivotedData
-	WHERE 
-		PVC.DT_REF BETWEEN @DT_INI  AND @DT_FIM
-		AND DASH.ID_DASH = @ID_DASH
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------                        DADOS  SOUTH ATLANTIC                              -----------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------                                YEAR                                       -----------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
 
 
 
-
-
-
-
-		UNION ALL
-
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------                                              YEAR                                                -----------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-SELECT 
-    PVC.DT_REF,
+SELECT
+    DATEFROMPARTS(PVA.ANO, MONTH(@DT_CARGA), 1) AS DT_REF,  -- ano no mês da DT_REF da carga (ex.: 2025-10-01, 2026-10-01)
+	--CONCAT(PVA.ANO,'-01-01') AS 'DT_REF',
     PVA.ID_SISTEMA,
     PVA.ID_SITE,
     PVA.ID_OPERACAO,
     PVA.ID_KPI,
 	DASH.NM_KPIS_DASH AS 'NM_KPI',
     DASH.ID_ORDEM,
-	CASE WHEN UnpivotedData.Type = 'Budget' THEN RIGHT(PVA.ANO,2) + 10  ELSE RIGHT(PVA.ANO,2) + 11 END AS 'ORDEM_GRAFICO',
-	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TYPE',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 6 ELSE 7 END AS 'ORDEM_GRAFICO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TIPO_VISAO',
 
-	'8' AS ID_VISAO,
-
-
-	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' 
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget'
 				WHEN UnpivotedData.Type = 'Supply' THEN 'Plan'
-				ELSE 'Act/Fcst' END AS 'NM_TYPE',
+				ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
 
     CASE WHEN UnpivotedData.Type = 'Budget' THEN  CONCAT(RIGHT(PVA.ANO,2),'B')
 				WHEN PVA.ANO < YEAR(@DT_REF)  THEN CONCAT(RIGHT(PVA.ANO,2),'A')
 	ELSE CONCAT(RIGHT(PVA.ANO,2),'F')
-	END AS 'Type',
-		UnpivotedData.Value,
-		-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
-		PVC.DT_REF AS 'DT_IND',
-		CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
-		'YEAR' AS 'CD_PERIODO',
-		5 AS 'ORDEM_VISAO',
-		PVA.ANO AS 'ORDEM_ANO',
-		PVA.ANO AS 'ORDEM_PERIODO'
-		--,
-		--NULL AS 'Range_Month',
-		--NULL AS 'Range_Quarter',
-		--(UnpivotedData.Value * 0.85) AS 'Range_Year'
+	END AS 'NM_VISAO',
+	DASH.SG_UNID,
+	DASH.VL_CASADECIMAL,
+	UnpivotedData.Value AS 'VL_KPI',
+	-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
+	'YEAR' AS 'CD_PERIODO',
+	5 AS 'ORDEM_VISAO',
+	PVA.ANO AS 'ORDEM_ANO',
+	PVA.ANO AS 'ORDEM_PERIODO'
 
 
 
-FROM 
-    IBP.PEDRAVISAOANO PVA 
-    INNER JOIN IBP.DASHBOARD DASH 
-        ON PVA.ID_SISTEMA = DASH.ID_SISTEMA 
+
+FROM
+    IBP.PEDRAVISAOANO PVA
+    INNER JOIN IBP.DASHBOARD DASH
+        ON PVA.ID_SISTEMA = DASH.ID_SISTEMA
         AND CONCAT(PVA.ID_SITE, '|', PVA.ID_OPERACAO, '|', PVA.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
     CROSS APPLY (
         SELECT 'Budget' AS Type, PVA.VL_ORC  * DASH.VL_FATOR AS Value
         UNION ALL
-
+        --SELECT 'Supply' AS Type, PVC.VL_SUPPLY  * DASH.VL_FATOR AS Value
+        --UNION ALL
+        --SELECT 'Actual' AS Type, PVC.VL_REAL  * DASH.VL_FATOR AS Value
+        --UNION ALL
         SELECT 'Forecast' AS Type, PVA.VL_PROJ  * DASH.VL_FATOR AS Value
     ) AS UnpivotedData
-	    
-		CROSS APPLY (
-			SELECT DISTINCT DT_REF FROM IBP.PEDRAVISAOCONSOLIDADA WHERE DT_REF BETWEEN @DT_INI  AND @DT_FIM
-		) AS PVC		
-		
-		
-		--EFT JOIN IBP.PEDRAVISAOCONSOLIDADA PVC ON YEAR(PVC.DT_REF) = PVA.ANO AND CONCAT(PVA.ID_SITE, PVA.ID_OPERACAO, PVA.ID_KPI) = CONCAT(PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI)
-WHERE 
-    1 = 1
-	AND PVA.ANO BETWEEN YEAR(@DT_INI)  AND YEAR(@DT_FIM)
-	AND DASH.ID_DASH = @ID_DASH
 
-) AS HOB
-WHERE HOB.CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YEAR', 'YTG')
-  AND (HOB.CD_PERIODO NOT IN ('QUARTER', 'YEAR') OR HOB.ORDEM_ANO = YEAR(HOB.DT_IND))   -- trimestre/ano do mesmo ano do mês
+		-- (sem repetir o ano em cada mês: uma linha por ano, no mês da DT_REF da carga)
+
+
+	   --LEFT JOIN IBP.PEDRAVISAOCONSOLIDADA PVC ON YEAR(PVC.DT_REF) = PVA.ANO AND CONCAT(PVA.ID_SITE, PVA.ID_OPERACAO, PVA.ID_KPI) = CONCAT(PVC.ID_SITE, PVC.ID_OPERACAO, PVC.ID_KPI)
+WHERE
+    PVA.ANO BETWEEN YEAR(@DT_INI)  AND YEAR(@DT_FIM)   -- a partir de 2025 (@DT_INI), sem histórico
+    AND DASH.ID_DASH = 16
+	-- só anos com mês carregado na tabela mensal
+	AND EXISTS (
+		SELECT 1 FROM IBP.PEDRAVISAOCONSOLIDADA M
+		WHERE M.DT_REF BETWEEN @DT_INI AND @DT_FIM AND YEAR(M.DT_REF) = PVA.ANO
+	)
+
+
+
+		UNION ALL
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------                                YEAR TO DATE (YTD)                         -----------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Uma linha por ano, no mês da DT_REF da carga (carga 2026-10-01 → 2025-10-01 e 2026-10-01), como o YEAR.
+-- Budget = VL_ORC; Act/Fcst = VL_REAL (o YTD é realizado: jan até o mês fechado).
+
+SELECT
+	DATEFROMPARTS(YEAR(PVD.DT_REF), MONTH(@DT_CARGA), 1) AS DT_REF,
+	PVD.ID_SISTEMA,
+	PVD.ID_SITE,
+	PVD.ID_OPERACAO,
+	PVD.ID_KPI,
+	DASH.NM_KPIS_DASH AS 'NM_KPI',
+	DASH.ID_ORDEM,
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 4 ELSE 5 END AS 'ORDEM_GRAFICO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TIPO_VISAO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'YTD B' ELSE 'YTD A' END AS 'NM_VISAO',
+	DASH.SG_UNID,
+	DASH.VL_CASADECIMAL,
+	CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS 'VL_KPI',
+	-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
+	'YTD' AS 'CD_PERIODO',
+	4 AS 'ORDEM_VISAO',
+	YEAR(PVD.DT_REF) AS 'ORDEM_ANO',
+	MONTH(@DT_CARGA) AS 'ORDEM_PERIODO'
+
+FROM
+	IBP.PEDRAVISAOYEARTODATE PVD
+	INNER JOIN IBP.DASHBOARD DASH
+		ON PVD.ID_SISTEMA = DASH.ID_SISTEMA
+		AND CONCAT(PVD.ID_SITE, '|', PVD.ID_OPERACAO, '|', PVD.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
+	CROSS APPLY (
+		SELECT 'Budget' AS Type, PVD.VL_ORC  * DASH.VL_FATOR AS Value
+		UNION ALL
+		SELECT 'Actual' AS Type, PVD.VL_REAL  * DASH.VL_FATOR AS Value
+	) AS UnpivotedData
+WHERE
+	PVD.DT_REF BETWEEN @DT_INI AND @DT_CARGA
+	AND MONTH(PVD.DT_REF) = MONTH(@DT_CARGA)
+	AND DASH.ID_DASH = 16
+
+
+
+		UNION ALL
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------                                YEAR TO GO (YTG)                           -----------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Mesma regra do YTD: uma linha por ano, no mês da DT_REF da carga.
+-- Budget = VL_ORC; Act/Fcst = VL_PROJ (o YTG é o restante do ano: não tem realizado).
+-- Rótulo: F no ano da DT_REF; A nos anos anteriores.
+
+SELECT
+	DATEFROMPARTS(YEAR(PVG.DT_REF), MONTH(@DT_CARGA), 1) AS DT_REF,
+	PVG.ID_SISTEMA,
+	PVG.ID_SITE,
+	PVG.ID_OPERACAO,
+	PVG.ID_KPI,
+	DASH.NM_KPIS_DASH AS 'NM_KPI',
+	DASH.ID_ORDEM,
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 8 ELSE 9 END AS 'ORDEM_GRAFICO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TIPO_VISAO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'YTG B'
+				WHEN YEAR(PVG.DT_REF) < YEAR(@DT_CARGA) THEN 'YTG A'
+				ELSE 'YTG F' END AS 'NM_VISAO',
+	DASH.SG_UNID,
+	DASH.VL_CASADECIMAL,
+	CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS 'VL_KPI',
+	-- Campos para IBP.PHUB_PERFORMANCESTUDIO (VBM)
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
+	'YTG' AS 'CD_PERIODO',
+	6 AS 'ORDEM_VISAO',
+	YEAR(PVG.DT_REF) AS 'ORDEM_ANO',
+	MONTH(@DT_CARGA) AS 'ORDEM_PERIODO'
+
+FROM
+	IBP.PEDRAVISAOYEARTOGO PVG
+	INNER JOIN IBP.DASHBOARD DASH
+		ON PVG.ID_SISTEMA = DASH.ID_SISTEMA
+		AND CONCAT(PVG.ID_SITE, '|', PVG.ID_OPERACAO, '|', PVG.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
+	CROSS APPLY (
+		SELECT 'Budget' AS Type, PVG.VL_ORC  * DASH.VL_FATOR AS Value
+		UNION ALL
+		SELECT 'Forecast' AS Type, PVG.VL_PROJ  * DASH.VL_FATOR AS Value
+	) AS UnpivotedData
+WHERE
+	PVG.DT_REF BETWEEN @DT_INI AND @DT_CARGA
+	AND MONTH(PVG.DT_REF) = MONTH(@DT_CARGA)
+	AND DASH.ID_DASH = 16
+
+) AS COO
 GROUP BY
-  HOB.DT_IND, HOB.ID_SISTEMA, HOB.ID_SITE, HOB.ID_OPERACAO, HOB.ID_KPI,
-  HOB.ID_TIPO_VISAO_VBM, HOB.CD_PERIODO, HOB.ORDEM_VISAO, HOB.ORDEM_ANO, HOB.ORDEM_PERIODO
+  COO.DT_REF, COO.ID_SISTEMA, COO.ID_SITE, COO.ID_OPERACAO, COO.ID_KPI,
+ COO.ID_TIPO_VISAO_VBM, COO.CD_PERIODO, COO.ORDEM_VISAO, COO.ORDEM_ANO, COO.ORDEM_PERIODO
 ) AS CONF;
 
 -- linhas que a carga gravaria
 SELECT * FROM #CONFERENCIA_HOB
-ORDER BY ORDEM_VISAO, ID_SITE, ID_OPERACAO, ID_KPI, DT_IND, ORDEM_PERIODO, ID_TIPO_VISAO;
+ORDER BY ORDEM_VISAO, ID_SITE, ID_OPERACAO, ID_KPI, DT_IND, ID_TIPO_VISAO;
 
--- resumo por período (o YTG deve aparecer com ORDEM_VISAO 6)
+-- resumo por período (YTD = ORDEM_VISAO 4, YTG = 6)
 SELECT CD_PERIODO, ORDEM_VISAO, ID_TIPO_VISAO, NM_TIPO_VISAO, COUNT(*) AS LINHAS
 FROM #CONFERENCIA_HOB
 GROUP BY CD_PERIODO, ORDEM_VISAO, ID_TIPO_VISAO, NM_TIPO_VISAO
@@ -513,9 +436,3 @@ SELECT DT_IND, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, ID_TIPO_VISAO, CD_PERIO
 FROM #CONFERENCIA_HOB
 GROUP BY DT_IND, ID_SISTEMA, ID_SITE, ID_OPERACAO, ID_KPI, ID_TIPO_VISAO, CD_PERIODO
 HAVING COUNT(*) > 1;
-
--- a tabela aceita YTG? (ACEITA_YTG = 'N': rode 006_cd_periodo_ytg.sql antes da carga)
-SELECT CC.name AS REGRA, CC.definition AS DEFINICAO,
-       CASE WHEN CC.definition LIKE '%YTG%' THEN 'S' ELSE 'N' END AS ACEITA_YTG
-FROM sys.check_constraints CC
-WHERE CC.parent_object_id = OBJECT_ID('IBP.PHUB_PERFORMANCESTUDIO') AND CC.definition LIKE '%CD_PERIODO%';
