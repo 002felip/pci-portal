@@ -27,7 +27,9 @@
  *   GET  /config                            BUs, período sugerido, limites, estado
  *   GET  /diagnostico                       Python + bibliotecas + Blob (sem banco)
  *   GET  /execucoes                         histórico (mais recente primeiro)
- *   POST /execucoes  {inicio, fim, bus[]}   inicia; 409 se já houver uma rodando
+ *   POST /execucoes  {inicio, fim, bus[], formato}   inicia; 409 se já houver uma rodando.
+ *                         formato: 'separados' (um PDF por BU, padrão) ou 'consolidado'
+ *                         (um PDF só: resumo dos scores + o relatório de cada BU)
  *   GET  /execucoes/:id                     estado, progresso por BU e fim do log
  *   POST /execucoes/:id/cancelar            interrompe a execução em andamento
  *   GET  /execucoes/:id/arquivos/:nome      download (?inline=1 abre o PDF no navegador)
@@ -384,6 +386,7 @@ function criarStableCapableRouter({ runQuery, obterPool, runQueryPrd, bancoBi, a
     const pedidas = Array.isArray(req.body.bus) && req.body.bus.length ? req.body.bus : BUS;
     const bus = BUS.filter((b) => pedidas.includes(b));
     if (!bus.length) return res.status(400).json({ error: 'Selecione ao menos uma Business Unit.' });
+    const formato = req.body.formato === 'consolidado' ? 'consolidado' : 'separados';
 
     await carregarHistorico();
 
@@ -395,6 +398,7 @@ function criarStableCapableRouter({ runQuery, obterPool, runQueryPrd, bancoBi, a
       inicio: iso(inicio),
       fim: iso(fim),
       anos,
+      formato,
       usuario: String(req.get('X-Forwarded-Email') || req.get('X-Forwarded-Preferred-Username') || '').trim() || null,
       criadaEm: agora.toISOString(),
       terminadaEm: null,
@@ -457,59 +461,106 @@ function criarStableCapableRouter({ runQuery, obterPool, runQueryPrd, bancoBi, a
       ex.arquivos.push({ nome: nomeEntrada, caminho: ex.pasta + '/' + nomeEntrada, tipo: 'entrada', tamanho: (await fs.promises.stat(xlsx)).size });
       anotar(`Entrada gravada: ${nomeEntrada}`);
 
-      // 3. PDFs, uma BU por vez
+      // 3. PDFs: um processo Python por BU, ou um só para o consolidado
       ex.status = 'gerando';
-      for (const b of ex.bus) {
-        if (cancelado) break;
-        if (b.status === 'sem-dados') continue;
-        b.status = 'gerando';
-        const saida = path.join(tmp, 'pdf', nomeArquivoBu(b.bu));
-        const args = [SCRIPT_PY, '--bu', b.bu, '--config', CONFIG_PY, '--data-file', xlsx,
-          '--output-dir', saida, '--log-dir', path.join(tmp, 'logs'),
-          '--years', String(Math.min(Math.max(ex.anos, 1), MAX_ANOS)), '--reference-year', ex.fim.slice(0, 4)];
-        anotar(`── ${b.bu}: gerando PDF`);
-        const codigo = await new Promise((resolve) => {
-          const p = spawn(ambiente.python, args, { cwd: CWD_PY, env: envPython() });
-          ex.processo = p;
-          const limite = setTimeout(() => { anotar(`${b.bu}: tempo limite excedido — interrompendo.`); p.kill('SIGKILL'); }, TIMEOUT_BU_MS);
-          let resto = '';
-          const ler = (chunk) => {
-            const partes = (resto + chunk.toString('utf8')).split(/\r?\n/);
-            resto = partes.pop();
-            for (const linha of partes) {
-              if (!linha.trim() || /FutureWarning|^\s*(The behavior|Downcasting)/.test(linha)) continue;
-              logCompleto.push(linha);
-              const m = linha.match(/\[(\d+)\/(\d+)\]/);
-              if (m) b.paginas = { atual: Number(m[1]), total: Number(m[2]) };
-              if (/\| (INFO|WARNING|ERROR)/.test(linha)) registrar(linha.replace(/^\S+ \S+ \| /, ''));
-              const falha = linha.match(/(?:FAILED|ERROR)[^:]*:\s*(.+)$/);
-              if (falha && !b.erro) b.erro = falha[1].trim();
-            }
-          };
-          p.stdout.on('data', ler);
-          p.stderr.on('data', ler);
-          p.on('error', (err) => { b.erro = err.message; });
-          p.on('close', (code) => { clearTimeout(limite); ex.processo = null; if (resto.trim()) ler('\n'); resolve(code); });
-        });
+      const argsBase = ['--config', CONFIG_PY, '--data-file', xlsx, '--log-dir', path.join(tmp, 'logs'),
+        '--years', String(Math.min(Math.max(ex.anos, 1), MAX_ANOS)), '--reference-year', ex.fim.slice(0, 4)];
 
-        if (cancelado) { b.status = 'cancelada'; break; }
-        const pdf = codigo === 0 && fs.existsSync(saida) ? fs.readdirSync(saida).find((f) => f.toLowerCase().endsWith('.pdf')) : null;
-        if (!pdf) {
-          b.status = 'erro';
-          b.erro = b.erro || `O gerador terminou com código ${codigo}.`;
-          anotar(`${b.bu}: ERRO — ${b.erro}`);
-          continue;
+      /** Roda o gerador; aoLinha recebe cada linha do log. Devolve o código de saída. */
+      const rodar = (args, limiteMs, rotulo, aoLinha) => new Promise((resolve) => {
+        const p = spawn(ambiente.python, [SCRIPT_PY, ...args], { cwd: CWD_PY, env: envPython() });
+        ex.processo = p;
+        let erroSpawn = null;
+        const limite = setTimeout(() => { anotar(`${rotulo}: tempo limite excedido — interrompendo.`); p.kill('SIGKILL'); }, limiteMs);
+        let resto = '';
+        const ler = (chunk) => {
+          const partes = (resto + chunk.toString('utf8')).split(/\r?\n/);
+          resto = partes.pop();
+          for (const linha of partes) {
+            if (!linha.trim() || /FutureWarning|^\s*(The behavior|Downcasting)/.test(linha)) continue;
+            logCompleto.push(linha);
+            if (/\| (INFO|WARNING|ERROR)/.test(linha)) registrar(linha.replace(/^\S+ \S+ \| /, ''));
+            aoLinha(linha);
+          }
+        };
+        p.stdout.on('data', ler);
+        p.stderr.on('data', ler);
+        p.on('error', (err) => { erroSpawn = err.message; });
+        p.on('close', (code) => { clearTimeout(limite); ex.processo = null; if (resto.trim()) ler('\n'); resolve({ code, erroSpawn }); });
+      });
+      const progresso = (b, linha) => {
+        const m = linha.match(/\[(\d+)\/(\d+)\]/);
+        if (m && b) b.paginas = { atual: Number(m[1]), total: Number(m[2]) };
+      };
+
+      if (ex.formato === 'consolidado') {
+        const alvo = ex.bus.filter((b) => b.status !== 'sem-dados');
+        const saida = path.join(tmp, 'pdf', 'consolidado');
+        let corrente = null;
+        for (const b of alvo) b.status = 'aguardando';
+        anotar(`── Consolidado: ${alvo.map((b) => b.bu).join(', ')}`);
+        const { code, erroSpawn } = alvo.length ? await rodar(
+          ['--consolidated', '--bus', alvo.map((b) => b.bu).join(','), '--output-dir', saida, ...argsBase],
+          TIMEOUT_BU_MS * Math.max(1, alvo.length), 'Consolidado', (linha) => {
+            const ini = linha.match(/STARTING REPORT GENERATION\s+\|\s+BU:\s+(.+?)\s*$/);
+            if (ini) {
+              if (corrente && corrente.status === 'gerando') corrente.status = 'montando';
+              corrente = alvo.find((b) => b.bu === ini[1].trim()) || null;
+              if (corrente) corrente.status = 'gerando';
+            }
+            const falha = linha.match(/FAILED for BU '(.+?)':\s*(.+)$/);
+            if (falha) { const b = alvo.find((x) => x.bu === falha[1]); if (b) { b.status = 'erro'; b.erro = falha[2].trim(); } }
+            const pronta = linha.match(/BU DONE\s+\|\s+(.+?)\s+\|/);
+            if (pronta) { const b = alvo.find((x) => x.bu === pronta[1].trim()); if (b) b.status = 'montando'; }
+            progresso(corrente, linha);
+          }) : { code: 1, erroSpawn: 'Nenhuma BU com dados.' };
+        if (!cancelado) {
+          const pdf = code === 0 && fs.existsSync(saida) ? fs.readdirSync(saida).find((f) => f.toLowerCase().endsWith('.pdf')) : null;
+          if (!pdf) {
+            for (const b of alvo) if (b.status !== 'erro') { b.status = 'erro'; b.erro = b.erro || erroSpawn || `O gerador terminou com código ${code}.`; }
+            anotar(`Consolidado: ERRO — ${erroSpawn || 'código ' + code}`);
+          } else {
+            const nome = `Stable_Capable_Consolidado_${ex.inicio}_${ex.fim}.pdf`;
+            const buffer = await fs.promises.readFile(path.join(saida, pdf));
+            await store.enviar(ex.pasta + '/' + nome, buffer, 'application/pdf');
+            ex.arquivos.push({ nome, caminho: ex.pasta + '/' + nome, tipo: 'pdf', bu: 'Consolidado', tamanho: buffer.length });
+            for (const b of alvo) if (b.status !== 'erro') { b.status = 'ok'; b.arquivo = nome; }
+            anotar(`Consolidado: PDF salvo (${(buffer.length / 1048576).toFixed(1)} MB)`);
+          }
         }
-        const nome = `${nomeArquivoBu(b.bu)}_${ex.inicio}_${ex.fim}.pdf`;
-        const buffer = await fs.promises.readFile(path.join(saida, pdf));
-        await store.enviar(ex.pasta + '/' + nome, buffer, 'application/pdf');
-        ex.arquivos.push({ nome, caminho: ex.pasta + '/' + nome, tipo: 'pdf', bu: b.bu, tamanho: buffer.length });
-        b.status = 'ok';
-        b.arquivo = nome;
-        anotar(`${b.bu}: PDF salvo (${(buffer.length / 1048576).toFixed(1)} MB)`);
+      } else {
+        for (const b of ex.bus) {
+          if (cancelado) break;
+          if (b.status === 'sem-dados') continue;
+          b.status = 'gerando';
+          const saida = path.join(tmp, 'pdf', nomeArquivoBu(b.bu));
+          anotar(`── ${b.bu}: gerando PDF`);
+          const { code, erroSpawn } = await rodar(['--bu', b.bu, '--output-dir', saida, ...argsBase], TIMEOUT_BU_MS, b.bu, (linha) => {
+            progresso(b, linha);
+            const falha = linha.match(/(?:FAILED|ERROR)[^:]*:\s*(.+)$/);
+            if (falha && !b.erro) b.erro = falha[1].trim();
+          });
+          if (erroSpawn && !b.erro) b.erro = erroSpawn;
+
+          if (cancelado) { b.status = 'cancelada'; break; }
+          const pdf = code === 0 && fs.existsSync(saida) ? fs.readdirSync(saida).find((f) => f.toLowerCase().endsWith('.pdf')) : null;
+          if (!pdf) {
+            b.status = 'erro';
+            b.erro = b.erro || `O gerador terminou com código ${code}.`;
+            anotar(`${b.bu}: ERRO — ${b.erro}`);
+            continue;
+          }
+          const nome = `${nomeArquivoBu(b.bu)}_${ex.inicio}_${ex.fim}.pdf`;
+          const buffer = await fs.promises.readFile(path.join(saida, pdf));
+          await store.enviar(ex.pasta + '/' + nome, buffer, 'application/pdf');
+          ex.arquivos.push({ nome, caminho: ex.pasta + '/' + nome, tipo: 'pdf', bu: b.bu, tamanho: buffer.length });
+          b.status = 'ok';
+          b.arquivo = nome;
+          anotar(`${b.bu}: PDF salvo (${(buffer.length / 1048576).toFixed(1)} MB)`);
+        }
       }
 
-      if (cancelado) for (const b of ex.bus) if (b.status === 'aguardando' || b.status === 'gerando') b.status = 'cancelada';
+      if (cancelado) for (const b of ex.bus) if (['aguardando', 'gerando', 'montando'].includes(b.status)) b.status = 'cancelada';
       const ok = ex.bus.filter((b) => b.status === 'ok').length;
       const falhas = ex.bus.filter((b) => b.status === 'erro').length;
       ex.status = cancelado ? 'cancelada' : (ok === 0 ? 'erro' : (falhas ? 'concluida-com-erros' : 'concluida'));
@@ -519,7 +570,7 @@ function criarStableCapableRouter({ runQuery, obterPool, runQueryPrd, bancoBi, a
       ex.erro = cancelado ? null : (/Cancelada/.test(err.message) ? null : err.message);
       if (ex.erro) console.error(TAG, ex.id, err.message);
       anotar('ERRO: ' + (ex.erro || 'cancelada'));
-      for (const b of ex.bus) if (b.status === 'aguardando' || b.status === 'gerando') b.status = cancelado ? 'cancelada' : 'nao-gerada';
+      for (const b of ex.bus) if (['aguardando', 'gerando', 'montando'].includes(b.status)) b.status = cancelado ? 'cancelada' : 'nao-gerada';
     } finally {
       ex.terminadaEm = new Date().toISOString();
       anotar(`Fim: ${ex.status}`);

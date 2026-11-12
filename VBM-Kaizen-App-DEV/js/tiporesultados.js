@@ -18,6 +18,11 @@
     prefixoAdd: "tiporesAdd", prefixoEdit: "tiporesEdit",
     btnSalvarAddId: "btnSaveAddTipoResultado", btnSalvarEditId: "btnSaveEditTipoResultado",
     classeIcone: "teal", iconePadrao: "assets/icons/tiporesultados/fa-solid-layer-group.svg",
+    // Sem URL_ICONE na tabela: ícone pelo nome (1 = financeiro, 2 = outros)
+    iconesPorNome: [
+      { re: /n[ãa]o[\s-]*financ|non[\s-]*financ/i, icone: "chart-pie" },
+      { re: /financ/i, icone: "sack-dollar" },
+    ],
     palavraBadge: null, palavraBadgeSingular: null,
     // Limite do DER (kzn_tipo_resultado): NM_TIPO_RESULTADO VARCHAR(30)
     // — mesmo tamanho de nome das outras 4 tabelas bilíngues (server.js

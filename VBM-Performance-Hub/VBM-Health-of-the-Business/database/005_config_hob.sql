@@ -11,10 +11,10 @@
    Conteúdo (o mesmo de CONFIG_PADRAO em hob-api.js; sem registro, a tela usa o código):
      fcf          FCF YEAR: site, tipo (ID_TIPO 2) e ano inicial da consulta em IBP.WATERFALL (database/002_hob_waterfall.sql)
      ebitdaPonte  2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO 3
-     ebitda       EBITDA por período: ID_DASH (15) e ID_KPI (73) da carga do COO em IBP.PHUB_PERFORMANCESTUDIO e
-                  ID_SITE de cada opção: vbm 40 (total), cu 38, ni 39, out 45 + 102 + 46
-     coo          demais gráficos mês a mês: ID_KPI da carga do COO (ID_DASH 15) por série, no site da página
-                  (vbm 40, cu 38, ni 39). Ex.: "cu.prod": <ID_KPI de Production>. null = segue na demonstração.
+     ebitda       EBITDA por período: ID_DASH 16 (carga do Health of the Business), ID_KPI 73 por site
+                  (vbm 40, cu 38, ni 39: um negócio por vez no seletor); outros = EBITDA (KPI 73) dos sites 45 + 102 + 46, operação 11
+     coo          demais gráficos mês a mês: ID_KPI da carga do dashboard (ID_DASH 16) por série, no site da página
+                  (vbm 40, cu 38, ni 39), do cadastro em IBP.DASHBOARD. null = segue na demonstração.
                   Séries: vbm.capex; cu/ni: prod, sales, ebitda (73), capex, fcf e o All-in: sus, cost, byp
      bus          sites (IBP.DASHBOARD.ID_SITE) de cada Business Unit: vbm, cu (Copper), ni (Nickel).
                   Vazio = qualquer site do dashboard. Obrigatório quando o mesmo nome de KPI
@@ -34,7 +34,6 @@ SET XACT_ABORT ON;
 DECLARE @CD_VISAO VARCHAR(40)    = 'VBM_HEALTH_OF_THE_BUSINESS';
 DECLARE @DONO     NVARCHAR(200)  = N'vbm-health-of-the-business';
 DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
-  "versao": 1,
   "fcf": {
     "site": 40,
     "tipo": 2,
@@ -46,7 +45,7 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
     "anoInicial": 2025
   },
   "ebitda": {
-    "idDash": 15,
+    "idDash": 16,
     "idKpi": 73,
     "sites": {
       "vbm": [
@@ -57,8 +56,14 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
       ],
       "ni": [
         39
+      ]
+    },
+    "outros": {
+      "idOperacao": 11,
+      "kpis": [
+        73
       ],
-      "out": [
+      "sites": [
         45,
         102,
         46
@@ -66,30 +71,30 @@ DECLARE @LAYOUT   NVARCHAR(MAX)  = N'{
     }
   },
   "coo": {
-    "idDash": 15,
+    "idDash": 16,
     "sites": {
       "vbm": 40,
       "cu": 38,
       "ni": 39
     },
     "kpis": {
-      "vbm.capex": null,
-      "cu.prod": null,
-      "cu.sales": null,
+      "vbm.capex": 83,
+      "cu.prod": 22,
+      "cu.sales": 34,
       "cu.ebitda": 73,
-      "cu.capex": null,
-      "cu.fcf": null,
-      "cu.sus": null,
-      "cu.cost": null,
-      "cu.byp": null,
-      "ni.prod": null,
-      "ni.sales": null,
+      "cu.capex": 83,
+      "cu.fcf": 733,
+      "cu.sus": 102,
+      "cu.cost": 45,
+      "cu.byp": 46,
+      "ni.prod": 51,
+      "ni.sales": 41,
       "ni.ebitda": 73,
-      "ni.capex": null,
-      "ni.fcf": null,
-      "ni.sus": null,
-      "ni.cost": null,
-      "ni.byp": null
+      "ni.capex": 83,
+      "ni.fcf": 733,
+      "ni.sus": 102,
+      "ni.cost": 45,
+      "ni.byp": 46
     }
   },
   "bus": {

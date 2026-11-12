@@ -18,7 +18,20 @@
     modalAddId: "modalAddTipoKaizen", modalEditId: "modalEditTipoKaizen",
     prefixoAdd: "tipokznAdd", prefixoEdit: "tipokznEdit",
     btnSalvarAddId: "btnSaveAddTipoKaizen", btnSalvarEditId: "btnSaveEditTipoKaizen",
-    classeIcone: "teal", iconePadrao: "assets/icons/tiporesultados/fa-solid-layer-group.svg",
+    classeIcone: "teal", iconePadrao: "assets/icons/tiposkaizen/fa-solid-clipboard-list.svg",
+    // Sem URL_ICONE na tabela: ícone pelo nome do tipo (PT e EN)
+    // New = melhoria nova; Replication = levar uma melhoria comprovada a outro lugar; Scope = ampliar
+    // a abrangência de uma melhoria. "Replic" vem antes de "nov" por segurança.
+    iconesPorNome: [
+      { re: /replic/i, icone: "clone" },
+      { re: /scope|escopo|abrang[êe]ncia|expans|amplia/i, icone: "up-right-and-down-left-from-center" },
+      { re: /^new\b|^nov[oa]\b|\bnew kaizen|\bnovo kaizen/i, icone: "lightbulb" },
+      { re: /simples|simple|quick/i, icone: "bolt" },
+      { re: /complex/i, icone: "gears" },
+      { re: /inova/i, icone: "rocket" },
+      { re: /seguran|safety/i, icone: "shield-halved" },
+      { re: /evento|event|equipe|team|blitz/i, icone: "people-group" },
+    ],
     palavraBadge: null, palavraBadgeSingular: null,
     // Mesmo tamanho de nome/descrição do DER (server.js espelha isso em
     // CADASTRO_LIMITES_DER).

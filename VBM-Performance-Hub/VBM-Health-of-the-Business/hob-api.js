@@ -31,6 +31,8 @@
  *   GET /indicadores?ciclo=      tudo o que a tela desenha, no formato de window.HOB_DATA do index.html
  *   GET /waterfall               FCF YEAR por ano, de IBP.WATERFALL
  *   GET /waterfall?bruto=1       colunas e linhas como vieram da tabela (só com HOB_DIAGNOSTICO=1)
+ *   GET /atualizacao?ciclo=      situação da atualização de cada gráfico da carga (SG_STATUS/DT_ATUALIZACAO,
+ *                                gravados por database/007_status_atualizacao_hob.sql, como o COO)
  */
 const fs = require('fs');
 const path = require('path');
@@ -61,15 +63,19 @@ const CONFIG_PADRAO = {
   fcf: { site: 40, tipo: 2, anoInicial: 2025 },
   // 2026 EBITDA YEAR: a mesma consulta de IBP.WATERFALL com ID_TIPO = 3
   ebitdaPonte: { site: 40, tipo: 3, anoInicial: 2025 },
-  // EBITDA (gráfico por período, seletor VBM | Copper | Nickel | Others): KPI EBITDA (ID_KPI 73) da carga do
-  // COO em IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 15). Sites: VBM 40, Copper 38, Nickel 39, Others 45 + 102 + 46
-  ebitda: { idDash: 15, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39], out: [45, 102, 46] } },
-  // Demais gráficos mês a mês: um KPI (ID_KPI) da mesma carga do COO por série, no site da página
+  // EBITDA (gráfico por período, seletor VBM | Copper | Nickel | Others): carga do Health of the Business em
+  // IBP.PHUB_PERFORMANCESTUDIO (ID_DASH 16). KPI EBITDA (ID_KPI 73) por site, um negócio por vez no seletor:
+  // VBM 40, Copper 38, Nickel 39; Others = EBITDA (KPI 73) dos sites 45, 102 e 46 da operação 11, somados
+  // (outros.kpis e outros.sites ajustáveis no 005; sites vazio = qualquer site)
+  ebitda: { idDash: 16, idKpi: 73, sites: { vbm: [40], cu: [38], ni: [39] }, outros: { idOperacao: 11, kpis: [73], sites: [45, 102, 46] } },
+  // Demais gráficos mês a mês: um KPI (ID_KPI) da carga do dashboard (ID_DASH 16) por série, no site da página
   // (VBM 40, Copper 38, Nickel 39). null = ainda sem KPI definido (o gráfico segue na demonstração)
-  coo: { idDash: 15, sites: { vbm: 40, cu: 38, ni: 39 }, kpis: {
-    'vbm.capex': null,
-    'cu.prod': null, 'cu.sales': null, 'cu.ebitda': 73, 'cu.capex': null, 'cu.fcf': null, 'cu.sus': null, 'cu.cost': null, 'cu.byp': null,
-    'ni.prod': null, 'ni.sales': null, 'ni.ebitda': 73, 'ni.capex': null, 'ni.fcf': null, 'ni.sus': null, 'ni.cost': null, 'ni.byp': null,
+  coo: { idDash: 16, sites: { vbm: 40, cu: 38, ni: 39 }, kpis: {
+    // IBP.DASHBOARD (ID_DASH 16): Copper 38 · Production 22 (op. 12), Sales 34 (op. 8); Nickel 39 · Production 51
+    // (op. 12), Sales 41 (op. 8); nos três sites: EBITDA 73, Capex 83, FCF 733; All-in: Sustaining 102, Cost 45, By Product 46
+    'vbm.capex': 83,
+    'cu.prod': 22, 'cu.sales': 34, 'cu.ebitda': 73, 'cu.capex': 83, 'cu.fcf': 733, 'cu.sus': 102, 'cu.cost': 45, 'cu.byp': 46,
+    'ni.prod': 51, 'ni.sales': 41, 'ni.ebitda': 73, 'ni.capex': 83, 'ni.fcf': 733, 'ni.sus': 102, 'ni.cost': 45, 'ni.byp': 46,
   } },
   bus: { vbm: { sites: [] }, cu: { sites: [] }, ni: { sites: [] } },
   indicadores: {
@@ -149,9 +155,17 @@ function normalizarConfigHob(json) {
     const id = Number(c.ebitda.idDash), kpi = Number(c.ebitda.idKpi);
     if (Number.isInteger(id) && id > 0) out.ebitda.idDash = id;
     if (Number.isInteger(kpi) && kpi > 0) out.ebitda.idKpi = kpi;
-    for (const seg of ['vbm', 'cu', 'ni', 'out']) {
-      const lista = c.ebitda.sites && Array.isArray(c.ebitda.sites[seg]) ? c.ebitda.sites[seg].map(Number).filter(n => Number.isInteger(n) && n > 0) : null;
+    const ints = (v) => (Array.isArray(v) ? v.map(Number).filter(n => Number.isInteger(n) && n > 0) : null);
+    for (const seg of ['vbm', 'cu', 'ni']) {
+      const lista = c.ebitda.sites && ints(c.ebitda.sites[seg]);
       if (lista) out.ebitda.sites[seg] = lista;
+    }
+    const o = c.ebitda.outros;
+    if (o && typeof o === 'object') {
+      const op = Number(o.idOperacao);
+      if (Number.isInteger(op) && op > 0) out.ebitda.outros.idOperacao = op;
+      if (ints(o.kpis) && ints(o.kpis).length) out.ebitda.outros.kpis = ints(o.kpis);
+      if (ints(o.sites)) out.ebitda.outros.sites = ints(o.sites);
     }
   }
   for (const b of BUS) {
@@ -186,7 +200,13 @@ function cicloDe(dt) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 // Casas decimais do KPI (IBP.DASHBOARD.VL_CASADECIMAL): inteiro de 0 a 6; fora disso, null (padrão da página)
-function casasDe(v) { const n = Number(v); return v != null && Number.isInteger(n) && n >= 0 && n <= 6 ? n : null; }
+function casasDe(v) { const n = Number(v); return v != null && v !== '' && Number.isInteger(n) && n >= 0 && n <= 6 ? n : null; }
+// Cadastro do KPI a partir das linhas: fica o primeiro com casas decimais e unidade; linha sem eles não apaga o anterior
+function melhorMeta(atual, l, nomePadrao) {
+  const novo = { nome: String(l.NM_KPI || nomePadrao).trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+  if (!atual) return novo;
+  return { nome: atual.nome || novo.nome, unid: atual.unid || novo.unid, casas: atual.casas != null ? atual.casas : novo.casas };
+}
 
 // Linhas da carga (001_hob_dashboard.sql) + configuração → formato da página (window.HOB_DATA).
 // Mês sem valor vira 0 e entra em avisos; KPI não encontrado também (o card mostra 0, o log diz qual falta).
@@ -324,6 +344,15 @@ function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
       const onde = ant ? itens.findIndex(y => semAno(y.lbl) === semAno(ant.lbl)) + 1 : 0;
       itens.splice(onde, 0, { tipo: 'sub', lbl: i.lbl, ...(i.cinza ? { cinza: true } : {}) });
     });
+    // quebras da configuração ('zero': começa outro gráfico, do 0 e sem fio do anterior), depois do degrau que as
+    // antecede na configuração — ex.: 2026 EBITDA YEAR, FY Act/Fcst | Copper, Nickel, Other Seg., Non-Allocated
+    const cfgPonte = config.pontes[ponte];
+    cfgPonte.forEach((i, pos) => {
+      if (i.tipo !== 'zero') return;
+      const ant = cfgPonte.slice(0, pos).reverse().find(x => x.tipo !== 'zero' && itens.some(y => semAno(y.lbl || '') === semAno(x.lbl)));
+      const onde = ant ? itens.findIndex(y => semAno(y.lbl || '') === semAno(ant.lbl)) : -1;
+      if (onde >= 0 && onde < itens.length - 1 && itens[onde + 1].tipo !== 'zero') itens.splice(onde + 1, 0, { tipo: 'zero' });
+    });
     return itens;
   }
   for (const [chave, g] of [...porRef].sort((x, y) => x[0].localeCompare(y[0]))) {
@@ -334,29 +363,81 @@ function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
   return { anos, referencias, colunas: col, avisos: [...new Set(avisos)] };
 }
 
-// ── EBITDA da carga do COO (004_hob_ebitda.sql) → séries mensais por segmento ──
-// Segmento pelo ID_SITE (configuração ebitda.sites): VBM é o site total (40), não a soma dos segmentos;
-// Others soma os seus sites. Linha de site fora da configuração entra em avisos (não é usada).
-function montarEbitda(linhas, config, ciclo) {
+// Linha de período (QUARTER, YTD, YTG, YEAR) gravada pela carga para o mês DT_IND → s.per[mês][período] = { b, a }
+// (sem CD_PERIODO, a linha é do mês). A tela usa estes valores no mês escolhido em vez de somar os meses.
+const PERIODOS = ['QUARTER', 'YTD', 'YTG', 'YEAR'];
+function periodoDe(l) { const p = String(l.CD_PERIODO || 'MONTH').trim().toUpperCase(); return p === 'MONTH' || PERIODOS.includes(p) ? p : null; }
+function somarPeriodo(s, l, cd, m) {
+  s.per = s.per || {};
+  const g = s.per[m + 1] = s.per[m + 1] || {};
+  const v = g[cd] = g[cd] || { b: null, a: null }, k = l.SERIE === 'B' ? 'b' : 'a';
+  v[k] = (v[k] || 0) + (l.VL_KPI == null ? 0 : Number(l.VL_KPI));
+}
+
+// ── EBITDA (004_hob_ebitda.sql) → séries mensais por segmento ──
+// KPI 73 (ebitda.idKpi) por ID_SITE: VBM 40, Copper 38 e Nickel 39 (cada um é uma opção do seletor).
+// Others: soma de ebitda.outros (KPI 73 nos sites 45, 102 e 46) na operação 11; com outros.sites vazio, de qualquer site.
+// Linha fora da configuração entra em avisos (não é somada).
+function montarEbitda(linhas, linhasOutros, config, ciclo) {
   const [anoC, mesC] = ciclo.split('-').map(Number);
   const ultimoReal = mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 };
   const SEG = { vbm: 'ebitdaVbm', cu: 'ebitdaCu', ni: 'ebitdaNi', out: 'ebitdaOut' };
   const avisos = [], anos = {}, sitesUsados = {}, fora = new Set();
-  let meta = null;
-  for (const l of linhas) {
-    const site = Number(l.ID_SITE), seg = Object.keys(SEG).find(k => config.ebitda.sites[k].includes(site));
-    if (!seg) { fora.add(String(site)); continue; }
+  // cadastro (IBP.DASHBOARD) de cada opção do seletor, pelas linhas dela: unidade e casas decimais próprias
+  const metas = {};
+  const metaDe = (seg, l) => { metas[seg] = melhorMeta(metas[seg], l, seg === 'out' ? 'Others' : 'EBITDA'); };
+  const somar = (seg, l, rotulo) => {
     const ano = Number(l.ANO), m = Number(l.MES) - 1;
-    if (!Number.isInteger(ano) || m < 0 || m > 11) continue;
-    sitesUsados[seg] = sitesUsados[seg] || new Set(); sitesUsados[seg].add(l.NM_SITE ? `${site} ${String(l.NM_SITE).trim()}` : String(site));
-    if (!meta || (!meta.unid && l.SG_UNID)) meta = { nome: String(l.NM_KPI || 'EBITDA').trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+    if (!Number.isInteger(ano) || m < 0 || m > 11) return;
+    sitesUsados[seg] = sitesUsados[seg] || new Set(); sitesUsados[seg].add(rotulo);
     if (!anos[ano]) { anos[ano] = {}; for (const k of Object.values(SEG)) anos[ano][k] = { b: Array(12).fill(0), a: Array(12).fill(0) }; }
+    const cd = periodoDe(l);
+    if (!cd) return;
+    if (cd !== 'MONTH') return somarPeriodo(anos[ano][SEG[seg]], l, cd, m);
     anos[ano][SEG[seg]][l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
+  };
+  for (const l of linhas) {
+    const site = Number(l.ID_SITE), seg = ['vbm', 'cu', 'ni'].find(k => config.ebitda.sites[k].includes(site));
+    if (!seg) { if (!config.ebitda.outros.sites.includes(site)) fora.add(String(site)); continue; }
+    metaDe(seg, l);
+    somar(seg, l, l.NM_SITE ? `${site} ${String(l.NM_SITE).trim()}` : String(site));
   }
+  const O = config.ebitda.outros, sitesOutros = new Set();
+  for (const l of linhasOutros || []) {
+    if (Number(l.ID_OPERACAO) !== O.idOperacao || !O.kpis.includes(Number(l.ID_KPI))) continue;
+    if (O.sites.length && !O.sites.includes(Number(l.ID_SITE))) continue;
+    sitesOutros.add(Number(l.ID_SITE));
+    metaDe('out', l);
+    somar('out', l, `site ${l.ID_SITE}${l.NM_SITE ? ' ' + String(l.NM_SITE).trim() : ''} · KPI ${l.ID_KPI}`);
+  }
+  if (sitesOutros.size > 1 && !O.sites.length) avisos.push(`Others: KPIs ${O.kpis.join(', ')} em ${sitesOutros.size} sites (${[...sitesOutros].join(', ')}), somados; defina ebitda.outros.sites para limitar`);
   if (fora.size) avisos.push(`sites com o KPI ${config.ebitda.idKpi} fora da configuração (não usados): ${[...fora].join(', ')}`);
-  for (const k of Object.keys(SEG)) if (!sitesUsados[k] && Object.keys(anos).length) avisos.push(`${k}: nenhum dos sites ${config.ebitda.sites[k].join(', ')} tem o KPI ${config.ebitda.idKpi} no ciclo ${ciclo}`);
+  for (const k of ['vbm', 'cu', 'ni']) if (!sitesUsados[k] && Object.keys(anos).length) avisos.push(`${k}: nenhum dos sites ${config.ebitda.sites[k].join(', ')} tem o KPI ${config.ebitda.idKpi} no ciclo ${ciclo}`);
+  // Sem Other Segments cadastrado (nenhuma linha de ebitda.outros): Others = VBM − Copper − Nickel, mês a mês e nos
+  // períodos gravados (mesmo fator em IBP.DASHBOARD.VL_FATOR nos três sites)
+  let outrosCalculado = false;
+  if (!sitesUsados.out && sitesUsados.vbm && sitesUsados.cu && sitesUsados.ni) {
+    outrosCalculado = true;
+    const menos = (v, c, n) => (v == null ? null : v - (c || 0) - (n || 0));
+    for (const a of Object.values(anos)) {
+      const V = a.ebitdaVbm, C = a.ebitdaCu, N = a.ebitdaNi, Ot = a.ebitdaOut;
+      for (const k of ['b', 'a']) Ot[k] = V[k].map((v, i) => v - C[k][i] - N[k][i]);
+      if (V.per) {
+        Ot.per = {};
+        for (const [m, g] of Object.entries(V.per)) {
+          Ot.per[m] = {};
+          for (const [cd, x] of Object.entries(g)) {
+            const c = (C.per && C.per[m] && C.per[m][cd]) || {}, n = (N.per && N.per[m] && N.per[m][cd]) || {};
+            Ot.per[m][cd] = { b: menos(x.b, c.b, n.b), a: menos(x.a, c.a, n.a) };
+          }
+        }
+      }
+    }
+    metas.out = metas.vbm ? { ...metas.vbm } : metas.out;
+    avisos.push(`Others calculado (VBM − Copper − Nickel): ebitda.outros sem linhas no ciclo ${ciclo}`);
+  } else if (!sitesUsados.out && Object.keys(anos).length) avisos.push(`out: KPIs ${O.kpis.join(', ')} da operação ${O.idOperacao} sem linhas no ciclo ${ciclo}`);
   if (!Object.keys(anos).length) avisos.push(`KPI ${config.ebitda.idKpi} sem linhas no ciclo ${ciclo} (ID_DASH ${config.ebitda.idDash})`);
-  return { ciclo, ultimoReal, anos, meta, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
+  return { ciclo, ultimoReal, anos, outrosCalculado, meta: metas.vbm || metas.cu || metas.ni || null, metas, sites: Object.fromEntries(Object.entries(sitesUsados).map(([k, v]) => [k, [...v]])), avisos };
 }
 
 // ── Demais séries da carga do COO: linhas de 004 (um KPI por consulta) → série mensal do site da página ──
@@ -367,11 +448,76 @@ function montarSerieCoo(linhas, site) {
     if (Number(l.ID_SITE) !== site) continue;
     const ano = Number(l.ANO), m = Number(l.MES) - 1;
     if (!Number.isInteger(ano) || m < 0 || m > 11) continue;
-    if (!meta || (!meta.unid && l.SG_UNID)) meta = { nome: String(l.NM_KPI || '').trim(), unid: l.SG_UNID ? String(l.SG_UNID).trim() : null, casas: casasDe(l.VL_CASADECIMAL) };
+    meta = melhorMeta(meta, l, '');
     const s = anos[ano] = anos[ano] || { b: Array(12).fill(0), a: Array(12).fill(0) };
+    const cd = periodoDe(l);
+    if (!cd) continue;
+    if (cd !== 'MONTH') { somarPeriodo(s, l, cd, m); continue; }
     s[l.SERIE === 'B' ? 'b' : 'a'][m] += l.VL_KPI == null ? 0 : Number(l.VL_KPI);
   }
   return { anos, meta };
+}
+
+// ── Situação de atualização (SG_STATUS 'S'/'N' e DT_ATUALIZACAO gravados por database/007_status_atualizacao_hob.sql,
+// como o 004 do COO) → situação de cada gráfico que vem da carga. Chave do gráfico:
+//   vbm.ebitda.vbm | vbm.ebitda.cu | vbm.ebitda.ni | vbm.ebitda.out (opções do seletor do EBITDA)
+//   <bu>.<série> de coo.kpis com ID_KPI (ex.: cu.ebitda, ni.ebitda), no site da página
+// Gráfico com algum KPI 'N' → pendente; também pendente o KPI sem o realizado (Act) do mês do ciclo na carga
+// (SEM_REAL: valor nulo ou 0 em MONTH/ID_TIPO_VISAO 3 no mês do ciclo), mesmo com o log em dia.
+// Sem linha com situação → fora (a tela não marca)
+const STATUS_SQL = `
+SELECT
+  R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  MIN(R.SG_STATUS) AS SG_STATUS, MAX(R.DT_ATUALIZACAO) AS DT_ATUALIZACAO,
+  CASE WHEN ISNULL(MAX(CASE WHEN R.CD_PERIODO = 'MONTH' AND R.ID_TIPO_VISAO = 3 AND R.DT_IND = @dtMes THEN ABS(R.VL_KPI) END), 0) = 0 THEN 1 ELSE 0 END AS SEM_REAL
+FROM IBP.PHUB_PERFORMANCESTUDIO R
+WHERE R.ID_DASH = @idDash
+  AND R.DT_REF = @dtRef
+  AND R.SG_STATUS IS NOT NULL
+GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+// Sem situação gravada na carga (007 ainda não rodou para o ciclo): a mesma regra do 007 (e do 004 do COO), lida na hora
+// do log — última atualização em IBP.LOG_PEDRAVISAOCONSOLIDADA >= 1º dia do mês do ciclo (@dtMes) → 'S'
+const STATUS_LOG_SQL = `
+SELECT
+  R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  CASE WHEN MAX(L.DT_ATUALIZACAO) >= @dtMes THEN 'S' ELSE 'N' END AS SG_STATUS,
+  MAX(L.DT_ATUALIZACAO) AS DT_ATUALIZACAO,
+  MAX(R.SEM_REAL) AS SEM_REAL
+FROM (
+  SELECT R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI,
+  CASE WHEN ISNULL(MAX(CASE WHEN R.CD_PERIODO = 'MONTH' AND R.ID_TIPO_VISAO = 3 AND R.DT_IND = @dtMes THEN ABS(R.VL_KPI) END), 0) = 0 THEN 1 ELSE 0 END AS SEM_REAL
+  FROM IBP.PHUB_PERFORMANCESTUDIO R
+  WHERE R.ID_DASH = @idDash AND R.DT_REF = @dtRef
+  GROUP BY R.ID_SISTEMA, R.ID_SITE, R.ID_OPERACAO, R.ID_KPI
+) R
+LEFT JOIN IBP.LOG_PEDRAVISAOCONSOLIDADA L
+  ON L.ID_SISTEMA = R.ID_SISTEMA AND L.ID_SITE = R.ID_SITE
+  AND L.ID_OPERACAO = R.ID_OPERACAO AND L.ID_KPI = R.ID_KPI
+GROUP BY R.ID_SITE, R.ID_OPERACAO, R.ID_KPI`;
+function montarAtualizacao(linhas, config, ciclo) {
+  const [anoC, mesC] = ciclo.split('-').map(Number);
+  const kpis = linhas.map(l => ({ site: Number(l.ID_SITE), op: Number(l.ID_OPERACAO), kpi: Number(l.ID_KPI),
+    ok: String(l.SG_STATUS).trim().toUpperCase() === 'S' && !Number(l.SEM_REAL), semReal: !!Number(l.SEM_REAL), dt: l.DT_ATUALIZACAO || null }));
+  const situacao = ({ sites, op, ids }) => {
+    const achados = kpis.filter(k => ids.includes(k.kpi) && (!sites || !sites.length || sites.includes(k.site)) && (op == null || k.op === op));
+    if (!achados.length) return null;
+    const pend = achados.filter(k => !k.ok), base = pend.length ? pend : achados;
+    const dts = base.map(k => k.dt).filter(Boolean).map(d => new Date(d).getTime()).filter(n => !isNaN(n));
+    // pendente: a última atualização recebida dos KPIs pendentes (algum sem registro → nenhuma)
+    const dt = pend.length && dts.length < pend.length ? null : dts.length ? new Date(Math.max(...dts)).toISOString() : null;
+    return { status: pend.length ? 'pendente' : 'ok', dt, kpis: achados.length, pendentes: pend.length, ...(pend.some(k => k.semReal) ? { semReal: true } : {}) };
+  };
+  const cards = {}, E = config.ebitda;
+  for (const seg of ['vbm', 'cu', 'ni']) cards[`vbm.ebitda.${seg}`] = situacao({ sites: E.sites[seg], ids: [E.idKpi] });
+  // Others calculado (VBM − Copper − Nickel, sem Other Segments cadastrado): a situação dos três sites
+  cards['vbm.ebitda.out'] = situacao({ sites: E.outros.sites, op: E.outros.idOperacao, ids: E.outros.kpis })
+    || situacao({ sites: [...E.sites.vbm, ...E.sites.cu, ...E.sites.ni], ids: [E.idKpi] });
+  for (const [chave, idKpi] of Object.entries(config.coo.kpis)) {
+    if (idKpi) cards[chave] = situacao({ sites: [config.coo.sites[chave.split('.')[0]]], ids: [idKpi] });
+  }
+  for (const k of Object.keys(cards)) if (!cards[k]) delete cards[k];
+  // mês do ciclo da carga (carga 2026-11 → outubro): meses anteriores já fechados contam como atualizados
+  return { ciclo, mesCiclo: mesC === 1 ? { ano: anoC - 1, mes: 12 } : { ano: anoC, mes: mesC - 1 }, cards, indicadores: kpis.length };
 }
 
 // Erro do banco → código para a tela (sem o texto do banco na resposta; o texto vai para o log)
@@ -396,7 +542,7 @@ function carregarSql(arquivo, parametros) {
   return textoSql;
 }
 const LEITURA = { arquivo: '001_hob_dashboard.sql', parametros: ['@idDash', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD'] };
-const EBITDA = { arquivo: '004_hob_ebitda.sql', parametros: ['@idDash', '@idKpi', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD', "CD_PERIODO = 'MONTH'"] };
+const EBITDA = { arquivo: '004_hob_ebitda.sql', parametros: ['@idDash', '@idKpi', '@dtRef', 'IBP.PHUB_PERFORMANCESTUDIO', 'IBP.DASHBOARD', "CD_PERIODO IN ('MONTH', 'QUARTER', 'YTD', 'YTG', 'YEAR')"] };
 const WATERFALL = { arquivo: '002_hob_waterfall.sql', parametros: ['IBP.WATERFALL', '@site', '@tipo', '@anoIni'] };
 
 // Cargas do Health of the Business em IBP.PHUB_PERFORMANCESTUDIO (uma por DT_REF), com a hora da gravação
@@ -407,7 +553,9 @@ WHERE R.ID_DASH = @idDash
 GROUP BY R.DT_REF
 ORDER BY R.DT_REF DESC`;
 
-// ID_DASH do dashboard em IBP.DASHBOARD (HOB_ID_DASH). Sem ele: null (rotas de dados pendentes)
+// ID_DASH do dashboard em IBP.DASHBOARD: 16 (o da carga 003_carga_mensal_hob.sql), trocável por HOB_ID_DASH.
+// O router aceita sem ID (null: rotas da carga pendentes); portal.js e server.js passam o padrão.
+const ID_DASH_PADRAO = 16;
 function lerIdDash(valor) {
   if (valor === undefined || valor === null || valor === '') return null;
   const n = Number(valor);
@@ -482,28 +630,31 @@ function criarHobRouter({ runQuery, idDash }) {
     const linhas = await comCache(`/waterfall:${site}:${tipo}:${anoInicial}`, async () => (await runQuery(WATERFALL_SQL, { site: [sql.Int, site], tipo: [sql.Int, tipo], anoIni: [sql.Int, anoInicial] })).recordset, f);
     return { linhas, ...mapearWaterfall(linhas, config, ponte) };
   }
+  // A carga inteira do ciclo (004 com @idKpi NULL), numa ida ao banco e em cache: EBITDA, Others e todas as séries
+  // de coo.kpis saem daqui (antes era uma consulta por KPI, ~12 idas ao banco por carregamento da página)
+  const lerCarga = (idDash, ciclo, f) => comCache(`/carga:${idDash}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, null], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
   // EBITDA da carga do COO: o ciclo pedido, se existir no dashboard de origem; senão, o mais recente
   async function lerEbitda(config, f, cicloPedido) {
     const idDash = config.ebitda.idDash;
     const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, f)).map(l => cicloDe(l.DT_REF));
-    if (!ciclos.length) throw Object.assign(new Error('Sem carga do COO'), { status: 404, codigo: 'SEM_CICLO' });
+    if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
     const ciclo = cicloPedido && ciclos.includes(cicloPedido) ? cicloPedido : ciclos[0];
     const idKpi = config.ebitda.idKpi;
-    const linhas = await comCache(`/ebitda:${idDash}:${idKpi}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, idKpi], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
-    return { idDash, idKpi, ...montarEbitda(linhas, config, ciclo) };
+    const carga = await lerCarga(idDash, ciclo, f), lerKpi = (k) => carga.filter(l => Number(l.ID_KPI) === k);
+    const linhas = lerKpi(idKpi), outros = config.ebitda.outros.kpis.map(lerKpi);
+    return { idDash, idKpi, ...montarEbitda(linhas, [].concat(...outros), config, ciclo) };
   }
   // Séries da carga do COO configuradas em coo.kpis (uma consulta por ID_KPI, a mesma do EBITDA)
   async function lerCoo(config, f, cicloPedido) {
     const { idDash, sites, kpis } = config.coo;
     const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, f)).map(l => cicloDe(l.DT_REF));
-    if (!ciclos.length) throw Object.assign(new Error('Sem carga do COO'), { status: 404, codigo: 'SEM_CICLO' });
+    if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
     const ciclo = cicloPedido && ciclos.includes(cicloPedido) ? cicloPedido : ciclos[0];
     const [anoC, mesC] = ciclo.split('-').map(Number);
     const ids = [...new Set(Object.values(kpis).filter(v => v))];
     const porKpi = {};
-    await Promise.all(ids.map(async (idKpi) => {
-      porKpi[idKpi] = await comCache(`/ebitda:${idDash}:${idKpi}:${ciclo}`, async () => (await runQuery(EBITDA_SQL, { idDash: [sql.Int, idDash], idKpi: [sql.Int, idKpi], dtRef: [sql.Date, new Date(`${ciclo}-01T00:00:00Z`)] })).recordset, f);
-    }));
+    const carga = await lerCarga(idDash, ciclo, f);
+    for (const idKpi of ids) porKpi[idKpi] = carga.filter(l => Number(l.ID_KPI) === idKpi);
     const series = {}, pendentes = [], avisos = [];
     for (const [chave, idKpi] of Object.entries(kpis)) {
       if (!idKpi) { pendentes.push(chave); continue; }
@@ -624,6 +775,34 @@ function criarHobRouter({ runQuery, idDash }) {
     }
   });
 
+  // Situação de atualização dos gráficos da carga (Pending final updates, como o COO). ?ciclo= como em /ebitda.
+  // À parte: a tela desenha os gráficos e acrescenta o aviso; se falhar, fica sem ele
+  router.get('/atualizacao', async (req, res) => {
+    const pedido = lerCiclo(req.query.ciclo);
+    try {
+      const { config } = await lerConfig(fresco(req));
+      const idDash = config.ebitda.idDash;
+      const ciclos = (await comCache(`/ciclos:${idDash}`, async () => (await runQuery(CICLOS_SQL, { idDash: [sql.Int, idDash] })).recordset, fresco(req))).map(l => cicloDe(l.DT_REF));
+      if (!ciclos.length) throw Object.assign(new Error('Sem carga gravada para o ID_DASH'), { status: 404, codigo: 'SEM_CICLO' });
+      const ciclo = pedido && ciclos.includes(pedido) ? pedido : ciclos[0];
+      const dtRef = new Date(`${ciclo}-01T00:00:00Z`), dtMes = new Date(Date.UTC(dtRef.getUTCFullYear(), dtRef.getUTCMonth() - 1, 1));
+      let origem = 'carga';
+      let linhas = await comCache(`/status:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
+      if (!linhas.length) {
+        // 007 ainda não gravou SG_STATUS neste ciclo: a mesma regra, direto do log
+        origem = 'log';
+        linhas = await comCache(`/status-log:${idDash}:${ciclo}`, async () => (await runQuery(STATUS_LOG_SQL, { idDash: [sql.Int, idDash], dtRef: [sql.Date, dtRef], dtMes: [sql.Date, dtMes] })).recordset, fresco(req));
+      }
+      const a = montarAtualizacao(linhas, config, ciclo);
+      if (!Object.keys(a.cards).length) console.warn(`${TAG} /atualizacao: nenhum gráfico com situação no ciclo ${ciclo} (origem ${origem}, ${linhas.length} KPIs)`);
+      res.json({ idDash, origem, ...a });
+    } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message, codigo: err.codigo });
+      console.error(`${TAG} erro em /atualizacao:`, err.message);
+      res.status(500).json({ error: 'Failed to query the data update status.', ...codigoDoErro(err) });
+    }
+  });
+
   // EBITDA por segmento (carga do COO). ?ciclo= segue o ciclo da tela quando o COO tiver a mesma carga
   router.get('/ebitda', async (req, res) => {
     const pedido = lerCiclo(req.query.ciclo);
@@ -642,4 +821,4 @@ function criarHobRouter({ runQuery, idDash }) {
   return router;
 }
 
-module.exports = { criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };
+module.exports = { ID_DASH_PADRAO, montarAtualizacao, STATUS_SQL, STATUS_LOG_SQL, criarHobRouter, montarDados, montarEbitda, montarSerieCoo, EBITDA, FONTE_PONTE, mapearWaterfall, codigoDoErro, colunasWaterfall, normalizarConfigHob, carregarSql, lerCiclo, lerIdDash, LEITURA, WATERFALL, CICLOS_SQL, CONFIG_PADRAO, CONFIG_VISAO };

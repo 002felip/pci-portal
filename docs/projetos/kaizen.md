@@ -157,6 +157,26 @@ renomeada por uma variável `AZURE_SQL_*_TABLE`.
   (modais, abas, toasts).
 - Uma aba do admin = um arquivo em `js/`. As abas bilíngues usam `cadastro-bilingue.js`; `categorias.js`
   é autossuficiente de propósito.
+- **Ícones dos cadastros do admin** (`assets/icons/<aba>/`, catálogo em `assets/icons/icones.json`):
+  SVG do Font Awesome Free 6.6.0 com o azul `#1a8bbf` gravado (no tema escuro o CSS clareia). A paleta
+  de cada aba está no modal do `admin.html`:
+  - Categorias: 16, de Segurança e 5S a Automação e Água;
+  - Pot. Replicação (área do processo): Global, Concentração, Britagem, Mina a céu aberto, Mina subterrânea,
+    Fundição, Refinaria, Usina, Porto, Ferrovia, Projetos, Outros e Sem replicação;
+  - Red. Desperdícios: os 8 desperdícios do Lean (Defeitos, Superprodução, Espera, Talento não utilizado,
+    Transporte, Estoque, Movimentação, Processamento extra) e Energia, Ideia, Segurança e Manutenção;
+  - Resultados: 13, de Redução de custo a Satisfação;
+  - Status: Aprovado, Reprovado, Em aprovação, Rascunho, Revisado, Pendente, Implementado e Cancelado.
+
+  O ícone escolhido vai para `URL_ICONE`. Quando o registro não tem escolha de verdade (sem ícone, com o
+  padrão da aba, com um ícone da paleta antiga ou com o mesmo ícone de outro registro), o cartão mostra o
+  ícone pelo nome (`iconesPorNome` em cada `js/<aba>.js` e em `js/categorias.js`, PT e EN), e editar
+  grava esse ícone. `database/atualizar_icones_desperdicios.sql` e `atualizar_icones_replicacao.sql` gravam de uma vez os
+  de Waste Reduction e de Replication Potential. Tipo Resultados e Tipo Kaizen não têm essa coluna: o ícone
+  sai do nome (`iconesPorNome` em `js/tiporesultados.js` e `js/tiposkaizen.js`; Financeiro = saco de
+  dinheiro; New = lâmpada, Replication = cópia, Scope = setas de expansão…). Para um ícone novo: incluir em
+  `ABAS`/paleta, gerar o SVG no mesmo formato e regerar o subconjunto da fonte
+  (`database/README-subset-fontawesome.md`), senão a paleta mostra um quadrado vazio.
 - Impressão do Kaizen (`js/impressao-kaizen.js`): folha A4/A3/A2 em PDF (html2canvas-pro + jsPDF) e PPT
   (`js/vendor/pptxgenjs-3.12.0.bundle.min.js`), carregados sob demanda.
 - Cache: arquivos com hash no nome são `immutable` (1 ano); o resto é `no-cache` + ETag.

@@ -47,6 +47,22 @@ sequenceDiagram
   T->>A: GET /execucoes/:id/arquivos/:nome (download, sem expor o SAS ao navegador)
 ```
 
+- **Formato:** escolhido na tela.
+  - **Um PDF por BU** (padrão): um processo Python por BU.
+  - **Consolidado:** um processo só (`--consolidated --bus "A,B"`) gera um PDF com o resumo dos
+    Stability & Capability Scores no início e, depois, o relatório de cada BU selecionada (capa, lista de
+    KPIs e páginas). Ele vai para o Blob como `Stable_Capable_Consolidado_<início>_<fim>.pdf`. Uma BU com
+    erro fica de fora e as outras seguem.
+- **Scores** (`src/report/scores.py`): calculados no ano de referência, com uma carta X-AM do ano inteiro
+  (σ = amplitude móvel média ÷ 1,128). Aparecem nas pílulas do cabeçalho de cada página de KPI e no resumo
+  do consolidado.
+  - **Stability** = 100 × (1 − dias fora de controle ÷ dias − 0,3 × CV). Um dia está fora de controle
+    quando alguma regra de Nelson o marca: fora de ±3σ, 9 do mesmo lado, 6 em tendência ou 14 alternando.
+  - **Capability** = 100 × dias dentro de Budget ± 2σ ÷ dias.
+  - **Faixas:**
+    - Stability: 85 Very Stable, 60 Stable, 40 Moderately Stable, 15 Unstable, abaixo disso Very Unstable;
+    - Capability: 95 Very Capable, 80 Capable, 70 Moderately Capable, abaixo disso Incapable.
+  - **Nome do processo:** vem da coluna *Definition* do `kpi_list.xlsx`.
 - **Período padrão** ("Fechamento mensal"): de 1º de janeiro do ano anterior ao último dia do mês
   anterior. Aceita intervalos de até 10 anos.
 - **A consulta é a do time, como foi entregue:** `database/query_stable_and_capable.sql`. As datas do
@@ -57,6 +73,16 @@ sequenceDiagram
   - `config/report_config.yaml`: página de 452×254 mm;
   - `data/kpi_list.xlsx`: ordem e filtro dos KPIs por BU;
   - `data/images/cover_template.png`.
+- **Visual do PDF:** o mesmo do Dashboard (`src/report/visual.py`, com as cores e a tipografia copiadas do
+  `index.html` e do `painel-spc.js`). Usa a Poppins de `data/fonts` e cards brancos com borda e sombra. A
+  página tem um cabeçalho com o site em itálico azul e, ao lado, o indicador em destaque com a unidade.
+  Abaixo vêm três cards:
+  - carta de controle, na largura toda (pílulas dos trimestres, CL azul, UCL/LCL tracejados, faixa dos
+    melhores 30 dias, sinais das regras de Nelson);
+  - medidas por trimestre, com a caixa "Mean variation";
+  - histograma ao lado, com a tabela por ano de cabeçalho azul-marinho.
+
+  Os gráficos são desenhados em matplotlib, e a página em 2×, para o texto sair nítido no PDF.
 - **Execução:**
   - uma por vez (a segunda recebe 409);
   - pode ser cancelada (`POST /execucoes/:id/cancelar`);
@@ -116,6 +142,8 @@ e sem depender de licença do Power BI.
   - interruptores Remover zeros e Remover outliers (média ± 3,5 desvios).
 
   Os padrões são os do `.pbix`: Salobo / Salobo / Ore Mined, sem remover nada.
+- **Cabeçalho:** sem banner. Abaixo dos filtros, uma linha no padrão do COO com o site, KPI e
+  unidade à esquerda e o período, a data de carga e o botão Atualizar à direita.
 - **Tela cheia:** botão no fim da barra de filtros, como nos dashboards do Hub. Em tela cheia (botão ou F11)
   saem a barra superior e o cabeçalho da página; `Esc` volta.
 - **Responsividade:**
@@ -139,7 +167,7 @@ O `portal.js` bloqueia na pasta o que não é tela: `python/`, `database/` e os 
 
 | O quê | Onde |
 |---|---|
-| PDFs e importação (leitura e gravação) | base do Kaizen (`STABLECAPABLE_AZURE_SQL_DATABASE` → `KAIZEN_AZURE_SQL_DATABASE`, hoje **DEV**) |
+| PDFs e importação (leitura e gravação) | **PRD** (`STABLECAPABLE_AZURE_SQL_DATABASE = BDIBPBMSA_PRD`; sem ela, cai na base do Kaizen) |
 | Tabela da importação | `IBP.PEDRAVISAODIARIA` (`STABLECAPABLE_TABELA_IMPORTACAO`) |
 | Dashboard | **PRD** (`STABLECAPABLE_BI_SQL_DATABASE`, `STABLECAPABLE_BI_SQL_SERVER`) |
 | Arquivos | Azure Blob do Kaizen (`azure-blob.js` da pasta do Kaizen), em `<AZURE_STORAGE_CONTAINER>/01 - Imagens/Stable & Capable/` (`STABLECAPABLE_BLOB_PASTA`). Sem Blob, usa o disco local (`STABLECAPABLE_PASTA_LOCAL`), e os arquivos se perdem ao reiniciar |
@@ -158,7 +186,7 @@ O `portal.js` bloqueia na pasta o que não é tela: `python/`, `database/` e os 
 
 | Variável | Padrão |
 |---|---|
-| `STABLECAPABLE_AZURE_SQL_DATABASE` | a do Kaizen |
+| `STABLECAPABLE_AZURE_SQL_DATABASE` | a do Kaizen (no `app.yaml`: `BDIBPBMSA_PRD`) |
 | `STABLECAPABLE_BI_SQL_DATABASE` / `_BI_SQL_SERVER` / `_BI_CACHE_MIN` | `BDIBPBMSA_PRD` / `AZURE_SQL_SERVER` / 60 |
 | `STABLECAPABLE_TABELA_IMPORTACAO` | `IBP.PEDRAVISAODIARIA` |
 | `STABLECAPABLE_BLOB_PASTA` | `01 - Imagens/Stable & Capable` |
@@ -175,6 +203,6 @@ O `portal.js` bloqueia na pasta o que não é tela: `python/`, `database/` e os 
 
 ## Pontos de atenção
 
-- PDFs e importação usam a base **DEV** enquanto o Kaizen estiver na pasta DEV.
+- PDFs e importação usam a base **PRD** (`STABLECAPABLE_AZURE_SQL_DATABASE`), a mesma do Dashboard.
 - O histórico depende de JSON no Blob, porque o SAS não tem listar nem apagar.
 - A primeira subida depois de um deploy pode instalar as bibliotecas Python (lenta).

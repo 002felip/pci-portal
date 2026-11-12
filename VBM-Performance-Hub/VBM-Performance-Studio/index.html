@@ -181,7 +181,42 @@ body {
 }
 
 /* Nome do dashboard aberto: mesmo estilo de "VBM - Performance Hub", abaixo da barra */
-.dash-titulo { position: relative; display: flex; justify-content: center; align-items: center; min-height: 52px; padding: 14px 188px 4px; } /* espaço dos 4 ícones à direita */
+.dash-titulo { position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; min-height: var(--titulo-h, 66px); padding: 24px 188px 0; } /* respiro acima do título (também em tela cheia) e espaço dos 4 ícones à direita */
+/* Situação de atualização dos dados: mesma regra e mesmo visual do COO Business Units Dashboard
+   (resumo com uma marca por gráfico e selo "Atualizações finais pendentes" no card) */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --cyc-ok: #1B7F7B; }
+.dash-situacao { position: absolute; right: 16px; top: var(--situacao-top, 70px); display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px; border: 0; border-radius: 6px;
+  background: transparent; color: #6B7280; font: italic 400 .7rem 'Poppins', 'Segoe UI', sans-serif; cursor: pointer; }
+html[data-bg="dark"] .dash-situacao { color: rgba(255,255,255,.72); }
+.dash-situacao b { font-weight: 500; color: var(--wait); }
+.dash-situacao .sit-ciclo { font-style: normal; font-weight: 600; color: #0B6E99; }
+html[data-bg="dark"] .dash-situacao .sit-ciclo { color: #7DD3F0; }
+html[data-bg="dark"] .dash-situacao b { color: #F5B94A; }
+.dash-situacao:hover:not(:disabled) > span:last-child { text-decoration: underline; text-underline-offset: 2px; }
+.dash-situacao[aria-pressed="true"] { background: var(--wait-bg); }
+.dash-situacao.is-ok { cursor: default; }
+.dash-situacao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
+.dash-situacao[hidden], .chart-situacao[hidden] { display: none; }
+.cycle-bar { display: inline-flex; gap: 2px; }
+.cycle-bar i { width: 3px; height: 9px; border-radius: 2px; background: var(--cyc-ok); opacity: .85; }
+.cycle-bar i.w { background: transparent; border: 1.3px dashed var(--wait); opacity: 1; }
+.chart-situacao { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 1px 9px 1px 6px; border-radius: 999px;
+  border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .66rem/1.25 'Poppins', 'Segoe UI', sans-serif;
+  grid-column: 2; justify-self: start; white-space: nowrap; }
+/* Selo na linha da unidade: chegar depois dos dados não muda a altura do cabeçalho nem move as barras */
+.chart-header { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; }
+.chart-header > .chart-title { grid-column: 1 / -1; }
+.chart-situacao svg { width: 13px; height: 13px; flex-shrink: 0; }
+.charts-board.is-carregando > .main-wrapper { visibility: hidden; }
+/* Colunas do mês pendente (mesmo visual do COO): o realizado do mês vira barra tracejada,
+   sem valor nem delta; períodos que incluem o mês ficam esmaecidos */
+.col-wrapper.is-pend-mes .bar { height: max(var(--h-ghost, 12%), 6px); animation: none; background: repeating-linear-gradient(45deg, rgba(217,140,10,.18) 0 2.4px, transparent 2.4px 6px); border: 1.2px dashed rgba(217,140,10,.55); box-shadow: none; }
+.col-wrapper.is-pend-mes .value-label { bottom: calc(max(var(--h-ghost, 12%), 6px) + 7px); color: #9A5B00; font-size: 0; }
+.col-wrapper.is-pend-mes .value-label::after { content: '—'; font-size: calc(.8rem * var(--ft-valores-s, 1)); }
+.col-wrapper.is-pend-mes .dcnx { display: none; }
+.col-wrapper.is-pend-col .bar, .col-wrapper.is-pend-col::after { filter: opacity(.45) saturate(.7); }
+.col-wrapper.is-pend-col .value-label { opacity: .55; } /* abrindo: só aparece com os dados da referência do dashboard */
+.charts-board.foco-pendentes > .main-wrapper:not(.is-pend) { opacity: .28; filter: grayscale(1); }
 .dash-titulo-nome {
   position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
   font: 300 1.1rem/1.2 'Poppins', 'Segoe UI', sans-serif; letter-spacing: .08em; color: rgba(255,255,255,.88);
@@ -193,7 +228,11 @@ body {
 }
 html[data-bg="light"] .dash-titulo-nome { color: #0B3A50; }
 /* Salvar no banco / desfazer alterações não salvas (mesmo visual do botão de exportar) */
-.dash-acoes { position: absolute; right: 16px; top: 12px; display: flex; gap: 8px; }
+.dash-acoes { position: absolute; right: 16px; top: 20px; display: flex; gap: 8px; }
+/* Linha de pendências com o mesmo espaço (16px) até os ícones e até os gráficos:
+   ícones terminam em 54px; texto de 70px a 86px; gráficos começam 16px abaixo (altura da faixa = --titulo-h) */
+:root { --titulo-h: 97px; --situacao-top: 70px; }
+@media (max-width: 768px) { :root { --titulo-h: 106px; } }
 .dash-acoes[hidden], .dash-acao[hidden] { display: none; }
 /* Tela cheia: sem o topo (logo, nome do app e usuário) */
 html:fullscreen .topnav { display: none; }
@@ -203,7 +242,7 @@ html:-webkit-full-screen .topnav { display: none; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-acao:disabled { opacity: .45; cursor: not-allowed; }
 .dash-acao.is-pendente { background: #0B6E99; color: #fff; border-color: #0B6E99; }
-@media (max-width: 760px) { .dash-titulo { padding: 12px 178px 4px 16px; } .dash-titulo-nome { font-size: .92rem; } }
+@media (max-width: 760px) { .dash-titulo { padding: 24px 178px 0 16px; } .dash-titulo-nome { font-size: .92rem; } }
 .settings-btn {
   display: flex;
   align-items: center;
@@ -1096,7 +1135,13 @@ body.qe-on .app-main { margin-left: calc(var(--qe-left) + var(--qe-bar-w) + 8px)
   body.qe-on.qe-open .app-main { margin-left: calc(var(--qe-left) + var(--qe-bar-w) + 16px + var(--qe-panel-w)); }
 }
 
+/* Barra lateral só com gráfico selecionado, painel aberto ou sem dashboard aberto (1º acesso);
+   some sem mexer no quadro (os gráficos não se reorganizam) */
+body.qe-barra-oculta .qe-toolbar { opacity: 0; visibility: hidden; transform: translateX(-10px); pointer-events: none; }
+/* Mouse junto à lateral esquerda: a barra aparece mesmo oculta (atualizarBarraLateral) */
+body.qe-barra-oculta.qe-barra-perto .qe-toolbar { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
 .qe-toolbar {
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
   position: fixed; z-index: 16; left: var(--qe-left); top: var(--qe-top);
   width: var(--qe-bar-w); padding: 6px;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -1297,10 +1342,15 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 .qe-mini:disabled { opacity: .35; cursor: default; }
 
 .qe-preview {
-  min-height: 38px; padding: 9px 11px; border-radius: 8px; border: 1px dashed var(--qe-line-strong);
-  background: var(--qe-surface-alt); color: var(--qe-strong); font-size: .8rem; line-height: 1.35;
-  white-space: pre-line; overflow-wrap: anywhere;
+  min-height: 44px; padding: 11px 13px; border-radius: 10px; border: 1.5px solid #3CB5E5; border-left-width: 4px;
+  background: rgba(60,181,229,.08); color: var(--qe-strong); font-size: .92rem; font-weight: 600; line-height: 1.35;
+  white-space: pre-line; overflow-wrap: anywhere; box-shadow: 0 2px 8px rgba(60,181,229,.15);
 }
+/* Títulos dos blocos da seção Unidade e formatação: a formatação numérica fica num cartão destacado */
+.qe-bloco-tit { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font: 700 .78rem 'Poppins', sans-serif; letter-spacing: .02em; color: var(--qe-strong); }
+.qe-bloco-tit i { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: rgba(60,181,229,.14); color: #0B6E99; font-size: .72rem; }
+.qe-bloco { margin-top: 18px; padding: 14px 14px 10px; border-radius: 12px; border: 1.5px solid #3CB5E5; background: rgba(60,181,229,.06); box-shadow: 0 2px 8px rgba(60,181,229,.12); }
+.qe-bloco .qe-bloco-dica { margin: -4px 0 12px; }
 .qe-preview.is-muted { color: var(--qe-muted); font-style: italic; }
 
 /* Cores */
@@ -1566,11 +1616,9 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
   <button type="button" class="qe-tool" id="qeFiltrosBtn" data-qe-view="filtros" aria-controls="qePanel" aria-expanded="false" aria-label="Filtros" data-tip="Filtros"><i class="fa-solid fa-filter" aria-hidden="true"></i><span class="qe-badge" id="qeFiltrosBadge" aria-hidden="true" hidden></span></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
   <button type="button" class="qe-tool" data-qe-go="tipo" aria-controls="qePanel" aria-expanded="false" aria-label="Tipo de Gráfico" data-tip="Tipo de Gráfico" data-i18n-tip="ui.tipo_de_grafico" data-i18n-aria="ui.tipo_de_grafico"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="ident" aria-controls="qePanel" aria-expanded="false" aria-label="Identificação" data-tip="Identificação" data-i18n-tip="ui.identificacao" data-i18n-aria="ui.identificacao"><i class="fa-solid fa-id-card" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="titulo" aria-controls="qePanel" aria-expanded="false" aria-label="Título" data-tip="Título" data-i18n-tip="ui.titulo" data-i18n-aria="ui.titulo"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="numeros" aria-controls="qePanel" aria-expanded="false" aria-label="Formatação numérica" data-tip="Formatação numérica" data-i18n-tip="ui.formatacao_numerica" data-i18n-aria="ui.formatacao_numerica"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="fontes" aria-controls="qePanel" aria-expanded="false" aria-label="Fontes" data-tip="Fontes" data-i18n-tip="ui.fontes" data-i18n-aria="ui.fontes"><i class="fa-solid fa-font" aria-hidden="true"></i></button>
-  <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade de medida" data-tip="Unidade de medida" data-i18n-tip="ui.unidade_de_medida" data-i18n-aria="ui.unidade_de_medida"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
+  <button type="button" class="qe-tool" data-qe-go="unidade" aria-controls="qePanel" aria-expanded="false" aria-label="Unidade e formatação numérica" data-tip="Unidade e formatação numérica" data-i18n-tip="ui.unidade_e_numeros" data-i18n-aria="ui.unidade_e_numeros"><i class="fa-solid fa-ruler" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="colunas" aria-controls="qePanel" aria-expanded="false" aria-label="Colunas" data-tip="Colunas" data-i18n-tip="ui.colunas" data-i18n-aria="ui.colunas"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i></button>
   <button type="button" class="qe-tool" data-qe-go="cores" aria-controls="qePanel" aria-expanded="false" aria-label="Cores" data-tip="Cores" data-i18n-tip="ui.cores" data-i18n-aria="ui.cores"><i class="fa-solid fa-palette" aria-hidden="true"></i></button>
   <span class="qe-tool-sep" aria-hidden="true"></span>
@@ -1625,16 +1673,17 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <div class="qe-status" id="qeDashInfo" aria-live="polite"></div>
       <div class="qe-dash-topo">
         <button type="button" class="qe-btn primary" id="qeDashNovo" aria-controls="qeDashForm"><i class="fa-solid fa-plus" aria-hidden="true"></i> <span data-i18n="ui.dash_novo">Novo dashboard</span></button>
-        <button type="button" class="qe-btn" id="qeDashEditar" aria-controls="qeDashForm" data-i18n="ui.dash_editar">Alterar parâmetros de data deste dashboard</button>
+        <button type="button" class="qe-btn" id="qeDashEditar" aria-controls="qeDashForm" data-i18n="ui.dash_editar">Renomear ou alterar datas deste dashboard</button>
       </div>
       <div class="qe-field qe-dash-bloco">
         <label class="qe-label" for="qeDashLista" data-i18n="ui.dash_abrir_reutilizar">Abrir, reutilizar ou excluir um dashboard</label>
         <select class="qe-select" id="qeDashLista" aria-describedby="qeDashListaHint"></select>
         <div class="qe-dash-acoes">
           <button type="button" class="qe-btn" id="qeDashAbrir" data-i18n="ui.abrir">Abrir</button>
+          <button type="button" class="qe-btn" id="qeDashRenomear" aria-controls="qeDashForm" data-i18n="ui.dash_renomear">Renomear</button>
           <button type="button" class="qe-btn" id="qeDashExcluir" aria-controls="qeDashExcluirBox" data-i18n="ui.excluir">Excluir</button>
+          <button type="button" class="qe-btn" id="qeDashAtivo">Desativar</button>
           <button type="button" class="qe-btn qe-dash-largo" id="qeDashReutilizar" data-i18n="ui.dash_reutilizar">Reutilizar em novo período</button>
-          <button type="button" class="qe-btn qe-dash-largo" id="qeDashAtivo">Desativar</button>
         </div>
         <div class="qe-alerta qe-dash-confirma" id="qeDashExcluirBox" role="alertdialog" aria-labelledby="qeDashExcluirTexto" hidden>
           <p id="qeDashExcluirTexto"></p>
@@ -1697,29 +1746,6 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
     <footer class="qe-foot" id="qeDashFoot" hidden>
       <button type="button" class="qe-btn" id="qeDashCancelar" data-i18n="ui.cancelar">Cancelar</button>
       <button type="button" class="qe-btn primary" id="qeDashCriar" data-i18n="ui.dash_criar">Criar dashboard</button>
-    </footer>
-  </section>
-
-  <section class="qe-view" id="qeViewAdd" data-view="add" hidden>
-    <div class="qe-body"><div class="qe-sec-body" style="padding-top:14px;">
-      <div class="qe-field">
-        <label class="qe-label" for="qeAddNome" data-i18n="ui.nome_do_grafico_opcional">Nome do gráfico (opcional)</label>
-        <input class="qe-input" id="qeAddNome" type="text" maxlength="100" autocomplete="off">
-      </div>
-      <div class="qe-field">
-        <label class="qe-label" for="qeAddProduto" data-i18n="ui.produto">Produto</label>
-        <select class="qe-select" id="qeAddProduto"></select>
-      </div>
-      <div class="qe-field">
-        <label class="qe-label" for="qeAddSalvo" data-i18n="ui.comecar_de_uma_configuracao_salva_opcional">Começar de uma configuração salva (opcional)</label>
-        <select class="qe-select" id="qeAddSalvo"></select>
-      </div>
-      <p class="qe-hint" data-i18n="ui.o_novo_grafico_usa_os_filtros_padrao_do_da">O novo gráfico usa os filtros padrão do dashboard (o Site acompanha o Produto escolhido) e o tamanho típico dos gráficos do quadro. Depois de criado, ele fica selecionado para configuração.</p>
-    </div></div>
-    <p class="qe-msg" id="qeAddMsg" role="status" aria-live="polite"></p>
-    <footer class="qe-foot">
-      <button type="button" class="qe-btn" id="qeAddCancelar" data-i18n="ui.cancelar">Cancelar</button>
-      <button type="button" class="qe-btn primary" id="qeAddConfirmar" data-i18n="ui.adicionar">Adicionar</button>
     </footer>
   </section>
 
@@ -1845,7 +1871,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           <button type="button" class="qe-btn" id="qeLoteSecao">Aplicar esta seção</button>
           <button type="button" class="qe-btn" id="qeLoteTudo">Aplicar todas</button>
         </div>
-        <p class="qe-hint">Copia a configuração do gráfico em edição (selo “Editando”, o último clicado) para os demais selecionados com Ctrl/Shift + clique. Gráficos vinculados ao banco são gravados na hora.</p>
+        <p class="qe-hint">Com vários gráficos selecionados (Ctrl/Shift + clique), cada alteração de filtro ou da seção aberta vale para todos. Os botões copiam a seção inteira ou todas as configurações do gráfico em edição (selo “Editando”). Salvar grava no banco também os vinculados do grupo.</p>
       </div>
       <section class="qe-sec" data-sec="tipo" hidden>
         <div class="qe-sec-body">
@@ -1918,6 +1944,10 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 
       <section class="qe-sec" data-sec="titulo" hidden>
         <div class="qe-sec-body">
+          <div class="qe-field">
+            <span class="qe-label" id="qePreviewLbl" data-i18n="ui.pre_visualizacao">Pré-visualização</span>
+            <div class="qe-preview" id="qePreview" role="status" aria-labelledby="qePreviewLbl"></div>
+          </div>
           <fieldset class="qe-field">
             <legend class="qe-label" data-i18n="ui.tipo_de_titulo">Tipo de título</legend>
             <div class="qe-seg">
@@ -1952,10 +1982,6 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
               </div>
             </div>
           </div>
-          <div class="qe-field">
-            <span class="qe-label" id="qePreviewLbl" data-i18n="ui.pre_visualizacao">Pré-visualização</span>
-            <div class="qe-preview" id="qePreview" role="status" aria-labelledby="qePreviewLbl"></div>
-          </div>
         </div>
       </section>
 
@@ -1974,32 +2000,9 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
         </div>
       </section>
 
-      <section class="qe-sec" data-sec="numeros" hidden>
-        <div class="qe-sec-body">
-          <div class="qe-row">
-            <div class="qe-field">
-              <label class="qe-label" for="qeDecBar" data-i18n="ui.decimais_das_barras">Decimais das barras</label>
-              <div class="qe-stepper">
-                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)" data-i18n-aria="ui.menos_uma_casa_decimal_barras">&minus;</button>
-                <input class="qe-input qe-step-val" id="qeDecBar" type="number" min="0" max="3" step="1" inputmode="numeric">
-                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)" data-i18n-aria="ui.mais_uma_casa_decimal_barras">+</button>
-              </div>
-            </div>
-            <div class="qe-field">
-              <label class="qe-label" for="qeDecDelta" data-i18n="ui.decimais_do_delta">Decimais do delta</label>
-              <div class="qe-stepper">
-                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)" data-i18n-aria="ui.menos_uma_casa_decimal_delta">&minus;</button>
-                <input class="qe-input qe-step-val" id="qeDecDelta" type="number" min="0" max="3" step="1" inputmode="numeric">
-                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)" data-i18n-aria="ui.mais_uma_casa_decimal_delta">+</button>
-              </div>
-            </div>
-          </div>
-          <p class="qe-hint" id="qeNumExemplo"></p>
-        </div>
-      </section>
-
       <section class="qe-sec" data-sec="unidade" hidden>
         <div class="qe-sec-body">
+          <h3 class="qe-bloco-tit"><i class="fa-solid fa-ruler" aria-hidden="true"></i><span data-i18n="ui.unidade_de_medida">Unidade de medida</span></h3>
           <div class="qe-field">
             <label class="qe-label" for="qeUnidade" data-i18n="ui.unidade">Unidade</label>
             <select class="qe-select" id="qeUnidade" aria-describedby="qeUnidadeDados"></select>
@@ -2021,6 +2024,29 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
           </div>
           <label class="qe-check qe-field"><input type="checkbox" id="qeNosRotulos"> <span data-i18n="ui.exibir_a_unidade_nos_rotulos_das_barras">Exibir a unidade nos rótulos das barras</span></label>
           <p class="qe-hint" data-i18n="ui.aplicada_no_subtitulo_e_nos_valores_das_ba">Aplicada no subtítulo e nos valores das barras. Os dados de origem não mudam e os deltas (%) não usam unidade.</p>
+          <div class="qe-bloco" role="group" aria-labelledby="qeNumTit">
+          <h3 class="qe-bloco-tit" id="qeNumTit"><i class="fa-solid fa-hashtag" aria-hidden="true"></i><span data-i18n="ui.formatacao_numerica">Formatação numérica</span></h3>
+          <p class="qe-hint qe-bloco-dica" data-i18n="ui.formatacao_numerica_dica">Defina quantas casas decimais aparecem nos valores das barras e nos deltas (%).</p>
+          <div class="qe-row">
+            <div class="qe-field">
+              <label class="qe-label" for="qeDecBar" data-i18n="ui.decimais_das_barras">Decimais das barras</label>
+              <div class="qe-stepper">
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecBar" aria-label="Menos uma casa decimal (barras)" data-i18n-aria="ui.menos_uma_casa_decimal_barras">&minus;</button>
+                <input class="qe-input qe-step-val" id="qeDecBar" type="number" min="0" max="3" step="1" inputmode="numeric">
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecBar" aria-label="Mais uma casa decimal (barras)" data-i18n-aria="ui.mais_uma_casa_decimal_barras">+</button>
+              </div>
+            </div>
+            <div class="qe-field">
+              <label class="qe-label" for="qeDecDelta" data-i18n="ui.decimais_do_delta">Decimais do delta</label>
+              <div class="qe-stepper">
+                <button type="button" class="qe-btn qe-step" data-step="-1" data-alvo="qeDecDelta" aria-label="Menos uma casa decimal (delta)" data-i18n-aria="ui.menos_uma_casa_decimal_delta">&minus;</button>
+                <input class="qe-input qe-step-val" id="qeDecDelta" type="number" min="0" max="3" step="1" inputmode="numeric">
+                <button type="button" class="qe-btn qe-step" data-step="1" data-alvo="qeDecDelta" aria-label="Mais uma casa decimal (delta)" data-i18n-aria="ui.mais_uma_casa_decimal_delta">+</button>
+              </div>
+            </div>
+          </div>
+          <p class="qe-hint" id="qeNumExemplo"></p>
+          </div>
         </div>
       </section>
 
@@ -2090,6 +2116,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
 <main class="app-main">
 <div class="dash-titulo">
   <h2 class="dash-titulo-nome" id="dashTituloNome" hidden></h2>
+  <button type="button" class="dash-situacao" id="dashSituacao" aria-pressed="false" hidden></button>
   <div class="dash-acoes" id="dashAcoes">
     <button type="button" class="dash-acao" id="dashSalvar" aria-label="Salvar dashboard no banco" title="Salvar dashboard no banco" data-i18n-aria="ui.dash_salvar" data-i18n-title="ui.dash_salvar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashDesfazer" aria-label="Desfazer alterações não salvas" title="Desfazer alterações não salvas" data-i18n-aria="ui.dash_desfazer" data-i18n-title="ui.dash_desfazer"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
@@ -2104,6 +2131,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <div class="chart-header">
         <p class="chart-title" id="chartTitle"></p>
         <p class="chart-subtitle" id="chartSubtitle">(%)</p>
+        <p class="chart-situacao" hidden></p>
       </div>
       <div class="chart-export">
         <button type="button" class="chart-export-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Exportar gráfico" title="Exportar gráfico" data-i18n-aria="ui.exportar_grafico" data-i18n-title="ui.exportar_grafico"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
@@ -2224,6 +2252,8 @@ const I18N_UI = {
   'ui.formatacao_numerica': ['Formatação numérica', 'Number formatting'],
   'ui.fontes': ['Fontes', 'Fonts'],
   'ui.unidade_de_medida': ['Unidade de medida', 'Unit of measure'],
+  'ui.formatacao_numerica_dica': ['Defina quantas casas decimais aparecem nos valores das barras e nos deltas (%).', 'Set how many decimal places the bar values and deltas (%) show.'],
+  'ui.unidade_e_numeros': ['Unidade e formatação numérica', 'Unit and number formatting'],
   'ui.cores': ['Cores', 'Colors'],
   'ui.persistencia': ['Persistência', 'Persistence'],
   'ui.editando_grafico': ['Editando gráfico', 'Editing chart'],
@@ -2234,10 +2264,7 @@ const I18N_UI = {
   'ui.o_grafico_sai_do_quadro_uma_configuracao_s': ['O gráfico sai do quadro. Uma configuração salva no banco é mantida e pode ser carregada em outro gráfico.', 'The chart is removed from the board. A configuration saved in the database is kept and can be loaded into another chart.'],
   'ui.cancelar': ['Cancelar', 'Cancel'],
   'ui.excluir': ['Excluir', 'Delete'],
-  'ui.nome_do_grafico_opcional': ['Nome do gráfico (opcional)', 'Chart name (optional)'],
   'ui.produto': ['Produto', 'Product'],
-  'ui.comecar_de_uma_configuracao_salva_opcional': ['Começar de uma configuração salva (opcional)', 'Start from a saved configuration (optional)'],
-  'ui.o_novo_grafico_usa_os_filtros_padrao_do_da': ['O novo gráfico usa os filtros padrão do dashboard (o Site acompanha o Produto escolhido) e o tamanho típico dos gráficos do quadro. Depois de criado, ele fica selecionado para configuração.', 'The new chart uses the dashboard default filters (the Site follows the chosen Product) and the typical size of the charts on the board. Once created, it stays selected for configuration.'],
   'ui.adicionar': ['Adicionar', 'Add'],
   'ui.selecione_um_grafico_para_filtrar': ['Selecione um gráfico para filtrar', 'Select a chart to filter'],
   'ui.filtros_aplicados': ['Filtros aplicados', 'Applied filters'],
@@ -2382,6 +2409,21 @@ const I18N_UI = {
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
+  'ui.grafico_vazio': ['Gráfico em branco: escolha o Produto e os Horizontes em Filtros.', 'Blank chart: choose the Product and Horizons in Filters.'],
+  'ui.novo_grafico': ['Novo gráfico', 'New chart'],
+  'ui.grafico_vazio_criado': ['Gráfico adicionado: escolha os filtros para montá-lo.', 'Chart added: choose the filters to build it.'],
+  'ui.sit_pendente': ['Atualizações finais pendentes', 'Pending final updates'],
+  'ui.sit_ultima': ['Última atualização recebida: {dt}', 'Last update received: {dt}'],
+  'ui.sit_nenhuma': ['Nenhuma atualização recebida neste ciclo', 'No update received for this cycle'],
+  'ui.sit_resumo': ['{n} de {total} gráficos', '{n} of {total} charts'],
+  'ui.sit_resumo_txt': ['com atualizações finais pendentes', 'pending final updates'],
+  'ui.sit_coluna': ['Aguardando a atualização final de {mes}', 'Waiting for the final update of {mes}'],
+  'ui.sit_ciclo': ['Ciclo {mes}', 'Cycle {mes}'],
+  'ui.sit_regra': ['Atualizado = KPI alterado a partir de {data} (carga de {carga}).', 'Up to date = KPI changed on or after {data} ({carga} load).'],
+  'ui.sit_sem_calculo': ['situação de atualização ainda não calculada para esta carga', 'update status not yet calculated for this load'],
+  'ui.sit_ok': ['Todos os gráficos atualizados', 'All charts updated'],
+  'ui.sit_destacar': ['Destacar os gráficos pendentes e ir até o primeiro', 'Highlight pending charts and go to the first one'],
+  'ui.sit_excel': ['Atenção: {n} gráfico(s) com atualizações finais pendentes no arquivo.', 'Warning: {n} chart(s) with pending final updates in the file.'],
   'ui.excel_sem_dados': ['Nenhum gráfico com dados para exportar.', 'No chart with data to export.'],
   'ui.excel_falhou': ['Não foi possível gerar o Excel. Tente novamente.', 'Could not generate the Excel file. Try again.'],
   'ui.sair_tela_cheia': ['Sair da tela cheia', 'Exit full screen'],
@@ -2389,7 +2431,7 @@ const I18N_UI = {
   'ui.dash_desfeito': ['“{nome}” voltou à última versão salva.', '“{nome}” is back to its last saved version.'],
   'ui.dash_salvo': ['Dashboard “{nome}” salvo no banco.', 'Dashboard “{nome}” saved to the database.'],
   'ui.dash_descartar': ['“{nome}” tem alterações não salvas. Salve (ícone de disquete) ou clique de novo para descartá-las.', '“{nome}” has unsaved changes. Save them (disk icon) or click again to discard them.'],
-  'ui.dash_parametros_aplicados': ['Parâmetros de “{nome}” aplicados na tela. Use o ícone de disquete para gravar no banco.', '“{nome}” parameters applied on screen. Use the disk icon to save them.'],
+  'ui.dash_parametros_aplicados': ['Alterações de “{nome}” aplicadas na tela. Use o ícone de disquete para gravar no banco.', '“{nome}” changes applied on screen. Use the disk icon to save them.'],
   'ui.dash_migrar_texto': ['{n} dashboard(s) estão salvos só neste navegador. Envie para o banco para não perder e poder compartilhar.', '{n} dashboard(s) are saved in this browser only. Send them to the database to keep and share them.'],
   'ui.dash_migrado': ['Envio concluído: {ok} gravado(s) no banco, {pulados} já existia(m) com o mesmo nome, {erros} com erro.', 'Done: {ok} saved to the database, {pulados} already existed with the same name, {erros} failed.'],
   'ui.dash_banco_erro': ['Não foi possível acessar os dashboards no banco: {erro}', 'Could not reach the dashboards in the database: {erro}'],
@@ -2439,15 +2481,16 @@ const I18N_UI = {
   'ui.dash_abrir_reutilizar': ['Abrir, reutilizar ou excluir um dashboard', 'Open, reuse or delete a dashboard'],
   'ui.dash_excluir_confirma': ['Excluir de vez o dashboard “{nome}”? Ele sai do banco junto com os editores. Para só tirá-lo da lista dos outros usuários, use Desativar.', 'Permanently delete the dashboard “{nome}”? It is removed from the database together with its editors. To just hide it from other users, use Deactivate.'],
   'ui.dash_excluido': ['Dashboard “{nome}” excluído.', 'Dashboard “{nome}” deleted.'],
+  'ui.dash_renomear': ['Renomear', 'Rename'],
   'ui.dash_reutilizar': ['Reutilizar em novo período', 'Reuse for a new period'],
   'ui.dash_reutilizar_hint': ['Reutilizar copia os gráficos do dashboard escolhido para um novo dashboard; ajuste as datas abaixo e clique em Criar.', 'Reuse copies the charts of the chosen dashboard into a new dashboard; adjust the dates below and click Create.'],
-  'ui.dash_editar': ['Alterar parâmetros de data deste dashboard', 'Change this dashboard\'s date parameters'],
-  'ui.dash_form_editar': ['Alterar parâmetros: {nome}', 'Change parameters: {nome}'],
+  'ui.dash_editar': ['Renomear ou alterar datas deste dashboard', 'Rename or change this dashboard\'s dates'],
+  'ui.dash_form_editar': ['Renomear ou alterar datas: {nome}', 'Rename or change dates: {nome}'],
   'ui.dash_form_reuso': ['Novo período a partir de: {nome}', 'New period from: {nome}'],
   'ui.dash_salvar_alteracoes': ['Salvar alterações', 'Save changes'],
   'ui.dash_novo_msg': ['Preencha o novo dashboard e clique em Criar dashboard.', 'Fill in the new dashboard and click Create dashboard.'],
   'ui.dash_reuso_msg': ['Gráficos de “{nome}” serão reaproveitados. Ajuste mês, ano e anos (o YTD acompanha o mês) e clique em Criar dashboard.', 'Charts from “{nome}” will be reused. Adjust month, year and years (YTD follows the month), then click Create dashboard.'],
-  'ui.dash_editar_msg': ['Altere mês, ano ou anos extraídos (o YTD acompanha o mês) e clique em Salvar alterações.', 'Change month, year or extracted years (YTD follows the month), then click Save changes.'],
+  'ui.dash_editar_msg': ['Altere o nome e/ou o mês e ano (o YTD acompanha o mês) e clique em Salvar alterações.', 'Change the name and/or the month and year (YTD follows the month), then click Save changes.'],
   'ui.dash_parametros_salvos': ['Parâmetros de “{nome}” atualizados.', '“{nome}” parameters updated.'],
   'ui.dash_visao_hint': ['Usa a consulta atual de produção (dados dos gráficos).', 'Uses the current production query (chart data).'],
   'ui.dash_status': ['Status', 'Status'],
@@ -2651,30 +2694,36 @@ const COL_PREFIXO = 'col:';
 const COR_COLUNA_RE = /^col:[A-Za-z0-9 ._\/-]{1,24}$/;
 const COR_COLUNA_MAX = 80;
 const PALETAS_COLUNAS = [
-  // Categóricas: ordem fixa que maximiza a distinção entre colunas vizinhas
-  // (validada para daltonismo). Monocromáticas e gradiente: do mais claro ao
-  // mais escuro, com a ponta clara visível sobre o fundo #F6F6F6.
+  // Categórica: ordem fixa que maximiza a distinção entre colunas vizinhas (validada para daltonismo).
   { id: 'vale', label: 'Paleta VBM', cores: ['#007E7A', '#BCBEC0', '#034944', '#3CB5E5', '#1B5E80', '#9DDAF2'] },
-  { id: 'executiva', label: 'Paleta Executiva', cores: ['#1B5E80', '#6E8CBA', '#3A4A6B', '#00B0F0', '#747678', '#C5D0E3'] },
-  { id: 'azul', label: 'Azul Monocromático', de: '#5FB4DC', ate: '#0F3F5C' },
-  { id: 'verde', label: 'Verde Monocromático', de: '#6FAFAC', ate: '#023832' },
-  { id: 'performance', label: 'Escala de Performance', escala: ['#DC2626', '#BCBEC0', '#007E7A'] },
-  { id: 'gradiente', label: 'Escala Gradiente', de: '#5FB4DC', ate: '#023832' }
+  // Por papel da coluna na comparação (ver papelDaColuna): realizado do período anterior,
+  // realizado/forecast do período atual, Budget atual, Budget do período anterior e Plan.
+  { id: 'executiva', label: 'Paleta Executiva', papeis: { anterior: '#007E7A', atual: '#3CB5E5', budget: '#BCBEC0', budgetAnterior: '#8E9093', plano: '#6E8CBA' } },
+  // Monocromáticas: a mesma regra, só com tons da própria cor
+  { id: 'azul', label: 'Azul Monocromático', papeis: { anterior: '#0F3F5C', atual: '#3CB5E5', budget: '#B9E2F4', budgetAnterior: '#7CC5E6', plano: '#1B5E80' } },
+  { id: 'verde', label: 'Verde Monocromático', papeis: { anterior: '#023832', atual: '#007E7A', budget: '#B5D8D6', budgetAnterior: '#6FAFAC', plano: '#034944' } }
 ];
-const misturarHex = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
+// Papel da coluna: Plan; Budget ou realizado/forecast do período atual (maior ano do mesmo
+// tipo de horizonte no gráfico) ou de um período anterior
+function papelDaColuna(t, cols) {
+  const info = rot => {
+    const { core, yearSuffix } = splitTypeLabel(String(rot).trim());
+    const anual = !yearSuffix && /^\d{2,4}[A-Z]$/i.test(core);
+    return { letra: core.slice(-1).toUpperCase(), tipo: getHorizonType(core) || 'OUTROS', ano: Number(anual ? core.slice(0, -1).slice(-2) : (yearSuffix || '').trim()) || 0 };
+  };
+  const x = info(t);
+  if (x.letra === 'P') return 'plano';
+  const maior = Math.max(x.ano, ...cols.map(c => info(c.t)).filter(c => c.tipo === x.tipo).map(c => c.ano));
+  const anterior = x.ano < maior;
+  return x.letra === 'B' ? (anterior ? 'budgetAnterior' : 'budget') : (anterior ? 'anterior' : 'atual');
+}
 
-// Cor da paleta para a coluna i de cols ([{ t, v }]); performance usa o valor (menor = vermelho, maior = verde)
+// Cor da paleta para a coluna i de cols ([{ t, v }]): categórica pela posição, as demais pelo papel
 function corDaPaleta(id, i, cols) {
   const p = PALETAS_COLUNAS.find(x => x.id === id);
   if (!p || i < 0) return null;
   if (p.cores) return p.cores[i % p.cores.length];
-  let t = cols.length > 1 ? i / (cols.length - 1) : 0;
-  if (p.escala) {
-    const vs = cols.map(c => c.v).filter(Number.isFinite), min = Math.min(...vs), max = Math.max(...vs);
-    t = Number.isFinite(cols[i].v) && max > min ? (cols[i].v - min) / (max - min) : 0.5;
-    return t <= 0.5 ? misturarHex(p.escala[0], p.escala[1], t * 2) : misturarHex(p.escala[1], p.escala[2], (t - 0.5) * 2);
-  }
-  return misturarHex(p.de, p.ate, t);
+  return p.papeis[papelDaColuna(cols[i].t, cols)];
 }
 
 // Cor própria da coluna (manual ou paleta) ou null = cor do grupo
@@ -2860,6 +2909,7 @@ function getDefaultColorForBar(barType) {
 function getHorizonType(core) {
   if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[A-Z]$/i.test(core)) return 'MONTH';
   if (/^YTD[A-Z]$/i.test(core)) return 'YTD';
+  if (/^YTG[A-Z]$/i.test(core)) return 'YTG';
   if (/^Q\d/i.test(core)) return 'QUARTER';
   if (/^H\d/i.test(core)) return 'SEMESTER';
   if (/^\d{2,4}[A-Z]/i.test(core)) return 'YEAR';
@@ -2877,6 +2927,15 @@ function renderTurnoverChart(sourceRows) {
   const chartAreaEl = document.getElementById('chartArea');
   if (!chartAreaEl) return; // nenhum gráfico selecionado
   chartAreaEl.closest('.main-wrapper').classList.toggle('qe-static', renderSemAnimacao);
+
+  // Sem produto ou horizonte escolhido (gráfico novo ou filtros limpos): em branco, não "tudo junto"
+  if (graficoEmBranco()) {
+    chartAreaEl.classList.remove('is-linhas', 'sem-delta');
+    chartAreaEl.innerHTML = `<p class="chart-empty-state">${escapeHtml(tx('ui.grafico_vazio'))}</p>`;
+    renderChartPager(0, 0, 0, 0);
+    if (activeChart) activeChart.colunas = [];
+    return;
+  }
 
   // Combinação de filtros sem nenhuma linha correspondente — estado vazio,
   // não um gráfico quebrado (pode acontecer com filtros muito restritivos).
@@ -3227,7 +3286,7 @@ const FILTER_DEFS = [
   { key: 'sites',      label: 'Site',       icon: 'fa-location-dot',  multiple: true,  allLabel: 'Todos os sites',      searchable: true  },
   { key: 'ano',        label: 'Ano',        icon: 'fa-calendar-days', multiple: true,  allLabel: 'Todos os anos',       searchable: false },
   { key: 'visoes',     label: 'Visão',      icon: 'fa-eye',           multiple: true,  allLabel: 'Todas as visões',     searchable: false },
-  { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Todos os horizontes', searchable: true  }
+  { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Selecione os horizontes', searchable: true  }
 ];
 
 // filterState: Set vazio (multi) ou null (single) == "Todos" (sem restrição)
@@ -3353,9 +3412,11 @@ function buildFallbackRows() {
 }
 
 // Granularidades exibidas: Mensal (bloco MONTH da query, rótulos "JanB 26"),
-// Trimestral, Semestral, Anual e YTD ("YTDB 26"). Outro CD_VISAO é ignorado.
-const VISOES_SUPORTADAS = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD'];
+// Trimestral, Semestral, Anual, YTD ("YTDB 26") e YTG ("YTGF 26"). Outro CD_VISAO é ignorado.
+const VISOES_SUPORTADAS = ['MONTH', 'QUARTER', 'SEMESTER', 'YEAR', 'YTD', 'YTG'];
 function isVisaoSuportada(row) { return VISOES_SUPORTADAS.includes(row.CD_VISAO); }
+// YTG fica antes do ano na tela (a carga grava ORDEM_VISAO 6, depois do YEAR 5)
+const ordemNaTela = r => (r.CD_VISAO === 'YTG' ? { ...r, ORDEM_VISAO: 4.5 } : r);
 
 // ── Carga de dados: API real, com fallback local ────────────────────────
 // Mostra/esconde o aviso de "dado de exemplo" — precisa ser visível na
@@ -3400,6 +3461,27 @@ async function buscarJsonDaApi(baseHref, recurso) {
   return res.json();
 }
 
+// Situação de atualização dos KPIs (mesma regra do COO), buscada depois dos dados: entra nas
+// linhas já carregadas e só atualiza selos e resumo, sem redesenhar os gráficos
+async function carregarSituacaoDepois(base, dtRef) {
+  let situacoes = [];
+  try { situacoes = await buscarJsonDaApi(base, dtRef ? `chart-data/status?dtRef=${encodeURIComponent(dtRef)}` : 'chart-data/status'); } catch (e) { return; }
+  if ((dtRef || null) !== (dadosCarga.dtRef || null)) return; // outra referência foi carregada nesse meio-tempo
+  // 'vazia' = a carga ainda não passou pelo 006: a tela avisa em vez de não mostrar nada
+  dadosCarga.situacao = Array.isArray(situacoes) && situacoes.length ? 'ok' : 'vazia';
+  const chave = r => `${r.ID_SISTEMA}|${r.ID_SITE}|${r.ID_OPERACAO}|${r.ID_KPI}`;
+  const porKpi = new Map((Array.isArray(situacoes) ? situacoes : []).map(x => [chave(x), x]));
+  allRows.forEach(r => { const st = porKpi.get(chave(r)); r.SG_STATUS = st ? st.SG_STATUS : null; r.DT_ATU_KPI = st ? st.DT_ATUALIZACAO : null; });
+  marcarSituacaoDeTodos();
+}
+// Selo de cada gráfico com os filtros dele (o contexto do gráfico ativo é emprestado e devolvido)
+function marcarSituacaoDeTodos() {
+  const ativo = activeChart, filtros = { ...filterState }; // devolve os mesmos objetos de filtro
+  if (ativo) stashActive();
+  try { charts.forEach(c => { activeChart = c; if (c === ativo) Object.assign(filterState, filtros); else loadFilters(c.filters); marcarSituacaoDoGrafico(); }); }
+  finally { activeChart = ativo; Object.assign(filterState, filtros); }
+}
+
 // Referência (mês/ano = mês final do YTD) dos dados em allRows. dtRef null =
 // carga mais recente; semCarga = o banco não tem a carga do mês escolhido.
 const dadosCarga = { dtRef: null, semCarga: false };
@@ -3418,9 +3500,11 @@ async function loadPerformanceHubData(dtRef) {
       const siteNameById = new Map(sitesList.map(s => [s.ID_SITE ?? s.id_site, s.NM_SITE ?? s.nm_site]));
       performanceHubApiBase = base; // as rotas de configuração usam a mesma base
       setDataFallbackWarning(false);
+      // Os gráficos aparecem já; a situação de atualização chega depois e só marca as pendências
+      setTimeout(() => carregarSituacaoDepois(base, dtRef), 0);
       console.info(`[performance-hub] dados reais carregados de ${new URL(base).pathname}`);
       return {
-        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada),
+        linhas: chartRows.map(r => ({ ...r, NM_SITE: siteNameById.get(r.ID_SITE) ?? null })).filter(isVisaoSuportada).map(ordemNaTela),
         semCarga: false
       };
     } catch (err) {
@@ -3538,6 +3622,7 @@ function onFilterChanged(key) {
   // Aplicação automática: cada clique já atualiza opções dependentes e gráfico
   refreshFiltersAndChart();
   if (filtrosAplicados) filtrosAplicadosAgora('');
+  propagarFiltrosAoGrupo([key]);
 }
 
 // linhas que passam em TODOS os filtros — usadas para montar o gráfico e
@@ -3675,7 +3760,7 @@ function ordenarColunas(lista, cfg) {
 // obrigatória); fixo ou dinâmico (campos dos filtros) pelo painel de edição.
 function updateChartTitle() {
   const titleEl = document.getElementById('chartTitle');
-  titleEl.textContent = composeChartTitle(activeChartCfg());
+  titleEl.textContent = composeChartTitle(activeChartCfg()) || (graficoEmBranco() ? tx('ui.novo_grafico') : '');
 }
 
 // Unidade = SG_UNID do MESMO conjunto de linhas filtrado (Ano+Site+Visão+
@@ -3786,14 +3871,15 @@ function selectOption(def, value) {
 //    Anual, recolhíveis, com UM item por rótulo ("Q2A 25", "Q2B 25", "Q2P 25").
 //    As opções vêm da cascata (filterOptions): só aparecem os rótulos dos
 //    Cenários escolhidos, na ordem das barras. O estado é o Set de Types.
-const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date (YTD)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
+const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date / Year to Go (YTD · YTG)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
 const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
 
 function periodosDoHorizonte(options) {
   const mapa = new Map();
   options.forEach(o => {
     const { core } = splitTypeLabel(o.value.trim());
-    const grupo = getHorizonType(core) || 'OUTROS';
+    const tipo = getHorizonType(core);
+    const grupo = tipo === 'YTG' ? 'YTD' : tipo || 'OUTROS'; // YTG fica no grupo do YTD
     const rotulo = o.value;
     const chave = `${grupo}|${rotulo}`;
     if (!mapa.has(chave)) mapa.set(chave, { grupo, rotulo, tipos: [], semDados: true });
@@ -3847,10 +3933,11 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
 
   // Rótulo ou grupo: tudo marcado → desmarca; senão marca
   const alternar = itens => {
-    if (itens.every(marcado)) {
-      itens.forEach(p => p.tipos.forEach(t => sel.delete(t)));
+    const atual = filterState.horizontes; // o conjunto vigente no clique, não o da montagem da lista
+    if (itens.every(p => p.tipos.every(t => atual.has(t)))) {
+      itens.forEach(p => p.tipos.forEach(t => atual.delete(t)));
     } else {
-      itens.forEach(p => p.tipos.forEach(t => sel.add(t)));
+      itens.forEach(p => p.tipos.forEach(t => atual.add(t)));
     }
     onFilterChanged(def.key);
   };
@@ -3992,12 +4079,13 @@ function buildFiltersBar() {
   // e as buscas internas; refresh reconsulta o dataset completo e volta à pág. 1
   document.getElementById('qfClearBtn').addEventListener('click', (e) => {
     e.stopPropagation();
-    FILTER_DEFS.forEach(d => { filterState[d.key] = d.multiple ? new Set() : null; });
-    filterState.product = getDefaultProduct();
+    // Como um gráfico novo: nenhum filtro (os mesmos conjuntos, esvaziados) e o gráfico em branco
+    FILTER_DEFS.forEach(d => { if (d.multiple) filterState[d.key].clear(); else filterState[d.key] = null; });
     bar.querySelectorAll('.qf-search input').forEach(i => { i.value = ''; });
     closeAllPanels();
     refreshFiltersAndChart();
     filtrosAplicadosAgora('Filtros limpos e aplicados.');
+    propagarFiltrosAoGrupo(FILTER_DEFS.map(d => d.key));
   });
 }
 
@@ -4139,8 +4227,11 @@ function loadFilters(obj) {
     const v = obj ? obj[d.key] : undefined;
     filterState[d.key] = d.multiple ? new Set(Array.isArray(v) ? v : []) : (v ?? null);
   });
-  if (!allRows.some(r => r.NM_KPI === filterState.product)) filterState.product = getDefaultProduct();
+  // Produto vazio é válido (gráfico novo ou filtros limpos: em branco); inexistente nos dados → padrão
+  if (filterState.product !== null && !allRows.some(r => r.NM_KPI === filterState.product)) filterState.product = getDefaultProduct();
 }
+// Gráfico em branco: sem Produto ou sem Horizonte escolhido (novo ou com filtros limpos)
+const graficoEmBranco = () => !filterState.product || !filterState.horizontes.size;
 
 function stashActive() {
   if (!activeChart) return;
@@ -4188,6 +4279,7 @@ function activateChart(c) {
   refreshFilterBar();
   updateChartActionButtons();
   editorSync();
+  atualizarBarraLateral();
 }
 
 function renderActiveChart() {
@@ -4195,6 +4287,145 @@ function renderActiveChart() {
   updateChartUnit();
   applyChartBackgroundColor();
   renderTurnoverChart(getFilteredChartRows());
+  marcarSituacaoDoGrafico();
+}
+
+// ── Situação de atualização (mesma regra do COO: 006_status_atualizacao.sql grava SG_STATUS
+// por KPI). Gráfico com algum KPI 'N' nas linhas filtradas = atualização final pendente.
+function marcarSituacaoDoGrafico() {
+  const c = activeChart;
+  if (!c) return;
+  const linhas = graficoEmBranco() ? [] : getFilteredRows().filter(r => r.SG_STATUS); // em branco: sem situação
+  const pend = linhas.filter(r => r.SG_STATUS === 'N');
+  const datas = pend.map(r => r.DT_ATU_KPI).filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d));
+  c.situacao = !linhas.length ? null : pend.length ? { pendente: true, ultima: datas.length ? new Date(Math.max(...datas)) : null } : { pendente: false };
+  const selo = c.el.querySelector('.chart-situacao');
+  if (selo) {
+    selo.hidden = !(c.situacao && c.situacao.pendente);
+    if (!selo.hidden) {
+      selo.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.3 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+        + `<span>${escapeHtml(tx('ui.sit_pendente'))}</span>`;
+      selo.title = c.situacao.ultima ? tx('ui.sit_ultima', { dt: c.situacao.ultima.toLocaleDateString(idioma) }) : tx('ui.sit_nenhuma');
+    }
+  }
+  c.el.classList.toggle('is-pend', !!(c.situacao && c.situacao.pendente));
+  marcarColunasPendentes(c);
+  agendarResumoSituacao();
+}
+// Mês ainda sem a atualização final = último mês realizado da carga (referência − 1 mês)
+function mesPendente() {
+  const ref = dadosCarga.dtRef || (allRows[0] && allRows[0].DT_REF && new Date(allRows[0].DT_REF).toISOString().slice(0, 7));
+  const m = /^(\d{4})-(\d{2})/.exec(ref || '');
+  if (!m) return null;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 2, 1));
+  return { ano: d.getUTCFullYear(), mes: d.getUTCMonth() + 1 };
+}
+const MESES_CURTOS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Como no COO: a coluna realizada do mês pendente vira barra tracejada, sem valor nem delta;
+// trimestre, semestre, YTD e ano que incluem esse mês ficam esmaecidos
+function marcarColunasPendentes(c) {
+  const cols = [...c.el.querySelectorAll('.col-wrapper')];
+  cols.forEach(w => { w.classList.remove('is-pend-mes', 'is-pend-col'); w.removeAttribute('title'); w.style.removeProperty('--h-ghost'); });
+  const mp = c.situacao && c.situacao.pendente && mesPendente();
+  if (!mp) return;
+  const yy = String(mp.ano).slice(-2), dica = tx('ui.sit_coluna', { mes: `${MESES_CURTOS[mp.mes - 1]}/${yy}` });
+  cols.forEach(w => {
+    const { core, yearSuffix } = splitTypeLabel(w.dataset.type || '');
+    const letra = core.slice(-1).toUpperCase(), tipo = getHorizonType(core);
+    if (letra !== 'A' && letra !== 'F') return;
+    const ano = tipo === 'YEAR' ? 2000 + Number(core.slice(0, -1).slice(-2)) : 2000 + Number((yearSuffix || '').trim());
+    if (ano !== mp.ano) return;
+    const per = core.slice(0, -1);
+    const inclui = tipo === 'MONTH' ? per.toLowerCase() === MESES_CURTOS[mp.mes - 1].toLowerCase()
+      : tipo === 'QUARTER' ? Number(per.slice(1)) === Math.ceil(mp.mes / 3)
+      : tipo === 'SEMESTER' ? Number(per.slice(1)) === (mp.mes <= 6 ? 1 : 2)
+      : tipo === 'YTD' || tipo === 'YTG' || tipo === 'YEAR';
+    if (!inclui) return;
+    w.title = dica;
+    if (tipo !== 'MONTH') { w.classList.add('is-pend-col'); return; }
+    // Barra fantasma na altura do Budget do mesmo mês (como no COO); sem Budget, uma altura mínima
+    const bud = cols.find(o => o !== w && splitTypeLabel(o.dataset.type || '').core.toLowerCase() === (per + 'B').toLowerCase() && splitTypeLabel(o.dataset.type || '').yearSuffix === yearSuffix);
+    w.style.setProperty('--h-ghost', bud ? bud.style.getPropertyValue('--h') || '12%' : '12%');
+    w.classList.add('is-pend-mes');
+  });
+}
+let resumoSituacaoTimer = 0;
+function agendarResumoSituacao() {
+  clearTimeout(resumoSituacaoTimer);
+  resumoSituacaoTimer = setTimeout(atualizarResumoSituacao, 0);
+}
+// Resumo sob o nome do dashboard: quantos gráficos estão pendentes (clique destaca e leva ao 1º)
+function atualizarResumoSituacao() {
+  const btn = document.getElementById('dashSituacao');
+  if (!btn) return;
+  const conhecidos = charts.filter(c => c.situacao), pend = conhecidos.filter(c => c.situacao.pendente);
+  // Ciclo usado: mês aguardando a atualização final (referência − 1) e a data a partir da qual
+  // um KPI conta como atualizado (1º dia do mês da carga, regra do 006)
+  const mp = mesPendente(), fmtMes = (a, m) => `${new Date(a, m - 1, 1).toLocaleDateString(idioma, { month: 'short' }).replace('.', '').replace(/^./, x => x.toUpperCase())}/${a}`;
+  const ciclo = mp ? tx('ui.sit_ciclo', { mes: fmtMes(mp.ano, mp.mes) }) : '';
+  const desde = mp ? new Date(mp.mes === 12 ? mp.ano + 1 : mp.ano, mp.mes % 12, 1) : null;
+  const regra = desde ? tx('ui.sit_regra', { data: desde.toLocaleDateString(idioma), carga: fmtMes(desde.getFullYear(), desde.getMonth() + 1) }) : '';
+  const semCalculo = !conhecidos.length && dadosCarga.situacao === 'vazia' && charts.some(c => !c.el.querySelector('.chart-empty-state'));
+  btn.hidden = !conhecidos.length && !semCalculo;
+  btn.classList.toggle('is-ok', !pend.length);
+  btn.disabled = !pend.length;
+  const rotCiclo = ciclo ? `<span class="sit-ciclo">${escapeHtml(ciclo)}</span><span aria-hidden="true">·</span>` : '';
+  // Uma marca por gráfico (cheia = atualizado, tracejada = pendente), como no COO
+  const marcas = conhecidos.map(c => `<i class="${c.situacao.pendente ? 'w' : ''}"></i>`).join('');
+  btn.innerHTML = semCalculo ? `${rotCiclo}<span>${escapeHtml(tx('ui.sit_sem_calculo'))}</span>`
+    : pend.length
+    ? `<span class="cycle-bar" aria-hidden="true">${marcas}</span>${rotCiclo}<span><b>${escapeHtml(tx('ui.sit_resumo', { n: pend.length, total: conhecidos.length }))}</b> ${escapeHtml(tx('ui.sit_resumo_txt'))}</span>`
+    : `${rotCiclo}<span>${escapeHtml(tx('ui.sit_ok'))}</span>`;
+  btn.title = [regra, pend.length ? tx('ui.sit_destacar') : ''].filter(Boolean).join('\n');
+  if (!pend.length && board.classList.contains('foco-pendentes')) { board.classList.remove('foco-pendentes'); btn.setAttribute('aria-pressed', 'false'); }
+}
+function alternarFocoPendentes() {
+  const btn = document.getElementById('dashSituacao');
+  const ligar = !board.classList.contains('foco-pendentes');
+  board.classList.toggle('foco-pendentes', ligar);
+  btn.setAttribute('aria-pressed', String(ligar));
+  const primeiro = ligar && [...charts].sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x).find(c => c.situacao && c.situacao.pendente);
+  if (primeiro) { primeiro.el.scrollIntoView({ behavior: 'smooth', block: 'center' }); primeiro.el.focus({ preventScroll: true }); }
+}
+
+// Redesenha gráficos que não estão em edição sem fechar painéis nem trocar a seleção:
+// o contexto do gráfico ativo (filtros, cores, página) é emprestado só durante o desenho
+function redesenharEmSilencio(lista) {
+  const ativo = activeChart;
+  if (!ativo || !lista.length) return;
+  stashActive();
+  // Devolve os MESMOS objetos de filtro do gráfico ativo (as listas abertas no painel apontam para eles)
+  const cores = { ...COLORS }, pagina = chartPage, filtros = { ...filterState };
+  const usarCores = cs => { Object.keys(COLORS).forEach(k => delete COLORS[k]); Object.assign(COLORS, cs); };
+  setChartIds(ativo, false);
+  try {
+    lista.forEach(c => {
+      usarCores({ bgChart: '#F6F6F6', ...c.colors });
+      activeChart = c;
+      loadFilters(c.filters);
+      chartPage = c.page || 0;
+      setChartIds(c, true);
+      try { renderActiveChart(); } finally { setChartIds(c, false); }
+    });
+  } finally {
+    activeChart = ativo;
+    Object.assign(filterState, filtros);
+    usarCores(cores);
+    chartPage = pagina;
+    setChartIds(ativo, true);
+  }
+}
+// Vários gráficos selecionados: o gráfico em edição e os demais do grupo
+const grupoSelecionado = () => (activeChart && multiSel.size > 1 && multiSel.has(activeChart) ? charts.filter(c => multiSel.has(c) && c !== activeChart) : []);
+// Filtro alterado no gráfico em edição vale para todo o grupo (só os campos alterados)
+function propagarFiltrosAoGrupo(chaves) {
+  const outros = grupoSelecionado();
+  if (!outros.length) return;
+  const f = serializeFilters();
+  outros.forEach(c => { c.filters = { ...(c.filters || {}) }; chaves.forEach(k => { c.filters[k] = JSON.parse(JSON.stringify(f[k] ?? null)); }); });
+  redesenharEmSilencio(outros);
+  saveCharts();
+  msgEm('qeFiltrosMsg', `Filtro aplicado a ${outros.length + 1} gráficos selecionados.`, 'ok');
 }
 
 function deselectChart() {
@@ -4208,6 +4439,7 @@ function deselectChart() {
   activeChart = null;
   updateChartActionButtons();
   editorSync();
+  atualizarBarraLateral();
 }
 
 // Percorre os cards ativando um a um: o painel de edição fica parado
@@ -4425,6 +4657,7 @@ function onChartShortcut(e) {
 function updateChartActionButtons() {
   const xl = document.getElementById('dashExcel');
   if (xl) xl.disabled = !charts.length;
+  agendarResumoSituacao();
   const rm = document.getElementById('qeDel');
   if (!rm) return;
   rm.disabled = !charts.length;
@@ -5432,6 +5665,7 @@ function aplicarCoresAoVivo() {
   c.cfg = { ...c.cfg, linhas: JSON.parse(JSON.stringify(d.cfg.linhas)) };
   if (c === activeChart) renderActiveChart();
   saveCharts();
+  agendarPropagacaoConfig();
 }
 
 // Unidade ↔ escala: mesma família (toneladas, dólares) → fator = base dos dados ÷ unidade escolhida
@@ -5495,6 +5729,7 @@ function aplicarUnidadeAoVivo() {
   if (c === activeChart) renderActiveChart();
   saveCharts();
   labelCharts();
+  agendarPropagacaoConfig();
 }
 
 function aplicarColunasAoVivo(msg) {
@@ -5507,6 +5742,7 @@ function aplicarColunasAoVivo(msg) {
   setChartColors(c, cores);
   if (c === activeChart) renderTurnoverChart(getFilteredChartRows());
   saveCharts();
+  agendarPropagacaoConfig();
   renderColors();
   if (msg) editorMsg(msg, 'ok');
 }
@@ -5673,6 +5909,7 @@ function aplicarFontesAoVivo(foco) {
     // Só variáveis CSS: troca a tipografia sem redesenhar nem reanimar o gráfico
     if (c === activeChart) aplicarFontesVars(document.getElementById('chartWrapper'), f);
     saveCharts();
+    agendarPropagacaoConfig();
   }
   renderFontes();
   if (foco) $qe('qeFontes').querySelector(foco)?.focus();
@@ -5811,6 +6048,15 @@ function validateDraft(exigirNome) {
   if (cfg.unidade.valor === 'custom' && !cfg.unidade.custom.trim()) erros.push(['qeUnidadeCustom', 'qeUnidadeErr', 'Informe a unidade personalizada.', 'unidade']);
   if (!(Number.isFinite(cfg.unidade.fator) && cfg.unidade.fator > 0 && cfg.unidade.fator <= 1e9)) erros.push(['qeFator', 'qeFatorErr', 'Informe um fator maior que zero.', 'unidade']);
   if (exigirNome) {
+    // Sem a seção Identificação: o nome salvo no banco vem do título do gráfico (único entre os salvos)
+    if (!cfg.nome.trim()) {
+      const base = (composeChartTitle(cfg) || nomeDoGrafico(editor.chart) || 'Gráfico').replace(/\s+/g, ' ').trim().slice(0, chartNameMax);
+      const usado = n => editor.db.itens.some(i => i.id !== cfg.idConfig && i.nome.toLocaleLowerCase('pt-BR') === n.toLocaleLowerCase('pt-BR'));
+      let nome = base, k = 2;
+      while (usado(nome)) nome = `${base.slice(0, chartNameMax - 6)} (${k++})`;
+      cfg.nome = nome;
+      $qe('qeNome').value = nome;
+    }
     const nome = cfg.nome.trim();
     const igual = n => n.toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR');
     if (!nome) erros.push(['qeNome', 'qeNomeErr', 'Informe o nome do gráfico para salvar.', 'ident']);
@@ -5855,6 +6101,7 @@ function aplicarRascunhoAoVivo(atraso) {
   setChartColors(c, { ...d.colors });
   if (c === activeChart) { if (soTitulo) updateChartTitle(); else renderActiveChart(); }
   saveCharts();
+  agendarPropagacaoConfig();
   labelCharts();
   renderEditorTarget();
   renderDbStatus();
@@ -5890,9 +6137,30 @@ async function gravarConfigBanco(c) {
 // ── Aplicar em lote: a configuração do gráfico em edição vai para os demais selecionados ──
 // O que cada seção copia (Identificação e Persistência são de cada gráfico: não entram)
 const LOTE_CHAVES = {
-  tipo: ['tipoGrafico', 'exibirDelta', 'linhas'], titulo: ['titulo'], fontes: ['fontes'], numeros: ['decBar', 'decDelta'],
-  unidade: ['unidade'], colunas: ['ordemColunas', 'deltasManuais'], cores: ['modoCor', 'paletaColunas']
+  tipo: ['tipoGrafico', 'exibirDelta', 'linhas'], titulo: ['titulo'], fontes: ['fontes'],
+  unidade: ['unidade', 'decBar', 'decDelta'], colunas: ['ordemColunas', 'deltasManuais'], cores: ['modoCor', 'paletaColunas']
 };
+// Cada alteração do painel (seção aberta) vale também para os outros gráficos selecionados;
+// gravação no banco dos vinculados: no Salvar (ou nos botões de aplicar)
+let propagarTimer = 0;
+function agendarPropagacaoConfig() {
+  const origem = editor.chart, secao = editor.secao;
+  if (!LOTE_CHAVES[secao] || !alvosDoLote().length) return;
+  clearTimeout(propagarTimer);
+  propagarTimer = setTimeout(() => {
+    const alvos = multiSel.size > 1 && multiSel.has(origem) ? charts.filter(c => multiSel.has(c) && c !== origem) : [];
+    if (!alvos.length) return;
+    alvos.forEach(c => {
+      const cfg = { ...c.cfg };
+      LOTE_CHAVES[secao].forEach(k => { cfg[k] = JSON.parse(JSON.stringify(origem.cfg[k])); });
+      c.cfg = normalizeChartCfg(cfg);
+      if (secao === 'cores') c.colors = { ...origem.colors };
+    });
+    if (activeChart === origem) redesenharEmSilencio(alvos);
+    saveCharts();
+    labelCharts();
+  }, 80);
+}
 const alvosDoLote = () => (multiSel.size > 1 && multiSel.has(editor.chart) ? charts.filter(c => multiSel.has(c) && c !== editor.chart) : []);
 function atualizarLote() {
   const n = alvosDoLote().length, secao = !!LOTE_CHAVES[editor.secao];
@@ -5956,9 +6224,15 @@ async function salvarEditor() {
         editor.draft.cfg.nome = c.cfg.nome;
       }
       if (editor.chart === c) guardarBaseEditor();
+      // Grupo selecionado: os outros gráficos vinculados ao banco também são gravados
+      const grupo = alvosDoLote().filter(o => o.cfg.idConfig);
+      let falhas = 0;
+      for (const o of grupo) { const rg = await gravarConfigBanco(o); if (!rg.ok) falhas++; }
+      if (grupo.length) saveCharts();
       renderEditorTarget();
       renderDbStatus();
-      editorMsg(`Configuração “${c.cfg.nome}” salva no banco.`, 'ok');
+      editorMsg(falhas ? `Configuração “${c.cfg.nome}” salva no banco; ${falhas} gráfico(s) do grupo não foram gravados: tente de novo.`
+        : `Configuração “${c.cfg.nome}” salva no banco${grupo.length ? ` (e mais ${grupo.length} do grupo)` : ''}.`, falhas ? 'err' : 'ok');
     } else if (r.status === 409 || r.corpo.campo === 'nome') {
       if (editor.chart === c) { showFieldError('qeNome', 'qeNomeErr', r.corpo.error, 'ident'); irParaSecao('ident'); $qe('qeNome').focus(); }
       editorMsg(r.corpo.error || 'Nome inválido.', 'err');
@@ -6081,11 +6355,13 @@ function setEditorOpen(open) {
   if (!open) closeChartPalette();
   updateEditorTop();
   relayoutBoard();
+  atualizarBarraLateral();
 }
 
 function abrirVisao(view, btn, sec) {
   // Dashboard só para leitura: só Dashboards e Filtros
   if (document.body.classList.contains('is-somente-leitura') && !['dash', 'filtros'].includes(view)) { mostrarAviso(tx('ui.dash_somente_leitura')); return; }
+  if (view === 'add') { criarGraficoVazio(); return; } // sem formulário: o gráfico vazio abre em Filtros
   // Clicar de novo na opção ativa recolhe o painel
   if (editor.open && editor.tool === btn) { setEditorOpen(false); btn.focus(); return; }
   if (editor.view !== view) sairDaVisao(editor.view);
@@ -6095,11 +6371,10 @@ function abrirVisao(view, btn, sec) {
   setEditorOpen(true);
   document.body.classList.toggle('qe-ctx-grafico', !['bg', 'add', 'excluir', 'dash'].includes(view));
   marcarFerramenta();
-  if (view === 'editar') irParaSecao(sec || editor.secao || 'ident');
+  if (view === 'editar') irParaSecao(sec || editor.secao || 'tipo');
   else $qe('qeHeading').textContent = PANEL_TITULOS[view];
   renderEditorTarget();
-  if (view === 'add') abrirAdicionar();
-  else if (view === 'filtros') abrirFiltros();
+  if (view === 'filtros') abrirFiltros();
   else if (view === 'bg') abrirFundo();
   else if (view === 'excluir') abrirExcluir();
   else if (view === 'dash') abrirDashView();
@@ -6107,7 +6382,7 @@ function abrirVisao(view, btn, sec) {
 }
 
 // Edição do gráfico: um ícone = uma seção; as demais ficam ocultas
-const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', numeros: 'Formatação numérica', unidade: 'Unidade de medida', colunas: 'Colunas', cores: 'Cores', persist: 'Persistência' };
+const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', unidade: 'Unidade e formatação numérica', colunas: 'Colunas', cores: 'Cores', persist: 'Persistência' };
 function irParaSecao(sec) {
   if (!SECOES_EDITOR[sec]) return;
   editor.secao = sec;
@@ -6175,7 +6450,7 @@ function confirmarExclusao() {
 // visões do quadro (Adicionar, Excluir, Background) voltam para a edição
 function abrirUltimaVisao() {
   if (editor.view === 'filtros') { abrirVisao('filtros', $qe('qeFiltrosBtn')); return; }
-  const sec = SECOES_EDITOR[editor.secao] ? editor.secao : 'ident';
+  const sec = SECOES_EDITOR[editor.secao] ? editor.secao : 'tipo';
   abrirVisao('editar', $qe('qeToolbar').querySelector(`[data-qe-go="${sec}"]`), sec);
 }
 
@@ -6203,38 +6478,102 @@ const proximoMes = (mes, ano) => (mes === 12 ? { mes: 1, ano: ano + 1 } : { mes:
 const dtRefDe = d => (d && d.mesRef && d.anoRef ? `${d.anoRef}-${String(d.mesRef).padStart(2, '0')}` : null);
 const nomeDtRef = dtRef => (dtRef ? `${nomeMes(Number(dtRef.slice(5, 7)))} ${dtRef.slice(0, 4)}` : '');
 // ── Períodos dos gráficos ao trocar a referência (reutilizar / alterar datas) ──
-// Cada rótulo de coluna ("Q4F 26", "SepA 26", "H2B 26", "YTDA 26", "26F") vai para o
-// mesmo período deslocado pela diferença de anos entre as referências; a letra A/F
-// é refeita para a nova referência (fechado = A, em aberto = F), como na carga.
+// O período de cada visual anda conforme a granularidade, a partir do mês do ciclo
+// (mês anterior à referência: ref out/26 → ciclo set/26 = Q3 26; ref nov/26 → out/26 = Q4 26):
+//   meses pela diferença de meses, trimestres de trimestres, semestres de semestres e anos/YTD de anos.
+// Ex.: ref out/26 com Q3A 25, Q3B 26 e Q3A 26 → ref nov/26: Q4A 25, Q4B 26 e Q4F 26.
+// A letra A/F é refeita para a nova referência (fechado = A, em aberto = F), como na carga.
 const MESES_ROTULO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function deslocarRotulo(rotulo, delta, ref) {
+// Deslocamentos entre duas referências {mes, ano}: { m, q, h, y } (meses, trimestres, semestres, anos)
+function deltasPeriodo(de, para) {
+  const ciclo = r => r.ano * 12 + (r.mes - 1) - 1; // índice do mês do ciclo
+  const a = ciclo(de), b = ciclo(para), div = (x, n) => Math.floor(x / n);
+  return { m: b - a, q: div(b, 3) - div(a, 3), h: div(b, 6) - div(a, 6), y: div(b, 12) - div(a, 12) };
+}
+// d: número (só anos, compatível) ou { m, q, h, y }
+function deslocarRotulo(rotulo, d, ref) {
+  if (typeof d === 'number') d = { m: d * 12, q: d * 4, h: d * 2, y: d };
   const t = String(rotulo);
-  const ano2 = yy => String((2000 + Number(yy) + delta) % 100).padStart(2, '0');
+  const yy = n => String(((n % 100) + 100) % 100).padStart(2, '0');
   // A/F: o período fecha até o mês de referência → 'A'
-  const letra = (s, yy, mesFim) => (s !== 'A' && s !== 'F') ? s
-    : ((2000 + Number(yy) + delta) * 12 + mesFim <= ref.ano * 12 + ref.mes ? 'A' : 'F');
+  const letra = (s, ano, mesFim) => (s !== 'A' && s !== 'F') ? s : (ano * 12 + mesFim <= ref.ano * 12 + ref.mes ? 'A' : 'F');
   let m;
-  if ((m = /^([A-Z][a-z]{2})([BPAF]) (\d{2})$/.exec(t)) && MESES_ROTULO.includes(m[1])) return `${m[1]}${letra(m[2], m[3], MESES_ROTULO.indexOf(m[1]) + 1)} ${ano2(m[3])}`;
-  if ((m = /^Q([1-4])([BPAF]) (\d{2})$/.exec(t))) return `Q${m[1]}${letra(m[2], m[3], m[1] * 3)} ${ano2(m[3])}`;
-  if ((m = /^H([12])([BPAF]) (\d{2})$/.exec(t))) return `H${m[1]}${letra(m[2], m[3], m[1] * 6)} ${ano2(m[3])}`;
-  if ((m = /^YTD([BPA]) (\d{2})$/.exec(t))) return `YTD${m[1]} ${ano2(m[2])}`; // YTD: só meses fechados
-  if ((m = /^(\d{2})([BPAF])$/.exec(t))) return `${ano2(m[1])}${letra(m[2], m[1], 12)}`;
+  if ((m = /^([A-Z][a-z]{2})([BPAF])( ?)(\d{2})$/.exec(t)) && MESES_ROTULO.includes(m[1])) {
+    const i = (2000 + Number(m[4])) * 12 + MESES_ROTULO.indexOf(m[1]) + d.m, ano = Math.floor(i / 12), mes = i % 12 + 1;
+    return `${MESES_ROTULO[mes - 1]}${letra(m[2], ano, mes)}${m[3]}${yy(ano)}`;
+  }
+  if ((m = /^Q([1-4])([BPAF])( ?)(\d{2})$/.exec(t))) {
+    const i = (2000 + Number(m[4])) * 4 + Number(m[1]) - 1 + d.q, ano = Math.floor(i / 4), q = i % 4 + 1;
+    return `Q${q}${letra(m[2], ano, q * 3)}${m[3]}${yy(ano)}`;
+  }
+  if ((m = /^H([12])([BPAF])( ?)(\d{2})$/.exec(t))) {
+    const i = (2000 + Number(m[4])) * 2 + Number(m[1]) - 1 + d.h, ano = Math.floor(i / 2), h = i % 2 + 1;
+    return `H${h}${letra(m[2], ano, h * 6)}${m[3]}${yy(ano)}`;
+  }
+  if ((m = /^YTD([BPA])( ?)(\d{2})$/.exec(t))) return `YTD${m[1]}${m[2]}${yy(2000 + Number(m[3]) + d.y)}`; // YTD: só meses fechados
+  if ((m = /^YTG([BPAF])( ?)(\d{2})$/.exec(t))) { // YTG: ano do mês do ciclo = F; anteriores = A
+    const ano = 2000 + Number(m[3]) + d.y, anoCiclo = ref.mes === 1 ? ref.ano - 1 : ref.ano;
+    return `YTG${m[1] === 'A' || m[1] === 'F' ? (ano < anoCiclo ? 'A' : 'F') : m[1]}${m[2]}${yy(ano)}`;
+  }
+  if ((m = /^(\d{2})([BPAF])$/.exec(t))) { const ano = 2000 + Number(m[1]) + d.y; return `${yy(ano)}${letra(m[2], ano, 12)}`; }
   return t; // rótulo desconhecido: fica como está
 }
-// Cópia do layout com Ano, Horizonte, ordem das colunas, deltas manuais e cores
-// por coluna traduzidos de uma referência {mes, ano} para outra
+// Períodos escritos em textos (nome do dashboard, nome e título dos gráficos):
+// rótulos de coluna ("Q3A 26", "26F"), "Q3 2026", "H2 26", "October 2026", "out/2026", "Outubro de 2026" e anos soltos ("2026")
+const MESES_TEXTO = [
+  ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+  MESES_ROTULO,
+  ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+];
+const RE_PERIODO_TEXTO = new RegExp([
+  String.raw`\b(?:[A-Z][a-z]{2}|Q[1-4]|H[12])[BPAF] ?\d{2}\b`,          // rótulo de mês/trimestre/semestre
+  String.raw`\bYT[DG][BPAF] ?\d{2}\b`, String.raw`\b\d{2}[BPAF]\b`,     // YTD, YTG e ano
+  String.raw`\b[QH][1-4](?:[\s/'-]*)(?:20)?\d{2}\b`,                     // "Q3 2026", "Q3'26", "H2 26"
+  String.raw`\b(?:${MESES_TEXTO.flat().sort((a, b) => b.length - a.length).join('|')})\.?(?:\s*de\s+|[\s/.-]+)(?:20\d{2}|\d{2})\b`, // "October 2026", "out/26"
+  String.raw`\b20\d{2}\b`                                                // ano solto
+].join('|'), 'gi');
+function deslocarTexto(texto, d, ref) {
+  if (typeof texto !== 'string' || !texto) return texto;
+  return texto.replace(RE_PERIODO_TEXTO, tok => {
+    const rot = deslocarRotulo(tok, d, ref);
+    if (rot !== tok) return rot;
+    let m;
+    if ((m = /^([QH])([1-4])([\s/'-]*)(20)?(\d{2})$/i.exec(tok)) && (m[1].toUpperCase() === 'Q' || +m[2] <= 2)) {
+      const n = m[1].toUpperCase() === 'Q' ? 4 : 2, passo = n === 4 ? d.q : d.h;
+      const i = (2000 + Number(m[5])) * n + Number(m[2]) - 1 + passo, ano = Math.floor(i / n);
+      return `${m[1]}${i % n + 1}${m[3]}${m[4] ? ano : String(ano % 100).padStart(2, '0')}`;
+    }
+    if ((m = /^([A-Za-zçÇ]+)(\.?(?:\s*de\s+|[\s/.-]+))(20\d{2}|\d{2})$/i.exec(tok))) {
+      const lista = MESES_TEXTO.find(l => l.some(x => x.toLowerCase() === m[1].toLowerCase()));
+      if (!lista) return tok;
+      const quatro = m[3].length === 4, ano0 = quatro ? Number(m[3]) : 2000 + Number(m[3]);
+      const i = ano0 * 12 + lista.findIndex(x => x.toLowerCase() === m[1].toLowerCase()) + d.m, ano = Math.floor(i / 12);
+      let nome = lista[i % 12];
+      if (m[1] === m[1].toLowerCase()) nome = nome.toLowerCase(); else if (m[1] === m[1].toUpperCase() && m[1].length > 1) nome = nome.toUpperCase();
+      return `${nome}${m[2]}${quatro ? ano : String(ano % 100).padStart(2, '0')}`;
+    }
+    if (/^20\d{2}$/.test(tok)) return String(Number(tok) + d.y);
+    return tok;
+  });
+}
+// Cópia do layout com Ano, Horizonte, ordem das colunas, deltas manuais, cores por coluna
+// e nome/título dos gráficos traduzidos de uma referência {mes, ano} para outra
 function deslocarLayout(layout, de, para) {
   const copia = JSON.parse(JSON.stringify(layout || null));
   if (!copia || !Array.isArray(copia.charts) || !de || !para) return copia;
-  const delta = para.ano - de.ano;
-  const rot = t => deslocarRotulo(t, delta, para);
+  const d = deltasPeriodo(de, para);
+  const rot = t => deslocarRotulo(t, d, para);
+  const txt = t => deslocarTexto(t, d, para);
   copia.charts.forEach(c => {
     const f = c.filters || {};
-    if (Array.isArray(f.ano)) f.ano = f.ano.map(a => String(Number(a) + delta));
+    if (Array.isArray(f.ano)) f.ano = f.ano.map(a => String(Number(a) + d.y));
     if (Array.isArray(f.horizontes)) f.horizontes = [...new Set(f.horizontes.map(rot))];
     if (c.cfg) {
       if (Array.isArray(c.cfg.ordemColunas)) c.cfg.ordemColunas = [...new Set(c.cfg.ordemColunas.map(rot))];
       if (Array.isArray(c.cfg.deltasManuais)) c.cfg.deltasManuais = [...new Set(c.cfg.deltasManuais.map(rot))];
+      if (typeof c.cfg.nome === 'string') c.cfg.nome = txt(c.cfg.nome);
+      if (c.cfg.titulo && typeof c.cfg.titulo === 'object') ['fixo', 'prefixo', 'sufixo'].forEach(k => { if (typeof c.cfg.titulo[k] === 'string') c.cfg.titulo[k] = txt(c.cfg.titulo[k]); });
     }
     if (c.colors) c.colors = Object.fromEntries(Object.entries(c.colors).map(([k, v]) => [k.startsWith(COL_PREFIXO) ? COL_PREFIXO + rot(k.slice(COL_PREFIXO.length)) : k, v]));
     c.page = 0;
@@ -6321,6 +6660,7 @@ async function recarregarDadosDoDashboard(d) {
   if (alvo === dadosCarga.dtRef) return;
   const vez = (recarregarDadosDoDashboard.vez = (recarregarDadosDoDashboard.vez || 0) + 1);
   dadosCarga.dtRef = alvo;
+  dadosCarga.situacao = null; // a situação da nova carga ainda vai chegar
   setFiltersInitialLoading(true);
   try {
     const { linhas, semCarga } = await loadPerformanceHubData(alvo);
@@ -6330,10 +6670,12 @@ async function recarregarDadosDoDashboard(d) {
     renderAllCharts();
     if (semCarga) { mostrarAviso(tx('ui.dash_sem_carga', { ref: nomeDtRef(alvo) }), true); announce(tx('ui.dash_sem_carga', { ref: nomeDtRef(alvo) })); }
   } finally {
-    if (vez === recarregarDadosDoDashboard.vez) { setFiltersInitialLoading(false); renderDash(); }
+    if (vez === recarregarDadosDoDashboard.vez) { setFiltersInitialLoading(false); board.classList.remove('is-carregando'); renderDash(); }
   }
 }
-const baseDoNome = n => String(n || '').replace(/\s+-\s+[A-Za-z]+\s+\d{4}$/, '').trim() || DASH_NOME_BASE;
+// O nome leva só o que o usuário escreveu e o período: o papel (Meu/Mine, Editor, Leitura) nunca entra
+const semPapel = n => String(n || '').replace(/\s*[·(\-–—]\s*(?:Mine|Meu|Editor|Leitura|Read[- ]only|Viewer)\)?\s*$/i, '').trim();
+const baseDoNome = n => semPapel(n).replace(/\s+-\s+[A-Za-z]+\s+\d{4}$/, '').trim() || DASH_NOME_BASE;
 const nomePadrao = (base, mes, ano) => `${base} - ${MESES_EN[mes - 1]} ${ano}`;
 // Nome já usado por outro dashboard ATIVO do mesmo dono (o banco garante; aqui só antecipa)
 const nomeEmUso = (nome, excetoId, dono) => dash.itens.some(d => d.id !== excetoId && d.status === 'S' && d.dono === dono && d.nome.toLocaleLowerCase() === nome.toLocaleLowerCase());
@@ -6379,8 +6721,33 @@ function lerDashboardsLocais() {
     return Array.isArray(v) ? v.filter(d => d && d.nome && d.mesRef && d.anoRef) : [];
   } catch (e) { return []; }
 }
+// Dashboard aberto fica no endereço (?dash=<id>): atualizar a página (F5) volta para ele
+function lembrarDashNaUrl(d) {
+  try {
+    const url = new URL(location.href);
+    if (d && d.id != null) url.searchParams.set('dash', String(d.id)); else url.searchParams.delete('dash');
+    if (url.href !== location.href) history.replaceState(history.state, '', url);
+  } catch (e) { /* sem History API: só não lembra */ }
+}
+// Barra lateral visível: sem dashboard aberto, com gráfico selecionado ou com painel aberto
+function atualizarBarraLateral() {
+  const aberto = typeof editor !== 'undefined' && editor.open;
+  document.body.classList.toggle('qe-barra-oculta', !!dash.atual && !activeChart && !aberto);
+}
+// Barra oculta reaparece com o mouse a até 32px da borda esquerda e some ao afastar da barra
+document.addEventListener('mousemove', e => {
+  if (!document.body.classList.contains('qe-barra-oculta')) return;
+  const perto = document.body.classList.contains('qe-barra-perto');
+  const bar = perto && document.querySelector('.qe-toolbar');
+  const limite = bar ? bar.getBoundingClientRect().right + 32 : 32;
+  const agora = e.clientX <= limite;
+  if (agora !== perto) document.body.classList.toggle('qe-barra-perto', agora);
+}, { passive: true });
+document.documentElement.addEventListener('mouseleave', () => document.body.classList.remove('qe-barra-perto'));
 function definirDashAtual(d) {
   dash.atual = d || null;
+  lembrarDashNaUrl(dash.atual);
+  atualizarBarraLateral();
   updateChartActionButtons(); // texto do quadro vazio depende de haver dashboard
   // Leitor: só Dashboards e Filtros; o que mudar no quadro não é gravado
   document.body.classList.toggle('is-somente-leitura', !!d && !podeAlterar(d));
@@ -6456,14 +6823,15 @@ function horizonteExcel(p, ano) {
   const yy = String(ano).slice(-2);
   if (p === 'ANO') return `ANO ${ano}`;
   if (p === 'YTD') return `YTD ${yy}`;
+  if (p === 'YTG') return `YTG ${yy}`;
   if (/^Q\d$/i.test(p)) return `TRIMESTRE · ${p} ${yy}`;
   if (/^H\d$/i.test(p)) return `SEMESTRE · ${p} ${yy}`;
   return `${p} ${yy}`;
 }
-// Ordem dos horizontes na planilha: meses, trimestres, semestres, YTD e ano (e o ano dentro de cada um)
+// Ordem dos horizontes na planilha: meses, trimestres, semestres, YTD, YTG e ano (e o ano dentro de cada um)
 function ordemHorizonteExcel(p, ano) {
   const n = Number((String(p).match(/\d+/) || [0])[0]);
-  const tipo = p === 'ANO' ? 4 : p === 'YTD' ? 3 : /^H\d$/i.test(p) ? 2 : /^Q\d$/i.test(p) ? 1 : 0;
+  const tipo = p === 'ANO' ? 5 : p === 'YTG' ? 4 : p === 'YTD' ? 3 : /^H\d$/i.test(p) ? 2 : /^Q\d$/i.test(p) ? 1 : 0;
   return tipo * 1e6 + ano * 100 + n;
 }
 // Comparações de cada gráfico: real (A/F) ÷ Budget/Plan do mesmo período e ÷ real do ano anterior
@@ -6494,10 +6862,12 @@ function dadosDosGraficosParaExcel() {
     ordem.forEach(c => {
       activateChart(c);
       const cfg = activeChartCfg();
+      if (graficoEmBranco()) return; // gráfico em branco: fora do Excel
       const linhas = getFilteredChartRows().map(r => ({ col: r.type.trim(), v: Number.isFinite(r.value) ? r.value * cfg.unidade.fator : null, cor: getBarColor(r.type) }));
       if (!linhas.length) return;
       const site = textoDoFiltro(c.filters || {}, defSites);
       out.push({ titulo: tituloDoCard(c), produto: (c.filters && c.filters.product) || '—', site, total: site === 'Todos',
+        situacao: !c.situacao ? '' : c.situacao.pendente ? 'Atualizações finais pendentes' : 'Atualizado',
         unidade: unitTextOf(cfg) || unidadeDosDados(c) || '', dec: cfg.decBar, linhas, comps: comparacoesDoGrafico(linhas) });
     });
   } finally {
@@ -6525,6 +6895,9 @@ async function baixarExcelDashboard() {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    // Risco de publicar dado inconsistente: avisa quando há gráfico com atualização pendente
+    const pend = graficos.filter(g => g.situacao === 'Atualizações finais pendentes').length;
+    if (pend) mostrarAviso(tx('ui.sit_excel', { n: pend }), true);
   } catch (err) {
     console.error('[performance-hub] exportar Excel:', err);
     mostrarAviso(tx('ui.excel_falhou'), true);
@@ -6566,7 +6939,7 @@ async function montarExcelDashboard(ExcelJS, G) {
   const legenda = (ws, linha, ult) => {
     ws.mergeCells(linha, 1, linha, ult);
     Object.assign(ws.getCell(linha, 1), {
-      value: 'Legenda: B = Budget · P = Plan · A = Actual (realizado) · F = Forecast (projeção) · Δ = 2ª coluna − 1ª · % = 2ª coluna ÷ 1ª (real ÷ Budget; ano atual ÷ ano anterior), verde a partir de 100%. Valores como exibidos no dashboard (filtros, unidade e escala de cada gráfico).',
+      value: 'Legenda: B = Budget · P = Plan · A = Actual (realizado) · F = Forecast (projeção) · Δ = 2ª coluna − 1ª · % = 2ª coluna ÷ 1ª (real ÷ Budget; ano atual ÷ ano anterior), verde a partir de 100%. ⚠ pendente = gráfico com KPI sem a atualização final do ciclo (não publicar sem conferir). Valores como exibidos no dashboard (filtros, unidade e escala de cada gráfico).',
       font: fonte({ size: 8, italic: true, color: { argb: C.suave } }), alignment: { wrapText: true, vertical: 'top' } });
     ws.getRow(linha).height = 28;
   };
@@ -6617,7 +6990,8 @@ async function montarExcelDashboard(ExcelJS, G) {
     Object.assign(ws.getCell(r, 1), { value: prod, font: fonte({ bold: true, italic: true, size: 10 }) });
     r++;
     G.filter(g => g.produto === prod).forEach(g => {
-      Object.assign(ws.getCell(r, 1), { value: (g.total ? '' : '   ') + g.titulo, font: fonte({ bold: g.total }) });
+      const pendente = g.situacao === 'Atualizações finais pendentes';
+      Object.assign(ws.getCell(r, 1), { value: (g.total ? '' : '   ') + g.titulo + (pendente ? '  ⚠ pendente' : ''), font: fonte({ bold: g.total, color: { argb: pendente ? 'FFB45309' : C.texto } }) });
       Object.assign(ws.getCell(r, 2), { value: g.unidade, font: fonte({ color: { argb: C.suave } }), alignment: { horizontal: 'center' } });
       visoes.forEach((v, i) => {
         const c0 = colIni[i], vb = valorDe(g, v.base), va = valorDe(g, v.atual), L = n => ws.getColumn(n).letter;
@@ -6649,7 +7023,7 @@ async function montarExcelDashboard(ExcelJS, G) {
   G.forEach(g => {
     wg.mergeCells(lg, 1, lg, 9);
     for (let c = 1; c <= 9; c++) wg.getCell(lg, c).fill = fill(C.cinza);
-    Object.assign(wg.getCell(lg, 1), { value: `${g.titulo}${g.unidade ? ` (${g.unidade})` : ''}`, font: fonte({ size: 10, bold: true, italic: true }), alignment: { vertical: 'middle' } });
+    Object.assign(wg.getCell(lg, 1), { value: `${g.titulo}${g.unidade ? ` (${g.unidade})` : ''}${g.situacao === 'Atualizações finais pendentes' ? '  ⚠ Atualizações finais pendentes' : ''}`, font: fonte({ size: 10, bold: true, italic: true }), alignment: { vertical: 'middle' } });
     wg.getRow(lg).height = 20;
     lg++;
     ['Coluna', 'Tipo', 'Valor', '', 'vs Budget/Plan', '%', '', 'vs ano anterior', '%'].forEach((h, k) => cabCelula(wg.getCell(lg, k + 1), h));
@@ -6690,18 +7064,18 @@ async function montarExcelDashboard(ExcelJS, G) {
       const cp = g.comps.find(x => x.atual === l.col && x.tipo === tipo), vb = cp ? valorDe(g, cp.base) : null;
       return cp && vb ? [cp.base, l.v / vb] : [null, null];
     };
-    linhas.push([g.titulo, g.produto, g.site, t.periodo === 'ANO' ? 'Ano' : t.periodo === 'YTD' ? 'YTD' : /^Q\d$/i.test(t.periodo) ? 'Trimestre' : /^H\d$/i.test(t.periodo) ? 'Semestre' : 'Mês', t.periodo, t.ano, EXCEL_SERIE[t.letra] || t.letra,
-      l.col, l.v, g.unidade, ...vs('plano'), ...vs('ano')]);
+    linhas.push([g.titulo, g.produto, g.site, t.periodo === 'ANO' ? 'Ano' : t.periodo === 'YTD' ? 'YTD' : t.periodo === 'YTG' ? 'YTG' : /^Q\d$/i.test(t.periodo) ? 'Trimestre' : /^H\d$/i.test(t.periodo) ? 'Semestre' : 'Mês', t.periodo, t.ano, EXCEL_SERIE[t.letra] || t.letra,
+      l.col, l.v, g.unidade, ...vs('plano'), ...vs('ano'), g.situacao || '—']);
   }));
   wd.addTable({ name: 'DadosDashboard', ref: 'A5', headerRow: true, style: { theme: 'TableStyleLight1', showRowStripes: false },
-    columns: ['Gráfico', 'Produto', 'Site', 'Horizonte', 'Período', 'Ano', 'Tipo', 'Coluna', 'Valor', 'Unidade', 'vs Budget/Plan', '% vs Budget/Plan', 'vs ano anterior', '% vs ano anterior'].map(name => ({ name, filterButton: true })),
+    columns: ['Gráfico', 'Produto', 'Site', 'Horizonte', 'Período', 'Ano', 'Tipo', 'Coluna', 'Valor', 'Unidade', 'vs Budget/Plan', '% vs Budget/Plan', 'vs ano anterior', '% vs ano anterior', 'Situação'].map(name => ({ name, filterButton: true })),
     rows: linhas });
-  wd.columns = [36, 18, 14, 12, 9, 8, 11, 11, 12, 9, 15, 17, 16, 18].map(width => ({ width }));
-  cabecalho(wd, 14, 'Base para análise (filtros e tabela dinâmica)');
-  for (let c = 1; c <= 14; c++) cabCelula(wd.getCell(5, c), wd.getCell(5, c).value);
+  wd.columns = [36, 18, 14, 12, 9, 8, 11, 11, 12, 9, 15, 17, 16, 18, 24].map(width => ({ width }));
+  cabecalho(wd, 15, 'Base para análise (filtros e tabela dinâmica)');
+  for (let c = 1; c <= 15; c++) cabCelula(wd.getCell(5, c), wd.getCell(5, c).value);
   wd.getRow(5).height = 30;
   for (let i = 6; i < 6 + linhas.length; i++) {
-    for (let c = 1; c <= 14; c++) Object.assign(wd.getCell(i, c), { font: fonte(), border: pontilhada });
+    for (let c = 1; c <= 15; c++) Object.assign(wd.getCell(i, c), { font: fonte(), border: pontilhada });
     wd.getCell(i, 9).numFmt = '#,##0.0##';
     wd.getCell(i, 12).numFmt = wd.getCell(i, 14).numFmt = '0.0%';
   }
@@ -6783,6 +7157,8 @@ function abrirDashboard(id, silencioso) {
   if (!d) { if (!silencioso) msgEm('qeDashMsg', tx('ui.dash_escolha'), 'err'); return false; }
   if (!silencioso && !podeDescartarDash(`abrir:${d.id}`)) return false;
   definirDashAtual(null); // não grava o quadro antigo por cima do dashboard que vai abrir
+  // Referência diferente da carga na tela: os gráficos esperam os dados certos (uma animação só)
+  if (dtRefDe(d) !== dadosCarga.dtRef) board.classList.add('is-carregando');
   const layout = layoutNaReferencia(d);
   const ajustado = layout !== d.layout; // períodos levados para a referência do dashboard
   substituirQuadro(layout);
@@ -6814,7 +7190,10 @@ function mostrarFormDash(aberto) {
   dash.formAberto = !!aberto;
   $qe('qeDashForm').hidden = !aberto;
   $qe('qeDashFoot').hidden = !aberto;
-  if (aberto) { $qe('qeDashForm').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); $qe('qeDashMes').focus(); }
+  if (aberto) {
+    $qe('qeDashForm').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (dash.modo === 'editar') { $qe('qeDashNome').focus(); $qe('qeDashNome').select(); } else $qe('qeDashMes').focus(); // editar: pronto para renomear
+  }
 }
 function prepararFormDash(modo, origem) {
   dash.modo = modo || 'novo';
@@ -6837,13 +7216,24 @@ function prepararFormDash(modo, origem) {
   $qe('qeDashCriar').textContent = dash.modo === 'editar' ? tx('ui.dash_salvar_alteracoes') : tx('ui.dash_criar');
   $qe('qeDashCancelar').textContent = tx('ui.cancelar');
   dash.nomeEditado = false;
-  if (dash.modo === 'editar') { $qe('qeDashNome').value = base.nome; dash.nomeEditado = true; } else atualizarNomeSugerido();
+  atualizarNomeSugerido();
   limparErrosDash();
 }
 function atualizarNomeSugerido() {
   if (dash.nomeEditado) return;
   const fonte = dash.modo === 'reuso' ? dash.origem : dash.atual;
-  $qe('qeDashNome').value = nomePadrao(baseDoNome(fonte && fonte.nome), Number($qe('qeDashMes').value), Number($qe('qeDashAno').value));
+  const para = { mes: Number($qe('qeDashMes').value), ano: Number($qe('qeDashAno').value) };
+  // Renomear/alterar datas: o nome atual, com os períodos andando junto se a data mudar (até o usuário digitar)
+  if (dash.modo === 'editar' && fonte) {
+    $qe('qeDashNome').value = deslocarTexto(fonte.nome, deltasPeriodo({ mes: fonte.mesRef, ano: fonte.anoRef }, para), para);
+    return;
+  }
+  // Reutilizar: o nome de origem com os períodos da nova referência ("Q3 2026 - October 2026" → "Q4 2026 - November 2026")
+  if (dash.modo === 'reuso' && fonte && fonte.mesRef && fonte.anoRef) {
+    const nome = semPapel(fonte.nome), novo = deslocarTexto(nome, deltasPeriodo({ mes: fonte.mesRef, ano: fonte.anoRef }, para), para);
+    if (novo !== nome || (fonte.mesRef === para.mes && fonte.anoRef === para.ano)) { $qe('qeDashNome').value = novo; return; }
+  }
+  $qe('qeDashNome').value = nomePadrao(baseDoNome(fonte && fonte.nome), para.mes, para.ano);
 }
 function limparErrosDash() {
   $qe('qeDashNomeErr').hidden = true; $qe('qeDashNomeErr').textContent = '';
@@ -6887,6 +7277,7 @@ async function salvarFormDash() {
   } finally {
     dash.gravando = false;
     $qe('qeDashCriar').disabled = Array.isArray(dashReferencias) && !dashReferencias.length;
+    if (dash.atual) atualizarEstadoDash(); // disquete liberado para gravar o que acabou de mudar
   }
 }
 // Alterar parâmetros do aberto: data nova → gráficos nos períodos da nova referência
@@ -6968,7 +7359,7 @@ function renderDash() {
   const sel = $qe('qeDashLista'), atualSel = sel.value;
   sel.innerHTML = '';
   sel.add(new Option(dash.itens.length ? tx('ui.selecione') : tx('ui.dash_lista_vazia'), ''));
-  dash.itens.forEach(d => sel.add(new Option(`${d.nome} — ${nomeMes(d.mesRef, true)}/${d.anoRef} · ${papelDash(d)}${d.status === 'S' ? '' : ` · ${tx('ui.dash_inativo')}`}`, String(d.id))));
+  dash.itens.forEach(d => sel.add(new Option(`${d.nome} — ${nomeMes(d.mesRef, true)}/${d.anoRef}${d.status === 'S' ? '' : ` · ${tx('ui.dash_inativo')}`}`, String(d.id))));
   sel.value = dashPorId(atualSel) ? atualSel : a ? String(a.id) : '';
   sel.disabled = !dash.itens.length;
   atualizarBotoesDash();
@@ -6981,7 +7372,7 @@ function renderDash() {
 function atualizarBotoesDash() {
   const d = dashSelecionado();
   $qe('qeDashAbrir').disabled = !d;
-  $qe('qeDashReutilizar').disabled = !podeAlterar(d);
+  $qe('qeDashReutilizar').disabled = $qe('qeDashRenomear').disabled = !podeAlterar(d);
   $qe('qeDashExcluir').hidden = $qe('qeDashAtivo').hidden = !ehDono(d);
   if (ehDono(d)) $qe('qeDashAtivo').textContent = tx(d.status === 'S' ? 'ui.dash_desativar' : 'ui.dash_ativar');
 }
@@ -7133,6 +7524,16 @@ function initDashboards() {
   });
   $qe('qeDashAbrir').addEventListener('click', () => { fecharExclusaoDash(); const d = escolhido(); if (d) abrirDashboard(d.id); });
   $qe('qeDashExcluir').addEventListener('click', () => { const d = escolhido(); if (d) pedirExclusaoDash(d); });
+  // Renomear o dashboard escolhido: abre-o (se ainda não estiver aberto) e mostra o formulário com o foco no nome
+  $qe('qeDashRenomear').addEventListener('click', () => {
+    fecharExclusaoDash();
+    const d = escolhido();
+    if (!podeAlterar(d)) return;
+    if ((!dash.atual || dash.atual.id !== d.id) && !abrirDashboard(d.id)) return;
+    prepararFormDash('editar');
+    mostrarFormDash(true);
+    msgEm('qeDashMsg', tx('ui.dash_editar_msg'), 'info');
+  });
   $qe('qeDashExcluirSim').addEventListener('click', excluirDashboard);
   $qe('qeDashExcluirNao').addEventListener('click', () => { fecharExclusaoDash(); $qe('qeDashExcluir').focus(); });
   $qe('qeDashExcluirBox').addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); fecharExclusaoDash(); $qe('qeDashExcluir').focus(); } });
@@ -7178,9 +7579,14 @@ function initDashboards() {
   $qe('dashDesfazer').addEventListener('click', desfazerAlteracoesDash);
   iniciarTelaCheia();
   $qe('dashExcel').addEventListener('click', baixarExcelDashboard);
+  $qe('dashSituacao').addEventListener('click', alternarFocoPendentes);
   renderDash();
-  // Nenhum dashboard abre sozinho: a lista fica pronta para o usuário escolher ou criar
-  carregarDashboards().then(renderDash);
+  // Nenhum dashboard abre sozinho, exceto o que estava aberto antes de atualizar a página (?dash=)
+  const doEndereco = new URLSearchParams(location.search).get('dash');
+  carregarDashboards().then(() => {
+    renderDash();
+    if (doEndereco && !dash.atual && !abrirDashboard(doEndereco, true)) lembrarDashNaUrl(null); // excluído ou sem acesso
+  });
 }
 
 function recolherPainel() {
@@ -7210,66 +7616,17 @@ function nomeDoGrafico(c) {
   return c.cfg.nome || (titulo || '').replace(/\s+/g, ' ').trim() || (c.filters && c.filters.product) || `Gráfico ${charts.indexOf(c) + 1}`;
 }
 
-// ── Adicionar gráfico (reaproveita addChart: mesmo fluxo de criação) ──
-let adicionandoGrafico = false;
-
-function abrirAdicionar() {
-  $qe('qeAddNome').maxLength = chartNameMax;
-  $qe('qeAddNome').value = '';
-  const prod = $qe('qeAddProduto');
-  prod.innerHTML = '';
-  extractOptions('product', allRows).forEach(o => prod.add(new Option(o.label, o.value)));
-  prod.value = (defaultFilters && defaultFilters.product) || '';
-  const sal = $qe('qeAddSalvo');
-  sal.innerHTML = '';
-  sal.add(new Option(editor.db.itens.length ? 'Nenhuma (padrão)' : editor.db.ok ? 'Nenhuma configuração salva' : 'Banco indisponível', ''));
-  editor.db.itens.forEach(i => sal.add(new Option(i.nome, String(i.id))));
-  sal.disabled = !editor.db.itens.length;
-  msgEm('qeAddMsg', '');
-}
-
-async function confirmarAdicionar() {
-  if (adicionandoGrafico) return; // uma inclusão por vez
-  adicionandoGrafico = true;
-  const btn = $qe('qeAddConfirmar');
-  btn.disabled = true;
-  btn.setAttribute('aria-busy', 'true');
-  btn.innerHTML = '<span class="qe-spin" aria-hidden="true"></span>Adicionando…';
-  msgEm('qeAddMsg', 'Adicionando gráfico…', 'info');
-  try {
-    await new Promise(r => requestAnimationFrame(() => r())); // mostra o carregamento antes do trabalho
-    const nome = $qe('qeAddNome').value.trim().slice(0, chartNameMax);
-    const produto = $qe('qeAddProduto').value;
-    const rec = editor.db.itens.find(i => String(i.id) === $qe('qeAddSalvo').value);
-    addChart(); // cria, seleciona, desenha e grava o layout
-    const c = activeChart;
-    if (rec) {
-      // Copia a apresentação, sem vincular ao registro (é um gráfico novo)
-      const conf = rec.config || {};
-      c.cfg = normalizeChartCfg({ ...conf, nome, idConfig: null });
-      setChartColors(c, { bgChart: '#F6F6F6', ...editorColorsOf(conf.cores) });
-    } else if (nome) {
-      c.cfg = { ...c.cfg, nome };
-    }
-    if (produto && produto !== filterState.product) {
-      filterState.product = produto;
-      podarSelecoesSemDados('product'); // Site/Ano/Cenário/Horizonte seguem o Produto escolhido
-    }
-    refreshFiltersAndChart();
-    editor.chart = null;
-    editorSync();
-    abrirVisao('editar', $qe('qeToolbar').querySelector('[data-qe-go="ident"]'), 'ident');
-    editorMsg('Gráfico adicionado e selecionado. Configure-o abaixo.', 'ok');
-    mostrarAviso('Gráfico adicionado.');
-  } catch (err) {
-    console.error('[performance-hub] falha ao adicionar gráfico:', err);
-    msgEm('qeAddMsg', 'Não foi possível adicionar o gráfico. Tente novamente.', 'err');
-  } finally {
-    adicionandoGrafico = false;
-    btn.disabled = false;
-    btn.removeAttribute('aria-busy');
-    btn.textContent = 'Adicionar';
-  }
+// ── Adicionar gráfico: nasce vazio (sem horizonte) e já abre em Filtros para ser montado ──
+function criarGraficoVazio() {
+  addChart(); // cria, seleciona, desenha e grava o layout
+  // Nenhum filtro: o usuário escolhe Produto, Site, Ano, Cenário e Horizonte
+  FILTER_DEFS.forEach(d => { if (d.multiple) filterState[d.key].clear(); else filterState[d.key] = null; });
+  refreshFiltersAndChart();
+  saveCharts();
+  editor.chart = null;
+  editorSync();
+  abrirVisao('filtros', $qe('qeFiltrosBtn'));
+  mostrarAviso(tx('ui.grafico_vazio_criado'));
 }
 
 // ── Filtros (mesmo componente/estado da antiga barra; aplicação automática a cada clique) ──
@@ -7780,8 +8137,6 @@ function initEditor() {
   });
   document.addEventListener('qtr:idioma', () => { updateChartActionButtons(); renderOrdemColunas(); if (editor.open && editor.view === 'excluir') abrirExcluir(true); });
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
-  $qe('qeAddConfirmar').addEventListener('click', confirmarAdicionar);
-  $qe('qeAddCancelar').addEventListener('click', recolherPainel);
   const viewBg = $qe('qeViewBg');
   viewBg.addEventListener('input', e => onFundoInput(e.target, 'input'));
   viewBg.addEventListener('change', e => onFundoInput(e.target, 'change'));

@@ -20,11 +20,11 @@ END) AS 'BUSINESS UNIT',
 
 SIT.NM_SITE as 'NAME SITE',
 KPI.NM_KPI AS 'NAME KPI',
-(CASE WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
+(CASE WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' -- Lateral Development: o banco marca t, o valor é eqm
+      WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
       WHEN KPI.SG_UNID_KPI = '%' THEN '%/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm' THEN 'eqm/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm/d' THEN 'eqm/day' 
-      WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' 
  ELSE KPI.SG_UNID_KPI END) AS 'UNIT',
 
 PVC.DT_REF,
@@ -60,11 +60,11 @@ WHERE PVC.DT_REF BETWEEN convert(datetime,'2025-01-01',121) AND convert(datetime
 group by SIST.NM_REGIAOGLOBAL,
 SIT.NM_PAIS,
 OPE.TP_OPERACAO,
-(CASE WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
+(CASE WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' -- Lateral Development: o banco marca t, o valor é eqm
+      WHEN KPI.SG_UNID_KPI = 't' THEN 'tonnes/day' 
       WHEN KPI.SG_UNID_KPI = '%' THEN '%/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm' THEN 'eqm/day' 
       WHEN KPI.SG_UNID_KPI = 'eqm/d' THEN 'eqm/day' 
-      WHEN KPI.ID_KPI = '15' and KPI.SG_UNID_KPI = 't' THEN 'eqm/day' 
  ELSE KPI.SG_UNID_KPI END),
 
 (CASE 
@@ -111,6 +111,7 @@ where KPI_FINAL IN
 
 --ONTARIO
 '8141', '9141', '10141', '11141', '12141', '31141', '81151', '91151', '101151', '111151', '121151', '152171', '152441', '152161', '3261291', '107511',
+'32141', '322161', -- Ontario Operations: Ore Mined (Mine) e Ore Milled (Mill), importados do PCI Master
 
 -- VNL E IR
 '361151', '371151', '36141', '37141', '132161', '187511', '167513', '267512',

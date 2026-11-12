@@ -12,6 +12,7 @@ Business Rules Applied:
     4. Multiply %/day values by 100
     5. Remove zeros for %/day unit
     6. Convert tonnes/day → ktonnes/day for Salobo/Sossego specific KPIs
+       (Total Movement is labelled eqm/day instead, with no value conversion)
     7. Remove upper outliers (μ+3.5σ) for %/day unit
 """
 
@@ -40,8 +41,12 @@ SITE_NAME_REPLACEMENTS = {
 
 # KPIs that require tonnes→ktonnes conversion
 KPIS_FOR_KTONNES_CONVERSION = [
-    'Ore Mined', 'Ore Mined (dry)', 'Total Movement', 'Ore Milled | ROP (dry)', 'Ore Milled - ROP', 'Ore Milled - ROP (dry)',
+    'Ore Mined', 'Ore Mined (dry)', 'Ore Milled | ROP (dry)', 'Ore Milled - ROP', 'Ore Milled - ROP (dry)',
 ]
+
+# KPIs whose values are already in eqm (the database tags them as tonnes): only the
+# unit label changes to eqm/day — no value conversion (not even tonnes→ktonnes)
+KPIS_EM_EQM = ['total movement']
 
 # Business Units that require tonnes→ktonnes conversion
 BUS_FOR_KTONNES_CONVERSION = ['Salobo', 'Sossego']
@@ -116,6 +121,11 @@ def load_kpi_data(df_raw, bu_name, kpi_name, site_name, type_operation, n_years=
 
     # Get unit before transformations
     unit = df_kpi['UNIT'].iloc[0] if 'UNIT' in df_kpi.columns else ''
+
+    # Treatment 0: Total Movement is reported in eqm/day (label only; values are already eqm)
+    if str(kpi_name).strip().lower() in KPIS_EM_EQM:
+        unit = 'eqm/day'
+        df_kpi['UNIT'] = 'eqm/day'
 
     # Treatment 1: If UNIT == '%/day', multiply values by 100
     if unit == '%/day':

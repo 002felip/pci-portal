@@ -20,6 +20,18 @@
     prefixoAdd: "statusAdd", prefixoEdit: "statusEdit",
     btnSalvarAddId: "btnSaveAddStatus", btnSalvarEditId: "btnSaveEditStatus",
     classeIcone: "purple", iconePadrao: "assets/icons/status/fa-solid-circle-check.svg",
+    // Ícone pelo nome (ver iconeDoRegistro em cadastro-bilingue.js); a ordem importa:
+    // "Reprovado" e "Em aprovação" antes de "Aprovado".
+    iconesPorNome: [
+      { re: /reprov|reject|recus|refus/i, icone: "circle-xmark" },
+      { re: /em aprova|aguard|await|pending approval|in approval|under approval|submetido|submitted/i, icone: "clipboard-check" },
+      { re: /aprova|approv/i, icone: "circle-check" },
+      { re: /rascunho|draft|novo|\bnew\b/i, icone: "pen" },
+      { re: /revis|review/i, icone: "rotate" },
+      { re: /implement|conclu|complet|finaliz|done|closed|encerr/i, icone: "flag-checkered" },
+      { re: /cancel/i, icone: "ban" },
+      { re: /pendent|pending|andamento|progress/i, icone: "hourglass-half" },
+    ],
     palavraBadge: null, palavraBadgeSingular: null,
     // Limites do DER (kzn_status): NM_STATUS VARCHAR(30) /
     // DS_STATUS VARCHAR(100) — mesmo tamanho das outras tabelas

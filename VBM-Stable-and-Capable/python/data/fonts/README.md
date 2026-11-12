@@ -1,15 +1,19 @@
 # Fontes do relatório
 
-No Windows o relatório usa Calibri / Arial / Segoe UI / Vale Sans, que **não existem no Linux (Databricks)**.
-Sem nada nesta pasta, o código usa automaticamente **DejaVu Sans** (vem com o matplotlib) no mesmo peso/estilo — o layout fica correto, só a tipografia muda.
-
-Para ficar idêntico ao Windows, copie os `.ttf` para esta pasta (os nomes precisam ser exatamente estes):
+O relatório usa a **Poppins**, a mesma fonte do Dashboard do app, para o PDF e a tela terem o mesmo
+visual. Os arquivos estão nesta pasta e são lidos por caminho, então funcionam no Databricks sem
+instalar nada no sistema:
 
 | Arquivo | Onde é usado |
 |---|---|
-| `calibri.ttf`, `calibrib.ttf`, `calibrii.ttf`, `calibriz.ttf` | títulos e tabelas das páginas de KPI |
-| `ValeSans-Bold.ttf`, `ValeSans-Italic.ttf` | capa |
-| `segoeuiz.ttf`, `segoeuii.ttf` | página de lista de KPIs |
+| `Poppins-Regular.ttf` | textos, eixos, tabelas |
+| `Poppins-Italic.ttf` | títulos das páginas (itálico azul, como no Dashboard) e datas |
+| `Poppins-Medium.ttf` | títulos dos cards e cabeçalhos de tabela |
+| `Poppins-SemiBold.ttf` | rótulos de destaque (CL, valores das colunas, pílulas dos trimestres) |
+| `Poppins-Bold.ttf` | reserva |
 
-No Windows eles ficam em `C:\Windows\Fonts\`. Verifique a licença da fonte antes de distribuí-la.
-Também é possível apontar outra pasta com a variável de ambiente `REPORT_FONTS_DIR`.
+Licença: SIL Open Font License 1.1 (Indian Type Foundry / Google Fonts), que permite redistribuir as
+fontes junto com o software. Ver `OFL.txt`.
+
+A capa continua usando a Vale Sans quando ela estiver aqui (`ValeSans-Bold.ttf`, `ValeSans-Italic.ttf`);
+sem ela, usa a Poppins. Outra pasta pode ser indicada com a variável de ambiente `REPORT_FONTS_DIR`.

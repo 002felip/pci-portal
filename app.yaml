@@ -25,8 +25,8 @@ env:
   - name: 'PERFORMANCEHUB_AZURE_SQL_DATABASE'  # VBM-Performance-Hub
     value: 'BDIBPBMSA_PRD'
   # VBM Health of the Business (VBM-Performance-Hub/VBM-Health-of-the-Business): IBP.DASHBOARD.ID_DASH
-  # do dashboard. Sem ela a página abre com dados de demonstração e só o FCF YEAR vem do banco
-  # (IBP.WATERFALL). Descomentar com o ID quando o dashboard for cadastrado:
+  # do dashboard. Opcional: o padrão é 16 (o da carga database/003_carga_mensal_hob.sql). Só declare
+  # para usar outro:
   # - name: 'HOB_ID_DASH'
   #   value: '<ID_DASH>'
   - name: 'AZURE_SQL_PORT'
@@ -120,17 +120,20 @@ env:
     value: 'sp=racw&st=2026-09-02T13:37:52Z&se=2030-01-18T21:52:52Z&spr=https&sv=2026-02-06&sr=c&sig=8gEPo1jtLiz1wbdSW7EVlOl0su8Tj5%2FqJDYe7I%2B%2BOHI%3D'
 
   # ── VBM-Stable-and-Capable (pasta da raiz, /VBM-Stable-and-Capable/) ──
-  # NADA obrigatório: usa o MESMO banco do Kaizen (KAIZEN_AZURE_SQL_DATABASE,
-  # mesmo servidor/login acima) e o MESMO Blob (AZURE_STORAGE_* acima). Os
+  # Banco: PRD (abaixo), o mesmo de onde o Dashboard lê. A importação grava em
+  # IBP.PEDRAVISAODIARIA e os PDFs leem de lá. Sem esta variável, cairia no
+  # banco do Kaizen (KAIZEN_AZURE_SQL_DATABASE, hoje DEV). Mesmo servidor/login
+  # acima e o MESMO Blob (AZURE_STORAGE_* acima). Os
   # PDFs vão para "<AZURE_STORAGE_CONTAINER>/01 - Imagens/Stable & Capable/".
   # As bibliotecas Python vêm do requirements.txt da raiz (instalado no deploy).
   # Opcionais — só declare para mudar o padrão:
-  #   STABLECAPABLE_AZURE_SQL_DATABASE  outro banco só para esta aplicação
   #   STABLECAPABLE_BLOB_PASTA          outra pasta no Blob
   #   STABLECAPABLE_PYTHON              executável Python (padrão: python3/python)
   #
   #   - name: 'STABLECAPABLE_BLOB_PASTA'
   #     value: '06 - Stable & Capable'
+  - name: 'STABLECAPABLE_AZURE_SQL_DATABASE'
+    value: 'BDIBPBMSA_PRD'
 
   # ── VBM-Vdt e VBM-Cockpit (aplicações Python, /VBM-Vdt/ e /VBM-Cockpit/) ──
   # Rodam como processos filhos do Portal (apps-python.js). As bibliotecas

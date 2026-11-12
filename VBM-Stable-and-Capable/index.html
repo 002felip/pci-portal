@@ -489,30 +489,22 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 .dsc [hidden] { display: none !important; }
 .dsc .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* ── Hero (mesma linguagem do Kaizen, fundo VBM) ── */
-.dsc-hero { position: relative; border-radius: 1.25rem; overflow: hidden; padding: 1.6rem 2rem; background-color: #041523;
-  background-image: linear-gradient(90deg, rgba(4,21,35,.85) 0%, rgba(4,21,35,.4) 60%, rgba(4,21,35,.6) 100%), url('assets/images/Fundo_VBM_2400x1145.webp');
-  background-size: cover; background-position: center; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; }
-.dsc-hero-orb { position: absolute; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(60,181,229,.18) 0%, transparent 65%); top: -100px; right: -60px; filter: blur(50px); pointer-events: none; }
-.dsc-hero-texto { position: relative; flex: 1 1 20rem; min-width: 0; }
-.dsc-hero-ante { font-size: .6rem; letter-spacing: .25em; text-transform: uppercase; color: var(--vbm-blue-light); margin-bottom: .5rem; }
-.dsc-hero-titulo { margin: 0 0 .45rem; font-weight: 700; font-style: italic; font-size: clamp(1.6rem, 3.2vw, 2.6rem); color: #fff; line-height: .95; letter-spacing: -.01em; text-transform: uppercase; }
-.dsc-hero-sub { font-weight: 300; font-size: clamp(.82rem, 1.5vw, 1.05rem); letter-spacing: .08em; color: rgba(255,255,255,.8); margin-bottom: .45rem; text-transform: uppercase; }
-.dsc-hero-desc { font-size: .78rem; color: rgba(255,255,255,.62); line-height: 1.6; max-width: 42rem; margin: 0; }
-.dsc-hero-box { position: relative; display: flex; flex-direction: column; gap: .7rem; min-width: 260px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; padding: .9rem 1.1rem; box-shadow: 0 8px 32px rgba(0,0,0,.18); color: #fff; }
-@supports (backdrop-filter: blur(1px)) { .dsc-hero-box { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } }
-.dsc-base { display: grid; grid-template-columns: auto auto; gap: .2rem 1.2rem; font-size: .74rem; color: rgba(255,255,255,.72); }
-.dsc-base b { color: #fff; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
-.dsc-atualizado { font-size: .66rem; color: rgba(255,255,255,.55); }
-.dsc-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
-.dsc-btn-hero { display: inline-flex; align-items: center; gap: .45rem; height: 38px; padding: 0 .95rem; border-radius: .55rem; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; font: 500 .74rem 'Poppins', sans-serif; cursor: pointer; transition: background .2s, border-color .2s; }
-.dsc-btn-hero svg { width: 14px; height: 14px; flex: none; }
-.dsc-btn-hero:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.4); }
-.dsc-btn-hero.primario { background: var(--vbm-blue); border-color: var(--vbm-blue); color: #04263a; font-weight: 600; }
-.dsc-btn-hero.primario:hover { background: var(--vbm-blue-light); border-color: var(--vbm-blue-light); }
-.dsc-btn-hero:disabled { opacity: .55; cursor: not-allowed; }
-.dsc-contador { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #04263a; color: #fff; font-size: .66rem; font-weight: 700; display: inline-grid; place-items: center; }
 
+/* ── Unidade + situação dos dados (padrão .site-row do COO, sem banner) ── */
+#vista-powerbi.dsc { padding-top: 14px; }
+.dsc-siterow { display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; }
+.dsc-site-id { min-width: 0; }
+.dsc-site { margin: 0; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
+.dsc-site-sub { margin: .25rem 0 0; font-size: .76rem; color: var(--text-soft); letter-spacing: .02em; }
+.dsc-meta { display: flex; align-items: center; gap: 12px; }
+.dsc-meta-txt { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.dsc-updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); font-variant-numeric: tabular-nums; text-align: right; }
+.dsc-updated b { font-style: normal; font-weight: 500; color: var(--text-soft); }
+.dsc .dsc-atualizar { display: inline-flex; align-items: center; gap: 6px; }
+.dsc .dsc-atualizar:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 720px) { .dsc-site { font-size: 1.6rem; } .dsc-meta-txt { align-items: flex-start; } .dsc-updated { text-align: left; } }
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) { .dsc-site { font-size: 1.7rem; } }
+@media (min-width: 1600px) { .dsc-site { font-size: 2.2rem; } .dsc-site-sub { font-size: .84rem; } .dsc-updated { font-size: .76rem; } }
 /* ── Abas + filtros ativos ── */
 .dsc-barra { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; }
 .dsc-abas { display: flex; gap: 4px; padding: 4px; border-radius: .75rem; background: var(--d-surface); border: 1px solid var(--d-line); box-shadow: var(--d-shadow); overflow-x: auto; max-width: 100%; }
@@ -781,8 +773,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .dsc-hist-legenda .dsc-tabela { font-size: .78rem; }
 }
 @media (min-width: 2200px) {
-  .dsc-hero { padding: 2rem 2.6rem; }
-  .dsc-card-titulo { font-size: 1.22rem; }
+    .dsc-card-titulo { font-size: 1.22rem; }
   .dsc-legenda { font-size: .8rem; }
   .dsc-svg .ex { font-size: 12.5px; }
   .dsc-svg .pilula text { font-size: 12.5px; }
@@ -802,8 +793,7 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .dsc-card-titulo { font-size: 1.45rem; }
   .dsc-card-sub { font-size: .95rem; }
   .dsc-legenda { font-size: .95rem; }
-  .dsc-hero { padding: 2.6rem 3.2rem; }
-  .dsc-svg .ex { font-size: 15px; }
+    .dsc-svg .ex { font-size: 15px; }
   .dsc-svg .pilula text { font-size: 15px; }
   .dsc-svg .t-cl { font-size: 16px; }
   .dsc-svg .t-lim { font-size: 13.5px; }
@@ -819,8 +809,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
 @media (max-width: 1180px) { .dsc .s3, .dsc .s9 { grid-column: span 12; } }
 @media (max-width: 960px) { .dsc .s4, .dsc .s5, .dsc .s7, .dsc .s8 { grid-column: span 12; } }
 @media (max-width: 640px) {
-  .dsc-hero { padding: 1.2rem 1.1rem; }
-  .dsc-hero-box { min-width: 0; width: 100%; }
   .dsc-tiles { grid-template-columns: minmax(0, 1fr); }
   }
 @media (prefers-reduced-motion: reduce) { .dsc *, .dsc *::before, .dsc *::after { animation: none !important; transition: none !important; } }
@@ -851,11 +839,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
   .opcao .acessar { padding-top: 6px; font-size: .7rem; }
   .vazio { padding: 1.4rem 1rem; }
   .dsc { gap: .85rem; }
-  .dsc-hero { padding: 1.1rem 1.4rem; border-radius: 1rem; }
-  .dsc-hero-titulo { font-size: clamp(1.3rem, 2.4vw, 1.9rem); }
-  .dsc-hero-desc { display: none; }
-  .dsc-hero-box { padding: .7rem .9rem; gap: .5rem; }
-  .dsc-btn-hero { height: 34px; }
   .dsc-tile { min-height: 112px; padding: .8rem 1rem; }
   .tt-num { font-size: clamp(1.9rem, 3vw, 2.5rem); }
   .dsc-grade { gap: .85rem; }
@@ -1017,6 +1000,12 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
           <div class="chips" id="chipsBus" role="group" aria-label="Business Units"></div>
         </div>
 
+        <div class="campo-grupo">
+          <div class="campo-rotulo"><span data-i18n="form.formato">Formato</span></div>
+          <div class="chips" id="chipsFormato" role="radiogroup" aria-label="Formato" data-i18n-aria="form.formato"></div>
+          <p class="resumo-periodo" id="dicaFormato"></p>
+        </div>
+
         <button type="submit" class="btn-primario" id="btnGerar">
           <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2.5v11l9-5.5-9-5.5Z" fill="currentColor"/></svg>
           <span data-i18n="form.run">Gerar relatórios</span>
@@ -1114,27 +1103,6 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
        (hero, abas, filtros na lateral, cartões de resumo, cards e tabelas). Cálculos SPC iguais
        aos visuais Python do .pbix — ver assets/js/painel-spc.js. Dados: api/bi (banco PRD). ═══ -->
   <section class="vista dsc" id="vista-powerbi" hidden>
-    <div class="dsc-hero">
-      <div class="dsc-hero-orb" aria-hidden="true"></div>
-      <div class="dsc-hero-texto">
-        <div class="dsc-hero-ante" data-i18n="bi.ante">Controle estatístico de processo</div>
-        <h3 class="dsc-hero-titulo" id="biTitulo">—</h3>
-        <div class="dsc-hero-sub" id="biSub"></div>
-        <p class="dsc-hero-desc" data-i18n="bi.desc">Carta de controle com as regras de Nelson, medidas por período e capabilidade por ano.</p>
-      </div>
-      <div class="dsc-hero-box">
-        <div class="dsc-base">
-          <span data-i18n="bi.h.periodo">Período</span><b id="biQtdPeriodo">—</b>
-        </div>
-        <div class="dsc-atualizado" id="biAtualizado"></div>
-        <div class="dsc-acoes">
-          <button type="button" class="dsc-btn-hero" id="biAtualizar">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span data-i18n="bi.atualizar">Atualizar</span>
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- Filtros no padrão dos reports do VBM Performance Hub (COO – Business Units Dashboard):
          rótulo em itálico em cima, seletor BU › Site em duas colunas, listas, segmentado e interruptores -->
@@ -1180,6 +1148,24 @@ td .sub { display: block; font-size: .7rem; color: var(--texto-fraco); margin-to
       </div>
       <div class="filter filter-acao"><div class="acoes-linha"><button type="button" class="nav-chip" id="biFiltrosLimpar" data-i18n="bi.limpar" title="Período inteiro, sem remover zeros nem outliers" data-i18n-title="bi.limparDica">Restaurar padrão</button><button type="button" class="fs-btn js-full" aria-label="Tela cheia" title="Tela cheia (F11)" data-i18n-aria="bi.fs.on" data-i18n-title="bi.fs.onTitle"><svg class="ico-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ico-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
     </section>
+
+    <!-- Unidade e situação dos dados, no padrão do COO (.site-row): sem banner -->
+    <div class="dsc-siterow">
+      <div class="dsc-site-id">
+        <h3 class="dsc-site" id="biTitulo">—</h3>
+        <p class="dsc-site-sub" id="biSub"></p>
+      </div>
+      <div class="dsc-meta">
+        <div class="dsc-meta-txt">
+          <p class="dsc-updated"><span data-i18n="bi.h.periodo">Período</span>: <b id="biQtdPeriodo">—</b></p>
+          <p class="dsc-updated" id="biAtualizado"></p>
+        </div>
+        <button type="button" class="nav-chip dsc-atualizar" id="biAtualizar">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span data-i18n="bi.atualizar">Atualizar</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Os três visuais da página "Stable and capable" do .pbix, na mesma disposição:
          carta de controle em cima; medidas estatísticas (com a variação da média) e
@@ -1368,7 +1354,7 @@ window.VBMSetup = (function () {
 })();
 /* ═══ fim Setup Dashboards ═══ */
 </script>
-<script src="assets/js/painel-spc.js?v=20261105-3"></script>
+<script src="assets/js/painel-spc.js?v=20261109-1"></script>
 <script>
 (function () {
   'use strict';
@@ -1428,6 +1414,10 @@ window.VBMSetup = (function () {
       'form.monthly': 'Fechamento mensal', 'form.last12': 'Últimos 12 meses', 'form.ytd': 'Ano atual',
       'form.bus': 'Business Units', 'form.all': 'Selecionar todas', 'form.none': 'Limpar', 'form.run': 'Gerar relatórios', 'form.running': 'Execução em andamento…',
       'form.footer': 'Leva cerca de 30 segundos por Business Unit. Uma execução por vez.',
+      'form.formato': 'Formato', 'form.f.separados': 'Um PDF por BU', 'form.f.consolidado': 'Consolidado',
+      'form.f.separadosDica': 'Um relatório para cada Business Unit selecionada.',
+      'form.f.consolidadoDica': 'Um PDF só, com o resumo dos Stability & Capability Scores no início e, em seguida, o relatório de cada Business Unit selecionada.',
+      'bu.montando': 'Páginas prontas',
       'periodo.resumo': '<strong>{meses}</strong> · gráficos com <strong>{anos}</strong> ({a1}–{a2})',
       'periodo.mes': '{n} mês', 'periodo.meses': '{n} meses', 'periodo.dias': '{n} dias', 'periodo.ano': '1 ano', 'periodo.anos': '{n} anos',
       'erro.datas': 'Informe as duas datas.', 'erro.ordem': 'A data fim deve ser igual ou posterior à data início.', 'erro.futuro': 'A data fim não pode estar no futuro.',
@@ -1496,6 +1486,10 @@ window.VBMSetup = (function () {
       'form.monthly': 'Monthly close', 'form.last12': 'Last 12 months', 'form.ytd': 'Year to date',
       'form.bus': 'Business Units', 'form.all': 'Select all', 'form.none': 'Clear', 'form.run': 'Generate reports', 'form.running': 'Run in progress…',
       'form.footer': 'Takes about 30 seconds per Business Unit. One run at a time.',
+      'form.formato': 'Format', 'form.f.separados': 'One PDF per BU', 'form.f.consolidado': 'Consolidated',
+      'form.f.separadosDica': 'One report for each selected Business Unit.',
+      'form.f.consolidadoDica': 'A single PDF: the Stability & Capability Scores summary first, then the report of each selected Business Unit.',
+      'bu.montando': 'Pages ready',
       'periodo.resumo': '<strong>{meses}</strong> · charts with <strong>{anos}</strong> ({a1}–{a2})',
       'periodo.mes': '{n} month', 'periodo.meses': '{n} months', 'periodo.dias': '{n} days', 'periodo.ano': '1 year', 'periodo.anos': '{n} years',
       'erro.datas': 'Enter both dates.', 'erro.ordem': 'End date must be on or after the start date.', 'erro.futuro': 'End date cannot be in the future.',
@@ -1552,7 +1546,7 @@ window.VBMSetup = (function () {
   };
 
   // ─── Estado ───
-  var estado = { config: null, bus: [], selecionadas: [], atual: null, historico: [], timer: null };
+  var estado = { config: null, bus: [], selecionadas: [], formato: 'separados', atual: null, historico: [], timer: null };
 
   // ─── Formulário ───
   function lerDatas() { return { inicio: $('dtInicio').value, fim: $('dtFim').value }; }
@@ -1599,7 +1593,16 @@ window.VBMSetup = (function () {
     }).join('');
     var todas = estado.selecionadas.length === estado.bus.length;
     $('todasBus').textContent = todas ? t('form.none') : t('form.all');
+    desenharFormato();
     atualizarResumo();
+  }
+  /** Um PDF por BU, ou o consolidado (um PDF só, com o resumo dos scores no início) */
+  function desenharFormato() {
+    $('chipsFormato').innerHTML = ['separados', 'consolidado'].map(function (f) {
+      var on = estado.formato === f;
+      return '<button type="button" class="chip" role="radio" aria-checked="' + on + '" aria-pressed="' + on + '" data-formato="' + f + '"><span class="marca">' + ICONE.check + '</span>' + esc(t('form.f.' + f)) + '</button>';
+    }).join('');
+    $('dicaFormato').textContent = t('form.f.' + estado.formato + 'Dica');
   }
 
   // ─── Execução ───
@@ -1634,7 +1637,7 @@ window.VBMSetup = (function () {
       return '<div class="etapa ' + cls + '"><span class="bola">' + (cls === 'feita' ? '✓' : i + 1) + '</span>' + esc(t('etapa.' + n)) + '</div>';
     }).join('');
     var bus = (mostrar.bus || []).map(function (b) {
-      var pct = b.status === 'ok' ? 100 : (b.paginas && b.paginas.total ? Math.round(100 * b.paginas.atual / (b.paginas.total + 1)) : 0);
+      var pct = b.status === 'ok' ? 100 : (b.status === 'montando' ? 96 : (b.paginas && b.paginas.total ? Math.round(100 * b.paginas.atual / (b.paginas.total + 1)) : 0));
       var clsBarra = b.status === 'ok' ? 'ok' : (b.status === 'erro' ? 'erro' : (b.status === 'gerando' && !b.paginas ? 'indeterminada' : ''));
       if (b.status === 'erro') pct = 100;
       var txt = b.status === 'gerando' && b.paginas ? t('bu.paginas', { a: b.paginas.atual, t: b.paginas.total }) : t('bu.' + b.status);
@@ -1644,6 +1647,7 @@ window.VBMSetup = (function () {
     var meta = '<div class="exec-meta">' +
       (fim ? '<span><strong>' + esc(t('exec.ultima')) + '</strong></span>' : '') +
       '<span>' + esc(t('exec.period')) + ': <strong>' + dataBR(mostrar.inicio) + ' → ' + dataBR(mostrar.fim) + '</strong></span>' +
+      (mostrar.formato === 'consolidado' ? '<span>' + esc(t('form.formato')) + ': <strong>' + esc(t('form.f.consolidado')) + '</strong></span>' : '') +
       '<span>' + esc(t('exec.started')) + ': <strong>' + dataHora(mostrar.criadaEm) + '</strong></span>' +
       (mostrar.usuario ? '<span>' + esc(t('exec.by')) + ': <strong>' + quem(mostrar.usuario) + '</strong></span>' : '') +
       (mostrar.linhas != null ? '<span>' + esc(t('exec.rows')) + ': <strong>' + num(mostrar.linhas) + '</strong></span>' : '') + '</div>';
@@ -1697,6 +1701,11 @@ window.VBMSetup = (function () {
     if (i >= 0) estado.selecionadas.splice(i, 1); else estado.selecionadas.push(bu);
     desenharChips();
   });
+  $('chipsFormato').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-formato]'); if (!c) return;
+    estado.formato = c.getAttribute('data-formato');
+    desenharFormato();
+  });
   $('todasBus').addEventListener('click', function () {
     estado.selecionadas = estado.selecionadas.length === estado.bus.length ? [] : estado.bus.slice();
     desenharChips();
@@ -1708,7 +1717,7 @@ window.VBMSetup = (function () {
     if (erro) return;
     var d = lerDatas();
     $('btnGerar').disabled = true;
-    api('execucoes', { method: 'POST', body: { inicio: d.inicio, fim: d.fim, bus: estado.selecionadas } })
+    api('execucoes', { method: 'POST', body: { inicio: d.inicio, fim: d.fim, bus: estado.selecionadas, formato: estado.formato } })
       .then(function (ex) { estado.atual = ex; desenharExecucao(); atualizarBotao(); agendar(800); })
       .catch(function (err) {
         if (err.status === 409 && err.dados && err.dados.emExecucao) { estado.atual = err.dados.emExecucao; agendar(300); }
