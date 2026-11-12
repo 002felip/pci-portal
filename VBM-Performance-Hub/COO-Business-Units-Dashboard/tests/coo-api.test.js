@@ -186,25 +186,20 @@ test('mês do ciclo acompanha o GETDATE()-2 das queries (dias 1 e 2 ainda no cic
   assert.deepStrictEqual(mesDoCiclo(new Date(2026, 10, 3, 12)), { ano: 2026, mes: 10 }); // 3/nov → outubro
 });
 
-test('carga do COO na tabela do VBM: query original + campos do VBM, só o dashboard 15 e o próprio mês', () => {
-  const ler = (f) => fs.readFileSync(path.join(__dirname, '..', 'database', f), 'utf8').replace(/\r/g, '');
-  const carga = ler('003_carga_mensal_coo.sql');
-  // toda linha da query original continua lá, na mesma ordem (só ganhou vírgula no fim, quando um campo foi incluído depois)
-  const linhas = carga.split('\n').map((l) => l.trim());
-  let j = 0;
-  for (const o of ler('001_coo_dashboard.sql').split('\n').map((l) => l.trim()).filter(Boolean)) {
-    while (j < linhas.length && linhas[j] !== o && linhas[j] !== o + ',') j++;
-    assert.ok(j < linhas.length, `linha da query original ausente ou fora de ordem: ${o}`);
-    j++;
-  }
+test('carga do COO na tabela do VBM: dashboard 15, apaga só o próprio mês, períodos amarrados na DT_REF', () => {
+  const carga = fs.readFileSync(path.join(__dirname, '..', 'database', '003_carga_mensal_coo.sql'), 'utf8').replace(/\r/g, '');
   const ativo = carga.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   assert.match(ativo, /DECLARE @ID_DASH\s+INT\s+=\s+15;/);
   const deletes = ativo.match(/DELETE FROM IBP\.PHUB_PERFORMANCESTUDIO\s+WHERE[^;]*;/g) || [];
   assert.strictEqual(deletes.length, 1);
   assert.match(deletes[0], /DT_REF = @DT_CARGA AND ID_DASH = @ID_DASH/);
   assert.strictEqual((ativo.match(/AS 'ID_TIPO_VISAO_VBM'/g) || []).length, 3);
+  assert.match(ativo, /^\s*COMMIT TRANSACTION;/m);
+  // trimestre no 1º mês do trimestre e ano no mês da DT_REF da carga, sem a repetição por mês
+  assert.match(ativo, /DATEFROMPARTS\(YEAR\(PVT\.DT_REF\), \(DATEPART\(QUARTER, PVT\.DT_REF\) - 1\) \* 3 \+ 1, 1\) AS DT_REF/);
+  assert.match(ativo, /DATEFROMPARTS\(PVA\.ANO, MONTH\(@DT_CARGA\), 1\) AS DT_REF/);
+  assert.doesNotMatch(ativo, /\) AS PVC\b[\s\S]*\) AS COO/);
 });
-
 test('lerCiclo e mês do ciclo da carga (2026-10 = realizado até setembro; janeiro → dezembro anterior)', () => {
   assert.strictEqual(lerCiclo('2026-10'), '2026-10');
   assert.strictEqual(lerCiclo('2026-10-01'), '2026-10');
