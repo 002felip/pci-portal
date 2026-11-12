@@ -244,11 +244,44 @@ function letraAF(tipo) {
   return l === 'A' || l === 'F' ? l : null;
 }
 
+// Linhas de um site no mês escolhido, pela regra da DT_REF da carga:
+//   mês       → DT_IND = o mês escolhido
+//   trimestre → DT_IND = 1º mês do trimestre (1, 4, 7, 10), qualquer que seja o mês escolhido
+//   ano       → DT_IND = ano escolhido com o mês da DT_REF da carga (carga 2026-10 → 2025-10, 2026-10)
+// Carga no formato antigo (trimestre e ano repetidos em todos os meses) também serve: por KPI, vale o
+// primeiro mês que tiver a linha, na ordem de preferência acima — nunca soma o mesmo período duas vezes.
+const ORDENS_MES = new Set([0, 1, 2]), ORDENS_TRI = new Set([3, 4]), ORDENS_ANO = new Set([6, 7]);
+function linhasDoPeriodo(linhas, p, mesCarga) {
+  const doMes = (mes, ordens) => linhasDe(linhas, { site: p.site, ano: p.ano, mes }).filter(l => ordens.has(Number(l.ORDEM_GRAFICO)));
+  // por KPI (operação + KPI), as linhas do primeiro mês candidato que as tiver
+  function primeiroMes(meses, ordens) {
+    const escolhido = new Map(), saida = [];
+    for (const mes of meses) {
+      const porKpi = new Map();
+      for (const l of doMes(mes, ordens)) {
+        const k = `${l.ID_OPERACAO}|${l.ID_KPI}`;
+        if (escolhido.has(k) && escolhido.get(k) !== mes) continue;
+        (porKpi.get(k) || porKpi.set(k, []).get(k)).push(l);
+      }
+      for (const [k, ls] of porKpi) { escolhido.set(k, mes); saida.push(...ls); }
+    }
+    return saida;
+  }
+  const iniTri = Math.floor((p.mes - 1) / 3) * 3 + 1;
+  const mesAno = mesCarga >= 1 && mesCarga <= 12 ? mesCarga : p.mes;
+  const mesesAno = [mesAno, ...Array.from({ length: 12 }, (_, i) => i + 1).filter(m => m !== mesAno)];
+  return [
+    ...doMes(p.mes, ORDENS_MES),
+    ...primeiroMes([iniTri, iniTri + 1, iniTri + 2], ORDENS_TRI),
+    ...primeiroMes(mesesAno, ORDENS_ANO),
+  ];
+}
+
 // Linhas do script de um site/mês → um item por KPI e janela, com B, A/F e a letra do script
-function agregarIndicadores(linhas, p) {
+function agregarIndicadores(linhas, p, mesCarga) {
   const porKpi = new Map(), vistas = new Set();
   let repetidas = 0;
-  for (const l of linhasDe(linhas, p)) {
+  for (const l of linhasDoPeriodo(linhas, p, mesCarga)) {
     const serie = SERIE_POR_ORDEM[l.ORDEM_GRAFICO];
     if (!serie) continue;
     const [visao, s] = serie;
@@ -509,7 +542,7 @@ function criarCooRouter({ runQuery, idDash }) {
     }
     try {
       const c = await resolverCiclo(req);
-      const linhas = agregarIndicadores(await buscarCarga(c.ciclo, fresco(req)), p);
+      const linhas = agregarIndicadores(await buscarCarga(c.ciclo, fresco(req)), p, Number(c.ciclo.slice(5, 7)));
       // Cadastro do site (KPIs sem valor no mês também); se falhar, segue sem ele
       let cadastro = [];
       try { cadastro = cadastroDoSite(await buscar('/cadastro', CADASTRO_SQL, fresco(req)), p.site); } catch (err) { console.error(`${TAG} cadastro indisponível:`, err.message); }

@@ -310,3 +310,25 @@ test('/filtros: só o ano do último mês realizado do ciclo e o anterior (carga
     try { assert.deepStrictEqual((await get(jan, '/api/filtros?ciclo=2027-01')).json.anos, [2025, 2026]); } finally { jan.close(); }
   } finally { s.close(); }
 });
+
+test('períodos pela DT_REF: trimestre no 1º mês do trimestre e ano no mês da DT_REF (formato antigo sem somar em dobro)', () => {
+  const D = (m) => new Date(Date.UTC(2026, m - 1, 1));
+  const novo = [
+    linha({ DT_REF: D(8), ORDEM_GRAFICO: 0, NM_VISAO: 'Aug B', VL_KPI: 3 }),
+    linha({ DT_REF: D(8), ORDEM_GRAFICO: 2, NM_VISAO: 'Aug A', VL_KPI: 5 }),
+    linha({ DT_REF: D(7), ORDEM_GRAFICO: 3, NM_VISAO: 'Q3B', VL_KPI: 9 }),
+    linha({ DT_REF: D(7), ORDEM_GRAFICO: 4, NM_VISAO: 'Q3A', VL_KPI: 8 }),
+    linha({ DT_REF: D(10), ORDEM_GRAFICO: 6, NM_VISAO: '26B', VL_KPI: 30 }),
+    linha({ DT_REF: D(10), ORDEM_GRAFICO: 7, NM_VISAO: '26F', VL_KPI: 31 }),
+  ];
+  const r = agregarIndicadores(novo, { site: 6, ano: 2026, mes: 8 }, 10);
+  const de = (v) => r.find((x) => x.CD_VISAO === v);
+  assert.deepStrictEqual([de('MONTH').VL_B, de('MONTH').VL_AF], [3, 5]);
+  assert.deepStrictEqual([de('QUARTER').VL_B, de('QUARTER').VL_AF], [9, 8]);
+  assert.deepStrictEqual([de('YEAR').VL_B, de('YEAR').VL_AF], [30, 31]);
+  // formato antigo: trimestre e ano repetidos em cada mês → um só conta
+  const antigo = [7, 8, 9].flatMap((m) => [linha({ DT_REF: D(m), ORDEM_GRAFICO: 3, VL_KPI: 9 }), linha({ DT_REF: D(m), ORDEM_GRAFICO: 6, VL_KPI: 30 })]);
+  const a = agregarIndicadores(antigo, { site: 6, ano: 2026, mes: 9 }, 10);
+  assert.strictEqual(a.find((x) => x.CD_VISAO === 'QUARTER').VL_B, 9);
+  assert.strictEqual(a.find((x) => x.CD_VISAO === 'YEAR').VL_B, 30);
+});
