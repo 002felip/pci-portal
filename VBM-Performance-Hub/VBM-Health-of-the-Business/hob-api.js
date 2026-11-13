@@ -300,11 +300,23 @@ function colunasWaterfall(l) {
   const achar = (regs, filtro) => { for (const r of regs) { const k = cols.find(c => r.test(c) && filtro(c)); if (k) return k; } return null; };
   return {
     data: achar([/^DT_REF$/i, /^DT_/i], () => true),
-    rotulo: achar([/^DS_(ITEM|WATERFALL|DESCRICAO|CONTA|LINHA)/i, /^NM_(ITEM|WATERFALL|CONTA|LINHA|KPI)/i, /^(DS|NM)_/i, /./], (c) => ehTexto(c) && !/SITE|USUARIO|SISTEMA/i.test(c)),
+    rotulo: achar([/^DS_(ITEM|WATERFALL|DESCRICAO|CONTA|LINHA)/i, /^NM_(ITEM|WATERFALL|CONTA|LINHA|KPI)/i, /^(DS|NM)_/i, /./], (c) => ehTexto(c) && !/SITE|USUARIO|SISTEMA|STATUS|ATUALIZ|SITUACAO/i.test(c)),
     valor: achar([/^VL_(ITEM|VALOR|WATERFALL|KPI)$/i, /^VL_/i, /VALOR|VALUE/i], ehNum),
     ordem: achar([/ORDEM|ORDER/i, /SEQ/i, /^ID_ITEM$/i, /^NR_/i], ehNum),
     tipo: achar([/^TP_/i, /TIPO|TYPE/i], (c) => typeof l[c] === 'string'),
+    // situação da atualização da referência (a tabela diz se está atualizada): S/N, 1/0, true/false ou texto
+    status: achar([/^(SG|FL|IN|ST|CD)_(STATUS|ATUALIZ|VALID|SITUACAO)/i, /VALIDATE|ATUALIZADO|SITUACAO|STATUS/i], (c) => !/^DT_/i.test(c)),
+    atualizacao: achar([/^DT_ATUALIZ/i, /^DT_(CARGA|ALTERACAO|MODIFICACAO)/i], () => true),
   };
+}
+// Valor da coluna de situação → atualizado? (null = não dá para dizer)
+function atualizadoDe(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'boolean') return v;
+  const t = String(v).trim().toUpperCase();
+  if (['S', 'Y', '1', 'SIM', 'YES', 'TRUE', 'OK', 'ATUALIZADO', 'UPDATED', '.'].includes(t)) return true;
+  if (['N', '0', '2', 'NAO', 'NÃO', 'NO', 'FALSE', 'PENDENTE', 'PENDING', 'DESATUALIZADO'].includes(t) || /PENDING|PENDENTE/.test(t)) return false;
+  return null;
 }
 // Ponte da tela → chave da configuração com site/tipo/ano de IBP.WATERFALL
 const FONTE_PONTE = { fcfYear: 'fcf', ebitdaYear: 'ebitdaPonte' };
@@ -357,6 +369,12 @@ function mapearWaterfall(linhas, config, ponte = 'fcfYear') {
   }
   for (const [chave, g] of [...porRef].sort((x, y) => x[0].localeCompare(y[0]))) {
     const r = { ref: chave, ano: g.dt.getUTCFullYear(), mes: g.dt.getUTCMonth() + 1, dtRef: g.dt.toISOString(), itens: itensDe(g.linhas, chave) };
+    // situação gravada na própria IBP.WATERFALL: pendente se alguma linha da referência não está atualizada
+    if (col.status) {
+      const vals = g.linhas.map(l => atualizadoDe(l[col.status])).filter(v => v !== null);
+      const dts = col.atualizacao ? g.linhas.map(l => new Date(l[col.atualizacao]).getTime()).filter(n => !isNaN(n)) : [];
+      if (vals.length) r.situacao = { status: vals.every(Boolean) ? 'ok' : 'pendente', dt: dts.length ? new Date(Math.max(...dts)).toISOString() : null, coluna: col.status };
+    }
     referencias.push(r);
     anos[r.ano] = { dtRef: r.dtRef, itens: r.itens }; // em ordem crescente: fica a mais recente do ano
   }
@@ -752,7 +770,7 @@ function criarHobRouter({ runQuery, idDash }) {
       const l0 = w.linhas[0] || {};
       res.json({ ...base, ok: w.referencias.length > 0, linhas: w.linhas.length,
         colunas: Object.keys(l0).map(c => ({ nome: c, tipo: l0[c] === null ? 'null' : l0[c] instanceof Date ? 'data' : typeof l0[c] })),
-        mapeamento: w.colunas, referencias: w.referencias.map(r => ({ ref: r.ref, itens: r.itens.length })), avisos: w.avisos.slice(0, 20) });
+        mapeamento: w.colunas, referencias: w.referencias.map(r => ({ ref: r.ref, itens: r.itens.length, situacao: r.situacao || null })), avisos: w.avisos.slice(0, 20) });
     } catch (err) {
       console.error(`${TAG} erro em /waterfall/estrutura:`, err.message);
       res.status(500).json({ ...base, ok: false, ...codigoDoErro(err) });
