@@ -30,9 +30,12 @@ SET @DT_REF =  DATEADD(MONTH, -1, GETDATE()-2)  --(SELECT DATEADD(MONTH, -1, DT_
 --     MONTH   → todos os meses (DT_REF da linha)
 --     QUARTER → um por trimestre, no 1º mês dele (meses 1, 4, 7 e 10)
 --     YEAR    → um por ano, no mês da DT_REF (carga 2026-10-01 → 2025-10-01 e 2026-10-01)
---     YTD     → um por ano, no mês da DT_REF: a linha de IBP.PEDRAVISAOYEARTODATE desse mês (jan até o mês)
---     YTG     → um por ano, no mês da DT_REF: a linha de IBP.PEDRAVISAOYEARTOGO desse mês (restante do ano),
---               mesma regra do YTD. CD_PERIODO precisa aceitar 'YTG' (006_cd_periodo_ytg.sql, uma vez só)
+--     YTD     → um só, no mês da DT_REF (ano da carga): IBP.PEDRAVISAOYEARTODATE desse mês (jan até o mês)
+--     YTG     → um só, no mês da DT_REF (ano da carga): o restante do ano depois do mês da DT_REF (M-1)
+--                 Budget   = Budget total do ano (PEDRAVISAOANO.VL_ORC)   − Budget acumulado até M-1 (YEARTODATE.VL_ORC)
+--                 Forecast = Forecast total do ano (PEDRAVISAOANO.VL_PROJ) − Actual acumulado até M-1 (YEARTODATE.VL_REAL)
+--               M-1 = mês da DT_REF da carga (mês em fechamento): YTD + YTG = ano.
+--               CD_PERIODO precisa aceitar 'YTG' (006_cd_periodo_ytg.sql, uma vez só)
 --   Rodar de novo no mesmo mês apaga e regrava só DT_REF + ID_DASH 16.
 -- ════════════════════════════════════════════════════════════════════
 SET XACT_ABORT ON;
@@ -340,7 +343,7 @@ WHERE
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------                                YEAR TO DATE (YTD)                         -----------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Uma linha por ano, no mês da DT_REF da carga (carga 2026-10-01 → 2025-10-01 e 2026-10-01), como o YEAR.
+-- Uma linha, no mês da DT_REF da carga (carga 2026-10-01 → 2026-10-01: jan a out/2026).
 -- Budget = VL_ORC; Act/Fcst = VL_REAL (o YTD é realizado: jan até o mês fechado).
 
 SELECT
@@ -376,8 +379,7 @@ FROM
 		SELECT 'Actual' AS Type, PVD.VL_REAL  * DASH.VL_FATOR AS Value
 	) AS UnpivotedData
 WHERE
-	PVD.DT_REF BETWEEN @DT_INI AND @DT_CARGA
-	AND MONTH(PVD.DT_REF) = MONTH(@DT_CARGA)
+	PVD.DT_REF = @DT_CARGA
 	AND DASH.ID_DASH = 16
 
 
@@ -389,24 +391,22 @@ WHERE
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------                                YEAR TO GO (YTG)                           -----------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Mesma regra do YTD: uma linha por ano, no mês da DT_REF da carga.
--- Budget = VL_ORC; Act/Fcst = VL_PROJ (o YTG é o restante do ano: não tem realizado).
--- Rótulo: F no ano da DT_REF; A nos anos anteriores.
+-- Restante do ano depois do mês da DT_REF da carga (M-1 = mês em fechamento), uma linha no mês da DT_REF:
+--   Budget   = Budget total do ano   (PEDRAVISAOANO.VL_ORC)  − Budget acumulado até M-1 (PEDRAVISAOYEARTODATE.VL_ORC)
+--   Forecast = Forecast total do ano (PEDRAVISAOANO.VL_PROJ) − Actual acumulado até M-1 (PEDRAVISAOYEARTODATE.VL_REAL)
 
 SELECT
-	DATEFROMPARTS(YEAR(PVG.DT_REF), MONTH(@DT_CARGA), 1) AS DT_REF,
-	PVG.ID_SISTEMA,
-	PVG.ID_SITE,
-	PVG.ID_OPERACAO,
-	PVG.ID_KPI,
+	@DT_CARGA AS DT_REF,
+	PVA.ID_SISTEMA,
+	PVA.ID_SITE,
+	PVA.ID_OPERACAO,
+	PVA.ID_KPI,
 	DASH.NM_KPIS_DASH AS 'NM_KPI',
 	DASH.ID_ORDEM,
 	CASE WHEN UnpivotedData.Type = 'Budget' THEN 8 ELSE 9 END AS 'ORDEM_GRAFICO',
 	CASE WHEN UnpivotedData.Type = 'Budget' THEN 0 ELSE 1 END AS 'ID_TIPO_VISAO',
 	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'Budget' ELSE 'Act/Fcst' END AS 'NM_TIPO_VISAO',
-	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'YTG B'
-				WHEN YEAR(PVG.DT_REF) < YEAR(@DT_CARGA) THEN 'YTG A'
-				ELSE 'YTG F' END AS 'NM_VISAO',
+	CASE WHEN UnpivotedData.Type = 'Budget' THEN 'YTG B' ELSE 'YTG F' END AS 'NM_VISAO',
 	DASH.SG_UNID,
 	DASH.VL_CASADECIMAL,
 	CASE WHEN UnpivotedData.Value IS NULL THEN 0 ELSE UnpivotedData.Value END AS 'VL_KPI',
@@ -414,22 +414,25 @@ SELECT
 	CASE WHEN UnpivotedData.Type = 'Budget' THEN 1 ELSE 3 END AS 'ID_TIPO_VISAO_VBM',
 	'YTG' AS 'CD_PERIODO',
 	6 AS 'ORDEM_VISAO',
-	YEAR(PVG.DT_REF) AS 'ORDEM_ANO',
+	PVA.ANO AS 'ORDEM_ANO',
 	MONTH(@DT_CARGA) AS 'ORDEM_PERIODO'
 
 FROM
-	IBP.PEDRAVISAOYEARTOGO PVG
+	IBP.PEDRAVISAOANO PVA
 	INNER JOIN IBP.DASHBOARD DASH
-		ON PVG.ID_SISTEMA = DASH.ID_SISTEMA
-		AND CONCAT(PVG.ID_SITE, '|', PVG.ID_OPERACAO, '|', PVG.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
+		ON PVA.ID_SISTEMA = DASH.ID_SISTEMA
+		AND CONCAT(PVA.ID_SITE, '|', PVA.ID_OPERACAO, '|', PVA.ID_KPI) = CONCAT(DASH.ID_SITE, '|', DASH.ID_OPERACAO, '|', DASH.ID_KPI)
+	LEFT JOIN IBP.PEDRAVISAOYEARTODATE PVD                     -- acumulado até M-1 (mês da DT_REF da carga)
+		ON PVD.ID_SISTEMA = PVA.ID_SISTEMA
+		AND CONCAT(PVD.ID_SITE, '|', PVD.ID_OPERACAO, '|', PVD.ID_KPI) = CONCAT(PVA.ID_SITE, '|', PVA.ID_OPERACAO, '|', PVA.ID_KPI)
+		AND PVD.DT_REF = @DT_CARGA
 	CROSS APPLY (
-		SELECT 'Budget' AS Type, PVG.VL_ORC  * DASH.VL_FATOR AS Value
+		SELECT 'Budget' AS Type, (ISNULL(PVA.VL_ORC, 0) - ISNULL(PVD.VL_ORC, 0)) * DASH.VL_FATOR AS Value
 		UNION ALL
-		SELECT 'Forecast' AS Type, PVG.VL_PROJ  * DASH.VL_FATOR AS Value
+		SELECT 'Forecast' AS Type, (ISNULL(PVA.VL_PROJ, 0) - ISNULL(PVD.VL_REAL, 0)) * DASH.VL_FATOR AS Value
 	) AS UnpivotedData
 WHERE
-	PVG.DT_REF BETWEEN @DT_INI AND @DT_CARGA
-	AND MONTH(PVG.DT_REF) = MONTH(@DT_CARGA)
+	PVA.ANO = YEAR(@DT_CARGA)
 	AND DASH.ID_DASH = 16
 
 ) AS COO
