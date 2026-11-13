@@ -191,7 +191,7 @@ test('SQL do FCF YEAR: a consulta de IBP.WATERFALL com site e ano inicial por pa
 
 test('mapearWaterfall: referência mais recente do ano, ordem, tipo e cinza pela configuração, subtotais inseridos', () => {
   const w = mapearWaterfall(WF, CONFIG);
-  assert.deepStrictEqual(w.colunas, { data: 'DT_REF', rotulo: 'DS_ITEM', valor: 'VL_ITEM', ordem: 'ID_ORDEM', tipo: null });
+  assert.deepStrictEqual(w.colunas, { data: 'DT_REF', rotulo: 'DS_ITEM', valor: 'VL_ITEM', ordem: 'ID_ORDEM', tipo: null, status: null, atualizacao: null });
   const it = w.anos[2026].itens;
   assert.strictEqual(w.anos[2026].dtRef, '2026-10-01T00:00:00.000Z');
   assert.deepStrictEqual(it[0], { tipo: 'tot', lbl: '2025 Net Debt', v: 1189 });
@@ -481,4 +481,18 @@ test('montarEbitda: sem Other Segments cadastrado, Others = VBM − Copper − N
   assert.ok(Math.abs(o.per[9].YEAR.b - (-0.2)) < 1e-9, String(o.per[9].YEAR.b));
   const a = montarAtualizacao([{ ID_SITE: 40, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'S', SEM_REAL: 0 }, { ID_SITE: 39, ID_OPERACAO: 11, ID_KPI: 73, SG_STATUS: 'N', SEM_REAL: 0 }], CONFIG_PADRAO, '2026-10');
   assert.strictEqual(a.cards['vbm.ebitda.out'].status, 'pendente');
+});
+
+test('mapearWaterfall: situação da referência pela coluna da própria IBP.WATERFALL (S/N)', () => {
+  const { mapearWaterfall } = require('../hob-api');
+  const linhas = [];
+  [['2025 Net Debt', 1189], ['EBITDA', 4665]].forEach(([n, v], i) => {
+    linhas.push({ DT_REF: new Date(Date.UTC(2026, 8, 1)), ID_SITE: 40, ID_ORDEM: i + 1, DS_ITEM: n, VL_ITEM: v, SG_STATUS: 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 9, 5)) });
+    linhas.push({ DT_REF: new Date(Date.UTC(2026, 9, 1)), ID_SITE: 40, ID_ORDEM: i + 1, DS_ITEM: n, VL_ITEM: v, SG_STATUS: i ? 'N' : 'S', DT_ATUALIZACAO: new Date(Date.UTC(2026, 10, 3)) });
+  });
+  const r = mapearWaterfall(linhas, CONFIG_PADRAO, 'fcfYear');
+  assert.strictEqual(r.colunas.status, 'SG_STATUS');
+  assert.strictEqual(r.colunas.data, 'DT_REF');
+  assert.deepStrictEqual(r.referencias.map((x) => x.situacao.status), ['ok', 'pendente']);
+  assert.strictEqual(r.referencias[1].situacao.dt, '2026-11-03T00:00:00.000Z');
 });
