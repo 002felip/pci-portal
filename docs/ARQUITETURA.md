@@ -69,7 +69,7 @@ pci-portal/
 ├── VBM-Stable-and-Capable/ ← SPC: PDFs, importação do PCI Master e dashboard
 ├── VBM-Vdt/                ← Value Driver Tree (Python)
 ├── VBM-Cockpit/            ← Strategic Cockpit (Python + React)
-└── .claude/skills/         ← skills do projeto (setup-dashboards, ajuste-responsividade, otimizacao-da-aplicacao)
+└── .claude/skills/         ← skills do projeto (setup-dashboards, vbm-design, ajuste-responsividade, otimizacao-da-aplicacao)
 ```
 
 **Nova aplicação = nova pasta + uma linha de montagem no `server.js`** (ou, dentro do Hub, o
@@ -295,6 +295,8 @@ flowchart TB
   (azul `#3cb5e5`, azul-escuro `#0d2640`), hero com fundo `Fundo_VBM_2400x1145.webp`.
 - **Padrão dos dashboards:** filtros no estilo do COO (rótulo em itálico, seletor BU › Site,
   segmentados e interruptores); cards, tabelas e gráficos SVG no estilo do dashboard do Kaizen.
+- **Design system:** skill [`vbm-design`](../.claude/skills/vbm-design/SKILL.md) (tokens claro/escuro
+  da marca VBM e do COO, Poppins local, filtros, cards, botões de ação, toast, acessibilidade).
 - **Responsividade:** skill [`ajuste-responsividade`](../.claude/skills/ajuste-responsividade/SKILL.md),
   com os pontos de quebra comuns (telas menores ≤ 1440 px ou ≤ 820 px de altura; maiores ≥ 1600,
   2200 e 3000 px) e o script `medir.js` para conferir. O Kaizen, o VDT e o Cockpit têm layout
@@ -348,5 +350,5 @@ flowchart TB
 4. **Aplicação Python:** use `montarAppPython` com uma porta interna livre (8103, …) e o comando do
    uvicorn; acrescente as bibliotecas ao `requirements.txt` da raiz.
 5. **Card na página inicial:** acrescente o card em `index.html` (`<nav class="cards">`).
-6. **Front-end:** aplique as skills `setup-dashboards` e `ajuste-responsividade`. Declare as variáveis no `app.yaml` com o
+6. **Front-end:** aplique as skills `setup-dashboards`, `vbm-design` e `ajuste-responsividade`. Declare as variáveis no `app.yaml` com o
    prefixo da aplicação.

@@ -1,0 +1,149 @@
+/* ════════════════════════════════════════════════════════════════════
+   VBM — tokens de tema (skill vbm-design)
+   Origem: COO Business Units Dashboard (semânticos e dados) + VBM Kaizen (marca).
+   Cole no <style> do dashboard (ou como assets/css/vbm-tokens.css). O tema é gravado
+   no <html> pela engrenagem da skill setup-dashboards: data-theme="light" | "dark".
+   Sem data-theme, segue o sistema (prefers-color-scheme).
+   Regra: toda cor da tela sai de um token; todo token tem o par escuro.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Marca (VBM Kaizen) — base das cores; prefira os tokens semânticos abaixo na tela ── */
+:root {
+  --vbm-blue:       #3CB5E5;   /* Azul-Vale: série realizada, destaques */
+  --vbm-blue-dark:  #1A8BBF;
+  --vbm-blue-deep:  #0D2640;
+  --vbm-blue-navy:  #041523;   /* barra superior, fundo escuro */
+  --vbm-blue-light: #7DD3F0;
+  --vbm-blue-pale:  #E8F7FD;
+  --vbm-green:      #007E7A;   /* Verde-Vale */
+  --vbm-grey:       #BCBEC0;   /* Cinza-Médio: Budget */
+  --vbm-steel:      #6E8CBA;   /* Azul-Aço: Plan */
+  /* Status de fluxo (Kaizen) */
+  --status-draft:    #888888;
+  --status-pending:  #C2770E;
+  --status-approved: #16A34A;
+  --status-rejected: #DC2626;
+  --status-review:   #3CB5E5;
+  /* Movimento */
+  --ease-out:    cubic-bezier(0.2, 1, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Semânticos de tela e de dados (COO Business Units Dashboard) ── */
+:root {
+  --page: #FFFFFF;
+  --text: #1F2937;
+  --text-soft: #6B7280;
+  --text-faint: #9CA3AF;
+  --line: #E5E7EB;
+  --accent: #1E8FC4;          /* títulos grandes (3,9:1 em branco, uso só em ≥24px) */
+  --accent-strong: #0B6E99;
+  --panel: #F3F4F5;
+  --chart-title: #1B7F7B;
+  --ink-strong: #111827;
+  --ink-soft: #6B7280;
+  --base-line: #D1D5DB;
+  --pill-bg: #FFFFFF;
+  --pill-line: rgba(15,23,42,.06);
+  --d-stroke: rgba(116,118,120,.45);
+  --d-hair: rgba(116,118,120,.30);
+  --badge-bg: rgba(31,41,55,.58);
+  --badge-text: #FFFFFF;
+  --serie-b: #BCBEC0;
+  --serie-a: #3CB5E5;
+  --serie-p: #9DB1CF;
+  --good: #007E7A;
+  --good-bg: rgba(0,126,122,.10);
+  --bad: #B91C1C;
+  --bad-bg: rgba(220,38,38,.09);
+  --flat: #5B5E61;
+  --flat-bg: rgba(116,118,120,.12);
+  --ctl-bg: #FFFFFF;
+  --ctl-border: rgba(13,38,64,.16);
+  --ctl-text: #1F2937;
+  --ctl-on-bg: #0B6E99;
+  --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --nav-bg: linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%);
+  --table-head: #0B6E99;
+
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B;
+    --text: #E8EEF5;
+    --text-soft: rgba(232,238,245,.66);
+    --text-faint: rgba(232,238,245,.42);
+    --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE;
+    --accent-strong: #7DD3F0;
+    --panel: #0C2438;
+    --chart-title: #5FD0C9;
+    --ink-strong: #F1F5F9;
+    --ink-soft: rgba(241,245,249,.62);
+    --base-line: rgba(255,255,255,.22);
+    --pill-bg: #0F2C44;
+    --pill-line: rgba(255,255,255,.10);
+    --d-stroke: rgba(226,232,240,.45);
+    --d-hair: rgba(226,232,240,.28);
+    --badge-bg: rgba(2,10,20,.55);
+    --serie-b: #8E949B;
+    --serie-p: #9DB1CF;
+    --good: #34C3B8;
+    --good-bg: rgba(52,195,184,.14);
+    --bad: #F87171;
+    --bad-bg: rgba(248,113,113,.14);
+    --flat: #B0B5BA;
+    --flat-bg: rgba(176,181,186,.14);
+    --ctl-bg: rgba(255,255,255,.05);
+    --ctl-border: rgba(255,255,255,.16);
+    --ctl-text: #E5EDF5;
+    --ctl-on-bg: #3CB5E5;
+    --ctl-on-text: #02101c;
+    --focus: #7DD3F0;
+    --table-head: #11577A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B;
+  --text: #E8EEF5;
+  --text-soft: rgba(232,238,245,.66);
+  --text-faint: rgba(232,238,245,.42);
+  --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE;
+  --accent-strong: #7DD3F0;
+  --panel: #0C2438;
+  --chart-title: #5FD0C9;
+  --ink-strong: #F1F5F9;
+  --ink-soft: rgba(241,245,249,.62);
+  --base-line: rgba(255,255,255,.22);
+  --pill-bg: #0F2C44;
+  --pill-line: rgba(255,255,255,.10);
+  --d-stroke: rgba(226,232,240,.45);
+  --d-hair: rgba(226,232,240,.28);
+  --badge-bg: rgba(2,10,20,.55);
+  --serie-b: #8E949B;
+  --serie-p: #9DB1CF;
+  --good: #34C3B8;
+  --good-bg: rgba(52,195,184,.14);
+  --bad: #F87171;
+  --bad-bg: rgba(248,113,113,.14);
+  --flat: #B0B5BA;
+  --flat-bg: rgba(176,181,186,.14);
+  --ctl-bg: rgba(255,255,255,.05);
+  --ctl-border: rgba(255,255,255,.16);
+  --ctl-text: #E5EDF5;
+  --ctl-on-bg: #3CB5E5;
+  --ctl-on-text: #02101c;
+  --focus: #7DD3F0;
+  --table-head: #11577A;
+  color-scheme: dark;
+}
+
+/* ── Ciclo / situação de atualização: âmbar, fora do par verde/vermelho de desempenho ── */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
+:root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }

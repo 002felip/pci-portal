@@ -30,7 +30,7 @@ Os dashboards do Hub são uma página só e cada pasta serve apenas `index.html`
    Sem ela: português e formato numérico pelo idioma do navegador.
 3. **Tema.** O JS grava `data-bg` (barra e painel) e `data-theme` (tokens do dashboard) no
    `<html>`. Defina as cores do dashboard em `:root` e `:root[data-theme="dark"]` (padrão
-   da skill `vbm-ecossistema`) e remova qualquer botão de tema próprio: o tema fica na
+   da skill `vbm-design`, arquivo `assets/vbm-tokens.css`) e remova qualquer botão de tema próprio: o tema fica na
    engrenagem.
 4. **Idioma.** Textos fixos com `data-i18n="chave"` (e `data-i18n-aria`, `data-i18n-title`,
    `data-i18n-ph`). Registre os textos do dashboard e aplique:

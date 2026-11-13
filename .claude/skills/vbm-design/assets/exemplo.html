@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exemplo VBM</title>
+<!-- Em um dashboard real: Poppins local (../assets/css/poppins.css do Hub) e a barra da skill setup-dashboards -->
+<link rel="stylesheet" href="vbm-tokens.css">
+<link rel="stylesheet" href="vbm-componentes.css">
+</head>
+<body>
+<main class="page">
+  <div class="dash-titulo">
+    <h2 class="dash-titulo-nome">Quartely Dashboard - Q4 2026 - October 2026</h2>
+    <span class="pill-wait"><span aria-hidden="true">◷</span> <span data-i18n="sit.pendente">Atualizações finais pendentes</span></span>
+    <div class="dash-acoes">
+      <button type="button" class="dash-acao" aria-label="Baixar dados em Excel" title="Baixar dados em Excel">X</button>
+      <button type="button" class="dash-acao" aria-label="Baixar todos os gráficos (PNG)" title="Baixar todos os gráficos (PNG)">▣</button>
+      <button type="button" class="dash-acao" id="tema" aria-label="Alternar tema" title="Alternar tema">◐</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filter"><span class="filter-label" id="lblVisao">Visão:</span>
+      <div class="seg" role="group" aria-labelledby="lblVisao">
+        <button type="button" aria-pressed="true">Mês</button><button type="button" aria-pressed="false">Trimestre</button><button type="button" aria-pressed="false">Ano</button>
+      </div></div>
+    <div class="filter"><span class="filter-label" id="lblUnid">Business Unit:</span>
+      <div class="unit"><button type="button" class="unit-trigger" aria-expanded="false" aria-labelledby="lblUnid">
+        <span class="unit-pais">Brasil</span><span class="unit-sep">›</span><span class="unit-site">Salobo</span></button></div></div>
+    <div class="filter"><span class="filter-label" id="lblDelta">Delta:</span>
+      <button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="lblDelta"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></button></div>
+  </div>
+
+  <section class="panel panel-prod">
+    <div class="panel-head">
+      <h3 class="panel-title">Production</h3>
+      <ul class="legend">
+        <li><span class="swatch" style="background:var(--serie-b)"></span>Budget</li>
+        <li><span class="swatch" style="background:var(--serie-p)"></span>Plan</li>
+        <li><span class="swatch" style="background:var(--serie-a)"></span>Act/Fcst</li>
+      </ul>
+    </div>
+    <p class="updated">Last updated 12/11/2026 14:30</p>
+  </section>
+</main>
+<div class="toast" role="status" aria-live="polite">Imagem PNG baixada.</div>
+<script>
+  // Só para o exemplo: no dashboard real o tema vem da engrenagem (setup-dashboards)
+  document.getElementById('tema').addEventListener('click', () => {
+    const h = document.documentElement;
+    h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+  });
+  document.querySelectorAll('.seg').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+  document.querySelectorAll('.switch').forEach(s => s.addEventListener('click', () => s.setAttribute('aria-checked', String(s.getAttribute('aria-checked') !== 'true'))));
+</script>
+</body>
+</html>
