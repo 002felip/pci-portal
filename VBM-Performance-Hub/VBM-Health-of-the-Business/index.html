@@ -1337,7 +1337,23 @@ window.HOB_CARREGAR(function (aviso) {
       }).join('');
     });
     document.getElementById('deltaSwitch').setAttribute('aria-checked', String(state.delta));
+    larguraMeses();
   }
+  // Botões de mês com largura única (como o COO): cabe o nome de mês mais longo do idioma (ex.: "September",
+  // "Fevereiro"), para a barra de filtros não mudar de tamanho ao trocar de trimestre
+  var reguaMes = document.createElement('canvas').getContext('2d');
+  function larguraMeses() {
+    var botoes = document.querySelectorAll('[data-filter="mes"] button');
+    if (!botoes.length) return;
+    var cs = getComputedStyle(botoes[0]), nomes = MESES_LONGOS[S.idioma] || MESES_LONGOS.en;
+    reguaMes.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var maior = 0;
+    for (var i = 0; i < 12; i++) maior = Math.max(maior, reguaMes.measureText(nomes[i]).width);
+    var w = Math.ceil(maior + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + 'px';
+    botoes.forEach(function (b) { b.style.width = w; });
+  }
+  // a fonte (Poppins) chega depois: mede de novo quando carregar
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(larguraMeses);
   document.querySelector('.filters').addEventListener('click', function (ev) {
     var b = ev.target.closest('button[data-k]'); if (!b) return;
     var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
