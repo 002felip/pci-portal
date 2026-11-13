@@ -67,13 +67,13 @@ test('003_carga_mensal_hob.sql: a carga do COO (003_carga_mensal_coo.sql) com ID
   const trecho = (t, a, b) => t.slice(t.indexOf(a), t.indexOf(b, t.indexOf(a)));
   assert.strictEqual(trecho(s, 'DECLARE @DT_CARGA', ';'), trecho(coo, 'DECLARE @DT_CARGA', ';'));
   assert.strictEqual(trecho(s, 'FROM (', 'AND DASH.ID_DASH = 16').replace(/16/g, 'X'), trecho(coo, 'FROM (', 'AND DASH.ID_DASH = 15').replace(/15/g, 'X'));
-  // YTD e YTG: uma linha por ano, no mês da DT_REF da carga (regra do YEAR); YTG Act/Fcst = VL_PROJ
-  for (const [cd, ordem, tab] of [['YTD', 4, 'PEDRAVISAOYEARTODATE PVD'], ['YTG', 6, 'PEDRAVISAOYEARTOGO PVG']]) {
-    assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), cd);
-    assert.ok(s.includes('IBP.' + tab), tab);
-  }
-  assert.strictEqual((s.match(/AND MONTH\(PV[DG]\.DT_REF\) = MONTH\(@DT_CARGA\)/g) || []).length, 2);
-  assert.match(s, /SELECT 'Forecast' AS Type, PVG\.VL_PROJ  \* DASH\.VL_FATOR AS Value/);
+  // YTD e YTG: uma linha só, no mês da DT_REF da carga (ano da carga)
+  for (const [cd, ordem] of [['YTD', 4], ['YTG', 6]]) assert.match(s, new RegExp(`'${cd}' AS 'CD_PERIODO',\\s*\\n\\s*${ordem} AS 'ORDEM_VISAO'`), cd);
+  assert.match(s, /PVD\.DT_REF = @DT_CARGA\s*\n\s*AND DASH\.ID_DASH = 16/); // YTD sem o ano anterior
+  // YTG = total do ano − acumulado até M-1 (mês da DT_REF): Budget − Budget YTD; Forecast − Actual YTD
+  assert.match(s, /\(ISNULL\(PVA\.VL_ORC, 0\) - ISNULL\(PVD\.VL_ORC, 0\)\) \* DASH\.VL_FATOR/);
+  assert.match(s, /\(ISNULL\(PVA\.VL_PROJ, 0\) - ISNULL\(PVD\.VL_REAL, 0\)\) \* DASH\.VL_FATOR/);
+  assert.match(s, /PVA\.ANO = YEAR\(@DT_CARGA\)/);
   const ativas = s.split('\n').filter((l) => !l.trim().startsWith('--'));
   for (const l of ativas) if (/CONCAT\([^)]*\.ID_SITE/.test(l)) assert.match(l, /'\|'/, l.trim());
 });

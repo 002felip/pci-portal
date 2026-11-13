@@ -66,7 +66,7 @@ Mesma estrutura dos demais dashboards do Hub (COO e COO Historical):
 | `database/001_hob_dashboard.sql` | Leitura de uma carga (`DT_REF`) em `IBP.PHUB_PERFORMANCESTUDIO` + cadastro em `IBP.DASHBOARD` (`@idDash`, `@dtRef`) |
 | `database/002_hob_waterfall.sql` | Pontes: `IBP.WATERFALL` do site 40 desde 2025 — tipo 2 = FCF YEAR, tipo 3 = 2026 EBITDA YEAR (`@site`, `@tipo`, `@anoIni`) |
 | `database/004_hob_ebitda.sql` | Um KPI da carga do COO em `IBP.PHUB_PERFORMANCESTUDIO` (`@idDash` 15, `@idKpi`, `@dtRef`): EBITDA (73) e as séries de `coo.kpis` (rotas `api/ebitda` e `api/coo`) |
-| `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO`, `ID_DASH` 16: idêntica ao `003_carga_mensal_coo.sql` do COO (DT_REF = mês em fechamento; MONTH, QUARTER e YEAR), desde 2025, mais YTD e YTG (uma linha por ano no mês da DT_REF) |
+| `database/003_carga_mensal_hob.sql` | Carga mensal em `IBP.PHUB_PERFORMANCESTUDIO`, `ID_DASH` 16: idêntica ao `003_carga_mensal_coo.sql` do COO (DT_REF = mês em fechamento; MONTH, QUARTER e YEAR), desde 2025, mais YTD (YEARTODATE do mês da DT_REF) e YTG (total do ano − acumulado até o mês da DT_REF), uma linha só, no ano da carga |
 | `database/003b_conferencia_carga_hob.sql` | A mesma consulta da carga, só leitura (sem gravar): mostra as linhas e os campos que o `003` gravaria |
 | `database/006_cd_periodo_ytg.sql` | Uma vez só: a regra de `CD_PERIODO` da tabela passa a aceitar `YTG` |
 | `database/007_status_atualizacao_hob.sql` | Depois da carga: idêntico ao `004_status_atualizacao_coo.sql` (SG_STATUS/DT_ATUALIZACAO por KPI e DT_IND), com `ID_DASH` 16 |
