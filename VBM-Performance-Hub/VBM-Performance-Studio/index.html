@@ -241,6 +241,8 @@ html:-webkit-full-screen .topnav { display: none; }
 .dash-acao:hover:not(:disabled) { background: #0B6E99; color: #fff; border-color: #0B6E99; }
 .dash-acao:focus-visible { outline: 2px solid #3CB5E5; outline-offset: 2px; }
 .dash-acao:disabled { opacity: .45; cursor: not-allowed; }
+.dash-menu { position: relative; display: flex; }
+.dash-menu .chart-export-menu { z-index: 40; }
 .dash-acao.is-pendente { background: #0B6E99; color: #fff; border-color: #0B6E99; }
 @media (max-width: 760px) { .dash-titulo { padding: 24px 178px 0 16px; } .dash-titulo-nome { font-size: .92rem; } }
 .settings-btn {
@@ -2121,7 +2123,13 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
     <button type="button" class="dash-acao" id="dashSalvar" aria-label="Salvar dashboard no banco" title="Salvar dashboard no banco" data-i18n-aria="ui.dash_salvar" data-i18n-title="ui.dash_salvar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashDesfazer" aria-label="Desfazer alterações não salvas" title="Desfazer alterações não salvas" data-i18n-aria="ui.dash_desfazer" data-i18n-title="ui.dash_desfazer"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashExcel" aria-label="Baixar dados em Excel" title="Baixar dados em Excel" data-i18n-aria="ui.baixar_excel" data-i18n-title="ui.baixar_excel"><i class="fa-solid fa-file-excel" aria-hidden="true"></i></button>
-    <button type="button" class="dash-acao" id="dashImagens" aria-label="Baixar todos os gráficos (PNG)" title="Baixar todos os gráficos (PNG)" data-i18n-aria="ui.baixar_imagens" data-i18n-title="ui.baixar_imagens"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
+    <div class="dash-menu">
+      <button type="button" class="dash-acao" id="dashImagens" aria-haspopup="menu" aria-expanded="false" aria-label="Baixar todos os gráficos" title="Baixar todos os gráficos" data-i18n-aria="ui.baixar_imagens" data-i18n-title="ui.baixar_imagens"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
+      <div class="chart-export-menu" id="dashImagensMenu" role="menu" hidden>
+        <button type="button" role="menuitem" data-baixar="png" data-i18n="ui.baixar_png_separados">Imagens separadas (PNG, .zip)</button>
+        <button type="button" role="menuitem" data-baixar="pdf" data-i18n="ui.baixar_pdf_junto">Todos em um PDF</button>
+      </div>
+    </div>
     <button type="button" class="dash-acao" id="dashTelaCheia" aria-pressed="false" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.tela_cheia" data-i18n-title="ui.tela_cheia"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
   </div>
 </div>
@@ -2410,7 +2418,10 @@ const I18N_UI = {
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
-  'ui.baixar_imagens': ['Baixar todos os gráficos (PNG)', 'Download all charts (PNG)'],
+  'ui.baixar_imagens': ['Baixar todos os gráficos', 'Download all charts'],
+  'ui.baixar_png_separados': ['Imagens separadas (PNG, .zip)', 'Separate images (PNG, .zip)'],
+  'ui.baixar_pdf_junto': ['Todos em um PDF', 'All in one PDF'],
+  'ui.pdf_ok': ['{n} gráficos baixados em PDF.', '{n} charts downloaded as PDF.'],
   'ui.imagens_gerando': ['Gerando as imagens dos gráficos…', 'Generating chart images…'],
   'ui.imagens_ok': ['{n} gráficos baixados em PNG (arquivo .zip).', '{n} charts downloaded as PNG (.zip file).'],
   'ui.graficos_zip': ['gráficos', 'charts'],
@@ -4518,7 +4529,7 @@ function cssPoppins() {
   }
   return poppinsCssCache;
 }
-async function graficoParaPng(card, escala = 2) {
+async function graficoParaPng(card, escala = 2, tipo = 'image/png') {
   const alvo = card.querySelector('.chart-container');
   const { width: w, height: h } = alvo.getBoundingClientRect();
   const clone = alvo.cloneNode(true);
@@ -4544,9 +4555,10 @@ async function graficoParaPng(card, escala = 2) {
   const ctx = canvas.getContext('2d');
   // Sem preencher o canvas: o card traz o próprio fundo e o lado de fora
   // dos cantos arredondados fica transparente no PNG
+  if (tipo === 'image/jpeg') { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height); } // JPEG não tem transparência
   ctx.scale(escala, escala);
   ctx.drawImage(img, 0, 0, w, h);
-  return new Promise((ok, erro) => canvas.toBlob(b => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'));
+  return new Promise((ok, erro) => canvas.toBlob(b => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), tipo, .95));
 }
 function nomeArquivoGrafico(card) {
   const titulo = (card.querySelector('.chart-title')?.textContent || 'grafico').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').slice(0, 80);
@@ -6908,7 +6920,30 @@ function baixarBlob(blob, nome) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
-async function baixarImagensDashboard() {
+// PDF sem biblioteca: [{ bytes (JPEG), w, h }] → Blob, uma página A4 paisagem por imagem, centralizada
+function montarPdf(imagens) {
+  const enc = new TextEncoder(), partes = [], offs = [];
+  let tam = 0;
+  const add = x => { const b = typeof x === 'string' ? enc.encode(x) : x; partes.push(b); tam += b.length; };
+  const obj = (n, corpo) => { offs[n] = tam; add(`${n} 0 obj\n`); corpo(); add('\nendobj\n'); };
+  const PW = 842, PH = 595, M = 24, n = imagens.length;
+  add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, () => add('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2, () => add(`<< /Type /Pages /Count ${n} /Kids [${imagens.map((_, i) => `${3 + i * 3} 0 R`).join(' ')}] >>`));
+  imagens.forEach((im, i) => {
+    const pg = 3 + i * 3, ct = pg + 1, ig = pg + 2;
+    const k = Math.min((PW - 2 * M) / im.w, (PH - 2 * M) / im.h), w = im.w * k, h = im.h * k;
+    const cmd = `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${((PW - w) / 2).toFixed(2)} ${((PH - h) / 2).toFixed(2)} cm /Im0 Do Q`;
+    obj(pg, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 ${ig} 0 R >> >> /Contents ${ct} 0 R >>`));
+    obj(ct, () => add(`<< /Length ${cmd.length} >>\nstream\n${cmd}\nendstream`));
+    obj(ig, () => { add(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`); add(im.bytes); add('\nendstream'); });
+  });
+  const total = 3 + n * 3, xref = tam;
+  add(`xref\n0 ${total}\n0000000000 65535 f \n${offs.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('')}`);
+  add(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(partes, { type: 'application/pdf' });
+}
+async function baixarImagensDashboard(formato = 'png') {
   const btn = $qe('dashImagens');
   if (!charts.length || btn.disabled) return;
   btn.disabled = true;
@@ -6916,6 +6951,19 @@ async function baixarImagensDashboard() {
   try {
     // Ordem do quadro: de cima para baixo, da esquerda para a direita
     const lista = [...charts].sort((a, b) => (a.pos.y - b.pos.y) || (a.pos.x - b.pos.x));
+    const base = ((dash.atual && dash.atual.nome) || 'VBM Performance Studio').replace(/[\\/:*?"<>|]+/g, '-').trim();
+    if (formato === 'pdf') {
+      const imagens = [];
+      for (const c of lista) {
+        const blob = await graficoParaPng(c.el, 3, 'image/jpeg');
+        const bmp = await createImageBitmap(blob);
+        imagens.push({ bytes: new Uint8Array(await blob.arrayBuffer()), w: bmp.width, h: bmp.height });
+        bmp.close();
+      }
+      baixarBlob(montarPdf(imagens), `${base}.pdf`);
+      mostrarAviso(tx('ui.pdf_ok', { n: imagens.length }));
+      return;
+    }
     const usados = new Set(), arquivos = [];
     for (const [i, c] of lista.entries()) {
       const blob = await graficoParaPng(c.el, 3);
@@ -6926,7 +6974,6 @@ async function baixarImagensDashboard() {
     }
     if (arquivos.length === 1) baixarBlob(arquivos[0].blob, arquivos[0].nome.replace(/^01 - /, ''));
     else {
-      const base = ((dash.atual && dash.atual.nome) || 'VBM Performance Studio').replace(/[\\/:*?"<>|]+/g, '-').trim();
       baixarBlob(montarZip(arquivos), `${base} - ${tx('ui.graficos_zip')}.zip`);
     }
     mostrarAviso(tx('ui.imagens_ok', { n: arquivos.length }));
@@ -7640,7 +7687,12 @@ function initDashboards() {
   $qe('dashDesfazer').addEventListener('click', desfazerAlteracoesDash);
   iniciarTelaCheia();
   $qe('dashExcel').addEventListener('click', baixarExcelDashboard);
-  $qe('dashImagens').addEventListener('click', baixarImagensDashboard);
+  // Baixar todos: menu com PNG separados (.zip) ou um PDF
+  const menuImg = $qe('dashImagensMenu'), abrirMenuImg = abrir => { menuImg.hidden = !abrir; $qe('dashImagens').setAttribute('aria-expanded', String(abrir)); };
+  $qe('dashImagens').addEventListener('click', e => { e.stopPropagation(); abrirMenuImg(menuImg.hidden); if (!menuImg.hidden) menuImg.querySelector('button').focus(); });
+  menuImg.addEventListener('click', e => { const b = e.target.closest('[data-baixar]'); if (!b) return; abrirMenuImg(false); baixarImagensDashboard(b.dataset.baixar); });
+  document.addEventListener('click', e => { if (!e.target.closest('.dash-menu')) abrirMenuImg(false); });
+  menuImg.addEventListener('keydown', e => { if (e.key === 'Escape') { abrirMenuImg(false); $qe('dashImagens').focus(); } });
   $qe('dashSituacao').addEventListener('click', alternarFocoPendentes);
   renderDash();
   // Nenhum dashboard abre sozinho, exceto o que estava aberto antes de atualizar a página (?dash=)
