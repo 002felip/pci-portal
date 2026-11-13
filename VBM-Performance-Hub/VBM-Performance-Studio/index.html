@@ -2121,6 +2121,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
     <button type="button" class="dash-acao" id="dashSalvar" aria-label="Salvar dashboard no banco" title="Salvar dashboard no banco" data-i18n-aria="ui.dash_salvar" data-i18n-title="ui.dash_salvar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashDesfazer" aria-label="Desfazer alterações não salvas" title="Desfazer alterações não salvas" data-i18n-aria="ui.dash_desfazer" data-i18n-title="ui.dash_desfazer"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashExcel" aria-label="Baixar dados em Excel" title="Baixar dados em Excel" data-i18n-aria="ui.baixar_excel" data-i18n-title="ui.baixar_excel"><i class="fa-solid fa-file-excel" aria-hidden="true"></i></button>
+    <button type="button" class="dash-acao" id="dashImagens" aria-label="Baixar todos os gráficos (PNG)" title="Baixar todos os gráficos (PNG)" data-i18n-aria="ui.baixar_imagens" data-i18n-title="ui.baixar_imagens"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
     <button type="button" class="dash-acao" id="dashTelaCheia" aria-pressed="false" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.tela_cheia" data-i18n-title="ui.tela_cheia"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
   </div>
 </div>
@@ -2409,6 +2410,11 @@ const I18N_UI = {
   'ui.dash_desfazer': ['Desfazer alterações não salvas', 'Undo unsaved changes'],
   'ui.tela_cheia': ['Tela cheia', 'Full screen'],
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
+  'ui.baixar_imagens': ['Baixar todos os gráficos (PNG)', 'Download all charts (PNG)'],
+  'ui.imagens_gerando': ['Gerando as imagens dos gráficos…', 'Generating chart images…'],
+  'ui.imagens_ok': ['{n} gráficos baixados em PNG (arquivo .zip).', '{n} charts downloaded as PNG (.zip file).'],
+  'ui.graficos_zip': ['gráficos', 'charts'],
+  'ui.imagens_falha': ['Não foi possível gerar as imagens dos gráficos.', 'Could not generate the chart images.'],
   'ui.grafico_vazio': ['Gráfico em branco: escolha o Produto e os Horizontes em Filtros.', 'Blank chart: choose the Product and Horizons in Filters.'],
   'ui.novo_grafico': ['Novo gráfico', 'New chart'],
   'ui.grafico_vazio_criado': ['Gráfico adicionado: escolha os filtros para montá-lo.', 'Chart added: choose the filters to build it.'],
@@ -4652,6 +4658,8 @@ function onChartShortcut(e) {
 function updateChartActionButtons() {
   const xl = document.getElementById('dashExcel');
   if (xl) xl.disabled = !charts.length;
+  const im = document.getElementById('dashImagens');
+  if (im) im.disabled = !charts.length;
   agendarResumoSituacao();
   const rm = document.getElementById('qeDel');
   if (!rm) return;
@@ -6761,7 +6769,7 @@ function atualizarEstadoDash() {
   const a = dash.atual, pendente = dashPendente(a), acoes = $qe('dashAcoes');
   if (!acoes) return;
   $qe('dashSalvar').hidden = $qe('dashDesfazer').hidden = !podeAlterar(a);
-  $qe('dashExcel').disabled = !charts.length;
+  $qe('dashExcel').disabled = $qe('dashImagens').disabled = !charts.length;
   $qe('dashSalvar').disabled = $qe('dashDesfazer').disabled = !pendente || dash.gravando;
   $qe('dashSalvar').classList.toggle('is-pendente', pendente);
 }
@@ -6865,6 +6873,69 @@ function dadosDosGraficosParaExcel() {
     editorHold--;
   }
   return out;
+}
+
+// ── Todos os gráficos em PNG: a mesma imagem do botão de cada gráfico (graficoParaPng), em 3x
+// para manter a nitidez ao ampliar ou colar em slides; vários gráficos vão num .zip ──
+const CRC32 = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC32[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+// ZIP sem compressão (PNG já é comprimido): [{ nome, bytes }] → Blob
+function montarZip(arquivos) {
+  const enc = new TextEncoder(), partes = [], central = [];
+  const d = new Date(), hora = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const data = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  let pos = 0;
+  arquivos.forEach(({ nome, bytes }) => {
+    const n = enc.encode(nome), crc = crc32(bytes);
+    const cab = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, hora, 2], [12, data, 2], [14, crc, 4], [18, bytes.length, 4], [22, bytes.length, 4], [26, n.length, 2], [28, 0, 2]]
+      .forEach(([o, v, t]) => (t === 4 ? cab.setUint32(o, v, true) : cab.setUint16(o, v, true)));
+    const cen = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, hora, 2], [14, data, 2], [16, crc, 4], [20, bytes.length, 4], [24, bytes.length, 4], [28, n.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, pos, 4]]
+      .forEach(([o, v, t]) => (t === 4 ? cen.setUint32(o, v, true) : cen.setUint16(o, v, true)));
+    partes.push(cab, n, bytes); central.push(cen, n);
+    pos += 30 + n.length + bytes.length;
+  });
+  const tam = central.reduce((s, x) => s + x.byteLength, 0), fim = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [8, arquivos.length, 2], [10, arquivos.length, 2], [12, tam, 4], [16, pos, 4]]
+    .forEach(([o, v, t]) => (t === 4 ? fim.setUint32(o, v, true) : fim.setUint16(o, v, true)));
+  return new Blob([...partes, ...central, fim], { type: 'application/zip' });
+}
+// Nome do arquivo baixado sem acentos: alguns navegadores trocam um nome com "á"/"ç" por "download"
+function baixarBlob(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '') });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+async function baixarImagensDashboard() {
+  const btn = $qe('dashImagens');
+  if (!charts.length || btn.disabled) return;
+  btn.disabled = true;
+  mostrarAviso(tx('ui.imagens_gerando'));
+  try {
+    // Ordem do quadro: de cima para baixo, da esquerda para a direita
+    const lista = [...charts].sort((a, b) => (a.pos.y - b.pos.y) || (a.pos.x - b.pos.x));
+    const usados = new Set(), arquivos = [];
+    for (const [i, c] of lista.entries()) {
+      const blob = await graficoParaPng(c.el, 3);
+      let nome = `${String(i + 1).padStart(2, '0')} - ${nomeArquivoGrafico(c.el)}`;
+      while (usados.has(nome)) nome = nome.replace(/\.png$/, ' (2).png');
+      usados.add(nome);
+      arquivos.push({ nome, bytes: new Uint8Array(await blob.arrayBuffer()), blob });
+    }
+    if (arquivos.length === 1) baixarBlob(arquivos[0].blob, arquivos[0].nome.replace(/^01 - /, ''));
+    else {
+      const base = ((dash.atual && dash.atual.nome) || 'VBM Performance Studio').replace(/[\\/:*?"<>|]+/g, '-').trim();
+      baixarBlob(montarZip(arquivos), `${base} - ${tx('ui.graficos_zip')}.zip`);
+    }
+    mostrarAviso(tx('ui.imagens_ok', { n: arquivos.length }));
+  } catch (err) {
+    console.error('[performance-hub] imagens:', err);
+    mostrarAviso(tx('ui.imagens_falha'), true);
+  } finally {
+    btn.disabled = !charts.length;
+  }
 }
 
 async function baixarExcelDashboard() {
@@ -7569,6 +7640,7 @@ function initDashboards() {
   $qe('dashDesfazer').addEventListener('click', desfazerAlteracoesDash);
   iniciarTelaCheia();
   $qe('dashExcel').addEventListener('click', baixarExcelDashboard);
+  $qe('dashImagens').addEventListener('click', baixarImagensDashboard);
   $qe('dashSituacao').addEventListener('click', alternarFocoPendentes);
   renderDash();
   // Nenhum dashboard abre sozinho, exceto o que estava aberto antes de atualizar a página (?dash=)
