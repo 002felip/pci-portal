@@ -1220,8 +1220,6 @@ window.HOB_CARREGAR(function (aviso) {
     if (!F || !F.ok || !mc) return null;
     var alvo = Math.min(state.ano * 12 + state.mes, mc.ano * 12 + mc.mes);
     var r = F.refs.filter(function (x) { return x.ano * 12 + x.mes <= alvo; }).pop();
-    // a própria IBP.WATERFALL diz se a referência do mês está atualizada (coluna de situação)
-    if (r && r.ano * 12 + r.mes >= alvo && r.situacao) return r.situacao.status === 'ok' ? { status: 'ok', dt: r.situacao.dt } : { status: 'pendente', dt: r.situacao.dt };
     if (r && r.ano * 12 + r.mes >= alvo) return { status: 'ok' };
     return { status: 'pendente', det: r ? S.t('c.ultimaRef', { ref: mesesCurtos()[r.mes - 1] + '/' + r.ano }) : S.t('c.semRef') };
   }
