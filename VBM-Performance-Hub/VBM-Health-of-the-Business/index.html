@@ -804,7 +804,7 @@ window.HOB_CARREGAR(function (aviso) {
     'pt-BR': { 'c.pendente': 'Atualizações finais pendentes', 'c.ultima': 'Última atualização recebida: {dt}', 'c.nenhuma': 'Nenhuma atualização recebida neste ciclo',
       'c.resumo': '{n} de {total} gráficos', 'c.resumoTxt': 'com atualizações finais pendentes', 'c.tudoOk': 'Todos os gráficos atualizados para {mes}', 'c.titulo': 'Ciclo de {mes} de {ano}',
       'c.info': 'Gráficos que ainda não receberam a atualização final do mês selecionado. Clique para ir até o gráfico.', 'c.destacar': 'Destacar gráficos pendentes', 'c.mesVazio': 'Mês aguardando atualização final',
-      'c.ultimaRef': 'Última referência no banco: {ref}', 'c.semRef': 'Sem referência no banco para o mês', 'c.indisp': 'Situação da atualização indisponível', 'c.semReal': 'Realizado de {mes} ainda não carregado', 'eb.outCalc': 'Others = VBM − Copper − Nickel',
+      'c.ultimaRef': 'Última referência no banco: {ref}', 'c.semRefCiclo': 'IBP.WATERFALL sem a referência {ref}', 'c.semRef': 'Sem referência no banco para o mês', 'c.indisp': 'Situação da atualização indisponível', 'c.semReal': 'Realizado de {mes} ainda não carregado', 'eb.outCalc': 'Others = VBM − Copper − Nickel',
       'db.semKpi': 'KPI de "{ind}" não encontrado no cadastro do dashboard (IBP.DASHBOARD)', 'l.doBanco': '{lista} do banco', 'eb.semCiclo': 'Sem carga do dashboard (ID_DASH 16) em IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'KPI EBITDA (ID_KPI 73) sem linhas na carga do ID_DASH 16', 'f.ciclo': 'Ciclo:', 'l.desat': 'Dados de ', 'f.unit': 'Business Units:', 'f.year': 'Ano:', 'f.quarter': 'Trimestre:', 'f.month': 'Mês:',
       'a.filtros': 'Dashboard e filtros', 'a.legenda': 'Legenda', 'l.upd': 'Última atualização:', 'l.demo': 'Dados demo', 'l.demoErro': 'Dados demo · banco indisponível',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Tela cheia', 'g.var': 'variação', 'g.semDados': 'Sem dados para o período',
@@ -816,7 +816,7 @@ window.HOB_CARREGAR(function (aviso) {
     en: { 'c.pendente': 'Pending final updates', 'c.ultima': 'Last update received: {dt}', 'c.nenhuma': 'No update received for this cycle',
       'c.resumo': '{n} of {total} charts', 'c.resumoTxt': 'pending final updates', 'c.tudoOk': 'All charts updated for {mes}', 'c.titulo': '{mes} {ano} cycle',
       'c.info': 'Charts that have not received the final update for the selected month yet. Click to go to the chart.', 'c.destacar': 'Highlight pending charts', 'c.mesVazio': 'Month awaiting final update',
-      'c.ultimaRef': 'Latest reference in the database: {ref}', 'c.semRef': 'No reference in the database for the month', 'c.indisp': 'Update status unavailable', 'c.semReal': '{mes} actual not loaded yet', 'eb.outCalc': 'Others = VBM − Copper − Nickel',
+      'c.ultimaRef': 'Latest reference in the database: {ref}', 'c.semRefCiclo': 'IBP.WATERFALL has no {ref} reference', 'c.semRef': 'No reference in the database for the month', 'c.indisp': 'Update status unavailable', 'c.semReal': '{mes} actual not loaded yet', 'eb.outCalc': 'Others = VBM − Copper − Nickel',
       'db.semKpi': 'KPI for "{ind}" not found in the dashboard registry (IBP.DASHBOARD)', 'l.doBanco': '{lista} from database', 'eb.semCiclo': 'No dashboard load (ID_DASH 16) in IBP.PHUB_PERFORMANCESTUDIO', 'eb.semLinhas': 'EBITDA KPI (ID_KPI 73) has no rows in the ID_DASH 16 load', 'f.ciclo': 'Cycle:', 'l.desat': 'Data from ', 'f.unit': 'Business Units:', 'f.year': 'Year:', 'f.quarter': 'Quarter:', 'f.month': 'Month:',
       'a.filtros': 'Dashboard and filters', 'a.legenda': 'Legend', 'l.upd': 'Last updated:', 'l.demo': 'Demo data', 'l.demoErro': 'Demo data · database unavailable',
       's.drivers': 'Production and Finance drivers', 'fs.on': 'Full screen', 'g.var': 'change', 'g.semDados': 'No data for the period',
@@ -1218,12 +1218,13 @@ window.HOB_CARREGAR(function (aviso) {
   function situacaoPonte(cfg) {
     var F = window.HOB_PONTES && window.HOB_PONTES[cfg.ind], mc = mesCiclo();
     if (!F || !F.ok || !mc) return null;
-    var alvo = Math.min(state.ano * 12 + state.mes, mc.ano * 12 + mc.mes);
-    var r = F.refs.filter(function (x) { return x.ano * 12 + x.mes <= alvo; }).pop();
-    // a própria IBP.WATERFALL diz se a referência do mês está atualizada (coluna de situação)
-    if (r && r.ano * 12 + r.mes >= alvo && r.situacao) return r.situacao.status === 'ok' ? { status: 'ok', dt: r.situacao.dt } : { status: 'pendente', dt: r.situacao.dt };
-    if (r && r.ano * 12 + r.mes >= alvo) return { status: 'ok' };
-    return { status: 'pendente', det: r ? S.t('c.ultimaRef', { ref: mesesCurtos()[r.mes - 1] + '/' + r.ano }) : S.t('c.semRef') };
+    // Regra: a IBP.WATERFALL tem a data de referência (DT_REF) do ciclo? Tem → atualizado; não tem → pendente.
+    // Meses anteriores ao do ciclo já estão fechados (como nos demais gráficos)
+    var ciclo = mc.ano * 12 + mc.mes;
+    if (state.ano * 12 + state.mes < ciclo) return { status: 'ok' };
+    if (F.refs.some(function (x) { return x.ano * 12 + x.mes >= ciclo; })) return { status: 'ok' };
+    var r = F.refs[F.refs.length - 1], refCiclo = mesesCurtos()[mc.mes - 1] + '/' + mc.ano;
+    return { status: 'pendente', det: S.t('c.semRefCiclo', { ref: refCiclo }) + (r ? ' · ' + S.t('c.ultimaRef', { ref: mesesCurtos()[r.mes - 1] + '/' + r.ano }) : '') };
   }
   function situacao(cfg) {
     if (cfg.tipo === 'ponte') return situacaoPonte(cfg);
