@@ -56,7 +56,7 @@ Fila pessoal do ciclo ativo: cards a preencher (rascunho ou devolvidos), decisõ
 comentários sem resposta e ações atribuídas.
 
 - **Menu no topo**, centralizado na própria barra (como as opções do Kaizen), só texto e com o item ativo sublinhado;
-  até 1080 px vira gaveta aberta pelo botão de menu. Cada perfil vê só as telas que pode usar (§6.4):
+  em janelas de até 1080 px vira gaveta aberta pelo botão de menu. Cada perfil vê só as telas que pode usar (§6.4):
   Painel do ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
 - **Banner** com o resumo por tipo; cada linha filtra a fila. "Paradas ou atrasadas" conta os itens há
   mais de `parametros.diasParado` dias úteis no mesmo nível (RN-14) ou com prazo vencido.
@@ -72,19 +72,15 @@ comentários sem resposta e ações atribuídas.
 
 ## Responsividade
 
-Camada `[RESPONSIVO]` no fim do `<style>` (skill responsividade), sem editar os CSS copiados das skills:
+Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo.
 
 - **Raiz fluida:** `html { font-size: clamp(1rem, 0.357vw + 0.643rem, 1.5rem) }` (16px até 1600px, 24px em
   3840px); layout em `rem`; barra com altura fluida (`--barra`).
-- **Breakpoints só estruturais:** 1080px (menu em gaveta, banner e abertura em uma coluna) e 720px
-  (fatos e jornada empilhados). Pouca altura (≤ 820px) compacta banner e abertura.
-- **Cartão da fila por container query** (`@container fila`): 3 arranjos pela largura do próprio cartão;
-  abaixo de 20rem o ícone decorativo sai.
-- **Toque:** alvos ≥ 44px e campos ≥ 16px com `pointer: coarse`; hover só com `hover: hover`.
+- **Breakpoint estrutural:** 1080px (menu em gaveta, banner e abertura em uma coluna). Pouca altura
+  (≤ 820px, notebook com escala de 125–150%) compacta banner e abertura.
+- **Cartão da fila por container query** (`@container fila`), pela largura do próprio cartão.
 - **Vidro com degradação:** fundo opaco sem `backdrop-filter` ou com `prefers-reduced-transparency`.
-- `viewport-fit=cover`, alturas com base `svh`, celular deitado e dobrável tratados.
-- Conferido sem rolagem lateral em 280, 320, 360, 390, 430, 480, 640, 768, 1024, 1180, 1280, 1440, 1920,
-  2560 e 3840px e em 844×390.
+- Conferido sem rolagem lateral em 1024, 1180, 1280×590, 1440, 1920, 2560 e 3840px.
 
 ## API (`/VBM-Aip-Goals/api`)
 
