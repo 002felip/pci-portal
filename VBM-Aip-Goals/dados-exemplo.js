@@ -31,6 +31,11 @@ function pendenciasExemplo(hoje = new Date()) {
     ciclo: {
       id: `AIP-${ano}`, nome: `AIP ${ano}`, ano,
       // Jornada do ciclo (janelas configuradas em T11). etapaAtual = a janela aberta hoje.
+      // BUs do ciclo (cadastro editável em T11)
+      bus: [
+        { sigla: 'OP', pais: 'Brasil' }, { sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'Sossego', pais: 'Brasil' },
+        { sigla: 'ON', pais: 'Canadá' }, { sigla: 'VNL', pais: 'Canadá' }, { sigla: 'UK', pais: 'Canadá' }, { sigla: 'JPN', pais: 'Canadá' },
+      ],
       etapaAtual: 'proposta',
       etapas: [
         { id: 'desdobramento', fim: desde(15) },

@@ -552,16 +552,17 @@ body.is-inicio .page { max-width: none; padding: 0; }
   font: 700 clamp(6rem, 15vw, 13.5rem)/.82 var(--font-display); letter-spacing: -.05em; margin-top: 6px;
   color: transparent; -webkit-text-stroke: 1.6px var(--ab-ano); font-variant-numeric: tabular-nums;
 }
-.ab-verbos { margin: 22px 0 0; font: italic 600 clamp(1.3rem, 2.2vw, 2rem)/1.15 var(--font-display); letter-spacing: -.01em; }
-.ab-verbos .v1 { color: var(--ab-v1); } .ab-verbos .v2 { color: var(--ab-v2); } .ab-verbos .v3 { color: var(--ab-v3); }
-.ab-sub { margin: 14px 0 0; max-width: 50ch; font-size: .95rem; line-height: 1.6; color: var(--text-soft); }
-.ab-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 28px; }
-.btn-grande { min-height: 46px; padding: 8px 22px; border-radius: 12px; font-size: .86rem; }
-.btn-cont { min-width: 22px; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ctl-on-text); color: var(--ctl-on-bg); font: 700 .68rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
-.btn-cont[hidden] { display: none; }
-.ab-status { margin: 0; font-size: .78rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
-.ab-status b { font-weight: 600; color: var(--wait); }
-.ab-status em { font-style: normal; font-weight: 600; color: var(--text); }
+.ab-lead { margin: 22px 0 0; max-width: 46ch; font: 400 1.05rem/1.55 var(--font-display); color: var(--text); }
+.ab-fatos { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); justify-content: start; gap: 0; margin: 26px 0 0; }
+.ab-fato { padding: 2px 28px 2px 0; }
+.ab-fato + .ab-fato { padding-left: 28px; border-left: 1px solid var(--ab-trilho); }
+.ab-fato dt { font: 600 .62rem var(--font-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--text-soft); }
+.ab-fato dd { margin: 6px 0 0; font: 500 1.15rem var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ab-fato .ab-fato-sub { margin-top: 2px; font: 400 .74rem var(--font-ui); color: var(--text-soft); white-space: normal; }
+.ab-bus { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 20px; }
+.ab-bus-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ab-bus-pais { margin-right: 4px; font: 600 .7rem var(--font-ui); color: var(--text-soft); }
+.ab-bu { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); color: var(--ink-strong); font: 600 .72rem var(--font-ui); }
 
 /* Índice numerado em vidro (o menu da aplicação) */
 .indice {
@@ -740,9 +741,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .ab-eyebrow { margin-bottom: 10px; }
   .ab-nome { font-size: 2.6rem; }
   .ab-ano { font-size: 7.4rem; }
-  .ab-verbos { margin-top: 12px; font-size: 1.3rem; }
-  .ab-sub { display: none; }
-  .ab-acoes { margin-top: 16px; }
+  .ab-lead { margin-top: 12px; font-size: .95rem; }
+  .ab-fatos { margin-top: 14px; }
+  .ab-bus { margin-top: 12px; }
   .indice { padding: 12px 8px 6px; }
   .indice-item { padding: 8px 14px; }
   .indice-desc { display: none; }
@@ -777,7 +778,8 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .jornada-lista { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .jornada-lista::before { left: 6px; right: auto; top: 6px; bottom: 6px; width: 1.5px; height: auto; }
   .etapa { padding: 0 0 0 26px; }
-  .ab-acoes .btn { width: 100%; }
+  .ab-fatos { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .ab-fato, .ab-fato + .ab-fato { padding: 0; border-left: 0; }
   .page { padding-left: 16px; padding-right: 16px; }
   .hero { padding: 18px 16px; border-radius: 16px; }
   .hero-acoes { position: static; order: -1; justify-content: flex-end; }
@@ -928,17 +930,18 @@ body.is-inicio .page { max-width: none; padding: 0; }
     <div class="abertura">
 
       <div class="abertura-texto">
-        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="ab.eyebrow">Ciclo de metas</span></p>
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="ab.eyebrow">Planejamento anual</span></p>
         <h2 class="ab-titulo" id="titInicio">
           <span class="ab-nome">AIP Goals</span>
           <span class="ab-ano" id="abAno">2027</span>
         </h2>
-        <p class="ab-verbos"><span class="v1" data-i18n="ab.v1">Propor.</span> <span class="v2" data-i18n="ab.v2">Aprovar.</span> <span class="v3" data-i18n="ab.v3">Registrar.</span></p>
-        <p class="ab-sub" data-i18n="ab.sub">Do desdobramento do COO ao Goal Card aprovado: uma versão oficial de cada meta, com cada decisão no histórico.</p>
-        <div class="ab-acoes">
-          <a class="btn btn-grande" href="#pendencias"><span data-i18n="ini.cta">Ver minhas pendências</span><span class="btn-cont" id="iniCtaCont" hidden></span></a>
-          <p class="ab-status" id="abStatus" aria-live="polite"></p>
-        </div>
+        <p class="ab-lead" data-i18n="ab.lead">Planejamento das metas de AIP 2027 das Business Units de VBM no Brasil e no Canadá.</p>
+        <dl class="ab-fatos">
+          <div class="ab-fato"><dt data-i18n="ab.fEtapa">Etapa atual</dt><dd id="fEtapa">—</dd><dd class="ab-fato-sub" id="fEtapaPrazo"></dd></div>
+          <div class="ab-fato"><dt data-i18n="ab.fOficial">Goal Cards oficiais</dt><dd id="fOficial">—</dd><dd class="ab-fato-sub" data-i18n="ab.fOficialSub">versão aprovada de cada meta</dd></div>
+          <div class="ab-fato"><dt>Business Units</dt><dd id="fBus">—</dd><dd class="ab-fato-sub" id="fBusSub"></dd></div>
+        </dl>
+        <div class="ab-bus" id="abBus" aria-label="Business Units do ciclo" data-i18n-aria="ab.busAria"></div>
       </div>
 
       <nav class="indice" aria-labelledby="titIndice">
@@ -946,32 +949,32 @@ body.is-inicio .page { max-width: none; padding: 0; }
         <ol class="indice-lista">
         <li data-perfis="todos"><a class="indice-item" href="#pendencias">
           <span class="indice-n">01</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="btn-cont" id="indCont" hidden></span></span><span class="indice-desc"><span data-i18n="ini.dPend">Cards a preencher, decisões, comentários e ações que dependem de você.</span></span></span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.pendencias">Minhas pendências</span></span><span class="indice-desc"><span data-i18n="ini.dPend">Goal Cards a preencher ou decidir, comentários e ações sob sua responsabilidade.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li hidden data-perfis="pci_coo admin"><a class="indice-item" href="#painel">
           <span class="indice-n">02</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.painel">Painel do ciclo</span></span><span class="indice-desc"><span data-i18n="ini.dPainel">Andamento do ciclo por BU e por status, com o tempo parado em cada nível.</span></span></span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.painel">Painel do ciclo</span></span><span class="indice-desc"><span data-i18n="ini.dPainel">Situação dos Goal Cards por BU e tempo em cada nível de aprovação.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li data-perfis="todos"><a class="indice-item" href="#metas">
           <span class="indice-n">03</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.metas">Metas da BU</span></span><span class="indice-desc"><span data-i18n="ini.dMetas">Metas com peso, tipo, status, nível de aprovação e versão oficial.</span></span></span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.metas">Metas da BU</span></span><span class="indice-desc"><span data-i18n="ini.dMetas">Metas do desdobramento com peso, tipo, status e versão.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li data-perfis="todos"><a class="indice-item" href="#action-log">
           <span class="indice-n">04</span>
-          <span class="indice-txt"><span class="indice-tit">Action Log</span><span class="indice-desc"><span data-i18n="ini.dLog">Histórico de submissões, decisões e comentários, com exportação em Excel.</span></span></span>
+          <span class="indice-txt"><span class="indice-tit">Action Log</span><span class="indice-desc"><span data-i18n="ini.dLog">Registro de submissões, decisões e comentários do ciclo.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li data-perfis="todos"><a class="indice-item" href="#acoes">
           <span class="indice-n">05</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.acoes">Ações</span></span><span class="indice-desc"><span data-i18n="ini.dAcoes">Ações abertas, concluídas e atrasadas, com responsável e prazo.</span></span></span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.acoes">Ações</span></span><span class="indice-desc"><span data-i18n="ini.dAcoes">Ações atribuídas no ciclo, com responsável e prazo.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li hidden data-perfis="admin"><a class="indice-item" href="#configuracao">
           <span class="indice-n">06</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.config">Configuração</span></span><span class="indice-desc"><span data-i18n="ini.dConfig">Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.</span></span></span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.config">Configuração</span></span><span class="indice-desc"><span data-i18n="ini.dConfig">Janelas do ciclo, BUs, pessoas, metas, pesos e rota de aprovação.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         </ol>
@@ -1270,11 +1273,11 @@ window.VBMSetup = (function () {
       'nav.menu': 'Telas do AIP Goals', 'nav.abrir': 'Abrir menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Ciclo', 'nav.inicio': 'Início', 'nav.pendencias': 'Minhas pendências',
       'ini.sub': 'Definição, aprovação e registro das metas de AIP das Business Units.',
       'ini.cta': 'Ver minhas pendências', 'ini.numerosAria': 'Sua situação no ciclo', 'ini.nPend': 'Pendências com você', 'ini.nPrazo': 'Próximo prazo', 'ini.semPrazo': 'Sem prazo', 'ini.abrir': 'Abrir',
-      'ini.dPend': 'Cards a preencher, decisões, comentários e ações que dependem de você.', 'ini.dPainel': 'Andamento do ciclo por BU e por status, com o tempo parado em cada nível.',
-      'ini.dMetas': 'Metas com peso, tipo, status, nível de aprovação e versão oficial.', 'ini.dLog': 'Histórico de submissões, decisões e comentários, com exportação em Excel.',
-      'ini.dAcoes': 'Ações abertas, concluídas e atrasadas, com responsável e prazo.', 'ini.dConfig': 'Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.',
-      'ab.eyebrow': 'Ciclo de metas', 'ab.v1': 'Propor.', 'ab.v2': 'Aprovar.', 'ab.v3': 'Registrar.',
-      'ab.sub': 'Do desdobramento do COO ao Goal Card aprovado: uma versão oficial de cada meta, com cada decisão no histórico.',
+      'ini.dPend': 'Goal Cards a preencher ou decidir, comentários e ações sob sua responsabilidade.', 'ini.dPainel': 'Situação dos Goal Cards por BU e tempo em cada nível de aprovação.',
+      'ini.dMetas': 'Metas do desdobramento com peso, tipo, status e versão.', 'ini.dLog': 'Registro de submissões, decisões e comentários do ciclo.',
+      'ini.dAcoes': 'Ações atribuídas no ciclo, com responsável e prazo.', 'ini.dConfig': 'Janelas do ciclo, BUs, pessoas, metas, pesos e rota de aprovação.',
+      'ab.eyebrow': 'Planejamento anual', 'ab.lead': 'Planejamento das metas de AIP 2027 das Business Units de VBM no Brasil e no Canadá.',
+      'ab.fEtapa': 'Etapa atual', 'ab.fOficial': 'Goal Cards oficiais', 'ab.fOficialSub': 'versão aprovada de cada meta', 'ab.noCiclo': 'no ciclo {a}', 'ab.busAria': 'Business Units do ciclo',
       'ab.indice': 'Acessar', 'ab.jornada': 'Jornada do ciclo', 'ab.emDia': 'Você está em dia neste ciclo.',
       'ab.alerta': '{n} paradas ou atrasadas', 'ab.alerta1': '1 parada ou atrasada', 'ab.proximo': 'Próximo prazo',
       'ab.ate': 'até {d}', 'ab.encerrada': 'encerrada em {d}', 'ab.publicacao': 'publicação em {d}', 'ab.atual': 'Etapa atual', 'ab.concluida': 'concluída',
@@ -1317,11 +1320,11 @@ window.VBMSetup = (function () {
       'nav.menu': 'AIP Goals screens', 'nav.abrir': 'Open menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Cycle', 'nav.inicio': 'Home', 'nav.pendencias': 'My pending items',
       'ini.sub': 'Setting, approval and record of the AIP goals of the Business Units.',
       'ini.cta': 'View my pending items', 'ini.numerosAria': 'Your status in the cycle', 'ini.nPend': 'Pending with you', 'ini.nPrazo': 'Next due date', 'ini.semPrazo': 'No due date', 'ini.abrir': 'Open',
-      'ini.dPend': 'Cards to fill in, decisions, comments and actions that depend on you.', 'ini.dPainel': 'Cycle progress by BU and status, with the time stalled at each level.',
-      'ini.dMetas': 'Goals with weight, type, status, approval level and official version.', 'ini.dLog': 'History of submissions, decisions and comments, with Excel export.',
-      'ini.dAcoes': 'Open, completed and overdue actions, with owner and due date.', 'ini.dConfig': 'Cycle, BUs, people, goals, weights, approval route and deadlines.',
-      'ab.eyebrow': 'Goal cycle', 'ab.v1': 'Propose.', 'ab.v2': 'Approve.', 'ab.v3': 'Record.',
-      'ab.sub': 'From the COO cascade to the approved Goal Card: one official version of each goal, with every decision on record.',
+      'ini.dPend': 'Goal Cards to fill in or decide, comments and actions under your responsibility.', 'ini.dPainel': 'Goal Card status by BU and time at each approval level.',
+      'ini.dMetas': 'Cascaded goals with weight, type, status and version.', 'ini.dLog': 'Record of submissions, decisions and comments in the cycle.',
+      'ini.dAcoes': 'Actions assigned in the cycle, with owner and due date.', 'ini.dConfig': 'Cycle windows, BUs, people, goals, weights and approval route.',
+      'ab.eyebrow': 'Annual planning', 'ab.lead': 'Planning of the 2027 AIP goals for the VBM Business Units in Brazil and Canada.',
+      'ab.fEtapa': 'Current stage', 'ab.fOficial': 'Official Goal Cards', 'ab.fOficialSub': 'approved version of each goal', 'ab.noCiclo': 'in the {a} cycle', 'ab.busAria': 'Business Units in the cycle',
       'ab.indice': 'Go to', 'ab.jornada': 'Cycle journey', 'ab.emDia': 'You are up to date in this cycle.',
       'ab.alerta': '{n} stalled or overdue', 'ab.alerta1': '1 stalled or overdue', 'ab.proximo': 'Next due date',
       'ab.ate': 'until {d}', 'ab.encerrada': 'closed on {d}', 'ab.publicacao': 'published on {d}', 'ab.atual': 'Current stage', 'ab.concluida': 'done',
@@ -1426,7 +1429,7 @@ window.VBMSetup = (function () {
         renderTudo();
       })
       .catch(function (err) {
-        dados = null; $('iniCtaCont').hidden = true; $('indCont').hidden = true; $('abStatus').textContent = '';
+        dados = null;
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return mostrarEstado('estSemAcesso', true);
         $('estErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
@@ -1465,8 +1468,6 @@ window.VBMSetup = (function () {
     var total = (dados.itens || []).length;
     $('navCont').textContent = S.fmt(total, 0);
     $('navCont').hidden = !total;
-    $('iniCtaCont').textContent = S.fmt(total, 0); $('iniCtaCont').hidden = !total;
-    $('indCont').textContent = S.fmt(total, 0); $('indCont').hidden = !total;
     renderAbertura();
     aplicarPerfis();
     renderUnidade();
@@ -1475,18 +1476,29 @@ window.VBMSetup = (function () {
 
   // ── Início: estado do usuário e jornada do ciclo ──
   var ETAPAS = ['desdobramento', 'proposta', 'calibracao', 'oficial'];
+  function dataLonga(isoTxt) {
+    var p = String(isoTxt).split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(S.idioma === 'en' ? 'en-US' : 'pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
   function renderAbertura() {
     var c = (dados && dados.ciclo) || {};
     if (c.ano) $('abAno').textContent = String(c.ano);
     $('jornadaCiclo').textContent = c.nome ? ' · ' + c.nome : '';
-    var its = (dados && dados.itens) || [];
-    var alerta = its.filter(function (it) { return it.parada || it.atrasada; }).length;
-    var prazos = its.filter(function (it) { return it.prazo && !it.atrasada; }).map(function (it) { return it.prazo; }).sort();
-    $('abStatus').innerHTML = !its.length ? esc(S.t('ab.emDia')) :
-      (alerta ? '<b>' + esc(S.t(alerta === 1 ? 'ab.alerta1' : 'ab.alerta', { n: S.fmt(alerta, 0) })) + '</b> · ' : '') +
-      esc(S.t('ab.proximo')) + ' <em>' + esc(prazos.length ? dataCurta(prazos[0]) : S.t('ini.semPrazo')) + '</em>';
     var atual = ETAPAS.indexOf(c.etapaAtual);
     var porId = {}; (c.etapas || []).forEach(function (e) { porId[e.id] = e; });
+    // Fatos do ciclo: etapa aberta, publicação dos Goal Cards oficiais e BUs por país
+    var etAtual = porId[c.etapaAtual] || {};
+    $('fEtapa').textContent = atual >= 0 ? S.t('et.' + c.etapaAtual) : '—';
+    $('fEtapaPrazo').textContent = etAtual.fim ? S.t('ab.ate', { d: dataCurta(etAtual.fim) }) : '';
+    $('fOficial').textContent = porId.oficial && porId.oficial.fim ? dataLonga(porId.oficial.fim) : '—';
+    var bus = c.bus || [], porPais = {};
+    bus.forEach(function (u) { (porPais[u.pais] = porPais[u.pais] || []).push(u.sigla); });
+    var paises = Object.keys(porPais);
+    $('fBus').textContent = bus.length ? S.fmt(bus.length, 0) : '—';
+    $('fBusSub').textContent = c.ano ? S.t('ab.noCiclo', { a: c.ano }) : '';
+    $('abBus').innerHTML = paises.map(function (p) {
+      return '<span class="ab-bus-grupo"><span class="ab-bus-pais">' + esc(p) + '</span>' + porPais[p].map(function (sg) { return '<span class="ab-bu">' + esc(sg) + '</span>'; }).join('') + '</span>';
+    }).join('');
     $('jornada').innerHTML = ETAPAS.map(function (id, i) {
       var e = porId[id] || {};
       var est = atual < 0 ? '' : i < atual ? ' is-feita' : i === atual ? ' is-atual' : '';

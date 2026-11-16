@@ -38,9 +38,10 @@ técnica v1 e Levantamento de requisitos).
 Tela de entrada em tela cheia, sobre a foto dos três minerais (versão clara no tema claro; original com
 véu navy no escuro):
 
-- **Assinatura:** "AIP Goals" com o ano do ciclo em numerais vazados, os três verbos do processo
-  (Propor. Aprovar. Registrar.) e o botão "Ver minhas pendências" com o contador, seguido do estado do
-  usuário (paradas ou atrasadas e próximo prazo).
+- **Assinatura:** "AIP Goals" com o ano do ciclo em numerais vazados e uma linha sobre o planejamento
+  das metas de AIP do ano. Abaixo, os fatos do ciclo: etapa atual e prazo, data de publicação dos Goal
+  Cards oficiais e as Business Units do ciclo por país (`ciclo.bus[]`). A abertura não mostra
+  pendências pessoais: elas ficam na T01.
 - **Índice "Acessar"** em vidro: telas numeradas (01, 02…) só com as que o perfil pode usar, com descrição.
 - **Jornada do ciclo:** as quatro janelas (Desdobramento do COO, Proposta da BU, Calibração e aprovação,
   Goal Card oficial) com datas e a etapa atual marcada por texto ("Etapa atual") e ponto. Vem de
