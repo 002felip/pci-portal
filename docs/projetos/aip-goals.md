@@ -70,6 +70,22 @@ comentários sem resposta e ações atribuídas.
 - **Cores:** status pelo fluxo do Kaizen; "Parada" com `--wait` e "Atrasada" com `--late-bg`
   (âmbar de ciclo, nunca verde/vermelho de desempenho).
 
+## Responsividade
+
+Camada `[RESPONSIVO]` no fim do `<style>` (skill responsividade), sem editar os CSS copiados das skills:
+
+- **Raiz fluida:** `html { font-size: clamp(1rem, 0.357vw + 0.643rem, 1.5rem) }` (16px até 1600px, 24px em
+  3840px); layout em `rem`; barra com altura fluida (`--barra`).
+- **Breakpoints só estruturais:** 1080px (menu em gaveta, banner e abertura em uma coluna) e 720px
+  (fatos e jornada empilhados). Pouca altura (≤ 820px) compacta banner e abertura.
+- **Cartão da fila por container query** (`@container fila`): 3 arranjos pela largura do próprio cartão;
+  abaixo de 20rem o ícone decorativo sai.
+- **Toque:** alvos ≥ 44px e campos ≥ 16px com `pointer: coarse`; hover só com `hover: hover`.
+- **Vidro com degradação:** fundo opaco sem `backdrop-filter` ou com `prefers-reduced-transparency`.
+- `viewport-fit=cover`, alturas com base `svh`, celular deitado e dobrável tratados.
+- Conferido sem rolagem lateral em 280, 320, 360, 390, 430, 480, 640, 768, 1024, 1180, 1280, 1440, 1920,
+  2560 e 3840px e em 844×390.
+
 ## API (`/VBM-Aip-Goals/api`)
 
 | Rota | O que faz |
