@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AIP Goals · Minhas pendências</title>
+<!-- Poppins local (faces embutidas): sem Google Fonts nem CDN — rede corporativa fechada -->
+<link rel="stylesheet" href="assets/css/poppins.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   VBM — tokens de tema (skill vbm-design)
+   Origem: COO Business Units Dashboard (semânticos e dados) + VBM Kaizen (marca).
+   Cole no <style> do dashboard (ou como assets/css/vbm-tokens.css). O tema é gravado
+   no <html> pela engrenagem da skill setup-dashboards: data-theme="light" | "dark".
+   Sem data-theme, segue o sistema (prefers-color-scheme).
+   Regra: toda cor da tela sai de um token; todo token tem o par escuro.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Marca (VBM Kaizen) — base das cores; prefira os tokens semânticos abaixo na tela ── */
+:root {
+  --vbm-blue:       #3CB5E5;   /* Azul-Vale: série realizada, destaques */
+  --vbm-blue-dark:  #1A8BBF;
+  --vbm-blue-deep:  #0D2640;
+  --vbm-blue-navy:  #041523;   /* barra superior, fundo escuro */
+  --vbm-blue-light: #7DD3F0;
+  --vbm-blue-pale:  #E8F7FD;
+  --vbm-green:      #007E7A;   /* Verde-Vale */
+  --vbm-grey:       #BCBEC0;   /* Cinza-Médio: Budget */
+  --vbm-steel:      #6E8CBA;   /* Azul-Aço: Plan */
+  /* Status de fluxo (Kaizen) */
+  --status-draft:    #888888;
+  --status-pending:  #C2770E;
+  --status-approved: #16A34A;
+  --status-rejected: #DC2626;
+  --status-review:   #3CB5E5;
+  /* Movimento */
+  --ease-out:    cubic-bezier(0.2, 1, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Semânticos de tela e de dados (COO Business Units Dashboard) ── */
+:root {
+  --page: #FFFFFF;
+  --text: #1F2937;
+  --text-soft: #6B7280;
+  --text-faint: #9CA3AF;
+  --line: #E5E7EB;
+  --accent: #1E8FC4;          /* títulos grandes (3,9:1 em branco, uso só em ≥24px) */
+  --accent-strong: #0B6E99;
+  --panel: #F3F4F5;
+  --chart-title: #1B7F7B;
+  --ink-strong: #111827;
+  --ink-soft: #6B7280;
+  --base-line: #D1D5DB;
+  --pill-bg: #FFFFFF;
+  --pill-line: rgba(15,23,42,.06);
+  --d-stroke: rgba(116,118,120,.45);
+  --d-hair: rgba(116,118,120,.30);
+  --badge-bg: rgba(31,41,55,.58);
+  --badge-text: #FFFFFF;
+  --serie-b: #BCBEC0;
+  --serie-a: #3CB5E5;
+  --serie-p: #9DB1CF;
+  --good: #007E7A;
+  --good-bg: rgba(0,126,122,.10);
+  --bad: #B91C1C;
+  --bad-bg: rgba(220,38,38,.09);
+  --flat: #5B5E61;
+  --flat-bg: rgba(116,118,120,.12);
+  --ctl-bg: #FFFFFF;
+  --ctl-border: rgba(13,38,64,.16);
+  --ctl-text: #1F2937;
+  --ctl-on-bg: #0B6E99;
+  --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --nav-bg: linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%);
+  --table-head: #0B6E99;
+
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B;
+    --text: #E8EEF5;
+    --text-soft: rgba(232,238,245,.66);
+    --text-faint: rgba(232,238,245,.42);
+    --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE;
+    --accent-strong: #7DD3F0;
+    --panel: #0C2438;
+    --chart-title: #5FD0C9;
+    --ink-strong: #F1F5F9;
+    --ink-soft: rgba(241,245,249,.62);
+    --base-line: rgba(255,255,255,.22);
+    --pill-bg: #0F2C44;
+    --pill-line: rgba(255,255,255,.10);
+    --d-stroke: rgba(226,232,240,.45);
+    --d-hair: rgba(226,232,240,.28);
+    --badge-bg: rgba(2,10,20,.55);
+    --serie-b: #8E949B;
+    --serie-p: #9DB1CF;
+    --good: #34C3B8;
+    --good-bg: rgba(52,195,184,.14);
+    --bad: #F87171;
+    --bad-bg: rgba(248,113,113,.14);
+    --flat: #B0B5BA;
+    --flat-bg: rgba(176,181,186,.14);
+    --ctl-bg: rgba(255,255,255,.05);
+    --ctl-border: rgba(255,255,255,.16);
+    --ctl-text: #E5EDF5;
+    --ctl-on-bg: #3CB5E5;
+    --ctl-on-text: #02101c;
+    --focus: #7DD3F0;
+    --table-head: #11577A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B;
+  --text: #E8EEF5;
+  --text-soft: rgba(232,238,245,.66);
+  --text-faint: rgba(232,238,245,.42);
+  --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE;
+  --accent-strong: #7DD3F0;
+  --panel: #0C2438;
+  --chart-title: #5FD0C9;
+  --ink-strong: #F1F5F9;
+  --ink-soft: rgba(241,245,249,.62);
+  --base-line: rgba(255,255,255,.22);
+  --pill-bg: #0F2C44;
+  --pill-line: rgba(255,255,255,.10);
+  --d-stroke: rgba(226,232,240,.45);
+  --d-hair: rgba(226,232,240,.28);
+  --badge-bg: rgba(2,10,20,.55);
+  --serie-b: #8E949B;
+  --serie-p: #9DB1CF;
+  --good: #34C3B8;
+  --good-bg: rgba(52,195,184,.14);
+  --bad: #F87171;
+  --bad-bg: rgba(248,113,113,.14);
+  --flat: #B0B5BA;
+  --flat-bg: rgba(176,181,186,.14);
+  --ctl-bg: rgba(255,255,255,.05);
+  --ctl-border: rgba(255,255,255,.16);
+  --ctl-text: #E5EDF5;
+  --ctl-on-bg: #3CB5E5;
+  --ctl-on-text: #02101c;
+  --focus: #7DD3F0;
+  --table-head: #11577A;
+  color-scheme: dark;
+}
+
+/* ── Ciclo / situação de atualização: âmbar, fora do par verde/vermelho de desempenho ── */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
+:root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }
+
+/* ════════════════════════════════════════════════════════════════════
+   VBM — componentes de tela (skill vbm-design)
+   Origem: COO Business Units Dashboard (filtros, painéis, legenda) e
+   VBM Performance Studio (título do dashboard, botões de ação, toast).
+   Depende de vbm-tokens.css. Fonte: Poppins LOCAL (assets/css/poppins.css do Hub).
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Base ── */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: var(--font-display); font-size: 14px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.page {
+  width: 100%; padding-block: 12px 16px;
+  padding-left: max(28px, env(safe-area-inset-left, 0px));
+  padding-right: max(28px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ── Título do dashboard (centro, sublinhado em degradê azul) ── */
+.dash-titulo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 188px 0; }
+.dash-titulo-nome {
+  position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
+  font: 300 1.1rem/1.2 var(--font-display); letter-spacing: .08em; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-titulo-nome::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--vbm-blue), rgba(60,181,229,0));
+}
+/* Título editorial de seção/site (COO): itálico grande em --accent (≥24px) */
+.site { margin: 0; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
+
+/* ── Botões de ação do topo (salvar, desfazer, Excel, imagens, tela cheia) ── */
+.dash-acoes { position: absolute; right: 16px; top: 20px; display: flex; gap: 8px; }
+.dash-acao {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+  border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--accent-strong);
+  cursor: pointer; box-shadow: 0 1px 3px rgba(15,23,42,.08);
+}
+.dash-acao:hover:not(:disabled), .dash-acao.is-pendente { background: var(--ctl-on-bg); color: var(--ctl-on-text); border-color: var(--ctl-on-bg); }
+.dash-acao:disabled { opacity: .45; cursor: not-allowed; }
+.dash-acao[hidden] { display: none; }
+
+/* ── Filtros (padrão COO): rótulo em itálico em cima do controle ── */
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+
+/* Segmentado: escolha única entre poucas opções (Visão, Ano, Trimestre, Mês) */
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+
+/* Interruptor liga/desliga (ex.: Delta) — role="switch" + aria-checked */
+.switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+
+/* Chip de navegação / paginação */
+.nav-chip { min-height: 28px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.nav-chip:disabled { opacity: .4; cursor: default; }
+
+/* Seletor em drill-down País › Site (e Ciclo): gatilho + popover em colunas */
+.unit { position: relative; }
+.unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.unit-trigger:hover, .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.unit-pais { color: var(--text-soft); }
+.unit-sep { color: var(--text-faint); }
+.unit-site { color: var(--ctl-on-bg); font-weight: 600; }
+.unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 360px; display: grid; grid-template-columns: 1fr 1.15fr; padding: 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: var(--cyc-shadow); }
+.unit-pop[hidden] { display: none; }
+.unit-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; }
+.unit-col + .unit-col { border-left: 1px solid var(--line); padding-left: 10px; }
+.unit-h { font: 600 .62rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); padding: 2px 8px 4px; }
+.unit-list { display: flex; flex-direction: column; gap: 2px; max-height: min(60vh, 420px); overflow-y: auto; }
+.unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; }
+.unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.unit-list button[aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
+.unit-list button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+
+/* ── Painéis e cards ── */
+.panel { display: flex; flex-direction: column; gap: 10px; }
+.panel-prod { background: var(--panel); border-radius: 20px; padding: 16px 22px 14px; }
+.panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.panel-title { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--text); }
+.card { background: var(--panel); border-radius: 16px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+.card.is-selected { outline: 2px solid var(--vbm-blue); outline-offset: -2px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--vbm-blue) 20%, transparent); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: .74rem; color: var(--text-soft); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.swatch { width: 14px; height: 9px; border-radius: 2px; }
+.updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* Pílula de situação "Atualizações finais pendentes" (ícone + texto, nunca só cor) */
+.pill-wait { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .7rem var(--font-ui); }
+
+/* ── Toast (aviso curto, role="status" aria-live="polite") ── */
+.toast {
+  position: fixed; z-index: 10001; left: 50%; bottom: 20px; transform: translateX(-50%);
+  max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 10px;
+  background: rgba(15,23,42,.94); color: #fff; font: 600 .74rem/1.4 var(--font-ui);
+  box-shadow: 0 10px 28px rgba(0,0,0,.3);
+}
+.toast.is-err { background: #991B1B; }
+.toast[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .dash-titulo { padding: 16px 16px 0; }
+  .dash-acoes { position: static; justify-content: center; }
+}
+
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
+:root {
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.topnav {
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
+.topnav-logo svg { height: 26px; width: auto; display: block; }
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
+.topnav-user[hidden] { display: none; }
+.topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
+
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
+.settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
+.settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+}
+/* ═══ fim Setup Dashboards ═══ */
+
+/* ════════════════════════════════════════════════════════════════════
+   AIP Goals — estilos próprios da aplicação (depois de vbm-tokens.css,
+   vbm-componentes.css e setup-dashboards.css). Sistema interno de fluxo:
+   inspirado na organização do VBM Kaizen (abas do app, banner com resumo,
+   cards de seção, fila em cartões), com código e tokens próprios.
+   Regra vbm-design: toda cor sai de um token; token novo tem o par escuro.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Tokens próprios ──
+   Status do Goal Card: o ponto usa a cor do fluxo (--status-*, as mesmas do Kaizen);
+   o texto e o ícone usam a variante "-ink", que passa AA (≥ 4,5:1) no fundo do cartão. */
+:root {
+  --st-draft-ink: #4B5563;    --st-draft-bg: rgba(136,136,136,.14);
+  --st-pending-ink: #8A5300;  --st-pending-bg: rgba(194,119,14,.12);
+  --st-review-ink: #0B6E99;   --st-review-bg: rgba(60,181,229,.14);
+  --st-approved-ink: #15803D; --st-approved-bg: rgba(22,163,74,.12);
+  --st-rejected-ink: #B91C1C; --st-rejected-bg: rgba(220,38,38,.10);
+  --card-bg: #FFFFFF;
+  --card-line: rgba(13,38,64,.10);
+  --card-hover: #F8FAFC;
+  --card-shadow: 0 1px 3px rgba(15,23,42,.06), 0 6px 18px rgba(15,23,42,.04);
+  --tab-bg: #FFFFFF;
+  --tab-line: rgba(13,38,64,.10);
+  --skel: rgba(15,23,42,.07);
+  /* Banner: fundo sempre escuro (imagem VBM + navy), igual nos dois temas */
+  --hero-bg: #041523;
+  --hero-veu: linear-gradient(100deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.88) 50%, rgba(8,45,79,.78) 100%);
+  --hero-text: #FFFFFF;
+  --hero-soft: rgba(255,255,255,.72);
+  --hero-faint: rgba(255,255,255,.55);
+  --hero-eyebrow: #7DD3F0;
+  --hero-glass: rgba(255,255,255,.08);
+  --hero-glass-line: rgba(255,255,255,.16);
+  --hero-glass-on: rgba(60,181,229,.24);
+  --hero-alerta: #F5B94A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --st-draft-ink: #C3C8CE;    --st-draft-bg: rgba(176,181,186,.16);
+    --st-pending-ink: #F5B94A;  --st-pending-bg: rgba(245,185,74,.14);
+    --st-review-ink: #7DD3F0;   --st-review-bg: rgba(125,211,240,.14);
+    --st-approved-ink: #4ADE80; --st-approved-bg: rgba(74,222,128,.13);
+    --st-rejected-ink: #F87171; --st-rejected-bg: rgba(248,113,113,.14);
+    --card-bg: #0F2C44;
+    --card-line: rgba(255,255,255,.08);
+    --card-hover: #133552;
+    --card-shadow: 0 1px 3px rgba(0,0,0,.35);
+    --tab-bg: #0A2135;
+    --tab-line: rgba(255,255,255,.08);
+    --skel: rgba(255,255,255,.08);
+  }
+}
+:root[data-theme="dark"] {
+  --st-draft-ink: #C3C8CE;    --st-draft-bg: rgba(176,181,186,.16);
+  --st-pending-ink: #F5B94A;  --st-pending-bg: rgba(245,185,74,.14);
+  --st-review-ink: #7DD3F0;   --st-review-bg: rgba(125,211,240,.14);
+  --st-approved-ink: #4ADE80; --st-approved-bg: rgba(74,222,128,.13);
+  --st-rejected-ink: #F87171; --st-rejected-bg: rgba(248,113,113,.14);
+  --card-bg: #0F2C44;
+  --card-line: rgba(255,255,255,.08);
+  --card-hover: #133552;
+  --card-shadow: 0 1px 3px rgba(0,0,0,.35);
+  --tab-bg: #0A2135;
+  --tab-line: rgba(255,255,255,.08);
+  --skel: rgba(255,255,255,.08);
+}
+
+/* ── Base ── */
+.ico { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.page { max-width: 1480px; margin-inline: auto; padding-top: 18px; gap: 16px; }
+.vista { display: flex; flex-direction: column; gap: 16px; }
+.vista[hidden] { display: none; }
+
+/* ── Abas do app (logo abaixo da barra superior; cada perfil vê só o que pode usar) ── */
+.app-nav {
+  position: sticky; top: 64px; z-index: 90;
+  display: flex; align-items: stretch; gap: 2px; padding: 0 max(28px, env(safe-area-inset-left, 0px));
+  background: var(--tab-bg); border-bottom: 1px solid var(--tab-line);
+  overflow-x: auto; scrollbar-width: none;
+}
+.app-nav::-webkit-scrollbar { display: none; }
+.app-nav-link {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 14px;
+  color: var(--text-soft); text-decoration: none; font: 500 .8rem var(--font-ui); white-space: nowrap;
+}
+.app-nav-link .ico { font-size: 1rem; }
+.app-nav-link:hover { color: var(--text); }
+.app-nav-link[aria-current="page"] { color: var(--accent-strong); font-weight: 600; }
+.app-nav-link[aria-current="page"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--vbm-blue); }
+.app-nav-link:focus-visible { outline-offset: -3px; }
+.app-nav-link[hidden] { display: none; }
+.app-nav-cont { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .64rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
+.app-nav-cont[hidden] { display: none; }
+.app-nav-sep { width: 1px; margin: 12px 6px; background: var(--tab-line); flex-shrink: 0; }
+
+/* Tela cheia: a barra sai (setup-dashboards) e as abas sobem */
+html.is-fs .app-nav { top: 0; }
+@media (display-mode: fullscreen) { .app-nav { top: 0; } }
+
+/* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
+.hero {
+  position: relative; overflow: hidden; border-radius: 20px; padding: 26px 28px;
+  background: var(--hero-veu), url('assets/images/Fundo_VBM_2400x1145.webp') center / cover no-repeat, var(--hero-bg);
+  color: var(--hero-text);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 420px); gap: 20px 28px; align-items: center;
+}
+.hero-eyebrow { margin: 0 0 8px; font: 600 .64rem var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--hero-eyebrow); }
+.hero-titulo { margin: 0; font: italic 700 clamp(1.7rem, 3vw, 2.5rem)/1.05 var(--font-display); color: var(--hero-text); letter-spacing: -.01em; }
+.hero-sub { margin: 10px 0 0; max-width: 52ch; font-size: .82rem; line-height: 1.55; color: var(--hero-soft); }
+.hero-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.hero-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); color: var(--hero-soft); font: italic 500 .68rem var(--font-ui); }
+.hero-pill.is-wait { color: var(--hero-alerta); border-color: var(--hero-alerta); }
+.hero-pill[hidden] { display: none; }
+.hero-acoes { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; }
+.hero-acao { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); color: var(--hero-text); cursor: pointer; }
+.hero-acao:hover { background: var(--hero-glass-on); }
+.hero-acao:focus-visible { outline: 2px solid var(--hero-eyebrow); outline-offset: 2px; }
+
+.resumo { margin-top: 30px; padding: 14px; border-radius: 16px; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.resumo-tit { margin: 0 0 8px; font: 600 .64rem var(--font-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--hero-faint); }
+.resumo-lista { display: flex; flex-direction: column; gap: 2px; }
+.resumo-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 10px; border: 1px solid transparent; border-radius: 10px;
+  background: transparent; color: var(--hero-soft); font: 500 .78rem var(--font-ui); text-align: left; cursor: pointer;
+}
+.resumo-item .ico { font-size: 1rem; color: var(--hero-eyebrow); }
+.resumo-item:hover { background: var(--hero-glass); color: var(--hero-text); }
+.resumo-item[aria-pressed="true"] { background: var(--hero-glass-on); border-color: var(--hero-eyebrow); color: var(--hero-text); }
+.resumo-item:focus-visible { outline: 2px solid var(--hero-eyebrow); outline-offset: 1px; }
+.resumo-num { margin-left: auto; font: 600 1.05rem var(--font-display); color: var(--hero-text); font-variant-numeric: tabular-nums; }
+.resumo-sep { height: 1px; margin: 6px 0; background: var(--hero-glass-line); }
+.resumo-alerta { display: flex; align-items: center; gap: 10px; padding: 6px 10px; color: var(--hero-alerta); font: 600 .76rem var(--font-ui); }
+.resumo-alerta .resumo-num { color: var(--hero-alerta); }
+.resumo-alerta small { display: block; font: 400 .66rem var(--font-ui); color: var(--hero-faint); }
+
+/* ── Card de seção (cabeçalho com ícone) ── */
+.secao { background: var(--panel); border-radius: 20px; padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 12px; }
+.secao-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.secao-ico { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--st-review-bg); color: var(--accent-strong); font-size: 1.05rem; }
+.secao-tit { margin: 0; font: italic 500 1.12rem var(--font-display); color: var(--text); }
+.secao-cont { padding: 1px 9px; border-radius: 999px; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .68rem var(--font-ui); font-variant-numeric: tabular-nums; }
+.secao-total { margin-left: auto; font: 400 .74rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+
+/* ── Fila em cartões ── */
+.fila { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.item {
+  display: grid; grid-template-columns: 40px minmax(0, 2.2fr) minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 14px; align-items: center;
+  padding: 12px 14px; border-radius: 14px; border: 1px solid var(--card-line); background: var(--card-bg); box-shadow: var(--card-shadow);
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.item:hover { background: var(--card-hover); border-color: var(--ctl-border); }
+.item.is-alerta { border-left: 3px solid var(--wait-line); }
+.item-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: var(--st-review-bg); color: var(--accent-strong); font-size: 1.1rem; }
+.item-principal { min-width: 0; }
+.item-tipo { margin: 0; font: 600 .66rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); }
+.item-meta { margin: 2px 0 0; font: 600 .9rem var(--font-ui); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-meta .num { color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.item-det { margin: 3px 0 0; font-size: .74rem; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.item-linha { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: .7rem; color: var(--text-soft); }
+.item-linha b { font-weight: 600; color: var(--text); }
+.item-sit { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.item-nivel { font-size: .7rem; color: var(--text-soft); }
+.item-tempo { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: .74rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.item-tempo small { font-size: .68rem; color: var(--text-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Pílula de status do Goal Card: ponto + ícone + rótulo (nunca só cor) */
+.st { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font: 600 .7rem var(--font-ui); white-space: nowrap; }
+.st .ico { font-size: .82rem; }
+.st-rascunho     { background: var(--st-draft-bg);    color: var(--st-draft-ink); }
+.st-em_aprovacao { background: var(--st-pending-bg);  color: var(--st-pending-ink); }
+.st-em_revisao   { background: var(--st-review-bg);   color: var(--st-review-ink); }
+.st-aprovado     { background: var(--st-approved-bg); color: var(--st-approved-ink); }
+.st-negado       { background: var(--st-rejected-bg); color: var(--st-rejected-ink); }
+.st::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.st-rascunho::before     { background: var(--status-draft); }
+.st-em_aprovacao::before { background: var(--status-pending); }
+.st-em_revisao::before   { background: var(--status-review); }
+.st-aprovado::before     { background: var(--status-approved); }
+.st-negado::before       { background: var(--status-rejected); }
+
+/* Idade e prazo: âmbar de ciclo (nunca verde/vermelho de desempenho) */
+.chip-parada, .chip-atrasada { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font: 600 .64rem var(--font-ui); white-space: nowrap; }
+.chip-parada { border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); }
+.chip-atrasada { background: var(--late-bg); color: var(--late); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 16px;
+  border-radius: 10px; border: 1px solid var(--ctl-on-bg); background: var(--ctl-on-bg); color: var(--ctl-on-text);
+  font: 600 .76rem var(--font-ui); text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn-sec { background: var(--ctl-bg); color: var(--accent-strong); border-color: var(--ctl-border); }
+.btn-sec:hover { border-color: var(--ctl-on-bg); filter: none; }
+
+/* O interruptor não estica com o rótulo do filtro */
+.filter .switch { align-self: flex-start; }
+
+/* Seta do seletor País › BU */
+.unit-chev { font-size: .7rem; color: var(--text-soft); }
+
+/* ── Estados de tela: carregando, vazio, erro, sem permissão ── */
+.estado { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px 16px; text-align: center; color: var(--text-soft); }
+.estado[hidden] { display: none; }
+.estado .ico { font-size: 2rem; color: var(--accent-strong); }
+.estado-tit { margin: 0; font: 500 1rem var(--font-display); color: var(--text); }
+.estado-txt { margin: 0; max-width: 46ch; font-size: .8rem; }
+.estado-erro .ico { color: var(--bad); }
+.item.is-skel { pointer-events: none; }
+.skel { display: block; height: 12px; border-radius: 6px; background: var(--skel); animation: skel 1.2s ease-in-out infinite; }
+@keyframes skel { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } .item { transition: none; } }
+
+/* ── Responsividade (pontos de quebra VBM) ── */
+@media (max-width: 1440px), (max-height: 820px) {
+  .app-nav { top: 56px; }
+  .app-nav-link { min-height: 42px; }
+  .page { padding-top: 14px; gap: 14px; }
+  .hero { padding: 20px 22px; }
+  .item { padding: 10px 12px; gap: 12px; }
+}
+/* Pouca altura (notebook com escala de 125–150%): banner compacto para a fila aparecer */
+@media (max-height: 820px) and (min-width: 721px) {
+  .hero { padding: 16px 20px; gap: 12px 22px; }
+  .hero-titulo { font-size: 1.6rem; }
+  .hero-sub { display: none; }
+  .hero-pills { margin-top: 8px; }
+  .resumo { margin-top: 26px; padding: 8px 10px; }
+  .resumo-tit { margin-bottom: 4px; }
+  .resumo-item { min-height: 30px; padding: 3px 8px; font-size: .74rem; }
+  .resumo-num { font-size: .92rem; }
+  .resumo-sep { margin: 3px 0; }
+  .resumo-alerta { padding: 3px 8px; }
+}
+@media (max-width: 1080px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .resumo { margin-top: 0; }
+  .item { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .item-sit, .item-tempo { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .item-acao { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
+}
+@media (max-width: 720px) {
+  .app-nav { padding: 0 8px; }
+  .app-nav-link span:not(.app-nav-cont) { display: none; }
+  .app-nav-link { min-width: 48px; justify-content: center; padding: 0 12px; }
+  .app-nav-link .ico { font-size: 1.15rem; }
+  .page { padding-left: 16px; padding-right: 16px; }
+  .hero { padding: 18px 16px; border-radius: 16px; }
+  .hero-acoes { position: static; order: -1; justify-content: flex-end; }
+  .item { grid-template-columns: 36px minmax(0, 1fr); }
+  .item-ico { width: 36px; height: 36px; }
+  .item-meta { white-space: normal; }
+  .item-sit, .item-tempo { grid-column: 1 / -1; }
+  .item-acao { grid-column: 1 / -1; grid-row: auto; }
+  .item-acao .btn { width: 100%; min-height: 44px; }
+  .unit-pop { width: min(92vw, 360px); }
+  .secao-total { margin-left: 0; width: 100%; }
+}
+@media (min-width: 1600px) { .page { max-width: 1600px; } body { font-size: 15px; } }
+@media (min-width: 2200px) { .page { max-width: 2100px; } body { font-size: 17px; } }
+@media (min-width: 3000px) { .page { max-width: 2800px; } body { font-size: 21px; } }
+
+</style>
+</head>
+<body>
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Trocar AIP Goals pelo nome do dashboard (ex.: "COO Business Units Dashboard").
+     Logo: "../" volta ao Hub; ajuste se o dashboard morar em outro lugar. -->
+<nav class="topnav" id="topnav">
+  <a href="/" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="topnav-brand"><span class="topnav-brand-nome">AIP Goals</span></h1>
+  <div class="topnav-actions">
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-8M21 20H3"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.8-6.3L3.5 8.3"/><path d="M3.5 3.5v4.8h4.8"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-tasks" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-decide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.2l2.8 2.8L16 9.5"/></symbol>
+  <symbol id="i-comment" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 0 1-12.3 7.6L3.5 20.5l1-4.4A8.5 8.5 0 1 1 20.5 12z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11.5L15 8l1.5 4H5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5L21.5 20h-19z"/><path d="M12 10v4.5M12 17.4v.1"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5l3 3 5.9-5.9a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.4-.6-.6-2.4z"/></symbol>
+  <symbol id="i-st-rascunho" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-st-em_aprovacao" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/></symbol>
+  <symbol id="i-st-em_revisao" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="i-st-aprovado" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-st-negado" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
+
+<!-- Abas do app: cada perfil vê só o que pode usar (§6.4) -->
+<nav class="app-nav" id="appNav" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
+  <a class="app-nav-link" href="#pendencias" data-tela="pendencias" data-perfis="todos">
+    <svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span data-i18n="nav.pendencias">Minhas pendências</span><span class="app-nav-cont" id="navCont" hidden></span>
+  </a>
+  <a class="app-nav-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden>
+    <svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.painel">Painel do ciclo</span>
+  </a>
+  <a class="app-nav-link" href="#metas" data-tela="metas" data-perfis="todos">
+    <svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span data-i18n="nav.metas">Metas da BU</span>
+  </a>
+  <span class="app-nav-sep" aria-hidden="true"></span>
+  <a class="app-nav-link" href="#action-log" data-tela="action-log" data-perfis="todos">
+    <svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span>Action Log</span>
+  </a>
+  <a class="app-nav-link" href="#acoes" data-tela="acoes" data-perfis="todos">
+    <svg class="ico" aria-hidden="true"><use href="#i-tasks"/></svg><span data-i18n="nav.acoes">Ações</span>
+  </a>
+  <a class="app-nav-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden>
+    <svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg><span data-i18n="nav.config">Configuração</span>
+  </a>
+</nav>
+
+<main class="page" id="main">
+
+  <!-- ═══ T01 · Minhas pendências ═══ -->
+  <section class="vista" id="vistaPendencias" aria-labelledby="titPend">
+
+    <header class="hero">
+      <div class="hero-texto">
+        <p class="hero-eyebrow"><span>AIP Goals</span><span id="heroCiclo"></span></p>
+        <h2 class="hero-titulo" id="titPend" data-i18n="t01.titulo">Minhas pendências</h2>
+        <p class="hero-sub" data-i18n="t01.sub">Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.</p>
+        <div class="hero-pills">
+          <span class="hero-pill" id="pillExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+          <span class="hero-pill is-wait" id="pillDesatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span>
+        </div>
+      </div>
+
+      <!-- Resumo em vidro: cada linha filtra a fila (aria-pressed) -->
+      <div class="resumo">
+        <p class="resumo-tit" id="titResumo" data-i18n="t01.resumo">Resumo da fila</p>
+        <div class="resumo-lista" id="resumo" role="group" aria-labelledby="titResumo">
+          <button type="button" class="resumo-item" data-tipo="preencher" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-pen"/></svg><span data-i18n="tipo.preencher.plural">A preencher</span><span class="resumo-num" data-cont="preencher">—</span></button>
+          <button type="button" class="resumo-item" data-tipo="decidir" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-decide"/></svg><span data-i18n="tipo.decidir.plural">Decisões</span><span class="resumo-num" data-cont="decidir">—</span></button>
+          <button type="button" class="resumo-item" data-tipo="comentario" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-comment"/></svg><span data-i18n="tipo.comentario.plural">Comentários sem resposta</span><span class="resumo-num" data-cont="comentario">—</span></button>
+          <button type="button" class="resumo-item" data-tipo="acao" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span data-i18n="tipo.acao.plural">Ações atribuídas</span><span class="resumo-num" data-cont="acao">—</span></button>
+          <div class="resumo-sep" aria-hidden="true"></div>
+          <div class="resumo-alerta"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span><span data-i18n="t01.alertaTit">Paradas ou atrasadas</span><small id="alertaRodape"></small></span><span class="resumo-num" data-cont="alerta">—</span></div>
+        </div>
+      </div>
+
+      <div class="hero-acoes">
+        <button type="button" class="hero-acao" id="btnAtualizar" aria-label="Atualizar lista" title="Atualizar lista" data-i18n-aria="t01.atualizar" data-i18n-title="t01.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="hero-acao" id="btnTelaCheia" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <!-- Filtros (padrão COO): rótulo em itálico em cima; estado na URL -->
+    <div class="filters">
+      <div class="filter">
+        <span class="filter-label" id="lblUnid">Business Unit:</span>
+        <div class="unit" id="unit">
+          <button type="button" class="unit-trigger" id="unitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="unitPop" aria-labelledby="lblUnid unitTrigger">
+            <span class="unit-pais" id="unitPais"></span><span class="unit-sep" id="unitSep">›</span><span class="unit-site" id="unitSite"></span>
+            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
+          <div class="unit-pop" id="unitPop" hidden>
+            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="unitPaises"></div></div>
+            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="unitBus"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter">
+        <span class="filter-label" id="lblOrd" data-i18n="f.ordenar">Ordenar por:</span>
+        <div class="seg" role="group" aria-labelledby="lblOrd" id="segOrd">
+          <button type="button" data-ord="urgencia" aria-pressed="true" data-i18n="f.urgencia">Urgência</button>
+          <button type="button" data-ord="prazo" aria-pressed="false" data-i18n="f.prazo">Prazo</button>
+          <button type="button" data-ord="idade" aria-pressed="false" data-i18n="f.idade">Idade</button>
+        </div>
+      </div>
+      <div class="filter">
+        <span class="filter-label" id="lblSo" data-i18n="f.soAlerta">Só paradas ou atrasadas:</span>
+        <button type="button" class="switch" id="swSo" role="switch" aria-checked="false" aria-labelledby="lblSo">
+          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+        </button>
+      </div>
+    </div>
+
+    <section class="secao" aria-labelledby="titFila">
+      <div class="secao-head">
+        <span class="secao-ico" aria-hidden="true"><svg class="ico"><use href="#i-inbox"/></svg></span>
+        <h3 class="secao-tit" id="titFila" data-i18n="t01.fila">Fila de pendências</h3>
+        <span class="secao-cont" id="filaCont" hidden></span>
+        <span class="secao-total" id="listaTotal" aria-live="polite"></span>
+      </div>
+
+      <ul class="fila" id="fila" aria-labelledby="titFila"></ul>
+
+      <div class="estado" id="estVazio" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-decide"/></svg>
+        <p class="estado-tit" data-i18n="est.vazioTit">Nenhuma pendência</p>
+        <p class="estado-txt" data-i18n="est.vazioTxt">Você está em dia neste ciclo. Novas pendências aparecem aqui e chegam por e-mail.</p>
+      </div>
+      <div class="estado" id="estFiltro" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg>
+        <p class="estado-tit" data-i18n="est.filtroTit">Nada com estes filtros</p>
+        <button type="button" class="btn btn-sec" id="btnLimpar" data-i18n="est.limpar">Limpar filtros</button>
+      </div>
+      <div class="estado estado-erro" id="estErro" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+        <p class="estado-tit" data-i18n="est.erroTit">Não foi possível carregar as pendências</p>
+        <p class="estado-txt" id="estErroTxt"></p>
+        <button type="button" class="btn" id="btnTentar" data-i18n="est.tentar">Tentar de novo</button>
+      </div>
+      <div class="estado" id="estSemAcesso" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+        <p class="estado-tit" data-i18n="est.semAcessoTit">Sem acesso ao AIP Goals</p>
+        <p class="estado-txt" data-i18n="est.semAcessoTxt">Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&amp;CI).</p>
+      </div>
+
+      <p class="updated" id="atualizado"></p>
+    </section>
+  </section>
+
+  <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
+  <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
+    <div class="secao">
+      <div class="secao-head">
+        <span class="secao-ico" aria-hidden="true"><svg class="ico"><use href="#i-tool"/></svg></span>
+        <h2 class="secao-tit" id="titConstr"></h2>
+      </div>
+      <div class="estado">
+        <p class="estado-tit" data-i18n="est.construcaoTit">Tela em construção</p>
+        <p class="estado-txt" data-i18n="est.construcaoTxt">Esta tela faz parte do MVP e ainda não foi publicada.</p>
+        <a class="btn btn-sec" href="#pendencias" data-i18n="est.voltar">Voltar para Minhas pendências</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ═══ Setup Dashboards — barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Colar num <script> logo depois da marcação (setup-dashboards.html), ANTES do script do dashboard.
+   Configuração opcional, declarada antes deste script:
+     window.VBM_SETUP = {
+       idiomaPadrao: 'pt-BR' | 'en',          // sem escolha salva; padrão 'pt-BR'
+       numeroPadrao: 'pt-BR' | 'en-CA',       // sem escolha salva; padrão: pelo idioma do navegador
+       urlUsuario: '/api/me'                  // { nome, email, cargo } — rota do Portal (Kaizen)
+     };
+   Preferências por pessoa no navegador, com as MESMAS chaves do Kaizen e do Studio,
+   para valerem em todas as aplicações do Portal: vdt-theme, vdt-lang, vdt-num.
+   API para o dashboard (window.VBMSetup):
+     t(chave, vars)         texto no idioma atual ('Olá {nome}' + { nome: 'Ana' })
+     registrar(dic)         { 'pt-BR': { chave: texto }, en: { … } } — textos do dashboard
+     traduzir(raiz?)        aplica data-i18n / -aria / -title / -ph em raiz (padrão: document)
+     fmt(valor, casas)      número no formato escolhido (Brasil 1.234,56 · Canadá 1,234.56)
+     dataHora(data)         data e hora no idioma escolhido
+     on('tema'|'idioma'|'numero', fn)   redesenhar o que o JS monta
+     tema / idioma / numero (leitura) */
+window.VBMSetup = (function () {
+  'use strict';
+  var CFG = window.VBM_SETUP || {};
+  var CHAVES = { tema: 'vdt-theme', idioma: 'vdt-lang', numero: 'vdt-num' };
+  var IDIOMAS = ['pt-BR', 'en'], NUMEROS = ['pt-BR', 'en-CA'];
+  var DIC = {
+    'pt-BR': { 'sd.menu': 'Menu', 'sd.configuracoes': 'Configurações', 'sd.fechar': 'Fechar', 'sd.tema': 'Tema', 'sd.claro': 'Claro', 'sd.escuro': 'Escuro',
+      'sd.idioma': 'Idioma', 'sd.idiomaInfo': 'Idioma da interface', 'sd.numero': 'Formato numérico', 'sd.numeroInfo': 'Separador decimal e de milhar dos gráficos',
+      'sd.numeroBR': 'Brasil — 1.234,56', 'sd.numeroCA': 'Canadá — 1,234.56' },
+    en: { 'sd.menu': 'Menu', 'sd.configuracoes': 'Settings', 'sd.fechar': 'Close', 'sd.tema': 'Theme', 'sd.claro': 'Light', 'sd.escuro': 'Dark',
+      'sd.idioma': 'Language', 'sd.idiomaInfo': 'Interface language', 'sd.numero': 'Number format', 'sd.numeroInfo': 'Decimal and thousands separators in charts',
+      'sd.numeroBR': 'Brazil — 1.234,56', 'sd.numeroCA': 'Canada — 1,234.56' }
+  };
+  var ouvintes = { tema: [], idioma: [], numero: [] };
+  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* só nesta sessão */ } }
+  function avisar(evt) { ouvintes[evt].forEach(function (fn) { try { fn(estado[evt]); } catch (e) { console.error('[setup-dashboards]', e); } }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  var estado = {
+    tema: ler(CHAVES.tema) === 'dark' ? 'dark' : 'light',
+    idioma: IDIOMAS.indexOf(ler(CHAVES.idioma)) >= 0 ? ler(CHAVES.idioma) : (IDIOMAS.indexOf(CFG.idiomaPadrao) >= 0 ? CFG.idiomaPadrao : 'pt-BR'),
+    numero: NUMEROS.indexOf(ler(CHAVES.numero)) >= 0 ? ler(CHAVES.numero)
+      : NUMEROS.indexOf(CFG.numeroPadrao) >= 0 ? CFG.numeroPadrao : (/^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR')
+  };
+
+  function t(chave, vars) {
+    var s = (DIC[estado.idioma] || {})[chave];
+    if (s == null) s = DIC['pt-BR'][chave];
+    if (s == null) return chave;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : s;
+  }
+  function registrar(dic) {
+    Object.keys(dic || {}).forEach(function (l) { DIC[l] = DIC[l] || {}; for (var k in dic[l]) DIC[l][k] = dic[l][k]; });
+  }
+  function traduzir(raiz) {
+    raiz = raiz || document;
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+    });
+  }
+  function fmt(v, casas) {
+    return Number(v).toLocaleString(estado.numero, { minimumFractionDigits: casas, maximumFractionDigits: casas }).replace('-', '−');
+  }
+  function dataHora(d) {
+    var l = estado.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l) + ' ' + d.toLocaleTimeString(l);
+  }
+
+  // ── Tema: data-bg (barra e painel) + data-theme (tokens do dashboard) ──
+  function aplicarTema(tema, salvar) {
+    estado.tema = tema === 'dark' ? 'dark' : 'light';
+    var html = document.documentElement;
+    html.setAttribute('data-bg', estado.tema);
+    html.setAttribute('data-theme', estado.tema);
+    if ($('btnWhite')) $('btnWhite').classList.toggle('active', estado.tema === 'light');
+    if ($('btnBusiness')) $('btnBusiness').classList.toggle('active', estado.tema === 'dark');
+    if (salvar) { gravar(CHAVES.tema, estado.tema); avisar('tema'); }
+  }
+  function aplicarIdioma(l, salvar) {
+    estado.idioma = IDIOMAS.indexOf(l) >= 0 ? l : 'pt-BR';
+    document.documentElement.lang = estado.idioma;
+    if ($('langSelect')) $('langSelect').value = estado.idioma;
+    traduzir();
+    if (salvar) { gravar(CHAVES.idioma, estado.idioma); avisar('idioma'); }
+  }
+  function aplicarNumero(n, salvar) {
+    estado.numero = NUMEROS.indexOf(n) >= 0 ? n : 'pt-BR';
+    if ($('numSelect')) $('numSelect').value = estado.numero;
+    if (salvar) { gravar(CHAVES.numero, estado.numero); avisar('numero'); }
+  }
+
+  // ── Painel de Configurações (engrenagem) ──
+  var btn = $('settingsBtn'), painel = $('settingsPanel'), fundo = $('settingsBackdrop');
+  function abrir(sim) {
+    if (!painel) return;
+    painel.classList.toggle('open', sim); fundo.classList.toggle('open', sim);
+    btn.setAttribute('aria-expanded', String(sim)); painel.setAttribute('aria-hidden', String(!sim));
+    if (sim) { var f = painel.querySelector('.theme-toggle-btn.active') || painel.querySelector('button'); if (f) f.focus(); } else btn.focus();
+  }
+  if (btn && painel && fundo) {
+    btn.addEventListener('click', function () { abrir(!painel.classList.contains('open')); });
+    $('settingsClose').addEventListener('click', function () { abrir(false); });
+    fundo.addEventListener('click', function () { abrir(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && painel.classList.contains('open')) abrir(false); });
+    $('btnWhite').addEventListener('click', function () { aplicarTema('light', true); });
+    $('btnBusiness').addEventListener('click', function () { aplicarTema('dark', true); });
+    $('langSelect').addEventListener('change', function (e) { aplicarIdioma(e.target.value, true); });
+    $('numSelect').addEventListener('change', function (e) { aplicarNumero(e.target.value, true); });
+  }
+
+  // ── Tela cheia: html.is-fs (a barra superior sai de cena pelo CSS) ──
+  document.addEventListener('fullscreenchange', function () {
+    document.documentElement.classList.toggle('is-fs', !!document.fullscreenElement);
+    if (document.fullscreenElement) abrir(false);
+  });
+
+  // ── Usuário logado: nome, cargo e iniciais (rota do Portal) ──
+  fetch(CFG.urlUsuario || '/api/me', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (me) {
+      if (!me || !$('topnavUser')) return;
+      var nome = String(me.nome || me.email || '').trim();
+      if (!nome) return;
+      var partes = nome.split(/\s+/);
+      $('topnavUserName').textContent = nome;
+      $('topnavUserRole').textContent = me.cargo || '';
+      $('topnavUserAvatar').textContent = ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+      $('topnavUserAvatar').title = nome;
+      $('topnavUser').hidden = false;
+    })
+    .catch(function () { /* sem a rota (ex.: fora do Portal): a barra fica sem o usuário */ });
+
+  aplicarTema(estado.tema, false);
+  aplicarNumero(estado.numero, false);
+  aplicarIdioma(estado.idioma, false);
+
+  return {
+    t: t, registrar: registrar, traduzir: traduzir, fmt: fmt, dataHora: dataHora,
+    on: function (evt, fn) { if (ouvintes[evt]) ouvintes[evt].push(fn); },
+    get tema() { return estado.tema; }, get idioma() { return estado.idioma; }, get numero() { return estado.numero; }
+  };
+})();
+/* ═══ fim Setup Dashboards ═══ */
+
+</script>
+<script>
+/* ═══ AIP Goals — T01 Minhas pendências ═══
+   Dados: GET api/pendencias (aip-goals-api.js). As regras (idade, parada, atrasada,
+   recorte por BU) vêm prontas do servidor; a tela só exibe e filtra.
+   Filtros na URL (?tipo=&pais=&bu=&ord=&so=1): o Voltar do navegador volta com o mesmo filtro.
+   Vistas pelo hash (#pendencias, #metas, …), como as outras telas do Portal. */
+(function () {
+  'use strict';
+  var S = window.VBMSetup;
+  var $ = function (id) { return document.getElementById(id); };
+  var TIMEOUT_MS = 75000;
+  var TIPOS = ['preencher', 'decidir', 'comentario', 'acao'];
+  var ORDENS = ['urgencia', 'prazo', 'idade'];
+
+  S.registrar({
+    'pt-BR': {
+      'nav.menu': 'Menu do AIP Goals', 'nav.ciclo': 'Ciclo', 'nav.pendencias': 'Minhas pendências', 'nav.painel': 'Painel do ciclo',
+      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração',
+      'ui.telaCheia': 'Tela cheia',
+      't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
+      't01.exemplo': 'Dados de exemplo — modelo de dados em validação (P-12)', 't01.desatualizado': 'Dados desatualizados — exibindo a última leitura',
+      't01.atualizar': 'Atualizar lista', 't01.resumoAria': 'Filtrar por tipo de pendência', 't01.filtrando': 'Filtrando',
+      't01.alertaTit': 'Paradas ou atrasadas', 't01.alertaRodape': 'mais de {n} dias úteis no nível ou prazo vencido',
+      't01.fila': 'Fila de pendências', 't01.caption': 'Pendências do ciclo, uma por linha', 't01.total': '{n} de {t} pendências', 't01.total1': '{n} de {t} pendência',
+      't01.atualizado': 'Última atualização {d}', 't01.atualizada': 'Lista atualizada.',
+      'tipo.preencher': 'Preencher Goal Card', 'tipo.decidir': 'Decisão pendente', 'tipo.comentario': 'Comentário sem resposta', 'tipo.acao': 'Ação atribuída',
+      'tipo.preencher.plural': 'A preencher', 'tipo.decidir.plural': 'Decisões', 'tipo.comentario.plural': 'Comentários sem resposta', 'tipo.acao.plural': 'Ações atribuídas',
+      'tipo.preencher.rodape': 'Goal Cards em rascunho ou devolvidos', 'tipo.decidir.rodape': 'Aprovar, devolver ou negar',
+      'tipo.comentario.rodape': 'Sem resposta sua', 'tipo.acao.rodape': 'Atribuídas a você',
+      'btn.preencher': 'Preencher', 'btn.ajustar': 'Ajustar', 'btn.decidir': 'Analisar', 'btn.comentario': 'Responder', 'btn.acao': 'Ver ação',
+      'est.rascunho': 'Rascunho', 'est.em_aprovacao': 'Em aprovação', 'est.em_revisao': 'Em revisão', 'est.aprovado': 'Aprovado', 'est.negado': 'Negado',
+      'nivel': 'Nível {a} de {t} · {n}', 'versao': 'v{n}', 'semVersao': 'sem versão submetida', 'lbl.card': 'Card', 'lbl.versao': 'Versão',
+      'idade.hoje': 'Hoje', 'idade.dias': '{n} dias úteis', 'idade.dia': '1 dia útil',
+      'chip.parada': 'Parada', 'chip.atrasada': 'Atrasada', 'prazo.sem': 'Sem prazo', 'prazo.vence': 'vence {d}', 'prazo.venceu': 'venceu {d}',
+      'f.pais': 'País', 'f.todos': 'Todos', 'f.todas': 'Todas', 'f.ordenar': 'Ordenar por:', 'f.urgencia': 'Urgência', 'f.prazo': 'Prazo', 'f.idade': 'Idade',
+      'f.soAlerta': 'Só paradas ou atrasadas:',
+      'col.pendencia': 'Pendência', 'col.meta': 'Meta', 'col.situacao': 'Situação', 'col.prazo': 'Prazo', 'col.idade': 'Idade', 'col.acao': 'Ação',
+      'est.vazioTit': 'Nenhuma pendência', 'est.vazioTxt': 'Você está em dia neste ciclo. Novas pendências aparecem aqui e chegam por e-mail.',
+      'est.filtroTit': 'Nada com estes filtros', 'est.limpar': 'Limpar filtros',
+      'est.erroTit': 'Não foi possível carregar as pendências', 'est.tentar': 'Tentar de novo',
+      'est.erroRede': 'Sem resposta do servidor. Verifique a conexão e tente de novo.', 'est.erroTempo': 'O servidor demorou mais que o esperado.',
+      'est.erroLimite': 'Muitos pedidos em sequência. Aguarde um minuto.', 'est.erroGeral': 'Tente de novo em instantes. Se continuar, avise o administrador do ciclo.',
+      'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
+      'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
+      'est.voltar': 'Voltar para Minhas pendências',
+      'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
+      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
+    },
+    en: {
+      'nav.menu': 'AIP Goals menu', 'nav.ciclo': 'Cycle', 'nav.pendencias': 'My pending items', 'nav.painel': 'Cycle dashboard',
+      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings',
+      'ui.telaCheia': 'Full screen',
+      't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
+      't01.exemplo': 'Sample data — data model under validation (P-12)', 't01.desatualizado': 'Outdated data — showing the last reading',
+      't01.atualizar': 'Refresh list', 't01.resumoAria': 'Filter by pending item type', 't01.filtrando': 'Filtering',
+      't01.alertaTit': 'Stalled or overdue', 't01.alertaRodape': 'over {n} business days at the level or past due',
+      't01.fila': 'Pending queue', 't01.caption': 'Pending items in the cycle, one per row', 't01.total': '{n} of {t} pending items', 't01.total1': '{n} of {t} pending item',
+      't01.atualizado': 'Last updated {d}', 't01.atualizada': 'List refreshed.',
+      'tipo.preencher': 'Fill in Goal Card', 'tipo.decidir': 'Pending decision', 'tipo.comentario': 'Unanswered comment', 'tipo.acao': 'Assigned action',
+      'tipo.preencher.plural': 'To fill in', 'tipo.decidir.plural': 'Decisions', 'tipo.comentario.plural': 'Unanswered comments', 'tipo.acao.plural': 'Assigned actions',
+      'tipo.preencher.rodape': 'Goal Cards in draft or returned', 'tipo.decidir.rodape': 'Approve, return or deny',
+      'tipo.comentario.rodape': 'Awaiting your reply', 'tipo.acao.rodape': 'Assigned to you',
+      'btn.preencher': 'Fill in', 'btn.ajustar': 'Adjust', 'btn.decidir': 'Review', 'btn.comentario': 'Reply', 'btn.acao': 'View action',
+      'est.rascunho': 'Draft', 'est.em_aprovacao': 'Pending approval', 'est.em_revisao': 'In Review', 'est.aprovado': 'Approved', 'est.negado': 'Denied',
+      'nivel': 'Level {a} of {t} · {n}', 'versao': 'v{n}', 'semVersao': 'not submitted yet', 'lbl.card': 'Card', 'lbl.versao': 'Version',
+      'idade.hoje': 'Today', 'idade.dias': '{n} business days', 'idade.dia': '1 business day',
+      'chip.parada': 'Stalled', 'chip.atrasada': 'Overdue', 'prazo.sem': 'No due date', 'prazo.vence': 'due {d}', 'prazo.venceu': 'was due {d}',
+      'f.pais': 'Country', 'f.todos': 'All', 'f.todas': 'All', 'f.ordenar': 'Sort by:', 'f.urgencia': 'Urgency', 'f.prazo': 'Due date', 'f.idade': 'Age',
+      'f.soAlerta': 'Stalled or overdue only:',
+      'col.pendencia': 'Pending item', 'col.meta': 'Goal', 'col.situacao': 'Status', 'col.prazo': 'Due date', 'col.idade': 'Age', 'col.acao': 'Action',
+      'est.vazioTit': 'No pending items', 'est.vazioTxt': 'You are up to date in this cycle. New items show up here and arrive by e-mail.',
+      'est.filtroTit': 'Nothing matches these filters', 'est.limpar': 'Clear filters',
+      'est.erroTit': 'Could not load your pending items', 'est.tentar': 'Try again',
+      'est.erroRede': 'No response from the server. Check your connection and try again.', 'est.erroTempo': 'The server took longer than expected.',
+      'est.erroLimite': 'Too many requests in a row. Wait a minute.', 'est.erroGeral': 'Try again shortly. If it persists, contact the cycle administrator.',
+      'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
+      'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
+      'est.voltar': 'Back to My pending items',
+      'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
+      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card'
+    }
+  });
+
+  S.traduzir(); // textos fixos da tela (data-i18n) já no idioma escolhido
+
+  // ── Utilitários ──
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  function ico(id) { return '<svg class="ico" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+  function dataCurta(isoTxt) {
+    var p = String(isoTxt).split('-').map(Number);
+    var d = new Date(p[0], p[1] - 1, p[2]);
+    return d.toLocaleDateString(S.idioma === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+  }
+  var toastTimer = null;
+  function toast(msg, erro) {
+    var t = $('toast');
+    t.textContent = msg; t.classList.toggle('is-err', !!erro); t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+
+  // ── Estado (filtros na URL) ──
+  var dados = null;
+  var filtro = lerFiltro();
+  function lerFiltro() {
+    var q = new URLSearchParams(location.search);
+    return {
+      tipo: TIPOS.indexOf(q.get('tipo')) >= 0 ? q.get('tipo') : '',
+      pais: q.get('pais') || '',
+      bu: q.get('bu') || '',
+      ord: ORDENS.indexOf(q.get('ord')) >= 0 ? q.get('ord') : 'urgencia',
+      so: q.get('so') === '1'
+    };
+  }
+  function gravarFiltro() {
+    var q = new URLSearchParams();
+    if (filtro.tipo) q.set('tipo', filtro.tipo);
+    if (filtro.pais) q.set('pais', filtro.pais);
+    if (filtro.bu) q.set('bu', filtro.bu);
+    if (filtro.ord !== 'urgencia') q.set('ord', filtro.ord);
+    if (filtro.so) q.set('so', '1');
+    var s = q.toString();
+    history.pushState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
+  }
+  window.addEventListener('popstate', function () { filtro = lerFiltro(); renderLista(); });
+
+  // ── Carga ──
+  function carregar(fresco) {
+    mostrarEstado(null);
+    renderCarregando();
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    // Sem retry automático (5xx/403/429): a pessoa decide pelo botão "Tentar de novo".
+    return fetch('api/pendencias' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) {
+        dados = j;
+        if (fresco) toast(S.t('t01.atualizada'));
+        renderTudo();
+      })
+      .catch(function (err) {
+        dados = null;
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return mostrarEstado('estSemAcesso', true);
+        $('estErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        mostrarEstado('estErro', true);
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+
+  function mostrarEstado(id, esconderTabela) {
+    ['estVazio', 'estFiltro', 'estErro', 'estSemAcesso'].forEach(function (k) { $(k).hidden = k !== id; });
+    $('fila').hidden = !!esconderTabela;
+    if (esconderTabela) {
+      $('fila').innerHTML = ''; $('filaCont').hidden = true; $('listaTotal').textContent = ''; $('atualizado').textContent = '';
+      document.querySelectorAll('[data-cont]').forEach(function (el) { el.textContent = '—'; });
+      $('pillExemplo').hidden = true; $('pillDesatualizado').hidden = true;
+    }
+  }
+
+  function renderCarregando() {
+    var sk = function (w) { return '<span class="skel" style="width:' + w + ';max-width:100%"></span>'; };
+    var item = '<li class="item is-skel" aria-hidden="true"><span class="item-ico"></span>' +
+      '<div class="item-principal">' + sk('40%') + '<div style="height:8px"></div>' + sk('80%') + '</div>' +
+      '<div class="item-sit">' + sk('110px') + '</div><div class="item-tempo">' + sk('80px') + '</div><div class="item-acao">' + sk('96px') + '</div></li>';
+    $('fila').innerHTML = item + item + item + item;
+    $('listaTotal').textContent = '';
+  }
+
+  // ── Render ──
+  function renderTudo() {
+    if (!dados) return;
+    var c = dados.ciclo || {};
+    $('heroCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
+    document.title = 'AIP Goals · ' + S.t('t01.titulo') + (c.nome ? ' · ' + c.nome : '');
+    $('pillExemplo').hidden = !dados.exemplo;
+    $('pillDesatualizado').hidden = !dados.desatualizado;
+    $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
+    var total = (dados.itens || []).length;
+    $('navCont').textContent = S.fmt(total, 0);
+    $('navCont').hidden = !total;
+    aplicarPerfis();
+    renderUnidade();
+    renderLista();
+  }
+
+  // Menu: cada perfil vê só o que pode usar (§6.4)
+  function aplicarPerfis() {
+    var papeis = ((dados && dados.usuario && dados.usuario.papeis) || []).map(function (p) { return p.papel; });
+    document.querySelectorAll('.app-nav-link').forEach(function (a) {
+      var pode = (a.getAttribute('data-perfis') || '').split(' ');
+      a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
+    });
+  }
+
+  function itensBase() {
+    // Itens dentro da BU escolhida (os cards de resumo contam só por BU, não por tipo)
+    return (dados.itens || []).filter(function (it) {
+      if (filtro.pais && it.bu.pais !== filtro.pais) return false;
+      if (filtro.bu && it.bu.sigla !== filtro.bu) return false;
+      return true;
+    });
+  }
+
+  function ordenar(lista) {
+    var pz = function (it) { return it.prazo || '9999-12-31'; };
+    var cmp = {
+      urgencia: function (a, b) {
+        return (b.atrasada - a.atrasada) || (b.parada - a.parada) || (pz(a) < pz(b) ? -1 : pz(a) > pz(b) ? 1 : 0) || (b.diasUteis - a.diasUteis);
+      },
+      prazo: function (a, b) { return (pz(a) < pz(b) ? -1 : pz(a) > pz(b) ? 1 : 0) || (b.diasUteis - a.diasUteis); },
+      idade: function (a, b) { return (b.diasUteis - a.diasUteis) || (pz(a) < pz(b) ? -1 : 1); }
+    }[filtro.ord];
+    return lista.slice().sort(cmp);
+  }
+
+  function renderLista() {
+    if (!dados) return;
+    var base = itensBase();
+    // Resumo
+    TIPOS.forEach(function (t) {
+      document.querySelector('[data-cont="' + t + '"]').textContent = S.fmt(base.filter(function (it) { return it.tipo === t; }).length, 0);
+    });
+    document.querySelector('[data-cont="alerta"]').textContent = S.fmt(base.filter(function (it) { return it.parada || it.atrasada; }).length, 0);
+    $('alertaRodape').textContent = S.t('t01.alertaRodape', { n: S.fmt((dados.parametros || {}).diasParado || 3, 0) });
+    document.querySelectorAll('.resumo-item[data-tipo]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tipo') === filtro.tipo)); });
+    document.querySelectorAll('#segOrd button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-ord') === filtro.ord)); });
+    $('swSo').setAttribute('aria-checked', String(filtro.so));
+    renderUnidadeRotulo();
+
+    var lista = ordenar(base.filter(function (it) {
+      if (filtro.tipo && it.tipo !== filtro.tipo) return false;
+      if (filtro.so && !(it.parada || it.atrasada)) return false;
+      return true;
+    }));
+    var total = (dados.itens || []).length;
+    $('listaTotal').textContent = S.t(lista.length === 1 ? 't01.total1' : 't01.total', { n: S.fmt(lista.length, 0), t: S.fmt(total, 0) });
+
+    if (!total) { mostrarEstado('estVazio', true); renderTudoRodape(); return; }
+    if (!lista.length) { mostrarEstado('estFiltro', true); renderTudoRodape(); return; }
+    mostrarEstado(null, false);
+    $('filaCont').textContent = S.fmt(lista.length, 0); $('filaCont').hidden = false;
+    $('fila').innerHTML = lista.map(itemHtml).join('');
+  }
+  // Mantém "Última atualização" e as pílulas quando a lista fica vazia pelo filtro
+  function renderTudoRodape() {
+    $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
+    $('pillExemplo').hidden = !dados.exemplo;
+    $('pillDesatualizado').hidden = !dados.desatualizado;
+    $('listaTotal').textContent = S.t('t01.total', { n: S.fmt(0, 0), t: S.fmt((dados.itens || []).length, 0) });
+    renderUnidadeRotulo();
+    TIPOS.forEach(function (t) { document.querySelector('[data-cont="' + t + '"]').textContent = S.fmt(itensBase().filter(function (it) { return it.tipo === t; }).length, 0); });
+    document.querySelector('[data-cont="alerta"]').textContent = S.fmt(itensBase().filter(function (it) { return it.parada || it.atrasada; }).length, 0);
+  }
+
+  var ICO_TIPO = { preencher: 'i-pen', decidir: 'i-decide', comentario: 'i-comment', acao: 'i-flag' };
+  function linkDo(it) {
+    // Vistas pelo hash: o link abre a tela exata (card, seção ou ação) — §6.4
+    if (it.tipo === 'acao') return '#acoes?acao=' + encodeURIComponent(it.id);
+    var q = 'card=' + encodeURIComponent(it.card) + (it.secao ? '&secao=' + encodeURIComponent(it.secao) : '');
+    return '#goal-card?' + q + (it.tipo === 'decidir' ? '&modo=analise' : it.tipo === 'preencher' ? '&modo=edicao' : '');
+  }
+  function itemHtml(it) {
+    var rotTipo = S.t('tipo.' + it.tipo);
+    var nivel = it.nivel ? '<span class="item-nivel">' + esc(S.t('nivel', { a: S.fmt(it.nivel.atual, 0), t: S.fmt(it.nivel.total, 0), n: it.nivel.nome })) + '</span>' : '';
+    var versao = it.versao ? esc(S.t('versao', { n: S.fmt(it.versao, 0) })) : esc(S.t('semVersao'));
+    var prazo = it.prazo
+      ? '<span>' + esc(S.t(it.atrasada ? 'prazo.venceu' : 'prazo.vence', { d: dataCurta(it.prazo) })) + '</span>'
+      : '<small>' + esc(S.t('prazo.sem')) + '</small>';
+    var idade = '<small>' + (it.diasUteis ? esc(S.t(it.diasUteis === 1 ? 'idade.dia' : 'idade.dias', { n: S.fmt(it.diasUteis, 0) })) : esc(S.t('idade.hoje'))) + '</small>';
+    var chips = (it.atrasada ? '<span class="chip-atrasada">' + ico('i-alert') + esc(S.t('chip.atrasada')) + '</span>' : '') +
+      (it.parada ? '<span class="chip-parada">' + ico('i-clock') + esc(S.t('chip.parada')) + '</span>' : '');
+    var btn = it.tipo === 'preencher' && it.estado === 'em_revisao' ? 'btn.ajustar' : 'btn.' + it.tipo;
+    var rotBtn = S.t(btn);
+    return '<li class="item' + (it.parada || it.atrasada ? ' is-alerta' : '') + '">' +
+      '<span class="item-ico" aria-hidden="true">' + ico(ICO_TIPO[it.tipo]) + '</span>' +
+      '<div class="item-principal">' +
+        '<p class="item-tipo">' + esc(rotTipo) + '</p>' +
+        '<p class="item-meta"><span class="num">#' + esc(it.meta.numero) + '</span> ' + esc(it.meta.titulo) + '</p>' +
+        '<p class="item-det">' + esc(it.detalhe) + '</p>' +
+        '<div class="item-linha"><span><b>' + esc(it.bu.sigla) + '</b> · ' + esc(it.bu.pais) + '</span><span>' + esc(it.card) + ' · ' + versao + '</span></div>' +
+      '</div>' +
+      '<div class="item-sit"><span class="st st-' + esc(it.estado) + '">' + ico('i-st-' + it.estado) + esc(S.t('est.' + it.estado)) + '</span>' + nivel + '</div>' +
+      '<div class="item-tempo">' + prazo + idade + (chips ? '<span class="chips">' + chips + '</span>' : '') + '</div>' +
+      '<div class="item-acao"><a class="btn" href="' + esc(linkDo(it)) + '" aria-label="' + esc(rotBtn + ': ' + rotTipo + ' · ' + it.bu.sigla + ' #' + it.meta.numero + ' ' + it.meta.titulo) + '">' +
+        esc(rotBtn) + ico('i-arrow') + '</a></div>' +
+      '</li>';
+  }
+
+  // ── Seletor País › BU (padrão COO) ──
+  function unidades() {
+    var mapa = {};
+    (dados.itens || []).forEach(function (it) { (mapa[it.bu.pais] = mapa[it.bu.pais] || {})[it.bu.sigla] = true; });
+    return mapa;
+  }
+  function renderUnidadeRotulo() {
+    $('unitPais').textContent = filtro.pais || S.t('f.todos');
+    $('unitSep').hidden = !filtro.pais;
+    $('unitSite').textContent = filtro.pais ? (filtro.bu || S.t('f.todas')) : '';
+  }
+  function renderUnidade() {
+    if (!dados) return;
+    var mapa = unidades();
+    var paises = Object.keys(mapa).sort();
+    $('unitPaises').innerHTML = ['' ].concat(paises).map(function (p) {
+      return '<button type="button" data-pais="' + esc(p) + '" aria-pressed="' + (p === filtro.pais) + '">' + esc(p || S.t('f.todos')) + '</button>';
+    }).join('');
+    var bus = filtro.pais ? Object.keys(mapa[filtro.pais] || {}).sort() : [];
+    $('unitBus').innerHTML = filtro.pais ? [''].concat(bus).map(function (b) {
+      return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === filtro.bu) + '">' + esc(b || S.t('f.todas')) + '</button>';
+    }).join('') : '';
+    renderUnidadeRotulo();
+  }
+  function abrirUnidade(sim) {
+    $('unitPop').hidden = !sim;
+    $('unitTrigger').setAttribute('aria-expanded', String(sim));
+    if (sim) { var f = $('unitPop').querySelector('[aria-pressed="true"]') || $('unitPop').querySelector('button'); if (f) f.focus(); }
+  }
+  $('unitTrigger').addEventListener('click', function () { abrirUnidade($('unitPop').hidden); });
+  $('unitPaises').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    filtro.pais = b.getAttribute('data-pais'); filtro.bu = '';
+    gravarFiltro(); renderUnidade(); renderLista();
+    if (!filtro.pais) { abrirUnidade(false); $('unitTrigger').focus(); }
+    else { var p = $('unitBus').querySelector('button'); if (p) p.focus(); }
+  });
+  $('unitBus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    filtro.bu = b.getAttribute('data-bu');
+    gravarFiltro(); renderUnidade(); renderLista();
+    abrirUnidade(false); $('unitTrigger').focus();
+  });
+  document.addEventListener('click', function (e) { if (!$('unitPop').hidden && !$('unit').contains(e.target)) abrirUnidade(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('unitPop').hidden) { abrirUnidade(false); $('unitTrigger').focus(); } });
+
+  // ── Demais filtros ──
+  $('resumo').addEventListener('click', function (e) {
+    var b = e.target.closest('.resumo-item[data-tipo]'); if (!b) return;
+    var t = b.getAttribute('data-tipo');
+    filtro.tipo = filtro.tipo === t ? '' : t;
+    gravarFiltro(); renderLista();
+  });
+  $('segOrd').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    filtro.ord = b.getAttribute('data-ord'); gravarFiltro(); renderLista();
+  });
+  $('swSo').addEventListener('click', function () { filtro.so = !filtro.so; gravarFiltro(); renderLista(); });
+  $('btnLimpar').addEventListener('click', function () { filtro = { tipo: '', pais: '', bu: '', ord: filtro.ord, so: false }; gravarFiltro(); renderUnidade(); renderLista(); });
+  $('btnTentar').addEventListener('click', function () { carregar(true); });
+  $('btnAtualizar').addEventListener('click', function () { carregar(true); });
+  $('btnTelaCheia').addEventListener('click', function () {
+    if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  });
+
+  // ── Vistas pelo hash ──
+  function rota() {
+    var h = (location.hash || '#pendencias').slice(1).split('?')[0] || 'pendencias';
+    var ehT01 = h === 'pendencias';
+    $('vistaPendencias').hidden = !ehT01;
+    $('vistaConstrucao').hidden = ehT01;
+    if (!ehT01) $('titConstr').textContent = S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h;
+    document.querySelectorAll('.app-nav-link').forEach(function (a) {
+      if (a.getAttribute('data-tela') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', rota);
+
+  // Idioma, formato e tema redesenham o que o JS monta
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); });
+  S.on('numero', function () { if (dados) renderTudo(); });
+
+  rota();
+  carregar(false);
+})();
+
+</script>
+</body>
+</html>

@@ -14,6 +14,8 @@
  *     .../VBM-Health-of-the-Business/
  *   /VBM-Stable-and-Capable/  VBM-Stable-and-Capable/portal.js  (API em <pasta>/api,
  *                             banco do Kaizen, PDFs no Azure Blob, gerador Python)
+ *   /VBM-Aip-Goals/           VBM-Aip-Goals/portal.js  (API em <pasta>/api; Goal Cards
+ *                             das metas de AIP — fluxo de aprovação e registro)
  *
  *   /VBM-Vdt/       VBM-Vdt/      (Python/FastAPI)  processos filhos em portas
  *   /VBM-Cockpit/   VBM-Cockpit/  (Python/FastAPI)  internas — ver apps-python.js
@@ -72,7 +74,7 @@ portal.get(["/admin.html", "/aprovacao.html", "/biblioteca.html", "/kaizen-novo.
 
 // ── Controle de acesso do Portal ──
 // Usuário em IBP.USERS com CD_MATRICULA preenchido (ver portal-acesso.js).
-// Vale para o Portal, o Performance Hub e o Stable & Capable. Abertos a todos: VBM-Kaizen-App
+// Vale para o Portal, o Performance Hub, o Stable & Capable e o AIP Goals. Abertos a todos: VBM-Kaizen-App
 // (validação própria), VBM-Vdt e VBM-Cockpit (sem restrição de acesso, por decisão do negócio).
 // Registrado ANTES das rotas do Performance Hub.
 let acesso = null;
@@ -81,6 +83,7 @@ portal.get("/portal/acesso", aguardarAcesso("rotaStatus"));
 portal.use("/VBM-Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/Performance-Hub", aguardarAcesso("exigir"));
 portal.use("/VBM-Stable-and-Capable", aguardarAcesso("exigir"));
+portal.use("/VBM-Aip-Goals", aguardarAcesso("exigir"));
 
 // ── VBM-Performance-Hub ──
 // API (/VBM-Performance-Hub/api) + bloqueio dos arquivos internos da pasta.
@@ -109,6 +112,17 @@ try {
 }
 portal.get("/VBM-Stable-and-Capable", exigirBarraFinal());
 portal.use("/VBM-Stable-and-Capable", express.static(path.join(__dirname, "VBM-Stable-and-Capable"), { index: "index.html", dotfiles: "ignore" }));
+
+// ── VBM-Aip-Goals ──
+// API (/VBM-Aip-Goals/api) + bloqueio dos arquivos internos da pasta
+// (portal.js, aip-goals-api.js, dados-exemplo.js, tests/). Uma falha ao montar não derruba o Portal.
+try {
+  require("./VBM-Aip-Goals/portal")(portal);
+} catch (err) {
+  console.error("[portal] falha ao montar VBM-Aip-Goals:", err.message);
+}
+portal.get("/VBM-Aip-Goals", exigirBarraFinal());
+portal.use("/VBM-Aip-Goals", express.static(path.join(__dirname, "VBM-Aip-Goals"), { index: "index.html", dotfiles: "ignore" }));
 
 // ── Aplicações Python: VBM-Vdt e VBM-Cockpit ──
 // Cada uma roda como processo filho numa porta interna; o Portal encaminha

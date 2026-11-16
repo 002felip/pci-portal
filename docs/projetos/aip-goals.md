@@ -1,0 +1,84 @@
+# AIP Goals
+
+Leva cada meta de AIP das BUs de VBM (Brasil e Canadá) do desdobramento do COO até o Goal Card
+aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação funcional e técnica:
+documento "AIP Goals — Especificação funcional e levantamento de requisitos" (abas Especificação
+técnica v1 e Levantamento de requisitos).
+
+- **Endereço:** `/VBM-Aip-Goals/`
+- **Código:** `VBM-Aip-Goals/`
+- **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
+- **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
+- **Situação:** T01 publicada com dados de exemplo; demais telas do catálogo em construção
+
+## Arquivos
+
+| Arquivo | O que é | Público? |
+|---|---|---|
+| `index.html` | página única; tokens e componentes `vbm-design` e barra `setup-dashboards` colados no `<style>`/`<script>` | sim |
+| `assets/css/poppins.css` | Poppins local (faces embutidas) | sim |
+| `assets/images/Fundo_VBM_2400x1145.webp` | fundo do banner | sim |
+| `portal.js` | montagem no Portal (pool próprio, health, router, bloqueio dos arquivos internos) | não |
+| `aip-goals-api.js` | rotas de dados (mesmo router no Portal e no standalone) | não |
+| `dados-exemplo.js` | fila de exemplo da T01, com datas relativas a hoje | não |
+| `server.js` | app standalone para desenvolvimento (porta 8020) | não |
+| `tests/` | testes `node --test` (API, regras de idade/prazo, bloqueio de arquivos) | não |
+
+## Telas (vistas pelo hash)
+
+| Vista | Tela | Situação |
+|---|---|---|
+| `#pendencias` | T01 Minhas pendências | publicada |
+| `#painel`, `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
+
+### T01 Minhas pendências
+
+Fila pessoal do ciclo ativo: cards a preencher (rascunho ou devolvidos), decisões pendentes,
+comentários sem resposta e ações atribuídas.
+
+- **Abas do app** abaixo da barra superior; cada perfil vê só as telas que pode usar (§6.4). Painel do
+  ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
+- **Banner** com o resumo por tipo; cada linha filtra a fila. "Paradas ou atrasadas" conta os itens há
+  mais de `parametros.diasParado` dias úteis no mesmo nível (RN-14) ou com prazo vencido.
+- **Filtros (padrão COO):** País › BU, Ordenar por (Urgência, Prazo, Idade) e "Só paradas ou atrasadas";
+  tudo na URL (`?tipo=&pais=&bu=&ord=&so=1`), e o Voltar do navegador volta com o mesmo filtro.
+- **Fila em cartões:** tipo, meta, detalhe, BU, card e versão, status (ícone + rótulo + cor do token
+  `--status-*`), nível da rota, prazo, idade e o botão que abre a tela exata (Preencher, Ajustar,
+  Analisar, Responder, Ver ação).
+- **Estados:** carregando, vazio, nada com os filtros, erro (com "Tentar de novo", sem retry
+  automático), sem acesso e desatualizado.
+- **Cores:** status pelo fluxo do Kaizen; "Parada" com `--wait` e "Atrasada" com `--late-bg`
+  (âmbar de ciclo, nunca verde/vermelho de desempenho).
+
+## API (`/VBM-Aip-Goals/api`)
+
+| Rota | O que faz |
+|---|---|
+| `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo`, `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
+| `GET /health` | `{ status }` |
+| `GET /ping` | diagnóstico sem banco |
+
+## Variáveis
+
+| Variável | Padrão | Uso |
+|---|---|---|
+| `AIPGOALS_FONTE` | `exemplo` | `exemplo` (dados de `dados-exemplo.js`) ou `banco` (responde 501 até a consulta do modelo validado entrar em `database/`) |
+| `AIPGOALS_AZURE_SQL_DATABASE` | `AZURE_SQL_DATABASE` | base da aplicação (`BDIBPBMSA_DEV` / `_PRD`) |
+| `AIPGOALS_EMAIL_LOCAL` | — | só no `server.js` com `NODE_ENV=development` fora do Databricks: simula o `X-Forwarded-Email` |
+
+Servidor, porta e login do banco: `AZURE_SQL_SERVER`, `AZURE_SQL_PORT`, `AZURE_SQL_USER`, `AZURE_SQL_PASSWORD` (os do Portal).
+
+## Rodar e testar
+
+```bash
+cd VBM-Aip-Goals && npm test
+NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js   # http://localhost:8020/
+```
+
+## Pontos de atenção
+
+- **P-12 (modelo de dados):** enquanto não for validado, a T01 mostra a pílula "Dados de exemplo". A
+  consulta real entra em `database/00N_*.sql`, parametrizada por e-mail e ciclo, e `/pendencias`
+  passa a lê-la com `AIPGOALS_FONTE=banco`.
+- **Papéis:** hoje vêm dos dados de exemplo; no modelo validado saem de `AIP_PAPEL` (AC-02, AC-03).
+- **Card na página inicial do Portal:** ainda não adicionado.
