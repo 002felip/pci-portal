@@ -2556,6 +2556,16 @@ const tx = (k, vars) => {
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, n) => (vars[n] != null ? vars[n] : m));
   return s;
 };
+// Textos montados pelo JS: ptEn(pt, en) segue o idioma atual; listas e objetos de rótulos traduzem na leitura
+const ptEn = (pt, en) => (idioma === 'en' ? en : pt);
+const traduzirCampo = (lista, campo, ingles, chave = (o, i) => i) => lista.forEach((o, i) => {
+  const pt = o[campo], en = ingles[chave(o, i)];
+  if (en !== undefined) Object.defineProperty(o, campo, { get: () => (idioma === 'en' ? en : pt), enumerable: true, configurable: true });
+});
+const traduzirObjeto = (obj, ingles) => Object.entries(ingles).forEach(([k, en]) => {
+  const pt = obj[k];
+  Object.defineProperty(obj, k, { get: () => (idioma === 'en' ? en : pt), enumerable: true, configurable: true });
+});
 function applyI18n(lang) {
   if (!i18n[lang]) lang = 'pt-BR';
   idioma = lang;
@@ -2694,6 +2704,7 @@ const EDIT_COLOR_DEFS = [
   { k: 'delta:flat', label: 'Delta neutro',                 def: '#747678' },
   { k: 'conector',   label: 'Conectores',                   def: '#747678' }
 ];
+traduzirCampo(EDIT_COLOR_DEFS, 'label', ['Main bars (Act/Fcst)', 'Plan bars', 'Comparison bars (Budget)', 'Chart background', 'Positive delta', 'Negative delta', 'Neutral delta', 'Connectors']);
 const hexToRgb = hex => [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16)).join(',');
 
 // Chave da série pelo último caractere do rótulo (mesma regra das cores padrão)
@@ -2720,6 +2731,7 @@ const PALETAS_COLUNAS = [
   { id: 'azul', label: 'Azul Monocromático', papeis: { anterior: '#0F3F5C', atual: '#3CB5E5', budget: '#B9E2F4', budgetAnterior: '#7CC5E6', plano: '#1B5E80' } },
   { id: 'verde', label: 'Verde Monocromático', papeis: { anterior: '#023832', atual: '#007E7A', budget: '#B5D8D6', budgetAnterior: '#6FAFAC', plano: '#034944' } }
 ];
+traduzirCampo(PALETAS_COLUNAS, 'label', ['VBM palette', 'Executive palette', 'Blue monochrome', 'Green monochrome']);
 // Papel da coluna: Plan; Budget ou realizado/forecast do período atual (maior ano do mesmo
 // tipo de horizonte no gráfico) ou de um período anterior
 function papelDaColuna(t, cols) {
@@ -3296,6 +3308,7 @@ function escapeHtml(str) {
 
 // Rótulos dos campos no painel Filtros (a ordem é a de FILTER_DEFS)
 const FILTER_PANEL_LABELS = { ano: 'Ano', sites: 'Business e Site', visoes: 'Cenário (Visão)', horizontes: 'Horizonte', product: 'Produto' };
+traduzirObjeto(FILTER_PANEL_LABELS, { ano: 'Year', sites: 'Business and Site', visoes: 'Scenario (View)', horizontes: 'Horizon', product: 'Product' });
 
 const FILTER_DEFS = [
   { key: 'product',    label: 'Product',    icon: 'fa-tags',          multiple: false, allLabel: 'Selecione um Product', searchable: true, required: true },
@@ -3304,6 +3317,8 @@ const FILTER_DEFS = [
   { key: 'visoes',     label: 'Visão',      icon: 'fa-eye',           multiple: true,  allLabel: 'Todas as visões',     searchable: false },
   { key: 'horizontes', label: 'Horizonte',  icon: 'fa-timeline',      multiple: true,  allLabel: 'Selecione os horizontes', searchable: true  }
 ];
+traduzirCampo(FILTER_DEFS, 'label', { ano: 'Year', visoes: 'View', horizontes: 'Horizon' }, o => o.key);
+traduzirCampo(FILTER_DEFS, 'allLabel', { product: 'Select a Product', sites: 'All sites', ano: 'All years', visoes: 'All views', horizontes: 'Select the horizons' }, o => o.key);
 
 // filterState: Set vazio (multi) ou null (single) == "Todos" (sem restrição)
 const filterState = {
@@ -3885,6 +3900,7 @@ function selectOption(def, value) {
 //    Anual, recolhíveis, com UM item por rótulo ("Q2A 25", "Q2B 25", "Q2P 25").
 //    As opções vêm da cascata (filterOptions): só aparecem os rótulos dos
 //    Cenários escolhidos, na ordem das barras. O estado é o Set de Types.
+const HORIZ_EN = { MONTH: 'Monthly', QUARTER: 'Quarterly', SEMESTER: 'Semiannual', YTD: 'Year to Date (YTD)', YEAR: 'Annual', OUTROS: 'Others' };
 const HORIZONTE_GRUPOS = [['MONTH', 'Mensal'], ['QUARTER', 'Trimestral'], ['SEMESTER', 'Semestral'], ['YTD', 'Year to Date (YTD)'], ['YEAR', 'Anual'], ['OUTROS', 'Outros']];
 const horizonteGrupoAberto = new Map(); // grupo -> aberto (sem entrada: aberto se tiver seleção)
 
@@ -3909,8 +3925,8 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
     .filter(p => !term || p.rotulo.toLowerCase().includes(term) || p.tipos.some(t => t.toLowerCase().includes(term)));
   if (!periodos.length) {
     container.innerHTML = term
-      ? `<div class="qf-option-empty">Nenhum resultado para "${escapeHtml(searchTerm)}"</div>`
-      : `<div class="qf-option-empty">Nenhuma opção disponível com os demais filtros atuais</div>`;
+      ? `<div class="qf-option-empty">${ptEn('Nenhum resultado para', 'No results for')} "${escapeHtml(searchTerm)}"</div>`
+      : `<div class="qf-option-empty">${ptEn('Nenhuma opção disponível com os demais filtros atuais', 'No options available with the other current filters')}</div>`;
     return;
   }
   // Marcado = período escolhido (qualquer série dele); grupo parcial = parte dos períodos
@@ -3923,7 +3939,8 @@ function renderHorizonteAgrupado(def, container, term, searchTerm) {
   const ariaChecked = st => (st === 'is-checked' ? 'true' : st === 'is-partial' ? 'mixed' : 'false');
   const grupos = [];
   let html = '';
-  HORIZONTE_GRUPOS.forEach(([g, nome]) => {
+  HORIZONTE_GRUPOS.forEach(([g, nomePt]) => {
+    const nome = ptEn(nomePt, HORIZ_EN[g]);
     const itens = periodos.filter(p => p.grupo === g);
     if (!itens.length) return;
     const gi = grupos.push(itens) - 1;
@@ -3992,8 +4009,8 @@ function renderFilterOptions(def, searchTerm) {
 
   if (!visible.length) {
     html += term
-      ? `<div class="qf-option-empty">Nenhum resultado para "${escapeHtml(searchTerm)}"</div>`
-      : `<div class="qf-option-empty">Nenhuma opção disponível com os demais filtros atuais</div>`;
+      ? `<div class="qf-option-empty">${ptEn('Nenhum resultado para', 'No results for')} "${escapeHtml(searchTerm)}"</div>`
+      : `<div class="qf-option-empty">${ptEn('Nenhuma opção disponível com os demais filtros atuais', 'No options available with the other current filters')}</div>`;
   } else {
     html += visible.map(opt => {
       const checked = def.multiple ? filterState[def.key].has(opt.value) : filterState[def.key] === opt.value;
@@ -4030,16 +4047,16 @@ function buildFiltersBar() {
   bar.innerHTML = FILTER_DEFS.map(def => `
     <div class="qf-field" data-field="${def.key}">
       <span class="qf-field-label" id="qfLbl-${def.key}">${FILTER_PANEL_LABELS[def.key] || def.label}</span>
-      <button type="button" class="qf-trigger" data-trigger="${def.key}" aria-label="Filtro de ${def.label}" aria-describedby="qfLbl-${def.key}" aria-haspopup="true" aria-expanded="false">
+      <button type="button" class="qf-trigger" data-trigger="${def.key}" aria-label="${ptEn('Filtro de ', 'Filter by ')}${def.label}" aria-describedby="qfLbl-${def.key}" aria-haspopup="true" aria-expanded="false">
         <i class="fa-solid ${def.icon} qf-icon" aria-hidden="true"></i>
         <span class="qf-trigger-label">${def.allLabel}</span>
         <i class="fa-solid fa-chevron-down qf-chevron" aria-hidden="true"></i>
       </button>
-      <div class="qf-panel" data-panel="${def.key}" role="group" aria-label="Opções de ${def.label}">
-        ${def.searchable ? `<div class="qf-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="text" placeholder="Buscar ${def.label.toLowerCase()}..." aria-label="Buscar em ${def.label}"/></div>` : ''}
+      <div class="qf-panel" data-panel="${def.key}" role="group" aria-label="${ptEn('Opções de ' + def.label, def.label + ' options')}">
+        ${def.searchable ? `<div class="qf-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="text" placeholder="${ptEn('Buscar ', 'Search ')}${def.label.toLowerCase()}..." aria-label="${ptEn('Buscar em ', 'Search in ')}${def.label}"/></div>` : ''}
         ${def.multiple ? `<div class="qf-panel-actions">
-          <button type="button" class="qf-action-link" data-action="select-all">Selecionar Todos</button>
-          <button type="button" class="qf-action-link" data-action="clear-selection">Limpar Seleção</button>
+          <button type="button" class="qf-action-link" data-action="select-all">${ptEn('Selecionar Todos', 'Select All')}</button>
+          <button type="button" class="qf-action-link" data-action="clear-selection">${ptEn('Limpar Seleção', 'Clear Selection')}</button>
         </div>` : ''}
         <div class="qf-options" id="qfOptions-${def.key}"></div>
       </div>
@@ -5145,6 +5162,7 @@ function initCharts() {
 // responde ou se ele estiver indisponível.
 // ════════════════════════════════════════════════════════════════════
 const TITLE_FIELDS = { product: 'Produto', sites: 'Site', visoes: 'Cenário (Visão)', horizontes: 'Período (Horizonte)', ano: 'Ano' };
+traduzirObjeto(TITLE_FIELDS, { product: 'Product', sites: 'Site', visoes: 'Scenario (View)', horizontes: 'Period (Horizon)', ano: 'Year' });
 const TITLE_SEPS = [
   { v: ' ', label: 'Espaço' }, { v: ' - ', label: 'Hífen ( - )' }, { v: ' / ', label: 'Barra ( / )' },
   { v: ' | ', label: 'Pipe ( | )' }, { v: '\n', label: 'Quebra de linha' }
@@ -5164,6 +5182,9 @@ const TIPOS_GRAFICO = [
   { id: 'bar', label: 'Barras' },
   { id: 'line-smooth', label: 'Linhas Suavizadas' }
 ];
+traduzirCampo(UNIT_OPTIONS, 'label', ['Automatic (from the indicator)', 't — tonne', 'Kt — thousand tonnes', 'Mt — million tonnes', 'kg — kilogram', 'oz — troy ounce', 'koz — thousand troy ounces', 'Moz — million troy ounces', '% — percent', 'US$ — dollar', 'KUSD — thousand dollars', 'MUSD — million dollars', 'BUSD — billion dollars', 'Custom…']);
+traduzirCampo(SCALE_OPTIONS, 'label', ['No scale (× 1)', '÷ 1,000 (thousand)', '÷ 1,000,000 (million)', '÷ 1,000,000,000 (billion)', '× 1,000', '× 100 (fraction → %)', 'Custom…']);
+traduzirCampo(TIPOS_GRAFICO, 'label', ['Bars', 'Smooth lines']);
 const tipoGraficoValido = id => (TIPOS_GRAFICO.some(t => t.id === id) ? id : TIPOS_GRAFICO[0].id);
 
 let chartNameMax = 100; // NVARCHAR(100) de NM_GRAFICO — o servidor confirma em limiteNome
@@ -5198,6 +5219,7 @@ const FONTE_ELEMENTOS = [
   { k: 'deltas',  nome: 'Deltas (variação %)', normal: 400, cor: false }, // cor segue positivo/negativo
   { k: 'eixo',    nome: 'Eixo e legenda',      normal: 400, cor: true }
 ];
+traduzirCampo(FONTE_ELEMENTOS, 'nome', ['Title', 'Unit (subtitle)', 'Values (numbers)', 'Deltas (change %)', 'Axis and legend']);
 const FONTE_PRESETS = {
   // Regular em tudo: negrito só quando o usuário marca B
   executivo:    { titulo: [100, 0], unidade: [100, 0], valores: [100, 0], deltas: [100, 0], eixo: [100, 0] },
@@ -5474,9 +5496,10 @@ function renderEditorTarget() {
   const resumo = $qe('qeResumoGrafico');
   $qe('qeEditBadge').hidden = !(doGrafico && c);
   if (!doGrafico || !c) {
-    $qe('qeTarget').textContent = editor.view === 'bg' ? 'Background' : editor.view === 'add' ? 'Novo gráfico'
+    $qe('qeTarget').textContent = editor.view === 'bg' ? 'Background' : editor.view === 'add' ? tx('ui.novo_grafico')
       : editor.view === 'excluir' ? tx('ui.graficos_no_quadro', { n: charts.length })
-      : editor.view === 'dash' ? (dash.atual ? dash.atual.nome : tx('ui.dash_nenhum')) : 'Nenhum gráfico selecionado';
+      : editor.view === 'dash' ? (dash.atual ? dash.atual.nome : tx('ui.dash_nenhum')) : ptEn('Nenhum gráfico selecionado', 'No chart selected');
+    $qe('qeTarget').title = $qe('qeTarget').textContent;
     resumo.hidden = true;
     return;
   }
@@ -5485,13 +5508,14 @@ function renderEditorTarget() {
   $qe('qeTarget').title = $qe('qeTarget').textContent;
   const f = filtrosAplicados && filtrosAplicados.chart === c ? filtrosAplicados.filtros : serializeFilters();
   const unidade = unitTextOf(c.cfg) || ((($qe('chartSubtitle') || {}).textContent || '').replace(/[()]/g, '').trim());
+  const siteTxt = textoDoFiltro(f, FILTER_DEFS.find(d => d.key === 'sites'));
   const itens = [
-    ['Gráfico', `Nº ${charts.indexOf(c) + 1}${c.cfg.idConfig ? ` · ID ${c.cfg.idConfig} no banco` : ''}`],
-    ['Tipo', (TIPOS_GRAFICO.find(t => t.id === c.cfg.tipoGrafico) || TIPOS_GRAFICO[0]).label],
-    ['Produto', f.product || '—'],
-    ['Site', textoDoFiltro(f, FILTER_DEFS.find(d => d.key === 'sites')) === 'Todos' ? 'Todos os sites' : textoDoFiltro(f, FILTER_DEFS.find(d => d.key === 'sites'))],
-    ['Unidade', unidade || '—'],
-    ['Nome salvo', c.cfg.nome || 'Não salvo']
+    [ptEn('Gráfico', 'Chart'), `${ptEn('Nº', 'No.')} ${charts.indexOf(c) + 1}${c.cfg.idConfig ? ptEn(` · ID ${c.cfg.idConfig} no banco`, ` · ID ${c.cfg.idConfig} in the database`) : ''}`],
+    [ptEn('Tipo', 'Type'), (TIPOS_GRAFICO.find(t => t.id === c.cfg.tipoGrafico) || TIPOS_GRAFICO[0]).label],
+    [ptEn('Produto', 'Product'), f.product || '—'],
+    ['Site', siteTxt === ptEn('Todos', 'All') ? ptEn('Todos os sites', 'All sites') : siteTxt],
+    [ptEn('Unidade', 'Unit'), unidade || '—'],
+    [ptEn('Nome salvo', 'Saved name'), c.cfg.nome || ptEn('Não salvo', 'Not saved')]
   ];
   resumo.innerHTML = itens.map(([k, v]) => `<div><dt>${k}</dt><dd title="${escapeHtml(v)}">${escapeHtml(v)}</dd></div>`).join('');
   resumo.hidden = false;
@@ -5582,10 +5606,10 @@ function refreshEditorDerived() {
   renderUnidadeDados();
   const titulo = composeChartTitle(cfg);
   const prev = $qe('qePreview');
-  prev.textContent = titulo || 'Sem título (nenhum Product selecionado)';
+  prev.textContent = titulo || ptEn('Sem título (nenhum Product selecionado)', 'No title (no Product selected)');
   prev.classList.toggle('is-muted', !titulo);
   const fatorOk = Number.isFinite(cfg.unidade.fator) && cfg.unidade.fator > 0;
-  $qe('qeNumExemplo').textContent = `Exemplo: barra ${fatorOk ? formatBarValue(1234.5678, cfg) : '—'} · delta ${formatPct(0.12345, cfg.decDelta)}`;
+  $qe('qeNumExemplo').textContent = `${ptEn('Exemplo: barra', 'Example: bar')} ${fatorOk ? formatBarValue(1234.5678, cfg) : '—'} · delta ${formatPct(0.12345, cfg.decDelta)}`;
   $qe('qeNomeCount').textContent = `${$qe('qeNome').value.length}/${chartNameMax}`;
 }
 
@@ -5615,7 +5639,7 @@ function moveTitleField(k, dir) {
   const lista = $qe('qeCampos');
   const btn = lista.querySelector(`[data-campo-k="${k}"][data-mover="${dir}"]`);
   (btn && !btn.disabled ? btn : lista.querySelector(`[data-campo-k="${k}"]:not(:disabled)`)).focus();
-  announce(`${TITLE_FIELDS[k]} na posição ${j + 1}`);
+  announce(`${TITLE_FIELDS[k]} ${ptEn('na posição', 'at position')} ${j + 1}`);
 }
 
 // Botão de cor (abre a paleta); usado na seção Cores e nas séries das Linhas
@@ -5623,7 +5647,7 @@ function htmlBotaoCor(k, idRotulo, idValor) {
   const def = EDIT_COLOR_DEFS.find(d => d.k === k).def;
   const atual = (editor.draft.colors[k] || def).toUpperCase();
   return `<button type="button" class="qe-color-btn" data-cor="${k}" aria-haspopup="listbox" aria-labelledby="${idRotulo} ${idValor}">
-        <span class="qe-swatch" style="background:${atual}" aria-hidden="true"></span><span id="${idValor}">${atual}</span>${atual === def.toUpperCase() ? '<span class="qe-tag">padrão</span>' : ''}
+        <span class="qe-swatch" style="background:${atual}" aria-hidden="true"></span><span id="${idValor}">${atual}</span>${atual === def.toUpperCase() ? `<span class="qe-tag">${ptEn('padrão', 'default')}</span>` : ''}
       </button>`;
 }
 
@@ -5704,14 +5728,14 @@ function renderUnidadeDados() {
   [...$qe('qeUnidade').options].forEach(o => {
     const def = UNIT_OPTIONS.find(x => x.v === o.value);
     const igual = conv(def) && multDe(def.v)[1] === base[1];
-    o.textContent = o.value === '' && un.length === 1 ? `Automática (${un[0]})` : def.label + (igual ? ' · unidade dos dados' : conv(def) ? ` · converte de ${un[0]}` : '');
+    o.textContent = o.value === '' && un.length === 1 ? ptEn(`Automática (${un[0]})`, `Automatic (${un[0]})`) : def.label + (igual ? ptEn(' · unidade dos dados', ' · data unit') : conv(def) ? ptEn(` · converte de ${un[0]}`, ` · converts from ${un[0]}`) : '');
   });
   const escolhida = editor.draft.cfg.unidade.valor, alvo = UNIT_OPTIONS.find(o => o.v === escolhida);
-  let txt = !un.length ? 'Unidade dos dados: não identificada (sem SG_UNID nos dados filtrados).'
-    : un.length > 1 ? `Unidade dos dados: mais de uma (${un.join(', ')}). Verifique o cadastro do indicador.`
-    : base ? `Unidade dos dados: ${un[0]}. ${UNIT_OPTIONS.filter(conv).map(o => o.v).join(', ')} convertem a escala automaticamente.`
-    : `Unidade dos dados: ${un[0]}. Sem conversão automática: ajuste a escala dos valores, se precisar.`;
-  if (base && alvo && escolhida && escolhida !== 'custom' && escolhida !== '%' && !conv(alvo)) txt += ` ${escolhida} não é da mesma grandeza de ${un[0]}: só o rótulo muda.`;
+  let txt = !un.length ? ptEn('Unidade dos dados: não identificada (sem SG_UNID nos dados filtrados).', 'Data unit: not identified (no SG_UNID in the filtered data).')
+    : un.length > 1 ? ptEn(`Unidade dos dados: mais de uma (${un.join(', ')}). Verifique o cadastro do indicador.`, `Data unit: more than one (${un.join(', ')}). Check the indicator registration.`)
+    : base ? ptEn(`Unidade dos dados: ${un[0]}. ${UNIT_OPTIONS.filter(conv).map(o => o.v).join(', ')} convertem a escala automaticamente.`, `Data unit: ${un[0]}. ${UNIT_OPTIONS.filter(conv).map(o => o.v).join(', ')} convert the scale automatically.`)
+    : ptEn(`Unidade dos dados: ${un[0]}. Sem conversão automática: ajuste a escala dos valores, se precisar.`, `Data unit: ${un[0]}. No automatic conversion: adjust the value scale if needed.`);
+  if (base && alvo && escolhida && escolhida !== 'custom' && escolhida !== '%' && !conv(alvo)) txt += ptEn(` ${escolhida} não é da mesma grandeza de ${un[0]}: só o rótulo muda.`, ` ${escolhida} is not the same quantity as ${un[0]}: only the label changes.`);
   $qe('qeUnidadeDados').textContent = txt;
 }
 function sincronizarEscala(origem) {
@@ -5898,20 +5922,20 @@ function renderFontes() {
   $qe('qeFontes').innerHTML = FONTE_ELEMENTOS.map(({ k, nome, cor }) => {
     const e = f[k], id = `qeFt-${k}`;
     return `<div class="qe-ft-item" role="group" aria-labelledby="${id}">
-      <div class="qe-ft-topo"><span class="qe-label" id="${id}">${nome}</span><button type="button" class="qe-ft-reset" data-ft-reset="${k}">Padrão</button></div>
+      <div class="qe-ft-topo"><span class="qe-label" id="${id}">${nome}</span><button type="button" class="qe-ft-reset" data-ft-reset="${k}">${ptEn('Padrão', 'Default')}</button></div>
       <div class="qe-ft-ctrl">
         <div class="qe-ft-escala">
-          <button type="button" class="qe-btn" data-ft-escala="${k}" data-dir="-1" aria-label="Diminuir ${nome}"${e.escala <= FONTE_ESCALA_MIN ? ' disabled' : ''}>&minus;</button>
+          <button type="button" class="qe-btn" data-ft-escala="${k}" data-dir="-1" aria-label="${ptEn('Diminuir', 'Decrease')} ${nome}"${e.escala <= FONTE_ESCALA_MIN ? ' disabled' : ''}>&minus;</button>
           <output aria-live="polite">${e.escala}%</output>
-          <button type="button" class="qe-btn" data-ft-escala="${k}" data-dir="1" aria-label="Aumentar ${nome}"${e.escala >= FONTE_ESCALA_MAX ? ' disabled' : ''}>+</button>
+          <button type="button" class="qe-btn" data-ft-escala="${k}" data-dir="1" aria-label="${ptEn('Aumentar', 'Increase')} ${nome}"${e.escala >= FONTE_ESCALA_MAX ? ' disabled' : ''}>+</button>
         </div>
         <div class="qe-ft-estilo">
-          <button type="button" class="qe-btn" data-ft-toggle="negrito" data-ft="${k}" aria-pressed="${e.negrito}" aria-label="Negrito em ${nome}" title="Negrito"><b>B</b></button>
-          <button type="button" class="qe-btn" data-ft-toggle="italico" data-ft="${k}" aria-pressed="${e.italico}" aria-label="Itálico em ${nome}" title="Itálico"><i style="font-family:serif">I</i></button>
+          <button type="button" class="qe-btn" data-ft-toggle="negrito" data-ft="${k}" aria-pressed="${e.negrito}" aria-label="${ptEn('Negrito em', 'Bold in')} ${nome}" title="${ptEn('Negrito', 'Bold')}"><b>B</b></button>
+          <button type="button" class="qe-btn" data-ft-toggle="italico" data-ft="${k}" aria-pressed="${e.italico}" aria-label="${ptEn('Itálico em', 'Italic in')} ${nome}" title="${ptEn('Itálico', 'Italic')}"><i style="font-family:serif">I</i></button>
         </div>
-        ${cor ? `<button type="button" class="qe-color-btn" data-ft-cor="${k}" aria-haspopup="listbox" aria-label="Cor de ${nome}: ${e.cor || 'automática'}">
+        ${cor ? `<button type="button" class="qe-color-btn" data-ft-cor="${k}" aria-haspopup="listbox" aria-label="${ptEn('Cor de', 'Color of')} ${nome}: ${e.cor || ptEn('automática', 'automatic')}">
           <span class="qe-swatch" style="background:${e.cor || 'transparent'};${e.cor ? '' : 'background-image:linear-gradient(135deg,#BCBEC0 0 45%,#fff 45% 55%,#BCBEC0 55%)'}" aria-hidden="true"></span><span>${e.cor || 'Auto'}</span>
-        </button>` : '<span class="qe-hint" style="margin:0">Cor: positivo/negativo</span>'}
+        </button>` : `<span class="qe-hint" style="margin:0">${ptEn('Cor: positivo/negativo', 'Color: positive/negative')}</span>`}
       </div>
     </div>`;
   }).join('');
@@ -5932,7 +5956,7 @@ function aplicarFontesAoVivo(foco) {
 function onFontesClick(e) {
   const f = editor.draft.cfg.fontes;
   const preset = e.target.closest('[data-ft-preset]');
-  if (preset) { editor.draft.cfg.fontes = fontesDoPreset(preset.dataset.ftPreset); aplicarFontesAoVivo(); editorMsg('Estilo de fontes aplicado.', 'ok'); return true; }
+  if (preset) { editor.draft.cfg.fontes = fontesDoPreset(preset.dataset.ftPreset); aplicarFontesAoVivo(); editorMsg(ptEn('Estilo de fontes aplicado.', 'Font style applied.'), 'ok'); return true; }
   const reset = e.target.closest('[data-ft-reset]');
   if (reset) { const k = reset.dataset.ftReset; f[k] = fontesDoPreset('executivo')[k]; aplicarFontesAoVivo(`[data-ft-reset="${k}"]`); return true; }
   const esc = e.target.closest('[data-ft-escala]');
@@ -6012,7 +6036,7 @@ function renderSavedList() {
   const sel = $qe('qeSalvos');
   const itens = editor.db.itens;
   sel.innerHTML = '';
-  sel.add(new Option(editor.db.carregando ? 'Consultando o banco…' : !editor.db.ok ? 'Banco indisponível' : itens.length ? 'Selecione…' : 'Nenhuma configuração salva', ''));
+  sel.add(new Option(editor.db.carregando ? ptEn('Consultando o banco…', 'Querying the database…') : !editor.db.ok ? ptEn('Banco indisponível', 'Database unavailable') : itens.length ? ptEn('Selecione…', 'Select…') : ptEn('Nenhuma configuração salva', 'No saved configuration'), ''));
   itens.forEach(i => sel.add(new Option(i.nome, String(i.id))));
   const id = editor.draft && editor.draft.cfg.idConfig;
   if (id && itens.some(i => i.id === id)) sel.value = String(id);
@@ -6182,14 +6206,14 @@ function atualizarLote() {
   $qe('qeLote').hidden = !(n && editor.view === 'editar' && editor.draft);
   $qe('qeLoteTit').textContent = `${n + 1} gráficos selecionados: aplicar a configuração deste aos outros ${n}`;
   $qe('qeLoteSecao').disabled = !secao || editor.saving;
-  $qe('qeLoteSecao').textContent = secao ? `Aplicar “${SECOES_EDITOR[editor.secao]}”` : 'Aplicar esta seção';
+  $qe('qeLoteSecao').textContent = secao ? `${ptEn('Aplicar', 'Apply')} “${SECOES_EDITOR[editor.secao]}”` : ptEn('Aplicar esta seção', 'Apply this section');
   $qe('qeLoteTudo').disabled = editor.saving;
 }
 async function aplicarEmLote(todas) {
   const alvos = alvosDoLote();
   if (!alvos.length || !editor.draft || editor.saving) return;
   readEditorForm();
-  if (!validateDraft(false)) { editorMsg('Corrija os campos destacados.', 'err'); return; }
+  if (!validateDraft(false)) { editorMsg(ptEn('Corrija os campos destacados.', 'Fix the highlighted fields.'), 'err'); return; }
   const secoes = todas ? Object.keys(LOTE_CHAVES) : [editor.secao].filter(s => LOTE_CHAVES[s]);
   if (!secoes.length) return;
   aplicarRascunhoAoVivo(); // o gráfico em edição também fica com o que está no painel
@@ -6215,20 +6239,20 @@ async function aplicarEmLote(todas) {
     saveCharts();
     renderDbStatus();
   }
-  const oQue = todas ? 'Todas as configurações' : `“${SECOES_EDITOR[secoes[0]]}”`;
-  editorMsg(falhas ? `${oQue} aplicada(s) a ${alvos.length} gráfico(s), mas ${falhas} não foram gravados no banco: tente de novo.`
-    : `${oQue} aplicada(s) a ${alvos.length} gráfico(s)${vinculados.length ? `; ${vinculados.length} gravado(s) no banco` : ''}.`, falhas ? 'err' : 'ok');
+  const oQue = todas ? ptEn('Todas as configurações', 'All settings') : `“${SECOES_EDITOR[secoes[0]]}”`;
+  editorMsg(falhas ? ptEn(`${oQue} aplicada(s) a ${alvos.length} gráfico(s), mas ${falhas} não foram gravados no banco: tente de novo.`, `${oQue} applied to ${alvos.length} chart(s), but ${falhas} could not be saved to the database: try again.`)
+    : ptEn(`${oQue} aplicada(s) a ${alvos.length} gráfico(s)${vinculados.length ? `; ${vinculados.length} gravado(s) no banco` : ''}.`, `${oQue} applied to ${alvos.length} chart(s)${vinculados.length ? `; ${vinculados.length} saved to the database` : ''}.`), falhas ? 'err' : 'ok');
   atualizarLote();
 }
 
 async function salvarEditor() {
   if (!editor.draft || editor.saving) return; // evita envio duplicado
   readEditorForm();
-  if (!validateDraft(true)) { editorMsg('Corrija os campos destacados.', 'err'); return; }
+  if (!validateDraft(true)) { editorMsg(ptEn('Corrija os campos destacados.', 'Fix the highlighted fields.'), 'err'); return; }
   const c = editor.chart;
   commitDraft(c);
   setEditorSaving(true);
-  editorMsg('Salvando no banco…', 'info');
+  editorMsg(ptEn('Salvando no banco…', 'Saving to the database…'), 'info');
   try {
     const r = await gravarConfigBanco(c);
     if (r.ok && Number.isInteger(r.corpo.id)) {
@@ -6272,7 +6296,7 @@ function cancelarEditor() {
   }
   loadDraft();
   renderEditor();
-  editorMsg('Alterações desfeitas: o gráfico voltou ao estado anterior à edição.', 'info');
+  editorMsg(ptEn('Alterações desfeitas: o gráfico voltou ao estado anterior à edição.', 'Changes undone: the chart is back to its state before editing.'), 'info');
 }
 
 function restaurarPadraoEditor() {
@@ -6283,7 +6307,7 @@ function restaurarPadraoEditor() {
   clearFieldErrors();
   renderEditor();
   aplicarRascunhoAoVivo();
-  editorMsg('Padrão aplicado ao gráfico. Clique em Salvar para gravar no banco.', 'ok');
+  editorMsg(ptEn('Padrão aplicado ao gráfico. Clique em Salvar para gravar no banco.', 'Default applied to the chart. Click Save to store it in the database.'), 'ok');
 }
 
 function restaurarCoresEditor() {
@@ -6291,14 +6315,14 @@ function restaurarCoresEditor() {
   editor.draft.colors = { bgChart: '#F6F6F6' }; // só o gráfico selecionado
   aplicarCoresAoVivo();
   renderColors();
-  editorMsg('Cores padrão aplicadas ao gráfico. Grave em Salvar.', 'ok');
+  editorMsg(ptEn('Cores padrão aplicadas ao gráfico. Grave em Salvar.', 'Default colors applied to the chart. Store them with Save.'), 'ok');
 }
 
 function carregarSalvoEditor() {
   if (!editor.chart || editor.saving) return;
   const id = Number($qe('qeSalvos').value);
   const rec = editor.db.itens.find(i => i.id === id);
-  if (!rec) { editorMsg('Escolha uma configuração salva.', 'err'); $qe('qeSalvos').focus(); return; }
+  if (!rec) { editorMsg(ptEn('Escolha uma configuração salva.', 'Choose a saved configuration.'), 'err'); $qe('qeSalvos').focus(); return; }
   const conf = rec.config || {};
   editor.draft = {
     cfg: normalizeChartCfg({ ...conf, nome: rec.nome, idConfig: rec.id }),
@@ -6344,6 +6368,7 @@ function relayoutBoard() {
 
 // ── Paleta lateral: uma visão por vez no mesmo painel ──
 const PANEL_TITULOS = { add: 'Adicionar gráfico', filtros: 'Filtros', editar: 'Edição', bg: 'Dashboard', excluir: 'Excluir gráficos', dash: 'Dashboards' };
+traduzirObjeto(PANEL_TITULOS, { add: 'Add chart', filtros: 'Filters', editar: 'Editing', bg: 'Dashboard', excluir: 'Delete charts', dash: 'Dashboards' });
 editor.view = 'editar';
 editor.tool = null; // botão da paleta da visão aberta (destacado)
 
@@ -6398,6 +6423,7 @@ function abrirVisao(view, btn, sec) {
 
 // Edição do gráfico: um ícone = uma seção; as demais ficam ocultas
 const SECOES_EDITOR = { tipo: 'Tipo de Gráfico', ident: 'Identificação', titulo: 'Título', fontes: 'Fontes', unidade: 'Unidade e formatação numérica', colunas: 'Colunas', cores: 'Cores', persist: 'Persistência' };
+traduzirObjeto(SECOES_EDITOR, { tipo: 'Chart type', ident: 'Identification', titulo: 'Title', fontes: 'Fonts', unidade: 'Unit and number format', colunas: 'Columns', cores: 'Colors', persist: 'Persistence' });
 function irParaSecao(sec) {
   if (!SECOES_EDITOR[sec]) return;
   editor.secao = sec;
@@ -6876,7 +6902,7 @@ function dadosDosGraficosParaExcel() {
       const linhas = getFilteredChartRows().map(r => ({ col: r.type.trim(), v: Number.isFinite(r.value) ? r.value * cfg.unidade.fator : null, cor: getBarColor(r.type) }));
       if (!linhas.length) return;
       const site = textoDoFiltro(c.filters || {}, defSites);
-      out.push({ titulo: tituloDoCard(c), produto: (c.filters && c.filters.product) || '—', site, total: site === 'Todos',
+      out.push({ titulo: tituloDoCard(c), produto: (c.filters && c.filters.product) || '—', site, total: site === ptEn('Todos', 'All'),
         situacao: !c.situacao ? '' : c.situacao.pendente ? 'Atualizações finais pendentes' : 'Atualizado',
         unidade: unitTextOf(cfg) || unidadeDosDados(c) || '', dec: cfg.decBar, linhas, comps: comparacoesDoGrafico(linhas) });
     });
@@ -7727,7 +7753,7 @@ function msgEm(id, texto, tipo) {
 function nomeDoGrafico(c) {
   if (!c) return '';
   const titulo = c === activeChart ? ($qe('chartTitle') || {}).textContent : '';
-  return c.cfg.nome || (titulo || '').replace(/\s+/g, ' ').trim() || (c.filters && c.filters.product) || `Gráfico ${charts.indexOf(c) + 1}`;
+  return c.cfg.nome || (titulo || '').replace(/\s+/g, ' ').trim() || (c.filters && c.filters.product) || `${ptEn('Gráfico', 'Chart')} ${charts.indexOf(c) + 1}`;
 }
 
 // ── Adicionar gráfico: nasce vazio (sem horizonte) e já abre em Filtros para ser montado ──
@@ -7781,8 +7807,8 @@ function filtrosAplicadosAgora(texto) {
 
 function textoDoFiltro(f, def) {
   const v = f[def.key];
-  if (!def.multiple) return v || 'Nenhum';
-  if (!v || !v.length) return 'Todos';
+  if (!def.multiple) return v || ptEn('Nenhum', 'None');
+  if (!v || !v.length) return ptEn('Todos', 'All');
   const rotulos = def.key === 'horizontes' ? v : v.map(x => {
     if (def.key !== 'sites') return x;
     const r = allRows.find(l => String(l.ID_SITE) === x);
@@ -7805,7 +7831,7 @@ function atualizarIndicadorFiltros() {
   const badge = $qe('qeFiltrosBadge');
   badge.hidden = !n;
   badge.textContent = n;
-  const texto = n ? `Filtros (${n} ativo${n > 1 ? 's' : ''})` : 'Filtros';
+  const texto = n ? ptEn(`Filtros (${n} ativo${n > 1 ? 's' : ''})`, `Filters (${n} active)`) : ptEn('Filtros', 'Filters');
   $qe('qeFiltrosBtn').setAttribute('aria-label', texto);
   $qe('qeFiltrosBtn').dataset.tip = texto;
 }
@@ -7938,11 +7964,11 @@ function atualizarFundoDerivado() {
   $qe('qeViewBg').querySelectorAll('[data-bg-show]').forEach(el => { el.hidden = el.dataset.bgShow !== f.tipo; });
   $qe('qeBgOverlayVal').textContent = Math.round(f.imagem.overlayOpacidade * 100) + '%';
   pintarFundo($qe('qeBgPreview'), f);
-  const quando = fundo.salvoEm ? new Date(fundo.salvoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  const quando = fundo.salvoEm ? new Date(fundo.salvoEm).toLocaleString(idioma === 'en' ? 'en-CA' : 'pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
   $qe('qeBgStatus').textContent = fundo.db === false
-    ? 'Banco indisponível: o fundo salvo não pôde ser lido; vale a cópia deste navegador ou o padrão.'
-    : quando ? `Fundo salvo no banco em ${quando}. Vale para todo o dashboard.` : 'Vale para todo o dashboard ao salvar.';
-  if (f.tipo === 'imagem' && !f.imagem.ref) $qe('qeBgStatus').textContent = 'Envie uma imagem para usar este tipo de fundo.';
+    ? ptEn('Banco indisponível: o fundo salvo não pôde ser lido; vale a cópia deste navegador ou o padrão.', 'Database unavailable: the saved background could not be read; this browser\'s copy or the default applies.')
+    : quando ? ptEn(`Fundo salvo no banco em ${quando}. Vale para todo o dashboard.`, `Background saved in the database on ${quando}. Applies to the whole dashboard.`) : ptEn('Vale para todo o dashboard ao salvar.', 'Applies to the whole dashboard when saved.');
+  if (f.tipo === 'imagem' && !f.imagem.ref) $qe('qeBgStatus').textContent = ptEn('Envie uma imagem para usar este tipo de fundo.', 'Upload an image to use this background type.');
   // Só aparece quando há um fundo gravado diferente do que está na tela
   $qe('qeBgUsarSalvo').hidden = !fundo.salvo || JSON.stringify(normalizarFundo(fundo.salvo)) === JSON.stringify(normalizarFundo(fundo.aplicado));
 }
@@ -8146,7 +8172,7 @@ function onEditorInput(t, e) {
       c.cfg = { ...c.cfg, exibirDelta: ligado };
       if (c === activeChart) renderTurnoverChart(getFilteredChartRows());
       saveCharts();
-      editorMsg(ligado ? 'Delta exibido.' : 'Delta ocultado.', 'ok');
+      editorMsg(ligado ? ptEn('Delta exibido.', 'Delta shown.') : ptEn('Delta ocultado.', 'Delta hidden.'), 'ok');
     }
   } else if (t.id === 'qeUnidade' || t.id === 'qeEscala') {
     sincronizarEscala(t.id === 'qeUnidade' ? 'unidade' : 'escala');
@@ -8181,7 +8207,7 @@ function initEditor() {
   UNIT_OPTIONS.forEach(o => $qe('qeUnidade').add(new Option(o.label, o.v)));
   SCALE_OPTIONS.forEach(o => $qe('qeEscala').add(new Option(o.label, o.v)));
   TIPOS_GRAFICO.forEach(t => $qe('qeTipoGrafico').add(new Option(t.label, t.id)));
-  $qe('qePaleta').add(new Option('Nenhuma', ''));
+  $qe('qePaleta').add(new Option(ptEn('Nenhuma', 'None'), ''));
   PALETAS_COLUNAS.forEach(p => $qe('qePaleta').add(new Option(p.label, p.id)));
 
   form.addEventListener('submit', e => e.preventDefault()); // Enter não grava no banco
@@ -8193,7 +8219,7 @@ function initEditor() {
     if (chipPct) { alternarPercentil(Number(chipPct.dataset.pct)); return; }
     if (e.target.closest('#qePctAdd')) {
       const n = Math.round(Number($qe('qePctNovo').value));
-      if (!(n >= 1 && n <= 99)) { editorMsg('Informe um percentil entre 1 e 99.', 'err'); $qe('qePctNovo').focus(); return; }
+      if (!(n >= 1 && n <= 99)) { editorMsg(ptEn('Informe um percentil entre 1 e 99.', 'Enter a percentile between 1 and 99.'), 'err'); $qe('qePctNovo').focus(); return; }
       if (!editor.draft.cfg.linhas.percentis.includes(n)) alternarPercentil(n);
       $qe('qePctNovo').value = '';
       return;
@@ -8248,6 +8274,37 @@ function initEditor() {
   $qe('qeExcluirTodos').addEventListener('change', e => {
     $qe('qeExcluirLista').querySelectorAll('input[data-excluir]').forEach(i => { i.checked = e.target.checked; });
     atualizarExclusao();
+  });
+  // Menu lateral aberto: refaz o que o JS monta (títulos, resumo do gráfico, filtros, fontes, cores, listas)
+  document.addEventListener('qtr:idioma', () => {
+    document.querySelectorAll('#qeTipoGrafico option').forEach(o => { const t = TIPOS_GRAFICO.find(x => x.id === o.value); if (t) o.textContent = t.label; });
+    [['qeEscala', SCALE_OPTIONS], ['qeUnidade', UNIT_OPTIONS]].forEach(([id, lista]) => document.querySelectorAll('#' + id + ' option').forEach(o => { const d = lista.find(x => x.v === o.value); if (d) o.textContent = d.label; }));
+    document.querySelectorAll('#qePaleta option').forEach(o => { const d = PALETAS_COLUNAS.find(x => x.id === o.value); o.textContent = d ? d.label : ptEn('Nenhuma', 'None'); });
+    FILTER_DEFS.forEach(def => {
+      const f = document.querySelector(`[data-field="${def.key}"]`);
+      if (!f) return;
+      f.querySelector('.qf-field-label').textContent = FILTER_PANEL_LABELS[def.key] || def.label;
+      f.querySelector('.qf-trigger').setAttribute('aria-label', ptEn('Filtro de ', 'Filter by ') + def.label);
+      f.querySelector('.qf-panel').setAttribute('aria-label', ptEn('Opções de ' + def.label, def.label + ' options'));
+      const busca = f.querySelector('.qf-search input');
+      if (busca) { busca.placeholder = ptEn('Buscar ', 'Search ') + def.label.toLowerCase() + '...'; busca.setAttribute('aria-label', ptEn('Buscar em ', 'Search in ') + def.label); }
+      const tudo = f.querySelector('[data-action="select-all"]'), limpa = f.querySelector('[data-action="clear-selection"]');
+      if (tudo) tudo.textContent = ptEn('Selecionar Todos', 'Select All');
+      if (limpa) limpa.textContent = ptEn('Limpar Seleção', 'Clear Selection');
+      renderTriggerLabel(def);
+    });
+    atualizarIndicadorFiltros();
+    if (typeof renderAllCharts === 'function' && charts.length) renderAllCharts(); // títulos de gráfico vazio, situação e rótulos
+    if (editor.open) {
+      if (editor.view === 'filtros') renderResumoFiltros();
+      if (editor.view === 'bg' && fundo.rascunho) atualizarFundoDerivado();
+      if (editor.view === 'editar') $qe('qeHeading').textContent = SECOES_EDITOR[editor.secao] || '';
+      else if (PANEL_TITULOS[editor.view]) $qe('qeHeading').textContent = PANEL_TITULOS[editor.view];
+      renderEditorTarget();
+      setTimeout(renderEditorTarget, 150); // o título do gráfico acaba de ser redesenhado
+    }
+    // Rascunho do gráfico (listas montadas ao selecionar o gráfico): refaz mesmo com o painel fechado
+    if (editor.draft) { renderFontes(); renderColors(); refreshEditorDerived(); if (editor.open) atualizarLote(); }
   });
   document.addEventListener('qtr:idioma', () => { updateChartActionButtons(); renderOrdemColunas(); if (editor.open && editor.view === 'excluir') abrirExcluir(true); });
   $qe('qeExcluirCancelar').addEventListener('click', recolherPainel);
