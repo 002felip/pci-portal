@@ -2127,7 +2127,7 @@ body[data-bg="dark"] .qe-select option { background: #0d2640; color: #fff; }
       <button type="button" class="dash-acao" id="dashImagens" aria-haspopup="menu" aria-expanded="false" aria-label="Baixar todos os gráficos" title="Baixar todos os gráficos" data-i18n-aria="ui.baixar_imagens" data-i18n-title="ui.baixar_imagens"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
       <div class="chart-export-menu" id="dashImagensMenu" role="menu" hidden>
         <button type="button" role="menuitem" data-baixar="png" data-i18n="ui.baixar_png_separados">Imagens separadas (PNG, .zip)</button>
-        <button type="button" role="menuitem" data-baixar="pdf" data-i18n="ui.baixar_pdf_junto">Todos em um PDF</button>
+        <button type="button" role="menuitem" data-baixar="pdf" data-i18n="ui.baixar_pdf_junto">Página completa em PDF</button>
       </div>
     </div>
     <button type="button" class="dash-acao" id="dashTelaCheia" aria-pressed="false" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.tela_cheia" data-i18n-title="ui.tela_cheia"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
@@ -2420,7 +2420,7 @@ const I18N_UI = {
   'ui.baixar_excel': ['Baixar dados em Excel', 'Download data as Excel'],
   'ui.baixar_imagens': ['Baixar todos os gráficos', 'Download all charts'],
   'ui.baixar_png_separados': ['Imagens separadas (PNG, .zip)', 'Separate images (PNG, .zip)'],
-  'ui.baixar_pdf_junto': ['Todos em um PDF', 'All in one PDF'],
+  'ui.baixar_pdf_junto': ['Página completa em PDF', 'Full page as PDF'],
   'ui.pdf_ok': ['{n} gráficos baixados em PDF.', '{n} charts downloaded as PDF.'],
   'ui.imagens_gerando': ['Gerando as imagens dos gráficos…', 'Generating chart images…'],
   'ui.imagens_ok': ['{n} gráficos baixados em PNG (arquivo .zip).', '{n} charts downloaded as PNG (.zip file).'],
@@ -4576,6 +4576,47 @@ async function graficoParaPng(card, escala = 2, tipo = 'image/png') {
   ctx.scale(escala, escala);
   ctx.drawImage(img, 0, 0, w, h);
   return new Promise((ok, erro) => canvas.toBlob(b => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), tipo, .95));
+}
+// Página do dashboard (título + quadro de gráficos) em JPEG, recortada nas bordas dos gráficos,
+// sem os ícones de ação e o selo do ciclo. Usada no PDF "página completa".
+async function paginaParaJpeg(escala = 2) {
+  const raiz = document.querySelector('.app-main'), rR = raiz.getBoundingClientRect();
+  const W = raiz.scrollWidth, H = raiz.scrollHeight, M = 20;
+  // Recorte (coordenadas em relação ao .app-main): do topo do título até o fim dos gráficos,
+  // e na horizontal só a faixa ocupada pelos gráficos e pelo nome do dashboard
+  const rel = r => ({ l: r.left - rR.left, r: r.right - rR.left, t: r.top - rR.top, b: r.bottom - rR.top });
+  const caixas = charts.map(c => rel(c.el.getBoundingClientRect()));
+  const nomeEl = $qe('dashTituloNome'), rN = nomeEl && !nomeEl.hidden ? rel(nomeEl.getBoundingClientRect()) : null;
+  const rT = rel(document.querySelector('.dash-titulo').getBoundingClientRect());
+  const x0 = Math.max(0, Math.min(...caixas.map(k => k.l), rN ? rN.l : Infinity) - M);
+  const x1 = Math.min(W, Math.max(...caixas.map(k => k.r), rN ? rN.r : 0) + M);
+  const y0 = Math.max(0, rT.t);
+  const y1 = Math.min(H, Math.max(rT.b, ...caixas.map(k => k.b)) + M);
+  // Clone com os estilos calculados, sem seleção, sem ícones de ação, selo do ciclo e controles
+  const selecionados = charts.filter(c => c.el.classList.contains('is-selected')).map(c => c.el);
+  selecionados.forEach(el => el.classList.remove('is-selected'));
+  const clone = raiz.cloneNode(true);
+  try { copiarEstilos(raiz, clone); } finally { selecionados.forEach(el => el.classList.add('is-selected')); }
+  clone.querySelectorAll('.dash-acoes, .dash-situacao, ' + EXPORT_FORA + ', .snap-guide, .board-marquee, .board-empty').forEach(n => n.remove());
+  clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  Object.assign(clone.style, { margin: '0', width: W + 'px', height: H + 'px', minHeight: '0', overflow: 'visible' });
+  const xml = new XMLSerializer().serializeToString(clone);
+  const fontes = await cssPoppins();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${fontes ? `<defs><style><![CDATA[${fontes}]]></style></defs>` : ''}<foreignObject x="0" y="0" width="100%" height="100%">${xml}</foreignObject></svg>`;
+  const img = new Image();
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  await img.decode();
+  const w = Math.round((x1 - x0) * escala), h = Math.round((y1 - y0) * escala);
+  const canvas = Object.assign(document.createElement('canvas'), { width: w, height: h });
+  const ctx = canvas.getContext('2d');
+  // Fundo: a cor do Background do dashboard (gradiente/imagem viram a cor base); sem cor, branco
+  const corFundo = getComputedStyle(document.documentElement).backgroundColor;
+  ctx.fillStyle = !corFundo || /rgba\(.*,\s*0\)$|transparent/.test(corFundo) ? '#FFFFFF' : corFundo;
+  ctx.fillRect(0, 0, w, h);
+  ctx.scale(escala, escala);
+  ctx.drawImage(img, -x0, -y0, W, H);
+  const blob = await new Promise((ok, erro) => canvas.toBlob(b => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/jpeg', .95));
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), w, h };
 }
 function nomeArquivoGrafico(card) {
   const titulo = (card.querySelector('.chart-title')?.textContent || 'grafico').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').slice(0, 80);
@@ -6952,12 +6993,13 @@ function montarPdf(imagens) {
   let tam = 0;
   const add = x => { const b = typeof x === 'string' ? enc.encode(x) : x; partes.push(b); tam += b.length; };
   const obj = (n, corpo) => { offs[n] = tam; add(`${n} 0 obj\n`); corpo(); add('\nendobj\n'); };
-  const PW = 842, PH = 595, M = 24, n = imagens.length;
+  const n = imagens.length;
   add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
   obj(1, () => add('<< /Type /Catalog /Pages 2 0 R >>'));
   obj(2, () => add(`<< /Type /Pages /Count ${n} /Kids [${imagens.map((_, i) => `${3 + i * 3} 0 R`).join(' ')}] >>`));
   imagens.forEach((im, i) => {
     const pg = 3 + i * 3, ct = pg + 1, ig = pg + 2;
+    const PW = im.pw || 842, PH = im.ph || 595, M = im.m ?? 24; // padrão: A4 paisagem com margem
     const k = Math.min((PW - 2 * M) / im.w, (PH - 2 * M) / im.h), w = im.w * k, h = im.h * k;
     const cmd = `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${((PW - w) / 2).toFixed(2)} ${((PH - h) / 2).toFixed(2)} cm /Im0 Do Q`;
     obj(pg, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 ${ig} 0 R >> >> /Contents ${ct} 0 R >>`));
@@ -6979,15 +7021,10 @@ async function baixarImagensDashboard(formato = 'png') {
     const lista = [...charts].sort((a, b) => (a.pos.y - b.pos.y) || (a.pos.x - b.pos.x));
     const base = ((dash.atual && dash.atual.nome) || 'VBM Performance Studio').replace(/[\\/:*?"<>|]+/g, '-').trim();
     if (formato === 'pdf') {
-      const imagens = [];
-      for (const c of lista) {
-        const blob = await graficoParaPng(c.el, 3, 'image/jpeg');
-        const bmp = await createImageBitmap(blob);
-        imagens.push({ bytes: new Uint8Array(await blob.arrayBuffer()), w: bmp.width, h: bmp.height });
-        bmp.close();
-      }
-      baixarBlob(montarPdf(imagens), `${base}.pdf`);
-      mostrarAviso(tx('ui.pdf_ok', { n: imagens.length }));
+      // Página completa (título + gráficos como na tela), numa página da largura de um A4 paisagem
+      const pg = await paginaParaJpeg(2);
+      baixarBlob(montarPdf([{ ...pg, pw: 842, ph: Math.round(842 * pg.h / pg.w), m: 0 }]), `${base}.pdf`);
+      mostrarAviso(tx('ui.pdf_ok', { n: lista.length }));
       return;
     }
     const usados = new Set(), arquivos = [];
