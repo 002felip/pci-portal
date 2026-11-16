@@ -28,7 +28,17 @@ function pendenciasExemplo(hoje = new Date()) {
   const ano = hoje.getMonth() >= 9 ? hoje.getFullYear() + 1 : hoje.getFullYear();
 
   return {
-    ciclo: { id: `AIP-${ano}`, nome: `AIP ${ano}`, ano },
+    ciclo: {
+      id: `AIP-${ano}`, nome: `AIP ${ano}`, ano,
+      // Jornada do ciclo (janelas configuradas em T11). etapaAtual = a janela aberta hoje.
+      etapaAtual: 'proposta',
+      etapas: [
+        { id: 'desdobramento', fim: desde(15) },
+        { id: 'proposta', fim: prazo(8) },
+        { id: 'calibracao', fim: prazo(18) },
+        { id: 'oficial', fim: prazo(23) },
+      ],
+    },
     usuario: {
       // Papéis por BU e por ciclo (AC-02): a mesma pessoa pode ter papéis diferentes.
       papeis: [

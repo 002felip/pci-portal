@@ -33,11 +33,21 @@ técnica v1 e Levantamento de requisitos).
 | `#pendencias` | T01 Minhas pendências | publicada |
 | `#painel`, `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
 
-### Início (menu)
+### Início (abertura)
 
-Página de entrada, no modelo da página inicial do Portal: fundo dos três minerais, título "AIP Goals",
-três números do usuário no ciclo (pendências, paradas ou atrasadas, próximo prazo) e um cartão por
-tela. Tema claro usa a versão clara da foto; tema escuro, a original com véu azul.
+Tela de entrada em tela cheia, sobre a foto dos três minerais (versão clara no tema claro; original com
+véu navy no escuro):
+
+- **Assinatura:** "AIP Goals" com o ano do ciclo em numerais vazados, os três verbos do processo
+  (Propor. Aprovar. Registrar.) e o botão "Ver minhas pendências" com o contador, seguido do estado do
+  usuário (paradas ou atrasadas e próximo prazo).
+- **Índice "Acessar"** em vidro: telas numeradas (01, 02…) só com as que o perfil pode usar, com descrição.
+- **Jornada do ciclo:** as quatro janelas (Desdobramento do COO, Proposta da BU, Calibração e aprovação,
+  Goal Card oficial) com datas e a etapa atual marcada por texto ("Etapa atual") e ponto. Vem de
+  `ciclo.etapaAtual` e `ciclo.etapas[]` em `/pendencias` (configuração do ciclo, T11).
+
+A barra superior é de vidro em todas as telas (desfoque + fundo translúcido no tom do tema): claro com
+logo e menu em navy, escuro com logo e menu em branco.
 
 ### T01 Minhas pendências
 
@@ -63,7 +73,7 @@ comentários sem resposta e ações atribuídas.
 
 | Rota | O que faz |
 |---|---|
-| `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo`, `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
+| `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 

@@ -456,16 +456,38 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .vista { display: flex; flex-direction: column; gap: 16px; }
 .vista[hidden] { display: none; }
 
-/* ── Menu no topo (opções na barra, só texto — inspirado no Kaizen) ──
-   A barra é sempre escura (setup-dashboards), então as cores do menu são fixas nos dois temas. */
+/* ── Barra superior em vidro: segue o tom do fundo (claro no tema claro, navy no escuro) ── */
 :root {
-  --menu-text: rgba(255,255,255,.74);
-  --menu-text-on: #FFFFFF;
-  --menu-line: rgba(255,255,255,.22);
-  --menu-hover: rgba(255,255,255,.08);
-  --menu-drawer: #072842;
+  --vidro-bg: rgba(255,255,255,.62);
+  --vidro-line: rgba(13,38,64,.10);
+  --vidro-ink: #0D2640;
+  --menu-text: rgba(13,38,64,.70);
+  --menu-text-on: #0D2640;
+  --menu-line: rgba(13,38,64,.12);
+  --menu-hover: rgba(13,38,64,.06);
+  --menu-drawer: rgba(255,255,255,.96);
 }
-/* Opções centralizadas na barra (logo à esquerda; engrenagem e usuário à direita) */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF;
+  --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
+} }
+:root[data-theme="dark"] {
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF;
+  --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
+}
+.topnav {
+  background: var(--vidro-bg); border-bottom: 1px solid var(--vidro-line); box-shadow: none;
+  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+}
+.topnav-logo svg g path { fill: var(--vidro-ink); } /* só o desenho; a máscara do SVG continua branca */
+.settings-btn, .topnav-menu-btn { color: var(--vidro-ink); }
+.settings-btn:hover { background: var(--menu-hover); }
+.settings-btn[aria-expanded="true"] { background: var(--menu-hover); }
+.topnav-user { border-left-color: var(--menu-line); }
+.topnav-user-name { color: var(--vidro-ink); }
+.topnav-user-role { color: var(--menu-text); }
+.settings-btn:focus-visible, .topnav-logo:focus-visible, .topnav-menu-btn:focus-visible { outline-color: var(--focus); }
+
 .topnav-menu { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); display: flex; align-items: stretch; gap: 4px; }
 .topnav-menu-link {
   position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px;
@@ -479,7 +501,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 }
 .topnav-menu-link[aria-current="page"]::after { width: calc(100% - 24px); }
 .topnav-menu-link:not([aria-current="page"]):hover::after { width: 30%; opacity: .5; }
-.topnav-menu-link:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: -6px; border-radius: 8px; }
+.topnav-menu-link:focus-visible { outline: 2px solid var(--focus); outline-offset: -6px; border-radius: 8px; }
 .topnav-menu-link[hidden] { display: none; }
 .topnav-menu-cont { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: var(--vbm-blue); color: var(--vbm-blue-navy); font: 700 .64rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
 .topnav-menu-cont[hidden] { display: none; }
@@ -487,59 +509,94 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .topnav-menu-btn:hover, .topnav-menu-btn[aria-expanded="true"] { background: var(--menu-hover); }
 .topnav-menu-btn:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
 
-/* ── Início: página-menu (fundo dos três minerais de VBM, claro no tema claro) ── */
+/* ── Início: abertura editorial do AIP Goals 2027 ──
+   Foto dos três minerais em tela cheia; véu do lado do texto, minerais visíveis do lado do índice. */
 :root {
-  --ini-foto: url('assets/images/Fundo_VBM_claro_2400x1145.webp');
-  --ini-veu: linear-gradient(180deg, rgba(255,255,255,.80) 0%, rgba(255,255,255,.88) 45%, rgba(248,251,253,.95) 100%);
-  --ini-vidro: rgba(255,255,255,.90);
-  --ini-vidro-line: rgba(13,38,64,.10);
-  --ini-sombra: 0 10px 30px rgba(13,38,64,.10);
+  --ab-foto: url('assets/images/Fundo_VBM_claro_2400x1145.webp');
+  --ab-veu: linear-gradient(90deg, rgba(255,255,255,.97) 0%, rgba(255,255,255,.90) 36%, rgba(255,255,255,.55) 66%, rgba(255,255,255,.30) 100%);
+  --ab-ano: rgba(13,38,64,.30);
+  --ab-v1: #0D2640; --ab-v2: #0B6E99; --ab-v3: #007E7A;
+  --ab-vidro: rgba(255,255,255,.66);
+  --ab-vidro-line: rgba(13,38,64,.10);
+  --ab-sombra: 0 18px 50px rgba(13,38,64,.14);
+  --ab-trilho: rgba(13,38,64,.16);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ini-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
-    --ini-veu: linear-gradient(180deg, rgba(7,34,66,.74) 0%, rgba(5,24,44,.86) 100%);
-    --ini-vidro: rgba(20,48,82,.62);
-    --ini-vidro-line: rgba(255,255,255,.12);
-    --ini-sombra: 0 10px 30px rgba(0,0,0,.35);
-  }
-}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ab-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
+  --ab-veu: linear-gradient(90deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.86) 38%, rgba(6,32,58,.55) 70%, rgba(6,32,58,.40) 100%);
+  --ab-ano: rgba(255,255,255,.22);
+  --ab-v1: #FFFFFF; --ab-v2: #7DD3F0; --ab-v3: #5FD0C9;
+  --ab-vidro: rgba(8,30,52,.58); --ab-vidro-line: rgba(255,255,255,.12); --ab-sombra: 0 18px 50px rgba(0,0,0,.40); --ab-trilho: rgba(255,255,255,.20);
+} }
 :root[data-theme="dark"] {
-  --ini-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
-  --ini-veu: linear-gradient(180deg, rgba(7,34,66,.74) 0%, rgba(5,24,44,.86) 100%);
-  --ini-vidro: rgba(20,48,82,.62);
-  --ini-vidro-line: rgba(255,255,255,.12);
-  --ini-sombra: 0 10px 30px rgba(0,0,0,.35);
+  --ab-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
+  --ab-veu: linear-gradient(90deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.86) 38%, rgba(6,32,58,.55) 70%, rgba(6,32,58,.40) 100%);
+  --ab-ano: rgba(255,255,255,.22);
+  --ab-v1: #FFFFFF; --ab-v2: #7DD3F0; --ab-v3: #5FD0C9;
+  --ab-vidro: rgba(8,30,52,.58); --ab-vidro-line: rgba(255,255,255,.12); --ab-sombra: 0 18px 50px rgba(0,0,0,.40); --ab-trilho: rgba(255,255,255,.20);
 }
-body.is-inicio { background: var(--ini-veu), var(--ini-foto) center / cover no-repeat fixed, var(--page); min-height: 100dvh; }
-#vistaInicio { max-width: 1080px; width: 100%; margin-inline: auto; gap: 22px; padding-block: clamp(34px, 9vh, 120px) 24px; }
-.ini-topo { text-align: center; }
-.ini-eyebrow { margin: 0 0 12px; font: 600 .68rem var(--font-ui); letter-spacing: .28em; text-transform: uppercase; color: var(--accent-strong); }
-.ini-titulo { margin: 0; font: 600 clamp(2.6rem, 5vw, 4.2rem)/1 var(--font-display); letter-spacing: -.025em; color: var(--ink-strong); }
-.ini-titulo span { font-weight: 300; color: var(--accent-strong); }
-.ini-sub { margin: 14px auto 0; max-width: 64ch; font-size: .95rem; line-height: 1.6; color: var(--text); }
-.btn-cont { min-width: 22px; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .68rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; vertical-align: middle; }
+body.is-inicio { background: var(--ab-veu), var(--ab-foto) center / cover no-repeat fixed, var(--page); }
+body.is-inicio .page { max-width: none; padding: 0; }
+#vistaInicio { min-height: calc(100dvh - 64px); }
+.abertura {
+  flex: 1; width: 100%; max-width: 1560px; margin-inline: auto;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr); grid-template-rows: 1fr auto;
+  gap: 28px 64px; padding: clamp(28px, 6vh, 80px) clamp(24px, 5vw, 88px) 28px;
+}
+.abertura-texto { align-self: center; }
+.ab-eyebrow { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; font: 600 .7rem var(--font-ui); letter-spacing: .3em; text-transform: uppercase; color: var(--accent-strong); }
+.ab-ponto { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .6; }
+.ab-titulo { margin: 0; display: flex; flex-direction: column; line-height: .9; }
+.ab-nome { font: 600 clamp(2.6rem, 5vw, 4.6rem)/1 var(--font-display); letter-spacing: -.03em; color: var(--ab-v1); }
+.ab-ano {
+  font: 700 clamp(6rem, 15vw, 13.5rem)/.82 var(--font-display); letter-spacing: -.05em; margin-top: 6px;
+  color: transparent; -webkit-text-stroke: 1.6px var(--ab-ano); font-variant-numeric: tabular-nums;
+}
+.ab-verbos { margin: 22px 0 0; font: italic 600 clamp(1.3rem, 2.2vw, 2rem)/1.15 var(--font-display); letter-spacing: -.01em; }
+.ab-verbos .v1 { color: var(--ab-v1); } .ab-verbos .v2 { color: var(--ab-v2); } .ab-verbos .v3 { color: var(--ab-v3); }
+.ab-sub { margin: 14px 0 0; max-width: 50ch; font-size: .95rem; line-height: 1.6; color: var(--text-soft); }
+.ab-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 28px; }
+.btn-grande { min-height: 46px; padding: 8px 22px; border-radius: 12px; font-size: .86rem; }
+.btn-cont { min-width: 22px; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ctl-on-text); color: var(--ctl-on-bg); font: 700 .68rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
 .btn-cont[hidden] { display: none; }
+.ab-status { margin: 0; font-size: .78rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.ab-status b { font-weight: 600; color: var(--wait); }
+.ab-status em { font-style: normal; font-weight: 600; color: var(--text); }
 
-.ini-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 0; border-radius: 18px; border: 1px solid var(--ini-vidro-line); background: var(--ini-vidro); box-shadow: var(--ini-sombra); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.ini-numero { padding: 16px 24px; text-align: center; }
-.ini-numero + .ini-numero { border-left: 1px solid var(--ini-vidro-line); }
-.ini-numero dt { font: 500 .72rem var(--font-ui); color: var(--text-soft); }
-.ini-numero dd { margin: 4px 0 0; font: 300 1.9rem/1.1 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
-
-.ini-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-.ini-card {
-  display: flex; flex-direction: column; gap: 6px; min-height: 138px; padding: 20px 22px; border-radius: 18px; border: 1px solid var(--ini-vidro-line);
-  background: var(--ini-vidro); box-shadow: var(--ini-sombra); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  color: var(--text); text-decoration: none; transition: border-color .15s ease, transform .15s ease;
+/* Índice numerado em vidro (o menu da aplicação) */
+.indice {
+  align-self: center; padding: 22px 10px 12px; border-radius: 22px; border: 1px solid var(--ab-vidro-line);
+  background: var(--ab-vidro); box-shadow: var(--ab-sombra); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
 }
-.ini-card:hover { border-color: var(--ctl-on-bg); transform: translateY(-2px); }
-.ini-card[hidden] { display: none; }
-.ini-card-tit { font: 600 1rem var(--font-display); color: var(--ink-strong); }
-.ini-card-txt { font-size: .78rem; line-height: 1.5; color: var(--text-soft); }
-.ini-card-ir { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; font: 600 .74rem var(--font-ui); color: var(--accent-strong); }
-@media (prefers-reduced-motion: reduce) { .ini-card { transition: none; } .ini-card:hover { transform: none; } }
+.indice-cab { margin: 0 16px 8px; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
+.indice-lista { margin: 0; padding: 0; list-style: none; }
+.indice-lista li[hidden] { display: none; }
+.indice-lista li + li .indice-item { border-top: 1px solid var(--ab-vidro-line); }
+.indice-item { display: grid; grid-template-columns: 38px minmax(0, 1fr) 28px; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; color: var(--text); text-decoration: none; }
+.indice-lista li + li .indice-item:hover, .indice-item:hover { background: var(--menu-hover); border-top-color: transparent; }
+.indice-n { font: 300 1.05rem var(--font-display); color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.indice-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.indice-tit { display: flex; align-items: center; font: 600 1.02rem var(--font-display); color: var(--ink-strong); }
+.indice-tit .btn-cont { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.indice-desc { font-size: .74rem; line-height: 1.45; color: var(--text-soft); }
+.indice-ir { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: var(--accent-strong); transition: transform .2s ease; }
+.indice-item:hover .indice-ir { transform: translateX(4px); }
 
+/* Jornada do ciclo: quatro janelas numa linha, a etapa atual marcada */
+.jornada { grid-column: 1 / -1; padding: 16px 22px 18px; border-radius: 18px; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.jornada-tit { margin: 0 0 14px; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
+.jornada-lista { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.jornada-lista::before { content: ''; position: absolute; left: 6px; right: 6px; top: 6px; height: 1.5px; background: var(--ab-trilho); }
+.etapa { position: relative; padding-top: 24px; }
+.etapa::before { content: ''; position: absolute; left: 0; top: 0; width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--ab-trilho); background: var(--page); box-sizing: border-box; }
+.etapa.is-feita::before { border-color: var(--ab-v3); background: var(--ab-v3); }
+.etapa.is-atual::before { border-color: var(--ab-v2); background: var(--ab-v2); box-shadow: 0 0 0 5px color-mix(in srgb, var(--ab-v2) 22%, transparent); }
+.etapa-nome { display: block; font: 600 .86rem var(--font-display); color: var(--ink-strong); }
+.etapa-quem { display: block; margin-top: 2px; font-size: .72rem; color: var(--text-soft); }
+.etapa-data { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: .72rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.etapa-tag { padding: 1px 8px; border-radius: 999px; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 600 .62rem var(--font-ui); letter-spacing: .04em; }
+.etapa-ok { font: 600 .62rem var(--font-ui); color: var(--good); }
+@media (prefers-reduced-motion: reduce) { .indice-ir { transition: none; } }
 /* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
 .hero {
   position: relative; overflow: hidden; border-radius: 20px; padding: 26px 28px;
@@ -660,7 +717,7 @@ body.is-inicio { background: var(--ini-veu), var(--ini-foto) center / cover no-r
   .topnav-menu {
     position: absolute; top: 100%; bottom: auto; left: 0; right: 0; transform: none; margin: 0; padding: 8px 12px 12px;
     flex-direction: column; align-items: stretch; gap: 2px;
-    background: var(--menu-drawer); border-bottom: 1px solid var(--menu-line); box-shadow: 0 12px 24px rgba(0,0,0,.25);
+    background: var(--menu-drawer); border-bottom: 1px solid var(--menu-line); box-shadow: var(--cyc-shadow); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
   }
   .topnav-menu:not(.is-aberto) { display: none; }
   .topnav-menu-link { min-height: 44px; padding: 0 12px; border-radius: 9px; font-size: .84rem; }
@@ -678,14 +735,19 @@ body.is-inicio { background: var(--ini-veu), var(--ini-foto) center / cover no-r
 }
 /* Pouca altura (notebook com escala de 125–150%): banner compacto para a fila aparecer */
 @media (max-height: 820px) and (min-width: 721px) {
-  #vistaInicio { gap: 14px; padding-block: 14px 12px; }
-  .ini-eyebrow { margin-bottom: 6px; }
-  .ini-titulo { font-size: 2.5rem; }
-  .ini-sub { margin-top: 8px; font-size: .84rem; }
-  .ini-numeros { margin-top: 0; }
-  .ini-numero { padding: 8px 20px; }
-  .ini-numero dd { font-size: 1.4rem; }
-  .ini-card { min-height: 100px; padding: 14px 16px; }
+  #vistaInicio { min-height: calc(100dvh - 56px); }
+  .abertura { gap: 16px 48px; padding-top: 22px; padding-bottom: 16px; }
+  .ab-eyebrow { margin-bottom: 10px; }
+  .ab-nome { font-size: 2.6rem; }
+  .ab-ano { font-size: 7.4rem; }
+  .ab-verbos { margin-top: 12px; font-size: 1.3rem; }
+  .ab-sub { display: none; }
+  .ab-acoes { margin-top: 16px; }
+  .indice { padding: 12px 8px 6px; }
+  .indice-item { padding: 8px 14px; }
+  .indice-desc { display: none; }
+  .jornada { padding: 10px 18px 12px; }
+  .jornada-tit { margin-bottom: 10px; }
   .hero { padding: 16px 20px; gap: 12px 22px; }
   .hero-titulo { font-size: 1.6rem; }
   .hero-sub { display: none; }
@@ -704,11 +766,18 @@ body.is-inicio { background: var(--ini-veu), var(--ini-foto) center / cover no-r
   .item-sit, .item-tempo { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
   .item-acao { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
 }
+@media (max-width: 1080px) {
+  .abertura { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  body.is-inicio { background-attachment: scroll; }
+  body.is-inicio { --ab-veu: linear-gradient(180deg, var(--ab-veu-mob-a, rgba(255,255,255,.94)) 0%, var(--ab-veu-mob-b, rgba(255,255,255,.80)) 100%); }
+  :root[data-theme="dark"] body.is-inicio { --ab-veu-mob-a: rgba(4,21,35,.92); --ab-veu-mob-b: rgba(4,21,35,.80); }
+}
 @media (max-width: 720px) {
-  .ini-numero { padding: 12px 12px; }
-  .ini-numero dd { font-size: 1.15rem; white-space: nowrap; }
-  .ini-numero dt { font-size: .64rem; }
-  #vistaInicio { padding-block: 20px 16px; }
+  .ab-ano { font-size: 6.4rem; }
+  .jornada-lista { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .jornada-lista::before { left: 6px; right: auto; top: 6px; bottom: 6px; width: 1.5px; height: auto; }
+  .etapa { padding: 0 0 0 26px; }
+  .ab-acoes .btn { width: 100%; }
   .page { padding-left: 16px; padding-right: 16px; }
   .hero { padding: 18px 16px; border-radius: 16px; }
   .hero-acoes { position: static; order: -1; justify-content: flex-end; }
@@ -854,28 +923,67 @@ body.is-inicio { background: var(--ini-veu), var(--ini-foto) center / cover no-r
 
 <main class="page" id="main">
 
-  <!-- ═══ Início · menu do AIP Goals ═══ -->
+  <!-- ═══ Início · abertura do AIP Goals ═══ -->
   <section class="vista" id="vistaInicio" aria-labelledby="titInicio">
-    <header class="ini-topo">
-      <p class="ini-eyebrow"><span>Vale Base Metals</span><span id="iniCiclo"></span></p>
-      <h2 class="ini-titulo" id="titInicio">AIP <span>Goals</span></h2>
-      <p class="ini-sub" data-i18n="ini.sub">Definição, aprovação e registro das metas de AIP das Business Units.</p>
-    </header>
+    <div class="abertura">
 
-    <dl class="ini-numeros" aria-label="Sua situação no ciclo" data-i18n-aria="ini.numerosAria">
-      <div class="ini-numero"><dt data-i18n="ini.nPend">Pendências com você</dt><dd data-ini="total">—</dd></div>
-      <div class="ini-numero"><dt data-i18n="t01.alertaTit">Paradas ou atrasadas</dt><dd data-ini="alerta">—</dd></div>
-      <div class="ini-numero"><dt data-i18n="ini.nPrazo">Próximo prazo</dt><dd data-ini="prazo">—</dd></div>
-    </dl>
+      <div class="abertura-texto">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="ab.eyebrow">Ciclo de metas</span></p>
+        <h2 class="ab-titulo" id="titInicio">
+          <span class="ab-nome">AIP Goals</span>
+          <span class="ab-ano" id="abAno">2027</span>
+        </h2>
+        <p class="ab-verbos"><span class="v1" data-i18n="ab.v1">Propor.</span> <span class="v2" data-i18n="ab.v2">Aprovar.</span> <span class="v3" data-i18n="ab.v3">Registrar.</span></p>
+        <p class="ab-sub" data-i18n="ab.sub">Do desdobramento do COO ao Goal Card aprovado: uma versão oficial de cada meta, com cada decisão no histórico.</p>
+        <div class="ab-acoes">
+          <a class="btn btn-grande" href="#pendencias"><span data-i18n="ini.cta">Ver minhas pendências</span><span class="btn-cont" id="iniCtaCont" hidden></span></a>
+          <p class="ab-status" id="abStatus" aria-live="polite"></p>
+        </div>
+      </div>
 
-    <nav class="ini-cards" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
-      <a class="ini-card" href="#pendencias" data-perfis="todos"><span class="ini-card-tit"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="btn-cont" id="iniCtaCont" hidden></span></span><span class="ini-card-txt" data-i18n="ini.dPend">Cards a preencher, decisões, comentários e ações que dependem de você.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
-      <a class="ini-card" href="#painel" data-perfis="pci_coo admin" hidden><span class="ini-card-tit" data-i18n="nav.painel">Painel do ciclo</span><span class="ini-card-txt" data-i18n="ini.dPainel">Andamento do ciclo por BU e por status, com o tempo parado em cada nível.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
-      <a class="ini-card" href="#metas" data-perfis="todos"><span class="ini-card-tit" data-i18n="nav.metas">Metas da BU</span><span class="ini-card-txt" data-i18n="ini.dMetas">Metas com peso, tipo, status, nível de aprovação e versão oficial.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
-      <a class="ini-card" href="#action-log" data-perfis="todos"><span class="ini-card-tit">Action Log</span><span class="ini-card-txt" data-i18n="ini.dLog">Histórico de submissões, decisões e comentários, com exportação em Excel.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
-      <a class="ini-card" href="#acoes" data-perfis="todos"><span class="ini-card-tit" data-i18n="nav.acoes">Ações</span><span class="ini-card-txt" data-i18n="ini.dAcoes">Ações abertas, concluídas e atrasadas, com responsável e prazo.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
-      <a class="ini-card" href="#configuracao" data-perfis="admin" hidden><span class="ini-card-tit" data-i18n="nav.config">Configuração</span><span class="ini-card-txt" data-i18n="ini.dConfig">Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
-    </nav>
+      <nav class="indice" aria-labelledby="titIndice">
+        <p class="indice-cab" id="titIndice" data-i18n="ab.indice">Acessar</p>
+        <ol class="indice-lista">
+        <li data-perfis="todos"><a class="indice-item" href="#pendencias">
+          <span class="indice-n">01</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="btn-cont" id="indCont" hidden></span></span><span class="indice-desc"><span data-i18n="ini.dPend">Cards a preencher, decisões, comentários e ações que dependem de você.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li hidden data-perfis="pci_coo admin"><a class="indice-item" href="#painel">
+          <span class="indice-n">02</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.painel">Painel do ciclo</span></span><span class="indice-desc"><span data-i18n="ini.dPainel">Andamento do ciclo por BU e por status, com o tempo parado em cada nível.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#metas">
+          <span class="indice-n">03</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.metas">Metas da BU</span></span><span class="indice-desc"><span data-i18n="ini.dMetas">Metas com peso, tipo, status, nível de aprovação e versão oficial.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#action-log">
+          <span class="indice-n">04</span>
+          <span class="indice-txt"><span class="indice-tit">Action Log</span><span class="indice-desc"><span data-i18n="ini.dLog">Histórico de submissões, decisões e comentários, com exportação em Excel.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#acoes">
+          <span class="indice-n">05</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.acoes">Ações</span></span><span class="indice-desc"><span data-i18n="ini.dAcoes">Ações abertas, concluídas e atrasadas, com responsável e prazo.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li hidden data-perfis="admin"><a class="indice-item" href="#configuracao">
+          <span class="indice-n">06</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.config">Configuração</span></span><span class="indice-desc"><span data-i18n="ini.dConfig">Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        </ol>
+      </nav>
+
+      <!-- Jornada do ciclo: as quatro janelas, com a etapa aberta hoje marcada (texto + ponto, nunca só cor) -->
+      <section class="jornada" aria-labelledby="titJornada">
+        <h3 class="jornada-tit" id="titJornada"><span data-i18n="ab.jornada">Jornada do ciclo</span><span id="jornadaCiclo"></span></h3>
+        <ol class="jornada-lista" id="jornada"></ol>
+      </section>
+
+    </div>
   </section>
 
   <!-- ═══ T01 · Minhas pendências ═══ -->
@@ -1165,7 +1273,15 @@ window.VBMSetup = (function () {
       'ini.dPend': 'Cards a preencher, decisões, comentários e ações que dependem de você.', 'ini.dPainel': 'Andamento do ciclo por BU e por status, com o tempo parado em cada nível.',
       'ini.dMetas': 'Metas com peso, tipo, status, nível de aprovação e versão oficial.', 'ini.dLog': 'Histórico de submissões, decisões e comentários, com exportação em Excel.',
       'ini.dAcoes': 'Ações abertas, concluídas e atrasadas, com responsável e prazo.', 'ini.dConfig': 'Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.',
-      'min.cobre': 'Cobre', 'min.niquel': 'Níquel', 'min.cobalto': 'Cobalto', 'nav.painel': 'Painel do ciclo',
+      'ab.eyebrow': 'Ciclo de metas', 'ab.v1': 'Propor.', 'ab.v2': 'Aprovar.', 'ab.v3': 'Registrar.',
+      'ab.sub': 'Do desdobramento do COO ao Goal Card aprovado: uma versão oficial de cada meta, com cada decisão no histórico.',
+      'ab.indice': 'Acessar', 'ab.jornada': 'Jornada do ciclo', 'ab.emDia': 'Você está em dia neste ciclo.',
+      'ab.alerta': '{n} paradas ou atrasadas', 'ab.alerta1': '1 parada ou atrasada', 'ab.proximo': 'Próximo prazo',
+      'ab.ate': 'até {d}', 'ab.encerrada': 'encerrada em {d}', 'ab.publicacao': 'publicação em {d}', 'ab.atual': 'Etapa atual', 'ab.concluida': 'concluída',
+      'et.desdobramento': 'Desdobramento do COO', 'et.desdobramento.quem': 'Metas e pesos por BU · Administrador',
+      'et.proposta': 'Proposta da BU', 'et.proposta.quem': 'Goal Cards preenchidos · Pontos focais',
+      'et.calibracao': 'Calibração e aprovação', 'et.calibracao.quem': 'Diretor da BU · Grupo P&CI/COO',
+      'et.oficial': 'Goal Card oficial', 'et.oficial.quem': 'Versão aprovada e travada', 'nav.painel': 'Painel do ciclo',
       'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração',
       'ui.telaCheia': 'Tela cheia',
       't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
@@ -1204,7 +1320,15 @@ window.VBMSetup = (function () {
       'ini.dPend': 'Cards to fill in, decisions, comments and actions that depend on you.', 'ini.dPainel': 'Cycle progress by BU and status, with the time stalled at each level.',
       'ini.dMetas': 'Goals with weight, type, status, approval level and official version.', 'ini.dLog': 'History of submissions, decisions and comments, with Excel export.',
       'ini.dAcoes': 'Open, completed and overdue actions, with owner and due date.', 'ini.dConfig': 'Cycle, BUs, people, goals, weights, approval route and deadlines.',
-      'min.cobre': 'Copper', 'min.niquel': 'Nickel', 'min.cobalto': 'Cobalt', 'nav.painel': 'Cycle dashboard',
+      'ab.eyebrow': 'Goal cycle', 'ab.v1': 'Propose.', 'ab.v2': 'Approve.', 'ab.v3': 'Record.',
+      'ab.sub': 'From the COO cascade to the approved Goal Card: one official version of each goal, with every decision on record.',
+      'ab.indice': 'Go to', 'ab.jornada': 'Cycle journey', 'ab.emDia': 'You are up to date in this cycle.',
+      'ab.alerta': '{n} stalled or overdue', 'ab.alerta1': '1 stalled or overdue', 'ab.proximo': 'Next due date',
+      'ab.ate': 'until {d}', 'ab.encerrada': 'closed on {d}', 'ab.publicacao': 'published on {d}', 'ab.atual': 'Current stage', 'ab.concluida': 'done',
+      'et.desdobramento': 'COO cascade', 'et.desdobramento.quem': 'Goals and weights per BU · Administrator',
+      'et.proposta': 'BU proposal', 'et.proposta.quem': 'Goal Cards filled in · Focal points',
+      'et.calibracao': 'Calibration and approval', 'et.calibracao.quem': 'BU Director · P&CI/COO group',
+      'et.oficial': 'Official Goal Card', 'et.oficial.quem': 'Approved and locked version', 'nav.painel': 'Cycle dashboard',
       'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings',
       'ui.telaCheia': 'Full screen',
       't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
@@ -1302,7 +1426,7 @@ window.VBMSetup = (function () {
         renderTudo();
       })
       .catch(function (err) {
-        dados = null; ['total', 'alerta', 'prazo'].forEach(function (k) { ini(k, '—'); }); $('iniCtaCont').hidden = true;
+        dados = null; $('iniCtaCont').hidden = true; $('indCont').hidden = true; $('abStatus').textContent = '';
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return mostrarEstado('estSemAcesso', true);
         $('estErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
@@ -1335,7 +1459,6 @@ window.VBMSetup = (function () {
     if (!dados) return;
     var c = dados.ciclo || {};
     $('heroCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
-    $('iniCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
     $('pillExemplo').hidden = !dados.exemplo;
     $('pillDesatualizado').hidden = !dados.desatualizado;
     $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
@@ -1343,17 +1466,38 @@ window.VBMSetup = (function () {
     $('navCont').textContent = S.fmt(total, 0);
     $('navCont').hidden = !total;
     $('iniCtaCont').textContent = S.fmt(total, 0); $('iniCtaCont').hidden = !total;
-    var its = dados.itens || [];
-    var prazos = its.filter(function (it) { return it.prazo && !it.atrasada; }).map(function (it) { return it.prazo; }).sort();
-    ini('total', S.fmt(total, 0));
-    ini('alerta', S.fmt(its.filter(function (it) { return it.parada || it.atrasada; }).length, 0));
-    ini('prazo', prazos.length ? dataCurta(prazos[0]) : S.t('ini.semPrazo'));
+    $('indCont').textContent = S.fmt(total, 0); $('indCont').hidden = !total;
+    renderAbertura();
     aplicarPerfis();
     renderUnidade();
     renderLista();
   }
 
-  function ini(k, v) { document.querySelector('[data-ini="' + k + '"]').textContent = v; }
+  // ── Início: estado do usuário e jornada do ciclo ──
+  var ETAPAS = ['desdobramento', 'proposta', 'calibracao', 'oficial'];
+  function renderAbertura() {
+    var c = (dados && dados.ciclo) || {};
+    if (c.ano) $('abAno').textContent = String(c.ano);
+    $('jornadaCiclo').textContent = c.nome ? ' · ' + c.nome : '';
+    var its = (dados && dados.itens) || [];
+    var alerta = its.filter(function (it) { return it.parada || it.atrasada; }).length;
+    var prazos = its.filter(function (it) { return it.prazo && !it.atrasada; }).map(function (it) { return it.prazo; }).sort();
+    $('abStatus').innerHTML = !its.length ? esc(S.t('ab.emDia')) :
+      (alerta ? '<b>' + esc(S.t(alerta === 1 ? 'ab.alerta1' : 'ab.alerta', { n: S.fmt(alerta, 0) })) + '</b> · ' : '') +
+      esc(S.t('ab.proximo')) + ' <em>' + esc(prazos.length ? dataCurta(prazos[0]) : S.t('ini.semPrazo')) + '</em>';
+    var atual = ETAPAS.indexOf(c.etapaAtual);
+    var porId = {}; (c.etapas || []).forEach(function (e) { porId[e.id] = e; });
+    $('jornada').innerHTML = ETAPAS.map(function (id, i) {
+      var e = porId[id] || {};
+      var est = atual < 0 ? '' : i < atual ? ' is-feita' : i === atual ? ' is-atual' : '';
+      var data = e.fim ? esc(S.t(i < atual ? 'ab.encerrada' : id === 'oficial' ? 'ab.publicacao' : 'ab.ate', { d: dataCurta(e.fim) })) : '';
+      var tag = i === atual ? '<span class="etapa-tag">' + esc(S.t('ab.atual')) + '</span>' : i < atual ? '<span class="etapa-ok">✓ ' + esc(S.t('ab.concluida')) + '</span>' : '';
+      return '<li class="etapa' + est + '"' + (i === atual ? ' aria-current="step"' : '') + '>' +
+        '<span class="etapa-nome">' + esc(S.t('et.' + id)) + '</span>' +
+        '<span class="etapa-quem">' + esc(S.t('et.' + id + '.quem')) + '</span>' +
+        '<span class="etapa-data">' + data + tag + '</span></li>';
+    }).join('');
+  }
 
   // Menu e cartões do início: cada perfil vê só o que pode usar (§6.4)
   function aplicarPerfis() {
@@ -1362,6 +1506,9 @@ window.VBMSetup = (function () {
       var pode = (a.getAttribute('data-perfis') || '').split(' ');
       a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
     });
+    // Índice do início numerado só com as telas visíveis (01, 02, 03…)
+    var n = 0;
+    document.querySelectorAll('.indice-lista li').forEach(function (li) { if (!li.hidden) li.querySelector('.indice-n').textContent = String(++n).padStart(2, '0'); });
   }
 
   function itensBase() {
