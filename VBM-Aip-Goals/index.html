@@ -465,9 +465,8 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   --menu-hover: rgba(255,255,255,.08);
   --menu-drawer: #072842;
 }
-.topnav-brand { position: static; transform: none; flex-shrink: 0; margin: 0 4px 0 18px; pointer-events: auto; }
-.topnav-brand::after { display: none; }
-.topnav-menu { display: flex; align-items: stretch; align-self: stretch; gap: 2px; margin-left: 18px; min-width: 0; }
+/* Opções centralizadas na barra (logo à esquerda; engrenagem e usuário à direita) */
+.topnav-menu { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); display: flex; align-items: stretch; gap: 4px; }
 .topnav-menu-link {
   position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px;
   color: var(--menu-text); text-decoration: none; font: 400 .78rem var(--font-ui); letter-spacing: .03em; white-space: nowrap;
@@ -487,6 +486,59 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .topnav-menu-btn { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--menu-text-on); cursor: pointer; }
 .topnav-menu-btn:hover, .topnav-menu-btn[aria-expanded="true"] { background: var(--menu-hover); }
 .topnav-menu-btn:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+
+/* ── Início: página-menu (fundo dos três minerais de VBM, claro no tema claro) ── */
+:root {
+  --ini-foto: url('assets/images/Fundo_VBM_claro_2400x1145.webp');
+  --ini-veu: linear-gradient(180deg, rgba(255,255,255,.80) 0%, rgba(255,255,255,.88) 45%, rgba(248,251,253,.95) 100%);
+  --ini-vidro: rgba(255,255,255,.90);
+  --ini-vidro-line: rgba(13,38,64,.10);
+  --ini-sombra: 0 10px 30px rgba(13,38,64,.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ini-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
+    --ini-veu: linear-gradient(180deg, rgba(7,34,66,.74) 0%, rgba(5,24,44,.86) 100%);
+    --ini-vidro: rgba(20,48,82,.62);
+    --ini-vidro-line: rgba(255,255,255,.12);
+    --ini-sombra: 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --ini-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
+  --ini-veu: linear-gradient(180deg, rgba(7,34,66,.74) 0%, rgba(5,24,44,.86) 100%);
+  --ini-vidro: rgba(20,48,82,.62);
+  --ini-vidro-line: rgba(255,255,255,.12);
+  --ini-sombra: 0 10px 30px rgba(0,0,0,.35);
+}
+body.is-inicio { background: var(--ini-veu), var(--ini-foto) center / cover no-repeat fixed, var(--page); min-height: 100dvh; }
+#vistaInicio { max-width: 1080px; width: 100%; margin-inline: auto; gap: 22px; padding-block: clamp(34px, 9vh, 120px) 24px; }
+.ini-topo { text-align: center; }
+.ini-eyebrow { margin: 0 0 12px; font: 600 .68rem var(--font-ui); letter-spacing: .28em; text-transform: uppercase; color: var(--accent-strong); }
+.ini-titulo { margin: 0; font: 600 clamp(2.6rem, 5vw, 4.2rem)/1 var(--font-display); letter-spacing: -.025em; color: var(--ink-strong); }
+.ini-titulo span { font-weight: 300; color: var(--accent-strong); }
+.ini-sub { margin: 14px auto 0; max-width: 64ch; font-size: .95rem; line-height: 1.6; color: var(--text); }
+.btn-cont { min-width: 22px; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .68rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; vertical-align: middle; }
+.btn-cont[hidden] { display: none; }
+
+.ini-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 0; border-radius: 18px; border: 1px solid var(--ini-vidro-line); background: var(--ini-vidro); box-shadow: var(--ini-sombra); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.ini-numero { padding: 16px 24px; text-align: center; }
+.ini-numero + .ini-numero { border-left: 1px solid var(--ini-vidro-line); }
+.ini-numero dt { font: 500 .72rem var(--font-ui); color: var(--text-soft); }
+.ini-numero dd { margin: 4px 0 0; font: 300 1.9rem/1.1 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+
+.ini-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.ini-card {
+  display: flex; flex-direction: column; gap: 6px; min-height: 138px; padding: 20px 22px; border-radius: 18px; border: 1px solid var(--ini-vidro-line);
+  background: var(--ini-vidro); box-shadow: var(--ini-sombra); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: var(--text); text-decoration: none; transition: border-color .15s ease, transform .15s ease;
+}
+.ini-card:hover { border-color: var(--ctl-on-bg); transform: translateY(-2px); }
+.ini-card[hidden] { display: none; }
+.ini-card-tit { font: 600 1rem var(--font-display); color: var(--ink-strong); }
+.ini-card-txt { font-size: .78rem; line-height: 1.5; color: var(--text-soft); }
+.ini-card-ir { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; font: 600 .74rem var(--font-ui); color: var(--accent-strong); }
+@media (prefers-reduced-motion: reduce) { .ini-card { transition: none; } .ini-card:hover { transform: none; } }
 
 /* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
 .hero {
@@ -606,7 +658,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 @media (max-width: 1080px) {
   .topnav-menu-btn { display: inline-flex; }
   .topnav-menu {
-    position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 8px 12px 12px;
+    position: absolute; top: 100%; bottom: auto; left: 0; right: 0; transform: none; margin: 0; padding: 8px 12px 12px;
     flex-direction: column; align-items: stretch; gap: 2px;
     background: var(--menu-drawer); border-bottom: 1px solid var(--menu-line); box-shadow: 0 12px 24px rgba(0,0,0,.25);
   }
@@ -616,9 +668,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .topnav-menu-link[aria-current="page"] { background: var(--menu-hover); }
   .topnav-menu-link:hover { background: var(--menu-hover); }
 }
-@media (max-width: 540px) {
-  .topnav-brand { margin: 0 auto 0 12px; }
-}
+
 @media (max-width: 1440px), (max-height: 820px) {
   .topnav-menu-link { padding: 0 10px; font-size: .74rem; }
   .topnav-menu-link::after { bottom: 10px; }
@@ -628,6 +678,14 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 }
 /* Pouca altura (notebook com escala de 125–150%): banner compacto para a fila aparecer */
 @media (max-height: 820px) and (min-width: 721px) {
+  #vistaInicio { gap: 14px; padding-block: 14px 12px; }
+  .ini-eyebrow { margin-bottom: 6px; }
+  .ini-titulo { font-size: 2.5rem; }
+  .ini-sub { margin-top: 8px; font-size: .84rem; }
+  .ini-numeros { margin-top: 0; }
+  .ini-numero { padding: 8px 20px; }
+  .ini-numero dd { font-size: 1.4rem; }
+  .ini-card { min-height: 100px; padding: 14px 16px; }
   .hero { padding: 16px 20px; gap: 12px 22px; }
   .hero-titulo { font-size: 1.6rem; }
   .hero-sub { display: none; }
@@ -647,6 +705,10 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   .item-acao { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
 }
 @media (max-width: 720px) {
+  .ini-numero { padding: 12px 12px; }
+  .ini-numero dd { font-size: 1.15rem; white-space: nowrap; }
+  .ini-numero dt { font-size: .64rem; }
+  #vistaInicio { padding-block: 20px 16px; }
   .page { padding-left: 16px; padding-right: 16px; }
   .hero { padding: 18px 16px; border-radius: 16px; }
   .hero-acoes { position: static; order: -1; justify-content: flex-end; }
@@ -685,8 +747,9 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   </g>
 </svg>
   </a>
-  <h1 class="topnav-brand"><span class="topnav-brand-nome">AIP Goals</span></h1>
+  <h1 class="sr-only">AIP Goals</h1>
   <nav class="topnav-menu" id="topMenu" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
+    <a class="topnav-menu-link" href="#inicio" data-tela="inicio" data-perfis="todos"><span data-i18n="nav.inicio">Início</span></a>
     <a class="topnav-menu-link" href="#pendencias" data-tela="pendencias" data-perfis="todos"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="topnav-menu-cont" id="navCont" hidden></span></a>
     <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
     <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
@@ -791,8 +854,32 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 
 <main class="page" id="main">
 
+  <!-- ═══ Início · menu do AIP Goals ═══ -->
+  <section class="vista" id="vistaInicio" aria-labelledby="titInicio">
+    <header class="ini-topo">
+      <p class="ini-eyebrow"><span>Vale Base Metals</span><span id="iniCiclo"></span></p>
+      <h2 class="ini-titulo" id="titInicio">AIP <span>Goals</span></h2>
+      <p class="ini-sub" data-i18n="ini.sub">Definição, aprovação e registro das metas de AIP das Business Units.</p>
+    </header>
+
+    <dl class="ini-numeros" aria-label="Sua situação no ciclo" data-i18n-aria="ini.numerosAria">
+      <div class="ini-numero"><dt data-i18n="ini.nPend">Pendências com você</dt><dd data-ini="total">—</dd></div>
+      <div class="ini-numero"><dt data-i18n="t01.alertaTit">Paradas ou atrasadas</dt><dd data-ini="alerta">—</dd></div>
+      <div class="ini-numero"><dt data-i18n="ini.nPrazo">Próximo prazo</dt><dd data-ini="prazo">—</dd></div>
+    </dl>
+
+    <nav class="ini-cards" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
+      <a class="ini-card" href="#pendencias" data-perfis="todos"><span class="ini-card-tit"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="btn-cont" id="iniCtaCont" hidden></span></span><span class="ini-card-txt" data-i18n="ini.dPend">Cards a preencher, decisões, comentários e ações que dependem de você.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+      <a class="ini-card" href="#painel" data-perfis="pci_coo admin" hidden><span class="ini-card-tit" data-i18n="nav.painel">Painel do ciclo</span><span class="ini-card-txt" data-i18n="ini.dPainel">Andamento do ciclo por BU e por status, com o tempo parado em cada nível.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+      <a class="ini-card" href="#metas" data-perfis="todos"><span class="ini-card-tit" data-i18n="nav.metas">Metas da BU</span><span class="ini-card-txt" data-i18n="ini.dMetas">Metas com peso, tipo, status, nível de aprovação e versão oficial.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+      <a class="ini-card" href="#action-log" data-perfis="todos"><span class="ini-card-tit">Action Log</span><span class="ini-card-txt" data-i18n="ini.dLog">Histórico de submissões, decisões e comentários, com exportação em Excel.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+      <a class="ini-card" href="#acoes" data-perfis="todos"><span class="ini-card-tit" data-i18n="nav.acoes">Ações</span><span class="ini-card-txt" data-i18n="ini.dAcoes">Ações abertas, concluídas e atrasadas, com responsável e prazo.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+      <a class="ini-card" href="#configuracao" data-perfis="admin" hidden><span class="ini-card-tit" data-i18n="nav.config">Configuração</span><span class="ini-card-txt" data-i18n="ini.dConfig">Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.</span><span class="ini-card-ir"><span data-i18n="ini.abrir">Abrir</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+    </nav>
+  </section>
+
   <!-- ═══ T01 · Minhas pendências ═══ -->
-  <section class="vista" id="vistaPendencias" aria-labelledby="titPend">
+  <section class="vista" id="vistaPendencias" hidden aria-labelledby="titPend">
 
     <header class="hero">
       <div class="hero-texto">
@@ -901,7 +988,7 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
       <div class="estado">
         <p class="estado-tit" data-i18n="est.construcaoTit">Tela em construção</p>
         <p class="estado-txt" data-i18n="est.construcaoTxt">Esta tela faz parte do MVP e ainda não foi publicada.</p>
-        <a class="btn btn-sec" href="#pendencias" data-i18n="est.voltar">Voltar para Minhas pendências</a>
+        <a class="btn btn-sec" href="#inicio" data-i18n="est.voltar">Voltar para o início</a>
       </div>
     </div>
   </section>
@@ -1072,7 +1159,13 @@ window.VBMSetup = (function () {
 
   S.registrar({
     'pt-BR': {
-      'nav.menu': 'Telas do AIP Goals', 'nav.abrir': 'Abrir menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Ciclo', 'nav.pendencias': 'Minhas pendências', 'nav.painel': 'Painel do ciclo',
+      'nav.menu': 'Telas do AIP Goals', 'nav.abrir': 'Abrir menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Ciclo', 'nav.inicio': 'Início', 'nav.pendencias': 'Minhas pendências',
+      'ini.sub': 'Definição, aprovação e registro das metas de AIP das Business Units.',
+      'ini.cta': 'Ver minhas pendências', 'ini.numerosAria': 'Sua situação no ciclo', 'ini.nPend': 'Pendências com você', 'ini.nPrazo': 'Próximo prazo', 'ini.semPrazo': 'Sem prazo', 'ini.abrir': 'Abrir',
+      'ini.dPend': 'Cards a preencher, decisões, comentários e ações que dependem de você.', 'ini.dPainel': 'Andamento do ciclo por BU e por status, com o tempo parado em cada nível.',
+      'ini.dMetas': 'Metas com peso, tipo, status, nível de aprovação e versão oficial.', 'ini.dLog': 'Histórico de submissões, decisões e comentários, com exportação em Excel.',
+      'ini.dAcoes': 'Ações abertas, concluídas e atrasadas, com responsável e prazo.', 'ini.dConfig': 'Ciclo, BUs, pessoas, metas, pesos, rota de aprovação e prazos.',
+      'min.cobre': 'Cobre', 'min.niquel': 'Níquel', 'min.cobalto': 'Cobalto', 'nav.painel': 'Painel do ciclo',
       'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração',
       'ui.telaCheia': 'Tela cheia',
       't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
@@ -1100,12 +1193,18 @@ window.VBMSetup = (function () {
       'est.erroLimite': 'Muitos pedidos em sequência. Aguarde um minuto.', 'est.erroGeral': 'Tente de novo em instantes. Se continuar, avise o administrador do ciclo.',
       'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
       'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
-      'est.voltar': 'Voltar para Minhas pendências',
+      'est.voltar': 'Voltar para o início',
       'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
       'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
     },
     en: {
-      'nav.menu': 'AIP Goals screens', 'nav.abrir': 'Open menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Cycle', 'nav.pendencias': 'My pending items', 'nav.painel': 'Cycle dashboard',
+      'nav.menu': 'AIP Goals screens', 'nav.abrir': 'Open menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Cycle', 'nav.inicio': 'Home', 'nav.pendencias': 'My pending items',
+      'ini.sub': 'Setting, approval and record of the AIP goals of the Business Units.',
+      'ini.cta': 'View my pending items', 'ini.numerosAria': 'Your status in the cycle', 'ini.nPend': 'Pending with you', 'ini.nPrazo': 'Next due date', 'ini.semPrazo': 'No due date', 'ini.abrir': 'Open',
+      'ini.dPend': 'Cards to fill in, decisions, comments and actions that depend on you.', 'ini.dPainel': 'Cycle progress by BU and status, with the time stalled at each level.',
+      'ini.dMetas': 'Goals with weight, type, status, approval level and official version.', 'ini.dLog': 'History of submissions, decisions and comments, with Excel export.',
+      'ini.dAcoes': 'Open, completed and overdue actions, with owner and due date.', 'ini.dConfig': 'Cycle, BUs, people, goals, weights, approval route and deadlines.',
+      'min.cobre': 'Copper', 'min.niquel': 'Nickel', 'min.cobalto': 'Cobalt', 'nav.painel': 'Cycle dashboard',
       'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings',
       'ui.telaCheia': 'Full screen',
       't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
@@ -1133,7 +1232,7 @@ window.VBMSetup = (function () {
       'est.erroLimite': 'Too many requests in a row. Wait a minute.', 'est.erroGeral': 'Try again shortly. If it persists, contact the cycle administrator.',
       'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
       'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
-      'est.voltar': 'Back to My pending items',
+      'est.voltar': 'Back to home',
       'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
       'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card'
     }
@@ -1203,7 +1302,7 @@ window.VBMSetup = (function () {
         renderTudo();
       })
       .catch(function (err) {
-        dados = null;
+        dados = null; ['total', 'alerta', 'prazo'].forEach(function (k) { ini(k, '—'); }); $('iniCtaCont').hidden = true;
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return mostrarEstado('estSemAcesso', true);
         $('estErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
@@ -1236,22 +1335,30 @@ window.VBMSetup = (function () {
     if (!dados) return;
     var c = dados.ciclo || {};
     $('heroCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
-    document.title = 'AIP Goals · ' + S.t('t01.titulo') + (c.nome ? ' · ' + c.nome : '');
+    $('iniCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
     $('pillExemplo').hidden = !dados.exemplo;
     $('pillDesatualizado').hidden = !dados.desatualizado;
     $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
     var total = (dados.itens || []).length;
     $('navCont').textContent = S.fmt(total, 0);
     $('navCont').hidden = !total;
+    $('iniCtaCont').textContent = S.fmt(total, 0); $('iniCtaCont').hidden = !total;
+    var its = dados.itens || [];
+    var prazos = its.filter(function (it) { return it.prazo && !it.atrasada; }).map(function (it) { return it.prazo; }).sort();
+    ini('total', S.fmt(total, 0));
+    ini('alerta', S.fmt(its.filter(function (it) { return it.parada || it.atrasada; }).length, 0));
+    ini('prazo', prazos.length ? dataCurta(prazos[0]) : S.t('ini.semPrazo'));
     aplicarPerfis();
     renderUnidade();
     renderLista();
   }
 
-  // Menu: cada perfil vê só o que pode usar (§6.4)
+  function ini(k, v) { document.querySelector('[data-ini="' + k + '"]').textContent = v; }
+
+  // Menu e cartões do início: cada perfil vê só o que pode usar (§6.4)
   function aplicarPerfis() {
     var papeis = ((dados && dados.usuario && dados.usuario.papeis) || []).map(function (p) { return p.papel; });
-    document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
+    document.querySelectorAll('[data-perfis]').forEach(function (a) {
       var pode = (a.getAttribute('data-perfis') || '').split(' ');
       a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
     });
@@ -1429,11 +1536,15 @@ window.VBMSetup = (function () {
 
   // ── Vistas pelo hash ──
   function rota() {
-    var h = (location.hash || '#pendencias').slice(1).split('?')[0] || 'pendencias';
-    var ehT01 = h === 'pendencias';
-    $('vistaPendencias').hidden = !ehT01;
-    $('vistaConstrucao').hidden = ehT01;
-    if (!ehT01) $('titConstr').textContent = S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h;
+    var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
+    var pronta = h === 'inicio' || h === 'pendencias';
+    $('vistaInicio').hidden = h !== 'inicio';
+    document.body.classList.toggle('is-inicio', h === 'inicio');
+    $('vistaPendencias').hidden = h !== 'pendencias';
+    $('vistaConstrucao').hidden = pronta;
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (!pronta) $('titConstr').textContent = nome;
+    document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
       if (a.getAttribute('data-tela') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });

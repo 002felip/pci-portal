@@ -9,7 +9,7 @@ técnica v1 e Levantamento de requisitos).
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** T01 publicada com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início (menu) e T01 publicados com dados de exemplo; demais telas do catálogo em construção
 
 ## Arquivos
 
@@ -17,7 +17,8 @@ técnica v1 e Levantamento de requisitos).
 |---|---|---|
 | `index.html` | página única; tokens e componentes `vbm-design` e barra `setup-dashboards` colados no `<style>`/`<script>` | sim |
 | `assets/css/poppins.css` | Poppins local (faces embutidas) | sim |
-| `assets/images/Fundo_VBM_2400x1145.webp` | fundo do banner | sim |
+| `assets/images/Fundo_VBM_2400x1145.webp` | fundo dos três minerais (banner da T01 e Início no tema escuro) | sim |
+| `assets/images/Fundo_VBM_claro_2400x1145.webp` | versão clara do mesmo fundo (Início no tema claro) | sim |
 | `portal.js` | montagem no Portal (pool próprio, health, router, bloqueio dos arquivos internos) | não |
 | `aip-goals-api.js` | rotas de dados (mesmo router no Portal e no standalone) | não |
 | `dados-exemplo.js` | fila de exemplo da T01, com datas relativas a hoje | não |
@@ -28,15 +29,22 @@ técnica v1 e Levantamento de requisitos).
 
 | Vista | Tela | Situação |
 |---|---|---|
+| `#inicio` (padrão) | Início: menu da aplicação | publicada |
 | `#pendencias` | T01 Minhas pendências | publicada |
 | `#painel`, `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
+
+### Início (menu)
+
+Página de entrada, no modelo da página inicial do Portal: fundo dos três minerais, título "AIP Goals",
+três números do usuário no ciclo (pendências, paradas ou atrasadas, próximo prazo) e um cartão por
+tela. Tema claro usa a versão clara da foto; tema escuro, a original com véu azul.
 
 ### T01 Minhas pendências
 
 Fila pessoal do ciclo ativo: cards a preencher (rascunho ou devolvidos), decisões pendentes,
 comentários sem resposta e ações atribuídas.
 
-- **Menu no topo**, na própria barra (como as opções do Kaizen), só texto e com o item ativo sublinhado;
+- **Menu no topo**, centralizado na própria barra (como as opções do Kaizen), só texto e com o item ativo sublinhado;
   até 1080 px vira gaveta aberta pelo botão de menu. Cada perfil vê só as telas que pode usar (§6.4):
   Painel do ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
 - **Banner** com o resumo por tipo; cada linha filtra a fila. "Paradas ou atrasadas" conta os itens há
