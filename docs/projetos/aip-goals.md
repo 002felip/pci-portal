@@ -36,8 +36,9 @@ técnica v1 e Levantamento de requisitos).
 Fila pessoal do ciclo ativo: cards a preencher (rascunho ou devolvidos), decisões pendentes,
 comentários sem resposta e ações atribuídas.
 
-- **Abas do app** abaixo da barra superior; cada perfil vê só as telas que pode usar (§6.4). Painel do
-  ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
+- **Menu no topo**, na própria barra (como as opções do Kaizen), só texto e com o item ativo sublinhado;
+  até 1080 px vira gaveta aberta pelo botão de menu. Cada perfil vê só as telas que pode usar (§6.4):
+  Painel do ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
 - **Banner** com o resumo por tipo; cada linha filtra a fila. "Paradas ou atrasadas" conta os itens há
   mais de `parametros.diasParado` dias úteis no mesmo nível (RN-14) ou com prazo vencido.
 - **Filtros (padrão COO):** País › BU, Ordenar por (Urgência, Prazo, Idade) e "Só paradas ou atrasadas";

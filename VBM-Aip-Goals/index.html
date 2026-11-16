@@ -456,31 +456,37 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .vista { display: flex; flex-direction: column; gap: 16px; }
 .vista[hidden] { display: none; }
 
-/* ── Abas do app (logo abaixo da barra superior; cada perfil vê só o que pode usar) ── */
-.app-nav {
-  position: sticky; top: 64px; z-index: 90;
-  display: flex; align-items: stretch; gap: 2px; padding: 0 max(28px, env(safe-area-inset-left, 0px));
-  background: var(--tab-bg); border-bottom: 1px solid var(--tab-line);
-  overflow-x: auto; scrollbar-width: none;
+/* ── Menu no topo (opções na barra, só texto — inspirado no Kaizen) ──
+   A barra é sempre escura (setup-dashboards), então as cores do menu são fixas nos dois temas. */
+:root {
+  --menu-text: rgba(255,255,255,.74);
+  --menu-text-on: #FFFFFF;
+  --menu-line: rgba(255,255,255,.22);
+  --menu-hover: rgba(255,255,255,.08);
+  --menu-drawer: #072842;
 }
-.app-nav::-webkit-scrollbar { display: none; }
-.app-nav-link {
-  position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 14px;
-  color: var(--text-soft); text-decoration: none; font: 500 .8rem var(--font-ui); white-space: nowrap;
+.topnav-brand { position: static; transform: none; flex-shrink: 0; margin: 0 4px 0 18px; pointer-events: auto; }
+.topnav-brand::after { display: none; }
+.topnav-menu { display: flex; align-items: stretch; align-self: stretch; gap: 2px; margin-left: 18px; min-width: 0; }
+.topnav-menu-link {
+  position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px;
+  color: var(--menu-text); text-decoration: none; font: 400 .78rem var(--font-ui); letter-spacing: .03em; white-space: nowrap;
 }
-.app-nav-link .ico { font-size: 1rem; }
-.app-nav-link:hover { color: var(--text); }
-.app-nav-link[aria-current="page"] { color: var(--accent-strong); font-weight: 600; }
-.app-nav-link[aria-current="page"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--vbm-blue); }
-.app-nav-link:focus-visible { outline-offset: -3px; }
-.app-nav-link[hidden] { display: none; }
-.app-nav-cont { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .64rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
-.app-nav-cont[hidden] { display: none; }
-.app-nav-sep { width: 1px; margin: 12px 6px; background: var(--tab-line); flex-shrink: 0; }
-
-/* Tela cheia: a barra sai (setup-dashboards) e as abas sobem */
-html.is-fs .app-nav { top: 0; }
-@media (display-mode: fullscreen) { .app-nav { top: 0; } }
+.topnav-menu-link:hover { color: var(--menu-text-on); }
+.topnav-menu-link[aria-current="page"] { color: var(--menu-text-on); font-weight: 500; }
+.topnav-menu-link::after {
+  content: ''; position: absolute; left: 50%; bottom: 12px; width: 0; height: 1.5px; border-radius: 2px;
+  background: var(--menu-text-on); transform: translateX(-50%); transition: width .25s ease;
+}
+.topnav-menu-link[aria-current="page"]::after { width: calc(100% - 24px); }
+.topnav-menu-link:not([aria-current="page"]):hover::after { width: 30%; opacity: .5; }
+.topnav-menu-link:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: -6px; border-radius: 8px; }
+.topnav-menu-link[hidden] { display: none; }
+.topnav-menu-cont { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: var(--vbm-blue); color: var(--vbm-blue-navy); font: 700 .64rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
+.topnav-menu-cont[hidden] { display: none; }
+.topnav-menu-btn { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--menu-text-on); cursor: pointer; }
+.topnav-menu-btn:hover, .topnav-menu-btn[aria-expanded="true"] { background: var(--menu-hover); }
+.topnav-menu-btn:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
 
 /* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
 .hero {
@@ -534,7 +540,6 @@ html.is-fs .app-nav { top: 0; }
   transition: border-color .15s ease, background-color .15s ease;
 }
 .item:hover { background: var(--card-hover); border-color: var(--ctl-border); }
-.item.is-alerta { border-left: 3px solid var(--wait-line); }
 .item-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: var(--st-review-bg); color: var(--accent-strong); font-size: 1.1rem; }
 .item-principal { min-width: 0; }
 .item-tipo { margin: 0; font: 600 .66rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); }
@@ -597,9 +602,26 @@ html.is-fs .app-nav { top: 0; }
 @media (prefers-reduced-motion: reduce) { .skel { animation: none; } .item { transition: none; } }
 
 /* ── Responsividade (pontos de quebra VBM) ── */
+/* Até 1080 px o menu vira gaveta sob a barra, aberta pelo botão de menu */
+@media (max-width: 1080px) {
+  .topnav-menu-btn { display: inline-flex; }
+  .topnav-menu {
+    position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 8px 12px 12px;
+    flex-direction: column; align-items: stretch; gap: 2px;
+    background: var(--menu-drawer); border-bottom: 1px solid var(--menu-line); box-shadow: 0 12px 24px rgba(0,0,0,.25);
+  }
+  .topnav-menu:not(.is-aberto) { display: none; }
+  .topnav-menu-link { min-height: 44px; padding: 0 12px; border-radius: 9px; font-size: .84rem; }
+  .topnav-menu-link::after { display: none; }
+  .topnav-menu-link[aria-current="page"] { background: var(--menu-hover); }
+  .topnav-menu-link:hover { background: var(--menu-hover); }
+}
+@media (max-width: 540px) {
+  .topnav-brand { margin: 0 auto 0 12px; }
+}
 @media (max-width: 1440px), (max-height: 820px) {
-  .app-nav { top: 56px; }
-  .app-nav-link { min-height: 42px; }
+  .topnav-menu-link { padding: 0 10px; font-size: .74rem; }
+  .topnav-menu-link::after { bottom: 10px; }
   .page { padding-top: 14px; gap: 14px; }
   .hero { padding: 20px 22px; }
   .item { padding: 10px 12px; gap: 12px; }
@@ -625,10 +647,6 @@ html.is-fs .app-nav { top: 0; }
   .item-acao { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
 }
 @media (max-width: 720px) {
-  .app-nav { padding: 0 8px; }
-  .app-nav-link span:not(.app-nav-cont) { display: none; }
-  .app-nav-link { min-width: 48px; justify-content: center; padding: 0 12px; }
-  .app-nav-link .ico { font-size: 1.15rem; }
   .page { padding-left: 16px; padding-right: 16px; }
   .hero { padding: 18px 16px; border-radius: 16px; }
   .hero-acoes { position: static; order: -1; justify-content: flex-end; }
@@ -668,7 +686,18 @@ html.is-fs .app-nav { top: 0; }
 </svg>
   </a>
   <h1 class="topnav-brand"><span class="topnav-brand-nome">AIP Goals</span></h1>
+  <nav class="topnav-menu" id="topMenu" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
+    <a class="topnav-menu-link" href="#pendencias" data-tela="pendencias" data-perfis="todos"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="topnav-menu-cont" id="navCont" hidden></span></a>
+    <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
+    <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
+    <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
+    <a class="topnav-menu-link" href="#acoes" data-tela="acoes" data-perfis="todos"><span data-i18n="nav.acoes">Ações</span></a>
+    <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.config">Configuração</span></a>
+  </nav>
   <div class="topnav-actions">
+    <button class="topnav-menu-btn" id="topMenuBtn" type="button" aria-expanded="false" aria-controls="topMenu" aria-label="Abrir menu" title="Menu" data-i18n-aria="nav.abrir" data-i18n-title="nav.menuCurto">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
     <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
       <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
         <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
@@ -759,29 +788,6 @@ html.is-fs .app-nav { top: 0; }
   <symbol id="i-st-aprovado" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
   <symbol id="i-st-negado" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
 </svg>
-
-<!-- Abas do app: cada perfil vê só o que pode usar (§6.4) -->
-<nav class="app-nav" id="appNav" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
-  <a class="app-nav-link" href="#pendencias" data-tela="pendencias" data-perfis="todos">
-    <svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span data-i18n="nav.pendencias">Minhas pendências</span><span class="app-nav-cont" id="navCont" hidden></span>
-  </a>
-  <a class="app-nav-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden>
-    <svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.painel">Painel do ciclo</span>
-  </a>
-  <a class="app-nav-link" href="#metas" data-tela="metas" data-perfis="todos">
-    <svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span data-i18n="nav.metas">Metas da BU</span>
-  </a>
-  <span class="app-nav-sep" aria-hidden="true"></span>
-  <a class="app-nav-link" href="#action-log" data-tela="action-log" data-perfis="todos">
-    <svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span>Action Log</span>
-  </a>
-  <a class="app-nav-link" href="#acoes" data-tela="acoes" data-perfis="todos">
-    <svg class="ico" aria-hidden="true"><use href="#i-tasks"/></svg><span data-i18n="nav.acoes">Ações</span>
-  </a>
-  <a class="app-nav-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden>
-    <svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg><span data-i18n="nav.config">Configuração</span>
-  </a>
-</nav>
 
 <main class="page" id="main">
 
@@ -1066,7 +1072,7 @@ window.VBMSetup = (function () {
 
   S.registrar({
     'pt-BR': {
-      'nav.menu': 'Menu do AIP Goals', 'nav.ciclo': 'Ciclo', 'nav.pendencias': 'Minhas pendências', 'nav.painel': 'Painel do ciclo',
+      'nav.menu': 'Telas do AIP Goals', 'nav.abrir': 'Abrir menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Ciclo', 'nav.pendencias': 'Minhas pendências', 'nav.painel': 'Painel do ciclo',
       'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração',
       'ui.telaCheia': 'Tela cheia',
       't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
@@ -1099,7 +1105,7 @@ window.VBMSetup = (function () {
       'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
     },
     en: {
-      'nav.menu': 'AIP Goals menu', 'nav.ciclo': 'Cycle', 'nav.pendencias': 'My pending items', 'nav.painel': 'Cycle dashboard',
+      'nav.menu': 'AIP Goals screens', 'nav.abrir': 'Open menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Cycle', 'nav.pendencias': 'My pending items', 'nav.painel': 'Cycle dashboard',
       'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings',
       'ui.telaCheia': 'Full screen',
       't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
@@ -1245,7 +1251,7 @@ window.VBMSetup = (function () {
   // Menu: cada perfil vê só o que pode usar (§6.4)
   function aplicarPerfis() {
     var papeis = ((dados && dados.usuario && dados.usuario.papeis) || []).map(function (p) { return p.papel; });
-    document.querySelectorAll('.app-nav-link').forEach(function (a) {
+    document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
       var pode = (a.getAttribute('data-perfis') || '').split(' ');
       a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
     });
@@ -1410,6 +1416,17 @@ window.VBMSetup = (function () {
     if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
   });
 
+  // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
+  function abrirMenu(sim) {
+    $('topMenu').classList.toggle('is-aberto', sim);
+    $('topMenuBtn').setAttribute('aria-expanded', String(sim));
+    if (sim) { var f = $('topMenu').querySelector('.topnav-menu-link:not([hidden])'); if (f) f.focus(); }
+  }
+  $('topMenuBtn').addEventListener('click', function () { abrirMenu(!$('topMenu').classList.contains('is-aberto')); });
+  $('topMenu').addEventListener('click', function (e) { if (e.target.closest('a')) abrirMenu(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('topMenu').classList.contains('is-aberto')) { abrirMenu(false); $('topMenuBtn').focus(); } });
+  document.addEventListener('click', function (e) { if ($('topMenu').classList.contains('is-aberto') && !e.target.closest('#topMenu, #topMenuBtn')) abrirMenu(false); });
+
   // ── Vistas pelo hash ──
   function rota() {
     var h = (location.hash || '#pendencias').slice(1).split('?')[0] || 'pendencias';
@@ -1417,7 +1434,7 @@ window.VBMSetup = (function () {
     $('vistaPendencias').hidden = !ehT01;
     $('vistaConstrucao').hidden = ehT01;
     if (!ehT01) $('titConstr').textContent = S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h;
-    document.querySelectorAll('.app-nav-link').forEach(function (a) {
+    document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
       if (a.getAttribute('data-tela') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     window.scrollTo(0, 0);
