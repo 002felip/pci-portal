@@ -1020,6 +1020,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .gc-chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 2px 0.625rem; border-radius: 999px; border: 1px solid var(--card-line); background: var(--card-bg); font: 500 .7rem var(--font-ui); color: var(--text); }
 .gc-chip b { font-weight: 700; color: var(--ink-strong); }
 .gc-chip-info { border-color: color-mix(in srgb, var(--accent-strong) 40%, transparent); background: transparent; color: var(--accent-strong); }
+/* Topo mais baixo na T04: a ficha é o foco (peso, tipo e direção ficam na ficha) */
+#vistaGoalCard .p2-titulo .ab-ano { font-size: clamp(3rem, 1.75rem + 3vw, 5.5rem); }
+#vistaGoalCard .p2-trilha { margin-top: 1.5rem; }
 /* Linha do tempo do card */
 .gc-linha { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .gc-linha::before { content: ''; position: absolute; left: 12.5%; right: 12.5%; top: 0.4375rem; height: 2px; background: var(--ab-trilho); }
@@ -1036,17 +1039,7 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .gc-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem); gap: 1rem; align-items: start; }
 .gc-grade[hidden] { display: none; }
 .gc-secoes { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
-.gc-desd { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.5rem; padding: 0.875rem 1.125rem; border-radius: 0.875rem; background: var(--panel); }
-.gc-desd b { display: block; font: 600 0.88rem/1.35 var(--font-display); color: var(--ink-strong); }
 .gc-rot { display: block; margin-bottom: 0.25rem; font: 600 0.62rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); }
-.gc-secao { scroll-margin-top: calc(var(--barra) + 1rem); padding: 0.875rem 1.125rem 0; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); transition: border-color .2s, box-shadow .2s; }
-.gc-secao.is-ajustar, .gc-secao.is-rev-ajustar { border-color: var(--wait-line); box-shadow: 0 0 0 3px var(--wait-bg), var(--card-shadow); }
-.gc-secao.is-rev-ok { border-color: color-mix(in srgb, var(--status-approved) 45%, var(--card-line)); }
-.gc-secao-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
-.gc-secao-n { display: inline-flex; align-items: center; justify-content: center; width: 1.625rem; height: 1.625rem; border-radius: 50%; background: var(--panel); font: 600 0.78rem var(--font-display); color: var(--accent-strong); }
-.gc-secao-tit { margin: 0; font: 600 0.95rem var(--font-display); color: var(--ink-strong); }
-.gc-secao-cab .seg { margin-left: auto; }
-.gc-secao-corpo { padding: 0.75rem 0 0.875rem; }
 .gc-texto { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; }
 .gc-vazio { margin: 0; font: italic 0.8rem var(--font-ui); color: var(--text-soft); }
 .gc-pre { display: inline-flex; align-items: center; gap: 0.25rem; padding: 1px 0.5rem; border-radius: 999px; font: 600 .66rem var(--font-ui); }
@@ -1059,8 +1052,6 @@ body.is-inicio .page { max-width: none; padding: 0; }
 /* Régua: três valores e o eixo com a direção da polaridade */
 .gc-regua { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
 .gc-regua-col b { font: 300 1.75rem/1 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
-.gc-regua-eixo { position: relative; height: 0.375rem; margin-top: 0.75rem; border-radius: 999px; background: linear-gradient(90deg, var(--line), var(--serie-a)); }
-.gc-regua-eixo.is-menor { background: linear-gradient(90deg, var(--serie-a), var(--line)); }
 .gc-regua-nota { margin: 0.375rem 0 0; font-size: 0.72rem; color: var(--text-soft); }
 .gc-marcos { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
 .gc-marcos li { display: grid; grid-template-columns: 1.625rem minmax(0, 1fr) auto; align-items: center; gap: 0.625rem; }
@@ -1069,17 +1060,45 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .gc-marco-data { font-size: 0.74rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .gc-marcos .gc-in[type="date"] { width: auto; }
 .gc-padrao { margin: 0 0 0.75rem; padding: 0.625rem 0.75rem; border-radius: 0.5rem; background: var(--panel); font-size: 0.8rem; color: var(--text-soft); }
-/* Comentários por seção */
-.gc-secao-rod { margin: 0 -1.125rem; padding: 0.5rem 1.125rem; border-top: 1px solid var(--card-line); }
-.gc-com-btn { display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2rem; padding: 0 0.5rem; border: 0; border-radius: 0.5rem; background: transparent; color: var(--accent-strong); font: 600 0.74rem var(--font-ui); cursor: pointer; }
-.gc-com-btn:hover { background: var(--card-hover); }
-.gc-coms { margin: 0 -1.125rem; padding: 0.75rem 1.125rem 0.875rem; border-top: 1px solid var(--card-line); background: var(--panel); border-radius: 0 0 0.875rem 0.875rem; }
+.gc-coms { grid-column: 1 / -1; padding: 0.75rem 1rem 0.875rem; border-radius: 0.625rem; background: var(--panel); }
 .gc-com-lista, .gc-com-resp { display: flex; flex-direction: column; gap: 0.625rem; margin: 0 0 0.75rem; padding: 0; list-style: none; }
 .gc-com-resp { margin: 0.5rem 0 0 1.25rem; }
 .gc-com-cab { margin: 0; font-size: 0.7rem; color: var(--text-soft); }
 .gc-com-cab b { color: var(--ink-strong); }
 .gc-com-txt { margin: 0.125rem 0 0; font-size: 0.82rem; color: var(--text); }
 .gc-com-novo { display: flex; gap: 0.5rem; align-items: flex-start; }
+/* Ficha única (modelo VBM "CARD"): rótulo à esquerda, valor ao centro, revisão e comentários à direita */
+.gc-filtro-meta { order: 0; }
+.gc-nav { display: flex; align-items: center; gap: 0.375rem; }
+.gc-sel { min-height: 2rem; max-width: min(34rem, 60vw); padding: 0.25rem 0.625rem; border-radius: 0.5rem; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 max(16px, 0.8rem) var(--font-ui); }
+.gc-sel:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.gc-nav .dash-acao[disabled] { opacity: .4; cursor: not-allowed; }
+.gc-ficha { display: flex; flex-direction: column; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); overflow: hidden; }
+.gc-f-linha { display: grid; grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr) auto; gap: 0 1.25rem; align-items: start; padding: 0.875rem 1.125rem; border-top: 1px solid var(--card-line); scroll-margin-top: calc(var(--barra) + 1rem); transition: background .2s, box-shadow .2s; }
+.gc-f-linha:first-child { border-top: 0; }
+.gc-f-linha.is-ajustar, .gc-f-linha.is-rev-ajustar { background: var(--wait-bg); box-shadow: inset 0 0 0 1px var(--wait-line); }
+.gc-f-linha.is-rev-ok { background: var(--st-approved-bg); }
+.gc-f-meta { background: var(--panel); }
+.gc-f-rot { display: flex; flex-direction: column; align-items: flex-start; gap: 0.375rem; padding-top: 0.375rem; }
+.gc-f-nome { font: 600 0.84rem/1.3 var(--font-display); color: var(--ink-strong); }
+.gc-obrig { margin-left: 0.125rem; color: var(--bad); font-weight: 700; }
+.gc-selo { display: inline-flex; align-items: center; gap: 0.25rem; padding: 1px 0.5rem; border-radius: 999px; background: var(--flat-bg); color: var(--flat); font: 600 .62rem var(--font-ui); }
+.gc-f-val { min-width: 0; padding-top: 0.25rem; }
+.gc-f-titulo { margin: 0; font: 600 1rem/1.35 var(--font-display); color: var(--ink-strong); }
+.gc-f-meta-info { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; margin-top: 0.5rem; }
+.gc-pol { display: inline-flex; padding: 2px; gap: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.gc-pol-op { padding: 2px 0.625rem; border-radius: 7px; font: 500 .7rem var(--font-ui); color: var(--text-soft); }
+.gc-pol-op.is-on { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.gc-f-acoes { display: flex; align-items: center; gap: 0.5rem; padding-top: 0.125rem; }
+.gc-com-btn { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 2rem; min-width: 2.75rem; justify-content: center; padding: 0 0.5rem; border-radius: 999px; border: 1px solid var(--card-line); background: transparent; color: var(--text-soft); font: 600 0.72rem var(--font-ui); cursor: pointer; }
+.gc-com-btn:hover { border-color: var(--accent-strong); color: var(--accent-strong); }
+.gc-com-btn.tem { border-color: var(--wait-line); background: var(--wait-bg); color: var(--wait); }
+.gc-com-btn[aria-expanded="true"] { border-color: var(--accent-strong); color: var(--accent-strong); background: transparent; }
+.gc-f-linha .gc-coms { margin-top: 0.75rem; }
+.gc-legenda { display: flex; flex-wrap: wrap; gap: 0.375rem 1.25rem; margin: 0; padding: 0.75rem 1.125rem; border-top: 1px solid var(--card-line); font-size: 0.72rem; color: var(--text-soft); }
+.gc-legenda span { display: inline-flex; align-items: center; gap: 0.375rem; }
+.gc-leg-campo { display: inline-block; width: 0.875rem; height: 0.875rem; border-radius: 3px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.gc-in[readonly] { background: var(--panel); }
 /* Painel lateral */
 .gc-lado { position: sticky; top: calc(var(--barra) + 1rem); }
 .gc-painel { display: flex; flex-direction: column; gap: 0.625rem; padding: 1rem 1.125rem; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
@@ -1108,11 +1127,12 @@ body.is-inicio .page { max-width: none; padding: 0; }
 /* [RESPONSIVO] T04 — abaixo de 1080px o painel lateral vai para cima das seções (estrutural) */
 @media (max-width: 1080px) {
   .gc-grade { grid-template-columns: minmax(0, 1fr); }
+  .gc-f-linha { grid-template-columns: minmax(0, 1fr) auto; }
+  .gc-f-rot { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 0 0 0.375rem; }
+  .gc-f-val { grid-column: 1; }
   .gc-lado { position: static; order: -1; }
-  .gc-desd { grid-template-columns: minmax(0, 1fr); }
-}
-@media (prefers-reduced-motion: reduce) { .gc-barra span, .gc-secao { transition: none; } }
-/* ════════════════════════════════════════════════════════════════════
+  }
+@media (prefers-reduced-motion: reduce) { .gc-barra span, /* ════════════════════════════════════════════════════════════════════
    [RESPONSIVO] Camada adaptativa (skill-responsividade)
    Aplicação de notebook e desktop (1024px a 4K; celular fora do escopo). Fluido primeiro; breakpoint
    estrutural só em 1080px (menu em gaveta, banner e abertura em uma coluna). Os CSS copiados das skills vbm-design/setup-dashboards não são
@@ -1722,6 +1742,14 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
 
     <div class="filters p2-filtro">
       <a class="btn btn-sec gc-voltar" id="gcVoltar" href="#metas"><svg class="ico gc-voltar-ico" aria-hidden="true"><use href="#i-arrow"/></svg><span id="gcVoltarTxt"></span></a>
+      <div class="filter gc-filtro-meta">
+        <label class="filter-label" for="gcSel" data-i18n="gc.meta">Meta:</label>
+        <div class="gc-nav">
+          <button type="button" class="dash-acao" id="gcAnt" aria-label="Meta anterior" title="Meta anterior" data-i18n-aria="gc.ant" data-i18n-title="gc.ant"><svg class="ico gc-voltar-ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <select class="gc-sel" id="gcSel"></select>
+          <button type="button" class="dash-acao" id="gcProx" aria-label="Próxima meta" title="Próxima meta" data-i18n-aria="gc.prox" data-i18n-title="gc.prox"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
       <p class="p2-pills">
         <span class="pill-info" id="gcModo"></span>
         <span class="pill-info" id="gcExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="gc.exemplo">Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)</span></span>
@@ -2009,7 +2037,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
       'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
       'est.voltar': 'Voltar para o início',
-      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Pendente", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.marcoNome': "Marco {n}: nome", 'gc.marcoData': "Marco {n}: data prevista", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.prechecagem': "Pré-checagem", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os itens completos.", 'gc.pre.objective': "Objetivo com 20 a 1.000 caracteres", 'gc.pre.formula': "Fórmula de cálculo preenchida", 'gc.pre.marcos': "Marcos com nome e data", 'gc.pre.unit': "Unidade compatível com o tipo", 'gc.pre.ruler': "Régua coerente com a polaridade", 'gc.pre.marcosAno': "Marcos dentro do ano do ciclo", 'gc.pre.area': "Área e responsável", 'gc.pre.evidence': "Evidência descrita", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.prechecagem': "A pré-checagem do servidor encontrou itens pendentes.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU; decisão só pelo grupo de aprovação.", 'gc.voce': "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)",
+      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Pendente", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.marcoNome': "Marco {n}: nome", 'gc.marcoData': "Marco {n}: data prevista", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.prechecagem': "Pré-checagem", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os itens completos.", 'gc.pre.objective': "Objetivo com 20 a 1.000 caracteres", 'gc.pre.formula': "Fórmula de cálculo preenchida", 'gc.pre.marcos': "Marcos com nome e data", 'gc.pre.unit': "Unidade compatível com o tipo", 'gc.pre.ruler': "Régua coerente com a polaridade", 'gc.pre.marcosAno': "Marcos dentro do ano do ciclo", 'gc.pre.area': "Área e responsável", 'gc.pre.evidence': "Evidência descrita", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.prechecagem': "A pré-checagem do servidor encontrou itens pendentes.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU; decisão só pelo grupo de aprovação.", 'gc.selo.desdobramento': 'Desdobramento', 'gc.selo.ciclo': 'Padrão do ciclo', 'gc.polaridade': 'Direção da meta', 'gc.leg.travado': 'Vem do desdobramento ou do ciclo (somente leitura)', 'gc.leg.bu': 'Preenchido pela BU', 'gc.leg.obrig': 'obrigatório', 'gc.meta': 'Meta:', 'gc.ant': 'Meta anterior', 'gc.prox': 'Próxima meta', 'gc.acao.salvar': 'Salvar rascunho', 'gc.salvoToast': 'Rascunho salvo neste navegador (simulação, nada foi gravado)', 'gc.voce': "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)",
       'nav.desdobramento': 'Desdobramento', 'tela.desdobramento': 'Desdobramento', 'ini.dDesd': 'Do scorecard do COO às metas e pesos de cada Business Unit.',
       'dd.titulo': 'Desdobramento', 'dd.nivel1': 'Scorecard do COO', 'dd.atualizar': 'Atualizar desdobramento', 'dd.matriz': 'Desdobramento para as Business Units',
       'dd.exemplo': 'Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada',
@@ -2104,7 +2132,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
       'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
       'est.voltar': 'Back to home',
-      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Pending", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.marcoNome': "Milestone {n}: name", 'gc.marcoData': "Milestone {n}: planned date", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.prechecagem': "Pre-check", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every item is complete.", 'gc.pre.objective': "Objective with 20 to 1,000 characters", 'gc.pre.formula': "Calculation formula filled in", 'gc.pre.marcos': "Milestones with name and date", 'gc.pre.unit': "Unit compatible with the type", 'gc.pre.ruler': "Ruler consistent with polarity", 'gc.pre.marcosAno': "Milestones within the cycle year", 'gc.pre.area': "Area and owner", 'gc.pre.evidence': "Evidence described", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.prechecagem': "The server pre-check found pending items.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors edit; only the approval group decides.", 'gc.voce': "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)",
+      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Pending", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.marcoNome': "Milestone {n}: name", 'gc.marcoData': "Milestone {n}: planned date", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.prechecagem': "Pre-check", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every item is complete.", 'gc.pre.objective': "Objective with 20 to 1,000 characters", 'gc.pre.formula': "Calculation formula filled in", 'gc.pre.marcos': "Milestones with name and date", 'gc.pre.unit': "Unit compatible with the type", 'gc.pre.ruler': "Ruler consistent with polarity", 'gc.pre.marcosAno': "Milestones within the cycle year", 'gc.pre.area': "Area and owner", 'gc.pre.evidence': "Evidence described", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.prechecagem': "The server pre-check found pending items.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors edit; only the approval group decides.", 'gc.selo.desdobramento': 'Cascade', 'gc.selo.ciclo': 'Cycle standard', 'gc.polaridade': 'Goal direction', 'gc.leg.travado': 'Comes from the cascade or the cycle (read only)', 'gc.leg.bu': 'Filled in by the BU', 'gc.leg.obrig': 'required', 'gc.meta': 'Goal:', 'gc.ant': 'Previous goal', 'gc.prox': 'Next goal', 'gc.acao.salvar': 'Save draft', 'gc.salvoToast': 'Draft saved in this browser (simulation, nothing saved)', 'gc.voce': "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)",
       'nav.desdobramento': 'Cascade', 'tela.desdobramento': 'Goal cascade', 'ini.dDesd': 'From the COO scorecard to the goals and weights of each Business Unit.',
       'dd.titulo': 'Goal cascade', 'dd.nivel1': 'COO scorecard', 'dd.atualizar': 'Refresh cascade', 'dd.matriz': 'Cascade to the Business Units',
       'dd.exemplo': 'Sample data — structure from the 2027 reference material (draft); card status simulated',
@@ -2998,9 +3026,7 @@ window.VBMSetup = (function () {
     $('gcChips').innerHTML = '<span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span>' +
       '<span class="gc-chip">' + esc(d.card) + '</span>' +
       (d.versao ? '<span class="gc-chip">' + esc(S.t('versao', { n: S.fmt(d.versao, 0) })) + '</span>' : '') +
-      '<span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span>' +
-      '<span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' +
-      '<span class="gc-chip">' + esc(S.t('gc.pol.' + m.polaridade)) + '</span>';
+      '';
     $('gcVoltar').href = '#metas?bu=' + encodeURIComponent(d.bu.sigla);
     $('gcVoltarTxt').textContent = S.t('gc.voltar', { b: d.bu.sigla });
     var modo = d.modo;
@@ -3008,7 +3034,8 @@ window.VBMSetup = (function () {
     $('gcExemplo').hidden = !d.exemplo;
     gcRenderLinha(d);
     var pre = gcPrechecar(gc.edit, m, c.ano);
-    $('gcSecoes').innerHTML = gcCabecalho(d) + GC_SECOES.map(function (id, i) { return gcSecaoHtml(d, id, i, pre); }).join('');
+    $('gcSecoes').innerHTML = gcFicha(d, pre);
+    gcRenderSeletor(d);
     gcRenderLado();
     if (gc.secao) { var alvo = document.getElementById('gcSec-' + gc.secao); gc.secao = ''; if (alvo) setTimeout(function () { alvo.scrollIntoView({ block: 'start' }); }, 50); }
   }
@@ -3020,30 +3047,39 @@ window.VBMSetup = (function () {
         '<span class="gc-passo-rot">' + esc(S.t('gc.passo.' + e.id)) + '</span><span class="gc-passo-det">' + esc(det) + '</span></li>';
     }).join('');
   }
-  // Campos que vêm do desdobramento (somente leitura para a BU, RN-02)
-  function gcCabecalho(d) {
-    return '<div class="gc-desd"><div><span class="gc-rot">Goal Title</span><b>' + esc(d.meta.titulo) + '</b></div>' +
-      '<div><span class="gc-rot">' + esc(S.t('gc.peso')) + '</span><b>' + esc(S.fmt(d.meta.peso, 0)) + ' pts</b></div>' +
-      '<div><span class="gc-rot">' + esc(S.t('gc.origem')) + '</span><b>' + esc(S.t('gc.desdobramento')) + '</b></div></div>';
+  // Ficha única do Goal Card (modelo VBM "CARD": rótulo à esquerda, valor à direita, ações e comentários por campo).
+  // Campos com cadeado vêm do desdobramento ou do ciclo (somente leitura para a BU, RN-02); campos abertos são da BU.
+  var GC_OBRIG = { objective: 1, formula: 1, unit: 1, ruler: 1, area: 1, evidence: 1 };
+  function gcSelo(chave) { return '<span class="gc-selo">' + ico('i-lock') + esc(S.t('gc.selo.' + chave)) + '</span>'; }
+  function gcFicha(d, pre) {
+    var m = d.meta;
+    var pol = '<div class="gc-pol" role="group" aria-label="' + esc(S.t('gc.polaridade')) + '">' + ['menor', 'maior'].map(function (p) {
+      return '<span class="gc-pol-op' + (m.polaridade === p ? ' is-on' : '') + '" aria-current="' + (m.polaridade === p) + '">' + (p === 'menor' ? '↓ ' : '↑ ') + esc(S.t('gc.pol.' + p)) + '</span>';
+    }).join('') + '</div>';
+    var cab = '<div class="gc-f-linha gc-f-meta"><div class="gc-f-rot"><span class="gc-f-nome">Goal Title</span>' + gcSelo('desdobramento') + '</div>' +
+      '<div class="gc-f-val"><p class="gc-f-titulo">' + esc(m.titulo) + '</p><div class="gc-f-meta-info"><span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span>' +
+      '<span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' + pol + '</div></div><div class="gc-f-acoes"></div></div>';
+    var leg = '<p class="gc-legenda"><span>' + ico('i-lock') + esc(S.t('gc.leg.travado')) + '</span><span><i class="gc-leg-campo" aria-hidden="true"></i>' + esc(S.t('gc.leg.bu')) + '</span><span><b class="gc-obrig">*</b> ' + esc(S.t('gc.leg.obrig')) + '</span></p>';
+    return '<section class="gc-ficha" aria-label="Goal Card">' + cab + GC_SECOES.map(function (id, i) { return gcSecaoHtml(d, id, i, pre); }).join('') + leg + '</section>';
   }
   function gcSecaoHtml(d, id, i, pre) {
     var edita = d.modo === 'edicao', analisa = d.modo === 'analise';
     var coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
     var ajustar = (d.ajustar || []).indexOf(id) >= 0, alterada = d.alteradasDesde && d.alteradasDesde.secoes.indexOf(id) >= 0;
     var ok = gcSecaoOk(id, pre), rev = gc.revisao[id] || '';
+    var nCom = coms.reduce(function (t, k) { return t + 1 + (k.respostas || []).length; }, 0);
     var chips = (ajustar ? '<span class="chip-parada">' + ico('i-st-em_revisao') + esc(S.t('gc.ajustar')) + '</span>' : '') +
       (alterada ? '<span class="gc-chip gc-chip-info">' + esc(S.t('gc.alterada', { v: S.fmt(d.alteradasDesde.versao, 0) })) + '</span>' : '') +
-      (edita ? '<span class="gc-pre ' + (ok ? 'is-ok' : 'is-pend') + '">' + ico(ok ? 'i-st-aprovado' : 'i-alert') + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')) + '</span>' : '');
+      (edita ? '<span class="gc-pre ' + (ok ? 'is-ok' : 'is-pend') + '" title="' + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')) + '">' + ico(ok ? 'i-st-aprovado' : 'i-alert') + '<span class="gc-pre-txt">' + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')) + '</span></span>' : '');
     var seg = analisa ? '<div class="seg" role="group" aria-label="' + esc(S.t('gc.revisaoAria', { s: GC_NOMES[id] })) + '">' +
       ['ok', 'ajustar'].map(function (v) { return '<button type="button" data-rev="' + v + '" data-sec="' + id + '" aria-pressed="' + (rev === v) + '">' + esc(S.t('gc.rev.' + v)) + '</button>'; }).join('') + '</div>' : '';
-    var nCom = coms.reduce(function (t, k) { return t + 1 + (k.respostas || []).length; }, 0);
-    return '<article class="gc-secao' + (ajustar && edita ? ' is-ajustar' : '') + (rev ? ' is-rev-' + rev : '') + '" id="gcSec-' + id + '" aria-labelledby="gcSecTit-' + id + '">' +
-      '<header class="gc-secao-cab"><span class="gc-secao-n" aria-hidden="true">' + (i + 1) + '</span>' +
-      '<h3 class="gc-secao-tit" id="gcSecTit-' + id + '">' + esc(GC_NOMES[id]) + '</h3><span class="chips">' + chips + '</span>' + seg + '</header>' +
-      '<div class="gc-secao-corpo">' + gcConteudo(d, id, edita) + '</div>' +
-      '<footer class="gc-secao-rod"><button type="button" class="gc-com-btn" data-com="' + id + '" aria-expanded="' + !!gc.abertos[id] + '">' + ico('i-comment') +
-      esc(nCom ? S.t(nCom === 1 ? 'gc.com1' : 'gc.coms', { n: S.fmt(nCom, 0) }) : S.t('gc.semCom')) + '</button></footer>' +
-      (gc.abertos[id] ? gcComentarios(d, id, coms) : '') + '</article>';
+    var comBtn = '<button type="button" class="gc-com-btn' + (nCom ? ' tem' : '') + '" data-com="' + id + '" aria-expanded="' + !!gc.abertos[id] + '" aria-label="' + esc(nCom ? S.t(nCom === 1 ? 'gc.com1' : 'gc.coms', { n: S.fmt(nCom, 0) }) : S.t('gc.semCom')) + ' — ' + esc(GC_NOMES[id]) + '">' + ico('i-comment') + '<span>' + S.fmt(nCom, 0) + '</span></button>';
+    return '<div class="gc-f-linha' + (ajustar && edita ? ' is-ajustar' : '') + (rev ? ' is-rev-' + rev : '') + '" id="gcSec-' + id + '" role="group" aria-labelledby="gcSecTit-' + id + '">' +
+      '<div class="gc-f-rot"><span class="gc-f-nome" id="gcSecTit-' + id + '">' + esc(GC_NOMES[id]) + (GC_OBRIG[id] && edita ? '<b class="gc-obrig" aria-hidden="true">*</b>' : '') + '</span>' +
+      (id === 'exceptions' ? gcSelo('ciclo') : '') + '<span class="chips">' + chips + '</span></div>' +
+      '<div class="gc-f-val">' + gcConteudo(d, id, edita) + '</div>' +
+      '<div class="gc-f-acoes">' + seg + comBtn + '</div>' +
+      (gc.abertos[id] ? gcComentarios(d, id, coms) : '') + '</div>';
   }
   function gcCampo(id, valor, rot, tipo) {
     return tipo === 'area' ? '<textarea class="gc-in" data-campo="' + id + '" rows="3" aria-label="' + esc(rot) + '">' + esc(valor || '') + '</textarea>'
@@ -3067,8 +3103,7 @@ window.VBMSetup = (function () {
     if (id === 'ruler') {
       var r = s.ruler || {};
       var col = function (k) { return '<div class="gc-regua-col"><span class="gc-rot">' + esc(S.t('gc.regua.' + k)) + '</span>' + (edita ? gcCampo('ruler.' + k, r[k], S.t('gc.regua.' + k), 'number') : '<b>' + esc(r[k] == null || r[k] === '' ? '—' : S.fmt(Number(r[k]), Number(r[k]) % 1 ? 1 : 0)) + '</b>') + '</div>'; };
-      return '<div class="gc-regua">' + col('min') + col('meta') + col('exc') + '</div>' +
-        '<div class="gc-regua-eixo' + (m.polaridade === 'menor' ? ' is-menor' : '') + '" aria-hidden="true"><span></span></div><p class="gc-regua-nota">' + esc(S.t('gc.pol.' + m.polaridade)) + ' · ' + esc(s.unit || '') + '</p>';
+      return '<div class="gc-regua">' + col('min') + col('meta') + col('exc') + '</div><p class="gc-regua-nota">' + esc(S.t('gc.pol.' + m.polaridade)) + (s.unit ? ' · ' + esc(s.unit) : '') + '</p>';
     }
     if (id === 'area') {
       var a = s.area || {};
@@ -3098,7 +3133,7 @@ window.VBMSetup = (function () {
         '<span class="gc-barra" aria-hidden="true"><span style="width:' + (nOk / pre.length * 100).toFixed(1) + '%"></span></span>' +
         '<ul class="gc-pre-lista">' + pre.map(function (x) { return '<li class="' + (x.ok ? 'is-ok' : 'is-pend') + '">' + ico(x.ok ? 'i-st-aprovado' : 'i-alert') + '<span>' + esc(S.t('gc.pre.' + (x.id === 'formula' && d.meta.tipo === 'marcos' ? 'marcos' : x.id))) + '</span></li>'; }).join('') + '</ul>' +
         '<p class="gc-salvo">' + esc(gc.salvo ? S.t('gc.salvoLocal', { h: gc.salvo === 'local' ? '' : gc.salvo }) : S.t('gc.semAlteracao')) + '</p>' +
-        gcBotoes([{ id: 'submeter', cls: 'btn', off: !tudo }]) + (tudo ? '' : '<p class="gc-dica">' + esc(S.t('gc.submeterDica')) + '</p>') + '</section>';
+        gcBotoes([{ id: 'submeter', cls: 'btn', off: !tudo }, { id: 'salvar', cls: 'btn btn-sec' }]) + (tudo ? '' : '<p class="gc-dica">' + esc(S.t('gc.submeterDica')) + '</p>') + '</section>';
     } else if (d.modo === 'analise') {
       var rev = GC_SECOES.map(function (id) { return gc.revisao[id] || ''; });
       var nOkR = rev.filter(function (v) { return v === 'ok'; }).length, nAj = rev.filter(function (v) { return v === 'ajustar'; }).length;
@@ -3171,7 +3206,7 @@ window.VBMSetup = (function () {
     // Atualiza só os indicadores (o campo em edição não é redesenhado, para não perder o foco)
     var pre = gcPrechecar(gc.edit, gc.dados.meta, gc.dados.ciclo.ano);
     GC_SECOES.forEach(function (id) { var el = document.querySelector('#gcSec-' + id + ' .gc-pre'); if (!el) return; var ok = gcSecaoOk(id, pre);
-      el.className = 'gc-pre ' + (ok ? 'is-ok' : 'is-pend'); el.innerHTML = ico(ok ? 'i-st-aprovado' : 'i-alert') + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')); });
+      el.className = 'gc-pre ' + (ok ? 'is-ok' : 'is-pend'); el.innerHTML = ico(ok ? 'i-st-aprovado' : 'i-alert') + '<span class="gc-pre-txt">' + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')) + '</span>'; });
     gc.confirma = ''; gcRenderLado(); gcSalvarLocal();
   });
   $('gcSecoes').addEventListener('click', function (e) {
@@ -3196,6 +3231,7 @@ window.VBMSetup = (function () {
     var b = e.target.closest('button'); if (!b || !gc.dados) return;
     if (b.hasAttribute('data-acao')) {
       var a = b.getAttribute('data-acao');
+      if (a === 'salvar') { clearTimeout(gc.timer); try { sessionStorage.setItem('aip-gc-' + gc.dados.card, JSON.stringify(gc.edit)); } catch (e2) {} var hh = new Date(); gc.salvo = String(hh.getHours()).padStart(2, '0') + ':' + String(hh.getMinutes()).padStart(2, '0'); toast(S.t('gc.salvoToast')); gcRenderLado(); return; }
       // Antecipa no cliente as regras do servidor (RN-08, RN-09) antes de pedir a confirmação
       if (a !== 'submeter') {
         var txt = (gc.comentario || '').trim(), erros = [];
@@ -3211,6 +3247,28 @@ window.VBMSetup = (function () {
     if (b.hasAttribute('data-cancelar')) { gc.confirma = ''; gcRenderLado(); var v = document.querySelector('#gcLado [data-acao]'); if (v) v.focus(); }
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && gc.confirma && !$('vistaGoalCard').hidden) { gc.confirma = ''; gcRenderLado(); } });
+
+  // Seletor de metas da BU: cadastro de todas as metas na mesma página (lista de api/metas)
+  var gcListas = {};
+  function gcRenderSeletor(d) {
+    var bu = d.bu.sigla, lista = gcListas[bu];
+    var pinta = function (l) {
+      $('gcSel').innerHTML = l.map(function (x) { return '<option value="' + esc(x.card) + '"' + (x.card === d.card ? ' selected' : '') + '>' + esc((x.meta.numero ? String(x.meta.numero).padStart(2, '0') : 'COO') + ' · ' + x.meta.titulo + ' — ' + S.t('est.' + x.estado)) + '</option>'; }).join('');
+      var k = l.map(function (x) { return x.card; }).indexOf(d.card);
+      $('gcAnt').disabled = k <= 0; $('gcProx').disabled = k < 0 || k >= l.length - 1;
+      $('gcAnt').setAttribute('data-card', k > 0 ? l[k - 1].card : ''); $('gcProx').setAttribute('data-card', k >= 0 && k < l.length - 1 ? l[k + 1].card : '');
+    };
+    if (lista) return pinta(lista);
+    $('gcSel').innerHTML = '<option>' + esc(d.card) + '</option>';
+    fetch('api/metas?bu=' + encodeURIComponent(bu), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.metas) { gcListas[bu] = j.metas; if (gc.dados && gc.dados.bu.sigla === bu) pinta(j.metas); } })
+      .catch(function () {});
+  }
+  function gcIrPara(card) { if (card && card !== gc.card) location.hash = '#goal-card?card=' + encodeURIComponent(card); }
+  $('gcSel').addEventListener('change', function () { gcIrPara(this.value); });
+  $('gcAnt').addEventListener('click', function () { gcIrPara(this.getAttribute('data-card')); });
+  $('gcProx').addEventListener('click', function () { gcIrPara(this.getAttribute('data-card')); });
   $('gcAtualizar').addEventListener('click', function () { gcCarregar(); });
   $('gcTentar').addEventListener('click', function () { gcCarregar(); });
 

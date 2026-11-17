@@ -134,9 +134,12 @@ editado o card — RN-12) ou **leitura** (todos os demais; leitura aberta, D-11)
 
 - **Topo** no padrão da T02/T03: "Goal Card" com o número da meta vazado, título, pílula de situação, código, versão,
   peso, tipo e polaridade; linha do tempo do card (rascunho → submetido → em aprovação → decisão).
-- **Seções 1–7** em cards suaves: Objective, Calculation Formula (ou marcos com data), Unit of Measurement, Ruler
-  (Mín./Meta/Exc. com o eixo da polaridade), Area Responsible, Evidence e Exceptions (texto padrão do ciclo + campo
-  da BU). Chips "Ajustar" (devolução), "Alterada desde a vN" (resubmissão) e, na edição, Completa/Pendente.
+- **Ficha única** (modelo VBM "CARD", inspirado nos três modelos de referência): rótulo à esquerda, valor ao centro,
+  revisão OK/Ajustar e contador de comentários à direita. Goal Title, peso, tipo e direção da meta (↓/↑) vêm do
+  desdobramento com cadeado; o texto padrão de exceções tem o selo "Padrão do ciclo"; os campos da BU são abertos e
+  marcados com * (obrigatório). Legenda no rodapé da ficha. Destaque de "Ajustar" por fundo âmbar, sem borda lateral.
+- **Seletor de metas da BU** na faixa de filtro (lista e setas anterior/próxima): todas as metas da BU são
+  preenchidas na mesma página.
 - **Painel lateral:** pré-checagem ao vivo (mesma regra do servidor, `prechecar`) com Submeter só com tudo verde;
   na análise, OK/Ajustar por seção, comentário e Aprovar/Devolver/Negar (RN-08, RN-09) com confirmação no segundo
   clique em `role="alertdialog"`; na leitura, resumo e "Somente leitura" (com o aviso da RN-12 quando for o caso).
