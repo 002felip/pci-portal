@@ -209,6 +209,8 @@ function painelExemplo(hoje = new Date()) {
     const c = cards.find((x) => x.card === it.card);
     if (c) Object.assign(c, { estado: it.estado, versao: it.versao, nivel: it.nivel, desde: it.desde });
   });
+  // Contribuidor responsável pelo card (o mesmo nome que aparece nos editores do Goal Card)
+  cards.forEach((c) => { c.contribuidor = PESSOAS[(c.meta.numero + c.bu.sigla.length) % PESSOAS.length]; });
   return { ciclo, parametros: { diasParado: 3, pesoTotal: PESO_TOTAL }, cards };
 }
 

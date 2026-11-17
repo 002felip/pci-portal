@@ -796,11 +796,33 @@ body.is-inicio .page { max-width: none; padding: 0; }
 /* ── T03 Metas da BU ──
    Reaproveita o topo, os anéis (.p2-et, .p2-anel) e a tabela (.p2-tabela) da T02; sem tokens novos. */
 .m3-aneis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
-.m3-tabela .m3-col-peso { width: 22%; }
+.m3-tabela .m3-col-peso { width: 14%; }
 .m3-peso { display: flex; align-items: center; gap: 0.625rem; }
-.m3-peso b { min-width: 2.25rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
-.m3-peso-barra { flex: 1; min-width: 3rem; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
-.m3-peso-barra span { display: block; height: 100%; border-radius: 999px; background: var(--serie-a); }
+.m3-peso b { min-width: 1.75rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
+/* Barra curta em cascata: o trecho cinza é o peso das metas anteriores; o azul, o desta meta (soma = total da BU) */
+.m3-peso-barra { position: relative; flex: 0 1 8rem; min-width: 4rem; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+.m3-peso-barra span { position: absolute; top: 0; bottom: 0; left: 0; }
+.m3-peso-ant { background: color-mix(in srgb, var(--flat) 45%, var(--line)); }
+.m3-peso-seg { background: var(--serie-a); border-radius: 999px; }
+.m3-tabela .m3-centro { text-align: center; }
+/* Anéis da T03 no modelo da jornada (linha pelos centros), cerca de 25% menores que os do Painel */
+#vistaMetas .p2-trilha { --anel: clamp(5rem, 3.4rem + 3vw, 7.1rem); --p2-esp: 0.95rem; }
+#vistaMetas .p2-et-n { font-size: 0.8rem; }
+#vistaMetas .p2-et-data { font-size: 0.74rem; }
+#vistaMetas .p2-et-det { font-size: 0.7rem; }
+#vistaMetas .p2-titulo .ab-nome { font-size: clamp(1.65rem, 1.05rem + 2.55vw, 3.45rem); }
+#vistaMetas .p2-titulo .ab-ano { font-size: clamp(3.4rem, 1.9rem + 3.75vw, 6.75rem); }
+/* Popup grande do Goal Card (aberto pelo botão Abrir) */
+.m3-dlg { width: min(92rem, calc(100vw - 3rem)); max-width: none; height: calc(100vh - 3rem); max-height: none; padding: 0; border-radius: 1.25rem; border: 1px solid var(--card-line); background: var(--page); color: var(--text); box-shadow: var(--ab-sombra, var(--card-shadow)); overflow-y: auto; overscroll-behavior: contain; }
+.m3-dlg::backdrop { background: color-mix(in srgb, var(--ink-strong) 45%, transparent); }
+.m3-dlg-fechar { position: sticky; top: 1rem; float: right; margin: 1rem 1rem 0 0; z-index: 5; background: var(--card-bg); }
+.m3-dlg-corpo { padding: 0 clamp(1rem, 2.5vw, 2.5rem) 2rem; }
+.m3-dlg .vista { display: block; }
+/* No popup, a foto do topo vai de borda a borda do popup (não da janela) */
+body.is-largo .m3-dlg .p2-topo { margin: 0 calc(-1 * clamp(1rem, 2.5vw, 2.5rem)); padding: 1.5rem clamp(1rem, 2.5vw, 2.5rem) 1.5rem; }
+.m3-dlg .topo-acoes { top: 1rem; right: 4rem; }
+.m3-dlg .gc-voltar { display: none; }
+.m3-dlg .p2-titulo .ab-ano { font-size: clamp(2.5rem, 1.5rem + 2.5vw, 4.5rem); }
 .m3-meta-tit { font-weight: 600; color: var(--ink-strong); }
 .m3-meta-tipo { display: block; margin-top: 0.125rem; font-size: 0.7rem; color: var(--text-soft); }
 .m3-tabela td.m3-acao { text-align: right; }
@@ -1217,6 +1239,7 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
   <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></symbol>
   <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5l3 3 5.9-5.9a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.4-.6-.6-2.4z"/></symbol>
   <symbol id="i-st-rascunho" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
@@ -1368,7 +1391,7 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       </div>
       <!-- Anéis por peso: quanto do total de pontos da BU está distribuído, submetido, em aprovação e aprovado -->
       <div class="p2-trilha">
-        <ol class="m3-aneis" id="m3Aneis" aria-label="Peso das metas por situação" data-i18n-aria="m3.aneisAria"></ol>
+        <ol class="p2-jornada m3-aneis" id="m3Aneis" aria-label="Peso das metas por situação" data-i18n-aria="m3.aneisAria"></ol>
       </div>
       <!-- Ações no canto superior direito da tela -->
       <div class="topo-acoes">
@@ -1404,15 +1427,15 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       </div>
       <div class="p2-tabela-wrap">
         <table class="p2-tabela m3-tabela">
-          <caption class="sr-only" data-i18n="m3.caption">Metas da Business Unit com peso, tipo, situação, nível e versão</caption>
+          <caption class="sr-only" data-i18n="m3.caption">Metas da Business Unit com peso, status, contribuidor, versão e última atualização</caption>
           <thead><tr>
             <th scope="col" class="num">#</th>
             <th scope="col" data-i18n="col.meta">Meta</th>
             <th scope="col" class="m3-col-peso" data-i18n="m3.colPeso">Peso (pts)</th>
-            <th scope="col" data-i18n="col.situacao">Situação</th>
-            <th scope="col" data-i18n="m3.colNivel">Nível</th>
-            <th scope="col" class="num" data-i18n="lbl.versao">Versão</th>
-            <th scope="col" data-i18n="m3.colDesde">Na situação desde</th>
+            <th scope="col" data-i18n="m3.colStatus">Status</th>
+            <th scope="col" data-i18n="m3.colContrib">Contribuidor</th>
+            <th scope="col" class="m3-centro" data-i18n="lbl.versao">Versão</th>
+            <th scope="col" data-i18n="m3.colAtualizacao">Última atualização</th>
             <th scope="col"><span class="sr-only" data-i18n="col.acao">Ação</span></th>
           </tr></thead>
           <tbody id="m3Linhas"></tbody>
@@ -1434,6 +1457,12 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       <p class="estado-txt" data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
     </div>
   </section>
+
+  <!-- Popup grande com o Goal Card: a vista T04 é movida para cá ao abrir pela T03 e devolvida ao fechar -->
+  <dialog class="m3-dlg" id="m3Dlg" aria-labelledby="titGc">
+    <button type="button" class="dash-acao m3-dlg-fechar" id="m3DlgFechar" aria-label="Fechar" title="Fechar" data-i18n-aria="gc.fechar" data-i18n-title="gc.fechar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+    <div class="m3-dlg-corpo" id="m3DlgCorpo"></div>
+  </dialog>
 
   <!-- ═══ T13 · Desdobramento das metas (CEO → COO → BUs) ═══ -->
   <section class="vista" id="vistaDesdobramento" hidden aria-labelledby="titDesd">
@@ -1733,7 +1762,7 @@ window.VBMSetup = (function () {
       'p2.ph.paradas': '{n} paradas há mais de {l} dias úteis', 'p2.ph.parada1': '1 parada há mais de {l} dias úteis',
       'p2.ph.oficialRot': 'aprovados', 'p2.ph.oficialDet': '{a} de {t} Goal Cards aprovados<br>{g} negados · {c} a concluir',
       'm3.titulo': 'Metas da BU', 'm3.aneisAria': 'Peso das metas por situação', 'm3.atualizar': 'Atualizar metas', 'm3.lista': 'Metas do desdobramento',
-      'm3.caption': 'Metas da Business Unit com peso, tipo, situação, nível e versão', 'm3.colPeso': 'Peso (pts)', 'm3.colNivel': 'Nível', 'm3.colDesde': 'Na situação desde',
+      'm3.caption': 'Metas da Business Unit com peso, status, contribuidor, versão e última atualização', 'm3.colPeso': 'Peso (pts)', 'm3.colStatus': 'Status', 'm3.colContrib': 'Contribuidor', 'm3.colAtualizacao': 'Última atualização', 'm3.colNivel': 'Nível', 'm3.colDesde': 'Na situação desde',
       'm3.erroTit': 'Não foi possível carregar as metas', 'm3.semAcessoTit': 'Sem Business Unit no seu recorte',
       'm3.semAcessoTxt': 'Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.',
       'm3.a.distribuido': 'Peso distribuído', 'm3.a.submetido': 'Peso submetido', 'm3.a.aprovacao': 'Peso em aprovação', 'm3.a.aprovado': 'Peso aprovado',
@@ -1828,7 +1857,7 @@ window.VBMSetup = (function () {
       'p2.ph.paradas': '{n} stalled for more than {l} business days', 'p2.ph.parada1': '1 stalled for more than {l} business days',
       'p2.ph.oficialRot': 'approved', 'p2.ph.oficialDet': '{a} of {t} Goal Cards approved<br>{g} denied · {c} to complete',
       'm3.titulo': 'BU goals', 'm3.aneisAria': 'Goal weight by status', 'm3.atualizar': 'Refresh goals', 'm3.lista': 'Cascaded goals',
-      'm3.caption': 'Business Unit goals with weight, type, status, level and version', 'm3.colPeso': 'Weight (pts)', 'm3.colNivel': 'Level', 'm3.colDesde': 'In status since',
+      'm3.caption': 'Business Unit goals with weight, status, contributor, version and last update', 'm3.colPeso': 'Weight (pts)', 'm3.colStatus': 'Status', 'm3.colContrib': 'Contributor', 'm3.colAtualizacao': 'Last update', 'm3.colNivel': 'Level', 'm3.colDesde': 'In status since',
       'm3.erroTit': 'Could not load the goals', 'm3.semAcessoTit': 'No Business Unit in your scope',
       'm3.semAcessoTxt': 'Your user has no role in any BU of the active cycle, or the requested BU is outside your scope.',
       'm3.a.distribuido': 'Weight assigned', 'm3.a.submetido': 'Weight submitted', 'm3.a.aprovacao': 'Weight pending approval', 'm3.a.aprovado': 'Weight approved',
@@ -2291,22 +2320,22 @@ window.VBMSetup = (function () {
     }).join('');
 
     // Tabela de metas
-    var maxPeso = Math.max.apply(null, (d.metas || []).map(function (m) { return m.meta.peso || 0; }).concat([1]));
+    // Barra de peso em cascata: cada meta começa onde a anterior termina e todas somam o total da BU
+    var acum = 0;
     $('m3Cont').textContent = S.fmt((d.metas || []).length, 0); $('m3Cont').hidden = !(d.metas || []).length;
     $('m3Legenda').innerHTML = '';
     $('m3Linhas').innerHTML = (d.metas || []).map(function (m) {
-      var nivel = m.nivel ? S.t('nivel', { a: S.fmt(m.nivel.atual, 0), t: S.fmt(m.nivel.total, 0), n: m.nivel.nome }) : '—';
+      var ini = fr(acum) * 100, larg = fr(m.meta.peso || 0) * 100; acum += m.meta.peso || 0;
       var link = '#goal-card?card=' + encodeURIComponent(m.card);
       return '<tr>' +
         '<td class="num">' + esc(m.meta.numero) + '</td>' +
         '<td><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></td>' +
-        '<td><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b><span class="m3-peso-barra" aria-hidden="true"><span style="width:' + (m.meta.peso / maxPeso * 100).toFixed(1) + '%"></span></span></span></td>' +
-        '<td><span class="st st-' + esc(m.estado) + '">' + ico('i-st-' + m.estado) + esc(S.t('est.' + m.estado)) + '</span>' +
-          (m.parada ? ' <span class="chip-parada">' + ico('i-clock') + esc(S.t('chip.parada')) + '</span>' : '') + '</td>' +
-        '<td>' + esc(nivel) + '</td>' +
-        '<td class="num">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
+        '<td><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b><span class="m3-peso-barra" aria-hidden="true"><span class="m3-peso-ant" style="width:' + ini.toFixed(1) + '%"></span><span class="m3-peso-seg" style="left:' + ini.toFixed(1) + '%;width:' + larg.toFixed(1) + '%"></span></span></span></td>' +
+        '<td><span class="st st-' + esc(m.estado) + '">' + ico('i-st-' + m.estado) + esc(S.t('est.' + m.estado)) + '</span></td>' +
+        '<td>' + esc(m.contribuidor || '—') + '</td>' +
+        '<td class="m3-centro">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
         '<td>' + esc(dataCurta(m.desde)) + '</td>' +
-        '<td class="m3-acao"><a class="btn btn-sec" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '">' + esc(S.t('m3.abrir')) + ico('i-arrow') + '</a></td></tr>';
+        '<td class="m3-acao"><a class="btn btn-sec" data-card="' + esc(m.card) + '" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '">' + esc(S.t('m3.abrir')) + ico('i-arrow') + '</a></td></tr>';
     }).join('');
     $('m3Rodape').innerHTML = '<tr><td></td><td>' + esc(S.t('m3.total')) + '</td><td><span class="m3-peso"><b' + (d.alertaPesos ? ' class="m3-alerta"' : '') + '>' +
       esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td colspan="5"></td></tr>';
@@ -2338,6 +2367,27 @@ window.VBMSetup = (function () {
   document.addEventListener('click', function (e) { if (e.target.isConnected && !$('m3UnitPop').hidden && !$('m3Unit').contains(e.target)) m3AbrirUnidade(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('m3UnitPop').hidden) { m3AbrirUnidade(false); $('m3UnitTrigger').focus(); } });
   $('m3Atualizar').addEventListener('click', function () { m3.cache = {}; m3Carregar(true); });
+  // Abrir: o Goal Card abre num popup grande, já pronto para editar (a vista T04 é movida para dentro dele)
+  var m3Vaga = document.createComment('vista T04');
+  function m3AbrirCard(card) {
+    var v = $('vistaGoalCard');
+    if (!m3Vaga.parentNode) v.parentNode.insertBefore(m3Vaga, v);
+    $('m3DlgCorpo').appendChild(v); v.hidden = false;
+    gc.card = card; gc.secao = ''; gcCarregar();
+    $('m3Dlg').showModal(); $('m3Dlg').scrollTop = 0;
+  }
+  $('m3Linhas').addEventListener('click', function (e) {
+    var a = e.target.closest('a[data-card]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || !$('m3Dlg').showModal) return; // Ctrl+clique: abre a tela inteira
+    e.preventDefault(); m3AbrirCard(a.getAttribute('data-card'));
+  });
+  $('m3DlgFechar').addEventListener('click', function () { $('m3Dlg').close(); });
+  $('m3Dlg').addEventListener('click', function (e) { if (e.target === this) this.close(); }); // clique fora do popup
+  $('m3Dlg').addEventListener('close', function () {
+    var v = $('vistaGoalCard'); v.hidden = true;
+    if (m3Vaga.parentNode) m3Vaga.parentNode.insertBefore(v, m3Vaga);
+    m3Carregar(true); // a lista volta atualizada
+  });
   $('m3Tentar').addEventListener('click', function () { m3Carregar(true); });
 
   // ═══ T13 · Desdobramento (CEO → COO → BUs) ═══
@@ -2742,7 +2792,11 @@ window.VBMSetup = (function () {
       .then(function (j) { if (j && j.metas) { gcListas[bu] = j.metas; if (gc.dados && gc.dados.bu.sigla === bu) pinta(j.metas); } })
       .catch(function () {});
   }
-  function gcIrPara(card) { if (card && card !== gc.card) location.hash = '#goal-card?card=' + encodeURIComponent(card); }
+  function gcIrPara(card) {
+    if (!card || card === gc.card) return;
+    if ($('m3Dlg').open) { gc.card = card; gc.secao = ''; return gcCarregar(); } // dentro do popup da T03: troca a meta sem sair
+    location.hash = '#goal-card?card=' + encodeURIComponent(card);
+  }
   $('gcSel').addEventListener('change', function () { gcIrPara(this.value); });
   $('gcAnt').addEventListener('click', function () { gcIrPara(this.getAttribute('data-card')); });
   $('gcProx').addEventListener('click', function () { gcIrPara(this.getAttribute('data-card')); });
