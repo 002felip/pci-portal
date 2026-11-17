@@ -29,43 +29,44 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 
 | Perfil | Permissões | Recorte | Tela inicial |
 | --- | --- | --- | --- |
-| Ponto focal da BU | Preencher, salvar e submeter Goal Card; recolher submissão; comentar; concluir ações; (F2) abrir CR; (F3) enviar evidência | Própria(s) BU(s) | T01 Minhas pendências |
-| Diretor da BU | Aprovar, devolver ou negar no nível 1; comentar; atribuir ações | Própria(s) BU(s) | T01 Minhas pendências |
-| Aprovação final (P&CI e COO) | Grupo único: qualquer membro aprova, devolve ou nega no nível final; comenta; atribui ações; (F3) valida evidência | Todas as BUs | T02 Painel do ciclo |
-| Administrador do ciclo (P&CI) | Configurar ciclo, BUs, pessoas, metas, pesos, rota, prazos e textos padrão; reatribuir pendências; reabrir card Negado | Todas as BUs | T11 Configuração do ciclo |
+| Contribuidores (grupo por BU) | Preencher, salvar e submeter Goal Card; recolher submissão; responder e comentar; concluir ações; (F2) abrir CR; (F3) enviar evidência. Qualquer membro do grupo da BU edita o card; o log registra quem alterou | Própria(s) BU(s) | T01 Minhas pendências |
+| Aprovadores (grupo de aprovação P&CI/COO) | Nível único de aprovação: qualquer membro do grupo aprova, devolve ou nega; comenta; atribui ações; (F3) valida evidência | Todas as BUs | T02 Painel do ciclo |
+| Consulta (grupo de leitura) | Só leitura: vê metas, Goal Cards, versões, Action Log e desdobramento; não edita, não comenta e não decide | BUs atribuídas ao papel (a confirmar, P-13) | T00 Início |
+| Administrador do ciclo (P&CI) | Configurar ciclo, BUs, grupos (contribuidores, aprovadores e consulta), metas, pesos, prazos e textos padrão; reatribuir pendências; reabrir card Negado | Todas as BUs | T11 Configuração do ciclo |
 
 | ID | Regra de acesso |
 | --- | --- |
 | AC-01 | Identidade pelo proxy (`X-Forwarded-Email`), vinculada a `IBP.USERS` (`CD_MATRICULA`). |
-| AC-02 | O papel é atribuído por BU e por ciclo; a mesma pessoa pode ter papéis diferentes em BUs diferentes. |
+| AC-02 | O papel (contribuidor, aprovador, consulta ou administrador) é atribuído por grupo, por BU e por ciclo; a mesma pessoa pode ter papéis diferentes em BUs diferentes. Aprovadores e administrador não têm BU (valem para todas). |
 | AC-03 | Usuário sem papel no ciclo ativo vê T12 "Sem acesso" e gera evento "Acesso negado" no log. |
 | AC-04 | Recurso de BU fora do recorte retorna 404, sem revelar existência. |
-| AC-05 | Ponto focal e diretor não veem outras BUs, nem metas aprovadas. |
+| AC-05 | Contribuidores e consulta não veem BUs fora do seu recorte. O grupo de consulta nunca edita, comenta nem decide: a interface não mostra essas ações e a API responde 403. |
 | AC-06 | Usuário inativo em `IBP.USERS` é tratado como sem acesso; suas pendências aparecem para o administrador reatribuir. |
-| AC-07 | O P&CI e o grupo cadastrado com ele (P&CI/COO), assim como o administrador, veem todas as metas de todas as BUs, em qualquer estado. |
+| AC-07 | O grupo de aprovação (P&CI/COO) e o administrador veem todas as metas de todas as BUs, em qualquer estado. |
 
 ## 3. Regras de negócio
 
 | ID | Condição | Resultado |
 | --- | --- | --- |
-| RN-01 | Administrador abre o ciclo | Metas da BU ficam em Rascunho; pontos focais são notificados |
+| RN-01 | Administrador abre o ciclo | Metas da BU ficam em Rascunho; contribuidores são notificados |
 | RN-02 | Meta criada | Título, peso e tipo vêm do desdobramento do COO; só o administrador edita |
-| RN-03 | Ponto focal clica em Submeter com pré-checagem pendente | Submissão bloqueada; itens pendentes destacados (cliente e servidor) |
-| RN-04 | Submissão aceita | Gera versão vN imutável; card vai a Em aprovação no nível 1 |
-| RN-05 | Aprovador do nível 1 aprova | Card avança ao nível final; grupo P&CI/COO é notificado |
-| RN-06 | Qualquer membro do grupo P&CI/COO decide no nível final | A decisão vale para o grupo; o card sai da fila dos demais; o log registra quem decidiu |
-| RN-07 | Aprovação no nível final | vN vira a versão oficial; card travado para todos os perfis |
+| RN-03 | Contribuidor clica em Submeter com pré-checagem pendente | Submissão bloqueada; itens pendentes destacados (cliente e servidor) |
+| RN-04 | Submissão aceita | Gera versão vN imutável; card vai a Em aprovação e entra na fila do grupo de aprovação, que é notificado |
+| RN-05 | Aprovação em nível único | Não há aprovação intermediária na BU; a decisão do grupo de aprovação é final |
+| RN-06 | Qualquer membro do grupo de aprovação decide | A decisão vale para o grupo; o card sai da fila dos demais; o log registra quem decidiu |
+| RN-07 | Aprovação | vN vira a versão oficial; card travado para todos os perfis |
 | RN-08 | Devolução | Exige comentário com no mínimo 10 caracteres e ao menos uma seção marcada Ajustar |
 | RN-09 | Negação | Exige justificativa com no mínimo 10 caracteres; estado final |
-| RN-10 | Ponto focal resubmete um card Em revisão | Gera vN+1; rota reinicia no nível 1; aprovadores veem as diferenças entre vN e vN+1 |
-| RN-11 | Ponto focal recolhe a submissão antes de qualquer decisão | Card volta a Rascunho; vN fica no histórico como Recolhida |
-| RN-12 | Aprovador é também o ponto focal que submeteu | Não pode decidir; a pendência vai para outro aprovador do mesmo nível |
+| RN-10 | Contribuidor resubmete um card Em revisão | Gera vN+1; card volta à fila do grupo de aprovação; aprovadores veem as diferenças entre vN e vN+1 |
+| RN-11 | Contribuidor recolhe a submissão antes da decisão | Card volta a Rascunho; vN fica no histórico como Recolhida |
+| RN-12 | Aprovador também é contribuidor da BU e editou ou submeteu a versão | Não pode decidir; a pendência fica com os demais membros do grupo de aprovação |
 | RN-13 | Comentário publicado ou ação aberta | Estado do card não muda; ação aberta não bloqueia a aprovação, mas aparece em destaque para o aprovador |
-| RN-14 | Card parado no mesmo nível por mais de 3 dias úteis (configurável) | Alerta ao aprovador e ao administrador; indicador de idade em T01 e T02 |
+| RN-14 | Card em aprovação há mais de 3 dias úteis (configurável) | Alerta ao grupo de aprovação e ao administrador; indicador de idade em T01 e T02 |
 | RN-15 | Administrador reabre um card Negado | Card volta a Rascunho com justificativa registrada |
 | RN-16 | Soma dos pesos da BU diferente do total do desdobramento | Alerta ao administrador em T03 e T11 |
 | RN-17 | Card Aprovado precisa mudar | Só via Change Request (fase 2), que gera vN+1 com motivo CR-xxx |
 | RN-18 | Exclusão de BU, meta ou pessoa | Não existe; o registro é desativado e o histórico é preservado |
+| RN-19 | Usuário do grupo de consulta tenta editar, comentar ou decidir | A ação não aparece na interface; a API responde 403 e o log registra a tentativa |
 
 Limites (configuráveis no banco, nunca fixos no front-end): comentário de devolução ou negação com mínimo de 10 caracteres; alerta de pendência parada em 3 dias úteis; anexo de até 25 MB por arquivo.
 
@@ -73,27 +74,26 @@ Limites (configuráveis no banco, nunca fixos no front-end): comentário de devo
 
 | Estado (pt / en) | Significado | Editável por |
 | --- | --- | --- |
-| Rascunho / Draft | Em preenchimento; salvamento automático | Ponto focal |
-| Em aprovação / Pending approval | Submetido; mostra o nível atual ("Nível 1 de 2 · Diretor da BU") | Ninguém |
-| Em revisão / In Review | Devolvido ao ponto focal com seções marcadas Ajustar | Ponto focal |
+| Rascunho / Draft | Em preenchimento; salvamento automático | Contribuidores da BU |
+| Em aprovação / Pending approval | Submetido; aguarda a decisão do grupo de aprovação (nível único) | Ninguém |
+| Em revisão / In Review | Devolvido aos contribuidores com seções marcadas Ajustar | Contribuidores da BU |
 | Aprovado / Approved | Versão oficial; travado | Ninguém (só via CR) |
 | Negado / Denied | Meta não será usada no ciclo; final | Ninguém (só reabertura pelo administrador) |
 
 | De | Evento | Para | Quem |
 | --- | --- | --- | --- |
-| Rascunho | Submeter (pré-checagem verde) | Em aprovação · nível 1 | Ponto focal |
-| Em aprovação · nível 1 | Aprovar | Em aprovação · nível final | Diretor da BU |
-| Em aprovação · nível final | Aprovar | Aprovado | Membro do grupo P&CI/COO |
-| Em aprovação (qualquer nível) | Devolver | Em revisão | Aprovador do nível |
-| Em aprovação (qualquer nível) | Negar | Negado | Aprovador do nível |
-| Em aprovação · nível 1, sem decisão | Recolher | Rascunho | Ponto focal |
-| Em revisão | Resubmeter | Em aprovação · nível 1 | Ponto focal |
+| Rascunho | Submeter (pré-checagem verde) | Em aprovação | Contribuidor |
+| Em aprovação | Aprovar | Aprovado | Membro do grupo de aprovação |
+| Em aprovação | Devolver | Em revisão | Membro do grupo de aprovação |
+| Em aprovação | Negar | Negado | Membro do grupo de aprovação |
+| Em aprovação, sem decisão | Recolher | Rascunho | Contribuidor |
+| Em revisão | Resubmeter | Em aprovação | Contribuidor |
 | Negado | Reabrir com justificativa | Rascunho | Administrador |
-| Aprovado | CR aprovado (fase 2) | Aprovado (nova versão oficial) | Rota do CR |
+| Aprovado | CR aprovado (fase 2) | Aprovado (nova versão oficial) | Grupo de aprovação |
 
-Não mudam o estado: comentário, ação atribuída ou concluída, alerta de pendência parada e alteração de pessoas da BU (a pendência só muda de dono).
+Não mudam o estado: comentário, ação atribuída ou concluída, alerta de pendência parada e alteração dos membros dos grupos (a pendência só muda de dono).
 
-**Revisão por seção:** no painel de decisão, cada uma das 7 seções recebe OK, Ajustar ou fica sem análise. Na devolução, o ponto focal abre o card direto nas seções Ajustar. Na resubmissão, as seções alteradas aparecem destacadas para o aprovador.
+**Revisão por seção:** no painel de decisão, cada uma das 7 seções recebe OK, Ajustar ou fica sem análise. Na devolução, os contribuidores abrem o card direto nas seções Ajustar. Na resubmissão, as seções alteradas aparecem destacadas para o aprovador.
 
 ## 5. Tipos de meta e campos do Goal Card
 
@@ -120,14 +120,14 @@ Cada meta tem uma **polaridade** definida no desdobramento: "maior é melhor" ex
 
 ## 6. Fluxos por perfil e navegação
 
-### 6.1 Ponto focal (T01, T04)
+### 6.1 Contribuidor (T01, T04)
 
 | Passo | Comportamento |
 | --- | --- |
 | 1 | Abre a meta em Rascunho a partir de T01. |
 | 2 | Preenche os campos com salvamento automático ("Salvo às 14:32"). Se a gravação falhar, o texto fica no navegador e aparece "Não salvo · tentar de novo". |
 | 3 | Com a pré-checagem completa, submete e confirma no segundo clique. |
-| 4 | Acompanha a rota na linha do tempo do card. |
+| 4 | Acompanha a situação na linha do tempo do card. |
 | 5 | Se devolvido, recebe e-mail e aviso no app, abre o card nas seções marcadas Ajustar, responde os comentários e resubmete. |
 
 ### 6.2 Aprovador (T04)
@@ -143,15 +143,19 @@ Cada meta tem uma **polaridade** definida no desdobramento: "maior é melhor" ex
 
 | Passo | Comportamento |
 | --- | --- |
-| 1 | Configura ciclo, BUs, pessoas, metas, pesos, rota, prazos e textos padrão. |
-| 2 | Abre o ciclo; os pontos focais são notificados. |
+| 1 | Configura ciclo, BUs, grupos (contribuidores, aprovadores e consulta), metas, pesos, prazos e textos padrão. |
+| 2 | Abre o ciclo; os contribuidores são notificados. |
 | 3 | Acompanha pelo T02 e reatribui pendências de quem está ausente ou inativo. |
 
-### 6.4 Navegação
+### 6.4 Consulta (T00, T03, T05, T13)
+
+O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitura), versões, Action Log e desdobramento no seu recorte, imprime a visão do Goal Card e exporta o log. Não recebe pendências nem notificações de decisão.
+
+### 6.5 Navegação
 
 | Situação | Comportamento |
 | --- | --- |
-| Menu no topo | Início (T00), Minhas pendências, Painel do ciclo, Metas da BU, Action Log, Ações, Change Requests (F2), Evidências (F3) e Configuração. Cada perfil vê apenas os itens que pode usar. |
+| Menu no topo | Início (T00), Minhas pendências, Painel do ciclo, Desdobramento, Metas da BU, Action Log, Ações, Change Requests (F2), Evidências (F3) e Configuração. Cada perfil vê apenas os itens que pode usar (consulta não vê Minhas pendências nem Configuração). |
 | Filtros e seleção | Ficam na URL; o botão Voltar do navegador retorna à tela anterior com o mesmo filtro. |
 | Saída de T04 com alteração não salva | O app pede confirmação antes de sair. |
 | Link de e-mail | Abre a tela exata (card, seção ou ação); sem acesso, abre T12. |
@@ -162,8 +166,9 @@ Cada meta tem uma **polaridade** definida no desdobramento: "maior é melhor" ex
 
 | Item | Regra |
 | --- | --- |
-| Ciclo | Ano, nome, janelas (proposta, calibração e, nas fases 2 e 3, CR e evidências), rota de aprovação e textos padrão de exceções. |
-| BU | País, pontos focais e diretor. O grupo P&CI/COO é único para todas as BUs. |
+| Ciclo | Ano, nome, janelas (proposta, calibração e, nas fases 2 e 3, CR e evidências) e textos padrão de exceções. A aprovação é em nível único, pelo grupo de aprovação. |
+| Grupos | Contribuidores e consulta por BU; grupo de aprovação (P&CI/COO) único para todas as BUs. A pessoa entra no grupo pela matrícula. |
+| BU | País e grupos vinculados. |
 | Metas | Número, título, peso, tipo e polaridade, com a soma dos pesos por BU sempre visível. |
 | Novo ciclo | Pode ser criado clonando BUs, pessoas e metas do ciclo anterior. |
 | Auditoria | Toda alteração de configuração gera evento no log com valor antes e depois. |
@@ -187,12 +192,12 @@ Cada submissão, resubmissão ou CR aprovado gera uma versão imutável com todo
 
 | Evento | Destinatário |
 | --- | --- |
-| Ciclo aberto | Pontos focais |
-| Card submetido ou avançou de nível | Aprovadores do nível atual |
-| Aprovado, devolvido ou negado | Ponto focal e Diretor da BU |
+| Ciclo aberto | Contribuidores |
+| Card submetido ou resubmetido | Grupo de aprovação |
+| Aprovado, devolvido ou negado | Contribuidores da BU |
 | Ação atribuída, ação vence em 2 dias, ação atrasada | Responsável |
-| Novo comentário no card | Ponto focal e aprovadores do card |
-| Pendência parada (RN-14) | Aprovador e administrador |
+| Novo comentário no card | Contribuidores da BU e grupo de aprovação |
+| Pendência parada (RN-14) | Grupo de aprovação e administrador |
 
 Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinatário, com assunto `[AIP Goals] <evento>: <BU> · <meta>` e botão que abre a tela; não carrega conteúdo além do título da meta. O serviço de envio deve ser o mesmo do Kaizen (P-03). Se o e-mail falhar, o aviso no app garante a entrega.
 
@@ -207,7 +212,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | Rede | Corporativa fechada: sem CDN, Google Fonts ou kit; fontes, ícones e scripts locais. |
 | Filtros | Padrão COO: rótulo em itálico em cima; `.seg` com `aria-pressed` para poucas opções (Estado, Tipo, Período); `.switch` com `role="switch"` para liga/desliga (ex.: só atrasadas); `.unit` para País › BU e para Ciclo (mais recente primeiro). Estado na URL. |
 | Status do Goal Card | Pílula com ícone + rótulo + cor do token de fluxo `--status-*` (mesmo do Kaizen): Rascunho `--status-draft` (cinza), Em aprovação `--status-pending` (âmbar), Em revisão `--status-review` (azul), Aprovado `--status-approved` (verde), Negado `--status-rejected` (vermelho). Nunca só por cor. `--good` e `--bad` ficam para desempenho nos gráficos; a idade de pendência parada (RN-14) usa `--wait`. |
-| Gráficos (T02) | SVG próprio por `VBMGraficos.barras()`, sem biblioteca; KPIs em `.card`; funil e tempo parado por nível em barras, sem pizza ou rosca; `NULL` = "sem dado", nunca 0; `role="img"` + `aria-label` com o resumo; redesenho ao trocar filtro, idioma, formato, tema e tamanho; animação só no primeiro desenho. |
+| Gráficos (T02) | SVG próprio por `VBMGraficos.barras()`, sem biblioteca; KPIs em `.card`; funil e tempo em aprovação em barras, sem pizza ou rosca; `NULL` = "sem dado", nunca 0; `role="img"` + `aria-label` com o resumo; redesenho ao trocar filtro, idioma, formato, tema e tamanho; animação só no primeiro desenho. |
 | Avisos e salvamento | `.toast` com `role="status" aria-live="polite"` ("Salvo às 14:32"; erro com `.is-err`), em linguagem de negócio. Botão salvar com `.is-pendente` enquanto houver alteração não salva. |
 | Estados de tela | Toda tela trata carregando, vazio, erro, sem permissão e desatualizado ("Last updated …"). |
 | Ações irreversíveis | Confirmação no segundo clique, em caixa `role="alertdialog"`, nunca `confirm()`. Mensagens de erro não mostram texto do banco. |
@@ -235,14 +240,14 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 | Tabela | Conteúdo |
 | --- | --- |
-| AIP_CICLO | Ano, nome, janelas, rota, textos padrão, status |
+| AIP_CICLO | Ano, nome, janelas, textos padrão, status |
 | AIP_CICLO_BU | BU do ciclo, país, ativo |
-| AIP_PAPEL | Matrícula, ciclo, BU (nulo para o grupo P&CI/COO), papel, ativo |
+| AIP_PAPEL | Matrícula, ciclo, BU (nula para aprovadores e administrador), papel (contribuidor, aprovador, consulta, administrador), ativo |
 | AIP_META | Ciclo, BU, número, título, peso, tipo, polaridade, ativo |
-| AIP_GOAL_CARD | Estado atual, nível atual, versão oficial, rascunho corrente |
+| AIP_GOAL_CARD | Estado atual, versão oficial, rascunho corrente |
 | AIP_GOAL_CARD_VERSAO | Snapshot imutável dos campos, vN, motivo, autor, data |
 | AIP_MARCO | Versão, nome, data prevista |
-| AIP_DECISAO | Versão, nível, decisão, comentário, decidido por, data |
+| AIP_DECISAO | Versão, decisão, comentário, decidido por, data |
 | AIP_REVISAO_SECAO | Decisão, seção, marcação (OK ou Ajustar) |
 | AIP_COMENTARIO | Card, seção, texto, autor, data, resposta a |
 | AIP_ACAO | Comentário de origem, responsável, prazo, status |
@@ -257,17 +262,17 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | ID | Tela | Perfis | Conteúdo e ações | Fase |
 | --- | --- | --- | --- | --- |
 | T00 | Início | Todos | Abertura do ciclo AIP: etapa atual e prazo, data dos Goal Cards oficiais, BUs do ciclo por país, jornada do ciclo e índice das telas do perfil | MVP |
-| T01 | Minhas pendências | Todos | Fila pessoal: cards a preencher, decisões, comentários sem resposta e ações, com prazo e idade | MVP |
-| T02 | Painel do ciclo | P&CI/COO, admin | KPIs (submetidos, aprovados %, em aprovação, em revisão, negados); matriz BU × status; funil; tempo parado por nível; filtro País › BU | MVP |
-| T03 | Metas da BU | Todos (no recorte) | Metas com peso, tipo, status, nível e versão; soma de pesos | MVP |
-| T04 | Goal Card | Todos (no recorte) | Edição com pré-checagem; análise com revisão por seção e painel de decisão; comentários por seção; linha do tempo da rota | MVP |
+| T01 | Minhas pendências | Contribuidores, aprovadores, admin | Fila pessoal: cards a preencher, decisões, comentários sem resposta e ações, com prazo e idade | MVP |
+| T02 | Painel do ciclo | Aprovadores, admin | KPIs (submetidos, aprovados %, em aprovação, em revisão, negados); matriz BU × status; funil; tempo em aprovação; filtro País › BU | MVP |
+| T03 | Metas da BU | Todos (no recorte) | Metas com peso, tipo, status e versão; soma de pesos | MVP |
+| T04 | Goal Card | Todos (no recorte) | Edição com pré-checagem (contribuidores); análise com revisão por seção e painel de decisão (aprovadores); comentários por seção; linha do tempo do card; só leitura para consulta | MVP |
 | T05 | Visão do Goal Card | Todos (no recorte) | Template VBM com versão, status e data; imprimir e PDF | MVP |
 | T06 | Versões | Todos (no recorte) | Lista de versões e comparação entre duas | MVP |
 | T07 | Action Log | Todos (no recorte) | Timeline com filtros BU, Meta, Seção, Tipo e Período; exportar Excel | MVP |
-| T08 | Ações | Todos (no recorte) | Ações abertas, concluídas e atrasadas; concluir com comentário | MVP |
-| T09 | Change Requests | Ponto focal, aprovadores | Abrir CR; decidir com atual × proposto lado a lado | F2 |
-| T10 | Evidências | Ponto focal, P&CI/COO | Upload por meta ou marco; aceitar ou devolver | F3 |
-| T11 | Configuração do ciclo | Admin | Ciclo, BUs, pessoas, metas, pesos, rota, prazos, textos padrão, parâmetros | MVP |
+| T08 | Ações | Contribuidores, aprovadores, admin (no recorte) | Ações abertas, concluídas e atrasadas; concluir com comentário | MVP |
+| T09 | Change Requests | Contribuidores, aprovadores | Abrir CR; decidir com atual × proposto lado a lado | F2 |
+| T10 | Evidências | Contribuidores, aprovadores | Upload por meta ou marco; aceitar ou devolver | F3 |
+| T11 | Configuração do ciclo | Admin | Ciclo, BUs, grupos, metas, pesos, prazos, textos padrão, parâmetros | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
 | T13 | Desdobramento | Todos (colunas no recorte) | Scorecard do COO definido pelo CEO (pesos, faixas, compartilhamento) e matriz meta × BU com peso, origem e situação do Goal Card | MVP |
 
@@ -276,15 +281,15 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | ID | Critério | Ref. |
 | --- | --- | --- |
 | CA-01 | Usuário sem papel no ciclo vê T12 e a tentativa aparece no log | AC-03 |
-| CA-02 | Ponto focal e diretor não acessam outra BU; a URL direta retorna 404 | AC-04, AC-05 |
+| CA-02 | Contribuidores e consulta não acessam BU fora do recorte; a URL direta retorna 404 | AC-04, AC-05 |
 | CA-03 | Não é possível submeter com campo obrigatório vazio ou régua incoerente, nem pelo cliente nem pela API | RN-03 |
-| CA-04 | Submeter gera vN imutável e notifica o Diretor da BU por e-mail e no sino | RN-04 |
-| CA-05 | Aprovação do diretor leva o card ao grupo P&CI/COO e notifica todos os membros | RN-05 |
+| CA-04 | Submeter gera vN imutável e notifica todos os membros do grupo de aprovação por e-mail e no sino | RN-04 |
+| CA-05 | A primeira aprovação do grupo torna a versão oficial; não existe etapa intermediária | RN-05, RN-07 |
 | CA-06 | Decisão de um membro do grupo tira o card da fila dos demais e registra quem decidiu | RN-06 |
-| CA-07 | Devolver exige comentário com no mínimo 10 caracteres e uma seção Ajustar; o ponto focal abre o card nessa seção | RN-08 |
-| CA-08 | Resubmeter gera vN+1, reinicia no nível 1 e mostra as diferenças ao aprovador | RN-10 |
+| CA-07 | Devolver exige comentário com no mínimo 10 caracteres e uma seção Ajustar; o contribuidor abre o card nessa seção | RN-08 |
+| CA-08 | Resubmeter gera vN+1, volta à fila do grupo de aprovação e mostra as diferenças ao aprovador | RN-10 |
 | CA-09 | Card Aprovado não aceita edição por nenhum perfil, nem pela API | RN-07 |
-| CA-10 | Ninguém decide sobre um card que submeteu | RN-12 |
+| CA-10 | Ninguém decide sobre um card que editou ou submeteu | RN-12 |
 | CA-11 | Card parado há mais de 3 dias úteis gera alerta e aparece com indicador de idade em T01 e T02 | RN-14 |
 | CA-12 | T05 imprime e gera PDF com versão, status e data; versão não oficial sai com marca d'água | §8 |
 | CA-13 | Todo comentário, decisão, ação e mudança de configuração aparece no log, filtrável e exportável em Excel | §7 |
@@ -292,6 +297,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | CA-15 | Contagens do T02 batem com a lista de metas de cada BU | T02 |
 | CA-16 | Interface completa em pt-BR e en (nenhum texto fixo sem data-i18n), tema claro e escuro com contraste AA e nenhuma cor fora de token, em 1024, 1280×590, 1440, 1920 e 3840 px sem rolagem lateral; status sempre com ícone e rótulo | §8 |
 | CA-17 | Clicar duas vezes em Aprovar gera uma única decisão | §9 |
+| CA-18 | O grupo de consulta não vê botões de edição, comentário ou decisão, e qualquer escrita pela API responde 403 com registro no log | AC-05, RN-19 |
 
 ## 12. Pendências e decisões em aberto
 
@@ -303,14 +309,14 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | P-06 | Conteúdo do card em um ou dois idiomas | Um idioma por card / bilíngue obrigatório | P&CI | Não |
 | P-07 | Janela de Change Request | Fixa no ciclo / a qualquer momento | P&CI + RH | Não (F2) |
 | P-08 | Retenção de evidências e dados do ciclo | Anos de retenção | P&CI + Jurídico/RH | Não (F3) |
-| P-09 | Aprovação local da CEO-2 | Incluir como nível / não incluir | P&CI + COO | Não |
+| P-09 | Aprovação local da CEO-2 | Não incluir (aprovação em nível único, D-09) / tratar fora do app | P&CI + COO | Não |
 | P-10 | Dono do produto e sustentação | Nome e área | P&CI | Não |
-| P-11 | Diretor da BU como nível 1 | Manter / BU submete direto ao grupo P&CI/COO | P&CI | Sim, para a rota (§4) |
+| P-13 | Recorte do grupo de consulta | Só as BUs atribuídas / todas as BUs | P&CI | Não |
 | P-12 | Modelo de dados | Validar a proposta do §9 | Time de dados | Sim, para o banco |
 
-Decisões já tomadas (P-01, P-02 e itens validados) estão em [LEVANTAMENTO-REQUISITOS.md](LEVANTAMENTO-REQUISITOS.md).
+Decisões já tomadas (P-01, P-02, P-11 → D-09 e itens validados) estão em [LEVANTAMENTO-REQUISITOS.md](LEVANTAMENTO-REQUISITOS.md).
 
-**Ordem técnica recomendada** (dependências, sem datas): esquema do banco e parâmetros; perfis e autorização no servidor; configuração do ciclo (T11); Goal Card com pré-checagem e versões; rota de aprovação com revisão por seção; Action Log, comentários e ações; notificações no app e por e-mail; Minhas pendências e painel do ciclo; visão imprimível; testes de permissão, estados e idempotência; depois, Change Request (F2) e Evidências (F3).
+**Ordem técnica recomendada** (dependências, sem datas): esquema do banco e parâmetros; perfis e autorização no servidor; configuração do ciclo (T11); Goal Card com pré-checagem e versões; aprovação em nível único com revisão por seção; Action Log, comentários e ações; notificações no app e por e-mail; Minhas pendências e painel do ciclo; visão imprimível; testes de permissão, estados e idempotência; depois, Change Request (F2) e Evidências (F3).
 
 ## 13. Telas desenvolvidas
 
@@ -320,11 +326,11 @@ Cinco telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendên
 | --- | --- | --- | --- |
 | T00 Início | Desenvolvida | Abertura do ciclo AIP 2027: etapa atual e prazo, data dos Goal Cards oficiais, BUs por país, jornada do ciclo com a etapa atual e índice das telas do perfil | Janelas e BUs reais (T11, P-12) |
 | T01 Minhas pendências | Desenvolvida | Fila por tipo, resumo que filtra, filtros País › BU, ordenação e só paradas ou atrasadas na URL, status com ícone e rótulo, idade em dias úteis (RN-14), estados de carregando, vazio, erro, sem acesso e desatualizado | Consulta real da fila (P-12) |
-| T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação por nível com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
-| T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação, nível e versão; BU na URL | Metas e pesos reais por BU (P-12) |
+| T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
+| T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação e versão; BU na URL | Metas e pesos reais por BU (P-12) |
 | T13 Desdobramento | Desenvolvida | Nível CEO → COO: barra fina do scorecard do COO em degradê executivo (uma cor por meta, a escolhida em ênfase) e um card por meta no modelo das fases do ciclo (selo de destino, título, compartilhamento, peso, barra dos 100% com a fatia da meta em ênfase, faixas e um ponto por Goal Card gerado nas BUs, na cor da situação), em painel com fundo e borda suaves; nível COO → BUs: matriz meta × BU com peso (bolha), situação do Goal Card (cor), etiquetas Nova e origem, destaque das metas que vêm de uma meta do COO, total por BU (RN-16) e peso aprovado; colunas no recorte do usuário | Scorecard e matriz reais do ciclo (T11, P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
-| T04, T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) e, na T04, a rota de aprovação (P-11) |
+| T04, T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |
 
-Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.
+Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 ainda mostram dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos; passam a nível único e aos grupos contribuidores, aprovadores e consulta na próxima entrega. Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.

@@ -11,6 +11,18 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
 - **Situação:** Início, T01, T02, T03 e T13 Desdobramento publicados com dados de exemplo; demais telas do catálogo em construção
 
+
+## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
+
+- **Aprovação em nível único**, feita por um grupo de usuários (grupo de aprovação P&CI/COO): qualquer membro
+  aprova, devolve ou nega, e a decisão é final. Não existe o nível do Diretor da BU (a P-11 foi encerrada).
+- **Contribuidores** (grupo por BU): preenchem, submetem, recolhem e resubmetem os Goal Cards da BU.
+- **Aprovadores**: decidem e veem todas as BUs (T02 Painel do ciclo).
+- **Consulta**: só leitura (metas, Goal Cards, versões, Action Log, desdobramento); a API recusa escrita com 403.
+  Recorte a confirmar (P-13).
+- **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 descritas abaixo ainda mostram
+  dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos (ponto focal, diretor); passam ao nível único e aos
+  três grupos na próxima entrega.
 ## Arquivos
 
 | Arquivo | O que é | Público? |
@@ -65,7 +77,7 @@ comentários sem resposta e ações atribuídas.
   em janelas de até 1080 px vira gaveta aberta pelo botão de menu. Cada perfil vê só as telas que pode usar (§6.4):
   Painel do ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
 - **Banner** com o resumo por tipo; cada linha filtra a fila. "Paradas ou atrasadas" conta os itens há
-  mais de `parametros.diasParado` dias úteis no mesmo nível (RN-14) ou com prazo vencido.
+  mais de `parametros.diasParado` dias úteis em aprovação (RN-14) ou com prazo vencido.
 - **Filtros (padrão COO):** País › BU, Ordenar por (Urgência, Prazo, Idade) e "Só paradas ou atrasadas";
   tudo na URL (`?tipo=&pais=&bu=&ord=&so=1`), e o Voltar do navegador volta com o mesmo filtro.
 - **Fila em cartões:** tipo, meta, detalhe, BU, card e versão, status (ícone + rótulo + cor do token

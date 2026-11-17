@@ -14,7 +14,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 
 | Item | Resposta | Status |
 | --- | --- | --- |
-| Usuários | Pontos focais e diretores das BUs, grupo P&CI/COO e administrador do ciclo | Decidido |
+| Usuários | Três grupos — contribuidores (por BU), aprovadores (grupo de aprovação P&CI/COO) e consulta — mais o administrador do ciclo | Decidido |
 | BUs do ciclo | ON, VNL, UK, JPN, OP, Salobo e Sossego (cadastro editável) | A confirmar |
 | Indicador de sucesso | 100% dos Goal Cards do ciclo aprovados no app, sem PPT paralelo | A confirmar |
 | Fases | MVP na definição de metas; Change Request e Evidências em Q2–Q4 | Decidido |
@@ -24,14 +24,14 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | Item | Status | Observação |
 | --- | --- | --- |
 | Objetivo, dono do produto e escopo do MVP | A confirmar | Escopo definido; dono do produto a nomear (P-10) |
-| Perfis, fonte do perfil e recorte de dados | Decidido | Cada BU vê só a própria; o grupo P&CI/COO vê todas |
+| Perfis, fonte do perfil e recorte de dados | Decidido | Contribuidores veem só a própria BU; aprovadores veem todas; recorte da consulta a confirmar (P-13) |
 | Entidades, estados e transições | Decidido | Especificação, seções 3 e 4 |
-| Regras críticas | A confirmar | Aprovação final decidida; confirmar o Diretor da BU como nível 1 (P-11) |
+| Regras críticas | Decidido | Aprovação em nível único pelo grupo de aprovação (D-09) |
 | Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00, T01, T02, T03 e T13 Desdobramento desenvolvidas |
 | Fontes de dados confirmadas com o dono | Pendente | Modelo de dados a validar com o time de dados (P-12) |
 | Critérios de aceite | A confirmar | Especificação, seção 11; validar com P&CI |
 
-**Conclusão:** pronto para iniciar o desenvolvimento. P-11 e P-12 precisam ser fechados antes de implementar a rota e o banco; o envio de e-mail (P-03) não bloqueia, porque as notificações no app cobrem o fluxo.
+**Conclusão:** pronto para iniciar o desenvolvimento. A rota de aprovação está fechada (nível único, D-09); P-12 precisa ser fechado antes de implementar o banco; o envio de e-mail (P-03) não bloqueia, porque as notificações no app cobrem o fluxo.
 
 ## 3. Decisões registradas
 
@@ -47,13 +47,15 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-06 | Tela de entrada T00 Início com os dados do ciclo AIP 2027 (etapa, prazos, BUs e jornada) e o índice das telas, sem pendências pessoais; foto dos três minerais, clara no tema claro | 16/11/2026 |
 | D-07 | Uso em notebook e desktop (1024 px a 4K); celular fora do escopo | 16/11/2026 |
 | D-08 | Nova tela T13 Desdobramento (CEO → COO → BUs) com a estrutura do material de referência 2027: scorecard do COO (75% resultado do CEO + metas próprias) e, por BU, 40% resultado do COO + 60% metas específicas | 17/11/2026 |
+| D-09 | Aprovação em nível único, feita por um grupo de usuários (grupo de aprovação P&CI/COO): qualquer membro aprova, devolve ou nega, e a decisão é final. Não há nível do Diretor da BU (encerra a P-11) | 17/11/2026 |
+| D-10 | Três grupos de acesso: contribuidores (preenchem e submetem os Goal Cards da BU), aprovadores (decidem) e consulta (só leitura); o administrador do ciclo configura os grupos | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 
 | Suposição | Base |
 | --- | --- |
 | Metas e pesos são cadastrados pelo administrador a partir do desdobramento do COO; a BU só preenche o card | Processo descrito no material |
-| Qualquer resubmissão reinicia a rota no nível 1 | Regra do material |
+| Qualquer resubmissão volta para a fila do grupo de aprovação | Regra do material, ajustada ao nível único |
 | Card Aprovado só muda via Change Request | Regra do material |
 | Exceções padrão definidas pelo administrador e não editáveis pela BU | Material (exceções pré-preenchidas) |
 | Stack, banco, variáveis (prefixo AIPGOALS_), localização (pasta VBM-Aip-Goals na raiz do portal-pci), identidade visual e cores de status | Padrão portal-pci (skill vbm-design; Especificação, seções 8 e 9) |
@@ -63,7 +65,6 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 
 | ID | Decisão | Opções | Quem decide | Bloqueia? |
 | --- | --- | --- | --- | --- |
-| P-11 | Diretor da BU como nível 1 | Manter / BU submete direto ao grupo P&CI/COO | P&CI | Sim, para a rota |
 | P-12 | Modelo de dados | Validar a proposta da especificação | Time de dados | Sim, para o banco |
 | P-03 | Serviço de envio de e-mail | Mesma solução do Kaizen (provável) / outra homologada | TI + P&CI | Não |
 | P-04 | BU pode propor meta fora do desdobramento? | Não / sim, com aprovação do P&CI | P&CI + COO | Não |
@@ -71,14 +72,15 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | P-06 | Conteúdo do card em um ou dois idiomas | Um idioma por card / bilíngue obrigatório | P&CI | Não |
 | P-07 | Janela de Change Request | Fixa no ciclo / a qualquer momento | P&CI + RH | Não (F2) |
 | P-08 | Retenção de evidências e dados do ciclo | Anos de retenção | P&CI + Jurídico/RH | Não (F3) |
-| P-09 | Aprovação local da CEO-2 | Incluir como nível / não incluir | P&CI + COO | Não |
+| P-09 | Aprovação local da CEO-2 | Não incluir (nível único, D-09) / tratar fora do app | P&CI + COO | Não |
+| P-13 | Recorte do grupo de consulta | Só as BUs atribuídas / todas as BUs | P&CI | Não |
 | P-10 | Dono do produto e sustentação | Nome e área | P&CI | Não |
 
 ## 6. Próximas perguntas
 
 | Pergunta | Destrava |
 | --- | --- |
-| O Diretor da BU aprova antes do grupo P&CI/COO, ou a BU submete direto para a aprovação final? | P-11 |
+| O grupo de consulta vê só as BUs atribuídas ou todas as BUs? | P-13 |
 | O time de dados valida o modelo proposto ou indica ajustes? | P-12 |
 | Haverá aprovação local da CEO-2 antes do envio? | P-09 |
 | Quais BUs, pessoas e pesos entram no piloto, e quem é o dono do produto? | P-10 |
