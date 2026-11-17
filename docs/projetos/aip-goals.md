@@ -144,7 +144,10 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
   (≤ 820px, notebook com escala de 125–150%) compacta banner e abertura.
 - **Cartão da fila por container query** (`@container fila`), pela largura do próprio cartão.
 - **Vidro com degradação:** fundo opaco sem `backdrop-filter` ou com `prefers-reduced-transparency`.
-- Conferido sem rolagem lateral em 1024, 1180, 1280×590, 1440, 1920, 2560 e 3840px.
+- **Card da meta do COO (T13) por container query** (`@container ddcard`): card estreito põe o rótulo do peso
+  abaixo do número.
+- Conferido sem rolagem lateral em 1024, 1180, 1280×590, 1280×800, 1440, 1920, 2560 e 3840px e com zoom de 200%
+  (960×540), nas cinco telas e nos dois temas (demonstração offline, 90 combinações).
 
 ## API (`/VBM-Aip-Goals/api`)
 
