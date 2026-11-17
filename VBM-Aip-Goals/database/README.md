@@ -19,7 +19,6 @@ respondem 501 até os scripts abaixo existirem.
 | `AIP_META` | ciclo, BU, número, título, peso, tipo, polaridade, ativo |
 | `AIP_GOAL_CARD` | estado atual, versão oficial, rascunho corrente |
 | `AIP_GOAL_CARD_VERSAO` | snapshot imutável dos campos, vN, motivo, autor, data |
-| `AIP_MARCO` | versão, nome, data prevista |
 | `AIP_DECISAO` | versão, decisão, comentário, decidido por, data (nível único, D-09) |
 | `AIP_REVISAO_SECAO` | decisão, seção, marcação (OK ou Ajustar) |
 | `AIP_COMENTARIO` | card, seção, texto, autor, data, resposta a |

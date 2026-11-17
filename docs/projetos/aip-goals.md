@@ -140,7 +140,7 @@ editado o card — RN-12) ou **leitura** (todos os demais; leitura aberta, D-11)
   marcados com * (obrigatório). Legenda no rodapé da ficha. Destaque de "Ajustar" por fundo âmbar, sem borda lateral.
 - **Seletor de metas da BU** na faixa de filtro (lista e setas anterior/próxima): todas as metas da BU são
   preenchidas na mesma página.
-- **Painel lateral:** pré-checagem ao vivo (mesma regra do servidor, `prechecar`) com Submeter só com tudo verde;
+- **Painel lateral:** campos obrigatórios preenchidos ("4 de 6") e os que faltam, com link para o campo; Submeter bloqueado até preencher tudo (mesma regra do servidor, `camposObrigatorios`); Salvar rascunho;
   na análise, OK/Ajustar por seção, comentário e Aprovar/Devolver/Negar (RN-08, RN-09) com confirmação no segundo
   clique em `role="alertdialog"`; na leitura, resumo e "Somente leitura" (com o aviso da RN-12 quando for o caso).
 - **Comentários por seção**, com respostas; o grupo de consulta não comenta.
@@ -173,8 +173,8 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
-| `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `prechecagem[]`, `comentarios[]`, `linha[]` e `permissoes` |
-| `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: pré-checagem e decisão validadas no servidor; simulação até o P-12 |
+| `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
+| `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: campos obrigatórios e decisão validados no servidor; simulação até o P-12 |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 

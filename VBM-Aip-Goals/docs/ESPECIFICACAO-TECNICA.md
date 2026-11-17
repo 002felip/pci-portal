@@ -16,7 +16,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 
 | Fase | Escopo |
 | --- | --- |
-| MVP | Configuração do ciclo; preenchimento do Goal Card com pré-checagem; aprovação com revisão por seção; versões imutáveis e comparação; visão imprimível; Action Log, comentários e ações; notificações; Minhas pendências; painel do ciclo |
+| MVP | Configuração do ciclo; preenchimento do Goal Card com campos obrigatórios; aprovação com revisão por seção; versões imutáveis e comparação; visão imprimível; Action Log, comentários e ações; notificações; Minhas pendências; painel do ciclo |
 | Fase 2 (Q2–Q4) | Change Request de meta aprovada |
 | Fase 3 (Q2–Q4) | Envio e validação de evidências |
 | Backlog | Visão entre BUs, painel de calibração, digest diário, Teams, tradução assistida do conteúdo |
@@ -50,7 +50,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | --- | --- | --- |
 | RN-01 | Administrador abre o ciclo | Metas da BU ficam em Rascunho; contribuidores são notificados |
 | RN-02 | Meta criada | Título, peso e tipo vêm do desdobramento do COO; só o administrador edita |
-| RN-03 | Contribuidor clica em Submeter com pré-checagem pendente | Submissão bloqueada; itens pendentes destacados (cliente e servidor) |
+| RN-03 | Contribuidor clica em Submeter com campo obrigatório vazio | Submissão bloqueada; campos que faltam destacados (cliente e servidor) |
 | RN-04 | Submissão aceita | Gera versão vN imutável; card vai a Em aprovação e entra na fila do grupo de aprovação, que é notificado |
 | RN-05 | Aprovação em nível único | Não há aprovação intermediária na BU; a decisão do grupo de aprovação é final |
 | RN-06 | Qualquer membro do grupo de aprovação decide | A decisão vale para o grupo; o card sai da fila dos demais; o log registra quem decidiu |
@@ -81,7 +81,7 @@ Limites (configuráveis no banco, nunca fixos no front-end): comentário de devo
 
 | De | Evento | Para | Quem |
 | --- | --- | --- | --- |
-| Rascunho | Submeter (pré-checagem verde) | Em aprovação | Contribuidor |
+| Rascunho | Submeter (campos obrigatórios preenchidos) | Em aprovação | Contribuidor |
 | Em aprovação | Aprovar | Aprovado | Membro do grupo de aprovação |
 | Em aprovação | Devolver | Em revisão | Membro do grupo de aprovação |
 | Em aprovação | Negar | Negado | Membro do grupo de aprovação |
@@ -99,24 +99,24 @@ Não mudam o estado: comentário, ação atribuída ou concluída e alteração 
 
 | Tipo | Como pontua | Régua | Pré-condição |
 | --- | --- | --- | --- |
-| Por fórmula | Resultado calculado (ex.: t produzidas, % de redução de custo) | Valores numéricos Mín / Meta / Exc na unidade da meta | Fórmula e unidade preenchidas |
-| Por marcos | Quantidade de marcos concluídos (ex.: 6 / 8 / 10) | Inteiros ≤ nº de marcos cadastrados | Pelo menos 1 marco, com nome e data prevista no ano do ciclo |
+| Por fórmula | Resultado calculado (ex.: t produzidas, % de redução de custo) | Valores numéricos Mín / Meta / Exc na unidade da meta | Fórmula de cálculo preenchida (uma linha) |
+| Por marcos | Quantidade de marcos concluídos (ex.: 6 / 8 / 10) | Inteiros (nº de marcos) | Fórmula de cálculo preenchida (uma linha) |
 
-Cada meta tem uma **polaridade** definida no desdobramento: "maior é melhor" exige Mín < Meta < Exc; "menor é melhor" exige Mín > Meta > Exc.
+Cada meta tem uma **polaridade** (direção) definida no desdobramento: "maior é melhor" ou "menor é melhor"; ela aparece no card, sem validação da régua nesta etapa.
 
 | # | Campo | Obrigatório | Regra |
 | --- | --- | --- | --- |
 | — | Goal Title | Sim | Vem do desdobramento; somente leitura para a BU |
 | — | Peso (pts) | Sim | Vem do desdobramento; somente leitura para a BU |
 | 1 | Objective / Goal | Sim | 20 a 1.000 caracteres |
-| 2 | Calculation Formula | Sim | Fórmula (tipo fórmula) ou lista de marcos (tipo marcos) |
+| 2 | Calculation Formula | Sim | Memória de cálculo: uma linha com a fórmula |
 | 3 | Unit of Measurement | Sim | Lista padrão (%, t, US$, nº de marcos, dias) ou Outra com texto |
-| 4 | Ruler | Sim | Três valores coerentes com o tipo e a polaridade |
+| 4 | Ruler | Sim | Três valores: Mín., Meta e Exc. |
 | 5 | Area Responsible | Sim | Área e responsável (pessoa do diretório) |
 | 6 | Evidence | Sim | Descrição da evidência que comprovará o resultado |
 | 7 | Exceptions and Considerations | Sim | Texto padrão do ciclo, não editável pela BU, mais campo livre para exceções da BU |
 
-**Pré-checagem:** painel lateral em tempo real com campos obrigatórios, régua coerente, unidade compatível com a régua, marcos dentro do ano do ciclo e evidência descrita. Submeter só fica ativo com tudo verde, e a mesma checagem roda no servidor.
+**Campos obrigatórios:** os campos 1 a 6 (Objective, Calculation Formula, Unit of Measurement, os três valores do Ruler, Area Responsible com área e responsável, e Evidence) são obrigatórios e marcados com \*; as exceções da BU são opcionais. Submeter fica bloqueado enquanto algum obrigatório estiver vazio, e o servidor repete a mesma verificação.
 
 ## 6. Fluxos por perfil e navegação
 
@@ -126,7 +126,7 @@ Cada meta tem uma **polaridade** definida no desdobramento: "maior é melhor" ex
 | --- | --- |
 | 1 | Abre a meta em Rascunho a partir de T01. |
 | 2 | Preenche os campos com salvamento automático ("Salvo às 14:32"). Se a gravação falhar, o texto fica no navegador e aparece "Não salvo · tentar de novo". |
-| 3 | Com a pré-checagem completa, submete e confirma no segundo clique. |
+| 3 | Com os campos obrigatórios preenchidos, submete e confirma no segundo clique. |
 | 4 | Acompanha a situação na linha do tempo do card. |
 | 5 | Se devolvido, recebe e-mail e aviso no app, abre o card nas seções marcadas Ajustar, responde os comentários e resubmete. |
 
@@ -246,7 +246,6 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | AIP_META | Ciclo, BU, número, título, peso, tipo, polaridade, ativo |
 | AIP_GOAL_CARD | Estado atual, versão oficial, rascunho corrente |
 | AIP_GOAL_CARD_VERSAO | Snapshot imutável dos campos, vN, motivo, autor, data |
-| AIP_MARCO | Versão, nome, data prevista |
 | AIP_DECISAO | Versão, decisão, comentário, decidido por, data |
 | AIP_REVISAO_SECAO | Decisão, seção, marcação (OK ou Ajustar) |
 | AIP_COMENTARIO | Card, seção, texto, autor, data, resposta a |
@@ -254,7 +253,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | AIP_EVENTO_LOG | Tipo, quem, papel, quando, BU, meta, seção, antes, depois |
 | AIP_NOTIFICACAO | Destinatário, evento, canal, enviado em, lido em |
 | AIP_CHANGE_REQUEST (F2) | Meta, seção, valor atual, proposto, justificativa, anexo, estado |
-| AIP_EVIDENCIA (F3) | Meta ou marco, arquivo, status de validação, comentário |
+| AIP_EVIDENCIA (F3) | Meta, arquivo, status de validação, comentário |
 | AIP_PARAMETRO | Limites configuráveis (caracteres mínimos, tamanho de anexo) |
 
 ## 10. Catálogo de telas
@@ -265,13 +264,13 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | T01 | Minhas pendências | Contribuidores, aprovadores, admin | Fila pessoal: cards a preencher, decisões, comentários sem resposta e ações, com prazo e idade | MVP |
 | T02 | Painel do ciclo | Todos | KPIs (submetidos, aprovados %, em aprovação, em revisão, negados); matriz BU × status; funil; tempo em aprovação; filtro País › BU | MVP |
 | T03 | Metas da BU | Todos | Metas com peso, tipo, status e versão; soma de pesos | MVP |
-| T04 | Goal Card | Todos | Edição com pré-checagem (contribuidores); análise com revisão por seção e painel de decisão (aprovadores); comentários por seção; linha do tempo do card; só leitura para consulta | MVP |
+| T04 | Goal Card | Todos | Edição com campos obrigatórios (contribuidores); análise com revisão por seção e painel de decisão (aprovadores); comentários por seção; linha do tempo do card; só leitura para consulta | MVP |
 | T05 | Visão do Goal Card | Todos | Template VBM com versão, status e data; imprimir e PDF | MVP |
 | T06 | Versões | Todos | Lista de versões e comparação entre duas | MVP |
 | T07 | Action Log | Todos | Timeline com filtros BU, Meta, Seção, Tipo e Período; exportar Excel | MVP |
 | T08 | Ações | Contribuidores, aprovadores, admin | Ações abertas, concluídas e atrasadas; concluir com comentário | MVP |
 | T09 | Change Requests | Contribuidores, aprovadores | Abrir CR; decidir com atual × proposto lado a lado | F2 |
-| T10 | Evidências | Contribuidores, aprovadores | Upload por meta ou marco; aceitar ou devolver | F3 |
+| T10 | Evidências | Contribuidores, aprovadores | Upload por meta; aceitar ou devolver | F3 |
 | T11 | Configuração do ciclo | Admin | Ciclo, BUs, grupos, metas, pesos, prazos, textos padrão, parâmetros | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
 
@@ -314,7 +313,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 Decisões já tomadas (P-01, P-02, P-11 → D-09, P-13 → D-11 e itens validados) estão em [LEVANTAMENTO-REQUISITOS.md](LEVANTAMENTO-REQUISITOS.md).
 
-**Ordem técnica recomendada** (dependências, sem datas): esquema do banco e parâmetros; perfis e autorização no servidor; configuração do ciclo (T11); Goal Card com pré-checagem e versões; aprovação em nível único com revisão por seção; Action Log, comentários e ações; notificações no app e por e-mail; Minhas pendências e painel do ciclo; visão imprimível; testes de permissão, estados e idempotência; depois, Change Request (F2) e Evidências (F3).
+**Ordem técnica recomendada** (dependências, sem datas): esquema do banco e parâmetros; perfis e autorização no servidor; configuração do ciclo (T11); Goal Card com campos obrigatórios e versões; aprovação em nível único com revisão por seção; Action Log, comentários e ações; notificações no app e por e-mail; Minhas pendências e painel do ciclo; visão imprimível; testes de permissão, estados e idempotência; depois, Change Request (F2) e Evidências (F3).
 
 ## 13. Telas desenvolvidas
 
@@ -326,7 +325,7 @@ Cinco telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendên
 | T01 Minhas pendências | Desenvolvida | Fila por tipo, resumo que filtra, filtros País › BU, ordenação e só paradas ou atrasadas na URL, status com ícone e rótulo, idade em dias úteis (RN-14), estados de carregando, vazio, erro, sem acesso e desatualizado | Consulta real da fila (P-12) |
 | T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
 | T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação e versão; BU na URL | Metas e pesos reais por BU (P-12) |
-| T04 Goal Card | Desenvolvida | Modo pelo grupo e pela situação (servidor): edição para contribuidores da BU (Rascunho e Em revisão), análise para o grupo de aprovação (Em aprovação, respeitando a RN-12) e leitura para os demais; ficha única no modelo VBM "CARD" (rótulo à esquerda, valor ao centro, revisão e comentários à direita), com seletor das metas da BU na mesma página; campos do desdobramento e texto padrão do ciclo com cadeado, campos da BU abertos com obrigatório (*); régua Mín./Meta/Exc. e direção da meta; marcos com data; linha do tempo do card; pré-checagem ao vivo e no servidor (Submeter só com tudo verde); revisão OK/Ajustar por seção, decisão Aprovar/Devolver/Negar com RN-08 e RN-09 e confirmação no segundo clique (`alertdialog`); comentários por seção; rascunho salvo no navegador; escritas validadas e simuladas | Gravação real (P-12) |
+| T04 Goal Card | Desenvolvida | Modo pelo grupo e pela situação (servidor): edição para contribuidores da BU (Rascunho e Em revisão), análise para o grupo de aprovação (Em aprovação, respeitando a RN-12) e leitura para os demais; ficha única no modelo VBM "CARD" (rótulo à esquerda, valor ao centro, revisão e comentários à direita), com seletor das metas da BU na mesma página; campos do desdobramento e texto padrão do ciclo com cadeado, campos da BU abertos com obrigatório (*); fórmula de cálculo em uma linha; régua Mín./Meta/Exc. e direção da meta; linha do tempo do card; campos obrigatórios marcados com * e Submeter bloqueado até preenchê-los (cliente e servidor); revisão OK/Ajustar por seção, decisão Aprovar/Devolver/Negar com RN-08 e RN-09 e confirmação no segundo clique (`alertdialog`); comentários por seção; rascunho salvo no navegador; escritas validadas e simuladas | Gravação real (P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
 | T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |

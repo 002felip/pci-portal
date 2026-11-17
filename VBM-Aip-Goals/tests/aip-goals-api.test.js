@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
-const { criarAipGoalsRouter, diasUteisEntre, enriquecer, agregarMetas, prechecar, validarDecisao } = require('../aip-goals-api');
+const { criarAipGoalsRouter, diasUteisEntre, enriquecer, agregarMetas, camposObrigatorios, validarDecisao } = require('../aip-goals-api');
 const { pendenciasExemplo } = require('../dados-exemplo');
 
 // Segunda-feira, 16/11/2026
@@ -186,16 +186,12 @@ async function enviar(s, caminho, corpo, h) {
   return { status: r.status, corpo: await r.json() };
 }
 
-test('prechecar e validarDecisao: régua pela polaridade, marcos no ano, RN-08 e RN-09', () => {
-  const meta = { tipo: 'formula', polaridade: 'maior' };
-  const ok = { objective: 'x'.repeat(25), formula: 'a/b', unit: '%', ruler: { min: 1, meta: 2, exc: 3 }, area: { area: 'A', responsavel: 'B' }, evidence: 'Relatório' };
-  assert.ok(prechecar(ok, meta, 2027).every((x) => x.ok));
-  assert.strictEqual(prechecar({ ...ok, ruler: { min: 3, meta: 2, exc: 1 } }, meta, 2027).find((x) => x.id === 'ruler').ok, false);
-  assert.ok(prechecar({ ...ok, ruler: { min: 3, meta: 2, exc: 1 } }, { ...meta, polaridade: 'menor' }, 2027).every((x) => x.ok));
-  const marcos = { ...ok, formula: '', unit: 'nº de marcos', ruler: { min: 1, meta: 2, exc: 3 }, marcos: [{ nome: 'a', data: '2027-03-01' }, { nome: 'b', data: '2026-12-01' }] };
-  const r = prechecar(marcos, { tipo: 'marcos', polaridade: 'maior' }, 2027);
-  assert.strictEqual(r.find((x) => x.id === 'marcosAno').ok, false);
-  assert.strictEqual(r.find((x) => x.id === 'ruler').ok, false); // 3 > nº de marcos
+test('camposObrigatorios e validarDecisao: envio bloqueado sem os obrigatórios, RN-08 e RN-09', () => {
+  const ok = { objective: 'Meta', formula: 'a ÷ b', unit: '%', ruler: { min: 1, meta: 2, exc: 3 }, area: { area: 'A', responsavel: 'B' }, evidence: 'Relatório' };
+  assert.ok(camposObrigatorios(ok).every((x) => x.ok));
+  assert.strictEqual(camposObrigatorios(ok).length, 6); // exceções da BU não são obrigatórias
+  const falta = camposObrigatorios({ ...ok, ruler: { min: 1, meta: '', exc: 3 }, area: { area: 'A', responsavel: ' ' } });
+  assert.deepStrictEqual(falta.filter((x) => !x.ok).map((x) => x.id), ['ruler', 'area']);
   assert.deepStrictEqual(validarDecisao({ decisao: 'aprovar' }), []);
   assert.deepStrictEqual(validarDecisao({ decisao: 'devolver', comentario: 'curto', revisao: { ruler: 'ok' } }), ['comentario', 'secaoAjustar']);
   assert.deepStrictEqual(validarDecisao({ decisao: 'negar', comentario: 'Meta fora do desdobramento' }), []);
@@ -208,7 +204,7 @@ test('GET /goal-card: modo por grupo e situação, leitura aberta e pré-checage
     const analise = await pedir(s, '/api/goal-card?card=GC-VNL-04', h); // em aprovação, outra BU: aprovador analisa
     assert.strictEqual(analise.status, 200);
     assert.strictEqual(analise.corpo.modo, 'analise');
-    assert.strictEqual(analise.corpo.prechecagem.length, 7);
+    assert.strictEqual(analise.corpo.obrigatorios.length, 6);
     const edicao = await pedir(s, '/api/goal-card?card=GC-SAL-09', h); // rascunho de BU do contribuidor
     assert.strictEqual(edicao.corpo.modo, 'edicao');
     assert.strictEqual((await pedir(s, '/api/goal-card?card=GC-XX', h)).status, 400);
@@ -225,7 +221,7 @@ test('GET /goal-card: modo por grupo e situação, leitura aberta e pré-checage
   } finally { leitor.close(); }
 });
 
-test('POST /goal-card: submissão bloqueada pela pré-checagem e decisão validada (simulação)', async () => {
+test('POST /goal-card: submissão bloqueada sem campos obrigatórios e decisão validada (simulação)', async () => {
   const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
   try {
     const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };

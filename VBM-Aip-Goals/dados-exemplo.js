@@ -208,7 +208,6 @@ function painelExemplo(hoje = new Date()) {
 // Seções do Goal Card (Especificação §5). O conteúdo digitado não é traduzido (P-06).
 const SECOES = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
 const TEXTO_PADRAO_EXCECOES = 'Standard cycle text: effects of force majeure, regulatory changes and portfolio decisions approved by the COO are excluded from the result.';
-const marcos = (ano, nomes) => nomes.map((nome, i) => ({ nome, data: `${ano}-${String(2 + i * 2).padStart(2, '0')}-28` }));
 function conteudoMeta(numero, ano) {
   const C = {
     0: { obj: "Deliver the BU share of the COO scorecard result, as measured by the consolidated COO scorecard at year end.", formula: 'COO scorecard result (%), as published by P&CI at year end', unidade: '%', regua: [80, 100, 120], area: ['P&CI', 'BU P&CI lead'], evid: 'COO scorecard closing report published by P&CI' },
@@ -217,19 +216,17 @@ function conteudoMeta(numero, ano) {
     3: { obj: 'Mine according to the spatial plan to protect ore quality and the long-term mine sequence.', formula: 'Tonnes mined inside the planned polygons ÷ total tonnes mined', unidade: '%', regua: [85, 90, 95], area: ['Mine Planning', 'BU mine planning manager'], evid: 'Monthly spatial adherence report from mine planning' },
     4: { obj: 'Deliver the production budget for the year, with monthly tracking of deviations and recovery plans.', formula: 'Payable metal produced ÷ budgeted payable metal', unidade: '%', regua: [95, 100, 105], area: ['Operations', 'BU operations director'], evid: 'Monthly production report reconciled with Finance' },
     5: { obj: 'Embed chronic unease as a leadership routine: weak signals reviewed weekly and acted on before they become events.', formula: 'Chronic unease routines held with actions closed ÷ routines planned', unidade: '%', regua: [80, 90, 100], area: ['Safety', 'BU safety lead'], evid: 'Routine log with attendance and closed actions' },
-    6: { obj: 'Execute the 2027 Asset Management roadmap for critical assets: standard, criticality and maintenance strategies.', unidade: 'nº de marcos', regua: [4, 5, 6], area: ['Asset Management', 'BU AM lead'], evid: 'Roadmap milestone evidence validated by the AM Director', marcos: ['AM standard adopted', 'Critical asset list approved', 'Maintenance strategies for top 20 assets', 'CMMS data quality > 90%', 'Reliability review cadence running', 'AM maturity self-assessment'] },
-    7: { obj: 'Scale the VBM Operating Model in the BU and run the initiatives portfolio through one register and one cockpit.', unidade: 'nº de marcos', regua: [3, 4, 5], area: ['OM & P&CI', 'BU OM lead'], evid: 'Cockpit snapshots and Finance-validated value report', marcos: ['Operating model diagnostic', 'Initiatives register live', 'Cockpit reviews monthly', 'Value validated by Finance', 'Sustainment audit'] },
-    8: { obj: 'Deliver the Bacaba must-win milestones within the approved capex.', unidade: 'nº de marcos', regua: [2, 3, 4], area: ['Projects', 'Bacaba project director'], evid: 'Project milestone certificates and licence documents', marcos: ['Operational licence issued', 'Pre-stripping completed', 'First ore processed', 'Ramp-up at 50%'] },
-    9: { obj: 'Keep the Salobo CPF construction on schedule for the January 2028 start-up, within the approved capex.', unidade: 'nº de marcos', regua: [2, 3, 4], area: ['Projects', 'CPF project director'], evid: 'Monthly project report with schedule and capex curves', marcos: ['Civil works completed', 'Main equipment installed', 'Mechanical completion', 'Commissioning plan approved'] },
-    10: { obj: 'Deliver the BU strategic initiatives of the VBM Operating Plan with validated value.', unidade: 'nº de marcos', regua: [3, 4, 5], area: ['Strategy', 'BU strategy lead'], evid: 'Initiative close-out reports validated by Finance', marcos: ['Portfolio approved', 'Wave 1 delivered', 'Wave 2 delivered', 'Value validated', 'Lessons learned shared'] },
+    6: { obj: 'Execute the 2027 Asset Management roadmap for critical assets: standard, criticality and maintenance strategies.', formula: 'Roadmap milestones delivered in the year (count)', unidade: 'nº de marcos', regua: [4, 5, 6], area: ['Asset Management', 'BU AM lead'], evid: 'Roadmap milestone evidence validated by the AM Director' },
+    7: { obj: 'Scale the VBM Operating Model in the BU and run the initiatives portfolio through one register and one cockpit.', formula: 'Operating model milestones delivered and validated (count)', unidade: 'nº de marcos', regua: [3, 4, 5], area: ['OM & P&CI', 'BU OM lead'], evid: 'Cockpit snapshots and Finance-validated value report' },
+    8: { obj: 'Deliver the Bacaba must-win milestones within the approved capex.', formula: 'Bacaba must-win milestones delivered (count)', unidade: 'nº de marcos', regua: [2, 3, 4], area: ['Projects', 'Bacaba project director'], evid: 'Project milestone certificates and licence documents' },
+    9: { obj: 'Keep the Salobo CPF construction on schedule for the January 2028 start-up, within the approved capex.', formula: 'CPF schedule milestones delivered on time (count)', unidade: 'nº de marcos', regua: [2, 3, 4], area: ['Projects', 'CPF project director'], evid: 'Monthly project report with schedule and capex curves' },
+    10: { obj: 'Deliver the BU strategic initiatives of the VBM Operating Plan with validated value.', formula: 'Strategic initiatives delivered with validated value (count)', unidade: 'nº de marcos', regua: [3, 4, 5], area: ['Strategy', 'BU strategy lead'], evid: 'Initiative close-out reports validated by Finance' },
   }[numero];
-  const tipoMarcos = !!C.marcos;
   return {
     polaridade: C.pol === 'menor' ? 'menor' : 'maior',
     secoes: {
       objective: C.obj,
-      formula: tipoMarcos ? '' : C.formula,
-      marcos: tipoMarcos ? marcos(ano, C.marcos) : [],
+      formula: C.formula, // memória de cálculo: uma linha
       unit: C.unidade,
       ruler: { min: C.regua[0], meta: C.regua[1], exc: C.regua[2] },
       area: { area: C.area[0], responsavel: C.area[1] },

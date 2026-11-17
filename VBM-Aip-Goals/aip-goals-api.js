@@ -31,10 +31,10 @@
  *                      { ciclo, parametros, scorecardCoo[], bus[], linhas[], totais[] }
  *                      Cada célula da matriz traz peso e a situação do Goal Card da BU naquela meta.
  *   GET  /goal-card?card=   T04 — Goal Card (leitura aberta a todos, AC-05/AC-07):
- *                      { card, bu, meta, estado, versao, secoes, prechecagem[], comentarios[], linha[], modo, permissoes }
+ *                      { card, bu, meta, estado, versao, secoes, obrigatorios[], comentarios[], linha[], modo, permissoes }
  *                      `modo` sai do grupo do usuário e da situação: edicao (contribuidor da BU, Rascunho/Em revisão),
  *                      analise (aprovador, Em aprovação, sem ter editado o card — RN-12) ou leitura.
- *   POST /goal-card/submeter  { card, secoes }   pré-checagem no servidor (RN-03); só contribuidor da BU (AC-04)
+ *   POST /goal-card/submeter  { card, secoes }   campos obrigatórios no servidor (RN-03); só contribuidor da BU (AC-04)
  *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
@@ -158,24 +158,16 @@ const ehAprovador = (papeis) => papeis.some((p) => ['aprovador', 'pci_coo', 'adm
 const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'ponto_focal'].includes(p.papel) && p.bu === sigla);
 const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (configurável no banco, AIP_PARAMETRO)
 
-// Pré-checagem (§5): a mesma lista roda no cliente e no servidor; Submeter só com tudo verde.
-function prechecar(secoes, meta, ano) {
-  const s = secoes || {}, r = s.ruler || {}, tipoMarcos = meta.tipo === 'marcos';
+// Campos obrigatórios (§5): Submeter fica bloqueado enquanto algum estiver vazio (cliente e servidor).
+const OBRIGATORIOS = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence'];
+function camposObrigatorios(secoes) {
+  const s = secoes || {}, r = s.ruler || {}, a = s.area || {};
   const vazio = (v) => v == null || String(v).trim() === '';
-  const nums = ['min', 'meta', 'exc'].map((k) => Number(r[k]));
-  const temRegua = !['min', 'meta', 'exc'].some((k) => vazio(r[k])) && nums.every((v) => Number.isFinite(v));
-  const coerente = temRegua && (meta.polaridade === 'menor' ? nums[0] > nums[1] && nums[1] > nums[2] : nums[0] < nums[1] && nums[1] < nums[2]);
-  const marcos = Array.isArray(s.marcos) ? s.marcos : [];
-  const obj = String(s.objective || '').trim().length;
-  return [
-    { id: 'objective', ok: obj >= 20 && obj <= 1000 },
-    { id: 'formula', ok: tipoMarcos ? marcos.length > 0 && marcos.every((m) => !vazio(m.nome) && !vazio(m.data)) : !vazio(s.formula) },
-    { id: 'unit', ok: !vazio(s.unit) && (!tipoMarcos || s.unit === 'nº de marcos') },
-    { id: 'ruler', ok: coerente && (!tipoMarcos || nums.every((v) => Number.isInteger(v) && v <= marcos.length)) },
-    { id: 'marcosAno', ok: !tipoMarcos || (marcos.length > 0 && marcos.every((m) => String(m.data || '').slice(0, 4) === String(ano))) },
-    { id: 'area', ok: !!s.area && !vazio(s.area.area) && !vazio(s.area.responsavel) },
-    { id: 'evidence', ok: !vazio(s.evidence) },
-  ];
+  const ok = {
+    objective: !vazio(s.objective), formula: !vazio(s.formula), unit: !vazio(s.unit),
+    ruler: !['min', 'meta', 'exc'].some((k) => vazio(r[k])), area: !vazio(a.area) && !vazio(a.responsavel), evidence: !vazio(s.evidence),
+  };
+  return OBRIGATORIOS.map((id) => ({ id, ok: ok[id] }));
 }
 
 // Decisão do grupo de aprovação (nível único, D-09): Devolver exige comentário e uma seção Ajustar (RN-08); Negar, justificativa (RN-09).
@@ -344,7 +336,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       const card = lerCard(req, res, hoje); if (!card) return;
       const modo = modoDoCard(card, papeis, nomeDe(email));
       const contrib = contribuidorDe(papeis, card.bu.sigla);
-      res.json({ ...card, modo, prechecagem: prechecar(card.secoes, card.meta, card.ciclo.ano), linha: linhaDoCard(card),
+      res.json({ ...card, modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
         permissoes: { editar: modo === 'edicao', decidir: modo === 'analise', comentar: contrib || ehAprovador(papeis),
           recolher: contrib && card.estado === 'em_aprovacao', bloqueioRN12: ehAprovador(papeis) && card.estado === 'em_aprovacao' && modo !== 'analise' },
         parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
@@ -363,8 +355,8 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       // Escrita só para contribuidores da BU (AC-04, AC-05); consulta e outras BUs: 403
       if (!contribuidorDe(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
-      const pend = prechecar(req.body.secoes, card.meta, card.ciclo.ano).filter((x) => !x.ok).map((x) => x.id);
-      if (pend.length) return res.status(400).json({ error: 'Pré-checagem pendente.', codigo: 'PRECHECAGEM', pendentes: pend });
+      const pend = camposObrigatorios(req.body.secoes).filter((x) => !x.ok).map((x) => x.id);
+      if (pend.length) return res.status(400).json({ error: 'Campos obrigatórios sem preencher.', codigo: 'OBRIGATORIOS', pendentes: pend });
       res.json({ ok: true, simulado: true, estado: 'em_aprovacao', versao: (card.versao || 0) + 1 });
     } catch (err) {
       console.error(`${TAG} /goal-card/submeter:`, err.message);
@@ -394,4 +386,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, prechecar, validarDecisao, modoDoCard, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };

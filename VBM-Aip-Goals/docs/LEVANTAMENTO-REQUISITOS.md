@@ -39,7 +39,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | --- | --- | --- |
 | P-01 | Aprovação final por um grupo único de acesso P&CI/COO; qualquer membro decide | 16/11/2026 |
 | P-02 | Pontos focais e diretores veem apenas a própria BU; o P&CI e o grupo cadastrado com ele (P&CI/COO) veem todas as metas de todas as BUs. Visão entre BUs para pontos focais e diretores vai para o backlog | 16/11/2026 |
-| D-01 | Minhas pendências como tela inicial, revisão por seção, pré-checagem de qualidade, comparação de versões e alertas de pendência parada | 16/11/2026 |
+| D-01 | Minhas pendências como tela inicial, revisão por seção, campos obrigatórios, comparação de versões e alertas de pendência parada | 16/11/2026 |
 | D-02 | Campos obrigatórios do Goal Card, fluxo Aprovar / Devolver / Negar, versão a cada submissão, Action Log com histórico de alterações e comentários | 16/11/2026 |
 | D-03 | Interface em português e inglês; acesso restrito a pontos focais, diretores e aprovadores | 16/11/2026 |
 | D-04 | Aplicação na pasta VBM-Aip-Goals, na raiz do portal-pci (fora do Performance Hub), em HTML e JavaScript com servidor Node, no padrão das demais aplicações | 16/11/2026 |

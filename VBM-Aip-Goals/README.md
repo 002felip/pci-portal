@@ -16,7 +16,7 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | `#inicio` (padrão) | T00 Início — abertura do ciclo AIP, jornada e índice das telas | publicada |
 | `#pendencias` | T01 Minhas pendências — fila pessoal com filtros e status | publicada |
 | `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
-| `#goal-card?card=` | T04 Goal Card — edição (contribuidores), análise (grupo de aprovação) ou leitura, com pré-checagem, revisão por seção, decisão e comentários | publicada |
+| `#goal-card?card=` | T04 Goal Card — edição (contribuidores), análise (grupo de aprovação) ou leitura, com campos obrigatórios, revisão por seção, decisão e comentários | publicada |
 | `#metas` | T03 Metas da BU — anéis por peso, alerta de soma dos pesos (RN-16) e tabela de metas, no recorte do usuário | publicada |
 | `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T04 a T08 e T11 | "Tela em construção" |
 
