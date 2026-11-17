@@ -752,10 +752,10 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
   .hero-titulo { font-size: 1.6rem; }
   /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
-  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-topo { padding-bottom: 1.5rem; }
-  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
-  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-titulo .ab-ano { font-size: 4.6rem; }
-  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-trilha { --p2-esp: 0.875rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-topo { padding-bottom: 1.5rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-titulo .ab-ano { font-size: 4.6rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-trilha { --p2-esp: 0.875rem; }
   .hero-sub { display: none; }
   .hero-pills { margin-top: 0.5rem; }
   .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
@@ -1011,6 +1011,107 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .dd-aprov-barra span { display: block; height: 100%; border-radius: 999px; background: var(--status-approved); }
 .dd-aprov-n { font-size: 0.7rem; font-weight: 500; color: var(--text-soft); }
 
+
+/* ── T04 Goal Card ──
+   Topo no padrão da T02/T03 (título + número vazado) com a linha do tempo do card; seções em cards suaves
+   (fundo e borda como na T13) e painel lateral fixo: pré-checagem, decisão ou resumo. Sem tokens novos. */
+.gc-meta-tit { margin: 0.75rem 0 0; max-width: 60ch; font: 600 clamp(1.1rem, 0.9rem + 0.6vw, 1.5rem)/1.25 var(--font-display); color: var(--ink-strong); }
+.gc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; margin: 0.75rem 0 0; }
+.gc-chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 2px 0.625rem; border-radius: 999px; border: 1px solid var(--card-line); background: var(--card-bg); font: 500 .7rem var(--font-ui); color: var(--text); }
+.gc-chip b { font-weight: 700; color: var(--ink-strong); }
+.gc-chip-info { border-color: color-mix(in srgb, var(--accent-strong) 40%, transparent); background: transparent; color: var(--accent-strong); }
+/* Linha do tempo do card */
+.gc-linha { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.gc-linha::before { content: ''; position: absolute; left: 12.5%; right: 12.5%; top: 0.4375rem; height: 2px; background: var(--ab-trilho); }
+.gc-passo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0 0.5rem; text-align: center; }
+.gc-passo-ponto { width: 0.875rem; height: 0.875rem; border-radius: 50%; border: 2px solid var(--ab-trilho); background: var(--page); }
+.gc-passo.is-feito .gc-passo-ponto { border-color: var(--cyc-ok); background: var(--cyc-ok); }
+.gc-passo.is-atual .gc-passo-ponto { border-color: var(--accent-strong); background: var(--page); box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--accent-strong) 16%, transparent); }
+.gc-passo-rot { margin-top: 0.25rem; font: 600 0.84rem var(--font-display); color: var(--ink-strong); }
+.gc-passo.is-atual .gc-passo-rot { color: var(--accent-strong); }
+.gc-passo-det { min-height: 1em; font-size: 0.72rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.gc-voltar { order: 0; }
+.gc-voltar-ico { transform: rotate(180deg); }
+/* Corpo: seções + painel lateral */
+.gc-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem); gap: 1rem; align-items: start; }
+.gc-grade[hidden] { display: none; }
+.gc-secoes { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.gc-desd { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.5rem; padding: 0.875rem 1.125rem; border-radius: 0.875rem; background: var(--panel); }
+.gc-desd b { display: block; font: 600 0.88rem/1.35 var(--font-display); color: var(--ink-strong); }
+.gc-rot { display: block; margin-bottom: 0.25rem; font: 600 0.62rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); }
+.gc-secao { scroll-margin-top: calc(var(--barra) + 1rem); padding: 0.875rem 1.125rem 0; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); transition: border-color .2s, box-shadow .2s; }
+.gc-secao.is-ajustar, .gc-secao.is-rev-ajustar { border-color: var(--wait-line); box-shadow: 0 0 0 3px var(--wait-bg), var(--card-shadow); }
+.gc-secao.is-rev-ok { border-color: color-mix(in srgb, var(--status-approved) 45%, var(--card-line)); }
+.gc-secao-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.gc-secao-n { display: inline-flex; align-items: center; justify-content: center; width: 1.625rem; height: 1.625rem; border-radius: 50%; background: var(--panel); font: 600 0.78rem var(--font-display); color: var(--accent-strong); }
+.gc-secao-tit { margin: 0; font: 600 0.95rem var(--font-display); color: var(--ink-strong); }
+.gc-secao-cab .seg { margin-left: auto; }
+.gc-secao-corpo { padding: 0.75rem 0 0.875rem; }
+.gc-texto { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; }
+.gc-vazio { margin: 0; font: italic 0.8rem var(--font-ui); color: var(--text-soft); }
+.gc-pre { display: inline-flex; align-items: center; gap: 0.25rem; padding: 1px 0.5rem; border-radius: 999px; font: 600 .66rem var(--font-ui); }
+.gc-pre.is-ok { background: var(--st-approved-bg); color: var(--st-approved-ink); }
+.gc-pre.is-pend { background: var(--wait-bg); color: var(--wait); }
+.gc-in { width: 100%; padding: 0.5rem 0.625rem; border-radius: 0.5rem; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 400 max(16px, 0.86rem)/1.45 var(--font-ui); resize: vertical; }
+.gc-in:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.gc-cont { display: block; margin-top: 0.25rem; font-size: 0.7rem; color: var(--text-soft); }
+.gc-duas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; }
+/* Régua: três valores e o eixo com a direção da polaridade */
+.gc-regua { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.gc-regua-col b { font: 300 1.75rem/1 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.gc-regua-eixo { position: relative; height: 0.375rem; margin-top: 0.75rem; border-radius: 999px; background: linear-gradient(90deg, var(--line), var(--serie-a)); }
+.gc-regua-eixo.is-menor { background: linear-gradient(90deg, var(--serie-a), var(--line)); }
+.gc-regua-nota { margin: 0.375rem 0 0; font-size: 0.72rem; color: var(--text-soft); }
+.gc-marcos { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.gc-marcos li { display: grid; grid-template-columns: 1.625rem minmax(0, 1fr) auto; align-items: center; gap: 0.625rem; }
+.gc-marco-n { display: inline-flex; justify-content: center; font: 600 0.74rem var(--font-display); color: var(--accent-strong); }
+.gc-marco-nome { font-size: 0.86rem; color: var(--text); }
+.gc-marco-data { font-size: 0.74rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.gc-marcos .gc-in[type="date"] { width: auto; }
+.gc-padrao { margin: 0 0 0.75rem; padding: 0.625rem 0.75rem; border-radius: 0.5rem; background: var(--panel); font-size: 0.8rem; color: var(--text-soft); }
+/* Comentários por seção */
+.gc-secao-rod { margin: 0 -1.125rem; padding: 0.5rem 1.125rem; border-top: 1px solid var(--card-line); }
+.gc-com-btn { display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2rem; padding: 0 0.5rem; border: 0; border-radius: 0.5rem; background: transparent; color: var(--accent-strong); font: 600 0.74rem var(--font-ui); cursor: pointer; }
+.gc-com-btn:hover { background: var(--card-hover); }
+.gc-coms { margin: 0 -1.125rem; padding: 0.75rem 1.125rem 0.875rem; border-top: 1px solid var(--card-line); background: var(--panel); border-radius: 0 0 0.875rem 0.875rem; }
+.gc-com-lista, .gc-com-resp { display: flex; flex-direction: column; gap: 0.625rem; margin: 0 0 0.75rem; padding: 0; list-style: none; }
+.gc-com-resp { margin: 0.5rem 0 0 1.25rem; }
+.gc-com-cab { margin: 0; font-size: 0.7rem; color: var(--text-soft); }
+.gc-com-cab b { color: var(--ink-strong); }
+.gc-com-txt { margin: 0.125rem 0 0; font-size: 0.82rem; color: var(--text); }
+.gc-com-novo { display: flex; gap: 0.5rem; align-items: flex-start; }
+/* Painel lateral */
+.gc-lado { position: sticky; top: calc(var(--barra) + 1rem); }
+.gc-painel { display: flex; flex-direction: column; gap: 0.625rem; padding: 1rem 1.125rem; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
+.gc-painel-tit { margin: 0; font: italic 500 1.05rem var(--font-display); color: var(--text); }
+.gc-painel-sub, .gc-dica, .gc-salvo { margin: 0; font-size: 0.74rem; color: var(--text-soft); }
+.gc-dica { display: flex; gap: 0.375rem; align-items: flex-start; }
+.gc-painel-n { margin: 0; font-size: 0.78rem; color: var(--text-soft); }
+.gc-painel-n b { font: 300 1.75rem/1 var(--font-display); color: var(--ink-strong); }
+.gc-barra { display: block; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+.gc-barra span { display: block; height: 100%; border-radius: 999px; background: var(--status-approved); transition: width .3s; }
+.gc-pre-lista { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; padding: 0; list-style: none; font-size: 0.78rem; }
+.gc-pre-lista li { display: flex; align-items: center; gap: 0.5rem; color: var(--text); }
+.gc-pre-lista .is-ok .ico { color: var(--st-approved-ink); }
+.gc-pre-lista .is-pend .ico { color: var(--wait); }
+.gc-rev-resumo { display: flex; gap: 1rem; margin: 0; padding: 0; list-style: none; font-size: 0.74rem; color: var(--text-soft); }
+.gc-rev-resumo b { font: 600 1rem var(--font-display); color: var(--ink-strong); }
+.gc-acoes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gc-acoes .btn[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.gc-erro { display: flex; gap: 0.375rem; align-items: center; margin: 0; font-size: 0.74rem; color: var(--wait); }
+.gc-confirma { padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--wait-line); background: var(--wait-bg); }
+.gc-confirma-tit { margin: 0; font: 600 0.86rem var(--font-display); color: var(--ink-strong); }
+.gc-confirma-txt { margin: 0.25rem 0 0.625rem; font-size: 0.76rem; color: var(--text); }
+.gc-dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.375rem 0.75rem; margin: 0; font-size: 0.78rem; }
+.gc-dl dt { color: var(--text-soft); }
+.gc-dl dd { margin: 0; color: var(--ink-strong); }
+/* [RESPONSIVO] T04 — abaixo de 1080px o painel lateral vai para cima das seções (estrutural) */
+@media (max-width: 1080px) {
+  .gc-grade { grid-template-columns: minmax(0, 1fr); }
+  .gc-lado { position: static; order: -1; }
+  .gc-desd { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .gc-barra span, .gc-secao { transition: none; } }
 /* ════════════════════════════════════════════════════════════════════
    [RESPONSIVO] Camada adaptativa (skill-responsividade)
    Aplicação de notebook e desktop (1024px a 4K; celular fora do escopo). Fluido primeiro; breakpoint
@@ -1606,6 +1707,48 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
     </div>
   </section>
 
+  <!-- ═══ T04 · Goal Card (edição, análise ou leitura, pelo grupo do usuário) ═══ -->
+  <section class="vista" id="vistaGoalCard" hidden aria-labelledby="titGc">
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="gcCiclo">AIP</span></p>
+        <h2 class="p2-titulo" id="titGc"><span class="ab-nome">Goal Card</span><span class="ab-ano" id="gcNum">—</span></h2>
+        <p class="gc-meta-tit" id="gcTitulo"></p>
+        <p class="gc-chips" id="gcChips"></p>
+      </div>
+      <!-- Linha do tempo do card: rascunho → submissão → aprovação (nível único) → decisão -->
+      <div class="p2-trilha"><ol class="gc-linha" id="gcLinha" aria-label="Linha do tempo do Goal Card" data-i18n-aria="gc.linhaAria"></ol></div>
+    </header>
+
+    <div class="filters p2-filtro">
+      <a class="btn btn-sec gc-voltar" id="gcVoltar" href="#metas"><svg class="ico gc-voltar-ico" aria-hidden="true"><use href="#i-arrow"/></svg><span id="gcVoltarTxt"></span></a>
+      <p class="p2-pills">
+        <span class="pill-info" id="gcModo"></span>
+        <span class="pill-info" id="gcExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="gc.exemplo">Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)</span></span>
+      </p>
+      <button type="button" class="dash-acao" id="gcAtualizar" aria-label="Atualizar Goal Card" title="Atualizar Goal Card" data-i18n-aria="gc.atualizar" data-i18n-title="gc.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+      <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+    </div>
+
+    <div class="gc-grade" id="gcCorpo">
+      <div class="gc-secoes" id="gcSecoes"></div>
+      <aside class="gc-lado" id="gcLado" aria-live="polite"></aside>
+    </div>
+
+    <div class="estado estado-erro" id="gcErro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="gc.erroTit">Não foi possível carregar o Goal Card</p>
+      <p class="estado-txt" id="gcErroTxt"></p>
+      <button type="button" class="btn" id="gcTentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <div class="estado" id="gcSemAcesso" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+      <p class="estado-tit" data-i18n="gc.naoEncontradoTit">Goal Card não encontrado</p>
+      <p class="estado-txt" data-i18n="gc.naoEncontradoTxt">O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.</p>
+      <a class="btn btn-sec" href="#metas" data-i18n="gc.irMetas">Ir para Metas da BU</a>
+    </div>
+  </section>
+
   <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
   <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
     <div class="secao">
@@ -1866,6 +2009,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
       'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
       'est.voltar': 'Voltar para o início',
+      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Pendente", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.marcoNome': "Marco {n}: nome", 'gc.marcoData': "Marco {n}: data prevista", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.prechecagem': "Pré-checagem", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os itens completos.", 'gc.pre.objective': "Objetivo com 20 a 1.000 caracteres", 'gc.pre.formula': "Fórmula de cálculo preenchida", 'gc.pre.marcos': "Marcos com nome e data", 'gc.pre.unit': "Unidade compatível com o tipo", 'gc.pre.ruler': "Régua coerente com a polaridade", 'gc.pre.marcosAno': "Marcos dentro do ano do ciclo", 'gc.pre.area': "Área e responsável", 'gc.pre.evidence': "Evidência descrita", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.prechecagem': "A pré-checagem do servidor encontrou itens pendentes.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU; decisão só pelo grupo de aprovação.", 'gc.voce': "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)",
       'nav.desdobramento': 'Desdobramento', 'tela.desdobramento': 'Desdobramento', 'ini.dDesd': 'Do scorecard do COO às metas e pesos de cada Business Unit.',
       'dd.titulo': 'Desdobramento', 'dd.nivel1': 'Scorecard do COO', 'dd.atualizar': 'Atualizar desdobramento', 'dd.matriz': 'Desdobramento para as Business Units',
       'dd.exemplo': 'Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada',
@@ -1960,6 +2104,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
       'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
       'est.voltar': 'Back to home',
+      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Pending", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.marcoNome': "Milestone {n}: name", 'gc.marcoData': "Milestone {n}: planned date", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.prechecagem': "Pre-check", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every item is complete.", 'gc.pre.objective': "Objective with 20 to 1,000 characters", 'gc.pre.formula': "Calculation formula filled in", 'gc.pre.marcos': "Milestones with name and date", 'gc.pre.unit': "Unit compatible with the type", 'gc.pre.ruler': "Ruler consistent with polarity", 'gc.pre.marcosAno': "Milestones within the cycle year", 'gc.pre.area': "Area and owner", 'gc.pre.evidence': "Evidence described", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.prechecagem': "The server pre-check found pending items.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors edit; only the approval group decides.", 'gc.voce': "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)",
       'nav.desdobramento': 'Cascade', 'tela.desdobramento': 'Goal cascade', 'ini.dDesd': 'From the COO scorecard to the goals and weights of each Business Unit.',
       'dd.titulo': 'Goal cascade', 'dd.nivel1': 'COO scorecard', 'dd.atualizar': 'Refresh cascade', 'dd.matriz': 'Cascade to the Business Units',
       'dd.exemplo': 'Sample data — structure from the 2027 reference material (draft); card status simulated',
@@ -2781,6 +2926,294 @@ window.VBMSetup = (function () {
   $('ddAtualizar').addEventListener('click', function () { ddCarregar(true); });
   $('ddTentar').addEventListener('click', function () { ddCarregar(true); });
 
+  // ═══ T04 · Goal Card ═══
+  // Dados: GET api/goal-card?card=. O servidor decide o modo pelo grupo do usuário e pela situação do card:
+  // edicao (contribuidores da BU), analise (grupo de aprovação, nível único) ou leitura (todos os demais).
+  // A pré-checagem roda aqui e no servidor; as escritas são validadas no servidor e simuladas até o P-12.
+  var GC_SECOES = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
+  var GC_NOMES = { objective: 'Objective / Goal', formula: 'Calculation Formula', unit: 'Unit of Measurement', ruler: 'Ruler', area: 'Area Responsible', evidence: 'Evidence', exceptions: 'Exceptions and Considerations' };
+  var GC_UNIDADES = ['%', 't', 'US$', 'nº de marcos', 'dias'];
+  var gc = { dados: null, card: '', secao: '', edit: null, revisao: {}, abertos: {}, confirma: '', erros: [], salvo: null, timer: null, enviando: false };
+  function gcLerParams() {
+    var q = new URLSearchParams((location.hash.split('?')[1]) || '');
+    gc.card = q.get('card') || ''; gc.secao = q.get('secao') || '';
+    if (gc.secao) gc.abertos[gc.secao] = true;
+  }
+  function gcEstado(qual) {
+    $('gcCorpo').hidden = qual !== 'ok'; $('gcErro').hidden = qual !== 'erro'; $('gcSemAcesso').hidden = qual !== 'acesso';
+    $('gcLinha').parentNode.hidden = qual !== 'ok';
+  }
+  function gcCarregar() {
+    if (!gc.card) return gcEstado('acesso');
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    return fetch('api/goal-card?card=' + encodeURIComponent(gc.card), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) {
+        gc.dados = j; gc.revisao = {}; gc.confirma = ''; gc.erros = [];
+        gc.edit = JSON.parse(JSON.stringify(j.secoes));
+        if (j.modo === 'edicao') { try { var r = sessionStorage.getItem('aip-gc-' + j.card); if (r) { gc.edit = JSON.parse(r); gc.salvo = 'local'; } } catch (e) {} }
+        gcRender();
+      })
+      .catch(function (err) {
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] goal-card:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return gcEstado('acesso');
+        $('gcErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        gcEstado('erro');
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+  // Pré-checagem (§5) — mesma regra do servidor (aip-goals-api.js: prechecar)
+  function gcPrechecar(s, meta, ano) {
+    s = s || {}; var r = s.ruler || {}, marcos = s.marcos || [], tipoMarcos = meta.tipo === 'marcos';
+    var vazio = function (v) { return v == null || String(v).trim() === ''; };
+    var nums = ['min', 'meta', 'exc'].map(function (k) { return Number(r[k]); });
+    var temRegua = !['min', 'meta', 'exc'].some(function (k) { return vazio(r[k]); }) && nums.every(function (v) { return isFinite(v); });
+    var coerente = temRegua && (meta.polaridade === 'menor' ? nums[0] > nums[1] && nums[1] > nums[2] : nums[0] < nums[1] && nums[1] < nums[2]);
+    var obj = String(s.objective || '').trim().length;
+    return [
+      { id: 'objective', ok: obj >= 20 && obj <= 1000 },
+      { id: 'formula', ok: tipoMarcos ? marcos.length > 0 && marcos.every(function (m) { return !vazio(m.nome) && !vazio(m.data); }) : !vazio(s.formula) },
+      { id: 'unit', ok: !vazio(s.unit) && (!tipoMarcos || s.unit === 'nº de marcos') },
+      { id: 'ruler', ok: coerente && (!tipoMarcos || nums.every(function (v) { return v % 1 === 0 && v <= marcos.length; })) },
+      { id: 'marcosAno', ok: !tipoMarcos || (marcos.length > 0 && marcos.every(function (m) { return String(m.data || '').slice(0, 4) === String(ano); })) },
+      { id: 'area', ok: !!s.area && !vazio(s.area.area) && !vazio(s.area.responsavel) },
+      { id: 'evidence', ok: !vazio(s.evidence) }
+    ];
+  }
+  function gcSecaoOk(id, pre) { var m = { formula: ['formula', 'marcosAno'], ruler: ['ruler'] }[id] || [id]; return pre.filter(function (x) { return m.indexOf(x.id) >= 0; }).every(function (x) { return x.ok; }); }
+  function gcRender() {
+    var d = gc.dados; if (!d) return;
+    gcEstado('ok');
+    var c = d.ciclo || {}, m = d.meta;
+    $('gcCiclo').textContent = (c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '') + ' · ' + d.bu.sigla;
+    $('gcNum').textContent = m.numero ? String(m.numero).padStart(2, '0') : 'COO';
+    $('gcTitulo').textContent = m.titulo;
+    $('gcChips').innerHTML = '<span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span>' +
+      '<span class="gc-chip">' + esc(d.card) + '</span>' +
+      (d.versao ? '<span class="gc-chip">' + esc(S.t('versao', { n: S.fmt(d.versao, 0) })) + '</span>' : '') +
+      '<span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span>' +
+      '<span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' +
+      '<span class="gc-chip">' + esc(S.t('gc.pol.' + m.polaridade)) + '</span>';
+    $('gcVoltar').href = '#metas?bu=' + encodeURIComponent(d.bu.sigla);
+    $('gcVoltarTxt').textContent = S.t('gc.voltar', { b: d.bu.sigla });
+    var modo = d.modo;
+    $('gcModo').innerHTML = ico(modo === 'edicao' ? 'i-pen' : modo === 'analise' ? 'i-decide' : 'i-lock') + '<span>' + esc(S.t('gc.modo.' + modo)) + '</span>';
+    $('gcExemplo').hidden = !d.exemplo;
+    gcRenderLinha(d);
+    var pre = gcPrechecar(gc.edit, m, c.ano);
+    $('gcSecoes').innerHTML = gcCabecalho(d) + GC_SECOES.map(function (id, i) { return gcSecaoHtml(d, id, i, pre); }).join('');
+    gcRenderLado();
+    if (gc.secao) { var alvo = document.getElementById('gcSec-' + gc.secao); gc.secao = ''; if (alvo) setTimeout(function () { alvo.scrollIntoView({ block: 'start' }); }, 50); }
+  }
+  function gcRenderLinha(d) {
+    $('gcLinha').innerHTML = (d.linha || []).map(function (e) {
+      var det = e.id === 'submetido' && e.feito ? [e.versao ? S.t('versao', { n: S.fmt(e.versao, 0) }) : '', dataCurta(e.quando), e.quem || ''].filter(Boolean).join(' · ')
+        : e.id === 'em_aprovacao' ? S.t('gc.grupoAprov') : e.quando ? dataCurta(e.quando) : '';
+      return '<li class="gc-passo' + (e.atual ? ' is-atual' : e.feito ? ' is-feito' : '') + '"><span class="gc-passo-ponto" aria-hidden="true"></span>' +
+        '<span class="gc-passo-rot">' + esc(S.t('gc.passo.' + e.id)) + '</span><span class="gc-passo-det">' + esc(det) + '</span></li>';
+    }).join('');
+  }
+  // Campos que vêm do desdobramento (somente leitura para a BU, RN-02)
+  function gcCabecalho(d) {
+    return '<div class="gc-desd"><div><span class="gc-rot">Goal Title</span><b>' + esc(d.meta.titulo) + '</b></div>' +
+      '<div><span class="gc-rot">' + esc(S.t('gc.peso')) + '</span><b>' + esc(S.fmt(d.meta.peso, 0)) + ' pts</b></div>' +
+      '<div><span class="gc-rot">' + esc(S.t('gc.origem')) + '</span><b>' + esc(S.t('gc.desdobramento')) + '</b></div></div>';
+  }
+  function gcSecaoHtml(d, id, i, pre) {
+    var edita = d.modo === 'edicao', analisa = d.modo === 'analise';
+    var coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
+    var ajustar = (d.ajustar || []).indexOf(id) >= 0, alterada = d.alteradasDesde && d.alteradasDesde.secoes.indexOf(id) >= 0;
+    var ok = gcSecaoOk(id, pre), rev = gc.revisao[id] || '';
+    var chips = (ajustar ? '<span class="chip-parada">' + ico('i-st-em_revisao') + esc(S.t('gc.ajustar')) + '</span>' : '') +
+      (alterada ? '<span class="gc-chip gc-chip-info">' + esc(S.t('gc.alterada', { v: S.fmt(d.alteradasDesde.versao, 0) })) + '</span>' : '') +
+      (edita ? '<span class="gc-pre ' + (ok ? 'is-ok' : 'is-pend') + '">' + ico(ok ? 'i-st-aprovado' : 'i-alert') + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')) + '</span>' : '');
+    var seg = analisa ? '<div class="seg" role="group" aria-label="' + esc(S.t('gc.revisaoAria', { s: GC_NOMES[id] })) + '">' +
+      ['ok', 'ajustar'].map(function (v) { return '<button type="button" data-rev="' + v + '" data-sec="' + id + '" aria-pressed="' + (rev === v) + '">' + esc(S.t('gc.rev.' + v)) + '</button>'; }).join('') + '</div>' : '';
+    var nCom = coms.reduce(function (t, k) { return t + 1 + (k.respostas || []).length; }, 0);
+    return '<article class="gc-secao' + (ajustar && edita ? ' is-ajustar' : '') + (rev ? ' is-rev-' + rev : '') + '" id="gcSec-' + id + '" aria-labelledby="gcSecTit-' + id + '">' +
+      '<header class="gc-secao-cab"><span class="gc-secao-n" aria-hidden="true">' + (i + 1) + '</span>' +
+      '<h3 class="gc-secao-tit" id="gcSecTit-' + id + '">' + esc(GC_NOMES[id]) + '</h3><span class="chips">' + chips + '</span>' + seg + '</header>' +
+      '<div class="gc-secao-corpo">' + gcConteudo(d, id, edita) + '</div>' +
+      '<footer class="gc-secao-rod"><button type="button" class="gc-com-btn" data-com="' + id + '" aria-expanded="' + !!gc.abertos[id] + '">' + ico('i-comment') +
+      esc(nCom ? S.t(nCom === 1 ? 'gc.com1' : 'gc.coms', { n: S.fmt(nCom, 0) }) : S.t('gc.semCom')) + '</button></footer>' +
+      (gc.abertos[id] ? gcComentarios(d, id, coms) : '') + '</article>';
+  }
+  function gcCampo(id, valor, rot, tipo) {
+    return tipo === 'area' ? '<textarea class="gc-in" data-campo="' + id + '" rows="3" aria-label="' + esc(rot) + '">' + esc(valor || '') + '</textarea>'
+      : '<input class="gc-in" data-campo="' + id + '" value="' + esc(valor == null ? '' : valor) + '" aria-label="' + esc(rot) + '"' + (tipo ? ' type="' + tipo + '"' : '') + '>';
+  }
+  function gcConteudo(d, id, edita) {
+    var s = gc.edit, m = d.meta, nome = GC_NOMES[id];
+    var texto = function (v) { return v ? '<p class="gc-texto">' + esc(v) + '</p>' : '<p class="gc-vazio">' + esc(S.t('gc.naoPreenchido')) + '</p>'; };
+    if (id === 'objective') return edita ? gcCampo('objective', s.objective, nome, 'area') + '<span class="gc-cont">' + esc(S.t('gc.caracteres', { n: S.fmt(String(s.objective || '').length, 0) })) + '</span>' : texto(s.objective);
+    if (id === 'formula') {
+      if (m.tipo !== 'marcos') return edita ? gcCampo('formula', s.formula, nome, 'area') : texto(s.formula);
+      return '<ol class="gc-marcos">' + (s.marcos || []).map(function (mc, k) {
+        return '<li><span class="gc-marco-n">' + (k + 1) + '</span>' + (edita ? gcCampo('marco.' + k + '.nome', mc.nome, S.t('gc.marcoNome', { n: k + 1 })) + gcCampo('marco.' + k + '.data', mc.data, S.t('gc.marcoData', { n: k + 1 }), 'date')
+          : '<span class="gc-marco-nome">' + esc(mc.nome) + '</span><span class="gc-marco-data">' + esc(dataCurta(mc.data)) + '</span>') + '</li>';
+      }).join('') + '</ol>';
+    }
+    if (id === 'unit') {
+      if (!edita) return texto(s.unit);
+      return '<div class="seg" role="group" aria-label="' + esc(nome) + '">' + GC_UNIDADES.map(function (u) { return '<button type="button" data-unid="' + esc(u) + '" aria-pressed="' + (s.unit === u) + '">' + esc(u) + '</button>'; }).join('') + '</div>';
+    }
+    if (id === 'ruler') {
+      var r = s.ruler || {};
+      var col = function (k) { return '<div class="gc-regua-col"><span class="gc-rot">' + esc(S.t('gc.regua.' + k)) + '</span>' + (edita ? gcCampo('ruler.' + k, r[k], S.t('gc.regua.' + k), 'number') : '<b>' + esc(r[k] == null || r[k] === '' ? '—' : S.fmt(Number(r[k]), Number(r[k]) % 1 ? 1 : 0)) + '</b>') + '</div>'; };
+      return '<div class="gc-regua">' + col('min') + col('meta') + col('exc') + '</div>' +
+        '<div class="gc-regua-eixo' + (m.polaridade === 'menor' ? ' is-menor' : '') + '" aria-hidden="true"><span></span></div><p class="gc-regua-nota">' + esc(S.t('gc.pol.' + m.polaridade)) + ' · ' + esc(s.unit || '') + '</p>';
+    }
+    if (id === 'area') {
+      var a = s.area || {};
+      return '<div class="gc-duas"><div><span class="gc-rot">' + esc(S.t('gc.area')) + '</span>' + (edita ? gcCampo('area.area', a.area, S.t('gc.area')) : texto(a.area)) + '</div>' +
+        '<div><span class="gc-rot">' + esc(S.t('gc.responsavel')) + '</span>' + (edita ? gcCampo('area.responsavel', a.responsavel, S.t('gc.responsavel')) : texto(a.responsavel)) + '</div></div>';
+    }
+    if (id === 'evidence') return edita ? gcCampo('evidence', s.evidence, nome, 'area') : texto(s.evidence);
+    var e = s.exceptions || {};
+    return '<p class="gc-padrao"><span class="gc-rot">' + esc(S.t('gc.textoPadrao')) + '</span>' + esc(e.padrao || '') + '</p>' +
+      '<span class="gc-rot">' + esc(S.t('gc.excecoesBu')) + '</span>' + (edita ? gcCampo('exceptions.bu', e.bu, S.t('gc.excecoesBu'), 'area') : texto(e.bu));
+  }
+  function gcComentarios(d, id, coms) {
+    var item = function (k) { return '<li><p class="gc-com-cab"><b>' + esc(k.autor) + '</b> · ' + esc(S.t('gc.papel.' + k.papel)) + ' · ' + esc(dataCurta(k.quando)) + '</p><p class="gc-com-txt">' + esc(k.texto) + '</p>' +
+      ((k.respostas || []).length ? '<ul class="gc-com-resp">' + k.respostas.map(item).join('') + '</ul>' : '') + '</li>'; };
+    return '<div class="gc-coms">' + (coms.length ? '<ul class="gc-com-lista">' + coms.map(item).join('') + '</ul>' : '') +
+      (d.permissoes.comentar ? '<div class="gc-com-novo"><textarea class="gc-in" rows="2" data-novo-com="' + id + '" aria-label="' + esc(S.t('gc.novoCom')) + '" placeholder="' + esc(S.t('gc.novoCom')) + '"></textarea>' +
+        '<button type="button" class="btn btn-sec" data-publicar="' + id + '">' + esc(S.t('gc.publicar')) + '</button></div>' : '<p class="gc-vazio">' + esc(S.t('gc.semPermCom')) + '</p>') + '</div>';
+  }
+  // Painel lateral: pré-checagem (edição), decisão (análise) ou resumo (leitura)
+  function gcRenderLado() {
+    var d = gc.dados, html = '';
+    if (d.modo === 'edicao') {
+      var pre = gcPrechecar(gc.edit, d.meta, d.ciclo.ano).filter(function (x) { return d.meta.tipo === 'marcos' || x.id !== 'marcosAno'; });
+      var nOk = pre.filter(function (x) { return x.ok; }).length, tudo = nOk === pre.length;
+      html = '<section class="gc-painel"><h3 class="gc-painel-tit">' + esc(S.t('gc.prechecagem')) + '</h3>' +
+        '<p class="gc-painel-n"><b>' + S.fmt(nOk, 0) + '</b> ' + esc(S.t('gc.de', { t: S.fmt(pre.length, 0) })) + '</p>' +
+        '<span class="gc-barra" aria-hidden="true"><span style="width:' + (nOk / pre.length * 100).toFixed(1) + '%"></span></span>' +
+        '<ul class="gc-pre-lista">' + pre.map(function (x) { return '<li class="' + (x.ok ? 'is-ok' : 'is-pend') + '">' + ico(x.ok ? 'i-st-aprovado' : 'i-alert') + '<span>' + esc(S.t('gc.pre.' + (x.id === 'formula' && d.meta.tipo === 'marcos' ? 'marcos' : x.id))) + '</span></li>'; }).join('') + '</ul>' +
+        '<p class="gc-salvo">' + esc(gc.salvo ? S.t('gc.salvoLocal', { h: gc.salvo === 'local' ? '' : gc.salvo }) : S.t('gc.semAlteracao')) + '</p>' +
+        gcBotoes([{ id: 'submeter', cls: 'btn', off: !tudo }]) + (tudo ? '' : '<p class="gc-dica">' + esc(S.t('gc.submeterDica')) + '</p>') + '</section>';
+    } else if (d.modo === 'analise') {
+      var rev = GC_SECOES.map(function (id) { return gc.revisao[id] || ''; });
+      var nOkR = rev.filter(function (v) { return v === 'ok'; }).length, nAj = rev.filter(function (v) { return v === 'ajustar'; }).length;
+      var err = function (k) { return gc.erros.indexOf(k) >= 0 ? '<p class="gc-erro" role="alert">' + ico('i-alert') + esc(S.t('gc.erro.' + k, { n: S.fmt(d.parametros.minComentario, 0) })) + '</p>' : ''; };
+      html = '<section class="gc-painel"><h3 class="gc-painel-tit">' + esc(S.t('gc.decisao')) + '</h3>' +
+        '<p class="gc-painel-sub">' + esc(S.t('gc.decisaoSub')) + '</p>' +
+        '<ul class="gc-rev-resumo"><li><b>' + S.fmt(nOkR, 0) + '</b> OK</li><li><b>' + S.fmt(nAj, 0) + '</b> ' + esc(S.t('gc.rev.ajustar')) + '</li><li><b>' + S.fmt(7 - nOkR - nAj, 0) + '</b> ' + esc(S.t('gc.semAnalise')) + '</li></ul>' +
+        (d.alteradasDesde ? '<p class="gc-dica">' + ico('i-history') + esc(S.t('gc.alteradasResumo', { v: S.fmt(d.alteradasDesde.versao, 0), l: d.alteradasDesde.secoes.map(function (x) { return GC_NOMES[x]; }).join(', ') })) + '</p>' : '') +
+        '<label class="gc-rot" for="gcComentario">' + esc(S.t('gc.comentario')) + '</label><textarea class="gc-in" id="gcComentario" rows="4">' + esc(gc.comentario || '') + '</textarea>' +
+        '<span class="gc-cont" id="gcComCont">' + esc(S.t('gc.minimo', { n: S.fmt(d.parametros.minComentario, 0) })) + '</span>' + err('comentario') + err('secaoAjustar') +
+        gcBotoes([{ id: 'aprovar', cls: 'btn' }, { id: 'devolver', cls: 'btn btn-sec' }, { id: 'negar', cls: 'btn btn-sec' }]) + '</section>';
+    } else {
+      html = '<section class="gc-painel"><h3 class="gc-painel-tit">' + esc(S.t('gc.resumo')) + '</h3>' +
+        '<span class="pill-info">' + ico('i-lock') + '<span>' + esc(S.t('gc.somenteLeitura')) + '</span></span>' +
+        '<dl class="gc-dl"><dt>' + esc(S.t('col.situacao')) + '</dt><dd><span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span></dd>' +
+        '<dt>' + esc(S.t('lbl.versao')) + '</dt><dd>' + (d.versao ? esc(S.t('versao', { n: S.fmt(d.versao, 0) })) : '—') + '</dd>' +
+        '<dt>' + esc(S.t('gc.submetidoPor')) + '</dt><dd>' + esc(d.submetidoPor || '—') + '</dd>' +
+        '<dt>' + esc(S.t('m3.colDesde')) + '</dt><dd>' + esc(dataCurta(d.desde)) + '</dd></dl>' +
+        (d.permissoes.bloqueioRN12 ? '<p class="gc-dica">' + ico('i-alert') + esc(S.t('gc.rn12')) + '</p>' : '') +
+        '<p class="gc-dica">' + esc(S.t('gc.leituraDica')) + '</p></section>';
+    }
+    $('gcLado').innerHTML = html;
+  }
+  // Ações irreversíveis: confirmação no segundo clique, em caixa role="alertdialog" (§8)
+  function gcBotoes(lista) {
+    var conf = gc.confirma;
+    return '<div class="gc-acoes">' + lista.map(function (b) {
+      return '<button type="button" class="' + b.cls + '" data-acao="' + b.id + '"' + (b.off || gc.enviando ? ' disabled' : '') + '>' + esc(S.t('gc.acao.' + b.id)) + '</button>';
+    }).join('') + '</div>' + (conf ? '<div class="gc-confirma" role="alertdialog" aria-labelledby="gcConfTit" aria-describedby="gcConfTxt">' +
+      '<p class="gc-confirma-tit" id="gcConfTit">' + esc(S.t('gc.conf.' + conf + '.tit')) + '</p><p class="gc-confirma-txt" id="gcConfTxt">' + esc(S.t('gc.conf.' + conf + '.txt', { v: S.fmt((gc.dados.versao || 0) + (conf === 'submeter' ? 1 : 0), 0) })) + '</p>' +
+      '<div class="gc-acoes"><button type="button" class="btn" data-confirmar="' + conf + '">' + esc(S.t('gc.confirmar')) + '</button><button type="button" class="btn btn-sec" data-cancelar>' + esc(S.t('gc.cancelar')) + '</button></div></div>' : '');
+  }
+  function gcEnviar(acao) {
+    var d = gc.dados, corpo = { card: d.card };
+    if (acao === 'submeter') { corpo.secoes = gc.edit; } else { corpo.decisao = acao; corpo.comentario = gc.comentario || ''; corpo.revisao = gc.revisao; }
+    gc.enviando = true; gcRenderLado();
+    return fetch('api/goal-card/' + (acao === 'submeter' ? 'submeter' : 'decisao'), { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'same-origin', body: JSON.stringify(corpo) })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (x) {
+        gc.enviando = false; gc.confirma = '';
+        if (x.status === 400) { gc.erros = x.j.erros || (x.j.pendentes ? ['prechecagem'] : []); gcRenderLado(); return; }
+        if (x.status !== 200) { toast(x.j.error || S.t('est.erroGeral'), true); gcRenderLado(); return; }
+        gc.erros = [];
+        try { sessionStorage.removeItem('aip-gc-' + d.card); } catch (e) {}
+        toast(S.t('gc.feito.' + acao));
+        d.estado = x.j.estado; if (x.j.versao) d.versao = x.j.versao; d.modo = 'leitura'; d.permissoes = Object.assign({}, d.permissoes, { editar: false, decidir: false });
+        d.linha = d.linha.map(function (e) { return Object.assign({}, e); });
+        gcRender();
+      })
+      .catch(function () { gc.enviando = false; toast(S.t('est.erroRede'), true); gcRenderLado(); });
+  }
+  function gcSalvarLocal() {
+    clearTimeout(gc.timer);
+    gc.timer = setTimeout(function () {
+      try { sessionStorage.setItem('aip-gc-' + gc.dados.card, JSON.stringify(gc.edit)); } catch (e) {}
+      var h = new Date(); gc.salvo = String(h.getHours()).padStart(2, '0') + ':' + String(h.getMinutes()).padStart(2, '0');
+      var el = document.querySelector('#gcLado .gc-salvo'); if (el) el.textContent = S.t('gc.salvoLocal', { h: gc.salvo });
+    }, 700);
+  }
+  function gcAplicarCampo(campo, valor) {
+    var p = campo.split('.'), s = gc.edit;
+    if (p[0] === 'marco') s.marcos[Number(p[1])][p[2]] = valor;
+    else if (p.length === 2) { s[p[0]] = s[p[0]] || {}; s[p[0]][p[1]] = valor; }
+    else s[p[0]] = valor;
+  }
+  $('gcSecoes').addEventListener('input', function (e) {
+    var c = e.target.getAttribute('data-campo'); if (!c || !gc.dados || gc.dados.modo !== 'edicao') return;
+    gcAplicarCampo(c, e.target.value);
+    if (c === 'objective') { var k = e.target.parentNode.querySelector('.gc-cont'); if (k) k.textContent = S.t('gc.caracteres', { n: S.fmt(e.target.value.length, 0) }); }
+    // Atualiza só os indicadores (o campo em edição não é redesenhado, para não perder o foco)
+    var pre = gcPrechecar(gc.edit, gc.dados.meta, gc.dados.ciclo.ano);
+    GC_SECOES.forEach(function (id) { var el = document.querySelector('#gcSec-' + id + ' .gc-pre'); if (!el) return; var ok = gcSecaoOk(id, pre);
+      el.className = 'gc-pre ' + (ok ? 'is-ok' : 'is-pend'); el.innerHTML = ico(ok ? 'i-st-aprovado' : 'i-alert') + esc(S.t(ok ? 'gc.completa' : 'gc.pendente')); });
+    gc.confirma = ''; gcRenderLado(); gcSalvarLocal();
+  });
+  $('gcSecoes').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !gc.dados) return;
+    if (b.hasAttribute('data-rev')) { var sec = b.getAttribute('data-sec'), v = b.getAttribute('data-rev'); gc.revisao[sec] = gc.revisao[sec] === v ? '' : v; gc.erros = []; gcRender(); return; }
+    if (b.hasAttribute('data-unid')) { gc.edit.unit = b.getAttribute('data-unid'); gcRender(); gcSalvarLocal(); return; }
+    if (b.hasAttribute('data-com')) { var id = b.getAttribute('data-com'); gc.abertos[id] = !gc.abertos[id]; gcRender(); var t = document.querySelector('[data-novo-com="' + id + '"]'); if (t && gc.abertos[id]) t.focus(); return; }
+    if (b.hasAttribute('data-publicar')) {
+      var sid = b.getAttribute('data-publicar'), ta = document.querySelector('[data-novo-com="' + sid + '"]'), txt = ta ? ta.value.trim() : '';
+      if (!txt) { if (ta) ta.focus(); return; }
+      gc.dados.comentarios.push({ id: 'novo-' + Date.now(), secao: sid, autor: S.t('gc.voce'), papel: gc.dados.modo === 'analise' ? 'aprovador' : 'contribuidor', quando: new Date().toISOString().slice(0, 10), texto: txt, respostas: [] });
+      toast(S.t('gc.comPublicado')); gcRender();
+    }
+  });
+  $('gcLado').addEventListener('input', function (e) {
+    if (e.target.id !== 'gcComentario') return;
+    gc.comentario = e.target.value;
+    var n = e.target.value.trim().length, min = gc.dados.parametros.minComentario;
+    $('gcComCont').textContent = n >= min ? S.t('gc.caracteres', { n: S.fmt(n, 0) }) : S.t('gc.minimo', { n: S.fmt(min, 0) });
+  });
+  $('gcLado').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !gc.dados) return;
+    if (b.hasAttribute('data-acao')) {
+      var a = b.getAttribute('data-acao');
+      // Antecipa no cliente as regras do servidor (RN-08, RN-09) antes de pedir a confirmação
+      if (a !== 'submeter') {
+        var txt = (gc.comentario || '').trim(), erros = [];
+        if ((a === 'devolver' || a === 'negar') && txt.length < gc.dados.parametros.minComentario) erros.push('comentario');
+        if (a === 'devolver' && GC_SECOES.every(function (id) { return gc.revisao[id] !== 'ajustar'; })) erros.push('secaoAjustar');
+        gc.erros = erros; if (erros.length) { gc.confirma = ''; gcRenderLado(); return; }
+      }
+      gc.confirma = a; gcRenderLado();
+      var c = document.querySelector('#gcLado [data-confirmar]'); if (c) c.focus();
+      return;
+    }
+    if (b.hasAttribute('data-confirmar')) { gcEnviar(b.getAttribute('data-confirmar')); return; }
+    if (b.hasAttribute('data-cancelar')) { gc.confirma = ''; gcRenderLado(); var v = document.querySelector('#gcLado [data-acao]'); if (v) v.focus(); }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && gc.confirma && !$('vistaGoalCard').hidden) { gc.confirma = ''; gcRenderLado(); } });
+  $('gcAtualizar').addEventListener('click', function () { gcCarregar(); });
+  $('gcTentar').addEventListener('click', function () { gcCarregar(); });
+
   // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
   function abrirMenu(sim) {
     $('topMenu').classList.toggle('is-aberto', sim);
@@ -2795,18 +3228,20 @@ window.VBMSetup = (function () {
   // ── Vistas pelo hash ──
   function rota() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
-    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel' || h === 'metas' || h === 'desdobramento';
+    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     $('vistaPendencias').hidden = h !== 'pendencias';
     $('vistaPainel').hidden = h !== 'painel';
     $('vistaMetas').hidden = h !== 'metas';
     $('vistaDesdobramento').hidden = h !== 'desdobramento';
+    $('vistaGoalCard').hidden = h !== 'goal-card';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
     if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
     if (h === 'desdobramento') ddCarregar(false);
-    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'goal-card') { gcLerParams(); gcCarregar(); }
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -2817,8 +3252,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); });
-  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); });
 
   rota();
   carregar(false);

@@ -30,9 +30,16 @@
  *   GET /desdobramento T13 — Desdobramento CEO → COO → BUs no recorte do usuário:
  *                      { ciclo, parametros, scorecardCoo[], bus[], linhas[], totais[] }
  *                      Cada célula da matriz traz peso e a situação do Goal Card da BU naquela meta.
+ *   GET  /goal-card?card=   T04 — Goal Card (leitura aberta a todos, AC-05/AC-07):
+ *                      { card, bu, meta, estado, versao, secoes, prechecagem[], comentarios[], linha[], modo, permissoes }
+ *                      `modo` sai do grupo do usuário e da situação: edicao (contribuidor da BU, Rascunho/Em revisão),
+ *                      analise (aprovador, Em aprovação, sem ter editado o card — RN-12) ou leitura.
+ *   POST /goal-card/submeter  { card, secoes }   pré-checagem no servidor (RN-03); só contribuidor da BU (AC-04)
+ *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12
+ *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo, desdobramentoExemplo } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, SECOES } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -143,6 +150,61 @@ function agregarDesdobramento(base, cards, bus) {
     return { bu: b.sigla, resultado, especificas, total, aprovado, alerta: total !== pesoTotal };
   });
   return { linhas, totais };
+}
+
+// ── T04 Goal Card ──
+// Grupos (D-10): contribuidor (por BU), aprovador (grupo de aprovação), consulta. Papéis antigos dos dados de exemplo são mapeados.
+const ehAprovador = (papeis) => papeis.some((p) => ['aprovador', 'pci_coo', 'admin'].includes(p.papel));
+const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'ponto_focal'].includes(p.papel) && p.bu === sigla);
+const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (configurável no banco, AIP_PARAMETRO)
+
+// Pré-checagem (§5): a mesma lista roda no cliente e no servidor; Submeter só com tudo verde.
+function prechecar(secoes, meta, ano) {
+  const s = secoes || {}, r = s.ruler || {}, tipoMarcos = meta.tipo === 'marcos';
+  const vazio = (v) => v == null || String(v).trim() === '';
+  const nums = ['min', 'meta', 'exc'].map((k) => Number(r[k]));
+  const temRegua = !['min', 'meta', 'exc'].some((k) => vazio(r[k])) && nums.every((v) => Number.isFinite(v));
+  const coerente = temRegua && (meta.polaridade === 'menor' ? nums[0] > nums[1] && nums[1] > nums[2] : nums[0] < nums[1] && nums[1] < nums[2]);
+  const marcos = Array.isArray(s.marcos) ? s.marcos : [];
+  const obj = String(s.objective || '').trim().length;
+  return [
+    { id: 'objective', ok: obj >= 20 && obj <= 1000 },
+    { id: 'formula', ok: tipoMarcos ? marcos.length > 0 && marcos.every((m) => !vazio(m.nome) && !vazio(m.data)) : !vazio(s.formula) },
+    { id: 'unit', ok: !vazio(s.unit) && (!tipoMarcos || s.unit === 'nº de marcos') },
+    { id: 'ruler', ok: coerente && (!tipoMarcos || nums.every((v) => Number.isInteger(v) && v <= marcos.length)) },
+    { id: 'marcosAno', ok: !tipoMarcos || (marcos.length > 0 && marcos.every((m) => String(m.data || '').slice(0, 4) === String(ano))) },
+    { id: 'area', ok: !!s.area && !vazio(s.area.area) && !vazio(s.area.responsavel) },
+    { id: 'evidence', ok: !vazio(s.evidence) },
+  ];
+}
+
+// Decisão do grupo de aprovação (nível único, D-09): Devolver exige comentário e uma seção Ajustar (RN-08); Negar, justificativa (RN-09).
+function validarDecisao({ decisao, comentario, revisao } = {}) {
+  const erros = [];
+  if (!['aprovar', 'devolver', 'negar'].includes(decisao)) erros.push('decisao');
+  const txt = String(comentario || '').trim();
+  if ((decisao === 'devolver' || decisao === 'negar') && txt.length < LIMITE_COMENTARIO) erros.push('comentario');
+  if (decisao === 'devolver' && !Object.values(revisao || {}).includes('ajustar')) erros.push('secaoAjustar');
+  return erros;
+}
+
+function modoDoCard(card, papeis, nomeUsuario) {
+  const contrib = contribuidorDe(papeis, card.bu.sigla), aprov = ehAprovador(papeis);
+  const editou = contrib && (card.editores || []).includes(nomeUsuario);
+  if (contrib && (card.estado === 'rascunho' || card.estado === 'em_revisao')) return 'edicao';
+  if (aprov && card.estado === 'em_aprovacao' && !editou) return 'analise';
+  return 'leitura';
+}
+
+// Linha do tempo do card: rascunho → submissão (vN) → decisão
+function linhaDoCard(card) {
+  const ev = [{ id: 'rascunho', feito: true, quando: null }];
+  const sub = card.estado !== 'rascunho';
+  ev.push({ id: 'submetido', feito: sub, quando: sub ? card.desde : null, versao: card.versao, quem: card.submetidoPor });
+  const decidido = ['aprovado', 'negado', 'em_revisao'].includes(card.estado);
+  ev.push({ id: 'em_aprovacao', feito: sub, atual: card.estado === 'em_aprovacao' });
+  ev.push({ id: card.estado === 'negado' ? 'negado' : card.estado === 'em_revisao' ? 'em_revisao' : 'aprovado', feito: decidido, quando: decidido ? card.desde : null });
+  return ev;
 }
 
 // Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
@@ -260,7 +322,76 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  // ── T04 Goal Card ──
+  const lerCard = (req, res, hoje) => {
+    const codigo = String((req.query && req.query.card) || (req.body && req.body.card) || '');
+    if (!/^GC-[A-Z]{2,3}-\d{2}$/.test(codigo)) { res.status(400).json({ error: 'Card inválido.', codigo: 'PARAMETRO' }); return null; }
+    const card = goalCardExemplo(codigo, hoje);
+    if (!card) { res.status(404).json({ error: 'Não encontrado.', codigo: 'NAO_ENCONTRADO' }); return null; }
+    return card;
+  };
+  // Nome do usuário (diretório); no exemplo, uma pessoa fora da lista de editores
+  const nomeDe = () => 'Usuário Demonstração';
+
+  router.get('/goal-card', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora();
+      const papeis = papeisDe(email, hoje);
+      if (!papeis.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const card = lerCard(req, res, hoje); if (!card) return;
+      const modo = modoDoCard(card, papeis, nomeDe(email));
+      const contrib = contribuidorDe(papeis, card.bu.sigla);
+      res.json({ ...card, modo, prechecagem: prechecar(card.secoes, card.meta, card.ciclo.ano), linha: linhaDoCard(card),
+        permissoes: { editar: modo === 'edicao', decidir: modo === 'analise', comentar: contrib || ehAprovador(papeis),
+          recolher: contrib && card.estado === 'em_aprovacao', bloqueioRN12: ehAprovador(papeis) && card.estado === 'em_aprovacao' && modo !== 'analise' },
+        parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /goal-card:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar o Goal Card.', codigo: 'ERRO' });
+    }
+  });
+
+  router.post('/goal-card/submeter', express.json({ limit: '100kb' }), async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      const hoje = agora(); const papeis = papeisDe(email, hoje);
+      const card = lerCard(req, res, hoje); if (!card) return;
+      // Escrita só para contribuidores da BU (AC-04, AC-05); consulta e outras BUs: 403
+      if (!contribuidorDe(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
+      if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
+      const pend = prechecar(req.body.secoes, card.meta, card.ciclo.ano).filter((x) => !x.ok).map((x) => x.id);
+      if (pend.length) return res.status(400).json({ error: 'Pré-checagem pendente.', codigo: 'PRECHECAGEM', pendentes: pend });
+      res.json({ ok: true, simulado: true, estado: 'em_aprovacao', versao: (card.versao || 0) + 1 });
+    } catch (err) {
+      console.error(`${TAG} /goal-card/submeter:`, err.message);
+      res.status(500).json({ error: 'Não foi possível submeter.', codigo: 'ERRO' });
+    }
+  });
+
+  router.post('/goal-card/decisao', express.json({ limit: '100kb' }), async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      const hoje = agora(); const papeis = papeisDe(email, hoje);
+      const card = lerCard(req, res, hoje); if (!card) return;
+      if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Decisão restrita ao grupo de aprovação.', codigo: 'SEM_ACESSO' });
+      if (card.estado !== 'em_aprovacao') return res.status(409).json({ error: 'O card não está em aprovação.', codigo: 'ESTADO' });
+      if (modoDoCard(card, papeis, nomeDe(email)) !== 'analise') return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
+      const erros = validarDecisao(req.body);
+      if (erros.length) return res.status(400).json({ error: 'Decisão incompleta.', codigo: 'VALIDACAO', erros });
+      const estado = { aprovar: 'aprovado', devolver: 'em_revisao', negar: 'negado' }[req.body.decisao];
+      res.json({ ok: true, simulado: true, estado });
+    } catch (err) {
+      console.error(`${TAG} /goal-card/decisao:`, err.message);
+      res.status(500).json({ error: 'Não foi possível registrar a decisão.', codigo: 'ERRO' });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, prechecar, validarDecisao, modoDoCard, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };

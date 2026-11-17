@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
-const { criarAipGoalsRouter, diasUteisEntre, enriquecer, agregarMetas } = require('../aip-goals-api');
+const { criarAipGoalsRouter, diasUteisEntre, enriquecer, agregarMetas, prechecar, validarDecisao } = require('../aip-goals-api');
 const { pendenciasExemplo } = require('../dados-exemplo');
 
 // Segunda-feira, 16/11/2026
@@ -178,4 +178,67 @@ test('GET /desdobramento: colunas só das BUs do recorte (AC-04/AC-05)', async (
   } finally { s.close(); }
   const s2 = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
   try { assert.strictEqual((await pedir(s2, '/api/desdobramento', { 'X-Forwarded-Email': 'x@vale.com' })).status, 403); } finally { s2.close(); }
+});
+
+// ── T04 Goal Card ──
+async function enviar(s, caminho, corpo, h) {
+  const r = await fetch(`http://127.0.0.1:${s.address().port}${caminho}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...h }, body: JSON.stringify(corpo) });
+  return { status: r.status, corpo: await r.json() };
+}
+
+test('prechecar e validarDecisao: régua pela polaridade, marcos no ano, RN-08 e RN-09', () => {
+  const meta = { tipo: 'formula', polaridade: 'maior' };
+  const ok = { objective: 'x'.repeat(25), formula: 'a/b', unit: '%', ruler: { min: 1, meta: 2, exc: 3 }, area: { area: 'A', responsavel: 'B' }, evidence: 'Relatório' };
+  assert.ok(prechecar(ok, meta, 2027).every((x) => x.ok));
+  assert.strictEqual(prechecar({ ...ok, ruler: { min: 3, meta: 2, exc: 1 } }, meta, 2027).find((x) => x.id === 'ruler').ok, false);
+  assert.ok(prechecar({ ...ok, ruler: { min: 3, meta: 2, exc: 1 } }, { ...meta, polaridade: 'menor' }, 2027).every((x) => x.ok));
+  const marcos = { ...ok, formula: '', unit: 'nº de marcos', ruler: { min: 1, meta: 2, exc: 3 }, marcos: [{ nome: 'a', data: '2027-03-01' }, { nome: 'b', data: '2026-12-01' }] };
+  const r = prechecar(marcos, { tipo: 'marcos', polaridade: 'maior' }, 2027);
+  assert.strictEqual(r.find((x) => x.id === 'marcosAno').ok, false);
+  assert.strictEqual(r.find((x) => x.id === 'ruler').ok, false); // 3 > nº de marcos
+  assert.deepStrictEqual(validarDecisao({ decisao: 'aprovar' }), []);
+  assert.deepStrictEqual(validarDecisao({ decisao: 'devolver', comentario: 'curto', revisao: { ruler: 'ok' } }), ['comentario', 'secaoAjustar']);
+  assert.deepStrictEqual(validarDecisao({ decisao: 'negar', comentario: 'Meta fora do desdobramento' }), []);
+});
+
+test('GET /goal-card: modo por grupo e situação, leitura aberta e pré-checagem', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    const analise = await pedir(s, '/api/goal-card?card=GC-VNL-04', h); // em aprovação, outra BU: aprovador analisa
+    assert.strictEqual(analise.status, 200);
+    assert.strictEqual(analise.corpo.modo, 'analise');
+    assert.strictEqual(analise.corpo.prechecagem.length, 7);
+    const edicao = await pedir(s, '/api/goal-card?card=GC-SAL-09', h); // rascunho de BU do contribuidor
+    assert.strictEqual(edicao.corpo.modo, 'edicao');
+    assert.strictEqual((await pedir(s, '/api/goal-card?card=GC-XX', h)).status, 400);
+    assert.strictEqual((await pedir(s, '/api/goal-card?card=GC-ZZZ-99', h)).status, 404);
+  } finally { s.close(); }
+  const leitor = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'consulta', bu: null }] }));
+  try {
+    const h = { 'X-Forwarded-Email': 'leitor@vale.com' };
+    const r = await pedir(leitor, '/api/goal-card?card=GC-VNL-04', h);
+    assert.strictEqual(r.corpo.modo, 'leitura'); // consulta vê todas as BUs, sem editar nem decidir
+    assert.strictEqual(r.corpo.permissoes.comentar, false);
+    assert.strictEqual((await enviar(leitor, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'aprovar' }, h)).status, 403);
+    assert.strictEqual((await enviar(leitor, '/api/goal-card/submeter', { card: 'GC-SAL-09', secoes: {} }, h)).status, 403);
+  } finally { leitor.close(); }
+});
+
+test('POST /goal-card: submissão bloqueada pela pré-checagem e decisão validada (simulação)', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    const card = (await pedir(s, '/api/goal-card?card=GC-SAL-09', h)).corpo;
+    const vazio = await enviar(s, '/api/goal-card/submeter', { card: 'GC-SAL-09', secoes: { ...card.secoes, evidence: '' } }, h);
+    assert.strictEqual(vazio.status, 400);
+    assert.ok(vazio.corpo.pendentes.includes('evidence'));
+    const sub = await enviar(s, '/api/goal-card/submeter', { card: 'GC-SAL-09', secoes: { ...card.secoes, area: { area: 'Projects', responsavel: 'X' }, evidence: 'Relatório' } }, h);
+    assert.strictEqual(sub.status, 200); assert.strictEqual(sub.corpo.simulado, true);
+    assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, h)).status, 403); // BU fora do cadastro (AC-04)
+    const dev = await enviar(s, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'devolver', comentario: 'ok', revisao: {} }, h);
+    assert.strictEqual(dev.status, 400); assert.deepStrictEqual(dev.corpo.erros, ['comentario', 'secaoAjustar']);
+    const apr = await enviar(s, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'aprovar' }, h);
+    assert.strictEqual(apr.corpo.estado, 'aprovado');
+  } finally { s.close(); }
 });

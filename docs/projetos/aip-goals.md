@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, T01, T02, T03 e T13 Desdobramento publicados com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, T01, T02, T03, T04 Goal Card e T13 Desdobramento publicados com dados de exemplo; demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -127,6 +127,24 @@ só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegad
 - **Tabela de metas:** número, título, tipo (fórmula ou marcos) e card, peso com barra, situação (com "Parada"
   quando passa do limite de dias úteis), nível, versão, data da situação e "Abrir" (T04); total de pesos no rodapé.
 
+### T04 Goal Card
+
+`#goal-card?card=GC-OP-05&secao=ruler`. O servidor decide o modo pelo grupo do usuário e pela situação do card:
+**edição** (contribuidores da BU, Rascunho ou Em revisão), **análise** (grupo de aprovação, Em aprovação, sem ter
+editado o card — RN-12) ou **leitura** (todos os demais; leitura aberta, D-11).
+
+- **Topo** no padrão da T02/T03: "Goal Card" com o número da meta vazado, título, pílula de situação, código, versão,
+  peso, tipo e polaridade; linha do tempo do card (rascunho → submetido → em aprovação → decisão).
+- **Seções 1–7** em cards suaves: Objective, Calculation Formula (ou marcos com data), Unit of Measurement, Ruler
+  (Mín./Meta/Exc. com o eixo da polaridade), Area Responsible, Evidence e Exceptions (texto padrão do ciclo + campo
+  da BU). Chips "Ajustar" (devolução), "Alterada desde a vN" (resubmissão) e, na edição, Completa/Pendente.
+- **Painel lateral:** pré-checagem ao vivo (mesma regra do servidor, `prechecar`) com Submeter só com tudo verde;
+  na análise, OK/Ajustar por seção, comentário e Aprovar/Devolver/Negar (RN-08, RN-09) com confirmação no segundo
+  clique em `role="alertdialog"`; na leitura, resumo e "Somente leitura" (com o aviso da RN-12 quando for o caso).
+- **Comentários por seção**, com respostas; o grupo de consulta não comenta.
+- **Escritas:** `POST /goal-card/submeter` e `/goal-card/decisao` validam no servidor (403 fora do grupo ou da BU,
+  409 fora da situação, 400 com os itens pendentes) e respondem `simulado: true` até o modelo de dados (P-12).
+
 ### T13 Desdobramento
 
 Tela nova, fora do catálogo original (§10), feita a partir do material de referência do ciclo 2027 ("VBM COO
@@ -172,6 +190,8 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
 | `GET /desdobramento` | T13: scorecard do COO e matriz meta × BU no recorte do usuário (sem BU no recorte → 403). Devolve `ciclo`, `parametros` (`pesoTotal`, `pesoResultadoCoo`), `scorecardCoo[]`, `bus[]`, `linhas[]` (cada célula com `peso`, `estado` e `card`) e `totais[]` por BU (`total`, `aprovado`, `alerta`) |
+| `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `prechecagem[]`, `comentarios[]`, `linha[]` e `permissoes` |
+| `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: pré-checagem e decisão validadas no servidor; simulação até o P-12 |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 

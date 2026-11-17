@@ -16,6 +16,7 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | `#inicio` (padrão) | T00 Início — abertura do ciclo AIP, jornada e índice das telas | publicada |
 | `#pendencias` | T01 Minhas pendências — fila pessoal com filtros e status | publicada |
 | `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
+| `#goal-card?card=` | T04 Goal Card — edição (contribuidores), análise (grupo de aprovação) ou leitura, com pré-checagem, revisão por seção, decisão e comentários | publicada |
 | `#desdobramento` | T13 Desdobramento — barra do scorecard do COO em degradê (uma cor por meta), cards das metas com a fatia dos 100% em ênfase e os Goal Cards gerados nas BUs, e matriz meta × BU (peso e situação do card) | publicada |
 | `#metas` | T03 Metas da BU — anéis por peso, alerta de soma dos pesos (RN-16) e tabela de metas, no recorte do usuário | publicada |
 | `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T04 a T08 e T11 | "Tela em construção" |
@@ -49,6 +50,7 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 | `GET /pendencias` | T01: fila do usuário (identidade pelo `X-Forwarded-Email`) |
 | `GET /painel?pais=&bu=` | T02: agregados do ciclo, só P&CI/COO e administrador; filtro validado |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (fora do recorte → 404) |
+| `GET /goal-card?card=` · `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: Goal Card e escritas validadas (simulação até o P-12) |
 | `GET /desdobramento` | T13: scorecard do COO e matriz meta × BU no recorte do usuário |
 | `GET /health` · `GET /ping` | saúde e diagnóstico |
 

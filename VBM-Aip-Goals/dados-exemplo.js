@@ -195,7 +195,83 @@ function painelExemplo(hoje = new Date()) {
       });
     });
   });
+  // Cards citados em Minhas pendências seguem a situação da pendência (T01, T02, T03 e T04 coerentes)
+  pendenciasExemplo(hoje).itens.filter((it) => it.tipo !== 'acao').forEach((it) => {
+    const c = cards.find((x) => x.card === it.card);
+    if (c) Object.assign(c, { estado: it.estado, versao: it.versao, nivel: it.nivel, desde: it.desde });
+  });
   return { ciclo, parametros: { diasParado: 3, pesoTotal: PESO_TOTAL }, cards };
 }
 
-module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, cicloExemplo, somarDiasUteis, iso };
+
+// ── T04 Goal Card: conteúdo das 7 seções por meta (exemplo) ──
+// Seções do Goal Card (Especificação §5). O conteúdo digitado não é traduzido (P-06).
+const SECOES = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
+const TEXTO_PADRAO_EXCECOES = 'Standard cycle text: effects of force majeure, regulatory changes and portfolio decisions approved by the COO are excluded from the result.';
+const marcos = (ano, nomes) => nomes.map((nome, i) => ({ nome, data: `${ano}-${String(2 + i * 2).padStart(2, '0')}-28` }));
+function conteudoMeta(numero, ano) {
+  const C = {
+    0: { obj: "Deliver the BU share of the COO scorecard result, as measured by the consolidated COO scorecard at year end.", formula: 'COO scorecard result (%), as published by P&CI at year end', unidade: '%', regua: [80, 100, 120], area: ['P&CI', 'BU P&CI lead'], evid: 'COO scorecard closing report published by P&CI' },
+    1: { obj: 'Keep BU working capital within the budget envelope, freeing cash for the operation and growth projects.', formula: 'Average monthly working capital (inventory + receivables − payables) vs budget', unidade: 'US$', regua: [105, 100, 95], pol: 'menor', area: ['Finance', 'BU controller'], evid: 'Monthly Finance closing with working capital breakdown' },
+    2: { obj: 'Deliver unit cost and sustaining investments at or below budget without compromising safety and asset integrity.', formula: 'C1 unit cost (US$/t) and sustaining capex vs budget, weighted 70/30', unidade: 'US$', regua: [103, 100, 97], pol: 'menor', area: ['Finance', 'BU controller'], evid: 'Monthly cost report and capex execution report' },
+    3: { obj: 'Mine according to the spatial plan to protect ore quality and the long-term mine sequence.', formula: 'Tonnes mined inside the planned polygons ÷ total tonnes mined', unidade: '%', regua: [85, 90, 95], area: ['Mine Planning', 'BU mine planning manager'], evid: 'Monthly spatial adherence report from mine planning' },
+    4: { obj: 'Deliver the production budget for the year, with monthly tracking of deviations and recovery plans.', formula: 'Payable metal produced ÷ budgeted payable metal', unidade: '%', regua: [95, 100, 105], area: ['Operations', 'BU operations director'], evid: 'Monthly production report reconciled with Finance' },
+    5: { obj: 'Embed chronic unease as a leadership routine: weak signals reviewed weekly and acted on before they become events.', formula: 'Chronic unease routines held with actions closed ÷ routines planned', unidade: '%', regua: [80, 90, 100], area: ['Safety', 'BU safety lead'], evid: 'Routine log with attendance and closed actions' },
+    6: { obj: 'Execute the 2027 Asset Management roadmap for critical assets: standard, criticality and maintenance strategies.', unidade: 'nº de marcos', regua: [4, 5, 6], area: ['Asset Management', 'BU AM lead'], evid: 'Roadmap milestone evidence validated by the AM Director', marcos: ['AM standard adopted', 'Critical asset list approved', 'Maintenance strategies for top 20 assets', 'CMMS data quality > 90%', 'Reliability review cadence running', 'AM maturity self-assessment'] },
+    7: { obj: 'Scale the VBM Operating Model in the BU and run the initiatives portfolio through one register and one cockpit.', unidade: 'nº de marcos', regua: [3, 4, 5], area: ['OM & P&CI', 'BU OM lead'], evid: 'Cockpit snapshots and Finance-validated value report', marcos: ['Operating model diagnostic', 'Initiatives register live', 'Cockpit reviews monthly', 'Value validated by Finance', 'Sustainment audit'] },
+    8: { obj: 'Deliver the Bacaba must-win milestones within the approved capex.', unidade: 'nº de marcos', regua: [2, 3, 4], area: ['Projects', 'Bacaba project director'], evid: 'Project milestone certificates and licence documents', marcos: ['Operational licence issued', 'Pre-stripping completed', 'First ore processed', 'Ramp-up at 50%'] },
+    9: { obj: 'Keep the Salobo CPF construction on schedule for the January 2028 start-up, within the approved capex.', unidade: 'nº de marcos', regua: [2, 3, 4], area: ['Projects', 'CPF project director'], evid: 'Monthly project report with schedule and capex curves', marcos: ['Civil works completed', 'Main equipment installed', 'Mechanical completion', 'Commissioning plan approved'] },
+    10: { obj: 'Deliver the BU strategic initiatives of the VBM Operating Plan with validated value.', unidade: 'nº de marcos', regua: [3, 4, 5], area: ['Strategy', 'BU strategy lead'], evid: 'Initiative close-out reports validated by Finance', marcos: ['Portfolio approved', 'Wave 1 delivered', 'Wave 2 delivered', 'Value validated', 'Lessons learned shared'] },
+  }[numero];
+  const tipoMarcos = !!C.marcos;
+  return {
+    polaridade: C.pol === 'menor' ? 'menor' : 'maior',
+    secoes: {
+      objective: C.obj,
+      formula: tipoMarcos ? '' : C.formula,
+      marcos: tipoMarcos ? marcos(ano, C.marcos) : [],
+      unit: C.unidade,
+      ruler: { min: C.regua[0], meta: C.regua[1], exc: C.regua[2] },
+      area: { area: C.area[0], responsavel: C.area[1] },
+      evidence: C.evid,
+      exceptions: { padrao: TEXTO_PADRAO_EXCECOES, bu: '' },
+    },
+  };
+}
+// Pessoas de exemplo (diretório): quem submeteu e quem comentou
+const PESSOAS = ['Ana Ribeiro', 'Bruno Costa', 'Carla Mendes', 'Daniel Souza', 'Elisa Martins', 'Felipe Araújo'];
+
+function goalCardExemplo(codigo, hoje = new Date()) {
+  const base = painelExemplo(hoje);
+  const c = base.cards.find((x) => x.card === codigo);
+  if (!c) return null;
+  const ano = base.ciclo.ano;
+  const conteudo = conteudoMeta(c.meta.numero, ano);
+  const sec = conteudo.secoes;
+  const n = c.meta.numero, k = (n + c.bu.sigla.length) % PESSOAS.length;
+  // Rascunho em andamento: faltam área e evidência (a pré-checagem mostra o que falta)
+  if (c.estado === 'rascunho') { sec.area = { area: '', responsavel: '' }; sec.evidence = ''; }
+  const comentarios = [];
+  let ajustar = [];
+  if (c.estado === 'em_revisao') {
+    ajustar = ['ruler', 'unit'];
+    comentarios.push({ id: `${codigo}-c1`, secao: 'ruler', autor: PESSOAS[(k + 1) % 6], papel: 'aprovador', quando: iso(somarDiasUteis(hoje, -3)),
+      texto: 'Minimum is too close to the target; review the ruler with the budget sensitivity.', respostas: [] });
+  }
+  if (c.estado === 'em_aprovacao' && c.versao > 1) {
+    comentarios.push({ id: `${codigo}-c2`, secao: 'formula', autor: PESSOAS[(k + 2) % 6], papel: 'aprovador', quando: iso(somarDiasUteis(hoje, -6)),
+      texto: 'Should the formula include the FX effect?', respostas: [{ autor: PESSOAS[k], papel: 'contribuidor', quando: iso(somarDiasUteis(hoje, -5)), texto: 'FX effect excluded; added to the exceptions section.' }] });
+  }
+  return {
+    ciclo: base.ciclo, card: c.card, bu: c.bu, meta: { ...c.meta, polaridade: conteudo.polaridade },
+    estado: c.estado, versao: c.versao, desde: c.desde,
+    submetidoPor: c.estado === 'rascunho' ? null : PESSOAS[k],
+    // Nas BUs em que o usuário de demonstração é contribuidor, ele aparece entre os editores (mostra a RN-12)
+    editores: ['Salobo', 'Sossego'].includes(c.bu.sigla) ? [PESSOAS[k], 'Usuário Demonstração'] : [PESSOAS[k]],
+    secoes: sec, ajustar,
+    alteradasDesde: c.versao > 1 ? { versao: c.versao - 1, secoes: ['formula', 'exceptions'] } : null,
+    comentarios,
+  };
+}
+
+module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };
