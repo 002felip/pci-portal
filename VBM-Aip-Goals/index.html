@@ -811,9 +811,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
    Nível 1 no topo: barra de composição do scorecard do COO (partes de 100%) com fios até cada meta.
    Nível 2 na matriz: peso por BU (tamanho da bolha) e situação do Goal Card (cor, tokens --status-*). Sem tokens novos. */
 .dd-trilha { position: relative; }
-.dd-nivel { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; font: 600 0.74rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--text-soft); }
+.dd-nivel { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; font: 600 0.82rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--text-soft); }
 .dd-nivel b { font-weight: 700; color: var(--accent-strong); }
-.dd-nivel .ico { width: 1rem; height: 1rem; }
+.dd-nivel .ico { width: 1.1rem; height: 1.1rem; }
 .dd-nivel > span::before { content: '·'; margin: 0 0.5rem 0 0.25rem; }
 .dd-nivel-2 { margin: 0; }
 .dd-barra { display: flex; gap: 3px; height: 0.375rem; }
@@ -876,7 +876,6 @@ body.is-largo .secao { background: color-mix(in srgb, var(--panel) 45%, var(--ca
 }
 .dd-ponto { width: 0.625rem; height: 0.625rem; border-radius: 50%; }
 .dd-ponto:not([class*="p2-seg-"]) { background: var(--ab-trilho); }
-.dd-resumo { font-size: 0.82rem; color: var(--text-soft); }
 /* Matriz meta × BU */
 .dd-tabela thead th { text-align: center; }
 .dd-cab-pais th:first-child { text-align: left; vertical-align: bottom; }
@@ -1462,7 +1461,6 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       <div class="secao-head">
         <p class="dd-nivel dd-nivel-2"><b>COO</b><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg><b>Business Units</b></p>
         <h3 class="sr-only" id="ddTitMatriz" data-i18n="dd.matriz">Desdobramento para as Business Units</h3>
-        <span class="dd-resumo" id="ddResumo"></span>
         <span class="pill-wait" id="ddAlerta" hidden role="status"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span id="ddAlertaTxt"></span></span>
         <ul class="legend p2-legenda" id="ddLegenda"></ul>
       </div>
@@ -1813,7 +1811,7 @@ window.VBMSetup = (function () {
       'dd.barraAria': 'Composição do scorecard do COO: {l}', 'dd.resultadoCeo': 'Resultado do scorecard do CEO', 'dd.compartilhada': 'Compartilhada com {l}',
       'dd.min': 'Mín.', 'dd.alvo': 'Alvo', 'dd.exc': 'Excep.', 'dd.paraBu': 'Meta da BU #{n}', 'dd.paraBus': 'Metas da BU #{n}', 'dd.paraTodas': '{p}% de cada BU como resultado do COO',
       'dd.grupoResultado': 'Resultado do scorecard do COO', 'dd.grupoEspecificas': 'Metas específicas da BU', 'dd.nova': 'Nova',
-      'dd.resumo': '{e} metas específicas · {n} novas no ciclo · {d} desdobradas de metas do COO', 'dd.meta': 'Meta',
+      'dd.meta': 'Meta',
       'dd.total': 'Total', 'dd.aprovado': 'Peso aprovado', 'dd.ptsDe': '{n} de {t}', 'dd.celula': '{b} · {m}: {p} pts · {e}', 'dd.semCard': 'sem Goal Card',
       'dd.filtrar': 'Destacar as metas da BU que vêm de {m}', 'dd.limpar': 'Mostrar todas as metas',
       'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.badgeTodas': '{p}% de cada BU', 'dd.doScorecard': 'do scorecard do COO', 'dd.baseBus': 'Base do resultado do COO em {n} BUs', 'dd.aprovados': '{a} de {t} aprovados', 'dd.emAprov': '{n} em aprovação', 'dd.irBu': 'Abrir as metas de {b}',
@@ -1908,7 +1906,7 @@ window.VBMSetup = (function () {
       'dd.barraAria': 'COO scorecard composition: {l}', 'dd.resultadoCeo': 'CEO scorecard result', 'dd.compartilhada': 'Shared with {l}',
       'dd.min': 'Min', 'dd.alvo': 'Target', 'dd.exc': 'Except.', 'dd.paraBu': 'BU goal #{n}', 'dd.paraBus': 'BU goals #{n}', 'dd.paraTodas': '{p}% of each BU as the COO result',
       'dd.grupoResultado': 'COO scorecard result', 'dd.grupoEspecificas': 'BU-specific goals', 'dd.nova': 'New',
-      'dd.resumo': '{e} specific goals · {n} new this cycle · {d} cascaded from COO goals', 'dd.meta': 'Goal',
+      'dd.meta': 'Goal',
       'dd.total': 'Total', 'dd.aprovado': 'Weight approved', 'dd.ptsDe': '{n} of {t}', 'dd.celula': '{b} · {m}: {p} pts · {e}', 'dd.semCard': 'no Goal Card',
       'dd.filtrar': 'Highlight the BU goals that come from {m}', 'dd.limpar': 'Show all goals',
       'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.badgeTodas': '{p}% of each BU', 'dd.doScorecard': 'of the COO scorecard', 'dd.baseBus': 'Basis of the COO result in {n} BUs', 'dd.aprovados': '{a} of {t} approved', 'dd.emAprov': '{n} pending approval', 'dd.irBu': 'Open the goals of {b}',
@@ -2460,8 +2458,6 @@ window.VBMSetup = (function () {
       }).join('') + '</tr>';
     $('ddLinhas').parentNode.style.setProperty('--dd-cols', nCols);
 
-    var novas = esp.filter(function (l) { return l.nova; }).length, desd = esp.filter(function (l) { return l.origem; }).length;
-    $('ddResumo').textContent = S.t('dd.resumo', { e: S.fmt(esp.length, 0), n: S.fmt(novas, 0), d: S.fmt(desd, 0) });
     $('ddLegenda').innerHTML = EST_ORDEM.map(function (e) { return '<li><span class="swatch p2-seg-' + e + '"></span>' + esc(S.t('est.' + e)) + '</li>'; }).join('');
     var alertas = tot.filter(function (t) { return t.alerta; }).map(function (t) { return t.bu; });
     $('ddAlerta').hidden = !alertas.length;
