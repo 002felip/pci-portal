@@ -197,13 +197,13 @@ test('camposObrigatorios e validarDecisao: envio bloqueado sem os obrigatórios,
   assert.deepStrictEqual(validarDecisao({ decisao: 'negar', comentario: 'Meta fora do desdobramento' }), []);
 });
 
-test('GET /goal-card: modo por grupo e situação, leitura aberta e pré-checagem', async () => {
+test('GET /goal-card: ficha do contribuidor (edição) ou leitura, campos obrigatórios', async () => {
   const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
   try {
     const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
-    const analise = await pedir(s, '/api/goal-card?card=GC-VNL-04', h); // em aprovação, outra BU: aprovador analisa
+    const analise = await pedir(s, '/api/goal-card?card=GC-VNL-04', h); // em aprovação: a T04 só mostra (decisão na fila, T14)
     assert.strictEqual(analise.status, 200);
-    assert.strictEqual(analise.corpo.modo, 'analise');
+    assert.strictEqual(analise.corpo.modo, 'leitura');
     assert.strictEqual(analise.corpo.obrigatorios.length, 6);
     const edicao = await pedir(s, '/api/goal-card?card=GC-SAL-09', h); // rascunho de BU do contribuidor
     assert.strictEqual(edicao.corpo.modo, 'edicao');
@@ -215,7 +215,6 @@ test('GET /goal-card: modo por grupo e situação, leitura aberta e pré-checage
     const h = { 'X-Forwarded-Email': 'leitor@vale.com' };
     const r = await pedir(leitor, '/api/goal-card?card=GC-VNL-04', h);
     assert.strictEqual(r.corpo.modo, 'leitura'); // consulta vê todas as BUs, sem editar nem decidir
-    assert.strictEqual(r.corpo.permissoes.comentar, false);
     assert.strictEqual((await enviar(leitor, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'aprovar' }, h)).status, 403);
     assert.strictEqual((await enviar(leitor, '/api/goal-card/submeter', { card: 'GC-SAL-09', secoes: {} }, h)).status, 403);
   } finally { leitor.close(); }

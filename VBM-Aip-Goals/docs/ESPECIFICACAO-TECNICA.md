@@ -30,7 +30,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | Perfil | Permissões | Recorte | Tela inicial |
 | --- | --- | --- | --- |
 | Contribuidores (grupo por BU) | Preencher, salvar e submeter Goal Card; recolher submissão; responder e comentar; concluir ações; (F2) abrir CR; (F3) enviar evidência. Qualquer membro do grupo da BU edita o card; o log registra quem alterou | Vê todas as BUs; edita só a(s) BU(s) do seu cadastro | T01 Minhas pendências |
-| Aprovadores (grupo de aprovação P&CI/COO) | Nível único de aprovação: qualquer membro do grupo aprova, devolve ou nega; comenta; atribui ações; (F3) valida evidência | Todas as BUs | T02 Painel do ciclo |
+| Aprovadores (grupo de aprovação P&CI/COO) | Nível único de aprovação, na tela T14 Aprovações: qualquer membro do grupo aprova, devolve ou nega; comenta; atribui ações; (F3) valida evidência | Todas as BUs | T02 Painel do ciclo |
 | Consulta (grupo de leitura) | Só leitura: vê metas, Goal Cards, versões e Action Log; não edita, não comenta e não decide | Vê todas as BUs | T00 Início |
 | Administrador do ciclo (P&CI) | Configurar ciclo, BUs, grupos (contribuidores, aprovadores e consulta), metas, pesos, prazos e textos padrão; reatribuir pendências; reabrir card Negado | Todas as BUs | T11 Configuração do ciclo |
 
@@ -93,7 +93,7 @@ Limites (configuráveis no banco, nunca fixos no front-end): comentário de devo
 
 Não mudam o estado: comentário, ação atribuída ou concluída e alteração dos membros dos grupos (a pendência só muda de dono).
 
-**Revisão por seção:** no painel de decisão, cada uma das 7 seções recebe OK, Ajustar ou fica sem análise. Na devolução, os contribuidores abrem o card direto nas seções Ajustar. Na resubmissão, as seções alteradas aparecem destacadas para o aprovador.
+**Revisão por seção (T14 Aprovações):** no painel de decisão, cada uma das 7 seções recebe OK, Ajustar ou fica sem análise. Na devolução, os contribuidores abrem o card direto nas seções Ajustar. Na resubmissão, as seções alteradas aparecem destacadas para o aprovador.
 
 ## 5. Tipos de meta e campos do Goal Card
 
@@ -130,11 +130,11 @@ Cada meta tem uma **polaridade** (direção) definida no desdobramento: "maior �
 | 4 | Acompanha a situação na linha do tempo do card. |
 | 5 | Se devolvido, recebe e-mail e aviso no app, abre o card nas seções marcadas Ajustar, responde os comentários e resubmete. |
 
-### 6.2 Aprovador (T04)
+### 6.2 Aprovador (T14)
 
 | Passo | Comportamento |
 | --- | --- |
-| 1 | Recebe "Decisão pendente" por e-mail e no app; o link abre T04 em modo análise. |
+| 1 | Recebe "Decisão pendente" por e-mail e no app; o link abre a T14 Aprovações na ficha do card. |
 | 2 | Marca cada seção como OK ou Ajustar; em resubmissões, vê as diferenças entre as versões. |
 | 3 | Aprova, devolve ou nega, com confirmação no segundo clique e comentário quando exigido. |
 | 4 | O app abre a próxima pendência da fila ("3 restantes"); com a fila vazia, volta a T01. |
@@ -155,7 +155,7 @@ O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitu
 
 | Situação | Comportamento |
 | --- | --- |
-| Menu no topo | Início (T00), Minhas pendências, Painel do ciclo, Metas da BU, Action Log, Ações, Change Requests (F2), Evidências (F3) e Configuração. Cada perfil vê apenas os itens que pode usar (consulta não vê Minhas pendências nem Configuração). |
+| Menu no topo | Início (T00), Minhas pendências, Painel do ciclo, Aprovações (T14, grupo de aprovação), Metas da BU, Action Log, Ações, Change Requests (F2), Evidências (F3) e Configuração. Cada perfil vê apenas os itens que pode usar (consulta não vê Minhas pendências nem Configuração). |
 | Filtros e seleção | Ficam na URL; o botão Voltar do navegador retorna à tela anterior com o mesmo filtro. |
 | Saída de T04 com alteração não salva | O app pede confirmação antes de sair. |
 | Link de e-mail | Abre a tela exata (card, seção ou ação); sem acesso, abre T12. |
@@ -184,7 +184,7 @@ Cada submissão, resubmissão ou CR aprovado gera uma versão imutável com todo
 | Timeline | Única e imutável, por card e por ciclo. |
 | Tipos de evento | Submissão, Decisão, Comentário, Ação, Change Request, Evidência, Configuração e Acesso negado. |
 | Conteúdo do evento | Quem, papel, quando, BU, meta, seção, detalhe e, nas edições, valor antes e depois. Nunca registra segredos. |
-| Comentários | Ancorados a uma seção, com respostas encadeadas; não podem ser editados nem apagados depois de publicados. |
+| Comentários | Ancorados a uma seção, com respostas encadeadas; não podem ser editados nem apagados depois de publicados. São feitos na T14 Aprovações; no Goal Card (T04) o campo com comentário mostra um indicador com o número, e o clique abre um pop-up só de leitura com as mensagens. |
 | Ações | Um comentário pode virar ação com responsável e prazo; status Aberta, Concluída (com comentário) ou Atrasada (automático). |
 | Exportação | Excel, com os dados de todas as BUs (leitura aberta a todos os perfis, AC-05). |
 
@@ -213,7 +213,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | Status do Goal Card | Pílula com ícone + rótulo + cor do token de fluxo `--status-*` (mesmo do Kaizen): Rascunho `--status-draft` (cinza), Em aprovação `--status-pending` (âmbar), Em revisão `--status-review` (azul), Aprovado `--status-approved` (verde), Negado `--status-rejected` (vermelho). Nunca só por cor: nos gráficos compactos a situação vai também na legenda, no `title` e no `aria-label`. `--good` e `--bad` ficam para desempenho nos gráficos; ciclo e prazo usam o âmbar `--wait` (atrasada com `--late-bg`), nunca verde ou vermelho. |
 | Gráficos | SVG próprio, sem biblioteca: anéis de progresso (T02, T03), barras de composição (T02), funil e tempo em aprovação em barras; sem pizza. Séries com `--serie-a` / `--serie-b` / `--serie-p`; situação com `--status-*`; deltas, se houver, com `--good` / `--bad` / `--flat`. `NULL` = "sem dado", nunca 0; `role="img"` + `aria-label` com o resumo; redesenho ao trocar filtro, idioma, formato, tema e tamanho; animação só de `transform` e `opacity`. |
 | Avisos e salvamento | `.toast` com `role="status" aria-live="polite"` ("Salvo às 14:32"; erro com `.is-err`), em linguagem de negócio. Botão salvar com `.is-pendente` enquanto houver alteração não salva. |
-| Perfis na interface | Cada grupo vê só o que pode fazer: ações que o perfil não tem não são desenhadas (não basta desabilitar). **Contribuidores:** Salvar, Submeter e Recolher no Goal Card. **Aprovadores:** painel de decisão com Aprovar (`.btn`), Devolver e Negar (`.btn-sec`), confirmação no segundo clique; os botões não usam `--good`/`--bad`, a cor de situação fica só na pílula. **Consulta:** pílula neutra "Somente leitura" (`--flat`, ícone de cadeado) no banner da tela e do Goal Card; sem campos editáveis, comentários nem decisão; menu sem Minhas pendências e Configuração. |
+| Perfis na interface | Cada grupo vê só o que pode fazer: ações que o perfil não tem não são desenhadas (não basta desabilitar). **Contribuidores (T04):** ficha com os campos da BU abertos, placeholder de orientação e obrigatórios marcados com \*; Salvar rascunho e Submeter no rodapé da ficha. **Aprovadores (T14):** fila das fichas em aprovação e painel de decisão com Aprovar (`.btn`), Devolver e Negar (`.btn-sec`), confirmação no segundo clique; os botões não usam `--good`/`--bad`, a cor de situação fica só na pílula. **Consulta e demais casos:** ficha em leitura com pílula neutra "Somente leitura" (`--flat`, ícone de cadeado) e o motivo; menu sem Minhas pendências e Configuração. |
 | Estados de tela | Toda tela trata carregando, vazio, erro, sem permissão e desatualizado ("Last updated …"). |
 | Ações irreversíveis | Confirmação no segundo clique, em caixa `role="alertdialog"`, nunca `confirm()`. Mensagens de erro não mostram texto do banco. |
 | Acessibilidade | Contraste AA (texto ≥ 4,5:1; texto grande e ícones ≥ 3:1); `--accent` só em texto ≥ 24 px, abaixo disso `--accent-strong`; foco visível com `--focus`; alvos ≥ 32 px (44 px no toque); `aria-label` e `title` em botões só com ícone; `aria-expanded` nos popovers, Esc fecha e devolve o foco. |
@@ -264,7 +264,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | T01 | Minhas pendências | Contribuidores, aprovadores, admin | Fila pessoal: cards a preencher, decisões, comentários sem resposta e ações, com prazo e idade | MVP |
 | T02 | Painel do ciclo | Todos | KPIs (submetidos, aprovados %, em aprovação, em revisão, negados); matriz BU × status; funil; tempo em aprovação; filtro País › BU | MVP |
 | T03 | Metas da BU | Todos | Metas com peso, tipo, status e versão; soma de pesos | MVP |
-| T04 | Goal Card | Todos | Edição com campos obrigatórios (contribuidores); análise com revisão por seção e painel de decisão (aprovadores); comentários por seção; linha do tempo do card; só leitura para consulta | MVP |
+| T04 | Goal Card | Todos | Ficha de cadastro da meta pelos contribuidores: campos obrigatórios marcados, Salvar rascunho e Submeter; comentários do grupo de aprovação em pop-up por campo; linha do tempo do card; leitura para os demais (sem decisão nesta tela) | MVP |
 | T05 | Visão do Goal Card | Todos | Template VBM com versão, status e data; imprimir e PDF | MVP |
 | T06 | Versões | Todos | Lista de versões e comparação entre duas | MVP |
 | T07 | Action Log | Todos | Timeline com filtros BU, Meta, Seção, Tipo e Período; exportar Excel | MVP |
@@ -273,6 +273,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | T10 | Evidências | Contribuidores, aprovadores | Upload por meta; aceitar ou devolver | F3 |
 | T11 | Configuração do ciclo | Admin | Ciclo, BUs, grupos, metas, pesos, prazos, textos padrão, parâmetros | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
+| T14 | Aprovações | Aprovadores | Fila com todas as fichas Em aprovação (filtro País › BU, idade); abre a ficha com revisão OK/Ajustar por seção, comentários por seção e decisão Aprovar/Devolver/Negar (RN-06, RN-08, RN-09, RN-12) | MVP |
 
 ## 11. Critérios de aceite
 
@@ -325,9 +326,10 @@ Cinco telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendên
 | T01 Minhas pendências | Desenvolvida | Fila por tipo, resumo que filtra, filtros País › BU, ordenação e só paradas ou atrasadas na URL, status com ícone e rótulo, idade em dias úteis (RN-14), estados de carregando, vazio, erro, sem acesso e desatualizado | Consulta real da fila (P-12) |
 | T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
 | T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação e versão; BU na URL | Metas e pesos reais por BU (P-12) |
-| T04 Goal Card | Desenvolvida | Modo pelo grupo e pela situação (servidor): edição para contribuidores da BU (Rascunho e Em revisão), análise para o grupo de aprovação (Em aprovação, respeitando a RN-12) e leitura para os demais; ficha única no modelo VBM "CARD" (rótulo à esquerda, valor ao centro, revisão e comentários à direita), com seletor das metas da BU na mesma página; campos do desdobramento e texto padrão do ciclo com cadeado, campos da BU abertos com obrigatório (*); fórmula de cálculo em uma linha; régua Mín./Meta/Exc. e direção da meta; linha do tempo do card; campos obrigatórios marcados com * e Submeter bloqueado até preenchê-los (cliente e servidor); revisão OK/Ajustar por seção, decisão Aprovar/Devolver/Negar com RN-08 e RN-09 e confirmação no segundo clique (`alertdialog`); comentários por seção; rascunho salvo no navegador; escritas validadas e simuladas | Gravação real (P-12) |
+| T04 Goal Card | Desenvolvida | Ficha de cadastro da meta pelos contribuidores da BU (Rascunho e Em revisão); leitura para os demais, com o motivo no rodapé; ficha única no modelo VBM "CARD" com seletor das metas da BU na mesma página; campos do desdobramento e texto padrão do ciclo com cadeado; campos da BU com placeholder, \* de obrigatório e borda âmbar enquanto vazios; fórmula de cálculo em uma linha; régua Mín./Meta/Exc. e direção da meta; Salvar rascunho e Submeter (bloqueado sem os obrigatórios, cliente e servidor) no rodapé; comentários em pop-up só de leitura; linha do tempo do card; sem decisão nem painel lateral; escritas validadas e simuladas | Gravação real (P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
 | T05, T06, T07, T08, T11 | Em construção | Endereço no menu do topo (cada perfil vê só as suas) | Modelo de dados (P-12) |
+| T14 Aprovações | Não iniciada | Item "Aprovações" no menu do grupo de aprovação; links de decisão da T01 e da T02 já apontam para ela; regra de decisão validada no servidor (`POST /goal-card/decisao`) | Layout da fila e da análise |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |
 
 Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 ainda mostram dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos; passam a nível único e aos grupos contribuidores, aprovadores e consulta na próxima entrega. **Ajuste pendente pelas regras de 17/11:** leitura aberta a todos (hoje a API filtra por BU e o Painel é só do P&CI/COO), sem o alerta de pendência parada (antiga RN-14) e sem o alerta de soma dos pesos na T03 (RN-16 passa a ser validação na gravação). Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.

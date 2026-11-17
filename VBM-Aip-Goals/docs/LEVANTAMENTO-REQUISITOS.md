@@ -50,6 +50,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-10 | Três grupos de acesso: contribuidores (preenchem e submetem os Goal Cards da BU), aprovadores (decidem) e consulta (só leitura); o administrador do ciclo configura os grupos | 17/11/2026 |
 | D-11 | Todos os usuários visualizam todos os dados de todas as BUs; a edição cabe só aos contribuidores da própria BU, conforme o cadastro no banco de dados (substitui o recorte de leitura da P-02 e encerra a P-13) | 17/11/2026 |
 | D-12 | Regras ajustadas: sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida pelo sistema, sem diferença possível (RN-16); card Aprovado pode ser reaberto dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17) | 17/11/2026 |
+| D-13 | O Goal Card (T04) é a ficha de cadastro dos contribuidores, sem decisão; a aprovação acontece numa tela própria (T14 Aprovações) com todas as fichas em aprovação; no Goal Card, os comentários aparecem em pop-up só de leitura | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 

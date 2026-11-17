@@ -32,10 +32,10 @@
  *                      Cada célula da matriz traz peso e a situação do Goal Card da BU naquela meta.
  *   GET  /goal-card?card=   T04 — Goal Card (leitura aberta a todos, AC-05/AC-07):
  *                      { card, bu, meta, estado, versao, secoes, obrigatorios[], comentarios[], linha[], modo, permissoes }
- *                      `modo` sai do grupo do usuário e da situação: edicao (contribuidor da BU, Rascunho/Em revisão),
- *                      analise (aprovador, Em aprovação, sem ter editado o card — RN-12) ou leitura.
+ *                      `modo` sai do grupo do usuário e da situação: edicao (contribuidor da BU, Rascunho/Em revisão)
+ *                      ou leitura. A T04 não tem decisão: ela fica na fila de aprovação (T14).
  *   POST /goal-card/submeter  { card, secoes }   campos obrigatórios no servidor (RN-03); só contribuidor da BU (AC-04)
- *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12
+ *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12 (usada pela fila de aprovação, T14)
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
@@ -180,12 +180,15 @@ function validarDecisao({ decisao, comentario, revisao } = {}) {
   return erros;
 }
 
-function modoDoCard(card, papeis, nomeUsuario) {
-  const contrib = contribuidorDe(papeis, card.bu.sigla), aprov = ehAprovador(papeis);
-  const editou = contrib && (card.editores || []).includes(nomeUsuario);
-  if (contrib && (card.estado === 'rascunho' || card.estado === 'em_revisao')) return 'edicao';
-  if (aprov && card.estado === 'em_aprovacao' && !editou) return 'analise';
-  return 'leitura';
+// T04 é a ficha dos contribuidores: edição (contribuidor da BU, Rascunho ou Em revisão) ou leitura (demais casos).
+// A decisão do grupo de aprovação acontece em outra tela (fila de aprovação, T14).
+function modoDoCard(card, papeis) {
+  return contribuidorDe(papeis, card.bu.sigla) && (card.estado === 'rascunho' || card.estado === 'em_revisao') ? 'edicao' : 'leitura';
+}
+// Quem pode decidir (fila de aprovação): grupo de aprovação, card Em aprovação, sem ter editado ou submetido o card (RN-12)
+function podeDecidir(card, papeis, nomeUsuario) {
+  const editou = contribuidorDe(papeis, card.bu.sigla) && (card.editores || []).includes(nomeUsuario);
+  return ehAprovador(papeis) && card.estado === 'em_aprovacao' && !editou;
 }
 
 // Linha do tempo do card: rascunho → submissão (vN) → decisão
@@ -334,11 +337,9 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       const papeis = papeisDe(email, hoje);
       if (!papeis.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
       const card = lerCard(req, res, hoje); if (!card) return;
-      const modo = modoDoCard(card, papeis, nomeDe(email));
-      const contrib = contribuidorDe(papeis, card.bu.sigla);
+      const modo = modoDoCard(card, papeis);
       res.json({ ...card, modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
-        permissoes: { editar: modo === 'edicao', decidir: modo === 'analise', comentar: contrib || ehAprovador(papeis),
-          recolher: contrib && card.estado === 'em_aprovacao', bloqueioRN12: ehAprovador(papeis) && card.estado === 'em_aprovacao' && modo !== 'analise' },
+        permissoes: { editar: modo === 'edicao' },
         parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
     } catch (err) {
       console.error(`${TAG} /goal-card:`, err.message);
@@ -372,7 +373,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       const card = lerCard(req, res, hoje); if (!card) return;
       if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Decisão restrita ao grupo de aprovação.', codigo: 'SEM_ACESSO' });
       if (card.estado !== 'em_aprovacao') return res.status(409).json({ error: 'O card não está em aprovação.', codigo: 'ESTADO' });
-      if (modoDoCard(card, papeis, nomeDe(email)) !== 'analise') return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
+      if (!podeDecidir(card, papeis, nomeDe(email))) return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
       const erros = validarDecisao(req.body);
       if (erros.length) return res.status(400).json({ error: 'Decisão incompleta.', codigo: 'VALIDACAO', erros });
       const estado = { aprovar: 'aprovado', devolver: 'em_revisao', negar: 'negado' }[req.body.decisao];
@@ -386,4 +387,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, linhaDoCard, ehAprovador, contribuidorDe, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };

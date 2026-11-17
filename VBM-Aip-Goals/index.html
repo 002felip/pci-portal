@@ -1075,6 +1075,16 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .gc-f-envio-txt { display: flex; flex-direction: column; gap: 0.25rem; }
 .gc-f-envio-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 0.625rem; margin-left: auto; }
 .gc-f-envio .gc-confirma { max-width: 26rem; }
+/* Campos para preencher: fundo de campo e borda visíveis; o obrigatório vazio ganha a borda âmbar */
+.gc-f-linha.is-edita .gc-in { border-color: color-mix(in srgb, var(--accent-strong) 30%, var(--ctl-border)); }
+.gc-f-linha.is-edita .gc-in::placeholder { color: var(--text-faint); font-style: italic; }
+.gc-f-linha.is-edita .gc-in[aria-required="true"]:placeholder-shown { border-color: var(--wait-line); }
+/* Pop-up de comentários (somente leitura) */
+.gc-dlg { width: min(34rem, calc(100vw - 2rem)); max-height: min(70vh, 40rem); padding: 1.125rem 1.25rem 1.25rem; border-radius: 1rem; border: 1px solid var(--card-line); background: var(--card-bg); color: var(--text); box-shadow: var(--ab-sombra); }
+.gc-dlg::backdrop { background: color-mix(in srgb, var(--ink-strong) 35%, transparent); }
+.gc-dlg-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.875rem; }
+.gc-dlg-tit { margin: 0; font: italic 500 1.05rem var(--font-display); color: var(--text); }
+.gc-dlg .gc-com-lista { margin: 0; overflow-y: auto; }
 /* Painel lateral */
 .gc-lado { position: sticky; top: calc(var(--barra) + 1rem); }
 .gc-painel { display: flex; flex-direction: column; gap: 0.625rem; padding: 1rem 1.125rem; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
@@ -1206,6 +1216,7 @@ p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
     <a class="topnav-menu-link" href="#pendencias" data-tela="pendencias" data-perfis="todos"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="topnav-menu-cont" id="navCont" hidden></span></a>
     <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
     <a class="topnav-menu-link" href="#desdobramento" data-tela="desdobramento" data-perfis="todos"><span data-i18n="nav.desdobramento">Desdobramento</span></a>
+    <a class="topnav-menu-link" href="#aprovacoes" data-tela="aprovacoes" data-perfis="pci_coo admin aprovador" hidden><span data-i18n="nav.aprovacoes">Aprovações</span></a>
     <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
     <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
     <a class="topnav-menu-link" href="#acoes" data-tela="acoes" data-perfis="todos"><span data-i18n="nav.acoes">Ações</span></a>
@@ -1701,6 +1712,13 @@ p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
       <aside class="gc-lado" id="gcLado" aria-live="polite"></aside>
     </div>
 
+    <!-- Comentários do campo: pop-up só de leitura -->
+    <dialog class="gc-dlg" id="gcDlg" aria-labelledby="gcDlgTit">
+      <div class="gc-dlg-cab"><h3 class="gc-dlg-tit" id="gcDlgTit"></h3>
+        <button type="button" class="dash-acao" id="gcDlgFechar" aria-label="Fechar" title="Fechar" data-i18n-aria="gc.fechar" data-i18n-title="gc.fechar"><span aria-hidden="true">✕</span></button></div>
+      <ul class="gc-com-lista" id="gcDlgLista"></ul>
+    </dialog>
+
     <div class="estado estado-erro" id="gcErro" hidden>
       <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
       <p class="estado-tit" data-i18n="gc.erroTit">Não foi possível carregar o Goal Card</p>
@@ -1975,7 +1993,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
       'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
       'est.voltar': 'Voltar para o início',
-      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Obrigatório", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.obrigatorios': "Campos obrigatórios", 'gc.deObrig': "de {t} preenchidos", 'gc.faltam': "Falta preencher:", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os campos obrigatórios preenchidos.", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.obrigatorios': "Há campos obrigatórios sem preencher.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU; decisão só pelo grupo de aprovação.", 'gc.selo.desdobramento': 'Desdobramento', 'gc.selo.ciclo': 'Padrão do ciclo', 'gc.polaridade': 'Direção da meta', 'gc.leg.travado': 'Vem do desdobramento ou do ciclo (somente leitura)', 'gc.leg.bu': 'Preenchido pela BU', 'gc.leg.obrig': 'obrigatório', 'gc.meta': 'Meta:', 'gc.ant': 'Meta anterior', 'gc.prox': 'Próxima meta', 'gc.acao.salvar': 'Salvar rascunho', 'gc.salvoToast': 'Rascunho salvo neste navegador (simulação, nada foi gravado)', 'gc.voce': "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)",
+      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Obrigatório", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.obrigatorios': "Campos obrigatórios", 'gc.deObrig': "de {t} preenchidos", 'gc.faltam': "Falta preencher:", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os campos obrigatórios preenchidos.", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.obrigatorios': "Há campos obrigatórios sem preencher.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU; decisão só pelo grupo de aprovação.", 'gc.selo.desdobramento': 'Desdobramento', 'gc.selo.ciclo': 'Padrão do ciclo', 'gc.polaridade': 'Direção da meta', 'gc.leg.travado': 'Vem do desdobramento ou do ciclo (somente leitura)', 'gc.leg.bu': 'Preenchido pela BU', 'gc.leg.obrig': 'obrigatório', 'gc.meta': 'Meta:', 'gc.ant': 'Meta anterior', 'gc.prox': 'Próxima meta', 'gc.acao.salvar': 'Salvar rascunho', 'gc.salvoToast': 'Rascunho salvo neste navegador (simulação, nada foi gravado)', 'gc.verComs': '{n} comentário(s) em {s} — ver', 'gc.comsDe': 'Comentários · {s}', 'gc.fechar': 'Fechar', 'gc.leitura.rascunho': 'Rascunho: só os contribuidores da BU editam.', 'gc.leitura.em_revisao': 'Devolvido para ajuste: só os contribuidores da BU editam.', 'gc.leitura.em_aprovacao': 'Em aprovação: a decisão é feita pelo grupo de aprovação, na fila de aprovação.', 'gc.leitura.aprovado': 'Versão oficial: travada (reabertura só na janela inicial do ciclo, RN-17).', 'gc.leitura.negado': 'Meta negada: só o administrador reabre.', 'gc.ph.ruler.min': 'Mín.', 'gc.ph.ruler.meta': 'Meta', 'gc.ph.ruler.exc': 'Exc.', 'gc.ph.objective': 'Descreva o que a meta quer alcançar', 'gc.ph.formula': 'Ex.: produção realizada ÷ produção orçada', 'gc.ph.area.area': 'Área responsável', 'gc.ph.area.responsavel': 'Nome do responsável', 'gc.ph.evidence': 'Documento ou relatório que comprova o resultado', 'gc.ph.exceptions.bu': 'Exceções específicas da BU (opcional)', 'nav.aprovacoes': 'Aprovações', 'tela.aprovacoes': 'Aprovações', "gc.voce": "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)",
       'nav.desdobramento': 'Desdobramento', 'tela.desdobramento': 'Desdobramento', 'ini.dDesd': 'Do scorecard do COO às metas e pesos de cada Business Unit.',
       'dd.titulo': 'Desdobramento', 'dd.nivel1': 'Scorecard do COO', 'dd.atualizar': 'Atualizar desdobramento', 'dd.matriz': 'Desdobramento para as Business Units',
       'dd.exemplo': 'Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada',
@@ -2070,7 +2088,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
       'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
       'est.voltar': 'Back to home',
-      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Required", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.obrigatorios': "Required fields", 'gc.deObrig': "of {t} filled in", 'gc.faltam': "Still to fill in:", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every required field is filled in.", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.obrigatorios': "There are required fields not filled in.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors edit; only the approval group decides.", 'gc.selo.desdobramento': 'Cascade', 'gc.selo.ciclo': 'Cycle standard', 'gc.polaridade': 'Goal direction', 'gc.leg.travado': 'Comes from the cascade or the cycle (read only)', 'gc.leg.bu': 'Filled in by the BU', 'gc.leg.obrig': 'required', 'gc.meta': 'Goal:', 'gc.ant': 'Previous goal', 'gc.prox': 'Next goal', 'gc.acao.salvar': 'Save draft', 'gc.salvoToast': 'Draft saved in this browser (simulation, nothing saved)', 'gc.voce': "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)",
+      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Required", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.obrigatorios': "Required fields", 'gc.deObrig': "of {t} filled in", 'gc.faltam': "Still to fill in:", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every required field is filled in.", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.obrigatorios': "There are required fields not filled in.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors edit; only the approval group decides.", 'gc.selo.desdobramento': 'Cascade', 'gc.selo.ciclo': 'Cycle standard', 'gc.polaridade': 'Goal direction', 'gc.leg.travado': 'Comes from the cascade or the cycle (read only)', 'gc.leg.bu': 'Filled in by the BU', 'gc.leg.obrig': 'required', 'gc.meta': 'Goal:', 'gc.ant': 'Previous goal', 'gc.prox': 'Next goal', 'gc.acao.salvar': 'Save draft', 'gc.salvoToast': 'Draft saved in this browser (simulation, nothing saved)', 'gc.verComs': '{n} comment(s) on {s} — view', 'gc.comsDe': 'Comments · {s}', 'gc.fechar': 'Close', 'gc.leitura.rascunho': 'Draft: only the BU contributors edit.', 'gc.leitura.em_revisao': 'Returned for changes: only the BU contributors edit.', 'gc.leitura.em_aprovacao': 'Pending approval: the approval group decides in the approval queue.', 'gc.leitura.aprovado': 'Official version: locked (reopening only in the initial cycle window, RN-17).', 'gc.leitura.negado': 'Goal denied: only the administrator reopens.', 'gc.ph.ruler.min': 'Min', 'gc.ph.ruler.meta': 'Target', 'gc.ph.ruler.exc': 'Exc.', 'gc.ph.objective': 'Describe what the goal aims to achieve', 'gc.ph.formula': 'E.g. actual production ÷ budgeted production', 'gc.ph.area.area': 'Responsible area', 'gc.ph.area.responsavel': 'Owner name', 'gc.ph.evidence': 'Document or report that proves the result', 'gc.ph.exceptions.bu': 'BU-specific exceptions (optional)', 'nav.aprovacoes': 'Approvals', 'tela.aprovacoes': 'Approvals', "gc.voce": "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)",
       'nav.desdobramento': 'Cascade', 'tela.desdobramento': 'Goal cascade', 'ini.dDesd': 'From the COO scorecard to the goals and weights of each Business Unit.',
       'dd.titulo': 'Goal cascade', 'dd.nivel1': 'COO scorecard', 'dd.atualizar': 'Refresh cascade', 'dd.matriz': 'Cascade to the Business Units',
       'dd.exemplo': 'Sample data — structure from the 2027 reference material (draft); card status simulated',
@@ -2302,7 +2320,8 @@ window.VBMSetup = (function () {
     // Vistas pelo hash: o link abre a tela exata (card, seção ou ação) — §6.4
     if (it.tipo === 'acao') return '#acoes?acao=' + encodeURIComponent(it.id);
     var q = 'card=' + encodeURIComponent(it.card) + (it.secao ? '&secao=' + encodeURIComponent(it.secao) : '');
-    return '#goal-card?' + q + (it.tipo === 'decidir' ? '&modo=analise' : it.tipo === 'preencher' ? '&modo=edicao' : '');
+    if (it.tipo === 'decidir') return '#aprovacoes?card=' + encodeURIComponent(it.card);
+    return '#goal-card?' + q;
   }
   function itemHtml(it) {
     var rotTipo = S.t('tipo.' + it.tipo);
@@ -2523,7 +2542,7 @@ window.VBMSetup = (function () {
     $('p2ParadosCont').textContent = S.fmt(t.paradas || 0, 0); $('p2ParadosCont').hidden = !t.paradas;
     $('p2ParadosVazio').hidden = par.length > 0;
     $('p2Parados').innerHTML = par.map(function (cd) {
-      var link = '#goal-card?card=' + encodeURIComponent(cd.card) + '&modo=analise';
+      var link = '#aprovacoes?card=' + encodeURIComponent(cd.card); // decisão na fila de aprovação (T14)
       return '<li class="p2-parado"><div><p class="p2-parado-tit"><span class="num">#' + esc(cd.meta.numero) + '</span> ' + esc(cd.meta.titulo) + '</p>' +
         '<p class="p2-parado-det"><b>' + esc(cd.bu.sigla) + '</b> · ' + esc(cd.card) + ' · ' + esc(S.t('nivel', { a: S.fmt(cd.nivel.atual, 0), t: S.fmt(cd.nivel.total, 0), n: cd.nivel.nome })) + '</p></div>' +
         '<div class="p2-parado-dir"><span class="chip-parada">' + ico('i-clock') + esc(S.t(cd.diasUteis === 1 ? 'p2.dia' : 'p2.dias', { n: S.fmt(cd.diasUteis, 0) })) + '</span>' +
@@ -2706,7 +2725,7 @@ window.VBMSetup = (function () {
     $('m3Legenda').innerHTML = '';
     $('m3Linhas').innerHTML = (d.metas || []).map(function (m) {
       var nivel = m.nivel ? S.t('nivel', { a: S.fmt(m.nivel.atual, 0), t: S.fmt(m.nivel.total, 0), n: m.nivel.nome }) : '—';
-      var link = '#goal-card?card=' + encodeURIComponent(m.card) + (m.estado === 'em_aprovacao' ? '&modo=analise' : '');
+      var link = '#goal-card?card=' + encodeURIComponent(m.card);
       return '<tr>' +
         '<td class="num">' + esc(m.meta.numero) + '</td>' +
         '<td><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></td>' +
@@ -2886,7 +2905,7 @@ window.VBMSetup = (function () {
 
   // ═══ T04 · Goal Card ═══
   // Dados: GET api/goal-card?card=. O servidor decide o modo pelo grupo do usuário e pela situação do card:
-  // edicao (contribuidores da BU), analise (grupo de aprovação, nível único) ou leitura (todos os demais).
+  // edicao (contribuidores da BU) ou leitura (todos os demais). A decisão fica na fila de aprovação (T14).
   // A pré-checagem roda aqui e no servidor; as escritas são validadas no servidor e simuladas até o P-12.
   var GC_SECOES = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
   var GC_NOMES = { objective: 'Objective / Goal', formula: 'Calculation Formula', unit: 'Unit of Measurement', ruler: 'Ruler', area: 'Area Responsible', evidence: 'Evidence', exceptions: 'Exceptions and Considerations' };
@@ -2895,7 +2914,6 @@ window.VBMSetup = (function () {
   function gcLerParams() {
     var q = new URLSearchParams((location.hash.split('?')[1]) || '');
     gc.card = q.get('card') || ''; gc.secao = q.get('secao') || '';
-    if (gc.secao) gc.abertos[gc.secao] = true;
   }
   function gcEstado(qual) {
     $('gcCorpo').hidden = qual !== 'ok'; $('gcErro').hidden = qual !== 'erro'; $('gcSemAcesso').hidden = qual !== 'acesso';
@@ -2951,14 +2969,14 @@ window.VBMSetup = (function () {
     $('gcVoltar').href = '#metas?bu=' + encodeURIComponent(d.bu.sigla);
     $('gcVoltarTxt').textContent = S.t('gc.voltar', { b: d.bu.sigla });
     var modo = d.modo;
-    $('gcModo').innerHTML = ico(modo === 'edicao' ? 'i-pen' : modo === 'analise' ? 'i-decide' : 'i-lock') + '<span>' + esc(S.t('gc.modo.' + modo)) + '</span>';
+    $('gcModo').innerHTML = ico(modo === 'edicao' ? 'i-pen' : 'i-lock') + '<span>' + esc(S.t('gc.modo.' + modo)) + '</span>';
     $('gcExemplo').hidden = !d.exemplo;
     gcRenderLinha(d);
     var pre = gcObrigatorios(gc.edit);
     $('gcSecoes').innerHTML = gcFicha(d, pre);
     gcRenderSeletor(d);
     gcRenderLado();
-    if (gc.secao) { var alvo = document.getElementById('gcSec-' + gc.secao); gc.secao = ''; if (alvo) setTimeout(function () { alvo.scrollIntoView({ block: 'start' }); }, 50); }
+    if (gc.secao) { var sec = gc.secao, alvo = document.getElementById('gcSec-' + sec); gc.secao = ''; if (alvo) setTimeout(function () { alvo.scrollIntoView({ block: 'center' }); gcAbrirComentarios(sec); }, 50); }
   }
   function gcRenderLinha(d) {
     $('gcLinha').innerHTML = (d.linha || []).map(function (e) {
@@ -2981,31 +2999,31 @@ window.VBMSetup = (function () {
       '<span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' + pol + '</div></div><div class="gc-f-acoes"></div></div>';
     var leg = '<p class="gc-legenda"><span>' + ico('i-lock') + esc(S.t('gc.leg.travado')) + '</span><span><i class="gc-leg-campo" aria-hidden="true"></i>' + esc(S.t('gc.leg.bu')) + '</span><span><b class="gc-obrig">*</b> ' + esc(S.t('gc.leg.obrig')) + '</span></p>';
     // Na edição, Salvar rascunho e Submeter ficam no rodapé da ficha (sem painel lateral)
-    var envio = d.modo === 'edicao' ? '<div class="gc-f-envio" id="gcEnvio" aria-live="polite"></div>' : '';
+    var envio = '<div class="gc-f-envio" id="gcEnvio" aria-live="polite"></div>';
     return '<section class="gc-ficha" aria-label="Goal Card">' + cab + GC_SECOES.map(function (id, i) { return gcSecaoHtml(d, id, i, pre); }).join('') + envio + leg + '</section>';
   }
   function gcSecaoHtml(d, id, i, pre) {
-    var edita = d.modo === 'edicao', analisa = d.modo === 'analise';
+    var edita = d.modo === 'edicao';
     var coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
     var ajustar = (d.ajustar || []).indexOf(id) >= 0, alterada = d.alteradasDesde && d.alteradasDesde.secoes.indexOf(id) >= 0;
-    var ok = gcSecaoOk(id, pre), rev = gc.revisao[id] || '';
+    var ok = gcSecaoOk(id, pre);
     var nCom = coms.reduce(function (t, k) { return t + 1 + (k.respostas || []).length; }, 0);
     var chips = (ajustar ? '<span class="chip-parada">' + ico('i-st-em_revisao') + esc(S.t('gc.ajustar')) + '</span>' : '') +
       (alterada ? '<span class="gc-chip gc-chip-info">' + esc(S.t('gc.alterada', { v: S.fmt(d.alteradasDesde.versao, 0) })) + '</span>' : '') +
       (edita ? '<span class="gc-pre is-pend"' + (ok ? ' hidden' : '') + '>' + ico('i-alert') + esc(S.t('gc.pendente')) + '</span>' : '');
-    var seg = analisa ? '<div class="seg" role="group" aria-label="' + esc(S.t('gc.revisaoAria', { s: GC_NOMES[id] })) + '">' +
-      ['ok', 'ajustar'].map(function (v) { return '<button type="button" data-rev="' + v + '" data-sec="' + id + '" aria-pressed="' + (rev === v) + '">' + esc(S.t('gc.rev.' + v)) + '</button>'; }).join('') + '</div>' : '';
-    var comBtn = '<button type="button" class="gc-com-btn' + (nCom ? ' tem' : '') + '" data-com="' + id + '" aria-expanded="' + !!gc.abertos[id] + '" aria-label="' + esc(nCom ? S.t(nCom === 1 ? 'gc.com1' : 'gc.coms', { n: S.fmt(nCom, 0) }) : S.t('gc.semCom')) + ' — ' + esc(GC_NOMES[id]) + '">' + ico('i-comment') + '<span>' + S.fmt(nCom, 0) + '</span></button>';
-    return '<div class="gc-f-linha' + (ajustar && edita ? ' is-ajustar' : '') + (rev ? ' is-rev-' + rev : '') + '" id="gcSec-' + id + '" role="group" aria-labelledby="gcSecTit-' + id + '">' +
+    // Comentários: só aparece quando existe algum; o clique abre um pop-up com as mensagens (somente leitura)
+    var comBtn = nCom ? '<button type="button" class="gc-com-btn tem" data-com="' + id + '" aria-haspopup="dialog" aria-label="' + esc(S.t('gc.verComs', { n: S.fmt(nCom, 0), s: GC_NOMES[id] })) + '">' + ico('i-comment') + '<span>' + S.fmt(nCom, 0) + '</span></button>' : '';
+    return '<div class="gc-f-linha' + (ajustar && edita ? ' is-ajustar' : '') + (edita ? ' is-edita' : '') + '" id="gcSec-' + id + '" role="group" aria-labelledby="gcSecTit-' + id + '">' +
       '<div class="gc-f-rot"><span class="gc-f-nome" id="gcSecTit-' + id + '">' + esc(GC_NOMES[id]) + (GC_OBRIGATORIOS.indexOf(id) >= 0 && edita ? '<b class="gc-obrig" aria-hidden="true">*</b>' : '') + '</span>' +
       (id === 'exceptions' ? gcSelo('ciclo') : '') + '<span class="chips">' + chips + '</span></div>' +
       '<div class="gc-f-val">' + gcConteudo(d, id, edita) + '</div>' +
-      '<div class="gc-f-acoes">' + seg + comBtn + '</div>' +
-      (gc.abertos[id] ? gcComentarios(d, id, coms) : '') + '</div>';
+      '<div class="gc-f-acoes">' + comBtn + '</div></div>';
   }
   function gcCampo(id, valor, rot, tipo) {
-    return tipo === 'area' ? '<textarea class="gc-in" data-campo="' + id + '" rows="3" aria-label="' + esc(rot) + '">' + esc(valor || '') + '</textarea>'
-      : '<input class="gc-in" data-campo="' + id + '" value="' + esc(valor == null ? '' : valor) + '" aria-label="' + esc(rot) + '"' + (tipo ? ' type="' + tipo + '"' : '') + '>';
+    var ph = S.t('gc.ph.' + id) !== 'gc.ph.' + id ? ' placeholder="' + esc(S.t('gc.ph.' + id)) + '"' : '';
+    var obrig = GC_OBRIGATORIOS.indexOf(id.split('.')[0]) >= 0 && id !== 'exceptions.bu' ? ' aria-required="true"' : '';
+    return tipo === 'area' ? '<textarea class="gc-in" data-campo="' + id + '" rows="3" aria-label="' + esc(rot) + '"' + ph + obrig + '>' + esc(valor || '') + '</textarea>'
+      : '<input class="gc-in" data-campo="' + id + '" value="' + esc(valor == null ? '' : valor) + '" aria-label="' + esc(rot) + '"' + ph + obrig + (tipo ? ' type="' + tipo + '"' : '') + '>';
   }
   function gcConteudo(d, id, edita) {
     var s = gc.edit, m = d.meta, nome = GC_NOMES[id];
@@ -3032,50 +3050,38 @@ window.VBMSetup = (function () {
     return '<p class="gc-padrao"><span class="gc-rot">' + esc(S.t('gc.textoPadrao')) + '</span>' + esc(e.padrao || '') + '</p>' +
       '<span class="gc-rot">' + esc(S.t('gc.excecoesBu')) + '</span>' + (edita ? gcCampo('exceptions.bu', e.bu, S.t('gc.excecoesBu'), 'area') : texto(e.bu));
   }
-  function gcComentarios(d, id, coms) {
+  function gcAbrirComentarios(id) {
+    var d = gc.dados, coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
+    if (!coms.length) return;
     var item = function (k) { return '<li><p class="gc-com-cab"><b>' + esc(k.autor) + '</b> · ' + esc(S.t('gc.papel.' + k.papel)) + ' · ' + esc(dataCurta(k.quando)) + '</p><p class="gc-com-txt">' + esc(k.texto) + '</p>' +
       ((k.respostas || []).length ? '<ul class="gc-com-resp">' + k.respostas.map(item).join('') + '</ul>' : '') + '</li>'; };
-    return '<div class="gc-coms">' + (coms.length ? '<ul class="gc-com-lista">' + coms.map(item).join('') + '</ul>' : '') +
-      (d.permissoes.comentar ? '<div class="gc-com-novo"><textarea class="gc-in" rows="2" data-novo-com="' + id + '" aria-label="' + esc(S.t('gc.novoCom')) + '" placeholder="' + esc(S.t('gc.novoCom')) + '"></textarea>' +
-        '<button type="button" class="btn btn-sec" data-publicar="' + id + '">' + esc(S.t('gc.publicar')) + '</button></div>' : '<p class="gc-vazio">' + esc(S.t('gc.semPermCom')) + '</p>') + '</div>';
+    $('gcDlgTit').textContent = S.t('gc.comsDe', { s: GC_NOMES[id] });
+    $('gcDlgLista').innerHTML = coms.map(item).join('');
+    var dlg = $('gcDlg'); gc.dlgOrigem = document.activeElement;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    $('gcDlgFechar').focus();
   }
-  // Painel lateral: pré-checagem (edição), decisão (análise) ou resumo (leitura)
+  function gcFecharComentarios() {
+    var dlg = $('gcDlg'); if (dlg.close) dlg.close(); else dlg.removeAttribute('open');
+  }
+  $('gcDlgFechar').addEventListener('click', gcFecharComentarios);
+  $('gcDlg').addEventListener('click', function (e) { if (e.target === this) gcFecharComentarios(); }); // clique fora fecha
+  $('gcDlg').addEventListener('close', function () { if (gc.dlgOrigem && gc.dlgOrigem.focus) gc.dlgOrigem.focus(); });
+  // Sem painel lateral: o rodapé da ficha tem o envio (edição) ou o motivo da leitura
   function gcRenderLado() {
-    var d = gc.dados, html = '';
-    var unica = d.modo === 'edicao';
-    $('gcLado').hidden = unica; $('gcCorpo').classList.toggle('is-unica', unica);
-    if (unica) {
+    var d = gc.dados, alvo = $('gcEnvio');
+    $('gcLado').hidden = true; $('gcLado').innerHTML = ''; $('gcCorpo').classList.add('is-unica');
+    if (!alvo) return;
+    if (d.modo === 'edicao') {
       var obr = gcObrigatorios(gc.edit), tudo = obr.every(function (x) { return x.ok; });
-      $('gcLado').innerHTML = '';
-      var alvo = $('gcEnvio'); if (!alvo) return;
       alvo.innerHTML = '<div class="gc-f-envio-txt"><p class="gc-salvo">' + esc(gc.salvo ? S.t('gc.salvoLocal', { h: gc.salvo === 'local' ? '' : gc.salvo }) : S.t('gc.semAlteracao')) + '</p>' +
         (tudo ? '' : '<p class="gc-dica">' + ico('i-alert') + esc(S.t('gc.submeterDica')) + '</p>') + (gc.erros.indexOf('obrigatorios') >= 0 ? '<p class="gc-erro" role="alert">' + ico('i-alert') + esc(S.t('gc.erro.obrigatorios')) + '</p>' : '') + '</div>' +
         '<div class="gc-f-envio-acoes">' + gcBotoes([{ id: 'salvar', cls: 'btn btn-sec' }, { id: 'submeter', cls: 'btn', off: !tudo }]) + '</div>';
-      return;
-    } else if (d.modo === 'analise') {
-      var rev = GC_SECOES.map(function (id) { return gc.revisao[id] || ''; });
-      var nOkR = rev.filter(function (v) { return v === 'ok'; }).length, nAj = rev.filter(function (v) { return v === 'ajustar'; }).length;
-      var err = function (k) { return gc.erros.indexOf(k) >= 0 ? '<p class="gc-erro" role="alert">' + ico('i-alert') + esc(S.t('gc.erro.' + k, { n: S.fmt(d.parametros.minComentario, 0) })) + '</p>' : ''; };
-      html = '<section class="gc-painel"><h3 class="gc-painel-tit">' + esc(S.t('gc.decisao')) + '</h3>' +
-        '<p class="gc-painel-sub">' + esc(S.t('gc.decisaoSub')) + '</p>' +
-        '<ul class="gc-rev-resumo"><li><b>' + S.fmt(nOkR, 0) + '</b> OK</li><li><b>' + S.fmt(nAj, 0) + '</b> ' + esc(S.t('gc.rev.ajustar')) + '</li><li><b>' + S.fmt(7 - nOkR - nAj, 0) + '</b> ' + esc(S.t('gc.semAnalise')) + '</li></ul>' +
-        (d.alteradasDesde ? '<p class="gc-dica">' + ico('i-history') + esc(S.t('gc.alteradasResumo', { v: S.fmt(d.alteradasDesde.versao, 0), l: d.alteradasDesde.secoes.map(function (x) { return GC_NOMES[x]; }).join(', ') })) + '</p>' : '') +
-        '<label class="gc-rot" for="gcComentario">' + esc(S.t('gc.comentario')) + '</label><textarea class="gc-in" id="gcComentario" rows="4">' + esc(gc.comentario || '') + '</textarea>' +
-        '<span class="gc-cont" id="gcComCont">' + esc(S.t('gc.minimo', { n: S.fmt(d.parametros.minComentario, 0) })) + '</span>' + err('comentario') + err('secaoAjustar') +
-        gcBotoes([{ id: 'aprovar', cls: 'btn' }, { id: 'devolver', cls: 'btn btn-sec' }, { id: 'negar', cls: 'btn btn-sec' }]) + '</section>';
     } else {
-      html = '<section class="gc-painel"><h3 class="gc-painel-tit">' + esc(S.t('gc.resumo')) + '</h3>' +
-        '<span class="pill-info">' + ico('i-lock') + '<span>' + esc(S.t('gc.somenteLeitura')) + '</span></span>' +
-        '<dl class="gc-dl"><dt>' + esc(S.t('col.situacao')) + '</dt><dd><span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span></dd>' +
-        '<dt>' + esc(S.t('lbl.versao')) + '</dt><dd>' + (d.versao ? esc(S.t('versao', { n: S.fmt(d.versao, 0) })) : '—') + '</dd>' +
-        '<dt>' + esc(S.t('gc.submetidoPor')) + '</dt><dd>' + esc(d.submetidoPor || '—') + '</dd>' +
-        '<dt>' + esc(S.t('m3.colDesde')) + '</dt><dd>' + esc(dataCurta(d.desde)) + '</dd></dl>' +
-        (d.permissoes.bloqueioRN12 ? '<p class="gc-dica">' + ico('i-alert') + esc(S.t('gc.rn12')) + '</p>' : '') +
-        '<p class="gc-dica">' + esc(S.t('gc.leituraDica')) + '</p></section>';
+      alvo.innerHTML = '<div class="gc-f-envio-txt"><span class="pill-info">' + ico('i-lock') + '<span>' + esc(S.t('gc.somenteLeitura')) + '</span></span>' +
+        '<p class="gc-dica">' + esc(S.t('gc.leitura.' + d.estado)) + '</p></div>';
     }
-    $('gcLado').innerHTML = html;
   }
-  // Ações irreversíveis: confirmação no segundo clique, em caixa role="alertdialog" (§8)
   function gcBotoes(lista) {
     var conf = gc.confirma;
     return '<div class="gc-acoes">' + lista.map(function (b) {
@@ -3086,9 +3092,9 @@ window.VBMSetup = (function () {
   }
   function gcEnviar(acao) {
     var d = gc.dados, corpo = { card: d.card };
-    if (acao === 'submeter') { corpo.secoes = gc.edit; } else { corpo.decisao = acao; corpo.comentario = gc.comentario || ''; corpo.revisao = gc.revisao; }
+    corpo.secoes = gc.edit; // a T04 só submete; a decisão fica na fila de aprovação (T14)
     gc.enviando = true; gcRenderLado();
-    return fetch('api/goal-card/' + (acao === 'submeter' ? 'submeter' : 'decisao'), { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'same-origin', body: JSON.stringify(corpo) })
+    return fetch('api/goal-card/submeter', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'same-origin', body: JSON.stringify(corpo) })
       .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }); })
       .then(function (x) {
         gc.enviando = false; gc.confirma = '';
@@ -3127,15 +3133,8 @@ window.VBMSetup = (function () {
   });
   $('gcSecoes').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || !gc.dados) return;
-    if (b.hasAttribute('data-rev')) { var sec = b.getAttribute('data-sec'), v = b.getAttribute('data-rev'); gc.revisao[sec] = gc.revisao[sec] === v ? '' : v; gc.erros = []; gcRender(); return; }
     if (b.hasAttribute('data-unid')) { gc.edit.unit = b.getAttribute('data-unid'); gcRender(); gcSalvarLocal(); return; }
-    if (b.hasAttribute('data-com')) { var id = b.getAttribute('data-com'); gc.abertos[id] = !gc.abertos[id]; gcRender(); var t = document.querySelector('[data-novo-com="' + id + '"]'); if (t && gc.abertos[id]) t.focus(); return; }
-    if (b.hasAttribute('data-publicar')) {
-      var sid = b.getAttribute('data-publicar'), ta = document.querySelector('[data-novo-com="' + sid + '"]'), txt = ta ? ta.value.trim() : '';
-      if (!txt) { if (ta) ta.focus(); return; }
-      gc.dados.comentarios.push({ id: 'novo-' + Date.now(), secao: sid, autor: S.t('gc.voce'), papel: gc.dados.modo === 'analise' ? 'aprovador' : 'contribuidor', quando: new Date().toISOString().slice(0, 10), texto: txt, respostas: [] });
-      toast(S.t('gc.comPublicado')); gcRender();
-    }
+    if (b.hasAttribute('data-com')) { gcAbrirComentarios(b.getAttribute('data-com')); }
   });
   $('gcLado').addEventListener('input', function (e) {
     if (e.target.id !== 'gcComentario') return;
@@ -3144,19 +3143,10 @@ window.VBMSetup = (function () {
     $('gcComCont').textContent = n >= min ? S.t('gc.caracteres', { n: S.fmt(n, 0) }) : S.t('gc.minimo', { n: S.fmt(min, 0) });
   });
   function gcCliqueAcoes(e) {
-    var ir = e.target.closest('[data-ir]');
-    if (ir) { e.preventDefault(); var campo = document.querySelector('#gcSec-' + ir.getAttribute('data-ir') + ' .gc-in, #gcSec-' + ir.getAttribute('data-ir') + ' .seg button'); var lin = document.getElementById('gcSec-' + ir.getAttribute('data-ir')); if (lin) lin.scrollIntoView({ block: 'center' }); if (campo) campo.focus({ preventScroll: true }); return; }
     var b = e.target.closest('button'); if (!b || !gc.dados) return;
     if (b.hasAttribute('data-acao')) {
       var a = b.getAttribute('data-acao');
       if (a === 'salvar') { clearTimeout(gc.timer); try { sessionStorage.setItem('aip-gc-' + gc.dados.card, JSON.stringify(gc.edit)); } catch (e2) {} var hh = new Date(); gc.salvo = String(hh.getHours()).padStart(2, '0') + ':' + String(hh.getMinutes()).padStart(2, '0'); toast(S.t('gc.salvoToast')); gcRenderLado(); return; }
-      // Antecipa no cliente as regras do servidor (RN-08, RN-09) antes de pedir a confirmação
-      if (a !== 'submeter') {
-        var txt = (gc.comentario || '').trim(), erros = [];
-        if ((a === 'devolver' || a === 'negar') && txt.length < gc.dados.parametros.minComentario) erros.push('comentario');
-        if (a === 'devolver' && GC_SECOES.every(function (id) { return gc.revisao[id] !== 'ajustar'; })) erros.push('secaoAjustar');
-        gc.erros = erros; if (erros.length) { gc.confirma = ''; gcRenderLado(); return; }
-      }
       gc.confirma = a; gcRenderLado();
       var c = document.querySelector('#vistaGoalCard [data-confirmar]'); if (c) c.focus();
       return;

@@ -107,7 +107,7 @@ Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis re
 - **Funil do ciclo:** Goal Cards → submetidos → aprovados no nível 1 → aprovados, com a perda entre etapas.
 - **Tempo em aprovação por nível:** por nível, mediana (ponto), mínimo–máximo (traço) e o limite de dias
   úteis da RN-14 (linha tracejada), com cards e paradas.
-- **Cards parados há mais tempo:** os 6 com mais dias úteis acima do limite, com link para a análise (T04).
+- **Cards parados há mais tempo:** os 6 com mais dias úteis acima do limite, com link para a fila de aprovação (T14).
 
 Toda conta sai do servidor (`agregarPainel`) a partir da mesma lista de cards, então as contagens batem com a
 lista de metas de cada BU (CA-15, coberto por teste).
@@ -127,26 +127,25 @@ só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegad
 
 ### T04 Goal Card
 
-`#goal-card?card=GC-OP-05&secao=ruler`. O servidor decide o modo pelo grupo do usuário e pela situação do card:
-**edição** (contribuidores da BU, Rascunho ou Em revisão), **análise** (grupo de aprovação, Em aprovação, sem ter
-editado o card — RN-12) ou **leitura** (todos os demais; leitura aberta, D-11).
+`#goal-card?card=GC-OP-05&secao=ruler`. Ficha de cadastro da meta pelos **contribuidores** (D-13): o servidor decide
+o modo — **edição** (contribuidores da BU, Rascunho ou Em revisão) ou **leitura** (demais casos, com o motivo no
+rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 Aprovações** (a construir).
 
-- **Topo** no padrão da T02/T03: "Goal Card" com o número da meta vazado, título, pílula de situação, código, versão,
-  peso, tipo e polaridade; linha do tempo do card (rascunho → submetido → em aprovação → decisão).
-- **Ficha única** (modelo VBM "CARD", inspirado nos três modelos de referência): rótulo à esquerda, valor ao centro,
-  revisão OK/Ajustar e contador de comentários à direita. Goal Title, peso, tipo e direção da meta (↓/↑) vêm do
-  desdobramento com cadeado; o texto padrão de exceções tem o selo "Padrão do ciclo"; os campos da BU são abertos e
-  marcados com * (obrigatório). Legenda no rodapé da ficha. Destaque de "Ajustar" por fundo âmbar, sem borda lateral.
-- **Seletor de metas da BU** na faixa de filtro (lista e setas anterior/próxima): todas as metas da BU são
-  preenchidas na mesma página.
-- **Envio na própria ficha:** na edição não há painel lateral; o rodapé da ficha tem Salvar rascunho e Submeter,
-  que só é liberado com os campos obrigatórios preenchidos (mesma regra do servidor, `camposObrigatorios`); campo
-  vazio mostra "Obrigatório". Na análise, o painel lateral tem OK/Ajustar por seção, comentário e Aprovar/Devolver/
-  Negar (RN-08, RN-09) com confirmação no segundo clique em `role="alertdialog"`; na leitura, resumo e "Somente
-  leitura" (com o aviso da RN-12 quando for o caso). Sem botão de tela cheia.
-- **Comentários por seção**, com respostas; o grupo de consulta não comenta.
-- **Escritas:** `POST /goal-card/submeter` e `/goal-card/decisao` validam no servidor (403 fora do grupo ou da BU,
-  409 fora da situação, 400 com os itens pendentes) e respondem `simulado: true` até o modelo de dados (P-12).
+- **Topo** no padrão da T02/T03: "Goal Card" com o número da meta vazado, título, pílula de situação, código e
+  versão; linha do tempo do card (rascunho → submetido → em aprovação → decisão).
+- **Ficha única** (modelo VBM "CARD"): rótulo à esquerda, valor ao centro e, quando houver comentário, o indicador
+  à direita. Goal Title, peso, tipo e direção da meta vêm do desdobramento com cadeado; o texto padrão de exceções
+  tem o selo "Padrão do ciclo".
+- **Campos para preencher bem marcados:** campos da BU abertos com placeholder de orientação, \* de obrigatório,
+  etiqueta "Obrigatório" e borda âmbar enquanto vazios; fórmula de cálculo em uma linha; legenda no rodapé.
+- **Seletor de metas da BU** na faixa de filtro (lista e setas): todas as metas da BU na mesma página.
+- **Envio no rodapé da ficha:** Salvar rascunho e Submeter, que só é liberado com os obrigatórios preenchidos
+  (mesma regra do servidor, `camposObrigatorios`). Sem painel lateral e sem botão de tela cheia.
+- **Comentários:** o campo com comentário mostra o indicador com o número; o clique abre um pop-up (`<dialog>`)
+  só de leitura com as mensagens; um link com `secao` abre o pop-up do campo.
+- **Escritas:** `POST /goal-card/submeter` valida no servidor (403 fora da BU, 409 fora da situação, 400 com os
+  campos que faltam) e responde `simulado: true` até o modelo de dados (P-12). `POST /goal-card/decisao` fica
+  pronto para a T14 (RN-06, RN-08, RN-09, RN-12).
 
 ### Dados de exemplo
 
