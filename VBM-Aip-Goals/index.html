@@ -817,14 +817,17 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .dd-nivel > span::before { content: '·'; margin: 0 0.5rem 0 0.25rem; }
 .dd-nivel-2 { margin: 0; }
 .dd-barra { display: flex; gap: 3px; height: 0.375rem; }
-/* Tela larga: o conteúdo ocupa a largura da janela, com margens fluidas (fontes e objetos escalam pela raiz fluida) */
+/* Todas as telas (menos o Início, que já é tela cheia): o conteúdo ocupa a largura da janela, com margens
+   fluidas; fontes e objetos escalam pela raiz fluida */
 body.is-largo .page { max-width: none; padding-top: 0; padding-inline: clamp(1rem, 2.5vw, 3.5rem); }
 /* A foto começa no topo da tela: o topo sobe por baixo da barra de vidro */
-#vistaDesdobramento .p2-topo { position: relative; margin-top: calc(-1 * var(--barra)); padding-top: calc(var(--barra) + clamp(1.5rem, 4vh, 3rem)); }
-.dd-acoes-topo { position: absolute; top: calc(var(--barra) + 1rem); right: clamp(1rem, 2.5vw, 3.5rem); display: flex; gap: 0.5rem; }
-#vistaDesdobramento .p2-topo { padding-bottom: 1.5rem; }
+body.is-largo .p2-topo { position: relative; margin-top: calc(-1 * var(--barra)); padding-top: calc(var(--barra) + clamp(1.5rem, 4vh, 3rem)); padding-bottom: 1.5rem; }
+/* Atualizar e Tela cheia no canto superior direito da tela */
+.topo-acoes { position: absolute; top: calc(var(--barra) + 1rem); right: clamp(1rem, 2.5vw, 3.5rem); display: flex; gap: 0.5rem; }
 .pill-wait[hidden] { display: none; }
-#vistaDesdobramento #ddCorpo { margin-top: 0; background: color-mix(in srgb, var(--panel) 45%, var(--card-bg)); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
+/* Blocos cinza mais suaves, com borda leve */
+body.is-largo .secao { background: color-mix(in srgb, var(--panel) 45%, var(--card-bg)); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
+#vistaDesdobramento #ddCorpo { margin-top: 0; }
 /* Paleta executiva em degradê: uma cor por meta do scorecard, na ordem (tokens da abertura e das séries) */
 .dd-seg { --c: var(--ab-v1); --c2: var(--ab-v2); flex: 1 1 0; min-width: 0; border-radius: 999px; cursor: pointer;
   background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, var(--c2))); transition: opacity .2s, transform .2s; }
@@ -1090,6 +1093,12 @@ p, dd { overflow-wrap: anywhere; }
 
 /* [RESPONSIVO] Dobrável aberto: as duas colunas da abertura ficam uma de cada lado da dobra */
 
+/* Tela cheia: a barra com os títulos do menu continua no topo para trocar de tela (pedido do usuário) */
+html.is-fs .topnav { display: flex; }
+@media (display-mode: fullscreen) { html .topnav { display: flex; } }
+/* Construção: sem topo próprio, recebe o espaço da barra */
+body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
+
 </style>
 </head>
 <body>
@@ -1260,10 +1269,15 @@ p, dd { overflow-wrap: anywhere; }
       <div class="p2-trilha">
         <ol class="p2-jornada" id="p2Fases" aria-label="Jornada do ciclo" data-i18n-aria="ab.jornada"></ol>
       </div>
+      <!-- Ações no canto superior direito da tela -->
+      <div class="topo-acoes">
+        <button type="button" class="dash-acao" id="p2Atualizar" aria-label="Atualizar painel" title="Atualizar painel" data-i18n-aria="p2.atualizar" data-i18n-title="p2.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
     </header>
 
     <div class="filters p2-filtro">
-      <p class="p2-pills"><span class="pill-info" id="p2Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+      <p class="p2-pills">
             <span class="pill-wait" id="p2Desatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span></p>
           <div class="filter">
         <span class="filter-label" id="p2LblUnid">Business Unit:</span>
@@ -1278,8 +1292,6 @@ p, dd { overflow-wrap: anywhere; }
           </div>
         </div>
       </div>
-          <button type="button" class="dash-acao" id="p2Atualizar" aria-label="Atualizar painel" title="Atualizar painel" data-i18n-aria="p2.atualizar" data-i18n-title="p2.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
-          <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
         </div>
 
     <div class="p2-corpo" id="p2Corpo">
@@ -1359,12 +1371,16 @@ p, dd { overflow-wrap: anywhere; }
       <div class="p2-trilha">
         <ol class="m3-aneis" id="m3Aneis" aria-label="Peso das metas por situação" data-i18n-aria="m3.aneisAria"></ol>
       </div>
+      <!-- Ações no canto superior direito da tela -->
+      <div class="topo-acoes">
+        <button type="button" class="dash-acao" id="m3Atualizar" aria-label="Atualizar metas" title="Atualizar metas" data-i18n-aria="m3.atualizar" data-i18n-title="m3.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
     </header>
 
     <div class="filters p2-filtro">
       <p class="p2-pills">
         <span class="pill-wait" id="m3AlertaPesos" hidden role="status"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span id="m3AlertaTxt"></span></span>
-        <span class="pill-info" id="m3Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
       </p>
       <div class="filter">
         <span class="filter-label" id="m3LblUnid">Business Unit:</span>
@@ -1379,8 +1395,6 @@ p, dd { overflow-wrap: anywhere; }
           </div>
         </div>
       </div>
-      <button type="button" class="dash-acao" id="m3Atualizar" aria-label="Atualizar metas" title="Atualizar metas" data-i18n-aria="m3.atualizar" data-i18n-title="m3.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
-      <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
     </div>
 
     <section class="secao" id="m3Corpo" aria-labelledby="m3TitLista">
@@ -1436,7 +1450,7 @@ p, dd { overflow-wrap: anywhere; }
         <ol class="dd-coo" id="ddCoo"></ol>
       </div>
       <!-- Ações no canto superior direito da tela -->
-      <div class="dd-acoes-topo">
+      <div class="topo-acoes">
         <button type="button" class="dash-acao" id="ddAtualizar" aria-label="Atualizar desdobramento" title="Atualizar desdobramento" data-i18n-aria="dd.atualizar" data-i18n-title="dd.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
         <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
       </div>
@@ -1487,6 +1501,10 @@ p, dd { overflow-wrap: anywhere; }
       </div>
       <!-- Linha do tempo do card: rascunho → submissão → aprovação (nível único) → decisão -->
       <div class="p2-trilha"><ol class="gc-linha" id="gcLinha" aria-label="Linha do tempo do Goal Card" data-i18n-aria="gc.linhaAria"></ol></div>
+      <!-- Ações no canto superior direito da tela -->
+      <div class="topo-acoes">
+        <button type="button" class="dash-acao" id="gcAtualizar" aria-label="Atualizar Goal Card" title="Atualizar Goal Card" data-i18n-aria="gc.atualizar" data-i18n-title="gc.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+      </div>
     </header>
 
     <div class="filters p2-filtro">
@@ -1501,9 +1519,7 @@ p, dd { overflow-wrap: anywhere; }
       </div>
       <p class="p2-pills">
         <span class="pill-info" id="gcModo"></span>
-        <span class="pill-info" id="gcExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="gc.exemplo">Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)</span></span>
       </p>
-      <button type="button" class="dash-acao" id="gcAtualizar" aria-label="Atualizar Goal Card" title="Atualizar Goal Card" data-i18n-aria="gc.atualizar" data-i18n-title="gc.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
     </div>
 
     <div class="gc-grade" id="gcCorpo">
@@ -2035,7 +2051,6 @@ window.VBMSetup = (function () {
     p2Estado('ok');
     var c = d.ciclo || {}, t = d.totais || {}, lim = (d.parametros || {}).diasParado || 3;
     if (c.ano) $('p2Ano').textContent = String(c.ano);
-    $('p2Exemplo').hidden = !d.exemplo;
     $('p2Desatualizado').hidden = !d.desatualizado;
     $('p2Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
 
@@ -2253,7 +2268,6 @@ window.VBMSetup = (function () {
     m3.bu = d.bu.sigla; m3.pais = d.bu.pais;
     $('m3Ciclo').textContent = c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '';
     $('m3Bu').textContent = d.bu.sigla;
-    $('m3Exemplo').hidden = !d.exemplo;
     $('m3Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
     // RN-16: soma dos pesos diferente do total do desdobramento
     $('m3AlertaPesos').hidden = !d.alertaPesos;
@@ -2528,7 +2542,6 @@ window.VBMSetup = (function () {
     $('gcVoltarTxt').textContent = S.t('gc.voltar', { b: d.bu.sigla });
     var modo = d.modo;
     $('gcModo').innerHTML = ico(modo === 'edicao' ? 'i-pen' : 'i-lock') + '<span>' + esc(S.t('gc.modo.' + modo)) + '</span>';
-    $('gcExemplo').hidden = !d.exemplo;
     gcRenderLinha(d);
     var pre = gcObrigatorios(gc.edit);
     $('gcSecoes').innerHTML = gcFicha(d, pre);
@@ -2757,7 +2770,7 @@ window.VBMSetup = (function () {
     var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
-    document.body.classList.toggle('is-largo', h === 'desdobramento');
+    document.body.classList.toggle('is-largo', h !== 'inicio'); // todas as telas ocupam a largura da janela
     $('vistaPainel').hidden = h !== 'painel';
     $('vistaMetas').hidden = h !== 'metas';
     $('vistaDesdobramento').hidden = h !== 'desdobramento';
