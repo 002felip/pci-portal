@@ -386,4 +386,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, linhaDoCard, ehAprovador, contribuidorDe, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
