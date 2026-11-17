@@ -1038,6 +1038,8 @@ body.is-inicio .page { max-width: none; padding: 0; }
 /* Corpo: seções + painel lateral */
 .gc-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem); gap: 1rem; align-items: start; }
 .gc-grade[hidden] { display: none; }
+.gc-grade.is-unica { grid-template-columns: minmax(0, 1fr); }
+.gc-lado[hidden] { display: none; }
 .gc-secoes { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
 .gc-rot { display: block; margin-bottom: 0.25rem; font: 600 0.62rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); }
 .gc-texto { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; }
@@ -1093,6 +1095,11 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .gc-legenda span { display: inline-flex; align-items: center; gap: 0.375rem; }
 .gc-leg-campo { display: inline-block; width: 0.875rem; height: 0.875rem; border-radius: 3px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
 .gc-in[readonly] { background: var(--panel); }
+/* Rodapé de envio da ficha (edição): situação do rascunho à esquerda, Salvar rascunho e Submeter à direita */
+.gc-f-envio { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.75rem 1.5rem; padding: 0.875rem 1.125rem; border-top: 1px solid var(--card-line); background: var(--panel); }
+.gc-f-envio-txt { display: flex; flex-direction: column; gap: 0.25rem; }
+.gc-f-envio-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 0.625rem; margin-left: auto; }
+.gc-f-envio .gc-confirma { max-width: 26rem; }
 /* Painel lateral */
 .gc-lado { position: sticky; top: calc(var(--barra) + 1rem); }
 .gc-painel { display: flex; flex-direction: column; gap: 0.625rem; padding: 1rem 1.125rem; border-radius: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
@@ -3045,7 +3052,9 @@ window.VBMSetup = (function () {
       '<div class="gc-f-val"><p class="gc-f-titulo">' + esc(m.titulo) + '</p><div class="gc-f-meta-info"><span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span>' +
       '<span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' + pol + '</div></div><div class="gc-f-acoes"></div></div>';
     var leg = '<p class="gc-legenda"><span>' + ico('i-lock') + esc(S.t('gc.leg.travado')) + '</span><span><i class="gc-leg-campo" aria-hidden="true"></i>' + esc(S.t('gc.leg.bu')) + '</span><span><b class="gc-obrig">*</b> ' + esc(S.t('gc.leg.obrig')) + '</span></p>';
-    return '<section class="gc-ficha" aria-label="Goal Card">' + cab + GC_SECOES.map(function (id, i) { return gcSecaoHtml(d, id, i, pre); }).join('') + leg + '</section>';
+    // Na edição, Salvar rascunho e Submeter ficam no rodapé da ficha (sem painel lateral)
+    var envio = d.modo === 'edicao' ? '<div class="gc-f-envio" id="gcEnvio" aria-live="polite"></div>' : '';
+    return '<section class="gc-ficha" aria-label="Goal Card">' + cab + GC_SECOES.map(function (id, i) { return gcSecaoHtml(d, id, i, pre); }).join('') + envio + leg + '</section>';
   }
   function gcSecaoHtml(d, id, i, pre) {
     var edita = d.modo === 'edicao', analisa = d.modo === 'analise';
@@ -3105,15 +3114,16 @@ window.VBMSetup = (function () {
   // Painel lateral: pré-checagem (edição), decisão (análise) ou resumo (leitura)
   function gcRenderLado() {
     var d = gc.dados, html = '';
-    if (d.modo === 'edicao') {
-      var obr = gcObrigatorios(gc.edit), nOk = obr.filter(function (x) { return x.ok; }).length, tudo = nOk === obr.length;
-      var faltam = obr.filter(function (x) { return !x.ok; });
-      html = '<section class="gc-painel"><h3 class="gc-painel-tit">' + esc(S.t('gc.obrigatorios')) + '</h3>' +
-        '<p class="gc-painel-n"><b>' + S.fmt(nOk, 0) + '</b> ' + esc(S.t('gc.deObrig', { t: S.fmt(obr.length, 0) })) + '</p>' +
-        '<span class="gc-barra" aria-hidden="true"><span style="width:' + (nOk / obr.length * 100).toFixed(1) + '%"></span></span>' +
-        (faltam.length ? '<p class="gc-painel-sub">' + esc(S.t('gc.faltam')) + '</p><ul class="gc-pre-lista">' + faltam.map(function (x) { return '<li class="is-pend">' + ico('i-alert') + '<a href="#gcSec-' + x.id + '" data-ir="' + x.id + '">' + esc(GC_NOMES[x.id]) + '</a></li>'; }).join('') + '</ul>' : '') +
-        '<p class="gc-salvo">' + esc(gc.salvo ? S.t('gc.salvoLocal', { h: gc.salvo === 'local' ? '' : gc.salvo }) : S.t('gc.semAlteracao')) + '</p>' +
-        gcBotoes([{ id: 'submeter', cls: 'btn', off: !tudo }, { id: 'salvar', cls: 'btn btn-sec' }]) + (tudo ? '' : '<p class="gc-dica">' + esc(S.t('gc.submeterDica')) + '</p>') + '</section>';
+    var unica = d.modo === 'edicao';
+    $('gcLado').hidden = unica; $('gcCorpo').classList.toggle('is-unica', unica);
+    if (unica) {
+      var obr = gcObrigatorios(gc.edit), tudo = obr.every(function (x) { return x.ok; });
+      $('gcLado').innerHTML = '';
+      var alvo = $('gcEnvio'); if (!alvo) return;
+      alvo.innerHTML = '<div class="gc-f-envio-txt"><p class="gc-salvo">' + esc(gc.salvo ? S.t('gc.salvoLocal', { h: gc.salvo === 'local' ? '' : gc.salvo }) : S.t('gc.semAlteracao')) + '</p>' +
+        (tudo ? '' : '<p class="gc-dica">' + ico('i-alert') + esc(S.t('gc.submeterDica')) + '</p>') + (gc.erros.indexOf('obrigatorios') >= 0 ? '<p class="gc-erro" role="alert">' + ico('i-alert') + esc(S.t('gc.erro.obrigatorios')) + '</p>' : '') + '</div>' +
+        '<div class="gc-f-envio-acoes">' + gcBotoes([{ id: 'salvar', cls: 'btn btn-sec' }, { id: 'submeter', cls: 'btn', off: !tudo }]) + '</div>';
+      return;
     } else if (d.modo === 'analise') {
       var rev = GC_SECOES.map(function (id) { return gc.revisao[id] || ''; });
       var nOkR = rev.filter(function (v) { return v === 'ok'; }).length, nAj = rev.filter(function (v) { return v === 'ajustar'; }).length;
@@ -3170,7 +3180,7 @@ window.VBMSetup = (function () {
     gc.timer = setTimeout(function () {
       try { sessionStorage.setItem('aip-gc-' + gc.dados.card, JSON.stringify(gc.edit)); } catch (e) {}
       var h = new Date(); gc.salvo = String(h.getHours()).padStart(2, '0') + ':' + String(h.getMinutes()).padStart(2, '0');
-      var el = document.querySelector('#gcLado .gc-salvo'); if (el) el.textContent = S.t('gc.salvoLocal', { h: gc.salvo });
+      var el = document.querySelector('#vistaGoalCard .gc-salvo'); if (el) el.textContent = S.t('gc.salvoLocal', { h: gc.salvo });
     }, 700);
   }
   function gcAplicarCampo(campo, valor) {
@@ -3205,7 +3215,7 @@ window.VBMSetup = (function () {
     var n = e.target.value.trim().length, min = gc.dados.parametros.minComentario;
     $('gcComCont').textContent = n >= min ? S.t('gc.caracteres', { n: S.fmt(n, 0) }) : S.t('gc.minimo', { n: S.fmt(min, 0) });
   });
-  $('gcLado').addEventListener('click', function (e) {
+  function gcCliqueAcoes(e) {
     var ir = e.target.closest('[data-ir]');
     if (ir) { e.preventDefault(); var campo = document.querySelector('#gcSec-' + ir.getAttribute('data-ir') + ' .gc-in, #gcSec-' + ir.getAttribute('data-ir') + ' .seg button'); var lin = document.getElementById('gcSec-' + ir.getAttribute('data-ir')); if (lin) lin.scrollIntoView({ block: 'center' }); if (campo) campo.focus({ preventScroll: true }); return; }
     var b = e.target.closest('button'); if (!b || !gc.dados) return;
@@ -3220,12 +3230,14 @@ window.VBMSetup = (function () {
         gc.erros = erros; if (erros.length) { gc.confirma = ''; gcRenderLado(); return; }
       }
       gc.confirma = a; gcRenderLado();
-      var c = document.querySelector('#gcLado [data-confirmar]'); if (c) c.focus();
+      var c = document.querySelector('#vistaGoalCard [data-confirmar]'); if (c) c.focus();
       return;
     }
     if (b.hasAttribute('data-confirmar')) { gcEnviar(b.getAttribute('data-confirmar')); return; }
-    if (b.hasAttribute('data-cancelar')) { gc.confirma = ''; gcRenderLado(); var v = document.querySelector('#gcLado [data-acao]'); if (v) v.focus(); }
-  });
+    if (b.hasAttribute('data-cancelar')) { gc.confirma = ''; gcRenderLado(); var v = document.querySelector('#vistaGoalCard [data-acao]'); if (v) v.focus(); }
+  }
+  $('gcLado').addEventListener('click', gcCliqueAcoes);
+  $('gcSecoes').addEventListener('click', function (e) { if (e.target.closest('#gcEnvio')) gcCliqueAcoes(e); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && gc.confirma && !$('vistaGoalCard').hidden) { gc.confirma = ''; gcRenderLado(); } });
 
   // Seletor de metas da BU: cadastro de todas as metas na mesma página (lista de api/metas)

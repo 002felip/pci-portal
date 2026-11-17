@@ -140,9 +140,11 @@ editado o card — RN-12) ou **leitura** (todos os demais; leitura aberta, D-11)
   marcados com * (obrigatório). Legenda no rodapé da ficha. Destaque de "Ajustar" por fundo âmbar, sem borda lateral.
 - **Seletor de metas da BU** na faixa de filtro (lista e setas anterior/próxima): todas as metas da BU são
   preenchidas na mesma página.
-- **Painel lateral:** campos obrigatórios preenchidos ("4 de 6") e os que faltam, com link para o campo; Submeter bloqueado até preencher tudo (mesma regra do servidor, `camposObrigatorios`); Salvar rascunho;
-  na análise, OK/Ajustar por seção, comentário e Aprovar/Devolver/Negar (RN-08, RN-09) com confirmação no segundo
-  clique em `role="alertdialog"`; na leitura, resumo e "Somente leitura" (com o aviso da RN-12 quando for o caso).
+- **Envio na própria ficha:** na edição não há painel lateral; o rodapé da ficha tem Salvar rascunho e Submeter,
+  que só é liberado com os campos obrigatórios preenchidos (mesma regra do servidor, `camposObrigatorios`); campo
+  vazio mostra "Obrigatório". Na análise, o painel lateral tem OK/Ajustar por seção, comentário e Aprovar/Devolver/
+  Negar (RN-08, RN-09) com confirmação no segundo clique em `role="alertdialog"`; na leitura, resumo e "Somente
+  leitura" (com o aviso da RN-12 quando for o caso). Sem botão de tela cheia.
 - **Comentários por seção**, com respostas; o grupo de consulta não comenta.
 - **Escritas:** `POST /goal-card/submeter` e `/goal-card/decisao` validam no servidor (403 fora do grupo ou da BU,
   409 fora da situação, 400 com os itens pendentes) e respondem `simulado: true` até o modelo de dados (P-12).
