@@ -117,11 +117,12 @@ só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegad
 Tela nova, fora do catálogo original (§10), feita a partir do material de referência do ciclo 2027 ("VBM COO
 Scorecard Details" e "COO and BUs Scorecard Matrix — DRAFT"). Mostra os dois níveis do desdobramento numa tela só.
 
-- **Nível 1, CEO → COO (no topo, sobre a foto):** barra fina, sem rótulos, com a composição do scorecard do COO
-  (75% resultado do scorecard do CEO + 5 / 7,5 / 7,5 / 5% das metas próprias) e fios até o card de cada meta; a meta
-  escolhida fica em ênfase na barra e nos fios. Cada card segue o modelo das fases do ciclo: código e selo de destino
-  ("Meta da BU #5"), título, com quem é compartilhada, peso grande, barra dos 100% com a fatia da meta em ênfase,
-  faixas (mín., alvo, excepcional) e um ponto por Goal Card gerado nas BUs, na cor da situação, com "n de N aprovados".
+- **Nível 1, CEO → COO (no topo, num painel suave sobre a foto):** barra fina, sem rótulos, com a composição do
+  scorecard do COO (75% resultado do scorecard do CEO + 5 / 7,5 / 7,5 / 5% das metas próprias), uma cor por meta
+  em degradê executivo (azul-marinho → petróleo → verde-água → ciano → azul-acinzentado, tokens existentes); a meta
+  escolhida fica em ênfase. Cada card (fundo e borda suaves, como a biblioteca do Kaizen) traz o selo de destino
+  ("Meta da BU #5"), título, com quem é compartilhada, peso grande, barra dos 100% com a fatia da meta na cor dela,
+  faixas (mín., alvo, excepcional) e, no rodapé, um ponto por Goal Card gerado nas BUs, na cor da situação.
 - **Nível 2, COO → BUs (matriz):** uma linha por meta (resultado do scorecard do COO, 40%, e as metas específicas,
   60%) e uma coluna por BU, agrupadas por país. O tamanho da bolha é o peso; a cor é a situação do Goal Card daquela
   meta na BU (tokens `--status-*`), e a bolha abre o card (T04). Etiquetas "Nova" e "COO 2027_0n" (origem).

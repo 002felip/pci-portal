@@ -926,53 +926,49 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .dd-nivel > span::before { content: '·'; margin: 0 0.5rem 0 0.25rem; }
 .dd-nivel-2 { margin: 0; }
 .dd-barra { display: flex; gap: 3px; height: 0.375rem; }
-.dd-seg { flex: 1 1 0; min-width: 0; border-radius: 999px; background: var(--serie-a); cursor: pointer; transition: background .2s, opacity .2s, transform .2s; }
-.dd-seg.is-resultado { background: var(--ab-v1); }
-.dd-barra.tem-sel .dd-seg { opacity: .3; }
-.dd-barra .dd-seg.is-sel { opacity: 1; background: var(--accent-strong); transform: scaleY(1.7); }
-.dd-fios { display: block; width: 100%; height: 2.5rem; overflow: visible; }
-.dd-fios path { fill: none; stroke: var(--serie-a); stroke-width: 1.5; opacity: .75; transition: opacity .2s; }
-.dd-fios path.is-resultado { stroke: var(--ab-v1); opacity: .4; }
-.dd-fios.tem-sel path { opacity: .15; }
-.dd-fios path.is-sel { stroke: var(--accent-strong); stroke-width: 2.5; opacity: 1; }
-.dd-coo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+/* Paleta executiva em degradê: uma cor por meta do scorecard, na ordem (tokens da abertura e das séries) */
+.dd-seg { --c: var(--ab-v1); --c2: var(--ab-v2); flex: 1 1 0; min-width: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, var(--c2))); transition: opacity .2s, transform .2s; }
+.dd-seg:nth-child(2) { --c: var(--ab-v2); --c2: var(--ab-v3); }
+.dd-seg:nth-child(3) { --c: var(--ab-v3); --c2: var(--serie-a); }
+.dd-seg:nth-child(4) { --c: var(--serie-a); --c2: var(--serie-p); }
+.dd-seg:nth-child(5) { --c: var(--serie-p); --c2: var(--serie-p); }
+.dd-barra.tem-sel .dd-seg { opacity: .25; }
+.dd-barra .dd-seg.is-sel { opacity: 1; transform: scaleY(1.7); }
+/* Área das metas do COO: painel suave com borda leve (como a biblioteca do Kaizen) */
+.dd-trilha { padding: 1.125rem 1.25rem 1.25rem; border-radius: 1.25rem; border: 1px solid var(--card-line);
+  background: color-mix(in srgb, var(--panel) 72%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.dd-coo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.875rem; margin: 1.125rem 0 0; padding: 0; list-style: none; }
 .dd-meta { display: flex; min-width: 0; }
-/* Card no modelo das fases do ciclo: código e selo, título, linha de apoio, número grande, barra dos 100% e rodapé */
-.dd-card { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.125rem; border-radius: 1rem; text-align: left; font: inherit; color: var(--text); cursor: pointer;
-  background: var(--ab-vidro); border: 1px solid var(--ab-vidro-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); transition: border-color .2s, box-shadow .2s, background .2s; }
-.dd-card:hover { border-color: var(--serie-a); }
-.dd-card[aria-pressed="true"] { border-color: var(--accent-strong); background: color-mix(in srgb, var(--accent-strong) 10%, var(--ab-vidro)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 16%, transparent); }
-.dd-card-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.dd-card-id { font: 300 0.84rem var(--font-display); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+/* Card no modelo das fases do ciclo, com fundo e borda suaves: selo, título, apoio, peso, barra dos 100% e rodapé */
+.dd-card { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.125rem 0; border-radius: 0.875rem; text-align: left; font: inherit; color: var(--text); cursor: pointer;
+  background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); transition: border-color .2s, box-shadow .2s, transform .2s; }
+.dd-card:hover { border-color: color-mix(in srgb, var(--accent-strong) 35%, var(--card-line)); transform: translateY(-1px); }
+.dd-card[aria-pressed="true"] { border-color: var(--accent-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 14%, transparent), var(--card-shadow); }
+.dd-card-cab { display: flex; align-items: center; }
 .dd-card-badge { padding: 2px 9px; border-radius: 999px; background: var(--flat-bg); color: var(--flat); font: 700 0.58rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dd-card[aria-pressed="true"] .dd-card-badge { background: var(--accent-strong); color: var(--page); }
-.dd-card-tit { min-height: 2.6em; font: 600 0.92rem/1.3 var(--font-display); color: var(--ink-strong); }
+.dd-card-tit { min-height: 2.6em; margin-top: 0.125rem; font: 600 0.92rem/1.3 var(--font-display); color: var(--ink-strong); }
 .dd-card-sub { font-size: 0.72rem; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dd-card-num { display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.25rem; }
 .dd-card-num b { font: 300 clamp(1.875rem, 1rem + 1.4vw, 2.5rem)/1 var(--font-display); letter-spacing: -.03em; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
 .dd-card-num span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.74rem; color: var(--text-soft); }
 /* Barra dos 100%: a fatia da meta em ênfase, as outras no trilho */
 .dd-card-barra { display: flex; gap: 2px; height: 0.375rem; }
-.dd-card-barra .dd-seg { background: var(--ab-trilho); cursor: inherit; }
-.dd-card-barra .dd-seg.is-sel { background: var(--serie-a); }
-.dd-card.is-resultado .dd-card-barra .dd-seg.is-sel { background: var(--ab-v1); }
-.dd-card[aria-pressed="true"] .dd-card-barra .dd-seg.is-sel { background: var(--accent-strong); }
+.dd-card-barra .dd-seg { background: var(--line); cursor: inherit; }
+.dd-card-barra .dd-seg.is-sel { background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, var(--c2))); }
 .dd-card-faixas { display: flex; flex-wrap: wrap; gap: 0.125rem 0.75rem; font-size: 0.7rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .dd-card-faixas b { font-weight: 600; color: var(--ink-strong); }
-.dd-card-rod { margin-top: auto; padding-top: 0.375rem; display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.72rem; color: var(--ink-strong); }
+.dd-card-rod { margin: auto -1.125rem 0; padding: 0.625rem 1.125rem 0.75rem; border-top: 1px solid var(--card-line); }
 /* Um ponto por Goal Card gerado nas BUs, na cor da situação */
 .dd-pontos { display: flex; flex-wrap: wrap; gap: 4px; }
 /* Pouca altura (notebook com escala de 125–150%): cards mais compactos */
 @media (max-height: 820px) and (min-width: 721px) {
   .dd-card { gap: 0.375rem; padding: 0.75rem 0.875rem; }
   .dd-card-tit { font-size: 0.84rem; }
-  .dd-fios { height: 1.75rem; }
 }
 .dd-ponto { width: 0.625rem; height: 0.625rem; border-radius: 50%; }
 .dd-ponto:not([class*="p2-seg-"]) { background: var(--ab-trilho); }
-.dd-card-rod-txt { display: flex; flex-direction: column; gap: 0.125rem; }
-.dd-card-rod-txt b { font-weight: 600; }
-.dd-card-rod-txt span { color: var(--text-soft); }
 .dd-resumo { font-size: 0.74rem; color: var(--text-soft); }
 /* Matriz meta × BU */
 .dd-tabela thead th { text-align: center; }
@@ -1556,11 +1552,10 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
         <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="ddCiclo">AIP</span></p>
         <h2 class="p2-titulo" id="titDesd"><span class="ab-nome" data-i18n="dd.titulo">Desdobramento</span><span class="ab-ano" id="ddAno">2027</span></h2>
       </div>
-      <!-- Nível 1: o CEO desdobra o scorecard do COO; cada meta do COO desce para uma ou mais metas das BUs -->
+      <!-- Nível 1: o CEO desdobra o scorecard do COO (barra com uma cor por meta); cada meta do COO desce para uma ou mais metas das BUs -->
       <div class="p2-trilha dd-trilha">
         <p class="dd-nivel"><b>CEO</b><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg><b>COO</b><span data-i18n="dd.nivel1">Scorecard do COO</span></p>
         <div class="dd-barra" id="ddBarra" role="img"></div>
-        <svg class="dd-fios" id="ddFios" aria-hidden="true" preserveAspectRatio="none"></svg>
         <ol class="dd-coo" id="ddCoo"></ol>
       </div>
     </header>
@@ -2716,12 +2711,12 @@ window.VBMSetup = (function () {
       var rod = S.t('dd.aprovados', { a: S.fmt(aprov, 0), t: S.fmt(cels.length, 0) }), rod2 = emAprov ? S.t('dd.emAprov', { n: S.fmt(emAprov, 0) }) : '';
       return '<li class="dd-meta"><button type="button" class="dd-card' + (m.resultado ? ' is-resultado' : '') + '" data-id="' + esc(m.id) + '" aria-pressed="' + (dd.sel === m.id) + '"' +
         ' aria-label="' + esc(m.id + ' ' + m.titulo + ', ' + ddPct(m.peso) + '. ' + rod + (rod2 ? ', ' + rod2 : '') + '. ' + S.t('dd.filtrar', { m: m.id })) + '">' +
-        '<span class="dd-card-cab"><span class="dd-card-id">' + esc(m.id) + '</span><span class="dd-card-badge">' + esc(badge) + '</span></span>' +
+        '<span class="dd-card-cab"><span class="dd-card-badge">' + esc(badge) + '</span></span>' +
         '<span class="dd-card-tit">' + esc(m.titulo) + '</span>' +
         '<span class="dd-card-sub" title="' + esc(sub) + '">' + esc(sub) + '</span>' +
         '<span class="dd-card-num"><b>' + esc(ddPct(m.peso)) + '</b><span>' + esc(S.t('dd.doScorecard')) + '</span></span>' +
         '<span class="dd-card-barra" aria-hidden="true">' + segs(m.id) + '</span>' + faixas +
-        '<span class="dd-card-rod"><span class="dd-pontos" aria-hidden="true">' + pontos + '</span><span class="dd-card-rod-txt"><b>' + esc(rod) + '</b>' + (rod2 ? '<span>' + esc(rod2) + '</span>' : '') + '</span></span>' +
+        '<span class="dd-card-rod"><span class="dd-pontos" aria-hidden="true">' + pontos + '</span></span>' +
         '</button></li>';
     }).join('');
 
@@ -2772,23 +2767,7 @@ window.VBMSetup = (function () {
     var alertas = tot.filter(function (t) { return t.alerta; }).map(function (t) { return t.bu; });
     $('ddAlerta').hidden = !alertas.length;
     $('ddAlertaTxt').textContent = alertas.length ? S.t('dd.alerta', { t: S.fmt(pt, 0), l: alertas.join(', ') }) : '';
-    requestAnimationFrame(ddFios);
   }
-  // Fios do desdobramento: de cada parte da barra até a meta correspondente (medidos no DOM, refeitos ao redimensionar)
-  function ddFios() {
-    var svg = $('ddFios'); if (!svg || $('vistaDesdobramento').hidden) return;
-    var base = svg.getBoundingClientRect(); if (!base.width) return;
-    var segs = $('ddBarra').querySelectorAll('.dd-seg'), metas = $('ddCoo').children, p = [];
-    for (var i = 0; i < segs.length && i < metas.length; i++) {
-      var a = segs[i].getBoundingClientRect(), b = metas[i].getBoundingClientRect();
-      var x1 = a.left + a.width / 2 - base.left, x2 = b.left + b.width / 2 - base.left, h = base.height;
-      var id = segs[i].getAttribute('data-id');
-      p.push('<path class="' + (segs[i].classList.contains('is-resultado') ? 'is-resultado' : '') + (dd.sel === id ? ' is-sel' : '') + '" d="M' + x1.toFixed(1) + ' 0 C' + x1.toFixed(1) + ' ' + (h * 0.6).toFixed(1) + ' ' + x2.toFixed(1) + ' ' + (h * 0.4).toFixed(1) + ' ' + x2.toFixed(1) + ' ' + h.toFixed(1) + '"/>');
-    }
-    svg.setAttribute('viewBox', '0 0 ' + base.width.toFixed(1) + ' ' + base.height.toFixed(1));
-    svg.innerHTML = p.join(''); svg.classList.toggle('tem-sel', !!dd.sel);
-  }
-  window.addEventListener('resize', function () { if (dd.dados) requestAnimationFrame(ddFios); });
   function ddSelecionar(id) { dd.sel = dd.sel === id ? '' : id; ddRender(); }
   $('ddCoo').addEventListener('click', function (e) { var b = e.target.closest('.dd-card'); if (b) ddSelecionar(b.getAttribute('data-id')); });
   $('ddBarra').addEventListener('click', function (e) { var b = e.target.closest('.dd-seg'); if (b) ddSelecionar(b.getAttribute('data-id')); });
