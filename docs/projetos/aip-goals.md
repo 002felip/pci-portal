@@ -76,15 +76,15 @@ comentários sem resposta e ações atribuídas.
 Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis recebem 403 e a tela mostra
 "Painel restrito"). Filtro País › BU no endereço (`#painel?pais=&bu=`), com o Voltar do navegador.
 
-- **Linha do tempo do ciclo** no banner: trilho proporcional às janelas (do início do desdobramento à
-  publicação dos Goal Cards oficiais), preenchido até hoje, com o marcador "Hoje" e o resumo da etapa em
-  andamento (dias úteis para o fim da janela e até os Goal Cards oficiais). Abaixo, um cartão por fase
-  com o resultado do negócio:
+- **Topo:** título da tela no padrão do Início (sobre a foto dos minerais com véu no tom da página) e o resumo
+  da etapa em andamento (dias úteis para o fim da janela e até a publicação dos Goal Cards oficiais).
+- **Jornada do ciclo:** as quatro etapas numa linha contínua, preenchida até hoje, com o marcador "Hoje".
+  Cada etapa tem um anel de progresso (SVG próprio) com o número central e um resumo curto:
   - Desdobramento do COO: metas desdobradas e BUs;
-  - Proposta da BU: % submetidos (n de total), em rascunho e devolvidos;
-  - Calibração e aprovação: em aprovação, com o Diretor da BU × com P&CI/COO, e paradas acima do limite;
-  - Goal Card oficial: % aprovados (n de total), negados e a concluir.
-  Os números seguem o filtro País › BU e saem dos totais do servidor.
+  - Proposta da BU: % submetidos, n de total, em rascunho e devolvidos;
+  - Calibração e aprovação: em aprovação (anel em duas partes: com o Diretor da BU × com P&CI/COO) e paradas;
+  - Goal Card oficial: % aprovados, n de total, negados e a concluir.
+  Números dos totais do servidor, seguindo o filtro País › BU (faixa de filtro e ações logo abaixo).
 - **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de
   status + números na linha), total e paradas; a BU leva à T03 filtrada.
 - **Funil do ciclo:** Goal Cards → submetidos → aprovados no nível 1 → aprovados, com a perda entre etapas.
