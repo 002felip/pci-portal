@@ -917,6 +917,11 @@ html {
   overflow-x: clip;
 }
 body { font-size: 0.875rem; overflow-x: clip; min-height: 100vh; min-height: 100svh; }
+/* [RESPONSIVO] Notebook com escala de 125–150% do Windows (~1270×590 úteis): toda a aplicação um
+   degrau menor, pela raiz (tudo é em rem). Em rem, e não em px, para o zoom do navegador seguir valendo. */
+@media (min-width: 721px) and (max-height: 820px) {
+  html { font-size: 0.9375rem; }
+}
 img, video, svg, canvas, iframe { max-width: 100%; }
 .page { max-width: 92.5rem; }
 .abertura { max-width: 97.5rem; }
