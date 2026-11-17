@@ -751,6 +751,8 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .jornada-tit { margin-bottom: 0.625rem; }
   .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
   .hero-titulo { font-size: 1.6rem; }
+  .p2-fase { padding: 0.75rem 0.875rem; }
+  .p2-fase-num { font-size: 2rem; }
   .hero-sub { display: none; }
   .hero-pills { margin-top: 0.5rem; }
   .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
@@ -775,23 +777,57 @@ body.is-inicio .page { max-width: none; padding: 0; }
    (ponto = mediana, traço = mínimo–máximo, linha tracejada = limite de dias úteis da RN-14). */
 .p2-corpo { display: flex; flex-direction: column; gap: 1rem; }
 .p2-corpo[hidden] { display: none; }
-.p2-agenda { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; }
-.p2-agenda div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.25rem 0.625rem; }
-.p2-agenda dt { font: 500 0.78rem var(--font-ui); color: var(--hero-soft); }
-.p2-agenda dd { margin: 0; font: 600 0.82rem var(--font-ui); color: var(--hero-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.p2-agenda .is-atual dt, .p2-agenda .is-atual dd { color: var(--hero-eyebrow); }
+/* Linha do tempo do ciclo (dentro do banner escuro: cores fixas nos dois temas) */
+:root {
+  --linha-feita: #5FD0C9;
+  --linha-atual: #7DD3F0;
+  --linha-trilho: rgba(255,255,255,.14);
+  --linha-futura: rgba(255,255,255,.32);
+  --linha-cartao: rgba(255,255,255,.06);
+  --linha-cartao-atual: rgba(125,211,240,.12);
+  --linha-borda: rgba(255,255,255,.12);
+}
+.hero.p2-hero { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.p2-hero .p2-linha { grid-column: 1 / -1; }
+.p2-linha { display: flex; flex-direction: column; gap: 1rem; }
+.p2-linha-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; flex-wrap: wrap; }
+.p2-linha-tit { margin: 0; font: 600 0.66rem var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--hero-faint); }
+.p2-linha-resumo { margin: 0; font: 500 0.86rem var(--font-ui); color: var(--hero-soft); font-variant-numeric: tabular-nums; }
+.p2-linha-resumo b { font-weight: 600; color: var(--hero-text); }
 
-.p2-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; margin: 0; }
-.p2-kpi { padding: 0.875rem 1rem; border-radius: 1rem; border: 1px solid var(--card-line); background: var(--card-bg); box-shadow: var(--card-shadow); }
-.p2-kpi dt { display: flex; align-items: center; gap: 0.5rem; font: 500 0.74rem var(--font-ui); color: var(--text-soft); }
-.p2-kpi dt::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent-strong); flex-shrink: 0; }
-.p2-kpi-submetidos dt::before { background: var(--serie-p); }
-.p2-kpi-aprovado dt::before { background: var(--status-approved); }
-.p2-kpi-em_aprovacao dt::before { background: var(--status-pending); }
-.p2-kpi-em_revisao dt::before { background: var(--status-review); }
-.p2-kpi-negado dt::before { background: var(--status-rejected); }
-.p2-kpi-num { margin: 0.25rem 0 0; font: 300 1.9rem/1.1 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
-.p2-kpi-sub { margin: 0.125rem 0 0; font: 400 0.7rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+/* Trilho: segmentos proporcionais à duração de cada janela; preenchimento até hoje */
+.p2-trilho { position: relative; display: flex; gap: 0.25rem; height: 2.75rem; padding-top: 1.75rem; }
+.p2-trecho { position: relative; flex: 1 1 0; min-width: 2.5rem; height: 0.5rem; border-radius: 999px; background: var(--linha-trilho); overflow: visible; }
+.p2-trecho-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--linha-feita); }
+.p2-trecho.is-atual .p2-trecho-fill { background: linear-gradient(90deg, var(--linha-feita), var(--linha-atual)); }
+.p2-trecho-fim { position: absolute; right: 0; top: 0.875rem; font: 500 0.66rem var(--font-ui); color: var(--hero-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.p2-trecho-ini { position: absolute; left: 0; top: 0.875rem; font: 500 0.66rem var(--font-ui); color: var(--hero-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.p2-hoje { position: absolute; top: 0; bottom: 0.75rem; width: 0; border-left: 2px solid var(--hero-text); }
+.p2-hoje::after { content: ''; position: absolute; left: -0.4375rem; bottom: -0.3rem; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--hero-text); box-shadow: 0 0 0 0.3rem rgba(255,255,255,.18); }
+.p2-hoje span { position: absolute; top: -0.25rem; left: 0.5rem; padding: 0.125rem 0.5rem; border-radius: 999px; background: var(--hero-text); color: var(--vbm-blue-navy); font: 700 0.64rem var(--font-ui); letter-spacing: .04em; white-space: nowrap; }
+
+/* Cartões de resultado por fase */
+.p2-fases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.p2-fase { display: flex; flex-direction: column; gap: 0.375rem; padding: 1rem 1.125rem 1.125rem; border-radius: 1rem; border: 1px solid var(--linha-borda); background: var(--linha-cartao); }
+.p2-fase.is-atual { background: var(--linha-cartao-atual); border-color: var(--linha-atual); box-shadow: 0 0 0 1px var(--linha-atual) inset; }
+.p2-fase-topo { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin: 0; }
+.p2-fase-n { font: 300 0.95rem var(--font-display); color: var(--hero-faint); font-variant-numeric: tabular-nums; }
+.p2-fase-tag { padding: 0.125rem 0.5rem; border-radius: 999px; font: 700 0.6rem var(--font-ui); letter-spacing: .06em; text-transform: uppercase; }
+.p2-fase.is-feita .p2-fase-tag { background: rgba(95,208,201,.16); color: var(--linha-feita); }
+.p2-fase.is-atual .p2-fase-tag { background: var(--linha-atual); color: var(--vbm-blue-navy); }
+.p2-fase.is-futura .p2-fase-tag { background: var(--linha-trilho); color: var(--hero-soft); }
+.p2-fase-nome { margin: 0; font: 600 1rem var(--font-display); color: var(--hero-text); }
+.p2-fase-data { margin: 0; font: 400 0.72rem var(--font-ui); color: var(--hero-soft); font-variant-numeric: tabular-nums; }
+.p2-fase-num { margin: 0.375rem 0 0; display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; font: 300 2.6rem/1 var(--font-display); color: var(--hero-text); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.p2-fase-num small { font: 500 0.74rem var(--font-ui); letter-spacing: 0; color: var(--hero-soft); }
+.p2-fase-barra { display: flex; gap: 2px; height: 0.375rem; margin-top: 0.375rem; border-radius: 999px; background: var(--linha-trilho); overflow: hidden; }
+.p2-fase-barra span { display: block; height: 100%; }
+.p2-fase-barra .b-feita { background: var(--linha-feita); }
+.p2-fase-barra .b-atual { background: var(--linha-atual); }
+.p2-fase-barra .b-n2 { background: var(--serie-p); }
+.p2-fase-det { margin: 0.25rem 0 0; font: 400 0.74rem/1.45 var(--font-ui); color: var(--hero-soft); font-variant-numeric: tabular-nums; }
+.p2-fase-det b { font-weight: 600; color: var(--hero-text); }
+.p2-fase-det .alerta { font-weight: 600; color: var(--hero-alerta); }
 
 .p2-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(min(22rem, 100%), 1fr); gap: 1rem; align-items: start; }
 .p2-coluna { display: flex; flex-direction: column; gap: 1rem; }
@@ -858,8 +894,10 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .p2-parado-dir { display: flex; flex-direction: column; align-items: flex-end; gap: 0.375rem; }
 .p2-vazio { padding: 0.5rem 0; }
 
+@media (max-width: 1180px) {
+  .p2-fases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 1280px) {
-  .p2-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .p2-grade { grid-template-columns: minmax(0, 1fr); }
   /* Matriz na largura toda; funil e tempo lado a lado abaixo dela */
   .p2-coluna { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
@@ -1227,7 +1265,7 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
   <!-- ═══ T02 · Painel do ciclo (P&CI/COO e administrador) ═══ -->
   <section class="vista" id="vistaPainel" hidden aria-labelledby="titPainel">
 
-    <header class="hero">
+    <header class="hero p2-hero">
       <div class="hero-texto">
         <p class="hero-eyebrow"><span>AIP Goals</span><span id="p2Ciclo"></span></p>
         <h2 class="hero-titulo" id="titPainel" data-i18n="p2.titulo">Painel do ciclo</h2>
@@ -1237,10 +1275,15 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
           <span class="hero-pill is-wait" id="p2Desatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span>
         </div>
       </div>
-      <div class="resumo">
-        <p class="resumo-tit" data-i18n="p2.agenda">Agenda do ciclo</p>
-        <dl class="p2-agenda" id="p2Agenda"></dl>
-      </div>
+      <!-- Linha do tempo do ciclo: trilho proporcional às datas, marcador "Hoje" e um cartão de resultado por fase -->
+      <section class="p2-linha" aria-labelledby="p2TitLinha">
+        <div class="p2-linha-cab">
+          <h3 class="p2-linha-tit" id="p2TitLinha" data-i18n="p2.linha">Linha do tempo do ciclo</h3>
+          <p class="p2-linha-resumo" id="p2LinhaResumo"></p>
+        </div>
+        <div class="p2-trilho" id="p2Trilho" aria-hidden="true"></div>
+        <ol class="p2-fases" id="p2Fases"></ol>
+      </section>
       <div class="hero-acoes">
         <button type="button" class="hero-acao" id="p2Atualizar" aria-label="Atualizar painel" title="Atualizar painel" data-i18n-aria="p2.atualizar" data-i18n-title="p2.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
         <button type="button" class="hero-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
@@ -1264,15 +1307,6 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
     </div>
 
     <div class="p2-corpo" id="p2Corpo">
-      <dl class="p2-kpis" aria-label="Indicadores do ciclo" data-i18n-aria="p2.kpisAria">
-          <div class="p2-kpi p2-kpi-total"><dt><span data-i18n="p2.k.total">Goal Cards</span></dt><dd class="p2-kpi-num" data-p2="total">—</dd><dd class="p2-kpi-sub" data-p2sub="total"></dd></div>
-          <div class="p2-kpi p2-kpi-submetidos"><dt><span data-i18n="p2.k.submetidos">Submetidos</span></dt><dd class="p2-kpi-num" data-p2="submetidos">—</dd><dd class="p2-kpi-sub" data-p2sub="submetidos"></dd></div>
-          <div class="p2-kpi p2-kpi-aprovado"><dt><span data-i18n="p2.k.aprovado">Aprovados</span></dt><dd class="p2-kpi-num" data-p2="aprovado">—</dd><dd class="p2-kpi-sub" data-p2sub="aprovado"></dd></div>
-          <div class="p2-kpi p2-kpi-em_aprovacao"><dt><span data-i18n="p2.k.em_aprovacao">Em aprovação</span></dt><dd class="p2-kpi-num" data-p2="em_aprovacao">—</dd><dd class="p2-kpi-sub" data-p2sub="em_aprovacao"></dd></div>
-          <div class="p2-kpi p2-kpi-em_revisao"><dt><span data-i18n="p2.k.em_revisao">Em revisão</span></dt><dd class="p2-kpi-num" data-p2="em_revisao">—</dd><dd class="p2-kpi-sub" data-p2sub="em_revisao"></dd></div>
-          <div class="p2-kpi p2-kpi-negado"><dt><span data-i18n="p2.k.negado">Negados</span></dt><dd class="p2-kpi-num" data-p2="negado">—</dd><dd class="p2-kpi-sub" data-p2sub="negado"></dd></div>
-      </dl>
-
       <div class="p2-grade">
         <section class="secao p2-matriz" aria-labelledby="p2TitMatriz">
           <div class="secao-head">
@@ -1519,6 +1553,14 @@ window.VBMSetup = (function () {
 
   S.registrar({
     'pt-BR': {
+      'p2.linha': 'Linha do tempo do ciclo', 'p2.hoje': 'Hoje · {d}',
+      'p2.linhaResumo': '{e} em andamento: {n} dias úteis para o fim da janela · {o} até os Goal Cards oficiais',
+      'p2.ph.concluida': 'Concluída', 'p2.ph.proxima': 'Próxima', 'p2.ph.restam': '{n} dias úteis restantes', 'p2.ph.resta1': '1 dia útil restante',
+      'p2.ph.desdobramentoRot': 'metas desdobradas', 'p2.ph.desdobramentoDet': 'Metas e pesos cadastrados para {b} Business Units',
+      'p2.ph.propostaRot': 'submetidos · {n} de {t}', 'p2.ph.propostaDet': '{r} em rascunho · {v} devolvidos para ajuste', 'p2.ph.propostaDet1': '{r} em rascunho · {v} devolvido para ajuste',
+      'p2.ph.calibracaoRot': 'em aprovação', 'p2.ph.calibracaoDet': '{a} com o Diretor da BU · {b} com P&CI/COO',
+      'p2.ph.paradas': '{n} paradas há mais de {l} dias úteis', 'p2.ph.parada1': '1 parada há mais de {l} dias úteis',
+      'p2.ph.oficialRot': 'aprovados · {n} de {t}', 'p2.ph.oficialDet': '{g} negados · {c} a concluir',
       'p2.titulo': 'Painel do ciclo', 'p2.sub': 'Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.',
       'p2.agenda': 'Agenda do ciclo', 'p2.atualizar': 'Atualizar painel', 'p2.kpisAria': 'Indicadores do ciclo',
       'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submetidos', 'p2.k.aprovado': 'Aprovados', 'p2.k.em_aprovacao': 'Em aprovação', 'p2.k.em_revisao': 'Em revisão', 'p2.k.negado': 'Negados',
@@ -1581,6 +1623,14 @@ window.VBMSetup = (function () {
       'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
     },
     en: {
+      'p2.linha': 'Cycle timeline', 'p2.hoje': 'Today · {d}',
+      'p2.linhaResumo': '{e} in progress: {n} business days to the window close · {o} to the official Goal Cards',
+      'p2.ph.concluida': 'Done', 'p2.ph.proxima': 'Next', 'p2.ph.restam': '{n} business days left', 'p2.ph.resta1': '1 business day left',
+      'p2.ph.desdobramentoRot': 'cascaded goals', 'p2.ph.desdobramentoDet': 'Goals and weights set for {b} Business Units',
+      'p2.ph.propostaRot': 'submitted · {n} of {t}', 'p2.ph.propostaDet': '{r} in draft · {v} returned for adjustment', 'p2.ph.propostaDet1': '{r} in draft · {v} returned for adjustment',
+      'p2.ph.calibracaoRot': 'pending approval', 'p2.ph.calibracaoDet': '{a} with the BU Director · {b} with P&CI/COO',
+      'p2.ph.paradas': '{n} stalled for more than {l} business days', 'p2.ph.parada1': '1 stalled for more than {l} business days',
+      'p2.ph.oficialRot': 'approved · {n} of {t}', 'p2.ph.oficialDet': '{g} denied · {c} to complete',
       'p2.titulo': 'Cycle dashboard', 'p2.sub': 'Goal Card status by Business Unit and time at each approval level.',
       'p2.agenda': 'Cycle agenda', 'p2.atualizar': 'Refresh dashboard', 'p2.kpisAria': 'Cycle indicators',
       'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submitted', 'p2.k.aprovado': 'Approved', 'p2.k.em_aprovacao': 'Pending approval', 'p2.k.em_revisao': 'In Review', 'p2.k.negado': 'Denied',
@@ -2024,28 +2074,7 @@ window.VBMSetup = (function () {
     $('p2Desatualizado').hidden = !d.desatualizado;
     $('p2Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
 
-    // Agenda do ciclo (vidro do banner)
-    var porId = {}; (c.etapas || []).forEach(function (e) { porId[e.id] = e; });
-    $('p2Agenda').innerHTML = ['proposta', 'calibracao', 'oficial'].map(function (id) {
-      var e = porId[id]; if (!e) return '';
-      var atual = c.etapaAtual === id;
-      return '<div' + (atual ? ' class="is-atual"' : '') + '><dt>' + esc(S.t('p2.ag.' + id)) + (atual ? ' · ' + esc(S.t('p2.ag.atual')) : '') + '</dt><dd>' + esc(dataCurta(e.fim)) + '</dd></div>';
-    }).join('');
-
-    // Indicadores
-    var nBus = (d.porBu || []).length;
-    var val = { total: t.total, submetidos: t.submetidos, aprovado: t.aprovado, em_aprovacao: t.em_aprovacao, em_revisao: t.em_revisao, negado: t.negado };
-    Object.keys(val).forEach(function (k) {
-      document.querySelector('[data-p2="' + k + '"]').textContent = val[k] == null ? '—' : S.fmt(val[k], 0);
-    });
-    var sub = {
-      total: S.t('p2.s.total', { b: S.fmt(nBus, 0) }),
-      submetidos: S.t('p2.s.submetidos', { p: pct(t.total ? t.submetidos / t.total : null) }),
-      aprovado: S.t('p2.s.aprovado', { p: pct(t.aprovadosPct) }),
-      em_aprovacao: S.t('p2.s.em_aprovacao', { n: S.fmt(t.paradas || 0, 0) }),
-      em_revisao: S.t('p2.s.em_revisao'), negado: S.t('p2.s.negado')
-    };
-    Object.keys(sub).forEach(function (k) { document.querySelector('[data-p2sub="' + k + '"]').textContent = sub[k]; });
+    p2RenderLinha(d);
 
     // Legenda da composição (cor + rótulo)
     $('p2Legenda').innerHTML = EST_ORDEM.map(function (e) { return '<li><span class="swatch p2-seg-' + e + '"></span>' + esc(S.t('est.' + e)) + '</li>'; }).join('');
@@ -2114,6 +2143,83 @@ window.VBMSetup = (function () {
         '<a class="btn btn-sec" href="' + esc(link) + '" aria-label="' + esc(S.t('p2.abrir') + ': ' + cd.bu.sigla + ' #' + cd.meta.numero + ' ' + cd.meta.titulo) + '">' + esc(S.t('p2.abrir')) + ico('i-arrow') + '</a></div></li>';
     }).join('');
     p2RenderUnidade();
+  }
+
+  // Linha do tempo do ciclo: trilho proporcional às janelas, "Hoje" e um cartão de resultado por fase.
+  // Os números vêm de `totais`/`niveis` do servidor (mesma lista de cards, CA-15) e seguem o filtro País › BU.
+  function dataDe(isoTxt) { var p = String(isoTxt).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function diasUteisAte(isoTxt) {
+    var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    var fim = dataDe(isoTxt), n = 0;
+    for (var x = new Date(hoje); x < fim;) { x.setDate(x.getDate() + 1); if (x.getDay() !== 0 && x.getDay() !== 6) n++; }
+    return n;
+  }
+  function p2RenderLinha(d) {
+    var c = d.ciclo || {}, t = d.totais || {}, niv = d.niveis || [];
+    var ets = (c.etapas || []).filter(function (e) { return ETAPAS.indexOf(e.id) >= 0; });
+    if (!ets.length) { $('p2Trilho').innerHTML = ''; $('p2Fases').innerHTML = ''; return; }
+    var atual = ETAPAS.indexOf(c.etapaAtual);
+    var inicio = dataDe(ets[0].inicio || ets[0].fim), fim = dataDe(ets[ets.length - 1].fim);
+    var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    var vao = Math.max(1, fim - inicio);
+
+    // Trilho: um trecho por janela, largura pela duração; preenchimento até hoje
+    var ini = inicio;
+    $('p2Trilho').innerHTML = ets.map(function (e, i) {
+      var a = i === 0 ? inicio : dataDe(ets[i - 1].fim), b = dataDe(e.fim);
+      var dur = Math.max(1, b - a);
+      var cheio = hoje >= b ? 100 : hoje <= a ? 0 : (hoje - a) / dur * 100;
+      var est = i < atual ? ' is-feita' : i === atual ? ' is-atual' : '';
+      return '<div class="p2-trecho' + est + '" style="flex-grow:' + Math.round(dur / 864e5) + '">' +
+        (i === 0 ? '<span class="p2-trecho-ini">' + esc(dataCurta(ets[0].inicio || ets[0].fim)) + '</span>' : '') +
+        '<span class="p2-trecho-fill" style="width:' + cheio.toFixed(1) + '%"></span>' +
+        (i === ets.length - 1 ? '<span class="p2-trecho-fim">' + esc(dataCurta(e.fim)) + '</span>' : '') + '</div>';
+    }).join('');
+    var posHoje = Math.min(100, Math.max(0, (hoje - ini) / vao * 100));
+    var hojeIso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+    $('p2Trilho').insertAdjacentHTML('beforeend', '<span class="p2-hoje" style="left:' + posHoje.toFixed(2) + '%"><span>' + esc(S.t('p2.hoje', { d: dataCurta(hojeIso) })) + '</span></span>');
+
+    // Resumo executivo ao lado do título
+    var etAtual = ets[atual] || null;
+    var restam = etAtual ? diasUteisAte(etAtual.fim) : null;
+    var faltaOficial = diasUteisAte(ets[ets.length - 1].fim);
+    $('p2LinhaResumo').innerHTML = etAtual
+      ? S.t('p2.linhaResumo', { e: '<b>' + esc(S.t('et.' + etAtual.id)) + '</b>', n: '<b>' + esc(S.fmt(restam, 0)) + '</b>', o: '<b>' + esc(S.fmt(faltaOficial, 0)) + '</b>' })
+      : '';
+
+    // Cartões por fase
+    var total = t.total || 0, n1 = (niv[0] || {}).cards || 0, n2 = (niv[1] || {}).cards || 0;
+    var w = function (v) { return (total ? v / total * 100 : 0).toFixed(1) + '%'; };
+    var nBus = (d.porBu || []).length;
+    var conteudo = {
+      desdobramento: { num: S.fmt(total, 0), rot: S.t('p2.ph.desdobramentoRot'), barra: '<span class="b-feita" style="width:100%"></span>',
+        det: S.t('p2.ph.desdobramentoDet', { b: '<b>' + esc(S.fmt(nBus, 0)) + '</b>' }) },
+      proposta: { num: pct(total ? t.submetidos / total : null), rot: S.t('p2.ph.propostaRot', { n: S.fmt(t.submetidos || 0, 0), t: S.fmt(total, 0) }),
+        barra: '<span class="b-atual" style="width:' + w(t.submetidos || 0) + '"></span>',
+        det: S.t(t.em_revisao === 1 ? 'p2.ph.propostaDet1' : 'p2.ph.propostaDet', { r: '<b>' + esc(S.fmt(t.rascunho || 0, 0)) + '</b>', v: '<b>' + esc(S.fmt(t.em_revisao || 0, 0)) + '</b>' }) },
+      calibracao: { num: S.fmt(t.em_aprovacao || 0, 0), rot: S.t('p2.ph.calibracaoRot'),
+        barra: '<span class="b-atual" style="width:' + w(n1) + '"></span><span class="b-n2" style="width:' + w(n2) + '"></span>',
+        det: S.t('p2.ph.calibracaoDet', { a: '<b>' + esc(S.fmt(n1, 0)) + '</b>', b: '<b>' + esc(S.fmt(n2, 0)) + '</b>' }) +
+          (t.paradas ? ' · <span class="alerta">' + esc(S.t(t.paradas === 1 ? 'p2.ph.parada1' : 'p2.ph.paradas', { n: S.fmt(t.paradas, 0), l: S.fmt((d.parametros || {}).diasParado || 3, 0) })) + '</span>' : '') },
+      oficial: { num: pct(t.aprovadosPct), rot: S.t('p2.ph.oficialRot', { n: S.fmt(t.aprovado || 0, 0), t: S.fmt(total, 0) }),
+        barra: '<span class="b-feita" style="width:' + w(t.aprovado || 0) + '"></span>',
+        det: S.t('p2.ph.oficialDet', { g: '<b>' + esc(S.fmt(t.negado || 0, 0)) + '</b>', c: '<b>' + esc(S.fmt(Math.max(0, total - (t.aprovado || 0) - (t.negado || 0)), 0)) + '</b>' }) }
+    };
+    $('p2Fases').innerHTML = ets.map(function (e, i) {
+      var k = conteudo[e.id] || {};
+      var est = i < atual ? 'is-feita' : i === atual ? 'is-atual' : 'is-futura';
+      var tag = S.t(i < atual ? 'p2.ph.concluida' : i === atual ? 'ab.atual' : 'p2.ph.proxima');
+      var data = i < atual ? S.t('ab.encerrada', { d: dataCurta(e.fim) })
+        : e.id === 'oficial' ? S.t('ab.publicacao', { d: dataCurta(e.fim) })
+        : S.t('ab.ate', { d: dataCurta(e.fim) }) + (i === atual ? ' · ' + S.t(restam === 1 ? 'p2.ph.resta1' : 'p2.ph.restam', { n: S.fmt(restam, 0) }) : '');
+      return '<li class="p2-fase ' + est + '"' + (i === atual ? ' aria-current="step"' : '') + '>' +
+        '<p class="p2-fase-topo"><span class="p2-fase-n">' + String(i + 1).padStart(2, '0') + '</span><span class="p2-fase-tag">' + esc(tag) + '</span></p>' +
+        '<h4 class="p2-fase-nome">' + esc(S.t('et.' + e.id)) + '</h4>' +
+        '<p class="p2-fase-data">' + esc(data) + '</p>' +
+        '<p class="p2-fase-num">' + esc(k.num) + '<small>' + esc(k.rot) + '</small></p>' +
+        '<div class="p2-fase-barra" aria-hidden="true">' + k.barra + '</div>' +
+        '<p class="p2-fase-det">' + k.det + '</p></li>';
+    }).join('');
   }
 
   // Seletor País › BU do painel (mesmo componente da T01; opções = BUs do ciclo)

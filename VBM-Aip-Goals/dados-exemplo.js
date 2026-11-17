@@ -37,7 +37,7 @@ function cicloExemplo(hoje = new Date()) {
     ],
     etapaAtual: 'proposta',
     etapas: [
-      { id: 'desdobramento', fim: desde(15) },
+      { id: 'desdobramento', inicio: desde(35), fim: desde(15) },
       { id: 'proposta', fim: prazo(8) },
       { id: 'calibracao', fim: prazo(18) },
       { id: 'oficial', fim: prazo(23) },

@@ -76,9 +76,15 @@ comentários sem resposta e ações atribuídas.
 Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis recebem 403 e a tela mostra
 "Painel restrito"). Filtro País › BU no endereço (`#painel?pais=&bu=`), com o Voltar do navegador.
 
-- **Banner** com a agenda do ciclo (proposta, calibração e aprovação, Goal Cards oficiais; etapa atual marcada).
-- **Indicadores:** Goal Cards, submetidos (% do total), aprovados (% do total), em aprovação (com paradas),
-  em revisão e negados.
+- **Linha do tempo do ciclo** no banner: trilho proporcional às janelas (do início do desdobramento à
+  publicação dos Goal Cards oficiais), preenchido até hoje, com o marcador "Hoje" e o resumo da etapa em
+  andamento (dias úteis para o fim da janela e até os Goal Cards oficiais). Abaixo, um cartão por fase
+  com o resultado do negócio:
+  - Desdobramento do COO: metas desdobradas e BUs;
+  - Proposta da BU: % submetidos (n de total), em rascunho e devolvidos;
+  - Calibração e aprovação: em aprovação, com o Diretor da BU × com P&CI/COO, e paradas acima do limite;
+  - Goal Card oficial: % aprovados (n de total), negados e a concluir.
+  Os números seguem o filtro País › BU e saem dos totais do servidor.
 - **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de
   status + números na linha), total e paradas; a BU leva à T03 filtrada.
 - **Funil do ciclo:** Goal Cards → submetidos → aprovados no nível 1 → aprovados, com a perda entre etapas.
