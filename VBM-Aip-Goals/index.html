@@ -925,29 +925,54 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .dd-nivel .ico { width: 0.875rem; height: 0.875rem; }
 .dd-nivel > span::before { content: '·'; margin: 0 0.5rem 0 0.25rem; }
 .dd-nivel-2 { margin: 0; }
-.dd-barra { display: flex; gap: 3px; height: 2rem; border-radius: 999px; overflow: hidden; }
-.dd-seg { flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-width: 0; font: 600 0.74rem var(--font-display); font-variant-numeric: tabular-nums; color: var(--page); background: var(--serie-a); cursor: pointer; transition: background .2s; }
-.dd-seg.is-resultado { background: var(--ab-v1); cursor: default; }
-.dd-seg.is-sel, .dd-seg:not(.is-resultado):hover { background: var(--accent-strong); }
+.dd-barra { display: flex; gap: 3px; height: 0.375rem; }
+.dd-seg { flex: 1 1 0; min-width: 0; border-radius: 999px; background: var(--serie-a); cursor: pointer; transition: background .2s, opacity .2s, transform .2s; }
+.dd-seg.is-resultado { background: var(--ab-v1); }
+.dd-barra.tem-sel .dd-seg { opacity: .3; }
+.dd-barra .dd-seg.is-sel { opacity: 1; background: var(--accent-strong); transform: scaleY(1.7); }
 .dd-fios { display: block; width: 100%; height: 2.5rem; overflow: visible; }
-.dd-fios path { fill: none; stroke: var(--serie-a); stroke-width: 1.5; opacity: .75; }
+.dd-fios path { fill: none; stroke: var(--serie-a); stroke-width: 1.5; opacity: .75; transition: opacity .2s; }
 .dd-fios path.is-resultado { stroke: var(--ab-v1); opacity: .4; }
+.dd-fios.tem-sel path { opacity: .15; }
 .dd-fios path.is-sel { stroke: var(--accent-strong); stroke-width: 2.5; opacity: 1; }
-.dd-coo { display: grid; grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.dd-coo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
 .dd-meta { display: flex; min-width: 0; }
-.dd-meta-btn, .dd-meta.is-resultado { width: 100%; display: flex; flex-direction: column; gap: 0.375rem; padding: 0.875rem 1rem; border-radius: 1rem; text-align: left; font: inherit; color: var(--text);
-  background: var(--ab-vidro); border: 1px solid var(--ab-vidro-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.dd-meta-btn { cursor: pointer; transition: border-color .2s, box-shadow .2s; }
-.dd-meta-btn:hover { border-color: var(--serie-a); }
-.dd-meta-btn[aria-pressed="true"] { border-color: var(--accent-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 18%, transparent); }
-.dd-meta-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-.dd-meta-id { font: 600 0.66rem var(--font-ui); letter-spacing: .08em; color: var(--text-soft); }
-.dd-meta-peso { font: 300 1.75rem/1 var(--font-display); letter-spacing: -.02em; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
-.dd-meta-tit { font: 600 0.84rem/1.3 var(--font-display); color: var(--ink-strong); }
-.dd-meta-faixas { display: flex; flex-wrap: wrap; gap: 0.125rem 0.75rem; font-size: 0.7rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
-.dd-meta-faixas b { font-weight: 600; color: var(--ink-strong); }
-.dd-meta-desce { margin-top: auto; padding-top: 0.25rem; display: inline-flex; align-items: center; gap: 0.375rem; font: 600 0.7rem var(--font-ui); color: var(--accent-strong); }
-.dd-meta-desce .ico { width: 0.875rem; height: 0.875rem; flex: none; transform: rotate(90deg); }
+/* Card no modelo das fases do ciclo: código e selo, título, linha de apoio, número grande, barra dos 100% e rodapé */
+.dd-card { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.125rem; border-radius: 1rem; text-align: left; font: inherit; color: var(--text); cursor: pointer;
+  background: var(--ab-vidro); border: 1px solid var(--ab-vidro-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); transition: border-color .2s, box-shadow .2s, background .2s; }
+.dd-card:hover { border-color: var(--serie-a); }
+.dd-card[aria-pressed="true"] { border-color: var(--accent-strong); background: color-mix(in srgb, var(--accent-strong) 10%, var(--ab-vidro)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 16%, transparent); }
+.dd-card-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.dd-card-id { font: 300 0.84rem var(--font-display); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.dd-card-badge { padding: 2px 9px; border-radius: 999px; background: var(--flat-bg); color: var(--flat); font: 700 0.58rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-card[aria-pressed="true"] .dd-card-badge { background: var(--accent-strong); color: var(--page); }
+.dd-card-tit { min-height: 2.6em; font: 600 0.92rem/1.3 var(--font-display); color: var(--ink-strong); }
+.dd-card-sub { font-size: 0.72rem; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-card-num { display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.25rem; }
+.dd-card-num b { font: 300 clamp(1.875rem, 1rem + 1.4vw, 2.5rem)/1 var(--font-display); letter-spacing: -.03em; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.dd-card-num span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.74rem; color: var(--text-soft); }
+/* Barra dos 100%: a fatia da meta em ênfase, as outras no trilho */
+.dd-card-barra { display: flex; gap: 2px; height: 0.375rem; }
+.dd-card-barra .dd-seg { background: var(--ab-trilho); cursor: inherit; }
+.dd-card-barra .dd-seg.is-sel { background: var(--serie-a); }
+.dd-card.is-resultado .dd-card-barra .dd-seg.is-sel { background: var(--ab-v1); }
+.dd-card[aria-pressed="true"] .dd-card-barra .dd-seg.is-sel { background: var(--accent-strong); }
+.dd-card-faixas { display: flex; flex-wrap: wrap; gap: 0.125rem 0.75rem; font-size: 0.7rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.dd-card-faixas b { font-weight: 600; color: var(--ink-strong); }
+.dd-card-rod { margin-top: auto; padding-top: 0.375rem; display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.72rem; color: var(--ink-strong); }
+/* Um ponto por Goal Card gerado nas BUs, na cor da situação */
+.dd-pontos { display: flex; flex-wrap: wrap; gap: 4px; }
+/* Pouca altura (notebook com escala de 125–150%): cards mais compactos */
+@media (max-height: 820px) and (min-width: 721px) {
+  .dd-card { gap: 0.375rem; padding: 0.75rem 0.875rem; }
+  .dd-card-tit { font-size: 0.84rem; }
+  .dd-fios { height: 1.75rem; }
+}
+.dd-ponto { width: 0.625rem; height: 0.625rem; border-radius: 50%; }
+.dd-ponto:not([class*="p2-seg-"]) { background: var(--ab-trilho); }
+.dd-card-rod-txt { display: flex; flex-direction: column; gap: 0.125rem; }
+.dd-card-rod-txt b { font-weight: 600; }
+.dd-card-rod-txt span { color: var(--text-soft); }
 .dd-resumo { font-size: 0.74rem; color: var(--text-soft); }
 /* Matriz meta × BU */
 .dd-tabela thead th { text-align: center; }
@@ -1851,7 +1876,7 @@ window.VBMSetup = (function () {
       'dd.resumo': '{e} metas específicas · {n} novas no ciclo · {d} desdobradas de metas do COO', 'dd.meta': 'Meta',
       'dd.total': 'Total', 'dd.aprovado': 'Peso aprovado', 'dd.ptsDe': '{n} de {t}', 'dd.celula': '{b} · {m}: {p} pts · {e}', 'dd.semCard': 'sem Goal Card',
       'dd.filtrar': 'Destacar as metas da BU que vêm de {m}', 'dd.limpar': 'Mostrar todas as metas',
-      'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.irBu': 'Abrir as metas de {b}',
+      'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.badgeTodas': '{p}% de cada BU', 'dd.doScorecard': 'do scorecard do COO', 'dd.baseBus': 'Base do resultado do COO em {n} BUs', 'dd.aprovados': '{a} de {t} aprovados', 'dd.emAprov': '{n} em aprovação', 'dd.irBu': 'Abrir as metas de {b}',
       'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
       'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
     },
@@ -1945,7 +1970,7 @@ window.VBMSetup = (function () {
       'dd.resumo': '{e} specific goals · {n} new this cycle · {d} cascaded from COO goals', 'dd.meta': 'Goal',
       'dd.total': 'Total', 'dd.aprovado': 'Weight approved', 'dd.ptsDe': '{n} of {t}', 'dd.celula': '{b} · {m}: {p} pts · {e}', 'dd.semCard': 'no Goal Card',
       'dd.filtrar': 'Highlight the BU goals that come from {m}', 'dd.limpar': 'Show all goals',
-      'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.irBu': 'Open the goals of {b}',
+      'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.badgeTodas': '{p}% of each BU', 'dd.doScorecard': 'of the COO scorecard', 'dd.baseBus': 'Basis of the COO result in {n} BUs', 'dd.aprovados': '{a} of {t} approved', 'dd.emAprov': '{n} pending approval', 'dd.irBu': 'Open the goals of {b}',
       'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
       'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card'
     }
@@ -2662,26 +2687,42 @@ window.VBMSetup = (function () {
     $('ddExemplo').hidden = !d.exemplo;
     $('ddAtualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
 
-    // Nível 1 — barra de composição do scorecard do COO (partes de 100%) e as metas abaixo
+    // Nível 1 — barra fina da composição do scorecard do COO (sem rótulos; a meta escolhida fica em ênfase)
     $('ddBarra').setAttribute('aria-label', S.t('dd.barraAria', { l: sc.map(function (m) { return m.id + ' ' + ddPct(m.peso); }).join(', ') }));
-    $('ddBarra').innerHTML = sc.map(function (m) {
-      return '<span class="dd-seg' + (m.resultado ? ' is-resultado' : '') + (dd.sel === m.id ? ' is-sel' : '') + '" data-id="' + esc(m.id) + '" style="flex-grow:' + m.peso + '">' + esc(ddPct(m.peso)) + '</span>';
-    }).join('');
+    $('ddBarra').classList.toggle('tem-sel', !!dd.sel);
+    var segs = function (on) {
+      return sc.map(function (m) { return '<span class="dd-seg' + (m.resultado ? ' is-resultado' : '') + (on === m.id ? ' is-sel' : '') + '" data-id="' + esc(m.id) + '" style="flex-grow:' + m.peso + '"></span>'; }).join('');
+    };
+    $('ddBarra').innerHTML = segs(dd.sel);
+    // Cards das metas do COO: a barra dos 100% com a fatia da meta em ênfase e a evolução dos Goal Cards que ela gerou nas BUs
+    var resId = (sc.filter(function (m) { return m.resultado; })[0] || {}).id;
     $('ddCoo').innerHTML = sc.map(function (m) {
-      var corpo = '<span class="dd-meta-cab"><span class="dd-meta-id">' + esc(m.id) + '</span><b class="dd-meta-peso">' + esc(ddPct(m.peso)) + '</b></span>' +
-        '<span class="dd-meta-tit">' + esc(m.titulo) + '</span>';
-      if (m.resultado) {
-        return '<li class="dd-meta is-resultado">' + corpo + '<span class="dd-meta-faixas">' + esc(S.t('dd.resultadoCeo')) + '</span>' +
-          '<span class="dd-meta-desce">' + ico('i-arrow') + esc(S.t('dd.paraTodas', { p: S.fmt(par.pesoResultadoCoo || 0, 0) })) + '</span></li>';
-      }
+      var alvo = m.resultado ? linhas.filter(function (l) { return l.resultado; }) : linhas.filter(function (l) { return (m.metasBu || []).indexOf(l.numero) >= 0; });
+      var cels = [];
+      alvo.forEach(function (l) { bus.forEach(function (b) { var x = l.celulas[b.sigla]; if (x) cels.push({ bu: b.sigla, n: l.numero, x: x }); }); });
+      var aprov = cels.filter(function (c) { return c.x.estado === 'aprovado'; }).length;
+      var emAprov = cels.filter(function (c) { return c.x.estado === 'em_aprovacao'; }).length;
+      var nBus = cels.map(function (c) { return c.bu; }).filter(function (v, k, a) { return a.indexOf(v) === k; }).length;
+      var badge = m.resultado ? S.t('dd.badgeTodas', { p: S.fmt(par.pesoResultadoCoo || 0, 0) })
+        : S.t((m.metasBu || []).length > 1 ? 'dd.paraBus' : 'dd.paraBu', { n: ddLista((m.metasBu || []).map(String)) });
+      var sub = m.resultado ? S.t('dd.resultadoCeo') : S.t('dd.compartilhada', { l: (m.compartilhada || []).join(' · ') });
       var f = m.faixas || {};
-      var faixas = '<span class="dd-meta-faixas"><span>' + esc(S.t('dd.min')) + ' <b>' + esc(f.min || '—') + '</b></span><span>' + esc(S.t('dd.alvo')) + ' <b>' + esc(f.alvo || '—') + '</b></span><span>' + esc(S.t('dd.exc')) + ' <b>' + esc(f.excepcional || '—') + '</b></span></span>';
-      var nums = (m.metasBu || []).map(function (n) { return '#' + n; });
-      var desce = nums.length ? S.t(nums.length > 1 ? 'dd.paraBus' : 'dd.paraBu', { n: ddLista((m.metasBu || []).map(String)) }) : '';
-      return '<li class="dd-meta"><button type="button" class="dd-meta-btn" data-id="' + esc(m.id) + '" aria-pressed="' + (dd.sel === m.id) + '"' +
-        ' title="' + esc(S.t('dd.compartilhada', { l: (m.compartilhada || []).join(', ') })) + '"' +
-        ' aria-label="' + esc(m.id + ' ' + m.titulo + ', ' + ddPct(m.peso) + '. ' + S.t('dd.filtrar', { m: m.id })) + '">' + corpo + faixas +
-        (desce ? '<span class="dd-meta-desce">' + ico('i-arrow') + esc(desce) + '</span>' : '') + '</button></li>';
+      var faixas = m.resultado ? '<span class="dd-card-faixas">' + esc(S.t('dd.baseBus', { n: S.fmt(nBus, 0) })) + '</span>'
+        : '<span class="dd-card-faixas"><span>' + esc(S.t('dd.min')) + ' <b>' + esc(f.min || '—') + '</b></span><span>' + esc(S.t('dd.alvo')) + ' <b>' + esc(f.alvo || '—') + '</b></span><span>' + esc(S.t('dd.exc')) + ' <b>' + esc(f.excepcional || '—') + '</b></span></span>';
+      var pontos = cels.map(function (c) {
+        var e = c.x.estado ? S.t('est.' + c.x.estado) : S.t('dd.semCard');
+        return '<span class="dd-ponto' + (c.x.estado ? ' p2-seg-' + esc(c.x.estado) : '') + '" title="' + esc(c.bu + (alvo.length > 1 ? ' #' + c.n : '') + ': ' + e) + '"></span>';
+      }).join('');
+      var rod = S.t('dd.aprovados', { a: S.fmt(aprov, 0), t: S.fmt(cels.length, 0) }), rod2 = emAprov ? S.t('dd.emAprov', { n: S.fmt(emAprov, 0) }) : '';
+      return '<li class="dd-meta"><button type="button" class="dd-card' + (m.resultado ? ' is-resultado' : '') + '" data-id="' + esc(m.id) + '" aria-pressed="' + (dd.sel === m.id) + '"' +
+        ' aria-label="' + esc(m.id + ' ' + m.titulo + ', ' + ddPct(m.peso) + '. ' + rod + (rod2 ? ', ' + rod2 : '') + '. ' + S.t('dd.filtrar', { m: m.id })) + '">' +
+        '<span class="dd-card-cab"><span class="dd-card-id">' + esc(m.id) + '</span><span class="dd-card-badge">' + esc(badge) + '</span></span>' +
+        '<span class="dd-card-tit">' + esc(m.titulo) + '</span>' +
+        '<span class="dd-card-sub" title="' + esc(sub) + '">' + esc(sub) + '</span>' +
+        '<span class="dd-card-num"><b>' + esc(ddPct(m.peso)) + '</b><span>' + esc(S.t('dd.doScorecard')) + '</span></span>' +
+        '<span class="dd-card-barra" aria-hidden="true">' + segs(m.id) + '</span>' + faixas +
+        '<span class="dd-card-rod"><span class="dd-pontos" aria-hidden="true">' + pontos + '</span><span class="dd-card-rod-txt"><b>' + esc(rod) + '</b>' + (rod2 ? '<span>' + esc(rod2) + '</span>' : '') + '</span></span>' +
+        '</button></li>';
     }).join('');
 
     // Nível 2 — matriz meta × BU, agrupada por país
@@ -2697,7 +2738,7 @@ window.VBMSetup = (function () {
     var linhaHtml = function (l) {
       var tags = (l.nova ? '<span class="dd-tag">' + esc(S.t('dd.nova')) + '</span>' : '') +
         (l.origem ? '<button type="button" class="dd-tag dd-tag-origem" data-id="' + esc(l.origem) + '" aria-pressed="' + (dd.sel === l.origem) + '" title="' + esc(S.t('dd.filtrar', { m: l.origem })) + '">COO ' + esc(l.origem) + '</button>' : '');
-      var apagada = dd.sel && l.origem !== dd.sel;
+      var apagada = dd.sel && !(l.origem === dd.sel || (l.resultado && dd.sel === resId));
       return '<tr class="dd-linha' + (apagada ? ' is-apagada' : '') + (dd.sel && !apagada ? ' is-acesa' : '') + '">' +
         '<th scope="row" class="dd-meta-cel"><span class="dd-n">' + (l.resultado ? '—' : esc(l.numero)) + '</span><span class="dd-meta-nome">' + esc(l.titulo) + '</span>' + tags + '</th>' +
         bus.map(function (b) {
@@ -2745,12 +2786,12 @@ window.VBMSetup = (function () {
       p.push('<path class="' + (segs[i].classList.contains('is-resultado') ? 'is-resultado' : '') + (dd.sel === id ? ' is-sel' : '') + '" d="M' + x1.toFixed(1) + ' 0 C' + x1.toFixed(1) + ' ' + (h * 0.6).toFixed(1) + ' ' + x2.toFixed(1) + ' ' + (h * 0.4).toFixed(1) + ' ' + x2.toFixed(1) + ' ' + h.toFixed(1) + '"/>');
     }
     svg.setAttribute('viewBox', '0 0 ' + base.width.toFixed(1) + ' ' + base.height.toFixed(1));
-    svg.innerHTML = p.join('');
+    svg.innerHTML = p.join(''); svg.classList.toggle('tem-sel', !!dd.sel);
   }
   window.addEventListener('resize', function () { if (dd.dados) requestAnimationFrame(ddFios); });
   function ddSelecionar(id) { dd.sel = dd.sel === id ? '' : id; ddRender(); }
-  $('ddCoo').addEventListener('click', function (e) { var b = e.target.closest('.dd-meta-btn'); if (b) ddSelecionar(b.getAttribute('data-id')); });
-  $('ddBarra').addEventListener('click', function (e) { var b = e.target.closest('.dd-seg:not(.is-resultado)'); if (b) ddSelecionar(b.getAttribute('data-id')); });
+  $('ddCoo').addEventListener('click', function (e) { var b = e.target.closest('.dd-card'); if (b) ddSelecionar(b.getAttribute('data-id')); });
+  $('ddBarra').addEventListener('click', function (e) { var b = e.target.closest('.dd-seg'); if (b) ddSelecionar(b.getAttribute('data-id')); });
   $('ddLinhas').addEventListener('click', function (e) { var b = e.target.closest('.dd-tag-origem'); if (b) ddSelecionar(b.getAttribute('data-id')); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && dd.sel && !$('vistaDesdobramento').hidden) ddSelecionar(dd.sel); });
   $('ddAtualizar').addEventListener('click', function () { ddCarregar(true); });
