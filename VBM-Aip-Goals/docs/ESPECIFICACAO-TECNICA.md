@@ -313,15 +313,16 @@ Decisões já tomadas (P-01, P-02 e itens validados) estão em [LEVANTAMENTO-REQ
 
 ## 13. Telas desenvolvidas
 
-Três telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendências e T02 Painel do ciclo), com dados de exemplo até a validação do modelo de dados (P-12). As demais telas do catálogo já têm endereço no menu e abrem "Tela em construção".
+Quatro telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendências, T02 Painel do ciclo e T03 Metas da BU), com dados de exemplo até a validação do modelo de dados (P-12). As demais telas do catálogo já têm endereço no menu e abrem "Tela em construção".
 
 | Tela | Situação | O que já funciona | Depende de |
 | --- | --- | --- | --- |
 | T00 Início | Desenvolvida | Abertura do ciclo AIP 2027: etapa atual e prazo, data dos Goal Cards oficiais, BUs por país, jornada do ciclo com a etapa atual e índice das telas do perfil | Janelas e BUs reais (T11, P-12) |
 | T01 Minhas pendências | Desenvolvida | Fila por tipo, resumo que filtra, filtros País › BU, ordenação e só paradas ou atrasadas na URL, status com ícone e rótulo, idade em dias úteis (RN-14), estados de carregando, vazio, erro, sem acesso e desatualizado | Consulta real da fila (P-12) |
 | T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação por nível com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
+| T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação, nível e versão; BU na URL | Metas e pesos reais por BU (P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
-| T03, T04, T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) e, na T04, a rota de aprovação (P-11) |
+| T04, T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) e, na T04, a rota de aprovação (P-11) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |
 
 Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.

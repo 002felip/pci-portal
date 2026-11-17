@@ -752,10 +752,10 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
   .hero-titulo { font-size: 1.6rem; }
   /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
-  #vistaPainel .p2-topo { padding-bottom: 1.5rem; }
-  #vistaPainel .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
-  #vistaPainel .p2-titulo .ab-ano { font-size: 4.6rem; }
-  #vistaPainel .p2-trilha { --p2-esp: 0.875rem; }
+  :is(#vistaPainel, #vistaMetas) .p2-topo { padding-bottom: 1.5rem; }
+  :is(#vistaPainel, #vistaMetas) .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
+  :is(#vistaPainel, #vistaMetas) .p2-titulo .ab-ano { font-size: 4.6rem; }
+  :is(#vistaPainel, #vistaMetas) .p2-trilha { --p2-esp: 0.875rem; }
   .hero-sub { display: none; }
   .hero-pills { margin-top: 0.5rem; }
   .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
@@ -901,6 +901,19 @@ body.is-inicio .page { max-width: none; padding: 0; }
   /* Matriz na largura toda; funil e tempo lado a lado abaixo dela */
   .p2-coluna { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
+
+/* ── T03 Metas da BU ──
+   Reaproveita o topo, os anéis (.p2-et, .p2-anel) e a tabela (.p2-tabela) da T02; sem tokens novos. */
+.m3-aneis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.m3-tabela .m3-col-peso { width: 22%; }
+.m3-peso { display: flex; align-items: center; gap: 0.625rem; }
+.m3-peso b { min-width: 2.25rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
+.m3-peso-barra { flex: 1; min-width: 3rem; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+.m3-peso-barra span { display: block; height: 100%; border-radius: 999px; background: var(--serie-a); }
+.m3-meta-tit { font-weight: 600; color: var(--ink-strong); }
+.m3-meta-tipo { display: block; margin-top: 0.125rem; font-size: 0.7rem; color: var(--text-soft); }
+.m3-tabela td.m3-acao { text-align: right; }
+.m3-tabela tfoot .m3-alerta { color: var(--wait); }
 
 /* ════════════════════════════════════════════════════════════════════
    [RESPONSIVO] Camada adaptativa (skill-responsividade)
@@ -1361,6 +1374,80 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
     </div>
   </section>
 
+  <!-- ═══ T03 · Metas da BU (recorte do usuário) ═══ -->
+  <section class="vista" id="vistaMetas" hidden aria-labelledby="titMetas">
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="m3Ciclo">AIP</span></p>
+        <h2 class="p2-titulo" id="titMetas"><span class="ab-nome" data-i18n="m3.titulo">Metas da BU</span><span class="ab-ano" id="m3Bu">—</span></h2>
+      </div>
+      <!-- Anéis por peso: quanto do total de pontos da BU está distribuído, submetido, em aprovação e aprovado -->
+      <div class="p2-trilha">
+        <ol class="m3-aneis" id="m3Aneis" aria-label="Peso das metas por situação" data-i18n-aria="m3.aneisAria"></ol>
+      </div>
+    </header>
+
+    <div class="filters p2-filtro">
+      <p class="p2-pills">
+        <span class="pill-wait" id="m3AlertaPesos" hidden role="status"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span id="m3AlertaTxt"></span></span>
+        <span class="pill-info" id="m3Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+      </p>
+      <div class="filter">
+        <span class="filter-label" id="m3LblUnid">Business Unit:</span>
+        <div class="unit" id="m3Unit">
+          <button type="button" class="unit-trigger" id="m3UnitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="m3UnitPop" aria-labelledby="m3LblUnid m3UnitTrigger">
+            <span class="unit-pais" id="m3UnitPais"></span><span class="unit-sep">›</span><span class="unit-site" id="m3UnitSite"></span>
+            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
+          <div class="unit-pop" id="m3UnitPop" hidden>
+            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="m3Paises"></div></div>
+            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="m3Bus"></div></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="dash-acao" id="m3Atualizar" aria-label="Atualizar metas" title="Atualizar metas" data-i18n-aria="m3.atualizar" data-i18n-title="m3.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+      <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+    </div>
+
+    <section class="secao" id="m3Corpo" aria-labelledby="m3TitLista">
+      <div class="secao-head">
+        <h3 class="secao-tit" id="m3TitLista" data-i18n="m3.lista">Metas do desdobramento</h3>
+        <span class="secao-cont" id="m3Cont" hidden></span>
+        <ul class="legend p2-legenda" id="m3Legenda"></ul>
+      </div>
+      <div class="p2-tabela-wrap">
+        <table class="p2-tabela m3-tabela">
+          <caption class="sr-only" data-i18n="m3.caption">Metas da Business Unit com peso, tipo, situação, nível e versão</caption>
+          <thead><tr>
+            <th scope="col" class="num">#</th>
+            <th scope="col" data-i18n="col.meta">Meta</th>
+            <th scope="col" class="m3-col-peso" data-i18n="m3.colPeso">Peso (pts)</th>
+            <th scope="col" data-i18n="col.situacao">Situação</th>
+            <th scope="col" data-i18n="m3.colNivel">Nível</th>
+            <th scope="col" class="num" data-i18n="lbl.versao">Versão</th>
+            <th scope="col" data-i18n="m3.colDesde">Na situação desde</th>
+            <th scope="col"><span class="sr-only" data-i18n="col.acao">Ação</span></th>
+          </tr></thead>
+          <tbody id="m3Linhas"></tbody>
+          <tfoot id="m3Rodape"></tfoot>
+        </table>
+      </div>
+      <p class="updated" id="m3Atualizado"></p>
+    </section>
+
+    <div class="estado estado-erro" id="m3Erro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="m3.erroTit">Não foi possível carregar as metas</p>
+      <p class="estado-txt" id="m3ErroTxt"></p>
+      <button type="button" class="btn" id="m3Tentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <div class="estado" id="m3SemAcesso" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+      <p class="estado-tit" data-i18n="m3.semAcessoTit">Sem Business Unit no seu recorte</p>
+      <p class="estado-txt" data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
+    </div>
+  </section>
+
   <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
   <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
     <div class="secao">
@@ -1550,6 +1637,14 @@ window.VBMSetup = (function () {
       'p2.ph.calibracaoRot': 'em aprovação', 'p2.ph.calibracaoDet': '{a} com o Diretor da BU · {b} com P&CI/COO',
       'p2.ph.paradas': '{n} paradas há mais de {l} dias úteis', 'p2.ph.parada1': '1 parada há mais de {l} dias úteis',
       'p2.ph.oficialRot': 'aprovados', 'p2.ph.oficialDet': '{a} de {t} Goal Cards aprovados<br>{g} negados · {c} a concluir',
+      'm3.titulo': 'Metas da BU', 'm3.aneisAria': 'Peso das metas por situação', 'm3.atualizar': 'Atualizar metas', 'm3.lista': 'Metas do desdobramento',
+      'm3.caption': 'Metas da Business Unit com peso, tipo, situação, nível e versão', 'm3.colPeso': 'Peso (pts)', 'm3.colNivel': 'Nível', 'm3.colDesde': 'Na situação desde',
+      'm3.erroTit': 'Não foi possível carregar as metas', 'm3.semAcessoTit': 'Sem Business Unit no seu recorte',
+      'm3.semAcessoTxt': 'Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.',
+      'm3.a.distribuido': 'Peso distribuído', 'm3.a.submetido': 'Peso submetido', 'm3.a.aprovacao': 'Peso em aprovação', 'm3.a.aprovado': 'Peso aprovado',
+      'm3.pts': '{n} de {t} pts', 'm3.metas': '{n} metas', 'm3.meta1': '1 meta', 'm3.alerta': 'Soma dos pesos: {n} de {t} pts — revisar com o administrador do ciclo',
+      'm3.tipo.formula': 'Por fórmula', 'm3.tipo.marcos': 'Por marcos', 'm3.total': 'Total', 'm3.abrir': 'Abrir',
+      'm3.anelAria': '{e}: {p} ({q}), {m}',
       'p2.eyebrow': 'Planejamento anual', 'p2.vis': 'Exibir:', 'p2.visAbs': 'Números absolutos', 'p2.visPct': 'Percentual do total', 'p2.prazo': 'prazo', 'p2.doTotalCurto': 'do total',
       'p2.et.desdobramento': 'Desdobramento COO', 'p2.et.proposta': "Propostas BU's", 'p2.et.calibracao': 'Calibração e Aprovação', 'p2.et.oficial': 'Goal Card oficial',
       'p2.qt': '{n} de {t}', 'p2.qtFull': '{n} de {t} {r}', 'p2.q.desdobramento': 'metas desdobradas', 'p2.q.proposta': 'Goal Cards submetidos', 'p2.q.calibracao': 'Goal Cards em aprovação', 'p2.q.oficial': 'Goal Cards aprovados',
@@ -1625,6 +1720,14 @@ window.VBMSetup = (function () {
       'p2.ph.calibracaoRot': 'pending approval', 'p2.ph.calibracaoDet': '{a} with the BU Director · {b} with P&CI/COO',
       'p2.ph.paradas': '{n} stalled for more than {l} business days', 'p2.ph.parada1': '1 stalled for more than {l} business days',
       'p2.ph.oficialRot': 'approved', 'p2.ph.oficialDet': '{a} of {t} Goal Cards approved<br>{g} denied · {c} to complete',
+      'm3.titulo': 'BU goals', 'm3.aneisAria': 'Goal weight by status', 'm3.atualizar': 'Refresh goals', 'm3.lista': 'Cascaded goals',
+      'm3.caption': 'Business Unit goals with weight, type, status, level and version', 'm3.colPeso': 'Weight (pts)', 'm3.colNivel': 'Level', 'm3.colDesde': 'In status since',
+      'm3.erroTit': 'Could not load the goals', 'm3.semAcessoTit': 'No Business Unit in your scope',
+      'm3.semAcessoTxt': 'Your user has no role in any BU of the active cycle, or the requested BU is outside your scope.',
+      'm3.a.distribuido': 'Weight assigned', 'm3.a.submetido': 'Weight submitted', 'm3.a.aprovacao': 'Weight pending approval', 'm3.a.aprovado': 'Weight approved',
+      'm3.pts': '{n} of {t} pts', 'm3.metas': '{n} goals', 'm3.meta1': '1 goal', 'm3.alerta': 'Sum of weights: {n} of {t} pts — review with the cycle administrator',
+      'm3.tipo.formula': 'Formula-based', 'm3.tipo.marcos': 'Milestone-based', 'm3.total': 'Total', 'm3.abrir': 'Open',
+      'm3.anelAria': '{e}: {p} ({q}), {m}',
       'p2.eyebrow': 'Annual planning', 'p2.vis': 'Show:', 'p2.visAbs': 'Absolute numbers', 'p2.visPct': 'Percent of total', 'p2.prazo': 'due', 'p2.doTotalCurto': 'of total',
       'p2.et.desdobramento': 'COO cascade', 'p2.et.proposta': 'BU proposals', 'p2.et.calibracao': 'Calibration and Approval', 'p2.et.oficial': 'Official Goal Card',
       'p2.qt': '{n} of {t}', 'p2.qtFull': '{n} of {t} {r}', 'p2.q.desdobramento': 'cascaded goals', 'p2.q.proposta': 'Goal Cards submitted', 'p2.q.calibracao': 'Goal Cards pending approval', 'p2.q.oficial': 'Goal Cards approved',
@@ -2244,6 +2347,126 @@ window.VBMSetup = (function () {
   $('p2Atualizar').addEventListener('click', function () { p2.cache = {}; p2Carregar(true); });
   $('p2Tentar').addEventListener('click', function () { p2Carregar(true); });
 
+  // ══ T03 · Metas da BU ══
+  // Dados: GET api/metas?bu= — recorte, soma e peso por situação calculados no servidor (AC-04/AC-05, RN-16).
+  // BU no hash (#metas?bu=): o Voltar do navegador volta com a mesma BU.
+  var m3 = { dados: null, cache: {}, bu: '', pais: '' };
+  function m3LerFiltro() { m3.bu = new URLSearchParams((location.hash.split('?')[1]) || '').get('bu') || ''; }
+  function m3GravarFiltro() {
+    var alvo = '#metas' + (m3.bu ? '?bu=' + encodeURIComponent(m3.bu) : '');
+    if (location.hash !== alvo) history.pushState(null, '', location.pathname + location.search + alvo);
+  }
+  function m3Estado(qual) {
+    $('m3Corpo').hidden = qual !== 'ok'; $('m3Erro').hidden = qual !== 'erro'; $('m3SemAcesso').hidden = qual !== 'acesso';
+    $('m3Aneis').parentNode.hidden = qual !== 'ok';
+  }
+  function m3Carregar(fresco) {
+    var chave = m3.bu || '*';
+    if (!fresco && m3.cache[chave]) { m3.dados = m3.cache[chave]; return Promise.resolve(m3Render()); }
+    var q = new URLSearchParams();
+    if (m3.bu) q.set('bu', m3.bu);
+    if (fresco) q.set('fresco', '1');
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    return fetch('api/metas' + (q.toString() ? '?' + q.toString() : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) { m3.cache[chave] = j; m3.cache[j.bu.sigla] = j; m3.dados = j; if (fresco) toast(S.t('t01.atualizada')); m3Render(); })
+      .catch(function (err) {
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] metas:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return m3Estado('acesso');
+        $('m3ErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        m3Estado('erro');
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+  function m3Render() {
+    var d = m3.dados; if (!d) return;
+    m3Estado('ok');
+    var c = d.ciclo || {}, t = d.totais || {}, esp = t.pesoEsperado || 100;
+    m3.bu = d.bu.sigla; m3.pais = d.bu.pais;
+    $('m3Ciclo').textContent = c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '';
+    $('m3Bu').textContent = d.bu.sigla;
+    $('m3Exemplo').hidden = !d.exemplo;
+    $('m3Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
+    // RN-16: soma dos pesos diferente do total do desdobramento
+    $('m3AlertaPesos').hidden = !d.alertaPesos;
+    $('m3AlertaTxt').textContent = S.t('m3.alerta', { n: S.fmt(t.pesoTotal || 0, 0), t: S.fmt(esp, 0) });
+
+    // Anéis por peso (fração do total de pontos da BU)
+    var fr = function (v) { return esp ? v / esp : 0; };
+    var p = t.peso || {}, qn = t.qtd || {};
+    var n = function (k) { return S.t(k === 1 ? 'm3.meta1' : 'm3.metas', { n: S.fmt(k, 0) }); };
+    var aneis = [
+      { id: 'distribuido', cls: 'is-feita', v: t.pesoTotal || 0, metas: t.metas || 0 },
+      { id: 'submetido', cls: 'is-futura', v: t.pesoSubmetido || 0, metas: (t.metas || 0) - (qn.rascunho || 0) },
+      { id: 'aprovacao', cls: 'is-futura', v: p.em_aprovacao || 0, metas: qn.em_aprovacao || 0 },
+      { id: 'aprovado', cls: 'is-feita', v: p.aprovado || 0, metas: qn.aprovado || 0 }
+    ];
+    $('m3Aneis').innerHTML = aneis.map(function (a, i) {
+      var rot = S.t('m3.a.' + a.id), pts = S.t('m3.pts', { n: S.fmt(a.v, 0), t: S.fmt(esp, 0) });
+      return '<li class="p2-et ' + a.cls + '" aria-label="' + esc(S.t('m3.anelAria', { e: rot, p: pct(fr(a.v)), q: pts, m: n(a.metas) })) + '">' +
+        '<p class="p2-et-n" aria-hidden="true"><b>' + String(i + 1).padStart(2, '0') + '</b> - ' + esc(rot) + '</p>' +
+        '<div class="p2-anel" aria-hidden="true">' + anel(fr(a.v)) + '<div class="p2-anel-txt"><strong>' + esc(pct(fr(a.v))) + '</strong></div></div>' +
+        '<p class="p2-et-data" aria-hidden="true">' + esc(n(a.metas)) + '</p>' +
+        '<p class="p2-et-det" aria-hidden="true">' + esc(pts) + '</p></li>';
+    }).join('');
+
+    // Tabela de metas
+    var maxPeso = Math.max.apply(null, (d.metas || []).map(function (m) { return m.meta.peso || 0; }).concat([1]));
+    $('m3Cont').textContent = S.fmt((d.metas || []).length, 0); $('m3Cont').hidden = !(d.metas || []).length;
+    $('m3Legenda').innerHTML = '';
+    $('m3Linhas').innerHTML = (d.metas || []).map(function (m) {
+      var nivel = m.nivel ? S.t('nivel', { a: S.fmt(m.nivel.atual, 0), t: S.fmt(m.nivel.total, 0), n: m.nivel.nome }) : '—';
+      var link = '#goal-card?card=' + encodeURIComponent(m.card) + (m.estado === 'em_aprovacao' ? '&modo=analise' : '');
+      return '<tr>' +
+        '<td class="num">' + esc(m.meta.numero) + '</td>' +
+        '<td><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></td>' +
+        '<td><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b><span class="m3-peso-barra" aria-hidden="true"><span style="width:' + (m.meta.peso / maxPeso * 100).toFixed(1) + '%"></span></span></span></td>' +
+        '<td><span class="st st-' + esc(m.estado) + '">' + ico('i-st-' + m.estado) + esc(S.t('est.' + m.estado)) + '</span>' +
+          (m.parada ? ' <span class="chip-parada">' + ico('i-clock') + esc(S.t('chip.parada')) + '</span>' : '') + '</td>' +
+        '<td>' + esc(nivel) + '</td>' +
+        '<td class="num">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
+        '<td>' + esc(dataCurta(m.desde)) + '</td>' +
+        '<td class="m3-acao"><a class="btn btn-sec" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '">' + esc(S.t('m3.abrir')) + ico('i-arrow') + '</a></td></tr>';
+    }).join('');
+    $('m3Rodape').innerHTML = '<tr><td></td><td>' + esc(S.t('m3.total')) + '</td><td><span class="m3-peso"><b' + (d.alertaPesos ? ' class="m3-alerta"' : '') + '>' +
+      esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td colspan="5"></td></tr>';
+    m3RenderUnidade();
+  }
+  // Seletor País › BU com as BUs do recorte do usuário (sempre uma BU escolhida)
+  function m3RenderUnidade() {
+    var bus = (m3.dados && m3.dados.bus) || [], porPais = {};
+    bus.forEach(function (b) { (porPais[b.pais] = porPais[b.pais] || []).push(b.sigla); });
+    $('m3UnitPais').textContent = m3.pais; $('m3UnitSite').textContent = m3.bu;
+    $('m3Paises').innerHTML = Object.keys(porPais).map(function (pz) { return '<button type="button" data-pais="' + esc(pz) + '" aria-pressed="' + (pz === m3.pais) + '">' + esc(pz) + '</button>'; }).join('');
+    $('m3Bus').innerHTML = (porPais[m3.pais] || []).map(function (b) { return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === m3.bu) + '">' + esc(b) + '</button>'; }).join('');
+  }
+  function m3AbrirUnidade(sim) {
+    $('m3UnitPop').hidden = !sim; $('m3UnitTrigger').setAttribute('aria-expanded', String(sim));
+    if (sim) { var x = $('m3UnitPop').querySelector('[aria-pressed="true"]') || $('m3UnitPop').querySelector('button'); if (x) x.focus(); }
+  }
+  $('m3UnitTrigger').addEventListener('click', function () { m3AbrirUnidade($('m3UnitPop').hidden); });
+  $('m3Paises').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    m3.pais = b.getAttribute('data-pais'); m3RenderUnidade();
+    var x = $('m3Bus').querySelector('button'); if (x) x.focus();
+  });
+  $('m3Bus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    m3.bu = b.getAttribute('data-bu'); m3GravarFiltro(); m3Carregar(false);
+    m3AbrirUnidade(false); $('m3UnitTrigger').focus();
+  });
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('m3UnitPop').hidden && !$('m3Unit').contains(e.target)) m3AbrirUnidade(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('m3UnitPop').hidden) { m3AbrirUnidade(false); $('m3UnitTrigger').focus(); } });
+  $('m3Atualizar').addEventListener('click', function () { m3.cache = {}; m3Carregar(true); });
+  $('m3Tentar').addEventListener('click', function () { m3Carregar(true); });
+
   // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
   function abrirMenu(sim) {
     $('topMenu').classList.toggle('is-aberto', sim);
@@ -2258,14 +2481,16 @@ window.VBMSetup = (function () {
   // ── Vistas pelo hash ──
   function rota() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
-    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel';
+    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel' || h === 'metas';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     $('vistaPendencias').hidden = h !== 'pendencias';
     $('vistaPainel').hidden = h !== 'painel';
+    $('vistaMetas').hidden = h !== 'metas';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
-    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -2276,8 +2501,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); });
-  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); });
 
   rota();
   carregar(false);

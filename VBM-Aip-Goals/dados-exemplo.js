@@ -1,5 +1,5 @@
 /**
- * AIP Goals — dados de exemplo da T00 (Início), T01 (Minhas pendências) e T02 (Painel do ciclo).
+ * AIP Goals — dados de exemplo da T00 (Início), T01 (Minhas pendências), T02 (Painel do ciclo) e T03 (Metas da BU).
  *
  * Usados enquanto o modelo de dados (Especificação §9, pendência P-12) não é
  * validado pelo time de dados. A resposta da API leva `exemplo: true` e a tela
@@ -134,6 +134,17 @@ const METAS_EXEMPLO = [
 // Distribuição de situação na etapa de proposta: muitos em rascunho, alguns já em aprovação ou devolvidos.
 const SITUACOES = ['rascunho', 'rascunho', 'rascunho', 'em_aprovacao', 'em_aprovacao', 'em_aprovacao', 'em_revisao', 'aprovado', 'aprovado', 'negado'];
 const QTD_METAS = { OP: 5, Salobo: 7, Sossego: 6, ON: 8, VNL: 7, UK: 4, JPN: 4 };
+// Total de pontos do desdobramento por BU (RN-16). UK soma 95 de propósito, para o alerta de pesos aparecer.
+const PESO_TOTAL = 100;
+const PESO_DESVIO = { UK: -5 };
+// Pesos em múltiplos de 5 que somam o total da BU (determinístico).
+function pesosDaBu(n, total) {
+  const base = Math.floor(total / n / 5) * 5;
+  const pesos = Array.from({ length: n }, () => base);
+  let resto = total - base * n;
+  for (let i = 0; resto > 0; i = (i + 1) % n) { pesos[i] += 5; resto -= 5; }
+  return pesos;
+}
 
 function painelExemplo(hoje = new Date()) {
   const ciclo = cicloExemplo(hoje);
@@ -142,6 +153,7 @@ function painelExemplo(hoje = new Date()) {
   const cards = [];
   ciclo.bus.forEach((bu, b) => {
     const n = QTD_METAS[bu.sigla] || 5;
+    const pesos = pesosDaBu(n, PESO_TOTAL + (PESO_DESVIO[bu.sigla] || 0));
     for (let i = 0; i < n; i++) {
       const [titulo, tipo] = METAS_EXEMPLO[(b * 2 + i) % METAS_EXEMPLO.length];
       const estado = SITUACOES[Math.floor(sorte() * SITUACOES.length)];
@@ -152,14 +164,14 @@ function painelExemplo(hoje = new Date()) {
       cards.push({
         card: `GC-${bu.sigla.slice(0, 3).toUpperCase()}-${String(i + 1).padStart(2, '0')}`,
         bu: { sigla: bu.sigla, pais: bu.pais },
-        meta: { numero: i + 1, titulo, tipo },
+        meta: { numero: i + 1, titulo, tipo, peso: pesos[i] },
         estado, nivel, versao,
         // Desde quando o card está na situação (ou no nível) atual
         desde: iso(somarDiasUteis(hoje, -Math.floor(sorte() * (estado === 'em_aprovacao' ? 8 : 12)))),
       });
     }
   });
-  return { ciclo, parametros: { diasParado: 3 }, cards };
+  return { ciclo, parametros: { diasParado: 3, pesoTotal: PESO_TOTAL }, cards };
 }
 
 module.exports = { pendenciasExemplo, painelExemplo, cicloExemplo, somarDiasUteis, iso };

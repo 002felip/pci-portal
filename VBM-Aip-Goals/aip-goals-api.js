@@ -24,6 +24,9 @@
  *   GET /painel?pais=&bu=   T02 — Painel do ciclo (só P&CI/COO e administrador, AC-07):
  *                      { ciclo, parametros, filtro, cards[], totais, porBu[], funil[], niveis[], parados[] }
  *                      Tudo calculado aqui a partir de `cards` (CA-15: as contagens batem com a lista).
+ *   GET /metas?bu=     T03 — Metas da BU no recorte do usuário (AC-04/AC-05: BU fora do recorte → 404):
+ *                      { ciclo, bu, bus[], parametros, metas[], totais, alertaPesos }
+ *                      `totais` traz quantidade e peso por situação; `alertaPesos` = soma ≠ total (RN-16).
  */
 const express = require('express');
 const { pendenciasExemplo, painelExemplo } = require('./dados-exemplo');
@@ -94,7 +97,30 @@ function agregarPainel(cards, ordemBus, limite, hoje = new Date()) {
   return { cards: comIdade, totais, porBu, funil, niveis, parados };
 }
 
-function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Date() } = {}) {
+// T03 — metas de uma BU: quantidade e peso por situação, soma dos pesos e alerta da RN-16.
+function agregarMetas(cards, pesoEsperado, limite, hoje = new Date()) {
+  const metas = cards
+    .map((c) => {
+      const diasUteis = c.desde ? diasUteisEntre(c.desde, hoje) : 0;
+      return { ...c, diasUteis, parada: c.estado === 'em_aprovacao' && diasUteis > limite };
+    })
+    .sort((a, b) => a.meta.numero - b.meta.numero);
+  const soma = (l) => l.reduce((t, c) => t + (Number(c.meta.peso) || 0), 0);
+  const peso = Object.fromEntries(ESTADOS.map((e) => [e, soma(metas.filter((c) => c.estado === e))]));
+  const qtd = Object.fromEntries(ESTADOS.map((e) => [e, metas.filter((c) => c.estado === e).length]));
+  const pesoTotal = soma(metas);
+  return {
+    metas,
+    totais: { metas: metas.length, pesoTotal, pesoEsperado, pesoSubmetido: pesoTotal - peso.rascunho, peso, qtd },
+    alertaPesos: pesoTotal !== pesoEsperado,
+  };
+}
+
+// Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
+const papeisExemplo = (email, hoje) => pendenciasExemplo(hoje).usuario.papeis || [];
+const veTodas = (papeis) => papeis.some((p) => p.papel === 'pci_coo' || p.papel === 'admin');
+
+function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Date(), papeisDe = papeisExemplo } = {}) {
   if (fonte === 'banco' && typeof runQuery !== 'function') {
     throw new Error('criarAipGoalsRouter: `runQuery` é obrigatório com fonte "banco"');
   }
@@ -140,8 +166,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
       const hoje = agora();
       // Papéis do usuário no ciclo: o Painel é do grupo P&CI/COO e do administrador (AC-07); demais perfis, 403.
-      const papeis = (pendenciasExemplo(hoje).usuario.papeis || []).map((p) => p.papel);
-      if (!papeis.some((p) => p === 'pci_coo' || p === 'admin')) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      if (!veTodas(papeisDe(email, hoje))) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
       const base = painelExemplo(hoje);
       const limite = Number(base.parametros.diasParado) || 3;
       // Filtro País › BU validado contra as BUs do ciclo (valor fora da lista → 400)
@@ -159,7 +184,33 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  router.get('/metas', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora();
+      const papeis = papeisDe(email, hoje);
+      const base = painelExemplo(hoje);
+      // Recorte (AC-04/AC-05): P&CI/COO e administrador veem todas as BUs; os demais, só as dos seus papéis
+      const minhas = new Set(papeis.filter((p) => p.bu).map((p) => p.bu));
+      const bus = base.ciclo.bus.filter((b) => veTodas(papeis) || minhas.has(b.sigla));
+      if (!bus.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const sigla = String(req.query.bu || bus[0].sigla);
+      const bu = bus.find((b) => b.sigla === sigla);
+      // BU inexistente ou fora do recorte: 404, sem revelar se existe (AC-04)
+      if (!bu) return res.status(404).json({ error: 'Não encontrado.', codigo: 'NAO_ENCONTRADO' });
+      const limite = Number(base.parametros.diasParado) || 3;
+      const ag = agregarMetas(base.cards.filter((c) => c.bu.sigla === bu.sigla), Number(base.parametros.pesoTotal) || 100, limite, hoje);
+      res.json({ ciclo: base.ciclo, bu, bus, parametros: { diasParado: limite, pesoTotal: ag.totais.pesoEsperado },
+        ...ag, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /metas:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar as metas.', codigo: 'ERRO' });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, agregarPainel, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, agregarPainel, agregarMetas, diasUteisEntre, enriquecer, TIPOS, ESTADOS };

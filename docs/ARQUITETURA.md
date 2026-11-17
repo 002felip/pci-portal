@@ -68,7 +68,7 @@ pci-portal/
 ├── VBM-Kaizen-App-PROD/    ← Kaizen, versão de produção
 ├── VBM-Performance-Hub/    ← Hub + VBM-Performance-Studio, COO, COO Historical, Health of the Business, Lean Six Sigma
 ├── VBM-Stable-and-Capable/ ← SPC: PDFs, importação do PCI Master e dashboard
-├── VBM-Aip-Goals/          ← AIP Goals: Goal Cards, aprovação e registro (Início, T01 e T02 publicados)
+├── VBM-Aip-Goals/          ← AIP Goals: Goal Cards, aprovação e registro (Início, T01, T02 e T03 publicados)
 ├── VBM-Vdt/                ← Value Driver Tree (Python)
 ├── VBM-Cockpit/            ← Strategic Cockpit (Python + React)
 └── .claude/skills/         ← skills do projeto (setup-dashboards, vbm-design, ajuste-responsividade, otimizacao-da-aplicacao)
@@ -249,9 +249,9 @@ Estabilidade e capabilidade (SPC) por KPI. Três opções na mesma página:
 
 Definição, aprovação e registro das metas de AIP das BUs de VBM (Goal Card versionado e
 rastreável). Página única com vistas pelo hash; publicadas **Início** (`#inicio`), **T01 Minhas pendências**
-(`#pendencias`) e **T02 Painel do ciclo** (`#painel`).
+(`#pendencias`), **T02 Painel do ciclo** (`#painel`) e **T03 Metas da BU** (`#metas`).
 
-- **API (`/VBM-Aip-Goals/api`):** `pendencias`, `painel`, `health`, `ping`.
+- **API (`/VBM-Aip-Goals/api`):** `pendencias`, `painel`, `metas`, `health`, `ping`.
 - **Dados:** até a validação do modelo de dados (P-12), `AIPGOALS_FONTE=exemplo` (padrão) responde
   com dados de exemplo marcados `exemplo: true`.
 - Mais: [`docs/projetos/aip-goals.md`](projetos/aip-goals.md).

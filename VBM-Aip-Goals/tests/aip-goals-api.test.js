@@ -109,3 +109,34 @@ test('GET /painel: filtro País › BU validado e aplicado', async () => {
     assert.strictEqual((await pedir(s, '/api/painel')).status, 401);
   } finally { s.close(); }
 });
+
+test('GET /metas: soma dos pesos, peso por situação e alerta da RN-16', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    const sal = await pedir(s, '/api/metas?bu=Salobo', h);
+    assert.strictEqual(sal.status, 200);
+    const { metas, totais } = sal.corpo;
+    assert.ok(metas.length > 0 && metas.every((m) => m.bu.sigla === 'Salobo'));
+    assert.strictEqual(totais.pesoTotal, metas.reduce((t, m) => t + m.meta.peso, 0));
+    assert.strictEqual(Object.values(totais.peso).reduce((a, b) => a + b, 0), totais.pesoTotal);
+    assert.strictEqual(totais.pesoSubmetido, totais.pesoTotal - totais.peso.rascunho);
+    assert.strictEqual(sal.corpo.alertaPesos, totais.pesoTotal !== totais.pesoEsperado);
+    const uk = await pedir(s, '/api/metas?bu=UK', h);
+    assert.strictEqual(uk.corpo.alertaPesos, true); // UK soma 95 de 100 nos dados de exemplo
+  } finally { s.close(); }
+});
+
+test('GET /metas: recorte por papel (AC-04/AC-05) e BU fora do recorte responde 404', async () => {
+  const pontoFocal = () => [{ papel: 'ponto_focal', bu: 'Salobo' }];
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: pontoFocal }));
+  try {
+    const h = { 'X-Forwarded-Email': 'focal@vale.com' };
+    const padrao = await pedir(s, '/api/metas', h);
+    assert.strictEqual(padrao.corpo.bu.sigla, 'Salobo');
+    assert.deepStrictEqual(padrao.corpo.bus.map((b) => b.sigla), ['Salobo']);
+    assert.strictEqual((await pedir(s, '/api/metas?bu=VNL', h)).status, 404);
+    assert.strictEqual((await pedir(s, '/api/metas?bu=Inexistente', h)).status, 404);
+    assert.strictEqual((await pedir(s, '/api/painel', h)).status, 403); // painel é só do P&CI/COO
+  } finally { s.close(); }
+});

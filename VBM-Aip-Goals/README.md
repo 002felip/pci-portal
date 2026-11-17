@@ -16,7 +16,8 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | `#inicio` (padrão) | T00 Início — abertura do ciclo AIP, jornada e índice das telas | publicada |
 | `#pendencias` | T01 Minhas pendências — fila pessoal com filtros e status | publicada |
 | `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
-| `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T03 a T08 e T11 | "Tela em construção" |
+| `#metas` | T03 Metas da BU — anéis por peso, alerta de soma dos pesos (RN-16) e tabela de metas, no recorte do usuário | publicada |
+| `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T04 a T08 e T11 | "Tela em construção" |
 
 Uso em **notebook e desktop** (1024 px a 4K); celular fora do escopo.
 
@@ -46,6 +47,7 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 |---|---|
 | `GET /pendencias` | T01: fila do usuário (identidade pelo `X-Forwarded-Email`) |
 | `GET /painel?pais=&bu=` | T02: agregados do ciclo, só P&CI/COO e administrador; filtro validado |
+| `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (fora do recorte → 404) |
 | `GET /health` · `GET /ping` | saúde e diagnóstico |
 
 ## Rodar e testar

@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, T01 e T02 publicados com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, T01, T02 e T03 publicados com dados de exemplo; demais telas do catálogo em construção
 
 ## Arquivos
 
@@ -35,7 +35,8 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `#inicio` (padrão) | Início: menu da aplicação | publicada |
 | `#pendencias` | T01 Minhas pendências | publicada |
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
-| `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
+| `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
+| `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
 
 ### Início (abertura)
 
@@ -97,6 +98,19 @@ Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis re
 Toda conta sai do servidor (`agregarPainel`) a partir da mesma lista de cards, então as contagens batem com a
 lista de metas de cada BU (CA-15, coberto por teste).
 
+### T03 Metas da BU
+
+Metas de uma BU, no recorte do usuário (AC-04/AC-05): P&CI/COO e administrador escolhem qualquer BU; os demais,
+só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegador; a matriz da T02 leva direto à BU.
+
+- **Topo** no modelo da T02: "Metas da BU" e, embaixo, a sigla da BU em letras vazadas.
+- **Quatro anéis por peso** (fração do total de pontos da BU): peso distribuído, submetido, em aprovação e
+  aprovado; abaixo de cada um, o número de metas e "n de 100 pts". Mesma distância padrão da T02 (`--p2-esp`).
+- **Alerta da RN-16:** pílula âmbar "Soma dos pesos: 95 de 100 pts" quando a soma difere do total do desdobramento
+  (nos dados de exemplo, a UK).
+- **Tabela de metas:** número, título, tipo (fórmula ou marcos) e card, peso com barra, situação (com "Parada"
+  quando passa do limite de dias úteis), nível, versão, data da situação e "Abrir" (T04); total de pesos no rodapé.
+
 ## Responsividade
 
 Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo.
@@ -115,6 +129,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 |---|---|
 | `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
+| `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 
