@@ -799,11 +799,12 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .m3-tabela .m3-col-peso { width: 14%; }
 .m3-peso { display: flex; align-items: center; gap: 0.625rem; }
 .m3-peso b { min-width: 1.75rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
-/* Barra curta em cascata: o trecho cinza é o peso das metas anteriores; o azul, o desta meta (soma = total da BU) */
+/* Barra curta em cascata: o trecho cinza claro é o peso das metas anteriores; o colorido, o desta meta (soma = total da BU) */
 .m3-peso-barra { position: relative; flex: 0 1 8rem; min-width: 4rem; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
 .m3-peso-barra span { position: absolute; top: 0; bottom: 0; left: 0; }
-.m3-peso-ant { background: color-mix(in srgb, var(--flat) 45%, var(--line)); }
-.m3-peso-seg { background: var(--serie-a); border-radius: 999px; }
+.m3-peso-ant { background: color-mix(in srgb, var(--flat) 22%, var(--line)); }
+/* Trecho da meta na cor do status de aprovação do card (mesmas cores da pílula de Status) */
+.m3-peso-seg { border-radius: 999px; }
 .m3-tabela .m3-centro { text-align: center; }
 .m3-tabela .m3-centro .m3-peso { justify-content: center; }
 /* Anéis da T03 no modelo da jornada (linha pelos centros), cerca de 25% menores que os do Painel */
@@ -2331,7 +2332,7 @@ window.VBMSetup = (function () {
       return '<tr>' +
         '<td class="num">' + esc(m.meta.numero) + '</td>' +
         '<td><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></td>' +
-        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b><span class="m3-peso-barra" aria-hidden="true"><span class="m3-peso-ant" style="width:' + ini.toFixed(1) + '%"></span><span class="m3-peso-seg" style="left:' + ini.toFixed(1) + '%;width:' + larg.toFixed(1) + '%"></span></span></span></td>' +
+        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b><span class="m3-peso-barra" aria-hidden="true"><span class="m3-peso-ant" style="width:' + ini.toFixed(1) + '%"></span><span class="m3-peso-seg p2-seg-' + esc(m.estado) + '" style="left:' + ini.toFixed(1) + '%;width:' + larg.toFixed(1) + '%"></span></span></span></td>' +
         '<td class="m3-centro"><span class="st st-' + esc(m.estado) + '">' + esc(S.t('est.' + m.estado)) + '</span></td>' +
         '<td>' + esc(m.contribuidor || '—') + '</td>' +
         '<td class="m3-centro">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
