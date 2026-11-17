@@ -269,6 +269,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | T10 | Evidências | Ponto focal, P&CI/COO | Upload por meta ou marco; aceitar ou devolver | F3 |
 | T11 | Configuração do ciclo | Admin | Ciclo, BUs, pessoas, metas, pesos, rota, prazos, textos padrão, parâmetros | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
+| T13 | Desdobramento | Todos (colunas no recorte) | Scorecard do COO definido pelo CEO (pesos, faixas, compartilhamento) e matriz meta × BU com peso, origem e situação do Goal Card | MVP |
 
 ## 11. Critérios de aceite
 
@@ -313,7 +314,7 @@ Decisões já tomadas (P-01, P-02 e itens validados) estão em [LEVANTAMENTO-REQ
 
 ## 13. Telas desenvolvidas
 
-Quatro telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendências, T02 Painel do ciclo e T03 Metas da BU), com dados de exemplo até a validação do modelo de dados (P-12). As demais telas do catálogo já têm endereço no menu e abrem "Tela em construção".
+Cinco telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendências, T02 Painel do ciclo, T03 Metas da BU e T13 Desdobramento), com dados de exemplo até a validação do modelo de dados (P-12). As demais telas do catálogo já têm endereço no menu e abrem "Tela em construção".
 
 | Tela | Situação | O que já funciona | Depende de |
 | --- | --- | --- | --- |
@@ -321,6 +322,7 @@ Quatro telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendê
 | T01 Minhas pendências | Desenvolvida | Fila por tipo, resumo que filtra, filtros País › BU, ordenação e só paradas ou atrasadas na URL, status com ícone e rótulo, idade em dias úteis (RN-14), estados de carregando, vazio, erro, sem acesso e desatualizado | Consulta real da fila (P-12) |
 | T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação por nível com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
 | T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação, nível e versão; BU na URL | Metas e pesos reais por BU (P-12) |
+| T13 Desdobramento | Desenvolvida | Nível CEO → COO: barra de composição do scorecard do COO com fios até cada meta (peso, faixas, compartilhamento, meta da BU de destino); nível COO → BUs: matriz meta × BU com peso (bolha), situação do Goal Card (cor), etiquetas Nova e origem, destaque das metas que vêm de uma meta do COO, total por BU (RN-16) e peso aprovado; colunas no recorte do usuário | Scorecard e matriz reais do ciclo (T11, P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
 | T04, T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) e, na T04, a rota de aprovação (P-11) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |

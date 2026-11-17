@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
-const { criarAipGoalsRouter, diasUteisEntre, enriquecer } = require('../aip-goals-api');
+const { criarAipGoalsRouter, diasUteisEntre, enriquecer, agregarMetas } = require('../aip-goals-api');
 const { pendenciasExemplo } = require('../dados-exemplo');
 
 // Segunda-feira, 16/11/2026
@@ -122,8 +122,11 @@ test('GET /metas: soma dos pesos, peso por situação e alerta da RN-16', async 
     assert.strictEqual(Object.values(totais.peso).reduce((a, b) => a + b, 0), totais.pesoTotal);
     assert.strictEqual(totais.pesoSubmetido, totais.pesoTotal - totais.peso.rascunho);
     assert.strictEqual(sal.corpo.alertaPesos, totais.pesoTotal !== totais.pesoEsperado);
-    const uk = await pedir(s, '/api/metas?bu=UK', h);
-    assert.strictEqual(uk.corpo.alertaPesos, true); // UK soma 95 de 100 nos dados de exemplo
+    assert.strictEqual(sal.corpo.alertaPesos, false); // desdobramento de referência: 40 + 60 = 100
+    // Soma diferente do total acende o alerta da RN-16
+    const curta = agregarMetas([{ meta: { numero: 1, peso: 40 }, estado: 'rascunho' }, { meta: { numero: 2, peso: 55 }, estado: 'aprovado' }], 100, 3, HOJE);
+    assert.strictEqual(curta.totais.pesoTotal, 95);
+    assert.strictEqual(curta.alertaPesos, true);
   } finally { s.close(); }
 });
 
@@ -139,4 +142,40 @@ test('GET /metas: recorte por papel (AC-04/AC-05) e BU fora do recorte responde 
     assert.strictEqual((await pedir(s, '/api/metas?bu=Inexistente', h)).status, 404);
     assert.strictEqual((await pedir(s, '/api/painel', h)).status, 403); // painel é só do P&CI/COO
   } finally { s.close(); }
+});
+
+test('GET /desdobramento: matriz CEO → COO → BUs, totais por BU e situação de cada célula (CA-15)', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    const r = await pedir(s, '/api/desdobramento', h);
+    assert.strictEqual(r.status, 200);
+    const { scorecardCoo, bus, linhas, totais, parametros } = r.corpo;
+    assert.strictEqual(scorecardCoo.reduce((t, m) => t + m.peso, 0), 100);
+    assert.strictEqual(bus.length, 7);
+    assert.ok(linhas[0].resultado && Object.values(linhas[0].celulas).every((c) => c.peso === parametros.pesoResultadoCoo));
+    totais.forEach((t) => { assert.strictEqual(t.total, parametros.pesoTotal); assert.strictEqual(t.alerta, false); });
+    // Cada célula aponta para o Goal Card da mesma BU e meta, com a situação do painel
+    const painel = (await pedir(s, '/api/painel', h)).corpo.cards;
+    linhas.forEach((l) => bus.forEach((b) => {
+      const c = l.celulas[b.sigla]; if (!c) return;
+      const card = painel.find((x) => x.card === c.card);
+      assert.ok(card && card.bu.sigla === b.sigla && card.meta.numero === l.numero && card.estado === c.estado);
+    }));
+    // Metas do COO desdobradas para as BUs apontam para a meta de origem
+    assert.deepStrictEqual(linhas.filter((l) => l.origem === '2027_05').map((l) => l.numero), [8, 9]);
+    assert.strictEqual((await pedir(s, '/api/desdobramento')).status, 401);
+  } finally { s.close(); }
+});
+
+test('GET /desdobramento: colunas só das BUs do recorte (AC-04/AC-05)', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'ponto_focal', bu: 'Salobo' }] }));
+  try {
+    const r = await pedir(s, '/api/desdobramento', { 'X-Forwarded-Email': 'focal@vale.com' });
+    assert.deepStrictEqual(r.corpo.bus.map((b) => b.sigla), ['Salobo']);
+    assert.ok(r.corpo.linhas.every((l) => Object.keys(l.celulas).join() === 'Salobo' && l.celulas.Salobo));
+    assert.ok(!r.corpo.linhas.some((l) => l.numero === 8)); // Bacaba é só de Sossego
+  } finally { s.close(); }
+  const s2 = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
+  try { assert.strictEqual((await pedir(s2, '/api/desdobramento', { 'X-Forwarded-Email': 'x@vale.com' })).status, 403); } finally { s2.close(); }
 });

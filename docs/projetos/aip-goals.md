@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, T01, T02 e T03 publicados com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, T01, T02, T03 e T13 Desdobramento publicados com dados de exemplo; demais telas do catálogo em construção
 
 ## Arquivos
 
@@ -35,6 +35,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `#inicio` (padrão) | Início: menu da aplicação | publicada |
 | `#pendencias` | T01 Minhas pendências | publicada |
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
+| `#desdobramento` | T13 Desdobramento CEO → COO → BUs (colunas no recorte do usuário) | publicada |
 | `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
 | `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
 
@@ -106,10 +107,29 @@ só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegad
 - **Topo** no modelo da T02: "Metas da BU" e, embaixo, a sigla da BU em letras vazadas.
 - **Quatro anéis por peso** (fração do total de pontos da BU): peso distribuído, submetido, em aprovação e
   aprovado; abaixo de cada um, o número de metas e "n de 100 pts". Mesma distância padrão da T02 (`--p2-esp`).
-- **Alerta da RN-16:** pílula âmbar "Soma dos pesos: 95 de 100 pts" quando a soma difere do total do desdobramento
-  (nos dados de exemplo, a UK).
+- **Alerta da RN-16:** pílula âmbar "Soma dos pesos: n de 100 pts" quando a soma difere do total do desdobramento
+  (nos dados de exemplo, todas as BUs somam 100, como no material de referência).
 - **Tabela de metas:** número, título, tipo (fórmula ou marcos) e card, peso com barra, situação (com "Parada"
   quando passa do limite de dias úteis), nível, versão, data da situação e "Abrir" (T04); total de pesos no rodapé.
+
+### T13 Desdobramento
+
+Tela nova, fora do catálogo original (§10), feita a partir do material de referência do ciclo 2027 ("VBM COO
+Scorecard Details" e "COO and BUs Scorecard Matrix — DRAFT"). Mostra os dois níveis do desdobramento numa tela só.
+
+- **Nível 1, CEO → COO (no topo, sobre a foto):** barra de composição do scorecard do COO (75% resultado do
+  scorecard do CEO + 5 / 7,5 / 7,5 / 5% das metas próprias), com fios ligando cada parte à sua meta. Cada meta
+  mostra ID, peso, faixas (mín., alvo, excepcional), com quem é compartilhada (dica) e para qual meta da BU desce.
+- **Nível 2, COO → BUs (matriz):** uma linha por meta (resultado do scorecard do COO, 40%, e as metas específicas,
+  60%) e uma coluna por BU, agrupadas por país. O tamanho da bolha é o peso; a cor é a situação do Goal Card daquela
+  meta na BU (tokens `--status-*`), e a bolha abre o card (T04). Etiquetas "Nova" e "COO 2027_0n" (origem).
+- **Destaque da origem:** clicar numa meta do COO (ou na etiqueta de origem) acende as metas da BU que vêm dela e
+  apaga as outras; clicar de novo ou Esc limpa.
+- **Rodapé:** total por BU com o alerta da RN-16 e o peso já aprovado ("45 de 100"); a sigla da BU leva à T03.
+- **Recorte:** o scorecard do COO é a origem comum; as colunas são só as BUs do usuário (P&CI/COO e administrador
+  veem todas).
+
+Os Goal Cards de exemplo (T02, T03) passaram a seguir essa matriz: um card por meta com peso em cada BU (63 cards).
 
 ## Responsividade
 
@@ -130,6 +150,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
+| `GET /desdobramento` | T13: scorecard do COO e matriz meta × BU no recorte do usuário (sem BU no recorte → 403). Devolve `ciclo`, `parametros` (`pesoTotal`, `pesoResultadoCoo`), `scorecardCoo[]`, `bus[]`, `linhas[]` (cada célula com `peso`, `estado` e `card`) e `totais[]` por BU (`total`, `aprovado`, `alerta`) |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 

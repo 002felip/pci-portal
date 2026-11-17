@@ -737,7 +737,7 @@ body.is-inicio .page { max-width: none; padding: 0; }
 }
 /* Pouca altura (notebook com escala de 125–150%): banner compacto para a fila aparecer */
 @media (max-height: 820px) and (min-width: 721px) {
-  .abertura { gap: 1rem 3rem; padding-top: 1.375rem; padding-bottom: 1rem; }
+  .abertura { gap: 1rem 3rem; padding-top: 1rem; padding-bottom: 0.5rem; }
   .ab-eyebrow { margin-bottom: 0.625rem; }
   .ab-nome { font-size: 2.6rem; }
   .ab-ano { font-size: 7.4rem; }
@@ -745,17 +745,17 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .ab-fatos { margin-top: 0.875rem; }
   .ab-bus { margin-top: 0.75rem; }
   .indice { padding: 0.75rem 0.5rem 0.375rem; }
-  .indice-item { padding: 0.5rem 0.875rem; }
+  .indice-item { padding: 0.375rem 0.875rem; }
   .indice-desc { display: none; }
   .jornada { padding: 0.625rem 1.125rem 0.75rem; }
   .jornada-tit { margin-bottom: 0.625rem; }
   .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
   .hero-titulo { font-size: 1.6rem; }
   /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
-  :is(#vistaPainel, #vistaMetas) .p2-topo { padding-bottom: 1.5rem; }
-  :is(#vistaPainel, #vistaMetas) .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
-  :is(#vistaPainel, #vistaMetas) .p2-titulo .ab-ano { font-size: 4.6rem; }
-  :is(#vistaPainel, #vistaMetas) .p2-trilha { --p2-esp: 0.875rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-topo { padding-bottom: 1.5rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-titulo .ab-ano { font-size: 4.6rem; }
+  :is(#vistaPainel, #vistaMetas, #vistaDesdobramento) .p2-trilha { --p2-esp: 0.875rem; }
   .hero-sub { display: none; }
   .hero-pills { margin-top: 0.5rem; }
   .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
@@ -915,6 +915,76 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .m3-tabela td.m3-acao { text-align: right; }
 .m3-tabela tfoot .m3-alerta { color: var(--wait); }
 
+
+/* ── T13 Desdobramento (CEO → COO → BUs) ──
+   Nível 1 no topo: barra de composição do scorecard do COO (partes de 100%) com fios até cada meta.
+   Nível 2 na matriz: peso por BU (tamanho da bolha) e situação do Goal Card (cor, tokens --status-*). Sem tokens novos. */
+.dd-trilha { position: relative; }
+.dd-nivel { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; font: 600 0.66rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--text-soft); }
+.dd-nivel b { font-weight: 700; color: var(--accent-strong); }
+.dd-nivel .ico { width: 0.875rem; height: 0.875rem; }
+.dd-nivel > span::before { content: '·'; margin: 0 0.5rem 0 0.25rem; }
+.dd-nivel-2 { margin: 0; }
+.dd-barra { display: flex; gap: 3px; height: 2rem; border-radius: 999px; overflow: hidden; }
+.dd-seg { flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-width: 0; font: 600 0.74rem var(--font-display); font-variant-numeric: tabular-nums; color: var(--page); background: var(--serie-a); cursor: pointer; transition: background .2s; }
+.dd-seg.is-resultado { background: var(--ab-v1); cursor: default; }
+.dd-seg.is-sel, .dd-seg:not(.is-resultado):hover { background: var(--accent-strong); }
+.dd-fios { display: block; width: 100%; height: 2.5rem; overflow: visible; }
+.dd-fios path { fill: none; stroke: var(--serie-a); stroke-width: 1.5; opacity: .75; }
+.dd-fios path.is-resultado { stroke: var(--ab-v1); opacity: .4; }
+.dd-fios path.is-sel { stroke: var(--accent-strong); stroke-width: 2.5; opacity: 1; }
+.dd-coo { display: grid; grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.dd-meta { display: flex; min-width: 0; }
+.dd-meta-btn, .dd-meta.is-resultado { width: 100%; display: flex; flex-direction: column; gap: 0.375rem; padding: 0.875rem 1rem; border-radius: 1rem; text-align: left; font: inherit; color: var(--text);
+  background: var(--ab-vidro); border: 1px solid var(--ab-vidro-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.dd-meta-btn { cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.dd-meta-btn:hover { border-color: var(--serie-a); }
+.dd-meta-btn[aria-pressed="true"] { border-color: var(--accent-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 18%, transparent); }
+.dd-meta-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.dd-meta-id { font: 600 0.66rem var(--font-ui); letter-spacing: .08em; color: var(--text-soft); }
+.dd-meta-peso { font: 300 1.75rem/1 var(--font-display); letter-spacing: -.02em; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.dd-meta-tit { font: 600 0.84rem/1.3 var(--font-display); color: var(--ink-strong); }
+.dd-meta-faixas { display: flex; flex-wrap: wrap; gap: 0.125rem 0.75rem; font-size: 0.7rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.dd-meta-faixas b { font-weight: 600; color: var(--ink-strong); }
+.dd-meta-desce { margin-top: auto; padding-top: 0.25rem; display: inline-flex; align-items: center; gap: 0.375rem; font: 600 0.7rem var(--font-ui); color: var(--accent-strong); }
+.dd-meta-desce .ico { width: 0.875rem; height: 0.875rem; flex: none; transform: rotate(90deg); }
+.dd-resumo { font-size: 0.74rem; color: var(--text-soft); }
+/* Matriz meta × BU */
+.dd-tabela thead th { text-align: center; }
+.dd-cab-pais th:first-child { text-align: left; vertical-align: bottom; }
+.dd-cab-pais th[scope="colgroup"] { color: var(--accent-strong); letter-spacing: .14em; }
+.dd-col-bu a { font: 700 0.8rem var(--font-display); letter-spacing: 0; text-transform: none; color: var(--ink-strong); text-decoration: none; }
+.dd-col-bu a:hover { color: var(--accent-strong); text-decoration: underline; }
+.dd-tabela :is(tbody, tfoot) th { padding: 0.5rem 0.625rem; text-align: left; font: 400 0.8rem var(--font-ui); letter-spacing: 0; text-transform: none; white-space: normal; color: var(--text); border-bottom: 1px solid var(--line); }
+.dd-tabela tfoot th { font-weight: 600; color: var(--ink-strong); border-bottom: 0; border-top: 1.5px solid var(--base-line); }
+.dd-tabela .dd-cel { width: 8%; padding-block: 0.375rem; text-align: center; vertical-align: middle; }
+.dd-tabela .dd-grupo td.dd-cel { letter-spacing: 0; }
+.dd-n { display: inline-block; min-width: 1.75rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.dd-meta-nome { margin-right: 0.5rem; font-weight: 600; color: var(--ink-strong); }
+.dd-tag { display: inline-flex; align-items: center; margin-right: 0.25rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--flat-bg); color: var(--flat); font: 600 0.62rem var(--font-ui); letter-spacing: .04em; vertical-align: middle; }
+.dd-tag-origem { cursor: pointer; background: transparent; color: var(--accent-strong); border-color: color-mix(in srgb, var(--accent-strong) 40%, transparent); }
+.dd-tag-origem[aria-pressed="true"] { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--page); }
+.dd-cel a { display: inline-flex; border-radius: 50%; text-decoration: none; }
+.dd-bolha { --d: calc(1.75rem + var(--k, 0) * 1.25rem); display: inline-flex; align-items: center; justify-content: center; width: var(--d); height: var(--d); border-radius: 50%; border: 1.5px solid var(--line);
+  background: var(--card-hover); color: var(--ink-strong); font: 600 0.74rem var(--font-display); font-variant-numeric: tabular-nums; transition: transform .15s; }
+.dd-cel a:hover .dd-bolha, .dd-cel a:focus-visible .dd-bolha { transform: scale(1.12); }
+.dd-st-rascunho     { background: var(--st-draft-bg);    color: var(--st-draft-ink);    border-color: var(--status-draft); }
+.dd-st-em_aprovacao { background: var(--st-pending-bg);  color: var(--st-pending-ink);  border-color: var(--status-pending); }
+.dd-st-em_revisao   { background: var(--st-review-bg);   color: var(--st-review-ink);   border-color: var(--status-review); }
+.dd-st-aprovado     { background: var(--st-approved-bg); color: var(--st-approved-ink); border-color: var(--status-approved); }
+.dd-st-negado       { background: var(--st-rejected-bg); color: var(--st-rejected-ink); border-color: var(--status-rejected); }
+.dd-vazio { color: var(--text-faint); }
+.dd-linha > * { transition: opacity .2s, background .2s; }
+.dd-linha.is-apagada > * { opacity: .3; }
+.dd-linha.is-acesa > * { background: color-mix(in srgb, var(--accent-strong) 7%, transparent); }
+.dd-total { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--st-approved-ink); font-variant-numeric: tabular-nums; }
+.dd-total.is-alerta { color: var(--wait); }
+.dd-total .ico { width: 0.875rem; height: 0.875rem; }
+.dd-tabela tfoot .dd-aprov > * { border-top: 0; padding-top: 0.25rem; }
+.dd-aprov-barra { display: block; max-width: 4rem; height: 0.3rem; margin: 0 auto 0.25rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+.dd-aprov-barra span { display: block; height: 100%; border-radius: 999px; background: var(--status-approved); }
+.dd-aprov-n { font-size: 0.7rem; font-weight: 500; color: var(--text-soft); }
+
 /* ════════════════════════════════════════════════════════════════════
    [RESPONSIVO] Camada adaptativa (skill-responsividade)
    Aplicação de notebook e desktop (1024px a 4K; celular fora do escopo). Fluido primeiro; breakpoint
@@ -1008,6 +1078,7 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
     <a class="topnav-menu-link" href="#inicio" data-tela="inicio" data-perfis="todos"><span data-i18n="nav.inicio">Início</span></a>
     <a class="topnav-menu-link" href="#pendencias" data-tela="pendencias" data-perfis="todos"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="topnav-menu-cont" id="navCont" hidden></span></a>
     <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
+    <a class="topnav-menu-link" href="#desdobramento" data-tela="desdobramento" data-perfis="todos"><span data-i18n="nav.desdobramento">Desdobramento</span></a>
     <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
     <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
     <a class="topnav-menu-link" href="#acoes" data-tela="acoes" data-perfis="todos"><span data-i18n="nav.acoes">Ações</span></a>
@@ -1142,23 +1213,28 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
           <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.painel">Painel do ciclo</span></span><span class="indice-desc"><span data-i18n="ini.dPainel">Situação dos Goal Cards por BU e tempo em cada nível de aprovação.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
-        <li data-perfis="todos"><a class="indice-item" href="#metas">
+        <li data-perfis="todos"><a class="indice-item" href="#desdobramento">
           <span class="indice-n">03</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.desdobramento">Desdobramento</span></span><span class="indice-desc"><span data-i18n="ini.dDesd">Do scorecard do COO às metas e pesos de cada Business Unit.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#metas">
+          <span class="indice-n">04</span>
           <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.metas">Metas da BU</span></span><span class="indice-desc"><span data-i18n="ini.dMetas">Metas do desdobramento com peso, tipo, status e versão.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li data-perfis="todos"><a class="indice-item" href="#action-log">
-          <span class="indice-n">04</span>
+          <span class="indice-n">05</span>
           <span class="indice-txt"><span class="indice-tit">Action Log</span><span class="indice-desc"><span data-i18n="ini.dLog">Registro de submissões, decisões e comentários do ciclo.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li data-perfis="todos"><a class="indice-item" href="#acoes">
-          <span class="indice-n">05</span>
+          <span class="indice-n">06</span>
           <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.acoes">Ações</span></span><span class="indice-desc"><span data-i18n="ini.dAcoes">Ações atribuídas no ciclo, com responsável e prazo.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
         <li hidden data-perfis="admin"><a class="indice-item" href="#configuracao">
-          <span class="indice-n">06</span>
+          <span class="indice-n">07</span>
           <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.config">Configuração</span></span><span class="indice-desc"><span data-i18n="ini.dConfig">Janelas do ciclo, BUs, pessoas, metas, pesos e rota de aprovação.</span></span></span>
           <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
         </a></li>
@@ -1448,6 +1524,63 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
     </div>
   </section>
 
+  <!-- ═══ T13 · Desdobramento das metas (CEO → COO → BUs) ═══ -->
+  <section class="vista" id="vistaDesdobramento" hidden aria-labelledby="titDesd">
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="ddCiclo">AIP</span></p>
+        <h2 class="p2-titulo" id="titDesd"><span class="ab-nome" data-i18n="dd.titulo">Desdobramento</span><span class="ab-ano" id="ddAno">2027</span></h2>
+      </div>
+      <!-- Nível 1: o CEO desdobra o scorecard do COO; cada meta do COO desce para uma ou mais metas das BUs -->
+      <div class="p2-trilha dd-trilha">
+        <p class="dd-nivel"><b>CEO</b><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg><b>COO</b><span data-i18n="dd.nivel1">Scorecard do COO</span></p>
+        <div class="dd-barra" id="ddBarra" role="img"></div>
+        <svg class="dd-fios" id="ddFios" aria-hidden="true" preserveAspectRatio="none"></svg>
+        <ol class="dd-coo" id="ddCoo"></ol>
+      </div>
+    </header>
+
+    <div class="filters p2-filtro">
+      <p class="p2-pills">
+        <span class="pill-wait" id="ddAlerta" hidden role="status"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span id="ddAlertaTxt"></span></span>
+        <span class="pill-info" id="ddExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="dd.exemplo">Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada</span></span>
+      </p>
+      <button type="button" class="dash-acao" id="ddAtualizar" aria-label="Atualizar desdobramento" title="Atualizar desdobramento" data-i18n-aria="dd.atualizar" data-i18n-title="dd.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+      <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+    </div>
+
+    <!-- Nível 2: o COO desdobra para cada BU 40% do resultado do seu scorecard + 60% de metas específicas -->
+    <section class="secao" id="ddCorpo" aria-labelledby="ddTitMatriz">
+      <div class="secao-head">
+        <p class="dd-nivel dd-nivel-2"><b>COO</b><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg><b>Business Units</b></p>
+        <h3 class="sr-only" id="ddTitMatriz" data-i18n="dd.matriz">Desdobramento para as Business Units</h3>
+        <span class="dd-resumo" id="ddResumo"></span>
+        <ul class="legend p2-legenda" id="ddLegenda"></ul>
+      </div>
+      <div class="p2-tabela-wrap">
+        <table class="p2-tabela dd-tabela">
+          <caption class="sr-only" data-i18n="dd.caption">Peso de cada meta por Business Unit e situação do Goal Card</caption>
+          <thead id="ddCab"></thead>
+          <tbody id="ddLinhas"></tbody>
+          <tfoot id="ddRodape"></tfoot>
+        </table>
+      </div>
+      <p class="updated" id="ddAtualizado"></p>
+    </section>
+
+    <div class="estado estado-erro" id="ddErro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="dd.erroTit">Não foi possível carregar o desdobramento</p>
+      <p class="estado-txt" id="ddErroTxt"></p>
+      <button type="button" class="btn" id="ddTentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <div class="estado" id="ddSemAcesso" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+      <p class="estado-tit" data-i18n="m3.semAcessoTit">Sem Business Unit no seu recorte</p>
+      <p class="estado-txt" data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
+    </div>
+  </section>
+
   <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
   <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
     <div class="secao">
@@ -1708,6 +1841,17 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
       'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
       'est.voltar': 'Voltar para o início',
+      'nav.desdobramento': 'Desdobramento', 'tela.desdobramento': 'Desdobramento', 'ini.dDesd': 'Do scorecard do COO às metas e pesos de cada Business Unit.',
+      'dd.titulo': 'Desdobramento', 'dd.nivel1': 'Scorecard do COO', 'dd.atualizar': 'Atualizar desdobramento', 'dd.matriz': 'Desdobramento para as Business Units',
+      'dd.exemplo': 'Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada',
+      'dd.caption': 'Peso de cada meta por Business Unit e situação do Goal Card', 'dd.erroTit': 'Não foi possível carregar o desdobramento',
+      'dd.barraAria': 'Composição do scorecard do COO: {l}', 'dd.resultadoCeo': 'Resultado do scorecard do CEO', 'dd.compartilhada': 'Compartilhada com {l}',
+      'dd.min': 'Mín.', 'dd.alvo': 'Alvo', 'dd.exc': 'Excep.', 'dd.paraBu': 'Meta da BU #{n}', 'dd.paraBus': 'Metas da BU #{n}', 'dd.paraTodas': '{p}% de cada BU como resultado do COO',
+      'dd.grupoResultado': 'Resultado do scorecard do COO', 'dd.grupoEspecificas': 'Metas específicas da BU', 'dd.nova': 'Nova',
+      'dd.resumo': '{e} metas específicas · {n} novas no ciclo · {d} desdobradas de metas do COO', 'dd.meta': 'Meta',
+      'dd.total': 'Total', 'dd.aprovado': 'Peso aprovado', 'dd.ptsDe': '{n} de {t}', 'dd.celula': '{b} · {m}: {p} pts · {e}', 'dd.semCard': 'sem Goal Card',
+      'dd.filtrar': 'Destacar as metas da BU que vêm de {m}', 'dd.limpar': 'Mostrar todas as metas',
+      'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.irBu': 'Abrir as metas de {b}',
       'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
       'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
     },
@@ -1791,6 +1935,17 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
       'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
       'est.voltar': 'Back to home',
+      'nav.desdobramento': 'Cascade', 'tela.desdobramento': 'Goal cascade', 'ini.dDesd': 'From the COO scorecard to the goals and weights of each Business Unit.',
+      'dd.titulo': 'Goal cascade', 'dd.nivel1': 'COO scorecard', 'dd.atualizar': 'Refresh cascade', 'dd.matriz': 'Cascade to the Business Units',
+      'dd.exemplo': 'Sample data — structure from the 2027 reference material (draft); card status simulated',
+      'dd.caption': 'Weight of each goal by Business Unit and Goal Card status', 'dd.erroTit': 'Could not load the cascade',
+      'dd.barraAria': 'COO scorecard composition: {l}', 'dd.resultadoCeo': 'CEO scorecard result', 'dd.compartilhada': 'Shared with {l}',
+      'dd.min': 'Min', 'dd.alvo': 'Target', 'dd.exc': 'Except.', 'dd.paraBu': 'BU goal #{n}', 'dd.paraBus': 'BU goals #{n}', 'dd.paraTodas': '{p}% of each BU as the COO result',
+      'dd.grupoResultado': 'COO scorecard result', 'dd.grupoEspecificas': 'BU-specific goals', 'dd.nova': 'New',
+      'dd.resumo': '{e} specific goals · {n} new this cycle · {d} cascaded from COO goals', 'dd.meta': 'Goal',
+      'dd.total': 'Total', 'dd.aprovado': 'Weight approved', 'dd.ptsDe': '{n} of {t}', 'dd.celula': '{b} · {m}: {p} pts · {e}', 'dd.semCard': 'no Goal Card',
+      'dd.filtrar': 'Highlight the BU goals that come from {m}', 'dd.limpar': 'Show all goals',
+      'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.irBu': 'Open the goals of {b}',
       'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
       'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card'
     }
@@ -2467,6 +2622,140 @@ window.VBMSetup = (function () {
   $('m3Atualizar').addEventListener('click', function () { m3.cache = {}; m3Carregar(true); });
   $('m3Tentar').addEventListener('click', function () { m3Carregar(true); });
 
+  // ═══ T13 · Desdobramento (CEO → COO → BUs) ═══
+  // Dados: GET api/desdobramento. Nível 1 no topo (scorecard do COO, com fios até cada meta);
+  // nível 2 na matriz (peso por BU; a cor da bolha é a situação do Goal Card daquela meta na BU).
+  var dd = { dados: null, sel: '' };
+  function ddEstado(qual) {
+    $('ddCorpo').hidden = qual !== 'ok'; $('ddErro').hidden = qual !== 'erro'; $('ddSemAcesso').hidden = qual !== 'acesso';
+    $('ddCoo').parentNode.hidden = qual !== 'ok';
+  }
+  function ddCarregar(fresco) {
+    if (!fresco && dd.dados) return Promise.resolve(ddRender());
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    return fetch('api/desdobramento' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) { dd.dados = j; if (fresco) toast(S.t('t01.atualizada')); ddRender(); })
+      .catch(function (err) {
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] desdobramento:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return ddEstado('acesso');
+        $('ddErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        ddEstado('erro');
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+  function ddPct(v) { return S.fmt(v, v % 1 ? 1 : 0) + '%'; }
+  function ddLista(nums) { return nums.length < 2 ? String(nums[0]) : nums.slice(0, -1).join(', ') + ' ' + (S.idioma === 'en' ? 'and' : 'e') + ' ' + nums[nums.length - 1]; }
+  function ddRender() {
+    var d = dd.dados; if (!d) return;
+    ddEstado('ok');
+    var c = d.ciclo || {}, par = d.parametros || {}, sc = d.scorecardCoo || [], bus = d.bus || [], linhas = d.linhas || [], tot = d.totais || [];
+    $('ddCiclo').textContent = c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '';
+    $('ddAno').textContent = c.ano || '';
+    $('ddExemplo').hidden = !d.exemplo;
+    $('ddAtualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
+
+    // Nível 1 — barra de composição do scorecard do COO (partes de 100%) e as metas abaixo
+    $('ddBarra').setAttribute('aria-label', S.t('dd.barraAria', { l: sc.map(function (m) { return m.id + ' ' + ddPct(m.peso); }).join(', ') }));
+    $('ddBarra').innerHTML = sc.map(function (m) {
+      return '<span class="dd-seg' + (m.resultado ? ' is-resultado' : '') + (dd.sel === m.id ? ' is-sel' : '') + '" data-id="' + esc(m.id) + '" style="flex-grow:' + m.peso + '">' + esc(ddPct(m.peso)) + '</span>';
+    }).join('');
+    $('ddCoo').innerHTML = sc.map(function (m) {
+      var corpo = '<span class="dd-meta-cab"><span class="dd-meta-id">' + esc(m.id) + '</span><b class="dd-meta-peso">' + esc(ddPct(m.peso)) + '</b></span>' +
+        '<span class="dd-meta-tit">' + esc(m.titulo) + '</span>';
+      if (m.resultado) {
+        return '<li class="dd-meta is-resultado">' + corpo + '<span class="dd-meta-faixas">' + esc(S.t('dd.resultadoCeo')) + '</span>' +
+          '<span class="dd-meta-desce">' + ico('i-arrow') + esc(S.t('dd.paraTodas', { p: S.fmt(par.pesoResultadoCoo || 0, 0) })) + '</span></li>';
+      }
+      var f = m.faixas || {};
+      var faixas = '<span class="dd-meta-faixas"><span>' + esc(S.t('dd.min')) + ' <b>' + esc(f.min || '—') + '</b></span><span>' + esc(S.t('dd.alvo')) + ' <b>' + esc(f.alvo || '—') + '</b></span><span>' + esc(S.t('dd.exc')) + ' <b>' + esc(f.excepcional || '—') + '</b></span></span>';
+      var nums = (m.metasBu || []).map(function (n) { return '#' + n; });
+      var desce = nums.length ? S.t(nums.length > 1 ? 'dd.paraBus' : 'dd.paraBu', { n: ddLista((m.metasBu || []).map(String)) }) : '';
+      return '<li class="dd-meta"><button type="button" class="dd-meta-btn" data-id="' + esc(m.id) + '" aria-pressed="' + (dd.sel === m.id) + '"' +
+        ' title="' + esc(S.t('dd.compartilhada', { l: (m.compartilhada || []).join(', ') })) + '"' +
+        ' aria-label="' + esc(m.id + ' ' + m.titulo + ', ' + ddPct(m.peso) + '. ' + S.t('dd.filtrar', { m: m.id })) + '">' + corpo + faixas +
+        (desce ? '<span class="dd-meta-desce">' + ico('i-arrow') + esc(desce) + '</span>' : '') + '</button></li>';
+    }).join('');
+
+    // Nível 2 — matriz meta × BU, agrupada por país
+    var paises = [];
+    bus.forEach(function (b) { var u = paises[paises.length - 1]; if (u && u.pais === b.pais) u.n++; else paises.push({ pais: b.pais, n: 1 }); });
+    $('ddCab').innerHTML = '<tr class="dd-cab-pais"><th scope="col" rowspan="2">' + esc(S.t('dd.meta')) + '</th>' +
+      paises.map(function (p) { return '<th scope="colgroup" colspan="' + p.n + '">' + esc(p.pais) + '</th>'; }).join('') + '</tr>' +
+      '<tr>' + bus.map(function (b) {
+        return '<th scope="col" class="dd-col-bu"><a href="#metas?bu=' + encodeURIComponent(b.sigla) + '" title="' + esc(S.t('dd.irBu', { b: b.sigla })) + '">' + esc(b.sigla) + '</a></th>';
+      }).join('') + '</tr>';
+    var maxPeso = Math.max.apply(null, linhas.reduce(function (a, l) { return a.concat(bus.map(function (b) { return l.celulas[b.sigla] ? l.celulas[b.sigla].peso : 0; })); }, [1]));
+    var nCols = bus.length + 1;
+    var linhaHtml = function (l) {
+      var tags = (l.nova ? '<span class="dd-tag">' + esc(S.t('dd.nova')) + '</span>' : '') +
+        (l.origem ? '<button type="button" class="dd-tag dd-tag-origem" data-id="' + esc(l.origem) + '" aria-pressed="' + (dd.sel === l.origem) + '" title="' + esc(S.t('dd.filtrar', { m: l.origem })) + '">COO ' + esc(l.origem) + '</button>' : '');
+      var apagada = dd.sel && l.origem !== dd.sel;
+      return '<tr class="dd-linha' + (apagada ? ' is-apagada' : '') + (dd.sel && !apagada ? ' is-acesa' : '') + '">' +
+        '<th scope="row" class="dd-meta-cel"><span class="dd-n">' + (l.resultado ? '—' : esc(l.numero)) + '</span><span class="dd-meta-nome">' + esc(l.titulo) + '</span>' + tags + '</th>' +
+        bus.map(function (b) {
+          var x = l.celulas[b.sigla];
+          if (!x) return '<td class="dd-cel"><span class="dd-vazio" aria-hidden="true">–</span></td>';
+          var est = x.estado ? S.t('est.' + x.estado) : S.t('dd.semCard');
+          var k = Math.max(0, Math.min(1, (x.peso - 5) / Math.max(1, maxPeso - 5)));
+          var rot = S.t('dd.celula', { b: b.sigla, m: l.titulo, p: S.fmt(x.peso, 0), e: est }) + (x.card ? ' · ' + x.card : '');
+          var conteudo = '<span class="dd-bolha' + (x.estado ? ' dd-st-' + esc(x.estado) : '') + '" style="--k:' + k.toFixed(3) + '">' + esc(S.fmt(x.peso, 0)) + '</span>';
+          return '<td class="dd-cel">' + (x.card ? '<a href="#goal-card?card=' + encodeURIComponent(x.card) + '" title="' + esc(rot) + '" aria-label="' + esc(rot) + '">' + conteudo + '</a>' : '<span title="' + esc(rot) + '">' + conteudo + '</span>') + '</td>';
+        }).join('') + '</tr>';
+    };
+    var res = linhas.filter(function (l) { return l.resultado; }), esp = linhas.filter(function (l) { return !l.resultado; });
+    var somaEsp = function (sig) { return esp.reduce(function (t, l) { return t + (l.celulas[sig] ? l.celulas[sig].peso : 0); }, 0); };
+    var grupo = function (rot, valores) { return '<tr class="p2-pais dd-grupo"><td>' + esc(rot) + '</td>' + valores.map(function (v) { return '<td class="dd-cel">' + esc(v) + '</td>'; }).join('') + '</tr>'; };
+    $('ddLinhas').innerHTML =
+      grupo(S.t('dd.grupoResultado'), bus.map(function (b) { return S.fmt(par.pesoResultadoCoo || 0, 0) + '%'; })) + res.map(linhaHtml).join('') +
+      grupo(S.t('dd.grupoEspecificas'), bus.map(function (b) { return S.fmt(somaEsp(b.sigla), 0) + '%'; })) + esp.map(linhaHtml).join('');
+    var pt = par.pesoTotal || 100;
+    $('ddRodape').innerHTML = '<tr><th scope="row">' + esc(S.t('dd.total')) + '</th>' + tot.map(function (t) {
+      return '<td class="dd-cel"><span class="dd-total' + (t.alerta ? ' is-alerta' : '') + '">' + ico(t.alerta ? 'i-alert' : 'i-st-aprovado') + esc(S.fmt(t.total, 0)) + '</span></td>';
+    }).join('') + '</tr>' +
+      '<tr class="dd-aprov"><th scope="row">' + esc(S.t('dd.aprovado')) + '</th>' + tot.map(function (t) {
+        return '<td class="dd-cel"><span class="dd-aprov-barra" aria-hidden="true"><span style="width:' + (t.aprovado / pt * 100).toFixed(1) + '%"></span></span><span class="dd-aprov-n">' + esc(S.t('dd.ptsDe', { n: S.fmt(t.aprovado, 0), t: S.fmt(pt, 0) })) + '</span></td>';
+      }).join('') + '</tr>';
+    $('ddLinhas').parentNode.style.setProperty('--dd-cols', nCols);
+
+    var novas = esp.filter(function (l) { return l.nova; }).length, desd = esp.filter(function (l) { return l.origem; }).length;
+    $('ddResumo').textContent = S.t('dd.resumo', { e: S.fmt(esp.length, 0), n: S.fmt(novas, 0), d: S.fmt(desd, 0) });
+    $('ddLegenda').innerHTML = EST_ORDEM.map(function (e) { return '<li><span class="swatch p2-seg-' + e + '"></span>' + esc(S.t('est.' + e)) + '</li>'; }).join('');
+    var alertas = tot.filter(function (t) { return t.alerta; }).map(function (t) { return t.bu; });
+    $('ddAlerta').hidden = !alertas.length;
+    $('ddAlertaTxt').textContent = alertas.length ? S.t('dd.alerta', { t: S.fmt(pt, 0), l: alertas.join(', ') }) : '';
+    requestAnimationFrame(ddFios);
+  }
+  // Fios do desdobramento: de cada parte da barra até a meta correspondente (medidos no DOM, refeitos ao redimensionar)
+  function ddFios() {
+    var svg = $('ddFios'); if (!svg || $('vistaDesdobramento').hidden) return;
+    var base = svg.getBoundingClientRect(); if (!base.width) return;
+    var segs = $('ddBarra').querySelectorAll('.dd-seg'), metas = $('ddCoo').children, p = [];
+    for (var i = 0; i < segs.length && i < metas.length; i++) {
+      var a = segs[i].getBoundingClientRect(), b = metas[i].getBoundingClientRect();
+      var x1 = a.left + a.width / 2 - base.left, x2 = b.left + b.width / 2 - base.left, h = base.height;
+      var id = segs[i].getAttribute('data-id');
+      p.push('<path class="' + (segs[i].classList.contains('is-resultado') ? 'is-resultado' : '') + (dd.sel === id ? ' is-sel' : '') + '" d="M' + x1.toFixed(1) + ' 0 C' + x1.toFixed(1) + ' ' + (h * 0.6).toFixed(1) + ' ' + x2.toFixed(1) + ' ' + (h * 0.4).toFixed(1) + ' ' + x2.toFixed(1) + ' ' + h.toFixed(1) + '"/>');
+    }
+    svg.setAttribute('viewBox', '0 0 ' + base.width.toFixed(1) + ' ' + base.height.toFixed(1));
+    svg.innerHTML = p.join('');
+  }
+  window.addEventListener('resize', function () { if (dd.dados) requestAnimationFrame(ddFios); });
+  function ddSelecionar(id) { dd.sel = dd.sel === id ? '' : id; ddRender(); }
+  $('ddCoo').addEventListener('click', function (e) { var b = e.target.closest('.dd-meta-btn'); if (b) ddSelecionar(b.getAttribute('data-id')); });
+  $('ddBarra').addEventListener('click', function (e) { var b = e.target.closest('.dd-seg:not(.is-resultado)'); if (b) ddSelecionar(b.getAttribute('data-id')); });
+  $('ddLinhas').addEventListener('click', function (e) { var b = e.target.closest('.dd-tag-origem'); if (b) ddSelecionar(b.getAttribute('data-id')); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && dd.sel && !$('vistaDesdobramento').hidden) ddSelecionar(dd.sel); });
+  $('ddAtualizar').addEventListener('click', function () { ddCarregar(true); });
+  $('ddTentar').addEventListener('click', function () { ddCarregar(true); });
+
   // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
   function abrirMenu(sim) {
     $('topMenu').classList.toggle('is-aberto', sim);
@@ -2481,16 +2770,18 @@ window.VBMSetup = (function () {
   // ── Vistas pelo hash ──
   function rota() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
-    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel' || h === 'metas';
+    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel' || h === 'metas' || h === 'desdobramento';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     $('vistaPendencias').hidden = h !== 'pendencias';
     $('vistaPainel').hidden = h !== 'painel';
     $('vistaMetas').hidden = h !== 'metas';
+    $('vistaDesdobramento').hidden = h !== 'desdobramento';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
     if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
-    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'desdobramento') ddCarregar(false);
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -2501,8 +2792,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); });
-  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); });
 
   rota();
   carregar(false);

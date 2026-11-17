@@ -27,9 +27,12 @@
  *   GET /metas?bu=     T03 — Metas da BU no recorte do usuário (AC-04/AC-05: BU fora do recorte → 404):
  *                      { ciclo, bu, bus[], parametros, metas[], totais, alertaPesos }
  *                      `totais` traz quantidade e peso por situação; `alertaPesos` = soma ≠ total (RN-16).
+ *   GET /desdobramento T13 — Desdobramento CEO → COO → BUs no recorte do usuário:
+ *                      { ciclo, parametros, scorecardCoo[], bus[], linhas[], totais[] }
+ *                      Cada célula da matriz traz peso e a situação do Goal Card da BU naquela meta.
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo, desdobramentoExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -114,6 +117,32 @@ function agregarMetas(cards, pesoEsperado, limite, hoje = new Date()) {
     totais: { metas: metas.length, pesoTotal, pesoEsperado, pesoSubmetido: pesoTotal - peso.rascunho, peso, qtd },
     alertaPesos: pesoTotal !== pesoEsperado,
   };
+}
+
+// T13 — matriz do desdobramento: uma linha por meta (resultado do COO + específicas), uma coluna por BU do recorte.
+// Cada célula leva o peso desdobrado e a situação do Goal Card correspondente; totais por BU validam a RN-16.
+function agregarDesdobramento(base, cards, bus) {
+  const pesoTotal = Number(base.parametros.pesoTotal) || 100;
+  const resultado = Number(base.parametros.pesoResultadoCoo) || 0;
+  const cardDe = (sigla, numero) => cards.find((c) => c.bu.sigla === sigla && c.meta.numero === numero);
+  const celula = (sigla, numero, peso) => {
+    if (!peso) return null;
+    const c = cardDe(sigla, numero);
+    return { peso, estado: c ? c.estado : null, card: c ? c.card : null };
+  };
+  const linhas = [{ numero: 0, titulo: "COO's Scorecard Result", tipo: 'formula', resultado: true, origem: null, nova: false,
+    celulas: Object.fromEntries(bus.map((b) => [b.sigla, celula(b.sigla, 0, resultado)])) }]
+    .concat(base.metasBu
+      .map((m) => ({ numero: m.numero, titulo: m.titulo, tipo: m.tipo, resultado: false, origem: m.origem || null, nova: !!m.nova,
+        celulas: Object.fromEntries(bus.map((b) => [b.sigla, celula(b.sigla, m.numero, m.pesos[b.sigla])])) }))
+      .filter((l) => Object.values(l.celulas).some(Boolean)));
+  const totais = bus.map((b) => {
+    const especificas = linhas.filter((l) => !l.resultado).reduce((t, l) => t + (l.celulas[b.sigla] ? l.celulas[b.sigla].peso : 0), 0);
+    const aprovado = linhas.reduce((t, l) => t + (l.celulas[b.sigla] && l.celulas[b.sigla].estado === 'aprovado' ? l.celulas[b.sigla].peso : 0), 0);
+    const total = resultado + especificas;
+    return { bu: b.sigla, resultado, especificas, total, aprovado, alerta: total !== pesoTotal };
+  });
+  return { linhas, totais };
 }
 
 // Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
@@ -210,7 +239,28 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  router.get('/desdobramento', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora();
+      const papeis = papeisDe(email, hoje);
+      const base = desdobramentoExemplo(hoje);
+      // Recorte (AC-04/AC-05): o scorecard do COO é a origem comum; as colunas de BU seguem os papéis do usuário
+      const minhas = new Set(papeis.filter((p) => p.bu).map((p) => p.bu));
+      const bus = base.ciclo.bus.filter((b) => veTodas(papeis) || minhas.has(b.sigla));
+      if (!bus.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const cards = painelExemplo(hoje).cards.filter((c) => bus.some((b) => b.sigla === c.bu.sigla));
+      res.json({ ciclo: base.ciclo, parametros: base.parametros, scorecardCoo: base.scorecardCoo, bus,
+        ...agregarDesdobramento(base, cards, bus), atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /desdobramento:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar o desdobramento.', codigo: 'ERRO' });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, agregarPainel, agregarMetas, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };

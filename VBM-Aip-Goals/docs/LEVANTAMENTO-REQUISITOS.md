@@ -27,7 +27,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | Perfis, fonte do perfil e recorte de dados | Decidido | Cada BU vê só a própria; o grupo P&CI/COO vê todas |
 | Entidades, estados e transições | Decidido | Especificação, seções 3 e 4 |
 | Regras críticas | A confirmar | Aprovação final decidida; confirmar o Diretor da BU como nível 1 (P-11) |
-| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00 Início, T01 Minhas pendências e T02 Painel do ciclo desenvolvidas |
+| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00, T01, T02, T03 e T13 Desdobramento desenvolvidas |
 | Fontes de dados confirmadas com o dono | Pendente | Modelo de dados a validar com o time de dados (P-12) |
 | Critérios de aceite | A confirmar | Especificação, seção 11; validar com P&CI |
 
@@ -46,6 +46,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-05 | Identidade vbm-design; menu no topo, centralizado e só com texto (inspirado no Kaizen), barra em vidro no tom do fundo, sem menu lateral e sem bordas laterais nos cartões | 16/11/2026 |
 | D-06 | Tela de entrada T00 Início com os dados do ciclo AIP 2027 (etapa, prazos, BUs e jornada) e o índice das telas, sem pendências pessoais; foto dos três minerais, clara no tema claro | 16/11/2026 |
 | D-07 | Uso em notebook e desktop (1024 px a 4K); celular fora do escopo | 16/11/2026 |
+| D-08 | Nova tela T13 Desdobramento (CEO → COO → BUs) com a estrutura do material de referência 2027: scorecard do COO (75% resultado do CEO + metas próprias) e, por BU, 40% resultado do COO + 60% metas específicas | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 
