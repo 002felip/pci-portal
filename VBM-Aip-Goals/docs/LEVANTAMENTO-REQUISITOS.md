@@ -44,7 +44,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-03 | Interface em português e inglês; acesso restrito a pontos focais, diretores e aprovadores | 16/11/2026 |
 | D-04 | Aplicação na pasta VBM-Aip-Goals, na raiz do portal-pci (fora do Performance Hub), em HTML e JavaScript com servidor Node, no padrão das demais aplicações | 16/11/2026 |
 | D-05 | Identidade vbm-design; menu no topo, centralizado e só com texto (inspirado no Kaizen), barra em vidro no tom do fundo, sem menu lateral e sem bordas laterais nos cartões | 16/11/2026 |
-| D-06 | Tela de entrada T00 Início com os dados do ciclo AIP 2027 (etapa, prazos, BUs e jornada) e o índice das telas, sem pendências pessoais; foto dos três minerais, clara no tema claro | 16/11/2026 |
+| D-06 | Tela de entrada T00 Início com os dados do ciclo AIP 2027 (etapa, prazos, número de BUs e jornada do ciclo na vertical), sem pendências pessoais e sem índice de telas (acesso pelo menu do topo); foto dos três minerais, clara no tema claro | 16/11/2026 |
 | D-07 | Uso em notebook e desktop (1024 px a 4K); celular fora do escopo | 16/11/2026 |
 | D-09 | Aprovação em nível único, feita por um grupo de usuários (grupo de aprovação P&CI/COO): qualquer membro aprova, devolve ou nega, e a decisão é final. Não há nível do Diretor da BU (encerra a P-11) | 17/11/2026 |
 | D-10 | Três grupos de acesso: contribuidores (preenchem e submetem os Goal Cards da BU), aprovadores (decidem) e consulta (só leitura); o administrador do ciclo configura os grupos | 17/11/2026 |

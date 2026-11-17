@@ -13,7 +13,7 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 
 | Vista | Tela | Situação |
 |---|---|---|
-| `#inicio` (padrão) | T00 Início — abertura do ciclo AIP, jornada e índice das telas | publicada |
+| `#inicio` (padrão) | T00 Início — abertura do ciclo AIP com a jornada do ciclo na vertical | publicada |
 | `#pendencias` | T01 Minhas pendências — fila pessoal com filtros e status | publicada |
 | `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
 | `#goal-card?card=` | T04 Goal Card — edição (contribuidores), análise (grupo de aprovação) ou leitura, com campos obrigatórios, revisão por seção, decisão e comentários | publicada |

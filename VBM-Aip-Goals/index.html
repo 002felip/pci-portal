@@ -539,7 +539,7 @@ body.is-inicio .page { max-width: none; padding: 0; }
 #vistaInicio { min-height: calc(100vh - var(--barra)); min-height: calc(100svh - var(--barra)); }
 .abertura {
   flex: 1; width: 100%; max-width: 97.5rem; margin-inline: auto;
-  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22.5rem, .85fr); grid-template-rows: 1fr auto;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22.5rem, .85fr);
   gap: 1.75rem 4rem; padding: clamp(1.75rem, 6vh, 5rem) clamp(1.5rem, 5vw, 5.5rem) 1.75rem;
 }
 .abertura-texto { align-self: center; }
@@ -558,40 +558,19 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .ab-fato dt { font: 600 .62rem var(--font-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--text-soft); }
 .ab-fato dd { margin: 0.375rem 0 0; font: 500 1.15rem var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ab-fato .ab-fato-sub { margin-top: 2px; font: 400 .74rem var(--font-ui); color: var(--text-soft); white-space: normal; }
-.ab-bus { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.125rem; margin-top: 1.25rem; }
-.ab-bus-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; }
-.ab-bus-pais { margin-right: 0.25rem; font: 600 .7rem var(--font-ui); color: var(--text-soft); }
-.ab-bu { padding: 3px 0.625rem; border-radius: 62.4375rem; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); color: var(--ink-strong); font: 600 .72rem var(--font-ui); }
 
-/* Índice numerado em vidro (o menu da aplicação) */
-.indice {
-  align-self: center; padding: 1.375rem 0.625rem 0.75rem; border-radius: 1.375rem; border: 1px solid var(--ab-vidro-line);
-  background: var(--ab-vidro); box-shadow: var(--ab-sombra); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
-}
-.indice-cab { margin: 0 1rem 0.5rem; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
-.indice-lista { margin: 0; padding: 0; list-style: none; }
-.indice-lista li[hidden] { display: none; }
-.indice-lista li + li .indice-item { border-top: 1px solid var(--ab-vidro-line); }
-.indice-item { display: grid; grid-template-columns: 2.375rem minmax(0, 1fr) 1.75rem; align-items: center; gap: 0.625rem; padding: 0.875rem 1rem; border-radius: 0.875rem; color: var(--text); text-decoration: none; }
-.indice-lista li + li .indice-item:hover, .indice-item:hover { background: var(--menu-hover); border-top-color: transparent; }
-.indice-n { font: 300 1.05rem var(--font-display); color: var(--accent-strong); font-variant-numeric: tabular-nums; }
-.indice-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.indice-tit { display: flex; align-items: center; font: 600 1.02rem var(--font-display); color: var(--ink-strong); }
-.indice-tit .btn-cont { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
-.indice-desc { font-size: .74rem; line-height: 1.45; color: var(--text-soft); }
-.indice-ir { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; color: var(--accent-strong); transition: transform .2s ease; }
 @media (hover: hover) {
   .topnav-menu-link:not([aria-current="page"]):hover::after { transform: scaleX(.3); opacity: .5; }
-  .indice-item:hover .indice-ir { transform: translateX(0.25rem); }
 }
 
-/* Jornada do ciclo: quatro janelas numa linha, a etapa atual marcada */
-.jornada { grid-column: 1 / -1; padding: 1rem 1.375rem 1.125rem; border-radius: 1.125rem; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-.jornada-tit { margin: 0 0 0.875rem; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
-.jornada-lista { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
-.jornada-lista::before { content: ''; position: absolute; left: 0.375rem; right: 0.375rem; top: 0.375rem; height: 1.5px; background: var(--ab-trilho); }
-.etapa { position: relative; padding-top: 1.5rem; }
-.etapa::before { content: ''; position: absolute; left: 0; top: 0; width: 0.8125rem; height: 0.8125rem; border-radius: 50%; border: 2px solid var(--ab-trilho); background: var(--page); box-sizing: border-box; }
+/* Jornada do ciclo na vertical, em vidro, no lugar do antigo índice (o menu do topo dá acesso às telas) */
+.jornada { align-self: center; padding: 1.375rem 1.5rem 1.5rem; border-radius: 1.375rem; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); box-shadow: var(--ab-sombra);
+  backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4); }
+.jornada-tit { margin: 0 0 1.25rem; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
+.jornada-lista { position: relative; display: flex; flex-direction: column; gap: 1.5rem; margin: 0; padding: 0; list-style: none; }
+.jornada-lista::before { content: ''; position: absolute; left: 0.375rem; top: 0.5rem; bottom: 0.5rem; width: 1.5px; background: var(--ab-trilho); }
+.etapa { position: relative; padding-left: 2rem; }
+.etapa::before { content: ''; position: absolute; left: 0; top: 0.1875rem; width: 0.8125rem; height: 0.8125rem; border-radius: 50%; border: 2px solid var(--ab-trilho); background: var(--page); box-sizing: border-box; }
 .etapa.is-feita::before { border-color: var(--ab-v3); background: var(--ab-v3); }
 .etapa.is-atual::before { border-color: var(--ab-v2); background: var(--ab-v2); box-shadow: 0 0 0 5px color-mix(in srgb, var(--ab-v2) 22%, transparent); }
 .etapa-nome { display: block; font: 600 .86rem var(--font-display); color: var(--ink-strong); }
@@ -599,7 +578,6 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .etapa-data { display: inline-flex; align-items: center; gap: 0.375rem; margin-top: 0.375rem; font-size: .72rem; color: var(--text); font-variant-numeric: tabular-nums; }
 .etapa-tag { padding: 1px 0.5rem; border-radius: 62.4375rem; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 600 .62rem var(--font-ui); letter-spacing: .04em; }
 .etapa-ok { font: 600 .62rem var(--font-ui); color: var(--good); }
-@media (prefers-reduced-motion: reduce) { .indice-ir { transition: none; } }
 /* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
 .hero {
   position: relative; overflow: hidden; border-radius: 1.25rem; padding: 1.625rem 1.75rem;
@@ -743,12 +721,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .ab-ano { font-size: 7.4rem; }
   .ab-lead { margin-top: 0.75rem; font-size: .95rem; }
   .ab-fatos { margin-top: 0.875rem; }
-  .ab-bus { margin-top: 0.75rem; }
-  .indice { padding: 0.75rem 0.5rem 0.375rem; }
-  .indice-item { padding: 0.375rem 0.875rem; }
-  .indice-desc { display: none; }
-  .jornada { padding: 0.625rem 1.125rem 0.75rem; }
-  .jornada-tit { margin-bottom: 0.625rem; }
+  .jornada { padding: 1rem 1.25rem 1.125rem; }
+  .jornada-tit { margin-bottom: 0.875rem; }
+  .jornada-lista { gap: 1rem; }
   .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
   .hero-titulo { font-size: 1.6rem; }
   /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
@@ -770,7 +745,7 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .resumo { margin-top: 0; }
 }
 @media (max-width: 1080px) {
-  .abertura { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .abertura { grid-template-columns: minmax(0, 1fr); }
   body.is-inicio { background-attachment: scroll; }
   body.is-inicio { --ab-veu: linear-gradient(180deg, var(--ab-veu-mob-a, rgba(255,255,255,.94)) 0%, var(--ab-veu-mob-b, rgba(255,255,255,.80)) 100%); }
   :root[data-theme="dark"] body.is-inicio { --ab-veu-mob-a: rgba(4,21,35,.92); --ab-veu-mob-b: rgba(4,21,35,.80); }
@@ -1136,6 +1111,8 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .gc-lado { position: static; order: -1; }
   }
 @media (prefers-reduced-motion: reduce) { .gc-barra span, .gc-f-linha { transition: none; } }
+
+/* ════════════════════════════════════════════════════════════════════
    [RESPONSIVO] Camada adaptativa (skill-responsividade)
    Aplicação de notebook e desktop (1024px a 4K; celular fora do escopo). Fluido primeiro; breakpoint
    estrutural só em 1080px (menu em gaveta, banner e abertura em uma coluna). Os CSS copiados das skills vbm-design/setup-dashboards não são
@@ -1153,7 +1130,7 @@ body { font-size: 0.875rem; overflow-x: clip; min-height: 100vh; min-height: 100
 img, video, svg, canvas, iframe { max-width: 100%; }
 .page { max-width: 92.5rem; }
 .abertura { max-width: 97.5rem; }
-p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
+p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
 
 /* [RESPONSIVO] Barra superior — altura fluida (token --barra) no lugar dos 64/56px fixos */
 :root { --barra: clamp(3.5rem, 2.6rem + 1.1vw, 5.5rem); }
@@ -1190,12 +1167,12 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
 /* [RESPONSIVO] Vidro com degradação (A3): sem backdrop-filter ou com transparência reduzida, fundo opaco */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .topnav, .topnav-menu { background: var(--page); }
-  .indice, .jornada { background: var(--card-bg); }
+  .jornada { background: var(--card-bg); }
   .resumo { background: var(--hero-bg); }
 }
 @media (prefers-reduced-transparency: reduce) {
   .topnav, .topnav-menu { background: var(--page); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .indice, .jornada { background: var(--card-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .jornada { background: var(--card-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .resumo { background: var(--hero-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
@@ -1347,51 +1324,10 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
           <div class="ab-fato"><dt data-i18n="ab.fOficial">Goal Cards oficiais</dt><dd id="fOficial">—</dd><dd class="ab-fato-sub" data-i18n="ab.fOficialSub">versão aprovada de cada meta</dd></div>
           <div class="ab-fato"><dt>Business Units</dt><dd id="fBus">—</dd><dd class="ab-fato-sub" id="fBusSub"></dd></div>
         </dl>
-        <div class="ab-bus" id="abBus" aria-label="Business Units do ciclo" data-i18n-aria="ab.busAria"></div>
       </div>
 
-      <nav class="indice" aria-labelledby="titIndice">
-        <p class="indice-cab" id="titIndice" data-i18n="ab.indice">Acessar</p>
-        <ol class="indice-lista">
-        <li data-perfis="todos"><a class="indice-item" href="#pendencias">
-          <span class="indice-n">01</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.pendencias">Minhas pendências</span></span><span class="indice-desc"><span data-i18n="ini.dPend">Goal Cards a preencher ou decidir, comentários e ações sob sua responsabilidade.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        <li hidden data-perfis="pci_coo admin"><a class="indice-item" href="#painel">
-          <span class="indice-n">02</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.painel">Painel do ciclo</span></span><span class="indice-desc"><span data-i18n="ini.dPainel">Situação dos Goal Cards por BU e tempo em cada nível de aprovação.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        <li data-perfis="todos"><a class="indice-item" href="#desdobramento">
-          <span class="indice-n">03</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.desdobramento">Desdobramento</span></span><span class="indice-desc"><span data-i18n="ini.dDesd">Do scorecard do COO às metas e pesos de cada Business Unit.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        <li data-perfis="todos"><a class="indice-item" href="#metas">
-          <span class="indice-n">04</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.metas">Metas da BU</span></span><span class="indice-desc"><span data-i18n="ini.dMetas">Metas do desdobramento com peso, tipo, status e versão.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        <li data-perfis="todos"><a class="indice-item" href="#action-log">
-          <span class="indice-n">05</span>
-          <span class="indice-txt"><span class="indice-tit">Action Log</span><span class="indice-desc"><span data-i18n="ini.dLog">Registro de submissões, decisões e comentários do ciclo.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        <li data-perfis="todos"><a class="indice-item" href="#acoes">
-          <span class="indice-n">06</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.acoes">Ações</span></span><span class="indice-desc"><span data-i18n="ini.dAcoes">Ações atribuídas no ciclo, com responsável e prazo.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        <li hidden data-perfis="admin"><a class="indice-item" href="#configuracao">
-          <span class="indice-n">07</span>
-          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.config">Configuração</span></span><span class="indice-desc"><span data-i18n="ini.dConfig">Janelas do ciclo, BUs, pessoas, metas, pesos e rota de aprovação.</span></span></span>
-          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-        </a></li>
-        </ol>
-      </nav>
 
-      <!-- Jornada do ciclo: as quatro janelas, com a etapa aberta hoje marcada (texto + ponto, nunca só cor) -->
+      <!-- Jornada do ciclo na vertical, no lugar do índice: as quatro janelas, com a etapa aberta hoje marcada (texto + ponto, nunca só cor) -->
       <section class="jornada" aria-labelledby="titJornada">
         <h3 class="jornada-tit" id="titJornada"><span data-i18n="ab.jornada">Jornada do ciclo</span><span id="jornadaCiclo"></span></h3>
         <ol class="jornada-lista" id="jornada"></ol>
@@ -2277,14 +2213,9 @@ window.VBMSetup = (function () {
     $('fEtapa').textContent = atual >= 0 ? S.t('et.' + c.etapaAtual) : '—';
     $('fEtapaPrazo').textContent = etAtual.fim ? S.t('ab.ate', { d: dataCurta(etAtual.fim) }) : '';
     $('fOficial').textContent = porId.oficial && porId.oficial.fim ? dataLonga(porId.oficial.fim) : '—';
-    var bus = c.bus || [], porPais = {};
-    bus.forEach(function (u) { (porPais[u.pais] = porPais[u.pais] || []).push(u.sigla); });
-    var paises = Object.keys(porPais);
+    var bus = c.bus || [];
     $('fBus').textContent = bus.length ? S.fmt(bus.length, 0) : '—';
     $('fBusSub').textContent = c.ano ? S.t('ab.noCiclo', { a: c.ano }) : '';
-    $('abBus').innerHTML = paises.map(function (p) {
-      return '<span class="ab-bus-grupo"><span class="ab-bus-pais">' + esc(p) + '</span>' + porPais[p].map(function (sg) { return '<span class="ab-bu">' + esc(sg) + '</span>'; }).join('') + '</span>';
-    }).join('');
     $('jornada').innerHTML = ETAPAS.map(function (id, i) {
       var e = porId[id] || {};
       var est = atual < 0 ? '' : i < atual ? ' is-feita' : i === atual ? ' is-atual' : '';
@@ -2304,9 +2235,6 @@ window.VBMSetup = (function () {
       var pode = (a.getAttribute('data-perfis') || '').split(' ');
       a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
     });
-    // Índice do início numerado só com as telas visíveis (01, 02, 03…)
-    var n = 0;
-    document.querySelectorAll('.indice-lista li').forEach(function (li) { if (!li.hidden) li.querySelector('.indice-n').textContent = String(++n).padStart(2, '0'); });
   }
 
   function itensBase() {

@@ -260,7 +260,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 | ID | Tela | Perfis | Conteúdo e ações | Fase |
 | --- | --- | --- | --- | --- |
-| T00 | Início | Todos | Abertura do ciclo AIP: etapa atual e prazo, data dos Goal Cards oficiais, BUs do ciclo por país, jornada do ciclo e índice das telas do perfil | MVP |
+| T00 | Início | Todos | Abertura do ciclo AIP: etapa atual e prazo, data dos Goal Cards oficiais, número de BUs e jornada do ciclo na vertical; o acesso às telas é pelo menu do topo | MVP |
 | T01 | Minhas pendências | Contribuidores, aprovadores, admin | Fila pessoal: cards a preencher, decisões, comentários sem resposta e ações, com prazo e idade | MVP |
 | T02 | Painel do ciclo | Todos | KPIs (submetidos, aprovados %, em aprovação, em revisão, negados); matriz BU × status; funil; tempo em aprovação; filtro País › BU | MVP |
 | T03 | Metas da BU | Todos | Metas com peso, tipo, status e versão; soma de pesos | MVP |
@@ -321,13 +321,13 @@ Cinco telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendên
 
 | Tela | Situação | O que já funciona | Depende de |
 | --- | --- | --- | --- |
-| T00 Início | Desenvolvida | Abertura do ciclo AIP 2027: etapa atual e prazo, data dos Goal Cards oficiais, BUs por país, jornada do ciclo com a etapa atual e índice das telas do perfil | Janelas e BUs reais (T11, P-12) |
+| T00 Início | Desenvolvida | Abertura do ciclo AIP 2027: etapa atual e prazo, data dos Goal Cards oficiais, número de BUs e jornada do ciclo na vertical, em vidro, com a etapa atual (no lugar do antigo índice de telas) | Janelas e BUs reais (T11, P-12) |
 | T01 Minhas pendências | Desenvolvida | Fila por tipo, resumo que filtra, filtros País › BU, ordenação e só paradas ou atrasadas na URL, status com ícone e rótulo, idade em dias úteis (RN-14), estados de carregando, vazio, erro, sem acesso e desatualizado | Consulta real da fila (P-12) |
 | T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
 | T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação e versão; BU na URL | Metas e pesos reais por BU (P-12) |
 | T04 Goal Card | Desenvolvida | Modo pelo grupo e pela situação (servidor): edição para contribuidores da BU (Rascunho e Em revisão), análise para o grupo de aprovação (Em aprovação, respeitando a RN-12) e leitura para os demais; ficha única no modelo VBM "CARD" (rótulo à esquerda, valor ao centro, revisão e comentários à direita), com seletor das metas da BU na mesma página; campos do desdobramento e texto padrão do ciclo com cadeado, campos da BU abertos com obrigatório (*); fórmula de cálculo em uma linha; régua Mín./Meta/Exc. e direção da meta; linha do tempo do card; campos obrigatórios marcados com * e Submeter bloqueado até preenchê-los (cliente e servidor); revisão OK/Ajustar por seção, decisão Aprovar/Devolver/Negar com RN-08 e RN-09 e confirmação no segundo clique (`alertdialog`); comentários por seção; rascunho salvo no navegador; escritas validadas e simuladas | Gravação real (P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
-| T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) |
+| T05, T06, T07, T08, T11 | Em construção | Endereço no menu do topo (cada perfil vê só as suas) | Modelo de dados (P-12) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |
 
 Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 ainda mostram dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos; passam a nível único e aos grupos contribuidores, aprovadores e consulta na próxima entrega. **Ajuste pendente pelas regras de 17/11:** leitura aberta a todos (hoje a API filtra por BU e o Painel é só do P&CI/COO), sem o alerta de pendência parada (antiga RN-14) e sem o alerta de soma dos pesos na T03 (RN-16 passa a ser validação na gravação). Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.
