@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, T01, T02, T03, T04 Goal Card e T13 Desdobramento publicados com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, T01, T02, T03 e T04 Goal Card publicados com dados de exemplo; demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -18,7 +18,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
   aprova, devolve ou nega, e a decisão é final. Não existe o nível do Diretor da BU (a P-11 foi encerrada).
 - **Contribuidores** (grupo por BU): preenchem, submetem, recolhem e resubmetem os Goal Cards da BU.
 - **Aprovadores**: decidem e veem todas as BUs (T02 Painel do ciclo).
-- **Consulta**: só leitura (metas, Goal Cards, versões, Action Log, desdobramento); a API recusa escrita com 403.
+- **Consulta**: só leitura (metas, Goal Cards, versões e Action Log); a API recusa escrita com 403.
 - **Leitura aberta (D-11):** todos os usuários veem todos os dados de todas as BUs; a edição cabe só aos
   contribuidores da própria BU, conforme o cadastro no banco (`AIP_PAPEL`).
 - **Regras ajustadas (D-12):** sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida na gravação
@@ -50,7 +50,6 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `#inicio` (padrão) | Início: menu da aplicação | publicada |
 | `#pendencias` | T01 Minhas pendências | publicada |
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
-| `#desdobramento` | T13 Desdobramento CEO → COO → BUs (colunas no recorte do usuário) | publicada |
 | `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
 | `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
 
@@ -145,27 +144,11 @@ editado o card — RN-12) ou **leitura** (todos os demais; leitura aberta, D-11)
 - **Escritas:** `POST /goal-card/submeter` e `/goal-card/decisao` validam no servidor (403 fora do grupo ou da BU,
   409 fora da situação, 400 com os itens pendentes) e respondem `simulado: true` até o modelo de dados (P-12).
 
-### T13 Desdobramento
+### Dados de exemplo
 
-Tela nova, fora do catálogo original (§10), feita a partir do material de referência do ciclo 2027 ("VBM COO
-Scorecard Details" e "COO and BUs Scorecard Matrix — DRAFT"). Mostra os dois níveis do desdobramento numa tela só.
-
-- **Nível 1, CEO → COO (no topo, num painel suave sobre a foto):** barra fina, sem rótulos, com a composição do
-  scorecard do COO (75% resultado do scorecard do CEO + 5 / 7,5 / 7,5 / 5% das metas próprias), uma cor por meta
-  em degradê executivo (azul-marinho → petróleo → verde-água → ciano → azul-acinzentado, tokens existentes); a meta
-  escolhida fica em ênfase. Cada card (fundo e borda suaves, como a biblioteca do Kaizen) traz o selo de destino
-  ("Meta da BU #5"), título, com quem é compartilhada, peso grande, barra dos 100% com a fatia da meta na cor dela,
-  faixas (mín., alvo, excepcional) e, no rodapé, um ponto por Goal Card gerado nas BUs, na cor da situação.
-- **Nível 2, COO → BUs (matriz):** uma linha por meta (resultado do scorecard do COO, 40%, e as metas específicas,
-  60%) e uma coluna por BU, agrupadas por país. O tamanho da bolha é o peso; a cor é a situação do Goal Card daquela
-  meta na BU (tokens `--status-*`), e a bolha abre o card (T04). Etiquetas "Nova" e "COO 2027_0n" (origem).
-- **Destaque da origem:** clicar numa meta do COO (ou na etiqueta de origem) acende as metas da BU que vêm dela e
-  apaga as outras; clicar de novo ou Esc limpa.
-- **Rodapé:** total por BU com o alerta da RN-16 e o peso já aprovado ("45 de 100"); a sigla da BU leva à T03.
-- **Recorte:** o scorecard do COO é a origem comum; as colunas são só as BUs do usuário (P&CI/COO e administrador
-  veem todas).
-
-Os Goal Cards de exemplo (T02, T03) passaram a seguir essa matriz: um card por meta com peso em cada BU (63 cards).
+Os Goal Cards de exemplo (T01 a T04) seguem a estrutura do material de referência do ciclo 2027: por BU, 40% de
+resultado do scorecard do COO e 60% de metas específicas (63 cards); os cards citados em Minhas pendências têm a
+mesma situação em todas as telas.
 
 ## Responsividade
 
@@ -177,8 +160,6 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
   (≤ 820px, notebook com escala de 125–150%) compacta banner e abertura.
 - **Cartão da fila por container query** (`@container fila`), pela largura do próprio cartão.
 - **Vidro com degradação:** fundo opaco sem `backdrop-filter` ou com `prefers-reduced-transparency`.
-- **Card da meta do COO (T13) por container query** (`@container ddcard`): card estreito põe o rótulo do peso
-  abaixo do número.
 - Conferido sem rolagem lateral em 1024, 1180, 1280×590, 1280×800, 1440, 1920, 2560 e 3840px e com zoom de 200%
   (960×540), nas cinco telas e nos dois temas (demonstração offline, 90 combinações).
 
@@ -189,7 +170,6 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
-| `GET /desdobramento` | T13: scorecard do COO e matriz meta × BU no recorte do usuário (sem BU no recorte → 403). Devolve `ciclo`, `parametros` (`pesoTotal`, `pesoResultadoCoo`), `scorecardCoo[]`, `bus[]`, `linhas[]` (cada célula com `peso`, `estado` e `card`) e `totais[]` por BU (`total`, `aprovado`, `alerta`) |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `prechecagem[]`, `comentarios[]`, `linha[]` e `permissoes` |
 | `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: pré-checagem e decisão validadas no servidor; simulação até o P-12 |
 | `GET /health` | `{ status }` |

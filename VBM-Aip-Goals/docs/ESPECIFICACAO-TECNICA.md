@@ -31,7 +31,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | --- | --- | --- | --- |
 | Contribuidores (grupo por BU) | Preencher, salvar e submeter Goal Card; recolher submissão; responder e comentar; concluir ações; (F2) abrir CR; (F3) enviar evidência. Qualquer membro do grupo da BU edita o card; o log registra quem alterou | Vê todas as BUs; edita só a(s) BU(s) do seu cadastro | T01 Minhas pendências |
 | Aprovadores (grupo de aprovação P&CI/COO) | Nível único de aprovação: qualquer membro do grupo aprova, devolve ou nega; comenta; atribui ações; (F3) valida evidência | Todas as BUs | T02 Painel do ciclo |
-| Consulta (grupo de leitura) | Só leitura: vê metas, Goal Cards, versões, Action Log e desdobramento; não edita, não comenta e não decide | Vê todas as BUs | T00 Início |
+| Consulta (grupo de leitura) | Só leitura: vê metas, Goal Cards, versões e Action Log; não edita, não comenta e não decide | Vê todas as BUs | T00 Início |
 | Administrador do ciclo (P&CI) | Configurar ciclo, BUs, grupos (contribuidores, aprovadores e consulta), metas, pesos, prazos e textos padrão; reatribuir pendências; reabrir card Negado | Todas as BUs | T11 Configuração do ciclo |
 
 | ID | Regra de acesso |
@@ -42,7 +42,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | AC-04 | Escrita (editar, submeter, recolher, comentar ou concluir ação) em BU que não está no cadastro do usuário retorna 403 e gera evento no log. |
 | AC-05 | Todos os usuários com papel no ciclo visualizam todos os dados de todas as BUs. A edição cabe só aos contribuidores da própria BU, conforme o cadastro no banco de dados (`AIP_PAPEL`); a decisão, só ao grupo de aprovação. O grupo de consulta nunca edita, comenta nem decide: a interface não mostra essas ações e a API responde 403. |
 | AC-06 | Usuário inativo em `IBP.USERS` é tratado como sem acesso; suas pendências aparecem para o administrador reatribuir. |
-| AC-07 | As telas de leitura (Início, Painel do ciclo, Desdobramento, Metas da BU, Goal Card em leitura, Versões e Action Log) ficam abertas a todos os perfis, com todas as BUs. |
+| AC-07 | As telas de leitura (Início, Painel do ciclo, Metas da BU, Goal Card em leitura, Versões e Action Log) ficam abertas a todos os perfis, com todas as BUs. |
 
 ## 3. Regras de negócio
 
@@ -147,15 +147,15 @@ Cada meta tem uma **polaridade** definida no desdobramento: "maior é melhor" ex
 | 2 | Abre o ciclo; os contribuidores são notificados. |
 | 3 | Acompanha pelo T02 e reatribui pendências de quem está ausente ou inativo. |
 
-### 6.4 Consulta (T00, T03, T05, T13)
+### 6.4 Consulta (T00, T03, T05)
 
-O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitura), versões, Action Log e desdobramento de todas as BUs, imprime a visão do Goal Card e exporta o log. Não recebe pendências nem notificações de decisão.
+O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitura), versões e Action Log de todas as BUs, imprime a visão do Goal Card e exporta o log. Não recebe pendências nem notificações de decisão.
 
 ### 6.5 Navegação
 
 | Situação | Comportamento |
 | --- | --- |
-| Menu no topo | Início (T00), Minhas pendências, Painel do ciclo, Desdobramento, Metas da BU, Action Log, Ações, Change Requests (F2), Evidências (F3) e Configuração. Cada perfil vê apenas os itens que pode usar (consulta não vê Minhas pendências nem Configuração). |
+| Menu no topo | Início (T00), Minhas pendências, Painel do ciclo, Metas da BU, Action Log, Ações, Change Requests (F2), Evidências (F3) e Configuração. Cada perfil vê apenas os itens que pode usar (consulta não vê Minhas pendências nem Configuração). |
 | Filtros e seleção | Ficam na URL; o botão Voltar do navegador retorna à tela anterior com o mesmo filtro. |
 | Saída de T04 com alteração não salva | O app pede confirmação antes de sair. |
 | Link de e-mail | Abre a tela exata (card, seção ou ação); sem acesso, abre T12. |
@@ -210,8 +210,8 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | Tipografia e ícones | Poppins local, com as faces embutidas (`VBM-Aip-Goals/assets/css/poppins.css`, cópia da do Performance Hub); nada de Google Fonts. Ícones em SVG próprio (sprite inline na página) ou pelo Font Awesome já servido pelo app, em subconjunto local; nunca por CDN. |
 | Rede | Corporativa fechada: sem CDN, Google Fonts ou kit; fontes, ícones e scripts locais. |
 | Filtros | Padrão COO: rótulo em itálico em cima; `.seg` com `aria-pressed` para poucas opções (Estado, Tipo, Período); `.switch` com `role="switch"` para liga/desliga (ex.: só atrasadas); `.unit` para País › BU e para Ciclo (mais recente primeiro). Estado na URL. |
-| Status do Goal Card | Pílula com ícone + rótulo + cor do token de fluxo `--status-*` (mesmo do Kaizen): Rascunho `--status-draft` (cinza), Em aprovação `--status-pending` (âmbar), Em revisão `--status-review` (azul), Aprovado `--status-approved` (verde), Negado `--status-rejected` (vermelho). Nunca só por cor: nos gráficos compactos (bolha da matriz e ponto por card na T13) a situação vai também na legenda, no `title` e no `aria-label`. `--good` e `--bad` ficam para desempenho nos gráficos; ciclo e prazo usam o âmbar `--wait` (atrasada com `--late-bg`), nunca verde ou vermelho. |
-| Gráficos | SVG próprio, sem biblioteca: anéis de progresso (T02, T03), barras de composição (T02, T13), funil e tempo em aprovação em barras, bolhas por peso (T13); sem pizza. Séries com `--serie-a` / `--serie-b` / `--serie-p`; a barra do scorecard do COO (T13) usa a paleta executiva da abertura (`--ab-v1`, `--ab-v2`, `--ab-v3`) seguida das séries, uma cor por meta; situação com `--status-*`; deltas, se houver, com `--good` / `--bad` / `--flat`. `NULL` = "sem dado", nunca 0; `role="img"` + `aria-label` com o resumo; redesenho ao trocar filtro, idioma, formato, tema e tamanho; animação só de `transform` e `opacity`. |
+| Status do Goal Card | Pílula com ícone + rótulo + cor do token de fluxo `--status-*` (mesmo do Kaizen): Rascunho `--status-draft` (cinza), Em aprovação `--status-pending` (âmbar), Em revisão `--status-review` (azul), Aprovado `--status-approved` (verde), Negado `--status-rejected` (vermelho). Nunca só por cor: nos gráficos compactos a situação vai também na legenda, no `title` e no `aria-label`. `--good` e `--bad` ficam para desempenho nos gráficos; ciclo e prazo usam o âmbar `--wait` (atrasada com `--late-bg`), nunca verde ou vermelho. |
+| Gráficos | SVG próprio, sem biblioteca: anéis de progresso (T02, T03), barras de composição (T02), funil e tempo em aprovação em barras; sem pizza. Séries com `--serie-a` / `--serie-b` / `--serie-p`; situação com `--status-*`; deltas, se houver, com `--good` / `--bad` / `--flat`. `NULL` = "sem dado", nunca 0; `role="img"` + `aria-label` com o resumo; redesenho ao trocar filtro, idioma, formato, tema e tamanho; animação só de `transform` e `opacity`. |
 | Avisos e salvamento | `.toast` com `role="status" aria-live="polite"` ("Salvo às 14:32"; erro com `.is-err`), em linguagem de negócio. Botão salvar com `.is-pendente` enquanto houver alteração não salva. |
 | Perfis na interface | Cada grupo vê só o que pode fazer: ações que o perfil não tem não são desenhadas (não basta desabilitar). **Contribuidores:** Salvar, Submeter e Recolher no Goal Card. **Aprovadores:** painel de decisão com Aprovar (`.btn`), Devolver e Negar (`.btn-sec`), confirmação no segundo clique; os botões não usam `--good`/`--bad`, a cor de situação fica só na pílula. **Consulta:** pílula neutra "Somente leitura" (`--flat`, ícone de cadeado) no banner da tela e do Goal Card; sem campos editáveis, comentários nem decisão; menu sem Minhas pendências e Configuração. |
 | Estados de tela | Toda tela trata carregando, vazio, erro, sem permissão e desatualizado ("Last updated …"). |
@@ -274,7 +274,6 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | T10 | Evidências | Contribuidores, aprovadores | Upload por meta ou marco; aceitar ou devolver | F3 |
 | T11 | Configuração do ciclo | Admin | Ciclo, BUs, grupos, metas, pesos, prazos, textos padrão, parâmetros | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
-| T13 | Desdobramento | Todos | Scorecard do COO definido pelo CEO (pesos, faixas, compartilhamento) e matriz meta × BU com peso, origem e situação do Goal Card | MVP |
 
 ## 11. Critérios de aceite
 
@@ -319,7 +318,7 @@ Decisões já tomadas (P-01, P-02, P-11 → D-09, P-13 → D-11 e itens validado
 
 ## 13. Telas desenvolvidas
 
-Seis telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendências, T02 Painel do ciclo, T03 Metas da BU, T04 Goal Card e T13 Desdobramento), com dados de exemplo até a validação do modelo de dados (P-12). As demais telas do catálogo já têm endereço no menu e abrem "Tela em construção".
+Cinco telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendências, T02 Painel do ciclo, T03 Metas da BU e T04 Goal Card), com dados de exemplo até a validação do modelo de dados (P-12). As demais telas do catálogo já têm endereço no menu e abrem "Tela em construção".
 
 | Tela | Situação | O que já funciona | Depende de |
 | --- | --- | --- | --- |
@@ -328,9 +327,8 @@ Seis telas do MVP estão prontas no protótipo (T00 Início, T01 Minhas pendênc
 | T02 Painel do ciclo | Desenvolvida | Só para P&CI/COO e administrador; título Ciclo AIP 2027 e jornada do ciclo com um anel por etapa (% do total, prazo e quantitativo, como "27 de 41"), matriz BU × situação com barra de composição, funil, tempo em aprovação com o limite da RN-14, cards parados há mais tempo e filtro País › BU na URL; contagens calculadas da mesma lista de cards (CA-15) | Goal Cards reais por BU (P-12) |
 | T03 Metas da BU | Desenvolvida | Metas de uma BU no recorte do usuário (AC-04/AC-05, fora do recorte → 404); quatro anéis por peso (distribuído, submetido, em aprovação, aprovado); alerta da soma dos pesos (RN-16); tabela com peso, tipo, situação e versão; BU na URL | Metas e pesos reais por BU (P-12) |
 | T04 Goal Card | Desenvolvida | Modo pelo grupo e pela situação (servidor): edição para contribuidores da BU (Rascunho e Em revisão), análise para o grupo de aprovação (Em aprovação, respeitando a RN-12) e leitura para os demais; topo com número da meta, situação, versão, peso, tipo e polaridade e linha do tempo do card; 7 seções com régua pela polaridade e marcos; pré-checagem ao vivo e no servidor (Submeter só com tudo verde); revisão OK/Ajustar por seção, decisão Aprovar/Devolver/Negar com RN-08 e RN-09 e confirmação no segundo clique (`alertdialog`); comentários por seção; rascunho salvo no navegador; escritas validadas e simuladas | Gravação real (P-12) |
-| T13 Desdobramento | Desenvolvida | Nível CEO → COO: barra fina do scorecard do COO em degradê executivo (uma cor por meta, a escolhida em ênfase) e um card por meta no modelo das fases do ciclo (selo de destino, título, compartilhamento, peso, barra dos 100% com a fatia da meta em ênfase, faixas e um ponto por Goal Card gerado nas BUs, na cor da situação), em painel com fundo e borda suaves; nível COO → BUs: matriz meta × BU com peso (bolha), situação do Goal Card (cor), etiquetas Nova e origem, destaque das metas que vêm de uma meta do COO, total por BU (RN-16) e peso aprovado; colunas no recorte do usuário | Scorecard e matriz reais do ciclo (T11, P-12) |
 | T12 Sem acesso | Parcial | Estado "Sem acesso" dentro da T01 e da T02 quando a API responde 401 ou 403 | Tela própria e evento "Acesso negado" no log |
 | T05, T06, T07, T08, T11 | Em construção | Endereço no menu e na T00 (cada perfil vê só as suas) | Modelo de dados (P-12) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |
 
-Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 ainda mostram dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos; passam a nível único e aos grupos contribuidores, aprovadores e consulta na próxima entrega. **Ajuste pendente pelas regras de 17/11:** leitura aberta a todos (hoje a API filtra por BU e o Painel é só do P&CI/COO), sem o alerta de pendência parada (antiga RN-14) e sem o alerta de soma dos pesos na T03 (RN-16 passa a ser validação na gravação). **Conflito com a vbm-design (nada só por cor):** na T13, os pontos dos cards das metas do COO mostram a situação só pela cor na tela (o rótulo fica na dica e no leitor de tela); falta decidir entre ícone na bolinha ou rótulo curto visível. Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.
+Comum às telas prontas: barra em vidro com menu no topo, tema claro e escuro e idioma pt-BR/en pela engrenagem, tokens `vbm-design` e escopo notebook e desktop (§8). **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 ainda mostram dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos; passam a nível único e aos grupos contribuidores, aprovadores e consulta na próxima entrega. **Ajuste pendente pelas regras de 17/11:** leitura aberta a todos (hoje a API filtra por BU e o Painel é só do P&CI/COO), sem o alerta de pendência parada (antiga RN-14) e sem o alerta de soma dos pesos na T03 (RN-16 passa a ser validação na gravação). Código em `VBM-Aip-Goals/` (raiz do portal-pci, PR #94), API em `/VBM-Aip-Goals/api/pendencias`, documentação em `docs/projetos/aip-goals.md`.
