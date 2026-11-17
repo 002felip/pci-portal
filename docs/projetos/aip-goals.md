@@ -76,14 +76,13 @@ comentários sem resposta e ações atribuídas.
 Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis recebem 403 e a tela mostra
 "Painel restrito"). Filtro País › BU no endereço (`#painel?pais=&bu=`), com o Voltar do navegador.
 
-- **Topo:** "Ciclo AIP" com o ano do ciclo em numerais vazados (modelo da abertura), sobre a foto dos minerais
-  com véu no tom da página.
+- **Topo:** "Ciclo AIP" e, embaixo, o ano do ciclo em numerais vazados (modelo da abertura), sobre a foto dos
+  minerais com véu no tom da página.
 - **Jornada do ciclo:** as quatro etapas ("01 - Desdobramento COO", "02 - Propostas BU's", "03 - Calibração e
   Aprovação", "04 - Goal Card oficial") numa linha contínua preenchida até hoje, com o marcador "Hoje". Cada anel
-  mostra só o quantitativo (metas desdobradas, Goal Cards submetidos, em aprovação e aprovados) e a fração do
-  total do ciclo. O seletor à esquerda alterna **Nº** (absoluto) e **%** (do total), com estado no endereço
-  (`#painel?vis=pct`). Abaixo de cada anel, só o prazo e um fato curto (concluída; dias úteis restantes e em
-  rascunho; paradas; negados). Números dos totais do servidor, seguindo o filtro País › BU.
+  mostra o percentual do total do ciclo (metas desdobradas, submetidos, em aprovação, aprovados). Abaixo, o prazo
+  discreto e o quantitativo ("27 de 41 Goal Cards submetidos"). A distância do anel ao texto de cima e ao de baixo
+  é a mesma (`--p2-esp`). Números dos totais do servidor, seguindo o filtro País › BU.
 - **Faixa de filtro:** País › BU, aviso de dados de exemplo e as ações atualizar e tela cheia.
 - **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de
   status + números na linha), total e paradas; a BU leva à T03 filtrada.
