@@ -939,7 +939,12 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .dd-trilha { padding: 1.125rem 1.25rem 1.25rem; border-radius: 1.25rem; border: 1px solid var(--card-line);
   background: color-mix(in srgb, var(--panel) 72%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .dd-coo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.875rem; margin: 1.125rem 0 0; padding: 0; list-style: none; }
-.dd-meta { display: flex; min-width: 0; }
+.dd-meta { display: flex; min-width: 0; container: ddcard / inline-size; }
+/* [RESPONSIVO] Card da meta do COO — o container manda: card estreito (notebook 1024–1180px) põe o rótulo do peso embaixo do número */
+@container ddcard (max-width: 14rem) {
+  .dd-card-num { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
+  .dd-card-num span { white-space: normal; }
+}
 /* Card no modelo das fases do ciclo, com fundo e borda suaves: selo, título, apoio, peso, barra dos 100% e rodapé */
 .dd-card { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.125rem 0; border-radius: 0.875rem; text-align: left; font: inherit; color: var(--text); cursor: pointer;
   background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); transition: border-color .2s, box-shadow .2s, transform .2s; }
