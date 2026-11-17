@@ -21,9 +21,12 @@
  *   GET /pendencias    T01 — fila pessoal do usuário no ciclo ativo:
  *                      { ciclo, usuario, parametros, itens[], atualizadoEm, exemplo }
  *                      Cada item já sai com `diasUteis`, `parada` (RN-14) e `atrasada`.
+ *   GET /painel?pais=&bu=   T02 — Painel do ciclo (só P&CI/COO e administrador, AC-07):
+ *                      { ciclo, parametros, filtro, cards[], totais, porBu[], funil[], niveis[], parados[] }
+ *                      Tudo calculado aqui a partir de `cards` (CA-15: as contagens batem com a lista).
  */
 const express = require('express');
-const { pendenciasExemplo } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -58,6 +61,37 @@ function enriquecer(dados, hoje = new Date()) {
       return { ...it, diasUteis, parada: diasUteis > limite, atrasada: !!it.prazo && it.prazo < hojeIso };
     });
   return { ...dados, parametros: { ...dados.parametros, diasParado: limite }, itens };
+}
+
+// T02 — agregados do Painel do ciclo, a partir da lista de Goal Cards já filtrada.
+// Funil: Goal Cards → submetidos (saíram do rascunho) → passaram do nível 1 → aprovados.
+function agregarPainel(cards, ordemBus, limite, hoje = new Date()) {
+  const comIdade = cards.map((c) => {
+    const diasUteis = c.desde ? diasUteisEntre(c.desde, hoje) : 0;
+    return { ...c, diasUteis, parada: c.estado === 'em_aprovacao' && diasUteis > limite };
+  });
+  const porEstado = (lista) => Object.fromEntries(ESTADOS.map((e) => [e, lista.filter((c) => c.estado === e).length]));
+  const total = comIdade.length;
+  const est = porEstado(comIdade);
+  const submetidos = total - est.rascunho;
+  const passaramNivel1 = est.aprovado + comIdade.filter((c) => c.estado === 'em_aprovacao' && c.nivel && c.nivel.atual > 1).length;
+  const totais = { total, ...est, submetidos, aprovadosPct: total ? est.aprovado / total : null, paradas: comIdade.filter((c) => c.parada).length };
+  const porBu = ordemBus
+    .map((b) => { const l = comIdade.filter((c) => c.bu.sigla === b.sigla); return { bu: b, total: l.length, ...porEstado(l), paradas: l.filter((c) => c.parada).length }; })
+    .filter((x) => x.total > 0);
+  const funil = [
+    { id: 'cards', n: total }, { id: 'submetidos', n: submetidos },
+    { id: 'nivel1', n: passaramNivel1 }, { id: 'aprovados', n: est.aprovado },
+  ];
+  const mediana = (v) => { if (!v.length) return null; const o = [...v].sort((a, b) => a - b); const m = Math.floor(o.length / 2); return o.length % 2 ? o[m] : (o[m - 1] + o[m]) / 2; };
+  const emAprov = comIdade.filter((c) => c.estado === 'em_aprovacao' && c.nivel);
+  const niveis = [1, 2].map((n) => {
+    const l = emAprov.filter((c) => c.nivel.atual === n); const d = l.map((c) => c.diasUteis);
+    return { nivel: n, nome: n === 1 ? 'Diretor da BU' : 'P&CI/COO', cards: l.length, mediana: mediana(d),
+      min: d.length ? Math.min(...d) : null, max: d.length ? Math.max(...d) : null, paradas: l.filter((c) => c.parada).length };
+  });
+  const parados = emAprov.filter((c) => c.parada).sort((a, b) => b.diasUteis - a.diasUteis).slice(0, 6);
+  return { cards: comIdade, totais, porBu, funil, niveis, parados };
 }
 
 function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Date() } = {}) {
@@ -99,7 +133,33 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  router.get('/painel', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora();
+      // Papéis do usuário no ciclo: o Painel é do grupo P&CI/COO e do administrador (AC-07); demais perfis, 403.
+      const papeis = (pendenciasExemplo(hoje).usuario.papeis || []).map((p) => p.papel);
+      if (!papeis.some((p) => p === 'pci_coo' || p === 'admin')) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const base = painelExemplo(hoje);
+      const limite = Number(base.parametros.diasParado) || 3;
+      // Filtro País › BU validado contra as BUs do ciclo (valor fora da lista → 400)
+      const pais = String(req.query.pais || ''), bu = String(req.query.bu || '');
+      const paises = [...new Set(base.ciclo.bus.map((b) => b.pais))];
+      if (pais && !paises.includes(pais)) return res.status(400).json({ error: 'País inválido.', codigo: 'FILTRO' });
+      if (bu && !base.ciclo.bus.some((b) => b.sigla === bu && (!pais || b.pais === pais))) return res.status(400).json({ error: 'BU inválida.', codigo: 'FILTRO' });
+      const filtrados = base.cards.filter((c) => (!pais || c.bu.pais === pais) && (!bu || c.bu.sigla === bu));
+      const ordem = base.ciclo.bus.filter((b) => (!pais || b.pais === pais) && (!bu || b.sigla === bu));
+      res.json({ ciclo: base.ciclo, parametros: { diasParado: limite }, filtro: { pais, bu }, ...agregarPainel(filtrados, ordem, limite, hoje),
+        atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /painel:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar o painel.', codigo: 'ERRO' });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, agregarPainel, diasUteisEntre, enriquecer, TIPOS, ESTADOS };

@@ -78,3 +78,34 @@ test('portal.js: só index.html e assets/ são públicos; arquivos internos dão
     assert.strictEqual(pag.status, 200);
   } finally { s.close(); }
 });
+
+test('GET /painel: contagens batem com a lista de cards (CA-15) e o funil não cresce', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const r = await pedir(s, '/api/painel', { 'X-Forwarded-Email': 'pessoa@vale.com' });
+    assert.strictEqual(r.status, 200);
+    const { cards, totais, porBu, funil, niveis } = r.corpo;
+    assert.strictEqual(totais.total, cards.length);
+    for (const e of ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado']) {
+      assert.strictEqual(totais[e], cards.filter((c) => c.estado === e).length, e);
+      assert.strictEqual(porBu.reduce((a, b) => a + b[e], 0), totais[e], 'matriz ' + e);
+    }
+    for (const linha of porBu) assert.strictEqual(linha.total, cards.filter((c) => c.bu.sigla === linha.bu.sigla).length, linha.bu.sigla);
+    for (let i = 1; i < funil.length; i++) assert.ok(funil[i].n <= funil[i - 1].n, 'funil ' + funil[i].id);
+    assert.strictEqual(niveis.reduce((a, n) => a + n.cards, 0), totais.em_aprovacao);
+  } finally { s.close(); }
+});
+
+test('GET /painel: filtro País › BU validado e aplicado', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    const br = await pedir(s, '/api/painel?pais=' + encodeURIComponent('Brasil'), h);
+    assert.ok(br.corpo.cards.length > 0 && br.corpo.cards.every((c) => c.bu.pais === 'Brasil'));
+    const sal = await pedir(s, '/api/painel?pais=Brasil&bu=Salobo', h);
+    assert.ok(sal.corpo.cards.every((c) => c.bu.sigla === 'Salobo'));
+    assert.strictEqual((await pedir(s, '/api/painel?pais=Chile', h)).status, 400);
+    assert.strictEqual((await pedir(s, '/api/painel?pais=Brasil&bu=VNL', h)).status, 400);
+    assert.strictEqual((await pedir(s, '/api/painel')).status, 401);
+  } finally { s.close(); }
+});

@@ -9,7 +9,7 @@ técnica v1 e Levantamento de requisitos).
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início (menu) e T01 publicados com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, T01 e T02 publicados com dados de exemplo; demais telas do catálogo em construção
 
 ## Arquivos
 
@@ -31,7 +31,8 @@ técnica v1 e Levantamento de requisitos).
 |---|---|---|
 | `#inicio` (padrão) | Início: menu da aplicação | publicada |
 | `#pendencias` | T01 Minhas pendências | publicada |
-| `#painel`, `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
+| `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
+| `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
 
 ### Início (abertura)
 
@@ -70,6 +71,24 @@ comentários sem resposta e ações atribuídas.
 - **Cores:** status pelo fluxo do Kaizen; "Parada" com `--wait` e "Atrasada" com `--late-bg`
   (âmbar de ciclo, nunca verde/vermelho de desempenho).
 
+### T02 Painel do ciclo
+
+Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis recebem 403 e a tela mostra
+"Painel restrito"). Filtro País › BU no endereço (`#painel?pais=&bu=`), com o Voltar do navegador.
+
+- **Banner** com a agenda do ciclo (proposta, calibração e aprovação, Goal Cards oficiais; etapa atual marcada).
+- **Indicadores:** Goal Cards, submetidos (% do total), aprovados (% do total), em aprovação (com paradas),
+  em revisão e negados.
+- **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de
+  status + números na linha), total e paradas; a BU leva à T03 filtrada.
+- **Funil do ciclo:** Goal Cards → submetidos → aprovados no nível 1 → aprovados, com a perda entre etapas.
+- **Tempo em aprovação por nível:** por nível, mediana (ponto), mínimo–máximo (traço) e o limite de dias
+  úteis da RN-14 (linha tracejada), com cards e paradas.
+- **Cards parados há mais tempo:** os 6 com mais dias úteis acima do limite, com link para a análise (T04).
+
+Toda conta sai do servidor (`agregarPainel`) a partir da mesma lista de cards, então as contagens batem com a
+lista de metas de cada BU (CA-15, coberto por teste).
+
 ## Responsividade
 
 Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo.
@@ -87,6 +106,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | Rota | O que faz |
 |---|---|
 | `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
+| `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 

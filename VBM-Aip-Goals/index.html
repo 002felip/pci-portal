@@ -770,6 +770,101 @@ body.is-inicio .page { max-width: none; padding: 0; }
   body.is-inicio { --ab-veu: linear-gradient(180deg, var(--ab-veu-mob-a, rgba(255,255,255,.94)) 0%, var(--ab-veu-mob-b, rgba(255,255,255,.80)) 100%); }
   :root[data-theme="dark"] body.is-inicio { --ab-veu-mob-a: rgba(4,21,35,.92); --ab-veu-mob-b: rgba(4,21,35,.80); }
 }
+/* ── T02 Painel do ciclo ──
+   Indicadores, matriz BU × situação (barra de composição = partes de um todo), funil e tempo por nível
+   (ponto = mediana, traço = mínimo–máximo, linha tracejada = limite de dias úteis da RN-14). */
+.p2-corpo { display: flex; flex-direction: column; gap: 1rem; }
+.p2-corpo[hidden] { display: none; }
+.p2-agenda { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; }
+.p2-agenda div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.25rem 0.625rem; }
+.p2-agenda dt { font: 500 0.78rem var(--font-ui); color: var(--hero-soft); }
+.p2-agenda dd { margin: 0; font: 600 0.82rem var(--font-ui); color: var(--hero-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p2-agenda .is-atual dt, .p2-agenda .is-atual dd { color: var(--hero-eyebrow); }
+
+.p2-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; margin: 0; }
+.p2-kpi { padding: 0.875rem 1rem; border-radius: 1rem; border: 1px solid var(--card-line); background: var(--card-bg); box-shadow: var(--card-shadow); }
+.p2-kpi dt { display: flex; align-items: center; gap: 0.5rem; font: 500 0.74rem var(--font-ui); color: var(--text-soft); }
+.p2-kpi dt::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent-strong); flex-shrink: 0; }
+.p2-kpi-submetidos dt::before { background: var(--serie-p); }
+.p2-kpi-aprovado dt::before { background: var(--status-approved); }
+.p2-kpi-em_aprovacao dt::before { background: var(--status-pending); }
+.p2-kpi-em_revisao dt::before { background: var(--status-review); }
+.p2-kpi-negado dt::before { background: var(--status-rejected); }
+.p2-kpi-num { margin: 0.25rem 0 0; font: 300 1.9rem/1.1 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.p2-kpi-sub { margin: 0.125rem 0 0; font: 400 0.7rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+
+.p2-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(min(22rem, 100%), 1fr); gap: 1rem; align-items: start; }
+.p2-coluna { display: flex; flex-direction: column; gap: 1rem; }
+.p2-legenda { margin-left: auto; }
+.p2-legenda .swatch { width: 0.75rem; height: 0.5rem; }
+.p2-tabela-wrap { overflow-x: auto; }
+.p2-tabela { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.p2-tabela th { padding: 0.5rem 0.625rem; text-align: left; font: 600 0.62rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); white-space: nowrap; border-bottom: 1px solid var(--line); }
+.p2-tabela td { padding: 0.625rem; border-bottom: 1px solid var(--line); color: var(--text); }
+.p2-tabela .num { text-align: right; }
+.p2-tabela td.num.zero { color: var(--text-faint); }
+.p2-tabela tbody tr:hover td { background: var(--card-hover); }
+.p2-pais td { padding-top: 0.875rem; font: 600 0.66rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-strong); border-bottom: 0; }
+.p2-bu a { font-weight: 600; color: var(--ink-strong); text-decoration: none; }
+.p2-bu a:hover { color: var(--accent-strong); text-decoration: underline; }
+.p2-col-barra { width: 32%; }
+.p2-barra { display: flex; height: 0.625rem; border-radius: 999px; overflow: hidden; background: var(--line); }
+.p2-barra span { display: block; height: 100%; }
+.p2-barra span + span { box-shadow: -1px 0 0 var(--card-bg); }
+.p2-seg-rascunho { background: var(--status-draft); }
+.p2-seg-em_aprovacao { background: var(--status-pending); }
+.p2-seg-em_revisao { background: var(--status-review); }
+.p2-seg-aprovado { background: var(--status-approved); }
+.p2-seg-negado { background: var(--status-rejected); }
+.p2-tabela tfoot td { font-weight: 600; color: var(--ink-strong); border-bottom: 0; border-top: 1.5px solid var(--base-line); }
+.p2-parada-n { display: inline-flex; min-width: 1.5rem; justify-content: center; padding: 0 0.4rem; border-radius: 999px; background: var(--wait-bg); color: var(--wait); font-weight: 700; }
+
+/* Funil: barra pelo total do ciclo, perda entre as etapas em texto */
+.p2-funil { display: flex; flex-direction: column; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.p2-etapa { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) 5.5rem; align-items: center; gap: 0.75rem; }
+.p2-etapa-rot { font: 500 0.78rem var(--font-ui); color: var(--text); }
+.p2-etapa-trilho { height: 1.5rem; border-radius: 0.375rem; background: var(--line); overflow: hidden; }
+.p2-etapa-barra { height: 100%; border-radius: 0.375rem; background: var(--serie-a); }
+.p2-etapa:last-child .p2-etapa-barra { background: var(--status-approved); }
+.p2-etapa-val { text-align: right; font: 600 0.9rem var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.p2-etapa-val small { display: block; font: 400 0.66rem var(--font-ui); color: var(--text-soft); }
+.p2-perda { margin: 0 0 0 calc(9.5rem + 0.75rem); font: 400 0.68rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+
+/* Tempo por nível: escala em dias úteis, mediana, faixa mínimo–máximo e limite */
+.p2-tempo { display: flex; flex-direction: column; gap: 1rem; }
+.p2-nivel-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; margin-bottom: 0.375rem; }
+.p2-nivel-nome { font: 600 0.82rem var(--font-ui); color: var(--ink-strong); }
+.p2-nivel-nome small { font-weight: 400; color: var(--text-soft); }
+.p2-nivel-resumo { font: 400 0.72rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p2-nivel-resumo b { font-weight: 600; color: var(--text); }
+.p2-escala { position: relative; height: 1.75rem; border-radius: 0.375rem; background: var(--line); }
+.p2-faixa { position: absolute; top: 50%; height: 0.375rem; transform: translateY(-50%); border-radius: 999px; background: var(--serie-p); }
+.p2-mediana { position: absolute; top: 50%; width: 0.875rem; height: 0.875rem; transform: translate(-50%, -50%); border-radius: 50%; background: var(--serie-a); box-shadow: 0 0 0 2px var(--card-bg); }
+.p2-limite { position: absolute; top: -0.25rem; bottom: -0.25rem; border-left: 1.5px dashed var(--wait); }
+.p2-eixo { display: flex; justify-content: space-between; margin-top: 0.25rem; font: 400 0.64rem var(--font-ui); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.p2-tempo-leg { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; font-size: 0.7rem; color: var(--text-soft); }
+.p2-tempo-leg li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.p2-leg-ponto { width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--serie-a); }
+.p2-leg-faixa { width: 1rem; height: 0.3rem; border-radius: 999px; background: var(--serie-p); }
+.p2-leg-limite { width: 0; height: 0.75rem; border-left: 1.5px dashed var(--wait); }
+.p2-sem { font-size: 0.74rem; color: var(--text-soft); }
+
+/* Cards parados há mais tempo */
+.p2-parados { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr)); gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.p2-parado { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; padding: 0.75rem 0.875rem; border-radius: 0.875rem; border: 1px solid var(--card-line); background: var(--card-bg); }
+.p2-parado-tit { margin: 0; font: 600 0.84rem var(--font-ui); color: var(--ink-strong); }
+.p2-parado-tit .num { color: var(--accent-strong); }
+.p2-parado-det { margin: 0.125rem 0 0; font-size: 0.72rem; color: var(--text-soft); }
+.p2-parado-dir { display: flex; flex-direction: column; align-items: flex-end; gap: 0.375rem; }
+.p2-vazio { padding: 0.5rem 0; }
+
+@media (max-width: 1280px) {
+  .p2-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .p2-grade { grid-template-columns: minmax(0, 1fr); }
+  /* Matriz na largura toda; funil e tempo lado a lado abaixo dela */
+  .p2-coluna { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
 /* ════════════════════════════════════════════════════════════════════
    [RESPONSIVO] Camada adaptativa (skill-responsividade)
    Aplicação de notebook e desktop (1024px a 4K; celular fora do escopo). Fluido primeiro; breakpoint
@@ -1058,7 +1153,7 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
 
       <div class="hero-acoes">
         <button type="button" class="hero-acao" id="btnAtualizar" aria-label="Atualizar lista" title="Atualizar lista" data-i18n-aria="t01.atualizar" data-i18n-title="t01.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
-        <button type="button" class="hero-acao" id="btnTelaCheia" aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+        <button type="button" class="hero-acao" id="btnTelaCheia" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
       </div>
     </header>
 
@@ -1127,6 +1222,120 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
 
       <p class="updated" id="atualizado"></p>
     </section>
+  </section>
+
+  <!-- ═══ T02 · Painel do ciclo (P&CI/COO e administrador) ═══ -->
+  <section class="vista" id="vistaPainel" hidden aria-labelledby="titPainel">
+
+    <header class="hero">
+      <div class="hero-texto">
+        <p class="hero-eyebrow"><span>AIP Goals</span><span id="p2Ciclo"></span></p>
+        <h2 class="hero-titulo" id="titPainel" data-i18n="p2.titulo">Painel do ciclo</h2>
+        <p class="hero-sub" data-i18n="p2.sub">Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.</p>
+        <div class="hero-pills">
+          <span class="hero-pill" id="p2Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+          <span class="hero-pill is-wait" id="p2Desatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span>
+        </div>
+      </div>
+      <div class="resumo">
+        <p class="resumo-tit" data-i18n="p2.agenda">Agenda do ciclo</p>
+        <dl class="p2-agenda" id="p2Agenda"></dl>
+      </div>
+      <div class="hero-acoes">
+        <button type="button" class="hero-acao" id="p2Atualizar" aria-label="Atualizar painel" title="Atualizar painel" data-i18n-aria="p2.atualizar" data-i18n-title="p2.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="hero-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <div class="filters">
+      <div class="filter">
+        <span class="filter-label" id="p2LblUnid">Business Unit:</span>
+        <div class="unit" id="p2Unit">
+          <button type="button" class="unit-trigger" id="p2UnitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="p2UnitPop" aria-labelledby="p2LblUnid p2UnitTrigger">
+            <span class="unit-pais" id="p2UnitPais"></span><span class="unit-sep" id="p2UnitSep">›</span><span class="unit-site" id="p2UnitSite"></span>
+            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
+          <div class="unit-pop" id="p2UnitPop" hidden>
+            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="p2Paises"></div></div>
+            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="p2Bus"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p2-corpo" id="p2Corpo">
+      <dl class="p2-kpis" aria-label="Indicadores do ciclo" data-i18n-aria="p2.kpisAria">
+          <div class="p2-kpi p2-kpi-total"><dt><span data-i18n="p2.k.total">Goal Cards</span></dt><dd class="p2-kpi-num" data-p2="total">—</dd><dd class="p2-kpi-sub" data-p2sub="total"></dd></div>
+          <div class="p2-kpi p2-kpi-submetidos"><dt><span data-i18n="p2.k.submetidos">Submetidos</span></dt><dd class="p2-kpi-num" data-p2="submetidos">—</dd><dd class="p2-kpi-sub" data-p2sub="submetidos"></dd></div>
+          <div class="p2-kpi p2-kpi-aprovado"><dt><span data-i18n="p2.k.aprovado">Aprovados</span></dt><dd class="p2-kpi-num" data-p2="aprovado">—</dd><dd class="p2-kpi-sub" data-p2sub="aprovado"></dd></div>
+          <div class="p2-kpi p2-kpi-em_aprovacao"><dt><span data-i18n="p2.k.em_aprovacao">Em aprovação</span></dt><dd class="p2-kpi-num" data-p2="em_aprovacao">—</dd><dd class="p2-kpi-sub" data-p2sub="em_aprovacao"></dd></div>
+          <div class="p2-kpi p2-kpi-em_revisao"><dt><span data-i18n="p2.k.em_revisao">Em revisão</span></dt><dd class="p2-kpi-num" data-p2="em_revisao">—</dd><dd class="p2-kpi-sub" data-p2sub="em_revisao"></dd></div>
+          <div class="p2-kpi p2-kpi-negado"><dt><span data-i18n="p2.k.negado">Negados</span></dt><dd class="p2-kpi-num" data-p2="negado">—</dd><dd class="p2-kpi-sub" data-p2sub="negado"></dd></div>
+      </dl>
+
+      <div class="p2-grade">
+        <section class="secao p2-matriz" aria-labelledby="p2TitMatriz">
+          <div class="secao-head">
+            <h3 class="secao-tit" id="p2TitMatriz" data-i18n="p2.matriz">Situação por Business Unit</h3>
+            <ul class="legend p2-legenda" id="p2Legenda"></ul>
+          </div>
+          <div class="p2-tabela-wrap">
+            <table class="p2-tabela">
+              <caption class="sr-only" data-i18n="p2.matrizCap">Goal Cards por Business Unit e situação</caption>
+              <thead><tr>
+                <th scope="col">BU</th>
+                <th scope="col" class="p2-col-barra"><span data-i18n="p2.composicao">Composição</span></th>
+                <th scope="col" class="num" data-i18n="est.rascunho">Rascunho</th>
+                <th scope="col" class="num" data-i18n="est.em_aprovacao">Em aprovação</th>
+                <th scope="col" class="num" data-i18n="est.em_revisao">Em revisão</th>
+                <th scope="col" class="num" data-i18n="est.aprovado">Aprovado</th>
+                <th scope="col" class="num" data-i18n="est.negado">Negado</th>
+                <th scope="col" class="num">Total</th>
+                <th scope="col" class="num" data-i18n="chip.paradaPl">Paradas</th>
+              </tr></thead>
+              <tbody id="p2Linhas"></tbody>
+              <tfoot id="p2Rodape"></tfoot>
+            </table>
+          </div>
+        </section>
+
+        <div class="p2-coluna">
+          <section class="secao" aria-labelledby="p2TitFunil">
+            <div class="secao-head"><h3 class="secao-tit" id="p2TitFunil" data-i18n="p2.funil">Funil do ciclo</h3></div>
+            <ol class="p2-funil" id="p2Funil" role="img"></ol>
+          </section>
+          <section class="secao" aria-labelledby="p2TitTempo">
+            <div class="secao-head">
+              <h3 class="secao-tit" id="p2TitTempo" data-i18n="p2.tempo">Tempo em aprovação por nível</h3>
+              <span class="secao-total" id="p2TempoNota"></span>
+            </div>
+            <div class="p2-tempo" id="p2Tempo" role="img"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="secao" aria-labelledby="p2TitParados">
+        <div class="secao-head">
+          <h3 class="secao-tit" id="p2TitParados" data-i18n="p2.parados">Cards parados há mais tempo</h3>
+          <span class="secao-cont" id="p2ParadosCont" hidden></span>
+        </div>
+        <ul class="p2-parados" id="p2Parados"></ul>
+        <p class="estado-txt p2-vazio" id="p2ParadosVazio" hidden data-i18n="p2.semParados">Nenhum card parado acima do limite.</p>
+        <p class="updated" id="p2Atualizado"></p>
+      </section>
+    </div>
+
+    <div class="estado estado-erro" id="p2Erro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="p2.erroTit">Não foi possível carregar o painel</p>
+      <p class="estado-txt" id="p2ErroTxt"></p>
+      <button type="button" class="btn" id="p2Tentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <div class="estado" id="p2SemAcesso" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+      <p class="estado-tit" data-i18n="p2.semAcessoTit">Painel restrito ao grupo P&amp;CI/COO</p>
+      <p class="estado-txt" data-i18n="p2.semAcessoTxt">O Painel do ciclo é visível para o grupo de aprovação final e para o administrador do ciclo.</p>
+    </div>
   </section>
 
   <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
@@ -1310,6 +1519,21 @@ window.VBMSetup = (function () {
 
   S.registrar({
     'pt-BR': {
+      'p2.titulo': 'Painel do ciclo', 'p2.sub': 'Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.',
+      'p2.agenda': 'Agenda do ciclo', 'p2.atualizar': 'Atualizar painel', 'p2.kpisAria': 'Indicadores do ciclo',
+      'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submetidos', 'p2.k.aprovado': 'Aprovados', 'p2.k.em_aprovacao': 'Em aprovação', 'p2.k.em_revisao': 'Em revisão', 'p2.k.negado': 'Negados',
+      'p2.s.total': 'no ciclo, {b} BUs', 'p2.s.submetidos': '{p} do total', 'p2.s.aprovado': '{p} do total', 'p2.s.em_aprovacao': '{n} paradas', 'p2.s.em_revisao': 'devolvidos às BUs', 'p2.s.negado': 'fora do ciclo',
+      'p2.matriz': 'Situação por Business Unit', 'p2.matrizCap': 'Goal Cards por Business Unit e situação', 'p2.composicao': 'Composição', 'chip.paradaPl': 'Paradas', 'p2.totalGeral': 'Total',
+      'p2.funil': 'Funil do ciclo', 'p2.f.cards': 'Goal Cards', 'p2.f.submetidos': 'Submetidos', 'p2.f.nivel1': 'Aprovados no nível 1', 'p2.f.aprovados': 'Aprovados',
+      'p2.doTotal': '{p} do total', 'p2.perda': '−{n} ({p}) não seguiram', 'p2.funilAria': 'Funil: {lista}.',
+      'p2.tempo': 'Tempo em aprovação por nível', 'p2.tempoNota': 'em dias úteis no nível atual', 'p2.cards': '{n} cards', 'p2.card1': '1 card',
+      'p2.nivelRes': 'mediana <b>{m}</b> · máx. <b>{x}</b> · <b>{p}</b> paradas', 'p2.semCards': 'Nenhum card neste nível.',
+      'p2.leg.mediana': 'Mediana', 'p2.leg.faixa': 'Mínimo–máximo', 'p2.leg.limite': 'Limite de {n} dias úteis',
+      'p2.tempoAria': 'Tempo em aprovação: {lista}. Limite de {n} dias úteis.', 'p2.dias': '{n} dias úteis', 'p2.dia': '1 dia útil',
+      'p2.parados': 'Cards parados há mais tempo', 'p2.semParados': 'Nenhum card parado acima do limite.', 'p2.abrir': 'Abrir',
+      'p2.erroTit': 'Não foi possível carregar o painel', 'p2.semAcessoTit': 'Painel restrito ao grupo P&CI/COO',
+      'p2.semAcessoTxt': 'O Painel do ciclo é visível para o grupo de aprovação final e para o administrador do ciclo.',
+      'p2.ag.proposta': 'Proposta da BU', 'p2.ag.calibracao': 'Calibração e aprovação', 'p2.ag.oficial': 'Goal Cards oficiais', 'p2.ag.atual': 'atual',
       'nav.menu': 'Telas do AIP Goals', 'nav.abrir': 'Abrir menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Ciclo', 'nav.inicio': 'Início', 'nav.pendencias': 'Minhas pendências',
       'ini.sub': 'Definição, aprovação e registro das metas de AIP das Business Units.',
       'ini.cta': 'Ver minhas pendências', 'ini.numerosAria': 'Sua situação no ciclo', 'ini.nPend': 'Pendências com você', 'ini.nPrazo': 'Próximo prazo', 'ini.semPrazo': 'Sem prazo', 'ini.abrir': 'Abrir',
@@ -1357,6 +1581,21 @@ window.VBMSetup = (function () {
       'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
     },
     en: {
+      'p2.titulo': 'Cycle dashboard', 'p2.sub': 'Goal Card status by Business Unit and time at each approval level.',
+      'p2.agenda': 'Cycle agenda', 'p2.atualizar': 'Refresh dashboard', 'p2.kpisAria': 'Cycle indicators',
+      'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submitted', 'p2.k.aprovado': 'Approved', 'p2.k.em_aprovacao': 'Pending approval', 'p2.k.em_revisao': 'In Review', 'p2.k.negado': 'Denied',
+      'p2.s.total': 'in the cycle, {b} BUs', 'p2.s.submetidos': '{p} of total', 'p2.s.aprovado': '{p} of total', 'p2.s.em_aprovacao': '{n} stalled', 'p2.s.em_revisao': 'returned to BUs', 'p2.s.negado': 'out of the cycle',
+      'p2.matriz': 'Status by Business Unit', 'p2.matrizCap': 'Goal Cards by Business Unit and status', 'p2.composicao': 'Breakdown', 'chip.paradaPl': 'Stalled', 'p2.totalGeral': 'Total',
+      'p2.funil': 'Cycle funnel', 'p2.f.cards': 'Goal Cards', 'p2.f.submetidos': 'Submitted', 'p2.f.nivel1': 'Approved at level 1', 'p2.f.aprovados': 'Approved',
+      'p2.doTotal': '{p} of total', 'p2.perda': '−{n} ({p}) did not move on', 'p2.funilAria': 'Funnel: {lista}.',
+      'p2.tempo': 'Time in approval by level', 'p2.tempoNota': 'business days at the current level', 'p2.cards': '{n} cards', 'p2.card1': '1 card',
+      'p2.nivelRes': 'median <b>{m}</b> · max <b>{x}</b> · <b>{p}</b> stalled', 'p2.semCards': 'No cards at this level.',
+      'p2.leg.mediana': 'Median', 'p2.leg.faixa': 'Min–max', 'p2.leg.limite': '{n}-business-day limit',
+      'p2.tempoAria': 'Time in approval: {lista}. Limit of {n} business days.', 'p2.dias': '{n} business days', 'p2.dia': '1 business day',
+      'p2.parados': 'Longest stalled cards', 'p2.semParados': 'No card stalled above the limit.', 'p2.abrir': 'Open',
+      'p2.erroTit': 'Could not load the dashboard', 'p2.semAcessoTit': 'Dashboard restricted to the P&CI/COO group',
+      'p2.semAcessoTxt': 'The cycle dashboard is visible to the final approval group and the cycle administrator.',
+      'p2.ag.proposta': 'BU proposal', 'p2.ag.calibracao': 'Calibration and approval', 'p2.ag.oficial': 'Official Goal Cards', 'p2.ag.atual': 'current',
       'nav.menu': 'AIP Goals screens', 'nav.abrir': 'Open menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Cycle', 'nav.inicio': 'Home', 'nav.pendencias': 'My pending items',
       'ini.sub': 'Setting, approval and record of the AIP goals of the Business Units.',
       'ini.cta': 'View my pending items', 'ini.numerosAria': 'Your status in the cycle', 'ini.nPend': 'Pending with you', 'ini.nPrazo': 'Next due date', 'ini.semPrazo': 'No due date', 'ini.abrir': 'Open',
@@ -1700,7 +1939,8 @@ window.VBMSetup = (function () {
     gravarFiltro(); renderUnidade(); renderLista();
     abrirUnidade(false); $('unitTrigger').focus();
   });
-  document.addEventListener('click', function (e) { if (!$('unitPop').hidden && !$('unit').contains(e.target)) abrirUnidade(false); });
+  // Clique em botão redesenhado (já fora do documento) não conta como "clique fora"
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('unitPop').hidden && !$('unit').contains(e.target)) abrirUnidade(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('unitPop').hidden) { abrirUnidade(false); $('unitTrigger').focus(); } });
 
   // ── Demais filtros ──
@@ -1718,9 +1958,200 @@ window.VBMSetup = (function () {
   $('btnLimpar').addEventListener('click', function () { filtro = { tipo: '', pais: '', bu: '', ord: filtro.ord, so: false }; gravarFiltro(); renderUnidade(); renderLista(); });
   $('btnTentar').addEventListener('click', function () { carregar(true); });
   $('btnAtualizar').addEventListener('click', function () { carregar(true); });
-  $('btnTelaCheia').addEventListener('click', function () {
-    if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  document.querySelectorAll('[data-tela-cheia]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    });
   });
+
+  // ══ T02 · Painel do ciclo ══
+  // Dados: GET api/painel?pais=&bu= — totais, matriz, funil e tempos calculados no servidor a partir dos cards (CA-15).
+  // Filtro País › BU no hash (#painel?pais=&bu=): o Voltar do navegador volta com o mesmo filtro.
+  var p2 = { dados: null, cache: {}, filtro: { pais: '', bu: '' }, carregando: null };
+  var EST_ORDEM = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado'];
+  function pct(v) { return v == null ? '—' : S.fmt(v * 100, 0) + '%'; }
+  function p2LerFiltro() {
+    var q = new URLSearchParams((location.hash.split('?')[1]) || '');
+    p2.filtro = { pais: q.get('pais') || '', bu: q.get('bu') || '' };
+  }
+  function p2GravarFiltro() {
+    var q = new URLSearchParams();
+    if (p2.filtro.pais) q.set('pais', p2.filtro.pais);
+    if (p2.filtro.bu) q.set('bu', p2.filtro.bu);
+    var alvo = '#painel' + (q.toString() ? '?' + q.toString() : '');
+    if (location.hash !== alvo) history.pushState(null, '', location.pathname + location.search + alvo);
+  }
+  function p2Estado(qual) {
+    $('p2Corpo').hidden = qual !== 'ok';
+    $('p2Erro').hidden = qual !== 'erro';
+    $('p2SemAcesso').hidden = qual !== 'acesso';
+  }
+  function p2Carregar(fresco) {
+    var chave = p2.filtro.pais + '|' + p2.filtro.bu;
+    if (!fresco && p2.cache[chave]) { p2.dados = p2.cache[chave]; return Promise.resolve(p2Render()); }
+    var q = new URLSearchParams();
+    if (p2.filtro.pais) q.set('pais', p2.filtro.pais);
+    if (p2.filtro.bu) q.set('bu', p2.filtro.bu);
+    if (fresco) q.set('fresco', '1');
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    $('p2Corpo').setAttribute('aria-busy', 'true');
+    return fetch('api/painel' + (q.toString() ? '?' + q.toString() : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 400) { p2.filtro = { pais: '', bu: '' }; p2GravarFiltro(); var f = new Error('filtro'); f.tipo = 'filtro'; throw f; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) { p2.cache[chave] = j; p2.dados = j; if (fresco) toast(S.t('t01.atualizada')); p2Render(); })
+      .catch(function (err) {
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'filtro') return p2Carregar(false);
+        if (tipo === 'acesso') return p2Estado('acesso');
+        $('p2ErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        p2Estado('erro');
+      })
+      .then(function () { clearTimeout(timer); $('p2Corpo').removeAttribute('aria-busy'); });
+  }
+
+  function p2Render() {
+    var d = p2.dados; if (!d) return;
+    p2Estado('ok');
+    var c = d.ciclo || {}, t = d.totais || {}, lim = (d.parametros || {}).diasParado || 3;
+    $('p2Ciclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
+    $('p2Exemplo').hidden = !d.exemplo;
+    $('p2Desatualizado').hidden = !d.desatualizado;
+    $('p2Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
+
+    // Agenda do ciclo (vidro do banner)
+    var porId = {}; (c.etapas || []).forEach(function (e) { porId[e.id] = e; });
+    $('p2Agenda').innerHTML = ['proposta', 'calibracao', 'oficial'].map(function (id) {
+      var e = porId[id]; if (!e) return '';
+      var atual = c.etapaAtual === id;
+      return '<div' + (atual ? ' class="is-atual"' : '') + '><dt>' + esc(S.t('p2.ag.' + id)) + (atual ? ' · ' + esc(S.t('p2.ag.atual')) : '') + '</dt><dd>' + esc(dataCurta(e.fim)) + '</dd></div>';
+    }).join('');
+
+    // Indicadores
+    var nBus = (d.porBu || []).length;
+    var val = { total: t.total, submetidos: t.submetidos, aprovado: t.aprovado, em_aprovacao: t.em_aprovacao, em_revisao: t.em_revisao, negado: t.negado };
+    Object.keys(val).forEach(function (k) {
+      document.querySelector('[data-p2="' + k + '"]').textContent = val[k] == null ? '—' : S.fmt(val[k], 0);
+    });
+    var sub = {
+      total: S.t('p2.s.total', { b: S.fmt(nBus, 0) }),
+      submetidos: S.t('p2.s.submetidos', { p: pct(t.total ? t.submetidos / t.total : null) }),
+      aprovado: S.t('p2.s.aprovado', { p: pct(t.aprovadosPct) }),
+      em_aprovacao: S.t('p2.s.em_aprovacao', { n: S.fmt(t.paradas || 0, 0) }),
+      em_revisao: S.t('p2.s.em_revisao'), negado: S.t('p2.s.negado')
+    };
+    Object.keys(sub).forEach(function (k) { document.querySelector('[data-p2sub="' + k + '"]').textContent = sub[k]; });
+
+    // Legenda da composição (cor + rótulo)
+    $('p2Legenda').innerHTML = EST_ORDEM.map(function (e) { return '<li><span class="swatch p2-seg-' + e + '"></span>' + esc(S.t('est.' + e)) + '</li>'; }).join('');
+
+    // Matriz BU × situação, agrupada por país
+    var linhas = [], paisAtual = null;
+    (d.porBu || []).forEach(function (l) {
+      if (l.bu.pais !== paisAtual) { paisAtual = l.bu.pais; linhas.push('<tr class="p2-pais"><td colspan="9">' + esc(paisAtual) + '</td></tr>'); }
+      var barra = EST_ORDEM.filter(function (e) { return l[e]; }).map(function (e) {
+        return '<span class="p2-seg-' + e + '" style="width:' + (l[e] / l.total * 100).toFixed(2) + '%" title="' + esc(S.t('est.' + e) + ': ' + l[e]) + '"></span>';
+      }).join('');
+      var rotulo = l.bu.sigla + ': ' + EST_ORDEM.map(function (e) { return S.t('est.' + e) + ' ' + l[e]; }).join(', ');
+      linhas.push('<tr><th scope="row" class="p2-bu"><a href="#metas?bu=' + encodeURIComponent(l.bu.sigla) + '">' + esc(l.bu.sigla) + '</a></th>' +
+        '<td><div class="p2-barra" role="img" aria-label="' + esc(rotulo) + '">' + barra + '</div></td>' +
+        EST_ORDEM.map(function (e) { return '<td class="num' + (l[e] ? '' : ' zero') + '">' + S.fmt(l[e], 0) + '</td>'; }).join('') +
+        '<td class="num"><b>' + S.fmt(l.total, 0) + '</b></td>' +
+        '<td class="num">' + (l.paradas ? '<span class="p2-parada-n">' + S.fmt(l.paradas, 0) + '</span>' : '<span class="zero">0</span>') + '</td></tr>');
+    });
+    $('p2Linhas').innerHTML = linhas.join('');
+    $('p2Rodape').innerHTML = '<tr><td>' + esc(S.t('p2.totalGeral')) + '</td><td></td>' +
+      EST_ORDEM.map(function (e) { return '<td class="num">' + S.fmt(t[e] || 0, 0) + '</td>'; }).join('') +
+      '<td class="num">' + S.fmt(t.total || 0, 0) + '</td><td class="num">' + S.fmt(t.paradas || 0, 0) + '</td></tr>';
+
+    // Funil
+    var f = d.funil || [], base = (f[0] && f[0].n) || 0;
+    $('p2Funil').innerHTML = f.map(function (e, i) {
+      var perda = i > 0 ? f[i - 1].n - e.n : 0;
+      return (i > 0 ? '<li class="p2-perda" aria-hidden="true">' + esc(S.t('p2.perda', { n: S.fmt(perda, 0), p: pct(f[i - 1].n ? perda / f[i - 1].n : null) })) + '</li>' : '') +
+        '<li class="p2-etapa"><span class="p2-etapa-rot">' + esc(S.t('p2.f.' + e.id)) + '</span>' +
+        '<span class="p2-etapa-trilho"><span class="p2-etapa-barra" style="display:block;width:' + (base ? e.n / base * 100 : 0).toFixed(2) + '%"></span></span>' +
+        '<span class="p2-etapa-val">' + S.fmt(e.n, 0) + '<small>' + esc(S.t('p2.doTotal', { p: pct(base ? e.n / base : null) })) + '</small></span></li>';
+    }).join('');
+    $('p2Funil').setAttribute('aria-label', S.t('p2.funilAria', { lista: f.map(function (e) { return S.t('p2.f.' + e.id) + ' ' + e.n; }).join(', ') }));
+
+    // Tempo por nível: escala comum aos dois níveis
+    var niveis = d.niveis || [];
+    var maxEscala = Math.max(lim + 2, Math.max.apply(null, niveis.map(function (n) { return n.max || 0; })) + 1);
+    var pos = function (v) { return (v / maxEscala * 100).toFixed(2) + '%'; };
+    $('p2TempoNota').textContent = S.t('p2.tempoNota');
+    $('p2Tempo').innerHTML = niveis.map(function (n) {
+      var cab = '<div class="p2-nivel-cab"><span class="p2-nivel-nome">' + esc(S.t('nivel', { a: S.fmt(n.nivel, 0), t: S.fmt(2, 0), n: n.nome })) +
+        ' <small>· ' + esc(S.t(n.cards === 1 ? 'p2.card1' : 'p2.cards', { n: S.fmt(n.cards, 0) })) + '</small></span>' +
+        (n.cards ? '<span class="p2-nivel-resumo">' + S.t('p2.nivelRes', { m: esc(S.fmt(n.mediana, n.mediana % 1 ? 1 : 0)), x: esc(S.fmt(n.max, 0)), p: esc(S.fmt(n.paradas, 0)) }) + '</span>' : '') + '</div>';
+      if (!n.cards) return '<div>' + cab + '<p class="p2-sem">' + esc(S.t('p2.semCards')) + '</p></div>';
+      return '<div>' + cab + '<div class="p2-escala">' +
+        '<span class="p2-faixa" style="left:' + pos(n.min) + ';width:calc(' + pos(n.max - n.min) + ' + 2px)"></span>' +
+        '<span class="p2-limite" style="left:' + pos(lim) + '"></span>' +
+        '<span class="p2-mediana" style="left:' + pos(n.mediana) + '"></span></div>' +
+        '<div class="p2-eixo"><span>0</span><span>' + esc(S.fmt(Math.round(maxEscala / 2), 0)) + '</span><span>' + esc(S.t('p2.dias', { n: S.fmt(maxEscala, 0) })) + '</span></div></div>';
+    }).join('') +
+      '<ul class="p2-tempo-leg"><li><span class="p2-leg-ponto"></span>' + esc(S.t('p2.leg.mediana')) + '</li><li><span class="p2-leg-faixa"></span>' + esc(S.t('p2.leg.faixa')) +
+      '</li><li><span class="p2-leg-limite"></span>' + esc(S.t('p2.leg.limite', { n: S.fmt(lim, 0) })) + '</li></ul>';
+    $('p2Tempo').setAttribute('aria-label', S.t('p2.tempoAria', { n: lim, lista: niveis.map(function (n) {
+      return S.t('nivel', { a: n.nivel, t: 2, n: n.nome }) + ': ' + n.cards + (n.cards ? ', mediana ' + n.mediana + ', máx. ' + n.max + ', ' + n.paradas + ' paradas' : '');
+    }).join('; ') }));
+
+    // Cards parados há mais tempo
+    var par = d.parados || [];
+    $('p2ParadosCont').textContent = S.fmt(t.paradas || 0, 0); $('p2ParadosCont').hidden = !t.paradas;
+    $('p2ParadosVazio').hidden = par.length > 0;
+    $('p2Parados').innerHTML = par.map(function (cd) {
+      var link = '#goal-card?card=' + encodeURIComponent(cd.card) + '&modo=analise';
+      return '<li class="p2-parado"><div><p class="p2-parado-tit"><span class="num">#' + esc(cd.meta.numero) + '</span> ' + esc(cd.meta.titulo) + '</p>' +
+        '<p class="p2-parado-det"><b>' + esc(cd.bu.sigla) + '</b> · ' + esc(cd.card) + ' · ' + esc(S.t('nivel', { a: S.fmt(cd.nivel.atual, 0), t: S.fmt(cd.nivel.total, 0), n: cd.nivel.nome })) + '</p></div>' +
+        '<div class="p2-parado-dir"><span class="chip-parada">' + ico('i-clock') + esc(S.t(cd.diasUteis === 1 ? 'p2.dia' : 'p2.dias', { n: S.fmt(cd.diasUteis, 0) })) + '</span>' +
+        '<a class="btn btn-sec" href="' + esc(link) + '" aria-label="' + esc(S.t('p2.abrir') + ': ' + cd.bu.sigla + ' #' + cd.meta.numero + ' ' + cd.meta.titulo) + '">' + esc(S.t('p2.abrir')) + ico('i-arrow') + '</a></div></li>';
+    }).join('');
+    p2RenderUnidade();
+  }
+
+  // Seletor País › BU do painel (mesmo componente da T01; opções = BUs do ciclo)
+  function p2RenderUnidade() {
+    var c = (p2.dados && p2.dados.ciclo) || {}, porPais = {};
+    (c.bus || []).forEach(function (b) { (porPais[b.pais] = porPais[b.pais] || []).push(b.sigla); });
+    var f = p2.filtro;
+    $('p2UnitPais').textContent = f.pais || S.t('f.todos');
+    $('p2UnitSep').hidden = !f.pais;
+    $('p2UnitSite').textContent = f.pais ? (f.bu || S.t('f.todas')) : '';
+    $('p2Paises').innerHTML = [''].concat(Object.keys(porPais)).map(function (pz) {
+      return '<button type="button" data-pais="' + esc(pz) + '" aria-pressed="' + (pz === f.pais) + '">' + esc(pz || S.t('f.todos')) + '</button>';
+    }).join('');
+    $('p2Bus').innerHTML = f.pais ? [''].concat(porPais[f.pais] || []).map(function (b) {
+      return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === f.bu) + '">' + esc(b || S.t('f.todas')) + '</button>';
+    }).join('') : '';
+  }
+  function p2AbrirUnidade(sim) {
+    $('p2UnitPop').hidden = !sim; $('p2UnitTrigger').setAttribute('aria-expanded', String(sim));
+    if (sim) { var x = $('p2UnitPop').querySelector('[aria-pressed="true"]') || $('p2UnitPop').querySelector('button'); if (x) x.focus(); }
+  }
+  $('p2UnitTrigger').addEventListener('click', function () { p2AbrirUnidade($('p2UnitPop').hidden); });
+  $('p2Paises').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    p2.filtro = { pais: b.getAttribute('data-pais'), bu: '' };
+    p2GravarFiltro(); p2RenderUnidade(); p2Carregar(false);
+    if (!p2.filtro.pais) { p2AbrirUnidade(false); $('p2UnitTrigger').focus(); } else { var x = $('p2Bus').querySelector('button'); if (x) x.focus(); }
+  });
+  $('p2Bus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    p2.filtro.bu = b.getAttribute('data-bu');
+    p2GravarFiltro(); p2RenderUnidade(); p2Carregar(false);
+    p2AbrirUnidade(false); $('p2UnitTrigger').focus();
+  });
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('p2UnitPop').hidden && !$('p2Unit').contains(e.target)) p2AbrirUnidade(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('p2UnitPop').hidden) { p2AbrirUnidade(false); $('p2UnitTrigger').focus(); } });
+  $('p2Atualizar').addEventListener('click', function () { p2.cache = {}; p2Carregar(true); });
+  $('p2Tentar').addEventListener('click', function () { p2Carregar(true); });
 
   // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
   function abrirMenu(sim) {
@@ -1736,12 +2167,14 @@ window.VBMSetup = (function () {
   // ── Vistas pelo hash ──
   function rota() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
-    var pronta = h === 'inicio' || h === 'pendencias';
+    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     $('vistaPendencias').hidden = h !== 'pendencias';
+    $('vistaPainel').hidden = h !== 'painel';
     $('vistaConstrucao').hidden = pronta;
-    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -1752,8 +2185,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); });
-  S.on('numero', function () { if (dados) renderTudo(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); });
 
   rota();
   carregar(false);

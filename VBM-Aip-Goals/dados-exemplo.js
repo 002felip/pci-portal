@@ -1,5 +1,5 @@
 /**
- * AIP Goals — dados de exemplo da T01 (Minhas pendências).
+ * AIP Goals — dados de exemplo da T00 (Início), T01 (Minhas pendências) e T02 (Painel do ciclo).
  *
  * Usados enquanto o modelo de dados (Especificação §9, pendência P-12) não é
  * validado pelo time de dados. A resposta da API leva `exemplo: true` e a tela
@@ -22,34 +22,44 @@ function somarDiasUteis(base, n) {
 }
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+// Ciclo ativo: BUs, etapa aberta hoje e janelas (configuração do ciclo, T11).
+function cicloExemplo(hoje = new Date()) {
+  const desde = (n) => iso(somarDiasUteis(hoje, -n));
+  const prazo = (n) => iso(somarDiasUteis(hoje, n));
+  const ano = hoje.getMonth() >= 9 ? hoje.getFullYear() + 1 : hoje.getFullYear();
+  return {
+    id: `AIP-${ano}`, nome: `AIP ${ano}`, ano,
+    // Jornada do ciclo (janelas configuradas em T11). etapaAtual = a janela aberta hoje.
+    // BUs do ciclo (cadastro editável em T11)
+    bus: [
+      { sigla: 'OP', pais: 'Brasil' }, { sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'Sossego', pais: 'Brasil' },
+      { sigla: 'ON', pais: 'Canadá' }, { sigla: 'VNL', pais: 'Canadá' }, { sigla: 'UK', pais: 'Canadá' }, { sigla: 'JPN', pais: 'Canadá' },
+    ],
+    etapaAtual: 'proposta',
+    etapas: [
+      { id: 'desdobramento', fim: desde(15) },
+      { id: 'proposta', fim: prazo(8) },
+      { id: 'calibracao', fim: prazo(18) },
+      { id: 'oficial', fim: prazo(23) },
+    ],
+  };
+}
+
 function pendenciasExemplo(hoje = new Date()) {
   const desde = (n) => iso(somarDiasUteis(hoje, -n));
   const prazo = (n) => iso(somarDiasUteis(hoje, n));
   const ano = hoje.getMonth() >= 9 ? hoje.getFullYear() + 1 : hoje.getFullYear();
 
   return {
-    ciclo: {
-      id: `AIP-${ano}`, nome: `AIP ${ano}`, ano,
-      // Jornada do ciclo (janelas configuradas em T11). etapaAtual = a janela aberta hoje.
-      // BUs do ciclo (cadastro editável em T11)
-      bus: [
-        { sigla: 'OP', pais: 'Brasil' }, { sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'Sossego', pais: 'Brasil' },
-        { sigla: 'ON', pais: 'Canadá' }, { sigla: 'VNL', pais: 'Canadá' }, { sigla: 'UK', pais: 'Canadá' }, { sigla: 'JPN', pais: 'Canadá' },
-      ],
-      etapaAtual: 'proposta',
-      etapas: [
-        { id: 'desdobramento', fim: desde(15) },
-        { id: 'proposta', fim: prazo(8) },
-        { id: 'calibracao', fim: prazo(18) },
-        { id: 'oficial', fim: prazo(23) },
-      ],
-    },
+    ciclo: cicloExemplo(hoje),
     usuario: {
       // Papéis por BU e por ciclo (AC-02): a mesma pessoa pode ter papéis diferentes.
       papeis: [
         { papel: 'ponto_focal', bu: 'Salobo' },
         { papel: 'ponto_focal', bu: 'Sossego' },
         { papel: 'diretor', bu: 'VNL' },
+        // Membro do grupo de aprovação final (vê todas as BUs e o Painel do ciclo, AC-07)
+        { papel: 'pci_coo', bu: null },
       ],
     },
     parametros: { diasParado: 3 },
@@ -114,4 +124,42 @@ function pendenciasExemplo(hoje = new Date()) {
   };
 }
 
-module.exports = { pendenciasExemplo, somarDiasUteis, iso };
+// ── T02 Painel do ciclo: Goal Cards de todas as BUs do ciclo ──
+// Gerador determinístico (mesma semente → mesmos cards), para o exemplo não mudar a cada leitura.
+const METAS_EXEMPLO = [
+  ['Finished nickel production', 'formula'], ['Copper concentrate production', 'formula'], ['C1 cash cost reduction', 'formula'],
+  ['Plant physical availability', 'formula'], ['TRIF — recordable injury frequency', 'formula'], ['Predictive maintenance program rollout', 'marcos'],
+  ['Metallurgical recovery', 'formula'], ['Tailings dam safety plan', 'marcos'], ['Energy intensity reduction', 'formula'],
+];
+// Distribuição de situação na etapa de proposta: muitos em rascunho, alguns já em aprovação ou devolvidos.
+const SITUACOES = ['rascunho', 'rascunho', 'rascunho', 'em_aprovacao', 'em_aprovacao', 'em_aprovacao', 'em_revisao', 'aprovado', 'aprovado', 'negado'];
+const QTD_METAS = { OP: 5, Salobo: 7, Sossego: 6, ON: 8, VNL: 7, UK: 4, JPN: 4 };
+
+function painelExemplo(hoje = new Date()) {
+  const ciclo = cicloExemplo(hoje);
+  let semente = 20271;
+  const sorte = () => { semente = (semente * 48271) % 2147483647; return semente / 2147483647; };
+  const cards = [];
+  ciclo.bus.forEach((bu, b) => {
+    const n = QTD_METAS[bu.sigla] || 5;
+    for (let i = 0; i < n; i++) {
+      const [titulo, tipo] = METAS_EXEMPLO[(b * 2 + i) % METAS_EXEMPLO.length];
+      const estado = SITUACOES[Math.floor(sorte() * SITUACOES.length)];
+      const nivel = estado === 'em_aprovacao'
+        ? (sorte() < 0.6 ? { atual: 1, total: 2, nome: 'Diretor da BU' } : { atual: 2, total: 2, nome: 'P&CI/COO' })
+        : null;
+      const versao = estado === 'rascunho' ? null : 1 + Math.floor(sorte() * 2);
+      cards.push({
+        card: `GC-${bu.sigla.slice(0, 3).toUpperCase()}-${String(i + 1).padStart(2, '0')}`,
+        bu: { sigla: bu.sigla, pais: bu.pais },
+        meta: { numero: i + 1, titulo, tipo },
+        estado, nivel, versao,
+        // Desde quando o card está na situação (ou no nível) atual
+        desde: iso(somarDiasUteis(hoje, -Math.floor(sorte() * (estado === 'em_aprovacao' ? 8 : 12)))),
+      });
+    }
+  });
+  return { ciclo, parametros: { diasParado: 3 }, cards };
+}
+
+module.exports = { pendenciasExemplo, painelExemplo, cicloExemplo, somarDiasUteis, iso };
