@@ -40,7 +40,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | AC-02 | O papel (contribuidor, aprovador, consulta ou administrador) é atribuído por grupo, por BU e por ciclo; a mesma pessoa pode ter papéis diferentes em BUs diferentes. Aprovadores e administrador não têm BU (valem para todas). |
 | AC-03 | Usuário sem papel no ciclo ativo vê T12 "Sem acesso" e gera evento "Acesso negado" no log. |
 | AC-04 | Escrita (editar, submeter, recolher, comentar ou concluir ação) em BU que não está no cadastro do usuário retorna 403 e gera evento no log. |
-| AC-05 | Todos os usuários com papel no ciclo visualizam todos os dados de todas as BUs. A edição cabe só aos contribuidores da própria BU, conforme o cadastro no banco de dados (`AIP_PAPEL`); a decisão, só ao grupo de aprovação. O grupo de consulta nunca edita, comenta nem decide: a interface não mostra essas ações e a API responde 403. |
+| AC-05 | Todos os usuários com papel no ciclo visualizam todos os dados de todas as BUs. A edição cabe aos contribuidores da própria BU, conforme o cadastro no banco de dados (`AIP_PAPEL`), e ao administrador, que edita as metas de todas as BUs; a decisão, só ao grupo de aprovação. O grupo de consulta nunca edita, comenta nem decide: a interface não mostra essas ações e a API responde 403. |
 | AC-06 | Usuário inativo em `IBP.USERS` é tratado como sem acesso; suas pendências aparecem para o administrador reatribuir. |
 | AC-07 | As telas de leitura (Início, Painel do ciclo, Metas da BU, Goal Card em leitura, Versões e Action Log) ficam abertas a todos os perfis, com todas as BUs. |
 | AC-08 | A T14 Aprovações é exclusiva do grupo de aprovação: os demais perfis não veem o item no menu e a API responde 403 (com evento no log). |

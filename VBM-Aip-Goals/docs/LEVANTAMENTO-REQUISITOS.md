@@ -53,6 +53,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-13 | O Goal Card (T04) é a ficha de cadastro dos contribuidores, sem decisão; a aprovação acontece numa tela própria (T14 Aprovações) com todas as fichas em aprovação; no Goal Card, os comentários aparecem em pop-up só de leitura | 17/11/2026 |
 | D-14 | Retirada a tela T01 Minhas pendências (substitui a tela inicial da D-01): as decisões ficam na T14 Aprovações, exclusiva do grupo de aprovação; os contribuidores entram pela T03 Metas da BU e pelos avisos | 17/11/2026 |
 | D-15 | Nomes das BUs iguais aos sites do COO Dashboard: Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries); as antigas siglas ON, VNL, UK, JPN e OP deixam de ser usadas | 17/11/2026 |
+| D-16 | O administrador edita os Goal Cards de todas as BUs, com as mesmas regras de situação dos contribuidores (só Rascunho ou Devolvido para ajuste); quem edita um card não o decide (RN-12) | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 

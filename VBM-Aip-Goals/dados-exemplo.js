@@ -65,6 +65,8 @@ function pendenciasExemplo(hoje = new Date()) {
         { papel: 'diretor', bu: 'VNL' },
         // Membro do grupo de aprovação final (vê todas as BUs e o Painel do ciclo, AC-07)
         { papel: 'pci_coo', bu: null },
+        // Administrador: edita as metas de todas as BUs (AC-05)
+        { papel: 'admin', bu: null },
       ],
     },
     parametros: { diasParado: 3 },

@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
-const { criarAipGoalsRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao } = require('../aip-goals-api');
+const { criarAipGoalsRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao, modoDoCard } = require('../aip-goals-api');
 
 // Segunda-feira, 16/11/2026
 const HOJE = new Date(2026, 10, 16, 10, 0, 0);
@@ -214,10 +214,21 @@ test('POST /goal-card: submissão bloqueada sem campos obrigatórios e decisão 
     assert.ok(vazio.corpo.pendentes.includes('evidence'));
     const sub = await enviar(s, '/api/goal-card/submeter', { card: 'GC-SAL-09', secoes: { ...card.secoes, area: { area: 'Projects', responsavel: 'X' }, evidence: 'Relatório' } }, h);
     assert.strictEqual(sub.status, 200); assert.strictEqual(sub.corpo.simulado, true);
-    assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, h)).status, 403); // BU fora do cadastro (AC-04)
+    assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, h)).status, 409); // admin passa pela BU; card em aprovação não está em edição
     const dev = await enviar(s, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'devolver', comentario: 'ok', revisao: {} }, h);
     assert.strictEqual(dev.status, 400); assert.deepStrictEqual(dev.corpo.erros, ['comentario', 'secaoAjustar']);
     const apr = await enviar(s, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'aprovar' }, h);
     assert.strictEqual(apr.corpo.estado, 'aprovado');
   } finally { s.close(); }
+});
+
+test('Edição: contribuidor só na própria BU; administrador em todas as BUs (AC-04, AC-05)', async () => {
+  const rascunho = (bu) => ({ bu: { sigla: bu }, estado: 'rascunho' });
+  const contrib = [{ papel: 'contribuidor', bu: 'Salobo' }], admin = [{ papel: 'admin', bu: null }];
+  assert.strictEqual(modoDoCard(rascunho('Salobo'), contrib), 'edicao');
+  assert.strictEqual(modoDoCard(rascunho('VNL'), contrib), 'leitura');
+  for (const bu of ['Onça Puma', 'Salobo', 'Sossego', 'Ontario', 'VNL', 'Clydach', 'Matsusaka']) assert.strictEqual(modoDoCard(rascunho(bu), admin), 'edicao');
+  assert.strictEqual(modoDoCard({ bu: { sigla: 'VNL' }, estado: 'aprovado' }, admin), 'leitura'); // travado: só reabertura (RN-17)
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => contrib }));
+  try { assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, { 'X-Forwarded-Email': 'c@vale.com' })).status, 403); } finally { s.close(); }
 });

@@ -129,6 +129,8 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
 
 ### Dados de exemplo
 
+O administrador edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU.
+
 As BUs usam os nomes dos sites do COO Dashboard (D-15): Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries). O código do Goal Card usa 3 letras por site
 (ONP, SAL, SOS, ONT, VNL, CLY, MAT).
 

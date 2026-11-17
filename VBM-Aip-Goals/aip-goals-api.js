@@ -138,6 +138,9 @@ function agregarDesdobramento(base, cards, bus) {
 // Grupos (D-10): contribuidor (por BU), aprovador (grupo de aprovação), consulta. Papéis antigos dos dados de exemplo são mapeados.
 const ehAprovador = (papeis) => papeis.some((p) => ['aprovador', 'pci_coo', 'admin'].includes(p.papel));
 const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'ponto_focal'].includes(p.papel) && p.bu === sigla);
+// Edição: contribuidor da própria BU ou administrador, que edita as metas de todas as BUs (AC-05)
+const ehAdmin = (papeis) => papeis.some((p) => p.papel === 'admin');
+const podeEditar = (papeis, sigla) => ehAdmin(papeis) || contribuidorDe(papeis, sigla);
 const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (configurável no banco, AIP_PARAMETRO)
 
 // Campos obrigatórios (§5): Submeter fica bloqueado enquanto algum estiver vazio (cliente e servidor).
@@ -165,11 +168,11 @@ function validarDecisao({ decisao, comentario, revisao } = {}) {
 // T04 é a ficha dos contribuidores: edição (contribuidor da BU, Rascunho ou Em revisão) ou leitura (demais casos).
 // A decisão do grupo de aprovação acontece em outra tela (fila de aprovação, T14).
 function modoDoCard(card, papeis) {
-  return contribuidorDe(papeis, card.bu.sigla) && (card.estado === 'rascunho' || card.estado === 'em_revisao') ? 'edicao' : 'leitura';
+  return podeEditar(papeis, card.bu.sigla) && (card.estado === 'rascunho' || card.estado === 'em_revisao') ? 'edicao' : 'leitura';
 }
 // Quem pode decidir (fila de aprovação): grupo de aprovação, card Em aprovação, sem ter editado ou submetido o card (RN-12)
 function podeDecidir(card, papeis, nomeUsuario) {
-  const editou = contribuidorDe(papeis, card.bu.sigla) && (card.editores || []).includes(nomeUsuario);
+  const editou = podeEditar(papeis, card.bu.sigla) && (card.editores || []).includes(nomeUsuario);
   return ehAprovador(papeis) && card.estado === 'em_aprovacao' && !editou;
 }
 
@@ -333,8 +336,8 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     try {
       const hoje = agora(); const papeis = papeisDe(email, hoje);
       const card = lerCard(req, res, hoje); if (!card) return;
-      // Escrita só para contribuidores da BU (AC-04, AC-05); consulta e outras BUs: 403
-      if (!contribuidorDe(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
+      // Escrita só para contribuidores da BU ou administrador (AC-04, AC-05); consulta e outras BUs: 403
+      if (!podeEditar(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
       const pend = camposObrigatorios(req.body.secoes).filter((x) => !x.ok).map((x) => x.id);
       if (pend.length) return res.status(400).json({ error: 'Campos obrigatórios sem preencher.', codigo: 'OBRIGATORIOS', pendentes: pend });
@@ -367,4 +370,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS };
