@@ -104,7 +104,8 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 - **Raiz fluida:** `html { font-size: clamp(1rem, 0.357vw + 0.643rem, 1.5rem) }` (16px até 1600px, 24px em
   3840px); layout em `rem`; barra com altura fluida (`--barra`).
 - **Breakpoint estrutural:** 1080px (menu em gaveta, banner e abertura em uma coluna). Pouca altura
-  (≤ 820px, notebook com escala de 125–150%) compacta banner e abertura.
+  (≤ 820px, notebook com escala de 125–150%) deixa a raiz em 15px (`0.9375rem`): a aplicação toda fica
+  um degrau menor (tudo é em `rem`), e o banner e a abertura ficam compactos.
 - **Cartão da fila por container query** (`@container fila`), pela largura do próprio cartão.
 - **Vidro com degradação:** fundo opaco sem `backdrop-filter` ou com `prefers-reduced-transparency`.
 - Conferido sem rolagem lateral em 1024, 1180, 1280×590, 1440, 1920, 2560 e 3840px.
