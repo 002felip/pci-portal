@@ -2,8 +2,8 @@
 
 Leva cada meta de AIP das BUs de VBM (Brasil e Canadá) do desdobramento do COO até o Goal Card
 aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação funcional e técnica:
-documento "AIP Goals — Especificação funcional e levantamento de requisitos" (abas Especificação
-técnica v1 e Levantamento de requisitos).
+[`VBM-Aip-Goals/docs/ESPECIFICACAO-TECNICA.md`](../../VBM-Aip-Goals/docs/ESPECIFICACAO-TECNICA.md) e
+[`VBM-Aip-Goals/docs/LEVANTAMENTO-REQUISITOS.md`](../../VBM-Aip-Goals/docs/LEVANTAMENTO-REQUISITOS.md).
 
 - **Endereço:** `/VBM-Aip-Goals/`
 - **Código:** `VBM-Aip-Goals/`
@@ -26,6 +26,7 @@ técnica v1 e Levantamento de requisitos).
 | `tests/` | testes `node --test` (API, regras de idade/prazo, bloqueio de arquivos) | não |
 | `README.md` | documento da pasta (telas, estrutura, API, como rodar) | não |
 | `database/` | scripts SQL do time de dados; hoje só o `README.md` com o modelo proposto (P-12) | não |
+| `docs/` | especificação técnica e levantamento de requisitos (cópia do documento de especificação) | não |
 
 ## Telas (vistas pelo hash)
 

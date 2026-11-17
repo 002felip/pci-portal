@@ -5,8 +5,9 @@ do desdobramento do COO até o **Goal Card** aprovado, versionado e rastreável,
 Endereço: `/VBM-Aip-Goals/`, aplicação da raiz do Portal, montada pelo `server.js` da raiz depois do controle de
 acesso do Portal (`IBP.USERS` com `CD_MATRICULA`).
 
-Documento técnico completo: [`docs/projetos/aip-goals.md`](../docs/projetos/aip-goals.md). Especificação funcional e
-técnica: documento "AIP Goals — Especificação funcional e levantamento de requisitos".
+Documento técnico completo: [`docs/projetos/aip-goals.md`](../docs/projetos/aip-goals.md). Especificação e levantamento
+de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) e
+[`docs/LEVANTAMENTO-REQUISITOS.md`](docs/LEVANTAMENTO-REQUISITOS.md).
 
 ## Telas (página única, vistas pelo hash)
 
@@ -32,6 +33,7 @@ VBM-Aip-Goals/
 ├── dados-exemplo.js    dados de exemplo até a validação do modelo de dados (P-12)
 ├── server.js           app standalone para desenvolvimento (porta 8020)
 ├── database/           scripts SQL do time de dados (ver database/README.md)
+├── docs/               especificação técnica e levantamento de requisitos
 ├── tests/              testes node --test
 └── package.json
 ```
