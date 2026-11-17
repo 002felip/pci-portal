@@ -1,0 +1,2288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>AIP Goals · Minhas pendências</title>
+<!-- Poppins local (faces embutidas): sem Google Fonts nem CDN — rede corporativa fechada -->
+<link rel="stylesheet" href="assets/css/poppins.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   VBM — tokens de tema (skill vbm-design)
+   Origem: COO Business Units Dashboard (semânticos e dados) + VBM Kaizen (marca).
+   Cole no <style> do dashboard (ou como assets/css/vbm-tokens.css). O tema é gravado
+   no <html> pela engrenagem da skill setup-dashboards: data-theme="light" | "dark".
+   Sem data-theme, segue o sistema (prefers-color-scheme).
+   Regra: toda cor da tela sai de um token; todo token tem o par escuro.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Marca (VBM Kaizen) — base das cores; prefira os tokens semânticos abaixo na tela ── */
+:root {
+  --vbm-blue:       #3CB5E5;   /* Azul-Vale: série realizada, destaques */
+  --vbm-blue-dark:  #1A8BBF;
+  --vbm-blue-deep:  #0D2640;
+  --vbm-blue-navy:  #041523;   /* barra superior, fundo escuro */
+  --vbm-blue-light: #7DD3F0;
+  --vbm-blue-pale:  #E8F7FD;
+  --vbm-green:      #007E7A;   /* Verde-Vale */
+  --vbm-grey:       #BCBEC0;   /* Cinza-Médio: Budget */
+  --vbm-steel:      #6E8CBA;   /* Azul-Aço: Plan */
+  /* Status de fluxo (Kaizen) */
+  --status-draft:    #888888;
+  --status-pending:  #C2770E;
+  --status-approved: #16A34A;
+  --status-rejected: #DC2626;
+  --status-review:   #3CB5E5;
+  /* Movimento */
+  --ease-out:    cubic-bezier(0.2, 1, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Semânticos de tela e de dados (COO Business Units Dashboard) ── */
+:root {
+  --page: #FFFFFF;
+  --text: #1F2937;
+  --text-soft: #6B7280;
+  --text-faint: #9CA3AF;
+  --line: #E5E7EB;
+  --accent: #1E8FC4;          /* títulos grandes (3,9:1 em branco, uso só em ≥24px) */
+  --accent-strong: #0B6E99;
+  --panel: #F3F4F5;
+  --chart-title: #1B7F7B;
+  --ink-strong: #111827;
+  --ink-soft: #6B7280;
+  --base-line: #D1D5DB;
+  --pill-bg: #FFFFFF;
+  --pill-line: rgba(15,23,42,.06);
+  --d-stroke: rgba(116,118,120,.45);
+  --d-hair: rgba(116,118,120,.30);
+  --badge-bg: rgba(31,41,55,.58);
+  --badge-text: #FFFFFF;
+  --serie-b: #BCBEC0;
+  --serie-a: #3CB5E5;
+  --serie-p: #9DB1CF;
+  --good: #007E7A;
+  --good-bg: rgba(0,126,122,.10);
+  --bad: #B91C1C;
+  --bad-bg: rgba(220,38,38,.09);
+  --flat: #5B5E61;
+  --flat-bg: rgba(116,118,120,.12);
+  --ctl-bg: #FFFFFF;
+  --ctl-border: rgba(13,38,64,.16);
+  --ctl-text: #1F2937;
+  --ctl-on-bg: #0B6E99;
+  --ctl-on-text: #FFFFFF;
+  --focus: #0B6E99;
+  --nav-bg: linear-gradient(135deg, #041523 0%, #072842 55%, #0b3a64 100%);
+  --table-head: #0B6E99;
+
+  --font-display: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #06192B;
+    --text: #E8EEF5;
+    --text-soft: rgba(232,238,245,.66);
+    --text-faint: rgba(232,238,245,.42);
+    --line: rgba(255,255,255,.10);
+    --accent: #5CC6EE;
+    --accent-strong: #7DD3F0;
+    --panel: #0C2438;
+    --chart-title: #5FD0C9;
+    --ink-strong: #F1F5F9;
+    --ink-soft: rgba(241,245,249,.62);
+    --base-line: rgba(255,255,255,.22);
+    --pill-bg: #0F2C44;
+    --pill-line: rgba(255,255,255,.10);
+    --d-stroke: rgba(226,232,240,.45);
+    --d-hair: rgba(226,232,240,.28);
+    --badge-bg: rgba(2,10,20,.55);
+    --serie-b: #8E949B;
+    --serie-p: #9DB1CF;
+    --good: #34C3B8;
+    --good-bg: rgba(52,195,184,.14);
+    --bad: #F87171;
+    --bad-bg: rgba(248,113,113,.14);
+    --flat: #B0B5BA;
+    --flat-bg: rgba(176,181,186,.14);
+    --ctl-bg: rgba(255,255,255,.05);
+    --ctl-border: rgba(255,255,255,.16);
+    --ctl-text: #E5EDF5;
+    --ctl-on-bg: #3CB5E5;
+    --ctl-on-text: #02101c;
+    --focus: #7DD3F0;
+    --table-head: #11577A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #06192B;
+  --text: #E8EEF5;
+  --text-soft: rgba(232,238,245,.66);
+  --text-faint: rgba(232,238,245,.42);
+  --line: rgba(255,255,255,.10);
+  --accent: #5CC6EE;
+  --accent-strong: #7DD3F0;
+  --panel: #0C2438;
+  --chart-title: #5FD0C9;
+  --ink-strong: #F1F5F9;
+  --ink-soft: rgba(241,245,249,.62);
+  --base-line: rgba(255,255,255,.22);
+  --pill-bg: #0F2C44;
+  --pill-line: rgba(255,255,255,.10);
+  --d-stroke: rgba(226,232,240,.45);
+  --d-hair: rgba(226,232,240,.28);
+  --badge-bg: rgba(2,10,20,.55);
+  --serie-b: #8E949B;
+  --serie-p: #9DB1CF;
+  --good: #34C3B8;
+  --good-bg: rgba(52,195,184,.14);
+  --bad: #F87171;
+  --bad-bg: rgba(248,113,113,.14);
+  --flat: #B0B5BA;
+  --flat-bg: rgba(176,181,186,.14);
+  --ctl-bg: rgba(255,255,255,.05);
+  --ctl-border: rgba(255,255,255,.16);
+  --ctl-text: #E5EDF5;
+  --ctl-on-bg: #3CB5E5;
+  --ctl-on-text: #02101c;
+  --focus: #7DD3F0;
+  --table-head: #11577A;
+  color-scheme: dark;
+}
+
+/* ── Ciclo / situação de atualização: âmbar, fora do par verde/vermelho de desempenho ── */
+:root { --wait: #9A5B00; --wait-bg: rgba(217,140,10,.10); --wait-line: rgba(217,140,10,.55); --late: #FFFFFF; --late-bg: #B76A00; --cyc-ok: #1B7F7B; --cyc-shadow: 0 14px 34px rgba(15,23,42,.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); } }
+:root[data-theme="dark"] { --wait: #F5B94A; --wait-bg: rgba(245,185,74,.12); --wait-line: rgba(245,185,74,.55); --late: #1C1203; --late-bg: #F5B94A; --cyc-ok: #5FD0C9; --cyc-shadow: 0 14px 34px rgba(0,0,0,.45); }
+
+/* ════════════════════════════════════════════════════════════════════
+   VBM — componentes de tela (skill vbm-design)
+   Origem: COO Business Units Dashboard (filtros, painéis, legenda) e
+   VBM Performance Studio (título do dashboard, botões de ação, toast).
+   Depende de vbm-tokens.css. Fonte: Poppins LOCAL (assets/css/poppins.css do Hub).
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Base ── */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: var(--font-display); font-size: 14px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.page {
+  width: 100%; padding-block: 12px 16px;
+  padding-left: max(28px, env(safe-area-inset-left, 0px));
+  padding-right: max(28px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ── Título do dashboard (centro, sublinhado em degradê azul) ── */
+.dash-titulo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 188px 0; }
+.dash-titulo-nome {
+  position: relative; max-width: 100%; margin: 0; padding-bottom: 9px;
+  font: 300 1.1rem/1.2 var(--font-display); letter-spacing: .08em; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-titulo-nome::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--vbm-blue), rgba(60,181,229,0));
+}
+/* Título editorial de seção/site (COO): itálico grande em --accent (≥24px) */
+.site { margin: 0; font: italic 400 2rem/1.1 var(--font-display); color: var(--accent); letter-spacing: -.005em; }
+
+/* ── Botões de ação do topo (salvar, desfazer, Excel, imagens, tela cheia) ── */
+.dash-acoes { position: absolute; right: 16px; top: 20px; display: flex; gap: 8px; }
+.dash-acao {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+  border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--accent-strong);
+  cursor: pointer; box-shadow: 0 1px 3px rgba(15,23,42,.08);
+}
+.dash-acao:hover:not(:disabled), .dash-acao.is-pendente { background: var(--ctl-on-bg); color: var(--ctl-on-text); border-color: var(--ctl-on-bg); }
+.dash-acao:disabled { opacity: .45; cursor: not-allowed; }
+.dash-acao[hidden] { display: none; }
+
+/* ── Filtros (padrão COO): rótulo em itálico em cima do controle ── */
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.filter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.filter-label { font: italic 400 .74rem var(--font-display); color: var(--text-soft); }
+
+/* Segmentado: escolha única entre poucas opções (Visão, Ano, Trimestre, Mês) */
+.seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); }
+.seg button { min-height: 26px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.seg button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+
+/* Interruptor liga/desliga (ex.: Delta) — role="switch" + aria-checked */
+.switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.switch-track { position: relative; width: 32px; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--text-soft) 40%, transparent); transition: background-color .18s ease; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.25); transition: transform .18s ease; }
+.switch[aria-checked="true"] .switch-track { background: var(--ctl-on-bg); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(14px); }
+
+/* Chip de navegação / paginação */
+.nav-chip { min-height: 28px; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.nav-chip:hover:not(:disabled) { border-color: var(--ctl-on-bg); color: var(--ctl-on-bg); }
+.nav-chip:disabled { opacity: .4; cursor: default; }
+
+/* Seletor em drill-down País › Site (e Ciclo): gatilho + popover em colunas */
+.unit { position: relative; }
+.unit-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 10px 2px 12px; border-radius: 9px; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--ctl-text); font: 500 .74rem var(--font-ui); cursor: pointer; white-space: nowrap; }
+.unit-trigger:hover, .unit-trigger[aria-expanded="true"] { border-color: var(--ctl-on-bg); }
+.unit-pais { color: var(--text-soft); }
+.unit-sep { color: var(--text-faint); }
+.unit-site { color: var(--ctl-on-bg); font-weight: 600; }
+.unit-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 360px; display: grid; grid-template-columns: 1fr 1.15fr; padding: 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--page); box-shadow: var(--cyc-shadow); }
+.unit-pop[hidden] { display: none; }
+.unit-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; }
+.unit-col + .unit-col { border-left: 1px solid var(--line); padding-left: 10px; }
+.unit-h { font: 600 .62rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); padding: 2px 8px 4px; }
+.unit-list { display: flex; flex-direction: column; gap: 2px; max-height: min(60vh, 420px); overflow-y: auto; }
+.unit-list button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ctl-text); font: 500 .76rem var(--font-ui); text-align: left; cursor: pointer; }
+.unit-list button:hover { background: color-mix(in srgb, var(--ctl-on-bg) 10%, transparent); }
+.unit-list button[aria-current="true"] { background: color-mix(in srgb, var(--ctl-on-bg) 12%, transparent); color: var(--ctl-on-bg); }
+.unit-list button[aria-pressed="true"] { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+
+/* ── Painéis e cards ── */
+.panel { display: flex; flex-direction: column; gap: 10px; }
+.panel-prod { background: var(--panel); border-radius: 20px; padding: 16px 22px 14px; }
+.panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.panel-title { margin: 0; font: italic 400 1.18rem var(--font-display); color: var(--text); }
+.card { background: var(--panel); border-radius: 16px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+.card.is-selected { outline: 2px solid var(--vbm-blue); outline-offset: -2px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--vbm-blue) 20%, transparent); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: .74rem; color: var(--text-soft); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.swatch { width: 14px; height: 9px; border-radius: 2px; }
+.updated { margin: 0; font: italic 400 .7rem var(--font-display); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* Pílula de situação "Atualizações finais pendentes" (ícone + texto, nunca só cor) */
+.pill-wait { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); font: italic 500 .7rem var(--font-ui); }
+
+/* ── Toast (aviso curto, role="status" aria-live="polite") ── */
+.toast {
+  position: fixed; z-index: 10001; left: 50%; bottom: 20px; transform: translateX(-50%);
+  max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 10px;
+  background: rgba(15,23,42,.94); color: #fff; font: 600 .74rem/1.4 var(--font-ui);
+  box-shadow: 0 10px 28px rgba(0,0,0,.3);
+}
+.toast.is-err { background: #991B1B; }
+.toast[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .dash-titulo { padding: 16px 16px 0; }
+  .dash-acoes { position: static; justify-content: center; }
+}
+
+/* ═══ Setup Dashboards — barra superior + Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Tema: html[data-bg="dark"|"light"] (o JS também grava data-theme, para os tokens do dashboard).
+   Tela cheia (botão ou F11): a barra superior sai de cena. */
+:root {
+  --sd-blue: #3cb5e5; --sd-blue-light: #7dd3f0; --sd-dark: #0a1421; --sd-mid: #6b7c93; --sd-white: #f4f7fb;
+  --sd-grad: linear-gradient(135deg, rgba(4,21,35,.97) 0%, rgba(8,45,79,.96) 60%, rgba(13,61,107,.95) 100%);
+  --sd-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); --sd-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.topnav {
+  position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+  height: 64px; display: flex; align-items: center;
+  padding: 0 max(2rem, env(safe-area-inset-right, 0px)) 0 max(2rem, env(safe-area-inset-left, 0px));
+  background: var(--sd-grad), #02101c;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  box-shadow: 0 2px 20px rgba(13,38,64,.18);
+}
+.topnav-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; position: relative; z-index: 1; }
+.topnav-logo svg { height: 26px; width: auto; display: block; }
+.topnav-brand {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; margin: 0;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; font-size: 1.02rem; line-height: 1;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.topnav-brand-nome { font-weight: 300; letter-spacing: .08em; color: rgba(255,255,255,.88); }
+.topnav-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #3CB5E5, rgba(60,181,229,0));
+}
+.topnav-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; margin-left: auto; position: relative; z-index: 1; }
+.settings-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: 100px; background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+  transition: background .25s, transform .35s var(--sd-ease-spring);
+}
+.settings-btn:hover { background: rgba(255,255,255,.12); }
+.settings-btn[aria-expanded="true"] { background: rgba(255,255,255,.18); transform: rotate(50deg); }
+.settings-btn:focus-visible, .settings-close:focus-visible, .theme-toggle-btn:focus-visible, .topnav-logo:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+.topnav-user { display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.22); flex-shrink: 0; }
+.topnav-user[hidden] { display: none; }
+.topnav-user-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+.topnav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg, #7dd3f0, #1a8bbf);
+  border: 1.5px solid rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0;
+}
+.topnav-user-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #fff; white-space: nowrap; }
+.topnav-user-role { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); white-space: nowrap; }
+@media (max-width: 960px) { .topnav-brand { font-size: .9rem; } .topnav-user-role { display: none; } }
+@media (max-width: 540px) {
+  .topnav { padding: 0 16px; }
+  .topnav-user-name { display: none; }
+  .topnav-brand { position: relative; left: auto; top: auto; transform: none; font-size: .8rem; margin: 0 auto; }
+}
+
+/* Painel lateral de Configurações */
+.settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; z-index: 399; transition: opacity .3s var(--sd-ease-out); }
+.settings-backdrop.open { opacity: 1; pointer-events: auto; }
+.settings-panel {
+  position: fixed; top: 0; right: 0; width: 300px; max-width: 90vw; height: 100vh; background: #fff;
+  box-shadow: -16px 0 48px rgba(9,20,34,.22); z-index: 400; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .38s var(--sd-ease-out), visibility 0s .38s;
+}
+.settings-panel.open { transform: translateX(0); visibility: visible; transition: transform .38s var(--sd-ease-out); }
+.settings-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+.settings-panel-head h2 { margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .92rem; letter-spacing: -.01em; color: var(--sd-dark); }
+.settings-close { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; border-radius: 100px; background: #fafcfe; color: var(--sd-mid); cursor: pointer; transition: background .2s, color .2s; }
+.settings-close svg { width: 11px; height: 11px; }
+.settings-close:hover { background: var(--sd-blue); color: #fff; }
+.settings-panel-body { padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.settings-section { display: flex; flex-direction: column; gap: 9px; }
+.settings-section-title { display: flex; align-items: center; gap: 5px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11px; color: var(--sd-dark); }
+.settings-info { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #e8e8e8; color: var(--sd-mid); font-size: 8px; font-style: italic; font-family: Georgia, serif; cursor: help; }
+.settings-divider { height: 1px; background: #eef1f6; margin: 18px 0; }
+.theme-toggle { display: flex; align-items: center; background: #fafcfe; border: 1px solid #e8e8e8; border-radius: 100px; padding: .16rem; gap: .1rem; width: fit-content; }
+.theme-toggle-btn { padding: .38rem 1.05rem; border-radius: 100px; font-size: .64rem; letter-spacing: .02em; color: var(--sd-mid); border: none; background: transparent; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: background .2s, color .2s; white-space: nowrap; line-height: 1; }
+.theme-toggle-btn.active { background: var(--sd-blue); color: #fff; box-shadow: 0 4px 14px rgba(60,181,229,.35); }
+.settings-select-wrap { position: relative; }
+.settings-select { width: 100%; appearance: none; -webkit-appearance: none; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 9px; padding: .5rem 1.9rem .5rem .75rem; font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--sd-dark); cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.settings-select:hover { border-color: var(--sd-blue-light); }
+.settings-select:focus { outline: none; border-color: var(--sd-blue); box-shadow: 0 0 0 3px rgba(60,181,229,.15); }
+.settings-select-caret { width: 9px; height: 9px; position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); color: var(--sd-mid); pointer-events: none; }
+/* Painel no tema escuro: vidro */
+[data-bg="dark"] .settings-panel { background: rgba(13,38,64,.96); border-left: 1px solid rgba(255,255,255,.12); box-shadow: -16px 0 48px rgba(0,0,0,.45); }
+[data-bg="dark"] .settings-panel-head { border-bottom-color: rgba(255,255,255,.1); }
+[data-bg="dark"] .settings-panel-head h2, [data-bg="dark"] .settings-section-title { color: #fff; }
+[data-bg="dark"] .settings-close { background: rgba(255,255,255,.12); color: var(--sd-white); }
+[data-bg="dark"] .settings-info { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.5); }
+[data-bg="dark"] .settings-divider { background: rgba(255,255,255,.1); }
+[data-bg="dark"] .theme-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+[data-bg="dark"] .theme-toggle-btn { color: rgba(255,255,255,.55); }
+[data-bg="dark"] .theme-toggle-btn.active { color: #fff; }
+[data-bg="dark"] .settings-select { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: var(--sd-white); }
+[data-bg="dark"] .settings-select option { background: #0d2640; color: #fff; }
+[data-bg="dark"] .settings-select-caret { color: rgba(255,255,255,.5); }
+
+/* Tela cheia (botão → html.is-fs; F11 → display-mode): a barra superior sai de cena */
+.is-fs .topnav { display: none; }
+@media (display-mode: fullscreen) { .topnav { display: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-panel, .settings-backdrop, .settings-btn { transition: none; } }
+/* Telas menores (notebook com escala de 125–150% no Windows, ~1280×600 úteis): barra mais baixa.
+   Mesmo critério da tela inicial do Portal; telas maiores não mudam. */
+@media (min-width: 721px) and (max-width: 1440px), (min-width: 721px) and (max-height: 820px) {
+  .topnav { height: 56px; }
+  .topnav-logo svg { height: 22px; }
+  .topnav-brand { font-size: .92rem; }
+  .topnav-brand::after { bottom: -8px; }
+  .topnav-user-avatar { width: 30px; height: 30px; }
+}
+/* ═══ fim Setup Dashboards ═══ */
+
+/* ════════════════════════════════════════════════════════════════════
+   AIP Goals — estilos próprios da aplicação (depois de vbm-tokens.css,
+   vbm-componentes.css e setup-dashboards.css). Sistema interno de fluxo:
+   inspirado na organização do VBM Kaizen (abas do app, banner com resumo,
+   cards de seção, fila em cartões), com código e tokens próprios.
+   Regra vbm-design: toda cor sai de um token; token novo tem o par escuro.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Tokens próprios ──
+   Status do Goal Card: o ponto usa a cor do fluxo (--status-*, as mesmas do Kaizen);
+   o texto e o ícone usam a variante "-ink", que passa AA (≥ 4,5:1) no fundo do cartão. */
+:root {
+  --st-draft-ink: #4B5563;    --st-draft-bg: rgba(136,136,136,.14);
+  --st-pending-ink: #8A5300;  --st-pending-bg: rgba(194,119,14,.12);
+  --st-review-ink: #0B6E99;   --st-review-bg: rgba(60,181,229,.14);
+  --st-approved-ink: #15803D; --st-approved-bg: rgba(22,163,74,.12);
+  --st-rejected-ink: #B91C1C; --st-rejected-bg: rgba(220,38,38,.10);
+  --card-bg: #FFFFFF;
+  --card-line: rgba(13,38,64,.10);
+  --card-hover: #F8FAFC;
+  --card-shadow: 0 1px 3px rgba(15,23,42,.06), 0 0.375rem 1.125rem rgba(15,23,42,.04);
+  --tab-bg: #FFFFFF;
+  --tab-line: rgba(13,38,64,.10);
+  --skel: rgba(15,23,42,.07);
+  /* Banner: fundo sempre escuro (imagem VBM + navy), igual nos dois temas */
+  --hero-bg: #041523;
+  --hero-veu: linear-gradient(100deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.88) 50%, rgba(8,45,79,.78) 100%);
+  --hero-text: #FFFFFF;
+  --hero-soft: rgba(255,255,255,.72);
+  --hero-faint: rgba(255,255,255,.55);
+  --hero-eyebrow: #7DD3F0;
+  --hero-glass: rgba(255,255,255,.08);
+  --hero-glass-line: rgba(255,255,255,.16);
+  --hero-glass-on: rgba(60,181,229,.24);
+  --hero-alerta: #F5B94A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --st-draft-ink: #C3C8CE;    --st-draft-bg: rgba(176,181,186,.16);
+    --st-pending-ink: #F5B94A;  --st-pending-bg: rgba(245,185,74,.14);
+    --st-review-ink: #7DD3F0;   --st-review-bg: rgba(125,211,240,.14);
+    --st-approved-ink: #4ADE80; --st-approved-bg: rgba(74,222,128,.13);
+    --st-rejected-ink: #F87171; --st-rejected-bg: rgba(248,113,113,.14);
+    --card-bg: #0F2C44;
+    --card-line: rgba(255,255,255,.08);
+    --card-hover: #133552;
+    --card-shadow: 0 1px 3px rgba(0,0,0,.35);
+    --tab-bg: #0A2135;
+    --tab-line: rgba(255,255,255,.08);
+    --skel: rgba(255,255,255,.08);
+  }
+}
+:root[data-theme="dark"] {
+  --st-draft-ink: #C3C8CE;    --st-draft-bg: rgba(176,181,186,.16);
+  --st-pending-ink: #F5B94A;  --st-pending-bg: rgba(245,185,74,.14);
+  --st-review-ink: #7DD3F0;   --st-review-bg: rgba(125,211,240,.14);
+  --st-approved-ink: #4ADE80; --st-approved-bg: rgba(74,222,128,.13);
+  --st-rejected-ink: #F87171; --st-rejected-bg: rgba(248,113,113,.14);
+  --card-bg: #0F2C44;
+  --card-line: rgba(255,255,255,.08);
+  --card-hover: #133552;
+  --card-shadow: 0 1px 3px rgba(0,0,0,.35);
+  --tab-bg: #0A2135;
+  --tab-line: rgba(255,255,255,.08);
+  --skel: rgba(255,255,255,.08);
+}
+
+/* ── Base ── */
+.ico { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.page { max-width: 92.5rem; margin-inline: auto; padding-top: 1.125rem; gap: 1rem; }
+.vista { display: flex; flex-direction: column; gap: 1rem; }
+.vista[hidden] { display: none; }
+
+/* ── Barra superior em vidro: segue o tom do fundo (claro no tema claro, navy no escuro) ── */
+:root {
+  --vidro-bg: rgba(255,255,255,.62);
+  --vidro-line: rgba(13,38,64,.10);
+  --vidro-ink: #0D2640;
+  --menu-text: rgba(13,38,64,.70);
+  --menu-text-on: #0D2640;
+  --menu-line: rgba(13,38,64,.12);
+  --menu-hover: rgba(13,38,64,.06);
+  --menu-drawer: rgba(255,255,255,.96);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF;
+  --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
+} }
+:root[data-theme="dark"] {
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF;
+  --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
+}
+.topnav {
+  background: var(--vidro-bg); border-bottom: 1px solid var(--vidro-line); box-shadow: none;
+  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+}
+.topnav-logo svg g path { fill: var(--vidro-ink); } /* só o desenho; a máscara do SVG continua branca */
+.settings-btn, .topnav-menu-btn { color: var(--vidro-ink); }
+.settings-btn:hover { background: var(--menu-hover); }
+.settings-btn[aria-expanded="true"] { background: var(--menu-hover); }
+.topnav-user { border-left-color: var(--menu-line); }
+.topnav-user-name { color: var(--vidro-ink); }
+.topnav-user-role { color: var(--menu-text); }
+.settings-btn:focus-visible, .topnav-logo:focus-visible, .topnav-menu-btn:focus-visible { outline-color: var(--focus); }
+
+.topnav-menu { position: absolute; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); display: flex; align-items: stretch; gap: 0.25rem; }
+.topnav-menu-link {
+  position: relative; display: inline-flex; align-items: center; gap: 0.4375rem; padding: 0 0.75rem;
+  color: var(--menu-text); text-decoration: none; font: 400 .78rem var(--font-ui); letter-spacing: .03em; white-space: nowrap;
+}
+.topnav-menu-link:hover { color: var(--menu-text-on); }
+.topnav-menu-link[aria-current="page"] { color: var(--menu-text-on); font-weight: 500; }
+.topnav-menu-link::after {
+  content: ''; position: absolute; left: 0.75rem; right: 0.75rem; bottom: 0.75rem; height: 1.5px; border-radius: 2px;
+  background: var(--menu-text-on); transform: scaleX(0); transition: transform .25s ease, opacity .25s ease;
+}
+.topnav-menu-link[aria-current="page"]::after { transform: scaleX(1); }
+.topnav-menu-link:focus-visible { outline: 2px solid var(--focus); outline-offset: -6px; border-radius: 0.5rem; }
+.topnav-menu-link[hidden] { display: none; }
+.topnav-menu-cont { min-width: 1.25rem; padding: 1px 0.4375rem; border-radius: 62.4375rem; background: var(--vbm-blue); color: var(--vbm-blue-navy); font: 700 .64rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
+.topnav-menu-cont[hidden] { display: none; }
+.topnav-menu-btn { display: none; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; border: 0; border-radius: 0.625rem; background: transparent; color: var(--menu-text-on); cursor: pointer; }
+.topnav-menu-btn:hover, .topnav-menu-btn[aria-expanded="true"] { background: var(--menu-hover); }
+.topnav-menu-btn:focus-visible { outline: 2px solid var(--sd-blue-light); outline-offset: 2px; }
+
+/* ── Início: abertura editorial do AIP Goals 2027 ──
+   Foto dos três minerais em tela cheia; véu do lado do texto, minerais visíveis do lado do índice. */
+:root {
+  --ab-foto: url('assets/images/Fundo_VBM_claro_2400x1145.webp');
+  --ab-veu: linear-gradient(90deg, rgba(255,255,255,.97) 0%, rgba(255,255,255,.90) 36%, rgba(255,255,255,.55) 66%, rgba(255,255,255,.30) 100%);
+  --ab-ano: rgba(13,38,64,.30);
+  --ab-v1: #0D2640; --ab-v2: #0B6E99; --ab-v3: #007E7A;
+  --ab-vidro: rgba(255,255,255,.66);
+  --ab-vidro-line: rgba(13,38,64,.10);
+  --ab-sombra: 0 1.125rem 3.125rem rgba(13,38,64,.14);
+  --ab-trilho: rgba(13,38,64,.16);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ab-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
+  --ab-veu: linear-gradient(90deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.86) 38%, rgba(6,32,58,.55) 70%, rgba(6,32,58,.40) 100%);
+  --ab-ano: rgba(255,255,255,.22);
+  --ab-v1: #FFFFFF; --ab-v2: #7DD3F0; --ab-v3: #5FD0C9;
+  --ab-vidro: rgba(8,30,52,.58); --ab-vidro-line: rgba(255,255,255,.12); --ab-sombra: 0 1.125rem 3.125rem rgba(0,0,0,.40); --ab-trilho: rgba(255,255,255,.20);
+} }
+:root[data-theme="dark"] {
+  --ab-foto: url('assets/images/Fundo_VBM_2400x1145.webp');
+  --ab-veu: linear-gradient(90deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.86) 38%, rgba(6,32,58,.55) 70%, rgba(6,32,58,.40) 100%);
+  --ab-ano: rgba(255,255,255,.22);
+  --ab-v1: #FFFFFF; --ab-v2: #7DD3F0; --ab-v3: #5FD0C9;
+  --ab-vidro: rgba(8,30,52,.58); --ab-vidro-line: rgba(255,255,255,.12); --ab-sombra: 0 1.125rem 3.125rem rgba(0,0,0,.40); --ab-trilho: rgba(255,255,255,.20);
+}
+body.is-inicio { background: var(--ab-veu), var(--ab-foto) center / cover no-repeat fixed, var(--page); }
+body.is-inicio .page { max-width: none; padding: 0; }
+#vistaInicio { min-height: calc(100vh - var(--barra)); min-height: calc(100svh - var(--barra)); }
+.abertura {
+  flex: 1; width: 100%; max-width: 97.5rem; margin-inline: auto;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22.5rem, .85fr); grid-template-rows: 1fr auto;
+  gap: 1.75rem 4rem; padding: clamp(1.75rem, 6vh, 5rem) clamp(1.5rem, 5vw, 5.5rem) 1.75rem;
+}
+.abertura-texto { align-self: center; }
+.ab-eyebrow { display: flex; align-items: center; gap: 0.75rem; margin: 0 0 1.125rem; font: 600 .7rem var(--font-ui); letter-spacing: .3em; text-transform: uppercase; color: var(--accent-strong); }
+.ab-ponto { width: 0.3125rem; height: 0.3125rem; border-radius: 50%; background: currentColor; opacity: .6; }
+.ab-titulo { margin: 0; display: flex; flex-direction: column; line-height: .9; }
+.ab-nome { font: 600 clamp(2.2rem, 1.4rem + 3.4vw, 4.6rem)/1 var(--font-display); letter-spacing: -.03em; color: var(--ab-v1); }
+.ab-ano {
+  font: 700 clamp(4.5rem, 19vw, 13.5rem)/.82 var(--font-display); letter-spacing: -.05em; margin-top: 0.375rem;
+  color: transparent; -webkit-text-stroke: 1.6px var(--ab-ano); font-variant-numeric: tabular-nums;
+}
+.ab-lead { margin: 1.375rem 0 0; max-width: 46ch; font: 400 1.05rem/1.55 var(--font-display); color: var(--text); }
+.ab-fatos { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); justify-content: start; gap: 0; margin: 1.625rem 0 0; }
+.ab-fato { padding: 2px 1.75rem 2px 0; }
+.ab-fato + .ab-fato { padding-left: 1.75rem; border-left: 1px solid var(--ab-trilho); }
+.ab-fato dt { font: 600 .62rem var(--font-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--text-soft); }
+.ab-fato dd { margin: 0.375rem 0 0; font: 500 1.15rem var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ab-fato .ab-fato-sub { margin-top: 2px; font: 400 .74rem var(--font-ui); color: var(--text-soft); white-space: normal; }
+.ab-bus { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.125rem; margin-top: 1.25rem; }
+.ab-bus-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; }
+.ab-bus-pais { margin-right: 0.25rem; font: 600 .7rem var(--font-ui); color: var(--text-soft); }
+.ab-bu { padding: 3px 0.625rem; border-radius: 62.4375rem; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); color: var(--ink-strong); font: 600 .72rem var(--font-ui); }
+
+/* Índice numerado em vidro (o menu da aplicação) */
+.indice {
+  align-self: center; padding: 1.375rem 0.625rem 0.75rem; border-radius: 1.375rem; border: 1px solid var(--ab-vidro-line);
+  background: var(--ab-vidro); box-shadow: var(--ab-sombra); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+.indice-cab { margin: 0 1rem 0.5rem; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
+.indice-lista { margin: 0; padding: 0; list-style: none; }
+.indice-lista li[hidden] { display: none; }
+.indice-lista li + li .indice-item { border-top: 1px solid var(--ab-vidro-line); }
+.indice-item { display: grid; grid-template-columns: 2.375rem minmax(0, 1fr) 1.75rem; align-items: center; gap: 0.625rem; padding: 0.875rem 1rem; border-radius: 0.875rem; color: var(--text); text-decoration: none; }
+.indice-lista li + li .indice-item:hover, .indice-item:hover { background: var(--menu-hover); border-top-color: transparent; }
+.indice-n { font: 300 1.05rem var(--font-display); color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.indice-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.indice-tit { display: flex; align-items: center; font: 600 1.02rem var(--font-display); color: var(--ink-strong); }
+.indice-tit .btn-cont { background: var(--ctl-on-bg); color: var(--ctl-on-text); }
+.indice-desc { font-size: .74rem; line-height: 1.45; color: var(--text-soft); }
+.indice-ir { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; color: var(--accent-strong); transition: transform .2s ease; }
+@media (hover: hover) {
+  .topnav-menu-link:not([aria-current="page"]):hover::after { transform: scaleX(.3); opacity: .5; }
+  .indice-item:hover .indice-ir { transform: translateX(0.25rem); }
+}
+
+/* Jornada do ciclo: quatro janelas numa linha, a etapa atual marcada */
+.jornada { grid-column: 1 / -1; padding: 1rem 1.375rem 1.125rem; border-radius: 1.125rem; border: 1px solid var(--ab-vidro-line); background: var(--ab-vidro); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.jornada-tit { margin: 0 0 0.875rem; font: 600 .64rem var(--font-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--text-soft); }
+.jornada-lista { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.jornada-lista::before { content: ''; position: absolute; left: 0.375rem; right: 0.375rem; top: 0.375rem; height: 1.5px; background: var(--ab-trilho); }
+.etapa { position: relative; padding-top: 1.5rem; }
+.etapa::before { content: ''; position: absolute; left: 0; top: 0; width: 0.8125rem; height: 0.8125rem; border-radius: 50%; border: 2px solid var(--ab-trilho); background: var(--page); box-sizing: border-box; }
+.etapa.is-feita::before { border-color: var(--ab-v3); background: var(--ab-v3); }
+.etapa.is-atual::before { border-color: var(--ab-v2); background: var(--ab-v2); box-shadow: 0 0 0 5px color-mix(in srgb, var(--ab-v2) 22%, transparent); }
+.etapa-nome { display: block; font: 600 .86rem var(--font-display); color: var(--ink-strong); }
+.etapa-quem { display: block; margin-top: 2px; font-size: .72rem; color: var(--text-soft); }
+.etapa-data { display: inline-flex; align-items: center; gap: 0.375rem; margin-top: 0.375rem; font-size: .72rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.etapa-tag { padding: 1px 0.5rem; border-radius: 62.4375rem; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 600 .62rem var(--font-ui); letter-spacing: .04em; }
+.etapa-ok { font: 600 .62rem var(--font-ui); color: var(--good); }
+@media (prefers-reduced-motion: reduce) { .indice-ir { transition: none; } }
+/* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
+.hero {
+  position: relative; overflow: hidden; border-radius: 1.25rem; padding: 1.625rem 1.75rem;
+  background: var(--hero-veu), url('assets/images/Fundo_VBM_2400x1145.webp') center / cover no-repeat, var(--hero-bg);
+  color: var(--hero-text);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 26.25rem); gap: 1.25rem 1.75rem; align-items: center;
+}
+.hero-eyebrow { margin: 0 0 0.5rem; font: 600 .64rem var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--hero-eyebrow); }
+.hero-titulo { margin: 0; font: italic 700 clamp(1.5rem, 1rem + 2.4vw, 2.5rem)/1.05 var(--font-display); color: var(--hero-text); letter-spacing: -.01em; }
+.hero-sub { margin: 0.625rem 0 0; max-width: 52ch; font-size: .82rem; line-height: 1.55; color: var(--hero-soft); }
+.hero-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.875rem; }
+.hero-pill { display: inline-flex; align-items: center; gap: 0.375rem; padding: 3px 0.625rem; border-radius: 62.4375rem; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); color: var(--hero-soft); font: italic 500 .68rem var(--font-ui); }
+.hero-pill.is-wait { color: var(--hero-alerta); border-color: var(--hero-alerta); }
+.hero-pill[hidden] { display: none; }
+.hero-acoes { position: absolute; top: 0.875rem; right: 0.875rem; display: flex; gap: 0.375rem; }
+.hero-acao { width: 2.125rem; height: 2.125rem; display: grid; place-items: center; border-radius: 0.5625rem; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); color: var(--hero-text); cursor: pointer; }
+.hero-acao:hover { background: var(--hero-glass-on); }
+.hero-acao:focus-visible { outline: 2px solid var(--hero-eyebrow); outline-offset: 2px; }
+
+.resumo { margin-top: 1.875rem; padding: 0.875rem; border-radius: 1rem; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.resumo-tit { margin: 0 0 0.5rem; font: 600 .64rem var(--font-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--hero-faint); }
+.resumo-lista { display: flex; flex-direction: column; gap: 2px; }
+.resumo-item {
+  display: flex; align-items: center; gap: 0.625rem; width: 100%; min-height: 2.5rem; padding: 0.375rem 0.625rem; border: 1px solid transparent; border-radius: 0.625rem;
+  background: transparent; color: var(--hero-soft); font: 500 .78rem var(--font-ui); text-align: left; cursor: pointer;
+}
+.resumo-item .ico { font-size: 1rem; color: var(--hero-eyebrow); }
+.resumo-item:hover { background: var(--hero-glass); color: var(--hero-text); }
+.resumo-item[aria-pressed="true"] { background: var(--hero-glass-on); border-color: var(--hero-eyebrow); color: var(--hero-text); }
+.resumo-item:focus-visible { outline: 2px solid var(--hero-eyebrow); outline-offset: 1px; }
+.resumo-num { margin-left: auto; font: 600 1.05rem var(--font-display); color: var(--hero-text); font-variant-numeric: tabular-nums; }
+.resumo-sep { height: 1px; margin: 0.375rem 0; background: var(--hero-glass-line); }
+.resumo-alerta { display: flex; align-items: center; gap: 0.625rem; padding: 0.375rem 0.625rem; color: var(--hero-alerta); font: 600 .76rem var(--font-ui); }
+.resumo-alerta .resumo-num { color: var(--hero-alerta); }
+.resumo-alerta small { display: block; font: 400 .66rem var(--font-ui); color: var(--hero-faint); }
+
+/* ── Card de seção (cabeçalho com ícone) ── */
+.secao { background: var(--panel); border-radius: 1.25rem; padding: 1rem 1.125rem 0.875rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.secao-head { display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; }
+.secao-ico { display: grid; place-items: center; width: 2.125rem; height: 2.125rem; border-radius: 0.625rem; background: var(--st-review-bg); color: var(--accent-strong); font-size: 1.05rem; }
+.secao-tit { margin: 0; font: italic 500 1.12rem var(--font-display); color: var(--text); }
+.secao-cont { padding: 1px 0.5625rem; border-radius: 62.4375rem; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .68rem var(--font-ui); font-variant-numeric: tabular-nums; }
+.secao-total { margin-left: auto; font: 400 .74rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+
+/* ── Fila em cartões ── */
+.fila { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.item {
+  display: grid; grid-template-columns: 2.5rem minmax(0, 2.2fr) minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 0.875rem; align-items: center;
+  padding: 0.75rem 0.875rem; border-radius: 0.875rem; border: 1px solid var(--card-line); background: var(--card-bg); box-shadow: var(--card-shadow);
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.item:hover { background: var(--card-hover); border-color: var(--ctl-border); }
+.item-ico { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.6875rem; background: var(--st-review-bg); color: var(--accent-strong); font-size: 1.1rem; }
+.item-principal { min-width: 0; }
+.item-tipo { margin: 0; font: 600 .66rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); }
+.item-meta { margin: 2px 0 0; font: 600 .9rem var(--font-ui); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-meta .num { color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.item-det { margin: 3px 0 0; font-size: .74rem; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.item-linha { display: flex; flex-wrap: wrap; gap: 0.25rem 0.625rem; margin-top: 0.3125rem; font-size: .7rem; color: var(--text-soft); }
+.item-linha b { font-weight: 600; color: var(--text); }
+.item-sit { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; min-width: 0; }
+.item-nivel { font-size: .7rem; color: var(--text-soft); }
+.item-tempo { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; font-size: .74rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.item-tempo small { font-size: .68rem; color: var(--text-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+
+/* Pílula de status do Goal Card: ponto + ícone + rótulo (nunca só cor) */
+.st { display: inline-flex; align-items: center; gap: 0.375rem; padding: 3px 0.625rem 3px 0.5rem; border-radius: 62.4375rem; font: 600 .7rem var(--font-ui); white-space: nowrap; }
+.st .ico { font-size: .82rem; }
+.st-rascunho     { background: var(--st-draft-bg);    color: var(--st-draft-ink); }
+.st-em_aprovacao { background: var(--st-pending-bg);  color: var(--st-pending-ink); }
+.st-em_revisao   { background: var(--st-review-bg);   color: var(--st-review-ink); }
+.st-aprovado     { background: var(--st-approved-bg); color: var(--st-approved-ink); }
+.st-negado       { background: var(--st-rejected-bg); color: var(--st-rejected-ink); }
+.st::before { content: ''; width: 0.4375rem; height: 0.4375rem; border-radius: 50%; flex-shrink: 0; }
+.st-rascunho::before     { background: var(--status-draft); }
+.st-em_aprovacao::before { background: var(--status-pending); }
+.st-em_revisao::before   { background: var(--status-review); }
+.st-aprovado::before     { background: var(--status-approved); }
+.st-negado::before       { background: var(--status-rejected); }
+
+/* Idade e prazo: âmbar de ciclo (nunca verde/vermelho de desempenho) */
+.chip-parada, .chip-atrasada { display: inline-flex; align-items: center; gap: 0.25rem; padding: 1px 0.5rem; border-radius: 62.4375rem; font: 600 .64rem var(--font-ui); white-space: nowrap; }
+.chip-parada { border: 1px solid var(--wait-line); background: var(--wait-bg); color: var(--wait); }
+.chip-atrasada { background: var(--late-bg); color: var(--late); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; min-height: 2.25rem; padding: 0.375rem 1rem;
+  border-radius: 0.625rem; border: 1px solid var(--ctl-on-bg); background: var(--ctl-on-bg); color: var(--ctl-on-text);
+  font: 600 .76rem var(--font-ui); text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn-sec { background: var(--ctl-bg); color: var(--accent-strong); border-color: var(--ctl-border); }
+.btn-sec:hover { border-color: var(--ctl-on-bg); filter: none; }
+
+/* O interruptor não estica com o rótulo do filtro */
+.filter .switch { align-self: flex-start; }
+
+/* Seta do seletor País › BU */
+.unit-chev { font-size: .7rem; color: var(--text-soft); }
+
+/* ── Estados de tela: carregando, vazio, erro, sem permissão ── */
+.estado { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; padding: 2.5rem 1rem; text-align: center; color: var(--text-soft); }
+.estado[hidden] { display: none; }
+.estado .ico { font-size: 2rem; color: var(--accent-strong); }
+.estado-tit { margin: 0; font: 500 1rem var(--font-display); color: var(--text); }
+.estado-txt { margin: 0; max-width: 46ch; font-size: .8rem; }
+.estado-erro .ico { color: var(--bad); }
+.item.is-skel { pointer-events: none; }
+.skel { display: block; height: 0.75rem; border-radius: 0.375rem; background: var(--skel); animation: skel 1.2s ease-in-out infinite; }
+@keyframes skel { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } .item { transition: none; } }
+
+/* ── Responsividade (pontos de quebra VBM) ── */
+/* Até 1080 px o menu vira gaveta sob a barra, aberta pelo botão de menu */
+@media (max-width: 1080px) {
+  .topnav-menu-btn { display: inline-flex; }
+  .topnav-menu {
+    position: absolute; top: 100%; bottom: auto; left: 0; right: 0; transform: none; margin: 0; padding: 0.5rem 0.75rem 0.75rem;
+    flex-direction: column; align-items: stretch; gap: 2px;
+    background: var(--menu-drawer); border-bottom: 1px solid var(--menu-line); box-shadow: var(--cyc-shadow); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  .topnav-menu:not(.is-aberto) { display: none; }
+  .topnav-menu-link { min-height: 2.75rem; padding: 0 0.75rem; border-radius: 0.5625rem; font-size: .84rem; }
+  .topnav-menu-link::after { display: none; }
+  .topnav-menu-link[aria-current="page"] { background: var(--menu-hover); }
+  .topnav-menu-link:hover { background: var(--menu-hover); }
+}
+
+@media (max-width: 1440px), (max-height: 820px) {
+  .topnav-menu-link { padding: 0 0.625rem; font-size: .74rem; }
+  .topnav-menu-link::after { bottom: 0.625rem; }
+  .page { padding-top: 0.875rem; gap: 0.875rem; }
+  .hero { padding: 1.25rem 1.375rem; }
+}
+/* Pouca altura (notebook com escala de 125–150%): banner compacto para a fila aparecer */
+@media (max-height: 820px) and (min-width: 721px) {
+  .abertura { gap: 1rem 3rem; padding-top: 1.375rem; padding-bottom: 1rem; }
+  .ab-eyebrow { margin-bottom: 0.625rem; }
+  .ab-nome { font-size: 2.6rem; }
+  .ab-ano { font-size: 7.4rem; }
+  .ab-lead { margin-top: 0.75rem; font-size: .95rem; }
+  .ab-fatos { margin-top: 0.875rem; }
+  .ab-bus { margin-top: 0.75rem; }
+  .indice { padding: 0.75rem 0.5rem 0.375rem; }
+  .indice-item { padding: 0.5rem 0.875rem; }
+  .indice-desc { display: none; }
+  .jornada { padding: 0.625rem 1.125rem 0.75rem; }
+  .jornada-tit { margin-bottom: 0.625rem; }
+  .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
+  .hero-titulo { font-size: 1.6rem; }
+  /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
+  #vistaPainel .p2-topo { padding-bottom: 1.5rem; }
+  #vistaPainel .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
+  #vistaPainel .p2-titulo .ab-ano { font-size: 4.6rem; }
+  #vistaPainel .p2-trilha { --p2-esp: 0.875rem; }
+  .hero-sub { display: none; }
+  .hero-pills { margin-top: 0.5rem; }
+  .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
+  .resumo-tit { margin-bottom: 0.25rem; }
+  .resumo-item { min-height: 1.875rem; padding: 3px 0.5rem; font-size: .74rem; }
+  .resumo-num { font-size: .92rem; }
+  .resumo-sep { margin: 3px 0; }
+  .resumo-alerta { padding: 3px 0.5rem; }
+}
+@media (max-width: 1080px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .resumo { margin-top: 0; }
+}
+@media (max-width: 1080px) {
+  .abertura { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  body.is-inicio { background-attachment: scroll; }
+  body.is-inicio { --ab-veu: linear-gradient(180deg, var(--ab-veu-mob-a, rgba(255,255,255,.94)) 0%, var(--ab-veu-mob-b, rgba(255,255,255,.80)) 100%); }
+  :root[data-theme="dark"] body.is-inicio { --ab-veu-mob-a: rgba(4,21,35,.92); --ab-veu-mob-b: rgba(4,21,35,.80); }
+}
+/* ── T02 Painel do ciclo ──
+   Indicadores, matriz BU × situação (barra de composição = partes de um todo), funil e tempo por nível
+   (ponto = mediana, traço = mínimo–máximo, linha tracejada = limite de dias úteis da RN-14). */
+.p2-corpo { display: flex; flex-direction: column; gap: 1rem; }
+.p2-corpo[hidden] { display: none; }
+/* Topo da T02: título no padrão do Início sobre a foto dos minerais (mesmo véu da abertura) */
+.p2-topo {
+  margin-inline: calc(50% - 50vw); padding: clamp(1.5rem, 4vh, 3rem) calc(50vw - 50%) 2.5rem;
+  background: linear-gradient(180deg, transparent 50%, var(--page)),
+    linear-gradient(90deg, color-mix(in srgb, var(--page) 95%, transparent), color-mix(in srgb, var(--page) 84%, transparent)),
+    var(--ab-foto) center / cover no-repeat;
+}
+/* Título no modelo da abertura: "Ciclo AIP" e, embaixo, o ano em numerais vazados */
+.p2-titulo { margin: 0; display: flex; flex-direction: column; line-height: .9; }
+.p2-titulo .ab-ano { font-size: clamp(4.5rem, 2.5rem + 5vw, 9rem); }
+.p2-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0; order: 1; align-self: center; }
+.p2-pills [hidden] { display: none; }
+/* Pílula informativa (mesmo formato da .pill-wait da vbm-design, em tom neutro) */
+.pill-info { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--flat-bg); color: var(--flat); font: italic 500 .7rem var(--font-ui); }
+/* Faixa de filtro e ações logo abaixo da jornada */
+.p2-filtro { align-items: flex-end; }
+.p2-filtro .dash-acao { order: 2; }
+.p2-filtro .dash-acao:first-of-type { margin-left: auto; }
+
+/* Jornada: linha contínua pelos centros dos anéis, preenchida até hoje */
+/* --p2-esp: distância única entre o anel e o texto de cima e entre o anel e o texto de baixo */
+.p2-trilha { --anel: clamp(6.5rem, 4.5rem + 4vw, 9.5rem); --p2-esp: 1.25rem; --p2-rot: 1.25rem; margin-top: 2rem; }
+.p2-jornada { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.p2-jornada::before, .p2-progresso { content: ''; position: absolute; left: 12.5%; top: calc(var(--p2-rot) + var(--p2-esp) + var(--anel) / 2); height: 3px; border-radius: 3px; }
+.p2-jornada::before { right: 12.5%; background: var(--ab-trilho); }
+.p2-progresso { background: linear-gradient(90deg, var(--cyc-ok), var(--accent-strong)); }
+.p2-hoje { position: absolute; z-index: 2; top: calc(var(--p2-rot) + var(--p2-esp) + var(--anel) / 2 - 2.1rem); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.p2-hoje span { padding: 0.125rem 0.5rem; border-radius: 999px; background: var(--ink-strong); color: var(--page); font: 700 0.64rem var(--font-ui); white-space: nowrap; }
+.p2-hoje::after { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--ink-strong); box-shadow: 0 0 0 0.3rem var(--page); }
+
+.p2-et { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 0.75rem; }
+/* Etapa no topo do anel: "01 - Desdobramento COO" */
+.p2-et-n { margin: 0 0 var(--p2-esp); height: var(--p2-rot); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 0.92rem/1.25rem var(--font-display); color: var(--ink-strong); }
+.p2-et-n b { font-weight: 300; color: var(--accent-strong); }
+.p2-anel { position: relative; width: var(--anel); height: var(--anel); border-radius: 50%; background: var(--page); }
+.p2-et.is-atual .p2-anel { box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--accent-strong) 14%, transparent); }
+.p2-anel svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.p2-anel circle { fill: none; stroke-width: 7; stroke-linecap: round; }
+.p2-anel .trilho { stroke: var(--line); }
+.p2-et.is-feita .v1 { stroke: var(--cyc-ok); }
+.p2-et.is-atual .v1 { stroke: var(--accent-strong); }
+.p2-et.is-futura .v1 { stroke: var(--serie-a); }
+.p2-anel .v2 { stroke: var(--serie-p); }
+.p2-anel-txt { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.p2-anel-txt strong { font: 300 calc(var(--anel) * 0.24)/1 var(--font-display); /* proporcional ao anel: "100%" sempre cabe */ color: var(--ink-strong); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+/* Abaixo do anel: o prazo discreto e, embaixo, o quantitativo */
+.p2-et-data { margin: var(--p2-esp) 0 0; font: 500 0.84rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.p2-et.is-atual .p2-et-data { color: var(--accent-strong); font-weight: 600; }
+.p2-et-det { margin: 0.25rem 0 0; font: 500 0.78rem/1.4 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.p2-et-det b { font-weight: 700; }
+
+.p2-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(min(22rem, 100%), 1fr); gap: 1rem; align-items: start; }
+.p2-coluna { display: flex; flex-direction: column; gap: 1rem; }
+.p2-legenda { margin-left: auto; }
+.p2-legenda .swatch { width: 0.75rem; height: 0.5rem; }
+.p2-tabela-wrap { overflow-x: auto; }
+.p2-tabela { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.p2-tabela th { padding: 0.5rem 0.625rem; text-align: left; font: 600 0.62rem var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); white-space: nowrap; border-bottom: 1px solid var(--line); }
+.p2-tabela td { padding: 0.625rem; border-bottom: 1px solid var(--line); color: var(--text); }
+.p2-tabela .num { text-align: right; }
+.p2-tabela td.num.zero { color: var(--text-faint); }
+.p2-tabela tbody tr:hover td { background: var(--card-hover); }
+.p2-pais td { padding-top: 0.875rem; font: 600 0.66rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-strong); border-bottom: 0; }
+.p2-bu a { font-weight: 600; color: var(--ink-strong); text-decoration: none; }
+.p2-bu a:hover { color: var(--accent-strong); text-decoration: underline; }
+.p2-col-barra { width: 32%; }
+.p2-barra { display: flex; height: 0.625rem; border-radius: 999px; overflow: hidden; background: var(--line); }
+.p2-barra span { display: block; height: 100%; }
+.p2-barra span + span { box-shadow: -1px 0 0 var(--card-bg); }
+.p2-seg-rascunho { background: var(--status-draft); }
+.p2-seg-em_aprovacao { background: var(--status-pending); }
+.p2-seg-em_revisao { background: var(--status-review); }
+.p2-seg-aprovado { background: var(--status-approved); }
+.p2-seg-negado { background: var(--status-rejected); }
+.p2-tabela tfoot td { font-weight: 600; color: var(--ink-strong); border-bottom: 0; border-top: 1.5px solid var(--base-line); }
+.p2-parada-n { display: inline-flex; min-width: 1.5rem; justify-content: center; padding: 0 0.4rem; border-radius: 999px; background: var(--wait-bg); color: var(--wait); font-weight: 700; }
+
+/* Funil: barra pelo total do ciclo, perda entre as etapas em texto */
+.p2-funil { display: flex; flex-direction: column; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.p2-etapa { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) 5.5rem; align-items: center; gap: 0.75rem; }
+.p2-etapa-rot { font: 500 0.78rem var(--font-ui); color: var(--text); }
+.p2-etapa-trilho { height: 1.5rem; border-radius: 0.375rem; background: var(--line); overflow: hidden; }
+.p2-etapa-barra { height: 100%; border-radius: 0.375rem; background: var(--serie-a); }
+.p2-etapa:last-child .p2-etapa-barra { background: var(--status-approved); }
+.p2-etapa-val { text-align: right; font: 600 0.9rem var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.p2-etapa-val small { display: block; font: 400 0.66rem var(--font-ui); color: var(--text-soft); }
+.p2-perda { margin: 0 0 0 calc(9.5rem + 0.75rem); font: 400 0.68rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+
+/* Tempo por nível: escala em dias úteis, mediana, faixa mínimo–máximo e limite */
+.p2-tempo { display: flex; flex-direction: column; gap: 1rem; }
+.p2-nivel-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; margin-bottom: 0.375rem; }
+.p2-nivel-nome { font: 600 0.82rem var(--font-ui); color: var(--ink-strong); }
+.p2-nivel-nome small { font-weight: 400; color: var(--text-soft); }
+.p2-nivel-resumo { font: 400 0.72rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p2-nivel-resumo b { font-weight: 600; color: var(--text); }
+.p2-escala { position: relative; height: 1.75rem; border-radius: 0.375rem; background: var(--line); }
+.p2-faixa { position: absolute; top: 50%; height: 0.375rem; transform: translateY(-50%); border-radius: 999px; background: var(--serie-p); }
+.p2-mediana { position: absolute; top: 50%; width: 0.875rem; height: 0.875rem; transform: translate(-50%, -50%); border-radius: 50%; background: var(--serie-a); box-shadow: 0 0 0 2px var(--card-bg); }
+.p2-limite { position: absolute; top: -0.25rem; bottom: -0.25rem; border-left: 1.5px dashed var(--wait); }
+.p2-eixo { display: flex; justify-content: space-between; margin-top: 0.25rem; font: 400 0.64rem var(--font-ui); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.p2-tempo-leg { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; font-size: 0.7rem; color: var(--text-soft); }
+.p2-tempo-leg li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.p2-leg-ponto { width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--serie-a); }
+.p2-leg-faixa { width: 1rem; height: 0.3rem; border-radius: 999px; background: var(--serie-p); }
+.p2-leg-limite { width: 0; height: 0.75rem; border-left: 1.5px dashed var(--wait); }
+.p2-sem { font-size: 0.74rem; color: var(--text-soft); }
+
+/* Cards parados há mais tempo */
+.p2-parados { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr)); gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.p2-parado { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; padding: 0.75rem 0.875rem; border-radius: 0.875rem; border: 1px solid var(--card-line); background: var(--card-bg); }
+.p2-parado-tit { margin: 0; font: 600 0.84rem var(--font-ui); color: var(--ink-strong); }
+.p2-parado-tit .num { color: var(--accent-strong); }
+.p2-parado-det { margin: 0.125rem 0 0; font-size: 0.72rem; color: var(--text-soft); }
+.p2-parado-dir { display: flex; flex-direction: column; align-items: flex-end; gap: 0.375rem; }
+.p2-vazio { padding: 0.5rem 0; }
+
+@media (max-width: 1280px) {
+  .p2-grade { grid-template-columns: minmax(0, 1fr); }
+  /* Matriz na largura toda; funil e tempo lado a lado abaixo dela */
+  .p2-coluna { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   [RESPONSIVO] Camada adaptativa (skill-responsividade)
+   Aplicação de notebook e desktop (1024px a 4K; celular fora do escopo). Fluido primeiro; breakpoint
+   estrutural só em 1080px (menu em gaveta, banner e abertura em uma coluna). Os CSS copiados das skills vbm-design/setup-dashboards não são
+   editados: o que eles fixam em px é sobrescrito aqui.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* [RESPONSIVO] Fundação — raiz fluida (C1, M1): 16px até 1600px de largura, 24px em 3840px.
+   Tem parcela em rem, então o zoom do navegador continua funcionando (WCAG 1.4.4). */
+html {
+  font-size: clamp(1rem, 0.357vw + 0.643rem, 1.5rem);
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+  overflow-x: clip;
+}
+body { font-size: 0.875rem; overflow-x: clip; min-height: 100vh; min-height: 100svh; }
+img, video, svg, canvas, iframe { max-width: 100%; }
+.page { max-width: 92.5rem; }
+.abertura { max-width: 97.5rem; }
+p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
+
+/* [RESPONSIVO] Barra superior — altura fluida (token --barra) no lugar dos 64/56px fixos */
+:root { --barra: clamp(3.5rem, 2.6rem + 1.1vw, 5.5rem); }
+.topnav { height: var(--barra); padding-inline: max(clamp(1rem, 2.5vw, 2.5rem), env(safe-area-inset-left, 0px)) max(clamp(1rem, 2.5vw, 2.5rem), env(safe-area-inset-right, 0px)); }
+.topnav-logo svg { height: clamp(1.375rem, 1rem + 0.6vw, 2.5rem); }
+.topnav-menu-link { font-size: clamp(0.74rem, 0.68rem + 0.12vw, 0.8rem); padding-inline: clamp(0.5rem, 0.4rem + 0.3vw, 0.8rem); }
+.settings-btn { width: 2.25rem; height: 2.25rem; }
+.settings-btn svg { width: 1.06rem; height: 1.06rem; }
+.unit-pop { width: min(22.5rem, calc(100vw - 2rem)); }
+
+/* [RESPONSIVO] Grids — mínimos com min(…, 100%), nunca estouram abaixo do mínimo */
+.hero { grid-template-columns: minmax(0, 1fr) minmax(min(17.5rem, 100%), 26.25rem); }
+.abertura { grid-template-columns: minmax(0, 1.15fr) minmax(min(22.5rem, 100%), .85fr); }
+@media (max-width: 1080px) {
+  .hero, .abertura { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* [RESPONSIVO] Cartão da fila — o container manda (A5). Funciona igual em qualquer coluna, sem saber da viewport. */
+.fila { container-type: inline-size; container-name: fila; }
+@container fila (max-width: 60rem) {
+  .item { grid-template-columns: 2.5rem minmax(0, 1fr) auto; }
+  .item-sit, .item-tempo { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .item-acao { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
+}
+@container fila (max-width: 36rem) {
+  .item { grid-template-columns: 2.25rem minmax(0, 1fr); }
+  .item-ico { width: 2.25rem; height: 2.25rem; }
+  .item-meta { white-space: normal; }
+  .item-sit, .item-tempo { grid-column: 1 / -1; }
+  .item-acao { grid-column: 1 / -1; grid-row: auto; }
+  .item-acao .btn { width: 100%; }
+}
+/* Cartão estreito (≈ 280–320px): o ícone é decorativo e sai; o texto ganha a largura */
+/* [RESPONSIVO] Vidro com degradação (A3): sem backdrop-filter ou com transparência reduzida, fundo opaco */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topnav, .topnav-menu { background: var(--page); }
+  .indice, .jornada { background: var(--card-bg); }
+  .resumo { background: var(--hero-bg); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .topnav, .topnav-menu { background: var(--page); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .indice, .jornada { background: var(--card-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .resumo { background: var(--hero-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+/* [RESPONSIVO] Dobrável aberto: as duas colunas da abertura ficam uma de cada lado da dobra */
+
+</style>
+</head>
+<body>
+<!-- ═══ Setup Dashboards: barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+     Trocar AIP Goals pelo nome do dashboard (ex.: "COO Business Units Dashboard").
+     Logo: "../" volta ao Hub; ajuste se o dashboard morar em outro lugar. -->
+<nav class="topnav" id="topnav">
+  <a href="/" class="topnav-logo" title="Menu" data-i18n-title="sd.menu">
+    <svg role="img" aria-label="Vale" xmlns="http://www.w3.org/2000/svg" width="71" height="28" viewBox="0 0 71 28" fill="none">
+  <mask id="sd-vale-mask" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="71" height="28">
+    <path d="M71 0.15918H0V27.841H71V0.15918Z" fill="white"></path>
+  </mask>
+  <g mask="url(#sd-vale-mask)">
+    <path d="M25.3432 10.8778C27.9075 11.2795 29.8701 10.8103 31.6461 9.63759L18.1989 27.841L0 3.04279C0 3.04279 2.97274 0.15918 7.9218 0.15918C15.1858 0.15918 19.6038 9.97757 25.3432 10.8778Z" fill="white"></path>
+    <path d="M32.8187 1.31152C28.6427 1.31152 25.9127 5.23711 20.9658 6.58897C22.7404 8.36452 25.1944 9.78319 27.2939 9.78319C30.2962 9.78319 32.2451 8.82566 33.4454 7.20799L36.7805 2.74782C36.7805 2.74782 35.0825 1.31226 32.8187 1.31226" fill="white"></path>
+    <path d="M45.7822 14.2412H43.9674L41.6055 20.7376C41.4695 21.1136 41.3874 21.3632 41.3874 21.3632H41.36C41.36 21.3632 39.5039 16.6057 38.5487 14.2412H36.6377L39.9946 22.6013C40.1861 23.0881 40.7992 23.8958 42.0012 23.8958L45.7822 14.2419V14.2412Z" fill="white"></path>
+    <path d="M63.1625 23.7556V22.2532H59.006V14.2412H57.2998V23.7556H63.1625Z" fill="white"></path>
+    <path d="M70.7932 23.7556V22.2532H66.8469V19.5275H70.1813V18.0801H66.8469V15.7429H69.1179C70.9021 15.7429 70.9999 14.2412 70.9999 14.2412H65.1416V23.7556H70.7938H70.7932Z" fill="white"></path>
+    <path d="M51.907 19.8337H49.464L50.6785 16.6204L50.6924 16.5646L51.907 19.8337ZM55.3055 23.7563L51.593 14.2412H49.9688L46.1064 23.7563H47.9291L48.8631 21.3361H52.4668L53.3948 23.7563H55.3055Z" fill="white"></path>
+  </g>
+</svg>
+  </a>
+  <h1 class="sr-only">AIP Goals</h1>
+  <nav class="topnav-menu" id="topMenu" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
+    <a class="topnav-menu-link" href="#inicio" data-tela="inicio" data-perfis="todos"><span data-i18n="nav.inicio">Início</span></a>
+    <a class="topnav-menu-link" href="#pendencias" data-tela="pendencias" data-perfis="todos"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="topnav-menu-cont" id="navCont" hidden></span></a>
+    <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
+    <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
+    <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
+    <a class="topnav-menu-link" href="#acoes" data-tela="acoes" data-perfis="todos"><span data-i18n="nav.acoes">Ações</span></a>
+    <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.config">Configuração</span></a>
+  </nav>
+  <div class="topnav-actions">
+    <button class="topnav-menu-btn" id="topMenuBtn" type="button" aria-expanded="false" aria-controls="topMenu" aria-label="Abrir menu" title="Menu" data-i18n-aria="nav.abrir" data-i18n-title="nav.menuCurto">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+    <button class="settings-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsPanel" title="Configurações" aria-label="Configurações" data-i18n-title="sd.configuracoes" data-i18n-aria="sd.configuracoes">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.5" />
+        <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28V17.4a1.7 1.7 0 0 1-3.4 0v-.08a1.4 1.4 0 0 0-.91-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85H2.6a1.7 1.7 0 0 1 0-3.4h.08a1.4 1.4 0 0 0 1.28-.91 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.06a1.4 1.4 0 0 0 .85-1.28V2.6a1.7 1.7 0 0 1 3.4 0v.08a1.4 1.4 0 0 0 .85 1.28h.06a1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.06a1.4 1.4 0 0 0 1.28.85h.08a1.7 1.7 0 0 1 0 3.4h-.08a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <div class="topnav-user" id="topnavUser" hidden>
+      <div class="topnav-user-text">
+        <span class="topnav-user-name" id="topnavUserName"></span>
+        <span class="topnav-user-role" id="topnavUserRole"></span>
+      </div>
+      <div class="topnav-user-avatar" id="topnavUserAvatar" aria-hidden="true"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="settings-backdrop" id="settingsBackdrop"></div>
+<aside class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" data-i18n-aria="sd.configuracoes">
+  <div class="settings-panel-head">
+    <h2 data-i18n="sd.configuracoes">Configurações</h2>
+    <button class="settings-close" id="settingsClose" type="button" aria-label="Fechar" data-i18n-aria="sd.fechar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+  <div class="settings-panel-body">
+    <section class="settings-section">
+      <span class="settings-section-title" data-i18n="sd.tema">Tema</span>
+      <div class="theme-toggle" role="group" aria-label="Tema" data-i18n-aria="sd.tema">
+        <button class="theme-toggle-btn" id="btnWhite" type="button" data-i18n="sd.claro">Claro</button>
+        <button class="theme-toggle-btn" id="btnBusiness" type="button" data-i18n="sd.escuro">Escuro</button>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.idioma">Idioma</span>
+        <span class="settings-info" title="Idioma da interface" data-i18n-title="sd.idiomaInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="langSelect" class="settings-select" aria-label="Idioma" data-i18n-aria="sd.idioma">
+          <option value="pt-BR">Português (Brasil)</option>
+          <option value="en">English</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+    <div class="settings-divider"></div>
+    <section class="settings-section">
+      <span class="settings-section-title">
+        <span data-i18n="sd.numero">Formato numérico</span>
+        <span class="settings-info" title="Separador decimal e de milhar dos gráficos" data-i18n-title="sd.numeroInfo">i</span>
+      </span>
+      <div class="settings-select-wrap">
+        <select id="numSelect" class="settings-select" aria-label="Formato numérico" data-i18n-aria="sd.numero">
+          <option value="pt-BR" data-i18n="sd.numeroBR">Brasil — 1.234,56</option>
+          <option value="en-CA" data-i18n="sd.numeroCA">Canadá — 1,234.56</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" class="settings-select-caret" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </section>
+  </div>
+</aside>
+<!-- ═══ fim Setup Dashboards ═══ -->
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-8M21 20H3"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.8-6.3L3.5 8.3"/><path d="M3.5 3.5v4.8h4.8"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-tasks" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-decide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.2l2.8 2.8L16 9.5"/></symbol>
+  <symbol id="i-comment" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 0 1-12.3 7.6L3.5 20.5l1-4.4A8.5 8.5 0 1 1 20.5 12z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11.5L15 8l1.5 4H5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5L21.5 20h-19z"/><path d="M12 10v4.5M12 17.4v.1"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5l3 3 5.9-5.9a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.4-.6-.6-2.4z"/></symbol>
+  <symbol id="i-st-rascunho" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-st-em_aprovacao" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/></symbol>
+  <symbol id="i-st-em_revisao" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="i-st-aprovado" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-st-negado" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
+
+<main class="page" id="main">
+
+  <!-- ═══ Início · abertura do AIP Goals ═══ -->
+  <section class="vista" id="vistaInicio" aria-labelledby="titInicio">
+    <div class="abertura">
+
+      <div class="abertura-texto">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="ab.eyebrow">Planejamento anual</span></p>
+        <h2 class="ab-titulo" id="titInicio">
+          <span class="ab-nome">AIP Goals</span>
+          <span class="ab-ano" id="abAno">2027</span>
+        </h2>
+        <p class="ab-lead" data-i18n="ab.lead">Planejamento das metas de AIP 2027 das Business Units de VBM no Brasil e no Canadá.</p>
+        <dl class="ab-fatos">
+          <div class="ab-fato"><dt data-i18n="ab.fEtapa">Etapa atual</dt><dd id="fEtapa">—</dd><dd class="ab-fato-sub" id="fEtapaPrazo"></dd></div>
+          <div class="ab-fato"><dt data-i18n="ab.fOficial">Goal Cards oficiais</dt><dd id="fOficial">—</dd><dd class="ab-fato-sub" data-i18n="ab.fOficialSub">versão aprovada de cada meta</dd></div>
+          <div class="ab-fato"><dt>Business Units</dt><dd id="fBus">—</dd><dd class="ab-fato-sub" id="fBusSub"></dd></div>
+        </dl>
+        <div class="ab-bus" id="abBus" aria-label="Business Units do ciclo" data-i18n-aria="ab.busAria"></div>
+      </div>
+
+      <nav class="indice" aria-labelledby="titIndice">
+        <p class="indice-cab" id="titIndice" data-i18n="ab.indice">Acessar</p>
+        <ol class="indice-lista">
+        <li data-perfis="todos"><a class="indice-item" href="#pendencias">
+          <span class="indice-n">01</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.pendencias">Minhas pendências</span></span><span class="indice-desc"><span data-i18n="ini.dPend">Goal Cards a preencher ou decidir, comentários e ações sob sua responsabilidade.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li hidden data-perfis="pci_coo admin"><a class="indice-item" href="#painel">
+          <span class="indice-n">02</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.painel">Painel do ciclo</span></span><span class="indice-desc"><span data-i18n="ini.dPainel">Situação dos Goal Cards por BU e tempo em cada nível de aprovação.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#metas">
+          <span class="indice-n">03</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.metas">Metas da BU</span></span><span class="indice-desc"><span data-i18n="ini.dMetas">Metas do desdobramento com peso, tipo, status e versão.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#action-log">
+          <span class="indice-n">04</span>
+          <span class="indice-txt"><span class="indice-tit">Action Log</span><span class="indice-desc"><span data-i18n="ini.dLog">Registro de submissões, decisões e comentários do ciclo.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li data-perfis="todos"><a class="indice-item" href="#acoes">
+          <span class="indice-n">05</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.acoes">Ações</span></span><span class="indice-desc"><span data-i18n="ini.dAcoes">Ações atribuídas no ciclo, com responsável e prazo.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        <li hidden data-perfis="admin"><a class="indice-item" href="#configuracao">
+          <span class="indice-n">06</span>
+          <span class="indice-txt"><span class="indice-tit"><span data-i18n="nav.config">Configuração</span></span><span class="indice-desc"><span data-i18n="ini.dConfig">Janelas do ciclo, BUs, pessoas, metas, pesos e rota de aprovação.</span></span></span>
+          <span class="indice-ir"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+        </a></li>
+        </ol>
+      </nav>
+
+      <!-- Jornada do ciclo: as quatro janelas, com a etapa aberta hoje marcada (texto + ponto, nunca só cor) -->
+      <section class="jornada" aria-labelledby="titJornada">
+        <h3 class="jornada-tit" id="titJornada"><span data-i18n="ab.jornada">Jornada do ciclo</span><span id="jornadaCiclo"></span></h3>
+        <ol class="jornada-lista" id="jornada"></ol>
+      </section>
+
+    </div>
+  </section>
+
+  <!-- ═══ T01 · Minhas pendências ═══ -->
+  <section class="vista" id="vistaPendencias" hidden aria-labelledby="titPend">
+
+    <header class="hero">
+      <div class="hero-texto">
+        <p class="hero-eyebrow"><span>AIP Goals</span><span id="heroCiclo"></span></p>
+        <h2 class="hero-titulo" id="titPend" data-i18n="t01.titulo">Minhas pendências</h2>
+        <p class="hero-sub" data-i18n="t01.sub">Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.</p>
+        <div class="hero-pills">
+          <span class="hero-pill" id="pillExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+          <span class="hero-pill is-wait" id="pillDesatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span>
+        </div>
+      </div>
+
+      <!-- Resumo em vidro: cada linha filtra a fila (aria-pressed) -->
+      <div class="resumo">
+        <p class="resumo-tit" id="titResumo" data-i18n="t01.resumo">Resumo da fila</p>
+        <div class="resumo-lista" id="resumo" role="group" aria-labelledby="titResumo">
+          <button type="button" class="resumo-item" data-tipo="preencher" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-pen"/></svg><span data-i18n="tipo.preencher.plural">A preencher</span><span class="resumo-num" data-cont="preencher">—</span></button>
+          <button type="button" class="resumo-item" data-tipo="decidir" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-decide"/></svg><span data-i18n="tipo.decidir.plural">Decisões</span><span class="resumo-num" data-cont="decidir">—</span></button>
+          <button type="button" class="resumo-item" data-tipo="comentario" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-comment"/></svg><span data-i18n="tipo.comentario.plural">Comentários sem resposta</span><span class="resumo-num" data-cont="comentario">—</span></button>
+          <button type="button" class="resumo-item" data-tipo="acao" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span data-i18n="tipo.acao.plural">Ações atribuídas</span><span class="resumo-num" data-cont="acao">—</span></button>
+          <div class="resumo-sep" aria-hidden="true"></div>
+          <div class="resumo-alerta"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span><span data-i18n="t01.alertaTit">Paradas ou atrasadas</span><small id="alertaRodape"></small></span><span class="resumo-num" data-cont="alerta">—</span></div>
+        </div>
+      </div>
+
+      <div class="hero-acoes">
+        <button type="button" class="hero-acao" id="btnAtualizar" aria-label="Atualizar lista" title="Atualizar lista" data-i18n-aria="t01.atualizar" data-i18n-title="t01.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="hero-acao" id="btnTelaCheia" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <!-- Filtros (padrão COO): rótulo em itálico em cima; estado na URL -->
+    <div class="filters">
+      <div class="filter">
+        <span class="filter-label" id="lblUnid">Business Unit:</span>
+        <div class="unit" id="unit">
+          <button type="button" class="unit-trigger" id="unitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="unitPop" aria-labelledby="lblUnid unitTrigger">
+            <span class="unit-pais" id="unitPais"></span><span class="unit-sep" id="unitSep">›</span><span class="unit-site" id="unitSite"></span>
+            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
+          <div class="unit-pop" id="unitPop" hidden>
+            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="unitPaises"></div></div>
+            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="unitBus"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter">
+        <span class="filter-label" id="lblOrd" data-i18n="f.ordenar">Ordenar por:</span>
+        <div class="seg" role="group" aria-labelledby="lblOrd" id="segOrd">
+          <button type="button" data-ord="urgencia" aria-pressed="true" data-i18n="f.urgencia">Urgência</button>
+          <button type="button" data-ord="prazo" aria-pressed="false" data-i18n="f.prazo">Prazo</button>
+          <button type="button" data-ord="idade" aria-pressed="false" data-i18n="f.idade">Idade</button>
+        </div>
+      </div>
+      <div class="filter">
+        <span class="filter-label" id="lblSo" data-i18n="f.soAlerta">Só paradas ou atrasadas:</span>
+        <button type="button" class="switch" id="swSo" role="switch" aria-checked="false" aria-labelledby="lblSo">
+          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+        </button>
+      </div>
+    </div>
+
+    <section class="secao" aria-labelledby="titFila">
+      <div class="secao-head">
+        <span class="secao-ico" aria-hidden="true"><svg class="ico"><use href="#i-inbox"/></svg></span>
+        <h3 class="secao-tit" id="titFila" data-i18n="t01.fila">Fila de pendências</h3>
+        <span class="secao-cont" id="filaCont" hidden></span>
+        <span class="secao-total" id="listaTotal" aria-live="polite"></span>
+      </div>
+
+      <ul class="fila" id="fila" aria-labelledby="titFila"></ul>
+
+      <div class="estado" id="estVazio" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-decide"/></svg>
+        <p class="estado-tit" data-i18n="est.vazioTit">Nenhuma pendência</p>
+        <p class="estado-txt" data-i18n="est.vazioTxt">Você está em dia neste ciclo. Novas pendências aparecem aqui e chegam por e-mail.</p>
+      </div>
+      <div class="estado" id="estFiltro" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg>
+        <p class="estado-tit" data-i18n="est.filtroTit">Nada com estes filtros</p>
+        <button type="button" class="btn btn-sec" id="btnLimpar" data-i18n="est.limpar">Limpar filtros</button>
+      </div>
+      <div class="estado estado-erro" id="estErro" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+        <p class="estado-tit" data-i18n="est.erroTit">Não foi possível carregar as pendências</p>
+        <p class="estado-txt" id="estErroTxt"></p>
+        <button type="button" class="btn" id="btnTentar" data-i18n="est.tentar">Tentar de novo</button>
+      </div>
+      <div class="estado" id="estSemAcesso" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+        <p class="estado-tit" data-i18n="est.semAcessoTit">Sem acesso ao AIP Goals</p>
+        <p class="estado-txt" data-i18n="est.semAcessoTxt">Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&amp;CI).</p>
+      </div>
+
+      <p class="updated" id="atualizado"></p>
+    </section>
+  </section>
+
+  <!-- ═══ T02 · Painel do ciclo (P&CI/COO e administrador) ═══ -->
+  <section class="vista" id="vistaPainel" hidden aria-labelledby="titPainel">
+
+    <!-- Topo da tela: título no padrão do Início e a jornada do ciclo com um anel de progresso por etapa -->
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="p2.eyebrow">Planejamento anual</span></p>
+        <h2 class="p2-titulo" id="titPainel"><span class="ab-nome" data-i18n="p2.titulo">Ciclo AIP</span> <span class="ab-ano" id="p2Ano">2027</span></h2>
+      </div>
+      <div class="p2-trilha">
+        <ol class="p2-jornada" id="p2Fases" aria-label="Jornada do ciclo" data-i18n-aria="ab.jornada"></ol>
+      </div>
+    </header>
+
+    <div class="filters p2-filtro">
+      <p class="p2-pills"><span class="pill-info" id="p2Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+            <span class="pill-wait" id="p2Desatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span></p>
+          <div class="filter">
+        <span class="filter-label" id="p2LblUnid">Business Unit:</span>
+        <div class="unit" id="p2Unit">
+          <button type="button" class="unit-trigger" id="p2UnitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="p2UnitPop" aria-labelledby="p2LblUnid p2UnitTrigger">
+            <span class="unit-pais" id="p2UnitPais"></span><span class="unit-sep" id="p2UnitSep">›</span><span class="unit-site" id="p2UnitSite"></span>
+            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
+          <div class="unit-pop" id="p2UnitPop" hidden>
+            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="p2Paises"></div></div>
+            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="p2Bus"></div></div>
+          </div>
+        </div>
+      </div>
+          <button type="button" class="dash-acao" id="p2Atualizar" aria-label="Atualizar painel" title="Atualizar painel" data-i18n-aria="p2.atualizar" data-i18n-title="p2.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+          <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+        </div>
+
+    <div class="p2-corpo" id="p2Corpo">
+      <div class="p2-grade">
+        <section class="secao p2-matriz" aria-labelledby="p2TitMatriz">
+          <div class="secao-head">
+            <h3 class="secao-tit" id="p2TitMatriz" data-i18n="p2.matriz">Situação por Business Unit</h3>
+            <ul class="legend p2-legenda" id="p2Legenda"></ul>
+          </div>
+          <div class="p2-tabela-wrap">
+            <table class="p2-tabela">
+              <caption class="sr-only" data-i18n="p2.matrizCap">Goal Cards por Business Unit e situação</caption>
+              <thead><tr>
+                <th scope="col">BU</th>
+                <th scope="col" class="p2-col-barra"><span data-i18n="p2.composicao">Composição</span></th>
+                <th scope="col" class="num" data-i18n="est.rascunho">Rascunho</th>
+                <th scope="col" class="num" data-i18n="est.em_aprovacao">Em aprovação</th>
+                <th scope="col" class="num" data-i18n="est.em_revisao">Em revisão</th>
+                <th scope="col" class="num" data-i18n="est.aprovado">Aprovado</th>
+                <th scope="col" class="num" data-i18n="est.negado">Negado</th>
+                <th scope="col" class="num">Total</th>
+                <th scope="col" class="num" data-i18n="chip.paradaPl">Paradas</th>
+              </tr></thead>
+              <tbody id="p2Linhas"></tbody>
+              <tfoot id="p2Rodape"></tfoot>
+            </table>
+          </div>
+        </section>
+
+        <div class="p2-coluna">
+          <section class="secao" aria-labelledby="p2TitFunil">
+            <div class="secao-head"><h3 class="secao-tit" id="p2TitFunil" data-i18n="p2.funil">Funil do ciclo</h3></div>
+            <ol class="p2-funil" id="p2Funil" role="img"></ol>
+          </section>
+          <section class="secao" aria-labelledby="p2TitTempo">
+            <div class="secao-head">
+              <h3 class="secao-tit" id="p2TitTempo" data-i18n="p2.tempo">Tempo em aprovação por nível</h3>
+              <span class="secao-total" id="p2TempoNota"></span>
+            </div>
+            <div class="p2-tempo" id="p2Tempo" role="img"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="secao" aria-labelledby="p2TitParados">
+        <div class="secao-head">
+          <h3 class="secao-tit" id="p2TitParados" data-i18n="p2.parados">Cards parados há mais tempo</h3>
+          <span class="secao-cont" id="p2ParadosCont" hidden></span>
+        </div>
+        <ul class="p2-parados" id="p2Parados"></ul>
+        <p class="estado-txt p2-vazio" id="p2ParadosVazio" hidden data-i18n="p2.semParados">Nenhum card parado acima do limite.</p>
+        <p class="updated" id="p2Atualizado"></p>
+      </section>
+    </div>
+
+    <div class="estado estado-erro" id="p2Erro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="p2.erroTit">Não foi possível carregar o painel</p>
+      <p class="estado-txt" id="p2ErroTxt"></p>
+      <button type="button" class="btn" id="p2Tentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <div class="estado" id="p2SemAcesso" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
+      <p class="estado-tit" data-i18n="p2.semAcessoTit">Painel restrito ao grupo P&amp;CI/COO</p>
+      <p class="estado-txt" data-i18n="p2.semAcessoTxt">O Painel do ciclo é visível para o grupo de aprovação final e para o administrador do ciclo.</p>
+    </div>
+  </section>
+
+  <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
+  <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
+    <div class="secao">
+      <div class="secao-head">
+        <span class="secao-ico" aria-hidden="true"><svg class="ico"><use href="#i-tool"/></svg></span>
+        <h2 class="secao-tit" id="titConstr"></h2>
+      </div>
+      <div class="estado">
+        <p class="estado-tit" data-i18n="est.construcaoTit">Tela em construção</p>
+        <p class="estado-txt" data-i18n="est.construcaoTxt">Esta tela faz parte do MVP e ainda não foi publicada.</p>
+        <a class="btn btn-sec" href="#inicio" data-i18n="est.voltar">Voltar para o início</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ═══ Setup Dashboards — barra superior + painel de Configurações (padrão VBM Performance Studio / Kaizen) ═══
+   Colar num <script> logo depois da marcação (setup-dashboards.html), ANTES do script do dashboard.
+   Configuração opcional, declarada antes deste script:
+     window.VBM_SETUP = {
+       idiomaPadrao: 'pt-BR' | 'en',          // sem escolha salva; padrão 'pt-BR'
+       numeroPadrao: 'pt-BR' | 'en-CA',       // sem escolha salva; padrão: pelo idioma do navegador
+       urlUsuario: '/api/me'                  // { nome, email, cargo } — rota do Portal (Kaizen)
+     };
+   Preferências por pessoa no navegador, com as MESMAS chaves do Kaizen e do Studio,
+   para valerem em todas as aplicações do Portal: vdt-theme, vdt-lang, vdt-num.
+   API para o dashboard (window.VBMSetup):
+     t(chave, vars)         texto no idioma atual ('Olá {nome}' + { nome: 'Ana' })
+     registrar(dic)         { 'pt-BR': { chave: texto }, en: { … } } — textos do dashboard
+     traduzir(raiz?)        aplica data-i18n / -aria / -title / -ph em raiz (padrão: document)
+     fmt(valor, casas)      número no formato escolhido (Brasil 1.234,56 · Canadá 1,234.56)
+     dataHora(data)         data e hora no idioma escolhido
+     on('tema'|'idioma'|'numero', fn)   redesenhar o que o JS monta
+     tema / idioma / numero (leitura) */
+window.VBMSetup = (function () {
+  'use strict';
+  var CFG = window.VBM_SETUP || {};
+  var CHAVES = { tema: 'vdt-theme', idioma: 'vdt-lang', numero: 'vdt-num' };
+  var IDIOMAS = ['pt-BR', 'en'], NUMEROS = ['pt-BR', 'en-CA'];
+  var DIC = {
+    'pt-BR': { 'sd.menu': 'Menu', 'sd.configuracoes': 'Configurações', 'sd.fechar': 'Fechar', 'sd.tema': 'Tema', 'sd.claro': 'Claro', 'sd.escuro': 'Escuro',
+      'sd.idioma': 'Idioma', 'sd.idiomaInfo': 'Idioma da interface', 'sd.numero': 'Formato numérico', 'sd.numeroInfo': 'Separador decimal e de milhar dos gráficos',
+      'sd.numeroBR': 'Brasil — 1.234,56', 'sd.numeroCA': 'Canadá — 1,234.56' },
+    en: { 'sd.menu': 'Menu', 'sd.configuracoes': 'Settings', 'sd.fechar': 'Close', 'sd.tema': 'Theme', 'sd.claro': 'Light', 'sd.escuro': 'Dark',
+      'sd.idioma': 'Language', 'sd.idiomaInfo': 'Interface language', 'sd.numero': 'Number format', 'sd.numeroInfo': 'Decimal and thousands separators in charts',
+      'sd.numeroBR': 'Brazil — 1.234,56', 'sd.numeroCA': 'Canada — 1,234.56' }
+  };
+  var ouvintes = { tema: [], idioma: [], numero: [] };
+  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* só nesta sessão */ } }
+  function avisar(evt) { ouvintes[evt].forEach(function (fn) { try { fn(estado[evt]); } catch (e) { console.error('[setup-dashboards]', e); } }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  var estado = {
+    tema: ler(CHAVES.tema) === 'dark' ? 'dark' : 'light',
+    idioma: IDIOMAS.indexOf(ler(CHAVES.idioma)) >= 0 ? ler(CHAVES.idioma) : (IDIOMAS.indexOf(CFG.idiomaPadrao) >= 0 ? CFG.idiomaPadrao : 'pt-BR'),
+    numero: NUMEROS.indexOf(ler(CHAVES.numero)) >= 0 ? ler(CHAVES.numero)
+      : NUMEROS.indexOf(CFG.numeroPadrao) >= 0 ? CFG.numeroPadrao : (/^en|^fr/i.test(navigator.language || '') ? 'en-CA' : 'pt-BR')
+  };
+
+  function t(chave, vars) {
+    var s = (DIC[estado.idioma] || {})[chave];
+    if (s == null) s = DIC['pt-BR'][chave];
+    if (s == null) return chave;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : s;
+  }
+  function registrar(dic) {
+    Object.keys(dic || {}).forEach(function (l) { DIC[l] = DIC[l] || {}; for (var k in dic[l]) DIC[l][k] = dic[l][k]; });
+  }
+  function traduzir(raiz) {
+    raiz = raiz || document;
+    raiz.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    [['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-ph', 'placeholder']].forEach(function (par) {
+      raiz.querySelectorAll('[' + par[0] + ']').forEach(function (el) { el.setAttribute(par[1], t(el.getAttribute(par[0]))); });
+    });
+  }
+  function fmt(v, casas) {
+    return Number(v).toLocaleString(estado.numero, { minimumFractionDigits: casas, maximumFractionDigits: casas }).replace('-', '−');
+  }
+  function dataHora(d) {
+    var l = estado.idioma === 'en' ? 'en-US' : 'pt-BR';
+    return d.toLocaleDateString(l) + ' ' + d.toLocaleTimeString(l);
+  }
+
+  // ── Tema: data-bg (barra e painel) + data-theme (tokens do dashboard) ──
+  function aplicarTema(tema, salvar) {
+    estado.tema = tema === 'dark' ? 'dark' : 'light';
+    var html = document.documentElement;
+    html.setAttribute('data-bg', estado.tema);
+    html.setAttribute('data-theme', estado.tema);
+    if ($('btnWhite')) $('btnWhite').classList.toggle('active', estado.tema === 'light');
+    if ($('btnBusiness')) $('btnBusiness').classList.toggle('active', estado.tema === 'dark');
+    if (salvar) { gravar(CHAVES.tema, estado.tema); avisar('tema'); }
+  }
+  function aplicarIdioma(l, salvar) {
+    estado.idioma = IDIOMAS.indexOf(l) >= 0 ? l : 'pt-BR';
+    document.documentElement.lang = estado.idioma;
+    if ($('langSelect')) $('langSelect').value = estado.idioma;
+    traduzir();
+    if (salvar) { gravar(CHAVES.idioma, estado.idioma); avisar('idioma'); }
+  }
+  function aplicarNumero(n, salvar) {
+    estado.numero = NUMEROS.indexOf(n) >= 0 ? n : 'pt-BR';
+    if ($('numSelect')) $('numSelect').value = estado.numero;
+    if (salvar) { gravar(CHAVES.numero, estado.numero); avisar('numero'); }
+  }
+
+  // ── Painel de Configurações (engrenagem) ──
+  var btn = $('settingsBtn'), painel = $('settingsPanel'), fundo = $('settingsBackdrop');
+  function abrir(sim) {
+    if (!painel) return;
+    painel.classList.toggle('open', sim); fundo.classList.toggle('open', sim);
+    btn.setAttribute('aria-expanded', String(sim)); painel.setAttribute('aria-hidden', String(!sim));
+    if (sim) { var f = painel.querySelector('.theme-toggle-btn.active') || painel.querySelector('button'); if (f) f.focus(); } else btn.focus();
+  }
+  if (btn && painel && fundo) {
+    btn.addEventListener('click', function () { abrir(!painel.classList.contains('open')); });
+    $('settingsClose').addEventListener('click', function () { abrir(false); });
+    fundo.addEventListener('click', function () { abrir(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && painel.classList.contains('open')) abrir(false); });
+    $('btnWhite').addEventListener('click', function () { aplicarTema('light', true); });
+    $('btnBusiness').addEventListener('click', function () { aplicarTema('dark', true); });
+    $('langSelect').addEventListener('change', function (e) { aplicarIdioma(e.target.value, true); });
+    $('numSelect').addEventListener('change', function (e) { aplicarNumero(e.target.value, true); });
+  }
+
+  // ── Tela cheia: html.is-fs (a barra superior sai de cena pelo CSS) ──
+  document.addEventListener('fullscreenchange', function () {
+    document.documentElement.classList.toggle('is-fs', !!document.fullscreenElement);
+    if (document.fullscreenElement) abrir(false);
+  });
+
+  // ── Usuário logado: nome, cargo e iniciais (rota do Portal) ──
+  fetch(CFG.urlUsuario || '/api/me', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (me) {
+      if (!me || !$('topnavUser')) return;
+      var nome = String(me.nome || me.email || '').trim();
+      if (!nome) return;
+      var partes = nome.split(/\s+/);
+      $('topnavUserName').textContent = nome;
+      $('topnavUserRole').textContent = me.cargo || '';
+      $('topnavUserAvatar').textContent = ((partes[0] || '')[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+      $('topnavUserAvatar').title = nome;
+      $('topnavUser').hidden = false;
+    })
+    .catch(function () { /* sem a rota (ex.: fora do Portal): a barra fica sem o usuário */ });
+
+  aplicarTema(estado.tema, false);
+  aplicarNumero(estado.numero, false);
+  aplicarIdioma(estado.idioma, false);
+
+  return {
+    t: t, registrar: registrar, traduzir: traduzir, fmt: fmt, dataHora: dataHora,
+    on: function (evt, fn) { if (ouvintes[evt]) ouvintes[evt].push(fn); },
+    get tema() { return estado.tema; }, get idioma() { return estado.idioma; }, get numero() { return estado.numero; }
+  };
+})();
+/* ═══ fim Setup Dashboards ═══ */
+
+</script>
+<script>
+/* ═══ AIP Goals — T01 Minhas pendências ═══
+   Dados: GET api/pendencias (aip-goals-api.js). As regras (idade, parada, atrasada,
+   recorte por BU) vêm prontas do servidor; a tela só exibe e filtra.
+   Filtros na URL (?tipo=&pais=&bu=&ord=&so=1): o Voltar do navegador volta com o mesmo filtro.
+   Vistas pelo hash (#pendencias, #metas, …), como as outras telas do Portal. */
+(function () {
+  'use strict';
+  var S = window.VBMSetup;
+  var $ = function (id) { return document.getElementById(id); };
+  var TIMEOUT_MS = 75000;
+  var TIPOS = ['preencher', 'decidir', 'comentario', 'acao'];
+  var ORDENS = ['urgencia', 'prazo', 'idade'];
+
+  S.registrar({
+    'pt-BR': {
+      'p2.linha': 'Linha do tempo do ciclo', 'p2.hoje': 'Hoje · {d}',
+      'p2.linhaResumo': '{e} em andamento — {n} dias úteis para o fim da janela e {o} até a publicação dos Goal Cards oficiais.',
+      'p2.ph.concluida': 'Concluída', 'p2.ph.proxima': 'Próxima', 'p2.ph.restam': '{n} dias úteis restantes', 'p2.ph.resta1': '1 dia útil restante',
+      'p2.ph.desdobramentoRot': 'metas', 'p2.ph.desdobramentoDet': 'Metas e pesos cadastrados para {b} Business Units',
+      'p2.ph.propostaRot': 'submetidos', 'p2.ph.propostaDet': '{s} de {t} Goal Cards submetidos<br>{r} em rascunho · {v} devolvidos para ajuste', 'p2.ph.propostaDet1': '{s} de {t} Goal Cards submetidos<br>{r} em rascunho · {v} devolvido para ajuste',
+      'p2.ph.calibracaoRot': 'em aprovação', 'p2.ph.calibracaoDet': '{a} com o Diretor da BU · {b} com P&CI/COO',
+      'p2.ph.paradas': '{n} paradas há mais de {l} dias úteis', 'p2.ph.parada1': '1 parada há mais de {l} dias úteis',
+      'p2.ph.oficialRot': 'aprovados', 'p2.ph.oficialDet': '{a} de {t} Goal Cards aprovados<br>{g} negados · {c} a concluir',
+      'p2.eyebrow': 'Planejamento anual', 'p2.vis': 'Exibir:', 'p2.visAbs': 'Números absolutos', 'p2.visPct': 'Percentual do total', 'p2.prazo': 'prazo', 'p2.doTotalCurto': 'do total',
+      'p2.et.desdobramento': 'Desdobramento COO', 'p2.et.proposta': "Propostas BU's", 'p2.et.calibracao': 'Calibração e Aprovação', 'p2.et.oficial': 'Goal Card oficial',
+      'p2.qt': '{n} de {t}', 'p2.qtFull': '{n} de {t} {r}', 'p2.q.desdobramento': 'metas desdobradas', 'p2.q.proposta': 'Goal Cards submetidos', 'p2.q.calibracao': 'Goal Cards em aprovação', 'p2.q.oficial': 'Goal Cards aprovados',
+      'p2.f2.concluida': 'Concluída', 'p2.f2.restam': 'faltam {n} dias úteis', 'p2.f2.resta1': 'falta 1 dia útil', 'p2.f2.rascunho': '{n} em rascunho',
+      'p2.f2.paradas': '{n} paradas', 'p2.f2.parada1': '1 parada', 'p2.f2.semParadas': 'sem paradas', 'p2.f2.negados': '{n} negados', 'p2.f2.bus': '{n} BUs',
+      'p2.titulo': 'Ciclo AIP', 'p2.tituloAba': 'Painel do ciclo', 'p2.sub': 'Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.',
+      'p2.agenda': 'Agenda do ciclo', 'p2.atualizar': 'Atualizar painel', 'p2.kpisAria': 'Indicadores do ciclo',
+      'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submetidos', 'p2.k.aprovado': 'Aprovados', 'p2.k.em_aprovacao': 'Em aprovação', 'p2.k.em_revisao': 'Em revisão', 'p2.k.negado': 'Negados',
+      'p2.s.total': 'no ciclo, {b} BUs', 'p2.s.submetidos': '{p} do total', 'p2.s.aprovado': '{p} do total', 'p2.s.em_aprovacao': '{n} paradas', 'p2.s.em_revisao': 'devolvidos às BUs', 'p2.s.negado': 'fora do ciclo',
+      'p2.matriz': 'Situação por Business Unit', 'p2.matrizCap': 'Goal Cards por Business Unit e situação', 'p2.composicao': 'Composição', 'chip.paradaPl': 'Paradas', 'p2.totalGeral': 'Total',
+      'p2.funil': 'Funil do ciclo', 'p2.f.cards': 'Goal Cards', 'p2.f.submetidos': 'Submetidos', 'p2.f.nivel1': 'Aprovados no nível 1', 'p2.f.aprovados': 'Aprovados',
+      'p2.doTotal': '{p} do total', 'p2.perda': '−{n} ({p}) não seguiram', 'p2.funilAria': 'Funil: {lista}.',
+      'p2.tempo': 'Tempo em aprovação por nível', 'p2.tempoNota': 'em dias úteis no nível atual', 'p2.cards': '{n} cards', 'p2.card1': '1 card',
+      'p2.nivelRes': 'mediana <b>{m}</b> · máx. <b>{x}</b> · <b>{p}</b> paradas', 'p2.semCards': 'Nenhum card neste nível.',
+      'p2.leg.mediana': 'Mediana', 'p2.leg.faixa': 'Mínimo–máximo', 'p2.leg.limite': 'Limite de {n} dias úteis',
+      'p2.tempoAria': 'Tempo em aprovação: {lista}. Limite de {n} dias úteis.', 'p2.dias': '{n} dias úteis', 'p2.dia': '1 dia útil',
+      'p2.parados': 'Cards parados há mais tempo', 'p2.semParados': 'Nenhum card parado acima do limite.', 'p2.abrir': 'Abrir',
+      'p2.erroTit': 'Não foi possível carregar o painel', 'p2.semAcessoTit': 'Painel restrito ao grupo P&CI/COO',
+      'p2.semAcessoTxt': 'O Painel do ciclo é visível para o grupo de aprovação final e para o administrador do ciclo.',
+      'p2.ag.proposta': 'Proposta da BU', 'p2.ag.calibracao': 'Calibração e aprovação', 'p2.ag.oficial': 'Goal Cards oficiais', 'p2.ag.atual': 'atual',
+      'nav.menu': 'Telas do AIP Goals', 'nav.abrir': 'Abrir menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Ciclo', 'nav.inicio': 'Início', 'nav.pendencias': 'Minhas pendências',
+      'ini.sub': 'Definição, aprovação e registro das metas de AIP das Business Units.',
+      'ini.cta': 'Ver minhas pendências', 'ini.numerosAria': 'Sua situação no ciclo', 'ini.nPend': 'Pendências com você', 'ini.nPrazo': 'Próximo prazo', 'ini.semPrazo': 'Sem prazo', 'ini.abrir': 'Abrir',
+      'ini.dPend': 'Goal Cards a preencher ou decidir, comentários e ações sob sua responsabilidade.', 'ini.dPainel': 'Situação dos Goal Cards por BU e tempo em cada nível de aprovação.',
+      'ini.dMetas': 'Metas do desdobramento com peso, tipo, status e versão.', 'ini.dLog': 'Registro de submissões, decisões e comentários do ciclo.',
+      'ini.dAcoes': 'Ações atribuídas no ciclo, com responsável e prazo.', 'ini.dConfig': 'Janelas do ciclo, BUs, pessoas, metas, pesos e rota de aprovação.',
+      'ab.eyebrow': 'Planejamento anual', 'ab.lead': 'Planejamento das metas de AIP 2027 das Business Units de VBM no Brasil e no Canadá.',
+      'ab.fEtapa': 'Etapa atual', 'ab.fOficial': 'Goal Cards oficiais', 'ab.fOficialSub': 'versão aprovada de cada meta', 'ab.noCiclo': 'no ciclo {a}', 'ab.busAria': 'Business Units do ciclo',
+      'ab.indice': 'Acessar', 'ab.jornada': 'Jornada do ciclo', 'ab.emDia': 'Você está em dia neste ciclo.',
+      'ab.alerta': '{n} paradas ou atrasadas', 'ab.alerta1': '1 parada ou atrasada', 'ab.proximo': 'Próximo prazo',
+      'ab.ate': 'até {d}', 'ab.encerrada': 'encerrada em {d}', 'ab.publicacao': 'publicação em {d}', 'ab.atual': 'Etapa atual', 'ab.concluida': 'concluída',
+      'et.desdobramento': 'Desdobramento do COO', 'et.desdobramento.quem': 'Metas e pesos por BU · Administrador',
+      'et.proposta': 'Proposta da BU', 'et.proposta.quem': 'Goal Cards preenchidos · Pontos focais',
+      'et.calibracao': 'Calibração e aprovação', 'et.calibracao.quem': 'Diretor da BU · Grupo P&CI/COO',
+      'et.oficial': 'Goal Card oficial', 'et.oficial.quem': 'Versão aprovada e travada', 'nav.painel': 'Painel do ciclo',
+      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração',
+      'ui.telaCheia': 'Tela cheia',
+      't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
+      't01.exemplo': 'Dados de exemplo — modelo de dados em validação (P-12)', 't01.desatualizado': 'Dados desatualizados — exibindo a última leitura',
+      't01.atualizar': 'Atualizar lista', 't01.resumoAria': 'Filtrar por tipo de pendência', 't01.filtrando': 'Filtrando',
+      't01.alertaTit': 'Paradas ou atrasadas', 't01.alertaRodape': 'mais de {n} dias úteis no nível ou prazo vencido',
+      't01.fila': 'Fila de pendências', 't01.caption': 'Pendências do ciclo, uma por linha', 't01.total': '{n} de {t} pendências', 't01.total1': '{n} de {t} pendência',
+      't01.atualizado': 'Última atualização {d}', 't01.atualizada': 'Lista atualizada.',
+      'tipo.preencher': 'Preencher Goal Card', 'tipo.decidir': 'Decisão pendente', 'tipo.comentario': 'Comentário sem resposta', 'tipo.acao': 'Ação atribuída',
+      'tipo.preencher.plural': 'A preencher', 'tipo.decidir.plural': 'Decisões', 'tipo.comentario.plural': 'Comentários sem resposta', 'tipo.acao.plural': 'Ações atribuídas',
+      'tipo.preencher.rodape': 'Goal Cards em rascunho ou devolvidos', 'tipo.decidir.rodape': 'Aprovar, devolver ou negar',
+      'tipo.comentario.rodape': 'Sem resposta sua', 'tipo.acao.rodape': 'Atribuídas a você',
+      'btn.preencher': 'Preencher', 'btn.ajustar': 'Ajustar', 'btn.decidir': 'Analisar', 'btn.comentario': 'Responder', 'btn.acao': 'Ver ação',
+      'est.rascunho': 'Rascunho', 'est.em_aprovacao': 'Em aprovação', 'est.em_revisao': 'Em revisão', 'est.aprovado': 'Aprovado', 'est.negado': 'Negado',
+      'nivel': 'Nível {a} de {t} · {n}', 'versao': 'v{n}', 'semVersao': 'sem versão submetida', 'lbl.card': 'Card', 'lbl.versao': 'Versão',
+      'idade.hoje': 'Hoje', 'idade.dias': '{n} dias úteis', 'idade.dia': '1 dia útil',
+      'chip.parada': 'Parada', 'chip.atrasada': 'Atrasada', 'prazo.sem': 'Sem prazo', 'prazo.vence': 'vence {d}', 'prazo.venceu': 'venceu {d}',
+      'f.pais': 'País', 'f.todos': 'Todos', 'f.todas': 'Todas', 'f.ordenar': 'Ordenar por:', 'f.urgencia': 'Urgência', 'f.prazo': 'Prazo', 'f.idade': 'Idade',
+      'f.soAlerta': 'Só paradas ou atrasadas:',
+      'col.pendencia': 'Pendência', 'col.meta': 'Meta', 'col.situacao': 'Situação', 'col.prazo': 'Prazo', 'col.idade': 'Idade', 'col.acao': 'Ação',
+      'est.vazioTit': 'Nenhuma pendência', 'est.vazioTxt': 'Você está em dia neste ciclo. Novas pendências aparecem aqui e chegam por e-mail.',
+      'est.filtroTit': 'Nada com estes filtros', 'est.limpar': 'Limpar filtros',
+      'est.erroTit': 'Não foi possível carregar as pendências', 'est.tentar': 'Tentar de novo',
+      'est.erroRede': 'Sem resposta do servidor. Verifique a conexão e tente de novo.', 'est.erroTempo': 'O servidor demorou mais que o esperado.',
+      'est.erroLimite': 'Muitos pedidos em sequência. Aguarde um minuto.', 'est.erroGeral': 'Tente de novo em instantes. Se continuar, avise o administrador do ciclo.',
+      'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
+      'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
+      'est.voltar': 'Voltar para o início',
+      'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
+      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
+    },
+    en: {
+      'p2.linha': 'Cycle timeline', 'p2.hoje': 'Today · {d}',
+      'p2.linhaResumo': '{e} in progress — {n} business days to the window close and {o} to the official Goal Cards.',
+      'p2.ph.concluida': 'Done', 'p2.ph.proxima': 'Next', 'p2.ph.restam': '{n} business days left', 'p2.ph.resta1': '1 business day left',
+      'p2.ph.desdobramentoRot': 'goals', 'p2.ph.desdobramentoDet': 'Goals and weights set for {b} Business Units',
+      'p2.ph.propostaRot': 'submitted', 'p2.ph.propostaDet': '{s} of {t} Goal Cards submitted<br>{r} in draft · {v} returned for adjustment', 'p2.ph.propostaDet1': '{s} of {t} Goal Cards submitted<br>{r} in draft · {v} returned for adjustment',
+      'p2.ph.calibracaoRot': 'pending approval', 'p2.ph.calibracaoDet': '{a} with the BU Director · {b} with P&CI/COO',
+      'p2.ph.paradas': '{n} stalled for more than {l} business days', 'p2.ph.parada1': '1 stalled for more than {l} business days',
+      'p2.ph.oficialRot': 'approved', 'p2.ph.oficialDet': '{a} of {t} Goal Cards approved<br>{g} denied · {c} to complete',
+      'p2.eyebrow': 'Annual planning', 'p2.vis': 'Show:', 'p2.visAbs': 'Absolute numbers', 'p2.visPct': 'Percent of total', 'p2.prazo': 'due', 'p2.doTotalCurto': 'of total',
+      'p2.et.desdobramento': 'COO cascade', 'p2.et.proposta': 'BU proposals', 'p2.et.calibracao': 'Calibration and Approval', 'p2.et.oficial': 'Official Goal Card',
+      'p2.qt': '{n} of {t}', 'p2.qtFull': '{n} of {t} {r}', 'p2.q.desdobramento': 'cascaded goals', 'p2.q.proposta': 'Goal Cards submitted', 'p2.q.calibracao': 'Goal Cards pending approval', 'p2.q.oficial': 'Goal Cards approved',
+      'p2.f2.concluida': 'Done', 'p2.f2.restam': '{n} business days left', 'p2.f2.resta1': '1 business day left', 'p2.f2.rascunho': '{n} in draft',
+      'p2.f2.paradas': '{n} stalled', 'p2.f2.parada1': '1 stalled', 'p2.f2.semParadas': 'none stalled', 'p2.f2.negados': '{n} denied', 'p2.f2.bus': '{n} BUs',
+      'p2.titulo': 'AIP Cycle', 'p2.tituloAba': 'Cycle dashboard', 'p2.sub': 'Goal Card status by Business Unit and time at each approval level.',
+      'p2.agenda': 'Cycle agenda', 'p2.atualizar': 'Refresh dashboard', 'p2.kpisAria': 'Cycle indicators',
+      'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submitted', 'p2.k.aprovado': 'Approved', 'p2.k.em_aprovacao': 'Pending approval', 'p2.k.em_revisao': 'In Review', 'p2.k.negado': 'Denied',
+      'p2.s.total': 'in the cycle, {b} BUs', 'p2.s.submetidos': '{p} of total', 'p2.s.aprovado': '{p} of total', 'p2.s.em_aprovacao': '{n} stalled', 'p2.s.em_revisao': 'returned to BUs', 'p2.s.negado': 'out of the cycle',
+      'p2.matriz': 'Status by Business Unit', 'p2.matrizCap': 'Goal Cards by Business Unit and status', 'p2.composicao': 'Breakdown', 'chip.paradaPl': 'Stalled', 'p2.totalGeral': 'Total',
+      'p2.funil': 'Cycle funnel', 'p2.f.cards': 'Goal Cards', 'p2.f.submetidos': 'Submitted', 'p2.f.nivel1': 'Approved at level 1', 'p2.f.aprovados': 'Approved',
+      'p2.doTotal': '{p} of total', 'p2.perda': '−{n} ({p}) did not move on', 'p2.funilAria': 'Funnel: {lista}.',
+      'p2.tempo': 'Time in approval by level', 'p2.tempoNota': 'business days at the current level', 'p2.cards': '{n} cards', 'p2.card1': '1 card',
+      'p2.nivelRes': 'median <b>{m}</b> · max <b>{x}</b> · <b>{p}</b> stalled', 'p2.semCards': 'No cards at this level.',
+      'p2.leg.mediana': 'Median', 'p2.leg.faixa': 'Min–max', 'p2.leg.limite': '{n}-business-day limit',
+      'p2.tempoAria': 'Time in approval: {lista}. Limit of {n} business days.', 'p2.dias': '{n} business days', 'p2.dia': '1 business day',
+      'p2.parados': 'Longest stalled cards', 'p2.semParados': 'No card stalled above the limit.', 'p2.abrir': 'Open',
+      'p2.erroTit': 'Could not load the dashboard', 'p2.semAcessoTit': 'Dashboard restricted to the P&CI/COO group',
+      'p2.semAcessoTxt': 'The cycle dashboard is visible to the final approval group and the cycle administrator.',
+      'p2.ag.proposta': 'BU proposal', 'p2.ag.calibracao': 'Calibration and approval', 'p2.ag.oficial': 'Official Goal Cards', 'p2.ag.atual': 'current',
+      'nav.menu': 'AIP Goals screens', 'nav.abrir': 'Open menu', 'nav.menuCurto': 'Menu', 'nav.ciclo': 'Cycle', 'nav.inicio': 'Home', 'nav.pendencias': 'My pending items',
+      'ini.sub': 'Setting, approval and record of the AIP goals of the Business Units.',
+      'ini.cta': 'View my pending items', 'ini.numerosAria': 'Your status in the cycle', 'ini.nPend': 'Pending with you', 'ini.nPrazo': 'Next due date', 'ini.semPrazo': 'No due date', 'ini.abrir': 'Open',
+      'ini.dPend': 'Goal Cards to fill in or decide, comments and actions under your responsibility.', 'ini.dPainel': 'Goal Card status by BU and time at each approval level.',
+      'ini.dMetas': 'Cascaded goals with weight, type, status and version.', 'ini.dLog': 'Record of submissions, decisions and comments in the cycle.',
+      'ini.dAcoes': 'Actions assigned in the cycle, with owner and due date.', 'ini.dConfig': 'Cycle windows, BUs, people, goals, weights and approval route.',
+      'ab.eyebrow': 'Annual planning', 'ab.lead': 'Planning of the 2027 AIP goals for the VBM Business Units in Brazil and Canada.',
+      'ab.fEtapa': 'Current stage', 'ab.fOficial': 'Official Goal Cards', 'ab.fOficialSub': 'approved version of each goal', 'ab.noCiclo': 'in the {a} cycle', 'ab.busAria': 'Business Units in the cycle',
+      'ab.indice': 'Go to', 'ab.jornada': 'Cycle journey', 'ab.emDia': 'You are up to date in this cycle.',
+      'ab.alerta': '{n} stalled or overdue', 'ab.alerta1': '1 stalled or overdue', 'ab.proximo': 'Next due date',
+      'ab.ate': 'until {d}', 'ab.encerrada': 'closed on {d}', 'ab.publicacao': 'published on {d}', 'ab.atual': 'Current stage', 'ab.concluida': 'done',
+      'et.desdobramento': 'COO cascade', 'et.desdobramento.quem': 'Goals and weights per BU · Administrator',
+      'et.proposta': 'BU proposal', 'et.proposta.quem': 'Goal Cards filled in · Focal points',
+      'et.calibracao': 'Calibration and approval', 'et.calibracao.quem': 'BU Director · P&CI/COO group',
+      'et.oficial': 'Official Goal Card', 'et.oficial.quem': 'Approved and locked version', 'nav.painel': 'Cycle dashboard',
+      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings',
+      'ui.telaCheia': 'Full screen',
+      't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
+      't01.exemplo': 'Sample data — data model under validation (P-12)', 't01.desatualizado': 'Outdated data — showing the last reading',
+      't01.atualizar': 'Refresh list', 't01.resumoAria': 'Filter by pending item type', 't01.filtrando': 'Filtering',
+      't01.alertaTit': 'Stalled or overdue', 't01.alertaRodape': 'over {n} business days at the level or past due',
+      't01.fila': 'Pending queue', 't01.caption': 'Pending items in the cycle, one per row', 't01.total': '{n} of {t} pending items', 't01.total1': '{n} of {t} pending item',
+      't01.atualizado': 'Last updated {d}', 't01.atualizada': 'List refreshed.',
+      'tipo.preencher': 'Fill in Goal Card', 'tipo.decidir': 'Pending decision', 'tipo.comentario': 'Unanswered comment', 'tipo.acao': 'Assigned action',
+      'tipo.preencher.plural': 'To fill in', 'tipo.decidir.plural': 'Decisions', 'tipo.comentario.plural': 'Unanswered comments', 'tipo.acao.plural': 'Assigned actions',
+      'tipo.preencher.rodape': 'Goal Cards in draft or returned', 'tipo.decidir.rodape': 'Approve, return or deny',
+      'tipo.comentario.rodape': 'Awaiting your reply', 'tipo.acao.rodape': 'Assigned to you',
+      'btn.preencher': 'Fill in', 'btn.ajustar': 'Adjust', 'btn.decidir': 'Review', 'btn.comentario': 'Reply', 'btn.acao': 'View action',
+      'est.rascunho': 'Draft', 'est.em_aprovacao': 'Pending approval', 'est.em_revisao': 'In Review', 'est.aprovado': 'Approved', 'est.negado': 'Denied',
+      'nivel': 'Level {a} of {t} · {n}', 'versao': 'v{n}', 'semVersao': 'not submitted yet', 'lbl.card': 'Card', 'lbl.versao': 'Version',
+      'idade.hoje': 'Today', 'idade.dias': '{n} business days', 'idade.dia': '1 business day',
+      'chip.parada': 'Stalled', 'chip.atrasada': 'Overdue', 'prazo.sem': 'No due date', 'prazo.vence': 'due {d}', 'prazo.venceu': 'was due {d}',
+      'f.pais': 'Country', 'f.todos': 'All', 'f.todas': 'All', 'f.ordenar': 'Sort by:', 'f.urgencia': 'Urgency', 'f.prazo': 'Due date', 'f.idade': 'Age',
+      'f.soAlerta': 'Stalled or overdue only:',
+      'col.pendencia': 'Pending item', 'col.meta': 'Goal', 'col.situacao': 'Status', 'col.prazo': 'Due date', 'col.idade': 'Age', 'col.acao': 'Action',
+      'est.vazioTit': 'No pending items', 'est.vazioTxt': 'You are up to date in this cycle. New items show up here and arrive by e-mail.',
+      'est.filtroTit': 'Nothing matches these filters', 'est.limpar': 'Clear filters',
+      'est.erroTit': 'Could not load your pending items', 'est.tentar': 'Try again',
+      'est.erroRede': 'No response from the server. Check your connection and try again.', 'est.erroTempo': 'The server took longer than expected.',
+      'est.erroLimite': 'Too many requests in a row. Wait a minute.', 'est.erroGeral': 'Try again shortly. If it persists, contact the cycle administrator.',
+      'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
+      'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
+      'est.voltar': 'Back to home',
+      'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
+      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card'
+    }
+  });
+
+  S.traduzir(); // textos fixos da tela (data-i18n) já no idioma escolhido
+
+  // ── Utilitários ──
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  function ico(id) { return '<svg class="ico" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+  function dataCurta(isoTxt) {
+    var p = String(isoTxt).split('-').map(Number);
+    var d = new Date(p[0], p[1] - 1, p[2]);
+    return d.toLocaleDateString(S.idioma === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+  }
+  var toastTimer = null;
+  function toast(msg, erro) {
+    var t = $('toast');
+    t.textContent = msg; t.classList.toggle('is-err', !!erro); t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+
+  // ── Estado (filtros na URL) ──
+  var dados = null;
+  var filtro = lerFiltro();
+  function lerFiltro() {
+    var q = new URLSearchParams(location.search);
+    return {
+      tipo: TIPOS.indexOf(q.get('tipo')) >= 0 ? q.get('tipo') : '',
+      pais: q.get('pais') || '',
+      bu: q.get('bu') || '',
+      ord: ORDENS.indexOf(q.get('ord')) >= 0 ? q.get('ord') : 'urgencia',
+      so: q.get('so') === '1'
+    };
+  }
+  function gravarFiltro() {
+    var q = new URLSearchParams();
+    if (filtro.tipo) q.set('tipo', filtro.tipo);
+    if (filtro.pais) q.set('pais', filtro.pais);
+    if (filtro.bu) q.set('bu', filtro.bu);
+    if (filtro.ord !== 'urgencia') q.set('ord', filtro.ord);
+    if (filtro.so) q.set('so', '1');
+    var s = q.toString();
+    history.pushState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
+  }
+  window.addEventListener('popstate', function () { filtro = lerFiltro(); renderLista(); });
+
+  // ── Carga ──
+  function carregar(fresco) {
+    mostrarEstado(null);
+    renderCarregando();
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    // Sem retry automático (5xx/403/429): a pessoa decide pelo botão "Tentar de novo".
+    return fetch('api/pendencias' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) {
+        dados = j;
+        if (fresco) toast(S.t('t01.atualizada'));
+        renderTudo();
+      })
+      .catch(function (err) {
+        dados = null;
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return mostrarEstado('estSemAcesso', true);
+        $('estErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        mostrarEstado('estErro', true);
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+
+  function mostrarEstado(id, esconderTabela) {
+    ['estVazio', 'estFiltro', 'estErro', 'estSemAcesso'].forEach(function (k) { $(k).hidden = k !== id; });
+    $('fila').hidden = !!esconderTabela;
+    if (esconderTabela) {
+      $('fila').innerHTML = ''; $('filaCont').hidden = true; $('listaTotal').textContent = ''; $('atualizado').textContent = '';
+      document.querySelectorAll('[data-cont]').forEach(function (el) { el.textContent = '—'; });
+      $('pillExemplo').hidden = true; $('pillDesatualizado').hidden = true;
+    }
+  }
+
+  function renderCarregando() {
+    var sk = function (w) { return '<span class="skel" style="width:' + w + ';max-width:100%"></span>'; };
+    var item = '<li class="item is-skel" aria-hidden="true"><span class="item-ico"></span>' +
+      '<div class="item-principal">' + sk('40%') + '<div style="height:8px"></div>' + sk('80%') + '</div>' +
+      '<div class="item-sit">' + sk('110px') + '</div><div class="item-tempo">' + sk('80px') + '</div><div class="item-acao">' + sk('96px') + '</div></li>';
+    $('fila').innerHTML = item + item + item + item;
+    $('listaTotal').textContent = '';
+  }
+
+  // ── Render ──
+  function renderTudo() {
+    if (!dados) return;
+    var c = dados.ciclo || {};
+    $('heroCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
+    $('pillExemplo').hidden = !dados.exemplo;
+    $('pillDesatualizado').hidden = !dados.desatualizado;
+    $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
+    var total = (dados.itens || []).length;
+    $('navCont').textContent = S.fmt(total, 0);
+    $('navCont').hidden = !total;
+    renderAbertura();
+    aplicarPerfis();
+    renderUnidade();
+    renderLista();
+  }
+
+  // ── Início: estado do usuário e jornada do ciclo ──
+  var ETAPAS = ['desdobramento', 'proposta', 'calibracao', 'oficial'];
+  function dataLonga(isoTxt) {
+    var p = String(isoTxt).split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(S.idioma === 'en' ? 'en-US' : 'pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function renderAbertura() {
+    var c = (dados && dados.ciclo) || {};
+    if (c.ano) $('abAno').textContent = String(c.ano);
+    $('jornadaCiclo').textContent = c.nome ? ' · ' + c.nome : '';
+    var atual = ETAPAS.indexOf(c.etapaAtual);
+    var porId = {}; (c.etapas || []).forEach(function (e) { porId[e.id] = e; });
+    // Fatos do ciclo: etapa aberta, publicação dos Goal Cards oficiais e BUs por país
+    var etAtual = porId[c.etapaAtual] || {};
+    $('fEtapa').textContent = atual >= 0 ? S.t('et.' + c.etapaAtual) : '—';
+    $('fEtapaPrazo').textContent = etAtual.fim ? S.t('ab.ate', { d: dataCurta(etAtual.fim) }) : '';
+    $('fOficial').textContent = porId.oficial && porId.oficial.fim ? dataLonga(porId.oficial.fim) : '—';
+    var bus = c.bus || [], porPais = {};
+    bus.forEach(function (u) { (porPais[u.pais] = porPais[u.pais] || []).push(u.sigla); });
+    var paises = Object.keys(porPais);
+    $('fBus').textContent = bus.length ? S.fmt(bus.length, 0) : '—';
+    $('fBusSub').textContent = c.ano ? S.t('ab.noCiclo', { a: c.ano }) : '';
+    $('abBus').innerHTML = paises.map(function (p) {
+      return '<span class="ab-bus-grupo"><span class="ab-bus-pais">' + esc(p) + '</span>' + porPais[p].map(function (sg) { return '<span class="ab-bu">' + esc(sg) + '</span>'; }).join('') + '</span>';
+    }).join('');
+    $('jornada').innerHTML = ETAPAS.map(function (id, i) {
+      var e = porId[id] || {};
+      var est = atual < 0 ? '' : i < atual ? ' is-feita' : i === atual ? ' is-atual' : '';
+      var data = e.fim ? esc(S.t(i < atual ? 'ab.encerrada' : id === 'oficial' ? 'ab.publicacao' : 'ab.ate', { d: dataCurta(e.fim) })) : '';
+      var tag = i === atual ? '<span class="etapa-tag">' + esc(S.t('ab.atual')) + '</span>' : i < atual ? '<span class="etapa-ok">✓ ' + esc(S.t('ab.concluida')) + '</span>' : '';
+      return '<li class="etapa' + est + '"' + (i === atual ? ' aria-current="step"' : '') + '>' +
+        '<span class="etapa-nome">' + esc(S.t('et.' + id)) + '</span>' +
+        '<span class="etapa-quem">' + esc(S.t('et.' + id + '.quem')) + '</span>' +
+        '<span class="etapa-data">' + data + tag + '</span></li>';
+    }).join('');
+  }
+
+  // Menu e cartões do início: cada perfil vê só o que pode usar (§6.4)
+  function aplicarPerfis() {
+    var papeis = ((dados && dados.usuario && dados.usuario.papeis) || []).map(function (p) { return p.papel; });
+    document.querySelectorAll('[data-perfis]').forEach(function (a) {
+      var pode = (a.getAttribute('data-perfis') || '').split(' ');
+      a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
+    });
+    // Índice do início numerado só com as telas visíveis (01, 02, 03…)
+    var n = 0;
+    document.querySelectorAll('.indice-lista li').forEach(function (li) { if (!li.hidden) li.querySelector('.indice-n').textContent = String(++n).padStart(2, '0'); });
+  }
+
+  function itensBase() {
+    // Itens dentro da BU escolhida (os cards de resumo contam só por BU, não por tipo)
+    return (dados.itens || []).filter(function (it) {
+      if (filtro.pais && it.bu.pais !== filtro.pais) return false;
+      if (filtro.bu && it.bu.sigla !== filtro.bu) return false;
+      return true;
+    });
+  }
+
+  function ordenar(lista) {
+    var pz = function (it) { return it.prazo || '9999-12-31'; };
+    var cmp = {
+      urgencia: function (a, b) {
+        return (b.atrasada - a.atrasada) || (b.parada - a.parada) || (pz(a) < pz(b) ? -1 : pz(a) > pz(b) ? 1 : 0) || (b.diasUteis - a.diasUteis);
+      },
+      prazo: function (a, b) { return (pz(a) < pz(b) ? -1 : pz(a) > pz(b) ? 1 : 0) || (b.diasUteis - a.diasUteis); },
+      idade: function (a, b) { return (b.diasUteis - a.diasUteis) || (pz(a) < pz(b) ? -1 : 1); }
+    }[filtro.ord];
+    return lista.slice().sort(cmp);
+  }
+
+  function renderLista() {
+    if (!dados) return;
+    var base = itensBase();
+    // Resumo
+    TIPOS.forEach(function (t) {
+      document.querySelector('[data-cont="' + t + '"]').textContent = S.fmt(base.filter(function (it) { return it.tipo === t; }).length, 0);
+    });
+    document.querySelector('[data-cont="alerta"]').textContent = S.fmt(base.filter(function (it) { return it.parada || it.atrasada; }).length, 0);
+    $('alertaRodape').textContent = S.t('t01.alertaRodape', { n: S.fmt((dados.parametros || {}).diasParado || 3, 0) });
+    document.querySelectorAll('.resumo-item[data-tipo]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tipo') === filtro.tipo)); });
+    document.querySelectorAll('#segOrd button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-ord') === filtro.ord)); });
+    $('swSo').setAttribute('aria-checked', String(filtro.so));
+    renderUnidadeRotulo();
+
+    var lista = ordenar(base.filter(function (it) {
+      if (filtro.tipo && it.tipo !== filtro.tipo) return false;
+      if (filtro.so && !(it.parada || it.atrasada)) return false;
+      return true;
+    }));
+    var total = (dados.itens || []).length;
+    $('listaTotal').textContent = S.t(lista.length === 1 ? 't01.total1' : 't01.total', { n: S.fmt(lista.length, 0), t: S.fmt(total, 0) });
+
+    if (!total) { mostrarEstado('estVazio', true); renderTudoRodape(); return; }
+    if (!lista.length) { mostrarEstado('estFiltro', true); renderTudoRodape(); return; }
+    mostrarEstado(null, false);
+    $('filaCont').textContent = S.fmt(lista.length, 0); $('filaCont').hidden = false;
+    $('fila').innerHTML = lista.map(itemHtml).join('');
+  }
+  // Mantém "Última atualização" e as pílulas quando a lista fica vazia pelo filtro
+  function renderTudoRodape() {
+    $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
+    $('pillExemplo').hidden = !dados.exemplo;
+    $('pillDesatualizado').hidden = !dados.desatualizado;
+    $('listaTotal').textContent = S.t('t01.total', { n: S.fmt(0, 0), t: S.fmt((dados.itens || []).length, 0) });
+    renderUnidadeRotulo();
+    TIPOS.forEach(function (t) { document.querySelector('[data-cont="' + t + '"]').textContent = S.fmt(itensBase().filter(function (it) { return it.tipo === t; }).length, 0); });
+    document.querySelector('[data-cont="alerta"]').textContent = S.fmt(itensBase().filter(function (it) { return it.parada || it.atrasada; }).length, 0);
+  }
+
+  var ICO_TIPO = { preencher: 'i-pen', decidir: 'i-decide', comentario: 'i-comment', acao: 'i-flag' };
+  function linkDo(it) {
+    // Vistas pelo hash: o link abre a tela exata (card, seção ou ação) — §6.4
+    if (it.tipo === 'acao') return '#acoes?acao=' + encodeURIComponent(it.id);
+    var q = 'card=' + encodeURIComponent(it.card) + (it.secao ? '&secao=' + encodeURIComponent(it.secao) : '');
+    return '#goal-card?' + q + (it.tipo === 'decidir' ? '&modo=analise' : it.tipo === 'preencher' ? '&modo=edicao' : '');
+  }
+  function itemHtml(it) {
+    var rotTipo = S.t('tipo.' + it.tipo);
+    var nivel = it.nivel ? '<span class="item-nivel">' + esc(S.t('nivel', { a: S.fmt(it.nivel.atual, 0), t: S.fmt(it.nivel.total, 0), n: it.nivel.nome })) + '</span>' : '';
+    var versao = it.versao ? esc(S.t('versao', { n: S.fmt(it.versao, 0) })) : esc(S.t('semVersao'));
+    var prazo = it.prazo
+      ? '<span>' + esc(S.t(it.atrasada ? 'prazo.venceu' : 'prazo.vence', { d: dataCurta(it.prazo) })) + '</span>'
+      : '<small>' + esc(S.t('prazo.sem')) + '</small>';
+    var idade = '<small>' + (it.diasUteis ? esc(S.t(it.diasUteis === 1 ? 'idade.dia' : 'idade.dias', { n: S.fmt(it.diasUteis, 0) })) : esc(S.t('idade.hoje'))) + '</small>';
+    var chips = (it.atrasada ? '<span class="chip-atrasada">' + ico('i-alert') + esc(S.t('chip.atrasada')) + '</span>' : '') +
+      (it.parada ? '<span class="chip-parada">' + ico('i-clock') + esc(S.t('chip.parada')) + '</span>' : '');
+    var btn = it.tipo === 'preencher' && it.estado === 'em_revisao' ? 'btn.ajustar' : 'btn.' + it.tipo;
+    var rotBtn = S.t(btn);
+    return '<li class="item' + (it.parada || it.atrasada ? ' is-alerta' : '') + '">' +
+      '<span class="item-ico" aria-hidden="true">' + ico(ICO_TIPO[it.tipo]) + '</span>' +
+      '<div class="item-principal">' +
+        '<p class="item-tipo">' + esc(rotTipo) + '</p>' +
+        '<p class="item-meta"><span class="num">#' + esc(it.meta.numero) + '</span> ' + esc(it.meta.titulo) + '</p>' +
+        '<p class="item-det">' + esc(it.detalhe) + '</p>' +
+        '<div class="item-linha"><span><b>' + esc(it.bu.sigla) + '</b> · ' + esc(it.bu.pais) + '</span><span>' + esc(it.card) + ' · ' + versao + '</span></div>' +
+      '</div>' +
+      '<div class="item-sit"><span class="st st-' + esc(it.estado) + '">' + ico('i-st-' + it.estado) + esc(S.t('est.' + it.estado)) + '</span>' + nivel + '</div>' +
+      '<div class="item-tempo">' + prazo + idade + (chips ? '<span class="chips">' + chips + '</span>' : '') + '</div>' +
+      '<div class="item-acao"><a class="btn" href="' + esc(linkDo(it)) + '" aria-label="' + esc(rotBtn + ': ' + rotTipo + ' · ' + it.bu.sigla + ' #' + it.meta.numero + ' ' + it.meta.titulo) + '">' +
+        esc(rotBtn) + ico('i-arrow') + '</a></div>' +
+      '</li>';
+  }
+
+  // ── Seletor País › BU (padrão COO) ──
+  function unidades() {
+    var mapa = {};
+    (dados.itens || []).forEach(function (it) { (mapa[it.bu.pais] = mapa[it.bu.pais] || {})[it.bu.sigla] = true; });
+    return mapa;
+  }
+  function renderUnidadeRotulo() {
+    $('unitPais').textContent = filtro.pais || S.t('f.todos');
+    $('unitSep').hidden = !filtro.pais;
+    $('unitSite').textContent = filtro.pais ? (filtro.bu || S.t('f.todas')) : '';
+  }
+  function renderUnidade() {
+    if (!dados) return;
+    var mapa = unidades();
+    var paises = Object.keys(mapa).sort();
+    $('unitPaises').innerHTML = ['' ].concat(paises).map(function (p) {
+      return '<button type="button" data-pais="' + esc(p) + '" aria-pressed="' + (p === filtro.pais) + '">' + esc(p || S.t('f.todos')) + '</button>';
+    }).join('');
+    var bus = filtro.pais ? Object.keys(mapa[filtro.pais] || {}).sort() : [];
+    $('unitBus').innerHTML = filtro.pais ? [''].concat(bus).map(function (b) {
+      return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === filtro.bu) + '">' + esc(b || S.t('f.todas')) + '</button>';
+    }).join('') : '';
+    renderUnidadeRotulo();
+  }
+  function abrirUnidade(sim) {
+    $('unitPop').hidden = !sim;
+    $('unitTrigger').setAttribute('aria-expanded', String(sim));
+    if (sim) { var f = $('unitPop').querySelector('[aria-pressed="true"]') || $('unitPop').querySelector('button'); if (f) f.focus(); }
+  }
+  $('unitTrigger').addEventListener('click', function () { abrirUnidade($('unitPop').hidden); });
+  $('unitPaises').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    filtro.pais = b.getAttribute('data-pais'); filtro.bu = '';
+    gravarFiltro(); renderUnidade(); renderLista();
+    if (!filtro.pais) { abrirUnidade(false); $('unitTrigger').focus(); }
+    else { var p = $('unitBus').querySelector('button'); if (p) p.focus(); }
+  });
+  $('unitBus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    filtro.bu = b.getAttribute('data-bu');
+    gravarFiltro(); renderUnidade(); renderLista();
+    abrirUnidade(false); $('unitTrigger').focus();
+  });
+  // Clique em botão redesenhado (já fora do documento) não conta como "clique fora"
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('unitPop').hidden && !$('unit').contains(e.target)) abrirUnidade(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('unitPop').hidden) { abrirUnidade(false); $('unitTrigger').focus(); } });
+
+  // ── Demais filtros ──
+  $('resumo').addEventListener('click', function (e) {
+    var b = e.target.closest('.resumo-item[data-tipo]'); if (!b) return;
+    var t = b.getAttribute('data-tipo');
+    filtro.tipo = filtro.tipo === t ? '' : t;
+    gravarFiltro(); renderLista();
+  });
+  $('segOrd').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    filtro.ord = b.getAttribute('data-ord'); gravarFiltro(); renderLista();
+  });
+  $('swSo').addEventListener('click', function () { filtro.so = !filtro.so; gravarFiltro(); renderLista(); });
+  $('btnLimpar').addEventListener('click', function () { filtro = { tipo: '', pais: '', bu: '', ord: filtro.ord, so: false }; gravarFiltro(); renderUnidade(); renderLista(); });
+  $('btnTentar').addEventListener('click', function () { carregar(true); });
+  $('btnAtualizar').addEventListener('click', function () { carregar(true); });
+  document.querySelectorAll('[data-tela-cheia]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    });
+  });
+
+  // ══ T02 · Painel do ciclo ══
+  // Dados: GET api/painel?pais=&bu= — totais, matriz, funil e tempos calculados no servidor a partir dos cards (CA-15).
+  // Filtro País › BU no hash (#painel?pais=&bu=): o Voltar do navegador volta com o mesmo filtro.
+  var p2 = { dados: null, cache: {}, filtro: { pais: '', bu: '' }, carregando: null };
+  var EST_ORDEM = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado'];
+  function pct(v) { return v == null ? '—' : S.fmt(v * 100, 0) + '%'; }
+  function p2LerFiltro() {
+    var q = new URLSearchParams((location.hash.split('?')[1]) || '');
+    p2.filtro = { pais: q.get('pais') || '', bu: q.get('bu') || '' };
+  }
+  function p2GravarFiltro() {
+    var q = new URLSearchParams();
+    if (p2.filtro.pais) q.set('pais', p2.filtro.pais);
+    if (p2.filtro.bu) q.set('bu', p2.filtro.bu);
+    var alvo = '#painel' + (q.toString() ? '?' + q.toString() : '');
+    if (location.hash !== alvo) history.pushState(null, '', location.pathname + location.search + alvo);
+  }
+  function p2Estado(qual) {
+    $('p2Corpo').hidden = qual !== 'ok';
+    $('p2Erro').hidden = qual !== 'erro';
+    $('p2SemAcesso').hidden = qual !== 'acesso';
+  }
+  function p2Carregar(fresco) {
+    var chave = p2.filtro.pais + '|' + p2.filtro.bu;
+    if (!fresco && p2.cache[chave]) { p2.dados = p2.cache[chave]; return Promise.resolve(p2Render()); }
+    var q = new URLSearchParams();
+    if (p2.filtro.pais) q.set('pais', p2.filtro.pais);
+    if (p2.filtro.bu) q.set('bu', p2.filtro.bu);
+    if (fresco) q.set('fresco', '1');
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    $('p2Corpo').setAttribute('aria-busy', 'true');
+    return fetch('api/painel' + (q.toString() ? '?' + q.toString() : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 400) { p2.filtro = { pais: '', bu: '' }; p2GravarFiltro(); var f = new Error('filtro'); f.tipo = 'filtro'; throw f; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) { p2.cache[chave] = j; p2.dados = j; if (fresco) toast(S.t('t01.atualizada')); p2Render(); })
+      .catch(function (err) {
+        // Erro de código (não de rede) vai para o console; a tela mostra a mensagem genérica
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] painel:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'filtro') return p2Carregar(false);
+        if (tipo === 'acesso') return p2Estado('acesso');
+        $('p2ErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        p2Estado('erro');
+      })
+      .then(function () { clearTimeout(timer); $('p2Corpo').removeAttribute('aria-busy'); });
+  }
+
+  function p2Render() {
+    var d = p2.dados; if (!d) return;
+    p2Estado('ok');
+    var c = d.ciclo || {}, t = d.totais || {}, lim = (d.parametros || {}).diasParado || 3;
+    if (c.ano) $('p2Ano').textContent = String(c.ano);
+    $('p2Exemplo').hidden = !d.exemplo;
+    $('p2Desatualizado').hidden = !d.desatualizado;
+    $('p2Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
+
+    p2RenderLinha(d);
+
+    // Legenda da composição (cor + rótulo)
+    $('p2Legenda').innerHTML = EST_ORDEM.map(function (e) { return '<li><span class="swatch p2-seg-' + e + '"></span>' + esc(S.t('est.' + e)) + '</li>'; }).join('');
+
+    // Matriz BU × situação, agrupada por país
+    var linhas = [], paisAtual = null;
+    (d.porBu || []).forEach(function (l) {
+      if (l.bu.pais !== paisAtual) { paisAtual = l.bu.pais; linhas.push('<tr class="p2-pais"><td colspan="9">' + esc(paisAtual) + '</td></tr>'); }
+      var barra = EST_ORDEM.filter(function (e) { return l[e]; }).map(function (e) {
+        return '<span class="p2-seg-' + e + '" style="width:' + (l[e] / l.total * 100).toFixed(2) + '%" title="' + esc(S.t('est.' + e) + ': ' + l[e]) + '"></span>';
+      }).join('');
+      var rotulo = l.bu.sigla + ': ' + EST_ORDEM.map(function (e) { return S.t('est.' + e) + ' ' + l[e]; }).join(', ');
+      linhas.push('<tr><th scope="row" class="p2-bu"><a href="#metas?bu=' + encodeURIComponent(l.bu.sigla) + '">' + esc(l.bu.sigla) + '</a></th>' +
+        '<td><div class="p2-barra" role="img" aria-label="' + esc(rotulo) + '">' + barra + '</div></td>' +
+        EST_ORDEM.map(function (e) { return '<td class="num' + (l[e] ? '' : ' zero') + '">' + S.fmt(l[e], 0) + '</td>'; }).join('') +
+        '<td class="num"><b>' + S.fmt(l.total, 0) + '</b></td>' +
+        '<td class="num">' + (l.paradas ? '<span class="p2-parada-n">' + S.fmt(l.paradas, 0) + '</span>' : '<span class="zero">0</span>') + '</td></tr>');
+    });
+    $('p2Linhas').innerHTML = linhas.join('');
+    $('p2Rodape').innerHTML = '<tr><td>' + esc(S.t('p2.totalGeral')) + '</td><td></td>' +
+      EST_ORDEM.map(function (e) { return '<td class="num">' + S.fmt(t[e] || 0, 0) + '</td>'; }).join('') +
+      '<td class="num">' + S.fmt(t.total || 0, 0) + '</td><td class="num">' + S.fmt(t.paradas || 0, 0) + '</td></tr>';
+
+    // Funil
+    var f = d.funil || [], base = (f[0] && f[0].n) || 0;
+    $('p2Funil').innerHTML = f.map(function (e, i) {
+      var perda = i > 0 ? f[i - 1].n - e.n : 0;
+      return (i > 0 ? '<li class="p2-perda" aria-hidden="true">' + esc(S.t('p2.perda', { n: S.fmt(perda, 0), p: pct(f[i - 1].n ? perda / f[i - 1].n : null) })) + '</li>' : '') +
+        '<li class="p2-etapa"><span class="p2-etapa-rot">' + esc(S.t('p2.f.' + e.id)) + '</span>' +
+        '<span class="p2-etapa-trilho"><span class="p2-etapa-barra" style="display:block;width:' + (base ? e.n / base * 100 : 0).toFixed(2) + '%"></span></span>' +
+        '<span class="p2-etapa-val">' + S.fmt(e.n, 0) + '<small>' + esc(S.t('p2.doTotal', { p: pct(base ? e.n / base : null) })) + '</small></span></li>';
+    }).join('');
+    $('p2Funil').setAttribute('aria-label', S.t('p2.funilAria', { lista: f.map(function (e) { return S.t('p2.f.' + e.id) + ' ' + e.n; }).join(', ') }));
+
+    // Tempo por nível: escala comum aos dois níveis
+    var niveis = d.niveis || [];
+    var maxEscala = Math.max(lim + 2, Math.max.apply(null, niveis.map(function (n) { return n.max || 0; })) + 1);
+    var pos = function (v) { return (v / maxEscala * 100).toFixed(2) + '%'; };
+    $('p2TempoNota').textContent = S.t('p2.tempoNota');
+    $('p2Tempo').innerHTML = niveis.map(function (n) {
+      var cab = '<div class="p2-nivel-cab"><span class="p2-nivel-nome">' + esc(S.t('nivel', { a: S.fmt(n.nivel, 0), t: S.fmt(2, 0), n: n.nome })) +
+        ' <small>· ' + esc(S.t(n.cards === 1 ? 'p2.card1' : 'p2.cards', { n: S.fmt(n.cards, 0) })) + '</small></span>' +
+        (n.cards ? '<span class="p2-nivel-resumo">' + S.t('p2.nivelRes', { m: esc(S.fmt(n.mediana, n.mediana % 1 ? 1 : 0)), x: esc(S.fmt(n.max, 0)), p: esc(S.fmt(n.paradas, 0)) }) + '</span>' : '') + '</div>';
+      if (!n.cards) return '<div>' + cab + '<p class="p2-sem">' + esc(S.t('p2.semCards')) + '</p></div>';
+      return '<div>' + cab + '<div class="p2-escala">' +
+        '<span class="p2-faixa" style="left:' + pos(n.min) + ';width:calc(' + pos(n.max - n.min) + ' + 2px)"></span>' +
+        '<span class="p2-limite" style="left:' + pos(lim) + '"></span>' +
+        '<span class="p2-mediana" style="left:' + pos(n.mediana) + '"></span></div>' +
+        '<div class="p2-eixo"><span>0</span><span>' + esc(S.fmt(Math.round(maxEscala / 2), 0)) + '</span><span>' + esc(S.t('p2.dias', { n: S.fmt(maxEscala, 0) })) + '</span></div></div>';
+    }).join('') +
+      '<ul class="p2-tempo-leg"><li><span class="p2-leg-ponto"></span>' + esc(S.t('p2.leg.mediana')) + '</li><li><span class="p2-leg-faixa"></span>' + esc(S.t('p2.leg.faixa')) +
+      '</li><li><span class="p2-leg-limite"></span>' + esc(S.t('p2.leg.limite', { n: S.fmt(lim, 0) })) + '</li></ul>';
+    $('p2Tempo').setAttribute('aria-label', S.t('p2.tempoAria', { n: lim, lista: niveis.map(function (n) {
+      return S.t('nivel', { a: n.nivel, t: 2, n: n.nome }) + ': ' + n.cards + (n.cards ? ', mediana ' + n.mediana + ', máx. ' + n.max + ', ' + n.paradas + ' paradas' : '');
+    }).join('; ') }));
+
+    // Cards parados há mais tempo
+    var par = d.parados || [];
+    $('p2ParadosCont').textContent = S.fmt(t.paradas || 0, 0); $('p2ParadosCont').hidden = !t.paradas;
+    $('p2ParadosVazio').hidden = par.length > 0;
+    $('p2Parados').innerHTML = par.map(function (cd) {
+      var link = '#goal-card?card=' + encodeURIComponent(cd.card) + '&modo=analise';
+      return '<li class="p2-parado"><div><p class="p2-parado-tit"><span class="num">#' + esc(cd.meta.numero) + '</span> ' + esc(cd.meta.titulo) + '</p>' +
+        '<p class="p2-parado-det"><b>' + esc(cd.bu.sigla) + '</b> · ' + esc(cd.card) + ' · ' + esc(S.t('nivel', { a: S.fmt(cd.nivel.atual, 0), t: S.fmt(cd.nivel.total, 0), n: cd.nivel.nome })) + '</p></div>' +
+        '<div class="p2-parado-dir"><span class="chip-parada">' + ico('i-clock') + esc(S.t(cd.diasUteis === 1 ? 'p2.dia' : 'p2.dias', { n: S.fmt(cd.diasUteis, 0) })) + '</span>' +
+        '<a class="btn btn-sec" href="' + esc(link) + '" aria-label="' + esc(S.t('p2.abrir') + ': ' + cd.bu.sigla + ' #' + cd.meta.numero + ' ' + cd.meta.titulo) + '">' + esc(S.t('p2.abrir')) + ico('i-arrow') + '</a></div></li>';
+    }).join('');
+    p2RenderUnidade();
+  }
+
+  // Linha do tempo do ciclo: trilho proporcional às janelas, "Hoje" e um cartão de resultado por fase.
+  // Os números vêm de `totais`/`niveis` do servidor (mesma lista de cards, CA-15) e seguem o filtro País › BU.
+  function dataDe(isoTxt) { var p = String(isoTxt).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function diasUteisAte(isoTxt) {
+    var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    var fim = dataDe(isoTxt), n = 0;
+    for (var x = new Date(hoje); x < fim;) { x.setDate(x.getDate() + 1); if (x.getDay() !== 0 && x.getDay() !== 6) n++; }
+    return n;
+  }
+  // Anel de progresso (SVG próprio): valor principal em v1 e, se houver, uma segunda parte em v2.
+  function anel(p1, p2) {
+    var R = 52, C = 2 * Math.PI * R, a = Math.max(0, Math.min(1, p1 || 0)), b = Math.max(0, Math.min(1 - a, p2 || 0));
+    var arco = function (cls, frac, desloc) {
+      return frac > 0 ? '<circle class="' + cls + '" cx="60" cy="60" r="' + R + '" stroke-dasharray="' + (frac * C).toFixed(1) + ' ' + C.toFixed(1) + '" stroke-dashoffset="' + (-desloc * C).toFixed(1) + '"/>' : '';
+    };
+    return '<svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trilho" cx="60" cy="60" r="' + R + '"/>' + arco('v1', a, 0) + arco('v2', b, a) + '</svg>';
+  }
+  function p2RenderLinha(d) {
+    var c = d.ciclo || {}, t = d.totais || {}, niv = d.niveis || [];
+    var ets = (c.etapas || []).filter(function (e) { return ETAPAS.indexOf(e.id) >= 0; });
+    if (!ets.length) { $('p2Fases').innerHTML = ''; return; }
+    var atual = ETAPAS.indexOf(c.etapaAtual);
+    var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    var hojeIso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+
+    // Quantitativo de cada etapa (dos totais do servidor, CA-15); o anel mostra a fração do total do ciclo
+    var total = t.total || 0, n1 = (niv[0] || {}).cards || 0, n2 = (niv[1] || {}).cards || 0;
+    var fr = function (v) { return total ? v / total : 0; };
+    var q = {
+      desdobramento: { n: total, anel: anel(1), rot: S.t('p2.q.desdobramento') },
+      proposta: { n: t.submetidos || 0, anel: anel(fr(t.submetidos || 0)), rot: S.t('p2.q.proposta') },
+      calibracao: { n: t.em_aprovacao || 0, anel: anel(fr(n1), fr(n2)), rot: S.t('p2.q.calibracao') },
+      oficial: { n: t.aprovado || 0, anel: anel(fr(t.aprovado || 0)), rot: S.t('p2.q.oficial') }
+    };
+    var html = ets.map(function (e, i) {
+      var k = q[e.id];
+      var est = i < atual ? 'is-feita' : i === atual ? 'is-atual' : 'is-futura';
+      var num = pct(fr(k.n));
+      // Quantitativo sob a data: "27 de 41 Goal Cards submetidos"
+      var qt = esc(S.t('p2.qt', { n: S.fmt(k.n, 0), t: S.fmt(total, 0) }));
+      var rotulo = S.t('p2.et.' + e.id) + ': ' + num + ', ' + S.t('p2.qtFull', { n: S.fmt(k.n, 0), t: S.fmt(total, 0), r: k.rot }) + ', ' + S.t('p2.prazo') + ' ' + dataCurta(e.fim) +
+        (i === atual ? ', ' + S.t('ab.atual') : i < atual ? ', ' + S.t('p2.ph.concluida') : '');
+      return '<li class="p2-et ' + est + '"' + (i === atual ? ' aria-current="step"' : '') + ' aria-label="' + esc(rotulo) + '">' +
+        '<p class="p2-et-n" title="' + esc(String(i + 1).padStart(2, '0') + ' - ' + S.t('p2.et.' + e.id)) + '"><b>' + String(i + 1).padStart(2, '0') + '</b> - ' + esc(S.t('p2.et.' + e.id)) + '</p>' +
+        '<div class="p2-anel" aria-hidden="true">' + k.anel + '<div class="p2-anel-txt"><strong>' + esc(num) + '</strong></div></div>' +
+        '<p class="p2-et-data" aria-hidden="true">' + esc(dataCurta(e.fim)) + '</p>' +
+        '<p class="p2-et-det" aria-hidden="true">' + qt + '</p></li>';
+    }).join('');
+
+    // Linha até hoje: etapas igualmente espaçadas; dentro da etapa atual, a posição segue a data
+    var frac = 0, etAtual = ets[atual];
+    if (etAtual) {
+      var a0 = atual === 0 ? dataDe(ets[0].inicio || ets[0].fim) : dataDe(ets[atual - 1].fim), a1 = dataDe(etAtual.fim);
+      frac = Math.max(0, Math.min(1, (hoje - a0) / Math.max(1, a1 - a0)));
+    }
+    var pos = atual <= 0 ? 12.5 : 12.5 + 25 * (atual - 1) + 25 * frac;
+    html += '<span class="p2-progresso" aria-hidden="true" style="width:' + (pos - 12.5).toFixed(2) + '%"></span>' +
+      '<span class="p2-hoje" aria-hidden="true" style="left:' + pos.toFixed(2) + '%"><span>' + esc(S.t('p2.hoje', { d: dataCurta(hojeIso) })) + '</span></span>';
+    $('p2Fases').innerHTML = html;
+  }
+
+  // Seletor País › BU do painel (mesmo componente da T01; opções = BUs do ciclo)
+  function p2RenderUnidade() {
+    var c = (p2.dados && p2.dados.ciclo) || {}, porPais = {};
+    (c.bus || []).forEach(function (b) { (porPais[b.pais] = porPais[b.pais] || []).push(b.sigla); });
+    var f = p2.filtro;
+    $('p2UnitPais').textContent = f.pais || S.t('f.todos');
+    $('p2UnitSep').hidden = !f.pais;
+    $('p2UnitSite').textContent = f.pais ? (f.bu || S.t('f.todas')) : '';
+    $('p2Paises').innerHTML = [''].concat(Object.keys(porPais)).map(function (pz) {
+      return '<button type="button" data-pais="' + esc(pz) + '" aria-pressed="' + (pz === f.pais) + '">' + esc(pz || S.t('f.todos')) + '</button>';
+    }).join('');
+    $('p2Bus').innerHTML = f.pais ? [''].concat(porPais[f.pais] || []).map(function (b) {
+      return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === f.bu) + '">' + esc(b || S.t('f.todas')) + '</button>';
+    }).join('') : '';
+  }
+  function p2AbrirUnidade(sim) {
+    $('p2UnitPop').hidden = !sim; $('p2UnitTrigger').setAttribute('aria-expanded', String(sim));
+    if (sim) { var x = $('p2UnitPop').querySelector('[aria-pressed="true"]') || $('p2UnitPop').querySelector('button'); if (x) x.focus(); }
+  }
+  $('p2UnitTrigger').addEventListener('click', function () { p2AbrirUnidade($('p2UnitPop').hidden); });
+  $('p2Paises').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    p2.filtro = { pais: b.getAttribute('data-pais'), bu: '' };
+    p2GravarFiltro(); p2RenderUnidade(); p2Carregar(false);
+    if (!p2.filtro.pais) { p2AbrirUnidade(false); $('p2UnitTrigger').focus(); } else { var x = $('p2Bus').querySelector('button'); if (x) x.focus(); }
+  });
+  $('p2Bus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    p2.filtro.bu = b.getAttribute('data-bu');
+    p2GravarFiltro(); p2RenderUnidade(); p2Carregar(false);
+    p2AbrirUnidade(false); $('p2UnitTrigger').focus();
+  });
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('p2UnitPop').hidden && !$('p2Unit').contains(e.target)) p2AbrirUnidade(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('p2UnitPop').hidden) { p2AbrirUnidade(false); $('p2UnitTrigger').focus(); } });
+  $('p2Atualizar').addEventListener('click', function () { p2.cache = {}; p2Carregar(true); });
+  $('p2Tentar').addEventListener('click', function () { p2Carregar(true); });
+
+  // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
+  function abrirMenu(sim) {
+    $('topMenu').classList.toggle('is-aberto', sim);
+    $('topMenuBtn').setAttribute('aria-expanded', String(sim));
+    if (sim) { var f = $('topMenu').querySelector('.topnav-menu-link:not([hidden])'); if (f) f.focus(); }
+  }
+  $('topMenuBtn').addEventListener('click', function () { abrirMenu(!$('topMenu').classList.contains('is-aberto')); });
+  $('topMenu').addEventListener('click', function (e) { if (e.target.closest('a')) abrirMenu(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('topMenu').classList.contains('is-aberto')) { abrirMenu(false); $('topMenuBtn').focus(); } });
+  document.addEventListener('click', function (e) { if ($('topMenu').classList.contains('is-aberto') && !e.target.closest('#topMenu, #topMenuBtn')) abrirMenu(false); });
+
+  // ── Vistas pelo hash ──
+  function rota() {
+    var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
+    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel';
+    $('vistaInicio').hidden = h !== 'inicio';
+    document.body.classList.toggle('is-inicio', h === 'inicio');
+    $('vistaPendencias').hidden = h !== 'pendencias';
+    $('vistaPainel').hidden = h !== 'painel';
+    $('vistaConstrucao').hidden = pronta;
+    if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (!pronta) $('titConstr').textContent = nome;
+    document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
+    document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
+      if (a.getAttribute('data-tela') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', rota);
+
+  // Idioma, formato e tema redesenham o que o JS monta
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); });
+
+  rota();
+  carregar(false);
+})();
+
+</script>
+</body>
+</html>

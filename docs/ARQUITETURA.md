@@ -25,6 +25,7 @@ flowchart LR
     S --> K["/VBM-Kaizen-App/ + /api<br/>Kaizen (Express montável)"]
     S --> PH["/VBM-Performance-Hub/<br/>Hub + 4 aplicações"]
     S --> SC["/VBM-Stable-and-Capable/<br/>SPC + gerador Python"]
+    S --> AG["/VBM-Aip-Goals/<br/>Goal Cards de AIP"]
     S -->|proxy 127.0.0.1:8101| V["/VBM-Vdt/<br/>FastAPI (processo filho)"]
     S -->|proxy 127.0.0.1:8102| C["/VBM-Cockpit/<br/>FastAPI (processo filho)"]
   end
@@ -67,6 +68,7 @@ pci-portal/
 ├── VBM-Kaizen-App-PROD/    ← Kaizen, versão de produção
 ├── VBM-Performance-Hub/    ← Hub + VBM-Performance-Studio, COO, COO Historical, Health of the Business, Lean Six Sigma
 ├── VBM-Stable-and-Capable/ ← SPC: PDFs, importação do PCI Master e dashboard
+├── VBM-Aip-Goals/          ← AIP Goals: Goal Cards, aprovação e registro (Início, T01 e T02 publicados)
 ├── VBM-Vdt/                ← Value Driver Tree (Python)
 ├── VBM-Cockpit/            ← Strategic Cockpit (Python + React)
 └── .claude/skills/         ← skills do projeto (setup-dashboards, vbm-design, ajuste-responsividade, otimizacao-da-aplicacao)
@@ -87,6 +89,7 @@ a API de cada aplicação entra **antes** do `express.static` da pasta dela.
 | 3 | `/portal/acesso` | status do acesso do usuário | — |
 | 4 | `/VBM-Performance-Hub/*` | `VBM-Performance-Hub/portal.js` + estáticos | **IBP.USERS** |
 | 5 | `/VBM-Stable-and-Capable/*` | `VBM-Stable-and-Capable/portal.js` + estáticos | **IBP.USERS** |
+| 5a | `/VBM-Aip-Goals/*` | `VBM-Aip-Goals/portal.js` + estáticos | **IBP.USERS** |
 | 6 | `/VBM-Vdt/*` | proxy para `127.0.0.1:8101` | aberto |
 | 7 | `/VBM-Cockpit/*` | proxy para `127.0.0.1:8102` | aberto |
 | 8 | `/assets/*`, `/`, `/index.html` | página inicial | **IBP.USERS** (sem acesso, a página sai sem os cards) |
@@ -241,6 +244,17 @@ Estabilidade e capabilidade (SPC) por KPI. Três opções na mesma página:
 - **Python:** se as bibliotecas não importarem, a aplicação instala `python/requirements.txt` numa
   pasta própria na primeira subida (`STABLECAPABLE_PYTHON` força o executável).
 - Mais: [`VBM-Stable-and-Capable/README.md`](../VBM-Stable-and-Capable/README.md).
+
+### 6.3a VBM-Aip-Goals — `/VBM-Aip-Goals/`
+
+Definição, aprovação e registro das metas de AIP das BUs de VBM (Goal Card versionado e
+rastreável). Página única com vistas pelo hash; publicadas **Início** (`#inicio`), **T01 Minhas pendências**
+(`#pendencias`) e **T02 Painel do ciclo** (`#painel`).
+
+- **API (`/VBM-Aip-Goals/api`):** `pendencias`, `painel`, `health`, `ping`.
+- **Dados:** até a validação do modelo de dados (P-12), `AIPGOALS_FONTE=exemplo` (padrão) responde
+  com dados de exemplo marcados `exemplo: true`.
+- Mais: [`docs/projetos/aip-goals.md`](projetos/aip-goals.md).
 
 ### 6.4 VBM-Vdt — `/VBM-Vdt/`
 
