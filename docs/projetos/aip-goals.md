@@ -1,6 +1,6 @@
 # AIP Goals
 
-Leva cada meta de AIP das BUs de VBM (Brasil e Canadá) do desdobramento do COO até o Goal Card
+Leva cada meta de AIP das BUs de VBM (Brasil, Canadá e International Refineries) do desdobramento do COO até o Goal Card
 aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação funcional e técnica:
 [`VBM-Aip-Goals/docs/ESPECIFICACAO-TECNICA.md`](../../VBM-Aip-Goals/docs/ESPECIFICACAO-TECNICA.md) e
 [`VBM-Aip-Goals/docs/LEVANTAMENTO-REQUISITOS.md`](../../VBM-Aip-Goals/docs/LEVANTAMENTO-REQUISITOS.md).
@@ -107,7 +107,7 @@ só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegad
 
 ### T04 Goal Card
 
-`#goal-card?card=GC-OP-05&secao=ruler`. Ficha de cadastro da meta pelos **contribuidores** (D-13): o servidor decide
+`#goal-card?card=GC-ONP-05&secao=ruler`. Ficha de cadastro da meta pelos **contribuidores** (D-13): o servidor decide
 o modo — **edição** (contribuidores da BU, Rascunho ou Em revisão) ou **leitura** (demais casos, com o motivo no
 rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 Aprovações** (a construir).
 
@@ -128,6 +128,9 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
   pronto para a T14 (RN-06, RN-08, RN-09, RN-12).
 
 ### Dados de exemplo
+
+As BUs usam os nomes dos sites do COO Dashboard (D-15): Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries). O código do Goal Card usa 3 letras por site
+(ONP, SAL, SOS, ONT, VNL, CLY, MAT).
 
 Os Goal Cards de exemplo (T02 a T04) seguem a estrutura do material de referência do ciclo 2027: por BU, 40% de
 resultado do scorecard do COO e 60% de metas específicas (63 cards); os cards com situação inicial definida têm a

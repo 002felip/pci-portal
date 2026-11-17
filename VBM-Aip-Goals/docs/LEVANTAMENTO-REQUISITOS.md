@@ -10,12 +10,12 @@ Status usados: Decidido (confirmado pelo solicitante), A confirmar (padrão port
 
 ## 1. Contexto
 
-Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e-mail, sem versão oficial, sem trilha de aprovação e sem visão consolidada do ciclo. O AIP Goals cobre as etapas 3 a 5 do processo (proposta da BU, calibração e aprovação, Goal Card final) e registra o resultado do desdobramento do COO.
+Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries) são definidas em PPT e e-mail, sem versão oficial, sem trilha de aprovação e sem visão consolidada do ciclo. O AIP Goals cobre as etapas 3 a 5 do processo (proposta da BU, calibração e aprovação, Goal Card final) e registra o resultado do desdobramento do COO.
 
 | Item | Resposta | Status |
 | --- | --- | --- |
 | Usuários | Três grupos — contribuidores (por BU), aprovadores (grupo de aprovação P&CI/COO) e consulta — mais o administrador do ciclo | Decidido |
-| BUs do ciclo | ON, VNL, UK, JPN, OP, Salobo e Sossego (cadastro editável) | A confirmar |
+| BUs do ciclo | Nomes dos sites do COO Dashboard: Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries) (cadastro editável) | Decidido |
 | Indicador de sucesso | 100% dos Goal Cards do ciclo aprovados no app, sem PPT paralelo | A confirmar |
 | Fases | MVP na definição de metas; Change Request e Evidências em Q2–Q4 | Decidido |
 
@@ -52,6 +52,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-12 | Regras ajustadas: sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida pelo sistema, sem diferença possível (RN-16); card Aprovado pode ser reaberto dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17) | 17/11/2026 |
 | D-13 | O Goal Card (T04) é a ficha de cadastro dos contribuidores, sem decisão; a aprovação acontece numa tela própria (T14 Aprovações) com todas as fichas em aprovação; no Goal Card, os comentários aparecem em pop-up só de leitura | 17/11/2026 |
 | D-14 | Retirada a tela T01 Minhas pendências (substitui a tela inicial da D-01): as decisões ficam na T14 Aprovações, exclusiva do grupo de aprovação; os contribuidores entram pela T03 Metas da BU e pelos avisos | 17/11/2026 |
+| D-15 | Nomes das BUs iguais aos sites do COO Dashboard: Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries); as antigas siglas ON, VNL, UK, JPN e OP deixam de ser usadas | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 

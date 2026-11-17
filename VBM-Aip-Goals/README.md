@@ -1,6 +1,6 @@
 # VBM - AIP Goals
 
-Definição, aprovação e registro das **metas de AIP** das Business Units de VBM (Brasil e Canadá): leva cada meta
+Definição, aprovação e registro das **metas de AIP** das Business Units de VBM (Brasil, Canadá e International Refineries): leva cada meta
 do desdobramento do COO até o **Goal Card** aprovado, versionado e rastreável, no lugar do PPT e do e-mail.
 Endereço: `/VBM-Aip-Goals/`, aplicação da raiz do Portal, montada pelo `server.js` da raiz depois do controle de
 acesso do Portal (`IBP.USERS` com `CD_MATRICULA`).

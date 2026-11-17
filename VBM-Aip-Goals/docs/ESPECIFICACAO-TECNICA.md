@@ -10,7 +10,7 @@ Versão 1 · Especificação funcional, técnica e catálogo de telas do MVP, co
 
 ## 1. Visão e escopo
 
-O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de VBM (Brasil e Canadá) do desdobramento do COO até o Goal Card aprovado, versionado e rastreável. Ela substitui o PPT e o e-mail como fonte oficial.
+O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de VBM (Brasil, Canadá e International Refineries) do desdobramento do COO até o Goal Card aprovado, versionado e rastreável. Ela substitui o PPT e o e-mail como fonte oficial.
 
 **Objetivo:** governar a definição das metas com um fluxo único de preenchimento, aprovação e registro, para que cada BU tenha uma versão oficial de cada Goal Card e todo comentário e decisão fique no histórico.
 
@@ -23,7 +23,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 
 **Fora do escopo:** apuração do resultado, cálculo de bônus, integração com sistemas de RH e app nativo.
 
-**Premissas:** BUs do ciclo ON, VNL, UK, JPN, OP, Salobo e Sossego (cadastro editável); interface em português e inglês; ferramentas homologadas pela TI; identidade `vbm-design`.
+**Premissas:** BUs do ciclo com os nomes dos sites do COO Dashboard — Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries) (cadastro editável); interface em português e inglês; ferramentas homologadas pela TI; identidade `vbm-design`.
 
 ## 2. Perfis e acesso
 

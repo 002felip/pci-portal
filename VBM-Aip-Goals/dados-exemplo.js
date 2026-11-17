@@ -32,8 +32,11 @@ function cicloExemplo(hoje = new Date()) {
     // Jornada do ciclo (janelas configuradas em T11). etapaAtual = a janela aberta hoje.
     // BUs do ciclo (cadastro editável em T11)
     bus: [
-      { sigla: 'OP', pais: 'Brasil' }, { sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'Sossego', pais: 'Brasil' },
-      { sigla: 'ON', pais: 'Canadá' }, { sigla: 'VNL', pais: 'Canadá' }, { sigla: 'UK', pais: 'Canadá' }, { sigla: 'JPN', pais: 'Canadá' },
+      // Nomes dos sites como no COO Dashboard (IBP.SITES, nomes curtos de apresentação); Clydach e Matsusaka
+      // ficam em International Refineries, como no seletor do COO Dashboard
+      { sigla: 'Onça Puma', pais: 'Brasil' }, { sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'Sossego', pais: 'Brasil' },
+      { sigla: 'Ontario', pais: 'Canadá' }, { sigla: 'VNL', pais: 'Canadá' },
+      { sigla: 'Clydach', pais: 'International Refineries' }, { sigla: 'Matsusaka', pais: 'International Refineries' },
     ],
     etapaAtual: 'proposta',
     etapas: [
@@ -143,19 +146,21 @@ const SCORECARD_COO = [
 ];
 const PESO_RESULTADO_COO = 40; // parte da BU ligada ao resultado do scorecard do COO
 const PESO_TOTAL = 100;        // total de pontos por BU (RN-16)
-const todas = (p) => ({ ON: p, VNL: p, UK: p, JPN: p, OP: p, Salobo: p, Sossego: p });
+// Prefixo do código do Goal Card por site (3 letras, sem acento)
+const CODIGO_SITE = { 'Onça Puma': 'ONP', Salobo: 'SAL', Sossego: 'SOS', Ontario: 'ONT', VNL: 'VNL', Clydach: 'CLY', Matsusaka: 'MAT' };
+const todas = (p) => ({ Ontario: p, VNL: p, Clydach: p, Matsusaka: p, 'Onça Puma': p, Salobo: p, Sossego: p });
 // Metas específicas da BU (60%): número, título, tipo, se é nova no ciclo, meta do COO de origem e peso por BU.
 const METAS_BU = [
   { numero: 1, titulo: 'BU Working Capital', tipo: 'formula', pesos: todas(5) },
   { numero: 2, titulo: 'BU Unit Cost and Investments', tipo: 'formula', pesos: todas(10) },
-  { numero: 3, titulo: 'BU Spatial Mine Adherence', tipo: 'formula', pesos: { ON: 5, VNL: 5, OP: 5, Salobo: 5, Sossego: 5 } },
+  { numero: 3, titulo: 'BU Spatial Mine Adherence', tipo: 'formula', pesos: { Ontario: 5, VNL: 5, 'Onça Puma': 5, Salobo: 5, Sossego: 5 } },
   { numero: 4, titulo: 'BU Adherence to Production Budget', tipo: 'formula', pesos: todas(10) },
   { numero: 5, titulo: 'BU Chronic Unease', tipo: 'formula', nova: true, origem: '2027_02', pesos: todas(5) },
   { numero: 6, titulo: 'BU Asset Management', tipo: 'marcos', nova: true, origem: '2027_03', pesos: { ...todas(10), Salobo: 5, Sossego: 5 } },
   { numero: 7, titulo: 'BU Operating Model & Continuous Improvement', tipo: 'marcos', nova: true, origem: '2027_04', pesos: todas(5) },
   { numero: 8, titulo: 'BU Copper Growth Bacaba', tipo: 'marcos', origem: '2027_05', pesos: { Sossego: 10 } },
   { numero: 9, titulo: 'BU Copper Growth CPF', tipo: 'marcos', origem: '2027_05', pesos: { Salobo: 10 } },
-  { numero: 10, titulo: 'BU VBM Operating Plan (strategic initiatives)', tipo: 'marcos', nova: true, pesos: { ON: 10, VNL: 10, UK: 15, JPN: 15, OP: 10, Salobo: 5, Sossego: 5 } },
+  { numero: 10, titulo: 'BU VBM Operating Plan (strategic initiatives)', tipo: 'marcos', nova: true, pesos: { Ontario: 10, VNL: 10, Clydach: 15, Matsusaka: 15, 'Onça Puma': 10, Salobo: 5, Sossego: 5 } },
 ];
 const META_RESULTADO_COO = { numero: 0, titulo: "COO's Scorecard Result", tipo: 'formula', resultado: true };
 
@@ -188,7 +193,7 @@ function painelExemplo(hoje = new Date()) {
         : null;
       const versao = estado === 'rascunho' ? null : 1 + Math.floor(sorte() * 2);
       cards.push({
-        card: `GC-${bu.sigla.slice(0, 3).toUpperCase()}-${String(meta.numero).padStart(2, '0')}`,
+        card: `GC-${CODIGO_SITE[bu.sigla] || bu.sigla.slice(0, 3).toUpperCase()}-${String(meta.numero).padStart(2, '0')}`,
         bu: { sigla: bu.sigla, pais: bu.pais },
         meta,
         estado, nivel, versao,
