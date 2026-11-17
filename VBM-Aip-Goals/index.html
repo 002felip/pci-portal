@@ -807,11 +807,7 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .m3-peso-seg { border-radius: 999px; }
 .m3-tabela .m3-centro { text-align: center; }
 .m3-tabela .m3-centro .m3-peso { justify-content: center; }
-/* Anéis da T03 no modelo da jornada (linha pelos centros), cerca de 25% menores que os do Painel */
-#vistaMetas .p2-trilha { --anel: clamp(5rem, 3.4rem + 3vw, 7.1rem); --p2-esp: 0.95rem; }
-#vistaMetas .p2-et-n { font-size: 0.8rem; }
-#vistaMetas .p2-et-data { font-size: 0.74rem; }
-#vistaMetas .p2-et-det { font-size: 0.7rem; }
+/* Anéis da T03 no mesmo modelo e tamanho da jornada do Painel (linha pelos centros, preenchida até a etapa atual) */
 #vistaMetas .p2-titulo .ab-nome { font-size: clamp(1.65rem, 1.05rem + 2.55vw, 3.45rem); }
 #vistaMetas .p2-titulo .ab-ano { font-size: clamp(3.4rem, 1.9rem + 3.75vw, 6.75rem); }
 /* Popup grande do Goal Card (aberto pelo botão Abrir) */
@@ -2307,19 +2303,27 @@ window.VBMSetup = (function () {
     var p = t.peso || {}, qn = t.qtd || {};
     var n = function (k) { return S.t(k === 1 ? 'm3.meta1' : 'm3.metas', { n: S.fmt(k, 0) }); };
     var aneis = [
-      { id: 'distribuido', cls: 'is-feita', v: t.pesoTotal || 0, metas: t.metas || 0 },
-      { id: 'submetido', cls: 'is-futura', v: t.pesoSubmetido || 0, metas: (t.metas || 0) - (qn.rascunho || 0) },
-      { id: 'aprovacao', cls: 'is-futura', v: p.em_aprovacao || 0, metas: qn.em_aprovacao || 0 },
-      { id: 'aprovado', cls: 'is-feita', v: p.aprovado || 0, metas: qn.aprovado || 0 }
+      { id: 'distribuido', cls: '', v: t.pesoTotal || 0, metas: t.metas || 0 },
+      { id: 'submetido', cls: '', v: t.pesoSubmetido || 0, metas: (t.metas || 0) - (qn.rascunho || 0) },
+      { id: 'aprovacao', cls: '', v: p.em_aprovacao || 0, metas: qn.em_aprovacao || 0 },
+      { id: 'aprovado', cls: '', v: p.aprovado || 0, metas: qn.aprovado || 0 }
     ];
+    // Etapa atual = primeira ainda incompleta (como na jornada do Painel): as anteriores ficam concluídas
+    var atual = 0; while (atual < aneis.length - 1 && fr(aneis[atual].v) >= 1) atual++;
+    aneis.forEach(function (a, i) { a.cls = i < atual ? 'is-feita' : i === atual ? 'is-atual' : 'is-futura'; });
+    var m3Pos = atual ? 25 * (atual - 1) + 25 * Math.min(1, fr(aneis[atual].v)) : 0;
+    var hj = new Date(), m3Hoje = hj.getFullYear() + '-' + String(hj.getMonth() + 1).padStart(2, '0') + '-' + String(hj.getDate()).padStart(2, '0');
     $('m3Aneis').innerHTML = aneis.map(function (a, i) {
       var rot = S.t('m3.a.' + a.id), pts = S.t('m3.pts', { n: S.fmt(a.v, 0), t: S.fmt(esp, 0) });
-      return '<li class="p2-et ' + a.cls + '" aria-label="' + esc(S.t('m3.anelAria', { e: rot, p: pct(fr(a.v)), q: pts, m: n(a.metas) })) + '">' +
+      return '<li class="p2-et ' + a.cls + '"' + (i === atual ? ' aria-current="step"' : '') + ' aria-label="' + esc(S.t('m3.anelAria', { e: rot, p: pct(fr(a.v)), q: pts, m: n(a.metas) })) + '">' +
         '<p class="p2-et-n" aria-hidden="true"><b>' + String(i + 1).padStart(2, '0') + '</b> - ' + esc(rot) + '</p>' +
         '<div class="p2-anel" aria-hidden="true">' + anel(fr(a.v)) + '<div class="p2-anel-txt"><strong>' + esc(pct(fr(a.v))) + '</strong></div></div>' +
         '<p class="p2-et-data" aria-hidden="true">' + esc(n(a.metas)) + '</p>' +
         '<p class="p2-et-det" aria-hidden="true">' + esc(pts) + '</p></li>';
-    }).join('');
+    }).join('') +
+      // Linha preenchida do primeiro anel até a etapa atual, na proporção do peso já alcançado nela
+      '<span class="p2-progresso" aria-hidden="true" style="width:' + m3Pos.toFixed(2) + '%"></span>' +
+      '<span class="p2-hoje" aria-hidden="true" style="left:' + (12.5 + m3Pos).toFixed(2) + '%"><span>' + esc(S.t('p2.hoje', { d: dataCurta(m3Hoje) })) + '</span></span>';
 
     // Tabela de metas
     // Barra de peso em cascata: cada meta começa onde a anterior termina e todas somam o total da BU
