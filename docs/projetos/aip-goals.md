@@ -17,13 +17,15 @@ técnica v1 e Levantamento de requisitos).
 |---|---|---|
 | `index.html` | página única; tokens e componentes `vbm-design` e barra `setup-dashboards` colados no `<style>`/`<script>` | sim |
 | `assets/css/poppins.css` | Poppins local (faces embutidas) | sim |
-| `assets/images/Fundo_VBM_2400x1145.webp` | fundo dos três minerais (banner da T01 e Início no tema escuro) | sim |
-| `assets/images/Fundo_VBM_claro_2400x1145.webp` | versão clara do mesmo fundo (Início no tema claro) | sim |
+| `assets/images/Fundo_VBM_2400x1145.webp` | fundo dos três minerais (banner da T01; Início e T02 no tema escuro) | sim |
+| `assets/images/Fundo_VBM_claro_2400x1145.webp` | versão clara do mesmo fundo (Início e T02 no tema claro) | sim |
 | `portal.js` | montagem no Portal (pool próprio, health, router, bloqueio dos arquivos internos) | não |
 | `aip-goals-api.js` | rotas de dados (mesmo router no Portal e no standalone) | não |
 | `dados-exemplo.js` | fila de exemplo da T01, com datas relativas a hoje | não |
 | `server.js` | app standalone para desenvolvimento (porta 8020) | não |
 | `tests/` | testes `node --test` (API, regras de idade/prazo, bloqueio de arquivos) | não |
+| `README.md` | documento da pasta (telas, estrutura, API, como rodar) | não |
+| `database/` | scripts SQL do time de dados; hoje só o `README.md` com o modelo proposto (P-12) | não |
 
 ## Telas (vistas pelo hash)
 

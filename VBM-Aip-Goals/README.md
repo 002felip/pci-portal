@@ -1,0 +1,64 @@
+# VBM - AIP Goals
+
+Definição, aprovação e registro das **metas de AIP** das Business Units de VBM (Brasil e Canadá): leva cada meta
+do desdobramento do COO até o **Goal Card** aprovado, versionado e rastreável, no lugar do PPT e do e-mail.
+Endereço: `/VBM-Aip-Goals/`, aplicação da raiz do Portal, montada pelo `server.js` da raiz depois do controle de
+acesso do Portal (`IBP.USERS` com `CD_MATRICULA`).
+
+Documento técnico completo: [`docs/projetos/aip-goals.md`](../docs/projetos/aip-goals.md). Especificação funcional e
+técnica: documento "AIP Goals — Especificação funcional e levantamento de requisitos".
+
+## Telas (página única, vistas pelo hash)
+
+| Vista | Tela | Situação |
+|---|---|---|
+| `#inicio` (padrão) | T00 Início — abertura do ciclo AIP, jornada e índice das telas | publicada |
+| `#pendencias` | T01 Minhas pendências — fila pessoal com filtros e status | publicada |
+| `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
+| `#metas`, `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T03 a T08 e T11 | "Tela em construção" |
+
+Uso em **notebook e desktop** (1024 px a 4K); celular fora do escopo.
+
+## Estrutura
+
+```
+VBM-Aip-Goals/
+├── index.html          página única (tokens vbm-design e barra setup-dashboards embutidos)
+├── assets/
+│   ├── css/poppins.css         Poppins local
+│   └── images/                 fundos dos três minerais (claro e original)
+├── portal.js           montagem no Portal: pool próprio, /api/health, router, bloqueio dos arquivos internos
+├── aip-goals-api.js    rotas de dados (o mesmo router no Portal e no standalone)
+├── dados-exemplo.js    dados de exemplo até a validação do modelo de dados (P-12)
+├── server.js           app standalone para desenvolvimento (porta 8020)
+├── database/           scripts SQL do time de dados (ver database/README.md)
+├── tests/              testes node --test
+└── package.json
+```
+
+Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`portal.js`).
+
+## API (`/VBM-Aip-Goals/api`)
+
+| Rota | O que faz |
+|---|---|
+| `GET /pendencias` | T01: fila do usuário (identidade pelo `X-Forwarded-Email`) |
+| `GET /painel?pais=&bu=` | T02: agregados do ciclo, só P&CI/COO e administrador; filtro validado |
+| `GET /health` · `GET /ping` | saúde e diagnóstico |
+
+## Rodar e testar
+
+```bash
+npm test
+NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js   # http://localhost:8020/
+```
+
+Variáveis: `AIPGOALS_FONTE` (`exemplo` até a P-12; `banco` depois), `AIPGOALS_AZURE_SQL_DATABASE` e as de conexão do
+Portal (`AZURE_SQL_*`). Detalhe em `docs/projetos/aip-goals.md`.
+
+## Pendências
+
+- **P-12 — modelo de dados:** validar a proposta (`database/README.md`) com o time de dados; enquanto isso as telas
+  mostram "Dados de exemplo".
+- **P-11 — rota de aprovação:** confirmar o Diretor da BU como nível 1 (afeta a T04).
+- Card do AIP Goals na página inicial do Portal.
