@@ -76,15 +76,15 @@ comentários sem resposta e ações atribuídas.
 Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis recebem 403 e a tela mostra
 "Painel restrito"). Filtro País › BU no endereço (`#painel?pais=&bu=`), com o Voltar do navegador.
 
-- **Topo:** título da tela no padrão do Início (sobre a foto dos minerais com véu no tom da página) e o resumo
-  da etapa em andamento (dias úteis para o fim da janela e até a publicação dos Goal Cards oficiais).
-- **Jornada do ciclo:** as quatro etapas numa linha contínua, preenchida até hoje, com o marcador "Hoje".
-  Cada etapa tem um anel de progresso (SVG próprio) com o número central e um resumo curto:
-  - Desdobramento do COO: metas desdobradas e BUs;
-  - Proposta da BU: % submetidos, n de total, em rascunho e devolvidos;
-  - Calibração e aprovação: em aprovação (anel em duas partes: com o Diretor da BU × com P&CI/COO) e paradas;
-  - Goal Card oficial: % aprovados, n de total, negados e a concluir.
-  Números dos totais do servidor, seguindo o filtro País › BU (faixa de filtro e ações logo abaixo).
+- **Topo:** "Ciclo AIP" com o ano do ciclo em numerais vazados (modelo da abertura), sobre a foto dos minerais
+  com véu no tom da página.
+- **Jornada do ciclo:** as quatro etapas ("01 - Desdobramento COO", "02 - Propostas BU's", "03 - Calibração e
+  Aprovação", "04 - Goal Card oficial") numa linha contínua preenchida até hoje, com o marcador "Hoje". Cada anel
+  mostra só o quantitativo (metas desdobradas, Goal Cards submetidos, em aprovação e aprovados) e a fração do
+  total do ciclo. O seletor à esquerda alterna **Nº** (absoluto) e **%** (do total), com estado no endereço
+  (`#painel?vis=pct`). Abaixo de cada anel, só o prazo e um fato curto (concluída; dias úteis restantes e em
+  rascunho; paradas; negados). Números dos totais do servidor, seguindo o filtro País › BU.
+- **Faixa de filtro:** País › BU, aviso de dados de exemplo e as ações atualizar e tela cheia.
 - **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de
   status + números na linha), total e paradas; a BU leva à T03 filtrada.
 - **Funil do ciclo:** Goal Cards → submetidos → aprovados no nível 1 → aprovados, com a perda entre etapas.

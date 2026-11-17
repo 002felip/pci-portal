@@ -751,10 +751,11 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .jornada-tit { margin-bottom: 0.625rem; }
   .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
   .hero-titulo { font-size: 1.6rem; }
-  .p2-topo { padding-bottom: 1.5rem; }
-  .p2-jornada { --anel: 6rem; margin-top: 1.25rem; }
-  .p2-et-nome { margin-top: 0.625rem; }
-  .p2-et-det { margin-top: 0.25rem; }
+  /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
+  #vistaPainel .p2-topo { padding-bottom: 1.5rem; }
+  #vistaPainel .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
+  #vistaPainel .p2-titulo .ab-ano { font-size: 4.2rem; }
+  #vistaPainel .p2-et-data { margin-top: 0.625rem; }
   .hero-sub { display: none; }
   .hero-pills { margin-top: 0.5rem; }
   .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
@@ -786,20 +787,24 @@ body.is-inicio .page { max-width: none; padding: 0; }
     linear-gradient(90deg, color-mix(in srgb, var(--page) 95%, transparent), color-mix(in srgb, var(--page) 84%, transparent)),
     var(--ab-foto) center / cover no-repeat;
 }
-.p2-cab { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; }
-.p2-titulo { margin: 0; font: 600 clamp(2rem, 1.3rem + 2.4vw, 3.4rem)/1 var(--font-display); letter-spacing: -.03em; color: var(--ab-v1); }
-.p2-resumo { margin: 0.75rem 0 0; max-width: 62ch; font-size: 0.95rem; line-height: 1.55; color: var(--text); font-variant-numeric: tabular-nums; }
-.p2-resumo b { font-weight: 600; color: var(--ink-strong); }
-.p2-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0.625rem 0 0; }
+/* Título no modelo da abertura: "Ciclo AIP" sólido e o ano em numerais vazados */
+.p2-titulo { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 1rem; line-height: 1; }
+.p2-titulo .ab-ano { margin: 0; font-size: clamp(3.6rem, 2rem + 4.2vw, 7.5rem); }
+.p2-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0; order: 1; align-self: center; }
 .p2-pills [hidden] { display: none; }
 /* Pílula informativa (mesmo formato da .pill-wait da vbm-design, em tom neutro) */
 .pill-info { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--flat-bg); color: var(--flat); font: italic 500 .7rem var(--font-ui); }
 /* Faixa de filtro e ações logo abaixo da jornada */
 .p2-filtro { align-items: flex-end; }
+.p2-filtro .dash-acao { order: 2; }
 .p2-filtro .dash-acao:first-of-type { margin-left: auto; }
 
 /* Jornada: linha contínua pelos centros dos anéis, preenchida até hoje */
-.p2-jornada { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 2.25rem 0 0; padding: 0; list-style: none; --anel: clamp(6.5rem, 4.5rem + 4vw, 9.5rem); }
+.p2-trilha { --anel: clamp(6.5rem, 4.5rem + 4vw, 9.5rem); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; margin-top: 2rem; }
+.p2-vis { align-self: start; padding-top: calc(1.75rem + var(--anel) / 2 - 1.6rem); }
+.p2-vis .seg { flex-direction: column; }
+.p2-vis .seg button { min-width: 2.75rem; }
+.p2-jornada { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .p2-jornada::before, .p2-progresso { content: ''; position: absolute; left: 12.5%; top: calc(1.75rem + var(--anel) / 2); height: 3px; border-radius: 3px; }
 .p2-jornada::before { right: 12.5%; background: var(--ab-trilho); }
 .p2-progresso { background: linear-gradient(90deg, var(--cyc-ok), var(--accent-strong)); }
@@ -808,8 +813,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .p2-hoje::after { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--ink-strong); box-shadow: 0 0 0 0.3rem var(--page); }
 
 .p2-et { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 0.75rem; }
-.p2-et-n { margin: 0 0 0.5rem; height: 1.25rem; font: 600 0.66rem var(--font-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--text-soft); }
-.p2-et.is-atual .p2-et-n { color: var(--accent-strong); }
+/* Etapa no topo do anel: "01 - Desdobramento COO" */
+.p2-et-n { margin: 0 0 0.5rem; height: 1.25rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 0.92rem/1.25rem var(--font-display); color: var(--ink-strong); }
+.p2-et-n b { font-weight: 300; color: var(--accent-strong); }
 .p2-anel { position: relative; width: var(--anel); height: var(--anel); border-radius: 50%; background: var(--page); }
 .p2-et.is-atual .p2-anel { box-shadow: 0 0 0 0.5rem color-mix(in srgb, var(--accent-strong) 14%, transparent); }
 .p2-anel svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -821,12 +827,10 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .p2-anel .v2 { stroke: var(--serie-p); }
 .p2-anel-txt { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .p2-anel-txt strong { font: 300 clamp(1.8rem, 1.2rem + 1.4vw, 2.7rem)/1 var(--font-display); color: var(--ink-strong); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.p2-anel-txt span { margin-top: 0.25rem; font: 500 0.66rem var(--font-ui); color: var(--text-soft); }
-.p2-et-nome { margin: 1rem 0 0; font: 600 1.02rem var(--font-display); color: var(--ink-strong); }
-.p2-et-data { margin: 0.25rem 0 0; font-size: 0.74rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
-.p2-et.is-atual .p2-et-data { color: var(--accent-strong); font-weight: 600; }
-.p2-et-det { margin: 0.5rem 0 0; max-width: 26ch; font-size: 0.78rem; line-height: 1.5; color: var(--text); font-variant-numeric: tabular-nums; }
-.p2-et-det b { font-weight: 600; color: var(--ink-strong); }
+/* Abaixo do anel: só o prazo e um fato executivo */
+.p2-et-data { margin: 1rem 0 0; font: 600 1.05rem var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.p2-et.is-atual .p2-et-data { color: var(--accent-strong); }
+.p2-et-det { margin: 0.25rem 0 0; font-size: 0.78rem; line-height: 1.45; color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .p2-et-det .alerta { font-weight: 600; color: var(--wait); }
 
 .p2-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(min(22rem, 100%), 1fr); gap: 1rem; align-items: start; }
@@ -1265,20 +1269,24 @@ p, dd, .item-meta, .indice-desc, .tipo-det { overflow-wrap: anywhere; }
     <!-- Topo da tela: título no padrão do Início e a jornada do ciclo com um anel de progresso por etapa -->
     <header class="p2-topo">
       <div class="p2-cab">
-        <div>
-          <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="p2Ciclo">AIP</span></p>
-          <h2 class="p2-titulo" id="titPainel" data-i18n="p2.titulo">Painel do ciclo</h2>
-          <p class="p2-resumo" id="p2LinhaResumo" aria-live="polite"></p>
-          <p class="p2-pills">
-            <span class="pill-info" id="p2Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
-            <span class="pill-wait" id="p2Desatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span>
-          </p>
-        </div>
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="p2.eyebrow">Planejamento anual</span></p>
+        <h2 class="p2-titulo" id="titPainel"><span class="ab-nome" data-i18n="p2.titulo">Ciclo AIP</span> <span class="ab-ano" id="p2Ano">2027</span></h2>
       </div>
-      <ol class="p2-jornada" id="p2Fases" aria-label="Jornada do ciclo" data-i18n-aria="ab.jornada"></ol>
+      <div class="p2-trilha">
+        <div class="filter p2-vis">
+          <span class="filter-label" id="p2LblVis" data-i18n="p2.vis">Exibir:</span>
+          <div class="seg" role="group" aria-labelledby="p2LblVis" id="p2Vis">
+            <button type="button" data-vis="abs" aria-pressed="true" title="Números absolutos" data-i18n-title="p2.visAbs">Nº</button>
+            <button type="button" data-vis="pct" aria-pressed="false" title="Percentual do total" data-i18n-title="p2.visPct">%</button>
+          </div>
+        </div>
+        <ol class="p2-jornada" id="p2Fases" aria-label="Jornada do ciclo" data-i18n-aria="ab.jornada"></ol>
+      </div>
     </header>
 
     <div class="filters p2-filtro">
+      <p class="p2-pills"><span class="pill-info" id="p2Exemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
+            <span class="pill-wait" id="p2Desatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span></p>
           <div class="filter">
         <span class="filter-label" id="p2LblUnid">Business Unit:</span>
         <div class="unit" id="p2Unit">
@@ -1551,7 +1559,12 @@ window.VBMSetup = (function () {
       'p2.ph.calibracaoRot': 'em aprovação', 'p2.ph.calibracaoDet': '{a} com o Diretor da BU · {b} com P&CI/COO',
       'p2.ph.paradas': '{n} paradas há mais de {l} dias úteis', 'p2.ph.parada1': '1 parada há mais de {l} dias úteis',
       'p2.ph.oficialRot': 'aprovados', 'p2.ph.oficialDet': '{a} de {t} Goal Cards aprovados<br>{g} negados · {c} a concluir',
-      'p2.titulo': 'Painel do ciclo', 'p2.sub': 'Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.',
+      'p2.eyebrow': 'Planejamento anual', 'p2.vis': 'Exibir:', 'p2.visAbs': 'Números absolutos', 'p2.visPct': 'Percentual do total', 'p2.prazo': 'prazo', 'p2.doTotalCurto': 'do total',
+      'p2.et.desdobramento': 'Desdobramento COO', 'p2.et.proposta': "Propostas BU's", 'p2.et.calibracao': 'Calibração e Aprovação', 'p2.et.oficial': 'Goal Card oficial',
+      'p2.q.desdobramento': 'metas desdobradas', 'p2.q.proposta': 'Goal Cards submetidos', 'p2.q.calibracao': 'Goal Cards em aprovação', 'p2.q.oficial': 'Goal Cards aprovados',
+      'p2.f2.concluida': 'Concluída', 'p2.f2.restam': 'faltam {n} dias úteis', 'p2.f2.resta1': 'falta 1 dia útil', 'p2.f2.rascunho': '{n} em rascunho',
+      'p2.f2.paradas': '{n} paradas', 'p2.f2.parada1': '1 parada', 'p2.f2.semParadas': 'sem paradas', 'p2.f2.negados': '{n} negados', 'p2.f2.bus': '{n} BUs',
+      'p2.titulo': 'Ciclo AIP', 'p2.tituloAba': 'Painel do ciclo', 'p2.sub': 'Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.',
       'p2.agenda': 'Agenda do ciclo', 'p2.atualizar': 'Atualizar painel', 'p2.kpisAria': 'Indicadores do ciclo',
       'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submetidos', 'p2.k.aprovado': 'Aprovados', 'p2.k.em_aprovacao': 'Em aprovação', 'p2.k.em_revisao': 'Em revisão', 'p2.k.negado': 'Negados',
       'p2.s.total': 'no ciclo, {b} BUs', 'p2.s.submetidos': '{p} do total', 'p2.s.aprovado': '{p} do total', 'p2.s.em_aprovacao': '{n} paradas', 'p2.s.em_revisao': 'devolvidos às BUs', 'p2.s.negado': 'fora do ciclo',
@@ -1621,7 +1634,12 @@ window.VBMSetup = (function () {
       'p2.ph.calibracaoRot': 'pending approval', 'p2.ph.calibracaoDet': '{a} with the BU Director · {b} with P&CI/COO',
       'p2.ph.paradas': '{n} stalled for more than {l} business days', 'p2.ph.parada1': '1 stalled for more than {l} business days',
       'p2.ph.oficialRot': 'approved', 'p2.ph.oficialDet': '{a} of {t} Goal Cards approved<br>{g} denied · {c} to complete',
-      'p2.titulo': 'Cycle dashboard', 'p2.sub': 'Goal Card status by Business Unit and time at each approval level.',
+      'p2.eyebrow': 'Annual planning', 'p2.vis': 'Show:', 'p2.visAbs': 'Absolute numbers', 'p2.visPct': 'Percent of total', 'p2.prazo': 'due', 'p2.doTotalCurto': 'of total',
+      'p2.et.desdobramento': 'COO cascade', 'p2.et.proposta': 'BU proposals', 'p2.et.calibracao': 'Calibration and Approval', 'p2.et.oficial': 'Official Goal Card',
+      'p2.q.desdobramento': 'cascaded goals', 'p2.q.proposta': 'Goal Cards submitted', 'p2.q.calibracao': 'Goal Cards pending approval', 'p2.q.oficial': 'Goal Cards approved',
+      'p2.f2.concluida': 'Done', 'p2.f2.restam': '{n} business days left', 'p2.f2.resta1': '1 business day left', 'p2.f2.rascunho': '{n} in draft',
+      'p2.f2.paradas': '{n} stalled', 'p2.f2.parada1': '1 stalled', 'p2.f2.semParadas': 'none stalled', 'p2.f2.negados': '{n} denied', 'p2.f2.bus': '{n} BUs',
+      'p2.titulo': 'AIP Cycle', 'p2.tituloAba': 'Cycle dashboard', 'p2.sub': 'Goal Card status by Business Unit and time at each approval level.',
       'p2.agenda': 'Cycle agenda', 'p2.atualizar': 'Refresh dashboard', 'p2.kpisAria': 'Cycle indicators',
       'p2.k.total': 'Goal Cards', 'p2.k.submetidos': 'Submitted', 'p2.k.aprovado': 'Approved', 'p2.k.em_aprovacao': 'Pending approval', 'p2.k.em_revisao': 'In Review', 'p2.k.negado': 'Denied',
       'p2.s.total': 'in the cycle, {b} BUs', 'p2.s.submetidos': '{p} of total', 'p2.s.aprovado': '{p} of total', 'p2.s.em_aprovacao': '{n} stalled', 'p2.s.em_revisao': 'returned to BUs', 'p2.s.negado': 'out of the cycle',
@@ -2007,17 +2025,19 @@ window.VBMSetup = (function () {
   // ══ T02 · Painel do ciclo ══
   // Dados: GET api/painel?pais=&bu= — totais, matriz, funil e tempos calculados no servidor a partir dos cards (CA-15).
   // Filtro País › BU no hash (#painel?pais=&bu=): o Voltar do navegador volta com o mesmo filtro.
-  var p2 = { dados: null, cache: {}, filtro: { pais: '', bu: '' }, carregando: null };
+  var p2 = { dados: null, cache: {}, filtro: { pais: '', bu: '' }, vis: 'abs', carregando: null };
   var EST_ORDEM = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado'];
   function pct(v) { return v == null ? '—' : S.fmt(v * 100, 0) + '%'; }
   function p2LerFiltro() {
     var q = new URLSearchParams((location.hash.split('?')[1]) || '');
     p2.filtro = { pais: q.get('pais') || '', bu: q.get('bu') || '' };
+    p2.vis = q.get('vis') === 'pct' ? 'pct' : 'abs';
   }
   function p2GravarFiltro() {
     var q = new URLSearchParams();
     if (p2.filtro.pais) q.set('pais', p2.filtro.pais);
     if (p2.filtro.bu) q.set('bu', p2.filtro.bu);
+    if (p2.vis === 'pct') q.set('vis', 'pct');
     var alvo = '#painel' + (q.toString() ? '?' + q.toString() : '');
     if (location.hash !== alvo) history.pushState(null, '', location.pathname + location.search + alvo);
   }
@@ -2059,7 +2079,7 @@ window.VBMSetup = (function () {
     var d = p2.dados; if (!d) return;
     p2Estado('ok');
     var c = d.ciclo || {}, t = d.totais || {}, lim = (d.parametros || {}).diasParado || 3;
-    $('p2Ciclo').textContent = c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '';
+    if (c.ano) $('p2Ano').textContent = String(c.ano);
     $('p2Exemplo').hidden = !d.exemplo;
     $('p2Desatualizado').hidden = !d.desatualizado;
     $('p2Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
@@ -2155,60 +2175,60 @@ window.VBMSetup = (function () {
   function p2RenderLinha(d) {
     var c = d.ciclo || {}, t = d.totais || {}, niv = d.niveis || [];
     var ets = (c.etapas || []).filter(function (e) { return ETAPAS.indexOf(e.id) >= 0; });
-    if (!ets.length) { $('p2Fases').innerHTML = ''; $('p2LinhaResumo').textContent = ''; return; }
+    document.querySelectorAll('#p2Vis button').forEach(function (bt) { bt.setAttribute('aria-pressed', String(bt.getAttribute('data-vis') === p2.vis)); });
+    if (!ets.length) { $('p2Fases').innerHTML = ''; return; }
     var atual = ETAPAS.indexOf(c.etapaAtual);
     var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     var hojeIso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
 
-    // Resumo executivo sob o título
-    var etAtual = ets[atual] || null;
-    $('p2LinhaResumo').innerHTML = etAtual
-      ? S.t('p2.linhaResumo', { e: '<b>' + esc(S.t('et.' + etAtual.id)) + '</b>', n: '<b>' + esc(S.fmt(diasUteisAte(etAtual.fim), 0)) + '</b>', o: '<b>' + esc(S.fmt(diasUteisAte(ets[ets.length - 1].fim), 0)) + '</b>' })
-      : '';
-
-    // Conteúdo de cada etapa: anel, número central e resumo (números dos totais do servidor, CA-15)
-    var total = t.total || 0, n1 = (niv[0] || {}).cards || 0, n2 = (niv[1] || {}).cards || 0, sub = t.submetidos || 0;
-    var nBus = (d.porBu || []).length;
+    // Quantitativo de cada etapa (dos totais do servidor, CA-15); o anel mostra a fração do total do ciclo
+    var total = t.total || 0, n1 = (niv[0] || {}).cards || 0, n2 = (niv[1] || {}).cards || 0;
+    var fr = function (v) { return total ? v / total : 0; };
     var lim = (d.parametros || {}).diasParado || 3;
-    var b = function (v) { return '<b>' + esc(S.fmt(v, 0)) + '</b>'; };
-    var conteudo = {
-      desdobramento: { anel: anel(1), num: S.fmt(total, 0), rot: S.t('p2.ph.desdobramentoRot'),
-        det: S.t('p2.ph.desdobramentoDet', { b: b(nBus) }) },
-      proposta: { anel: anel(total ? sub / total : 0), num: pct(total ? sub / total : null), rot: S.t('p2.ph.propostaRot', { n: S.fmt(sub, 0), t: S.fmt(total, 0) }),
-        det: S.t(t.em_revisao === 1 ? 'p2.ph.propostaDet1' : 'p2.ph.propostaDet', { s: b(sub), t: b(total), r: b(t.rascunho || 0), v: b(t.em_revisao || 0) }) },
-      calibracao: { anel: anel(sub ? n1 / sub : 0, sub ? n2 / sub : 0), num: S.fmt(t.em_aprovacao || 0, 0), rot: S.t('p2.ph.calibracaoRot'),
-        det: S.t('p2.ph.calibracaoDet', { a: b(n1), b: b(n2) }) +
-          (t.paradas ? '<br><span class="alerta">' + esc(S.t(t.paradas === 1 ? 'p2.ph.parada1' : 'p2.ph.paradas', { n: S.fmt(t.paradas, 0), l: S.fmt(lim, 0) })) + '</span>' : '') },
-      oficial: { anel: anel(t.aprovadosPct || 0), num: pct(t.aprovadosPct), rot: S.t('p2.ph.oficialRot', { n: S.fmt(t.aprovado || 0, 0), t: S.fmt(total, 0) }),
-        det: S.t('p2.ph.oficialDet', { a: b(t.aprovado || 0), t: b(total), g: b(t.negado || 0), c: b(Math.max(0, total - (t.aprovado || 0) - (t.negado || 0))) }) }
+    var q = {
+      desdobramento: { n: total, anel: anel(1), rot: S.t('p2.q.desdobramento') },
+      proposta: { n: t.submetidos || 0, anel: anel(fr(t.submetidos || 0)), rot: S.t('p2.q.proposta') },
+      calibracao: { n: t.em_aprovacao || 0, anel: anel(fr(n1), fr(n2)), rot: S.t('p2.q.calibracao') },
+      oficial: { n: t.aprovado || 0, anel: anel(fr(t.aprovado || 0)), rot: S.t('p2.q.oficial') }
+    };
+    // Um fato executivo por etapa
+    var fato = function (id, i) {
+      if (i < atual) return S.t('p2.f2.concluida');
+      if (id === 'proposta') return (i === atual ? S.t(diasUteisAte(ets[i].fim) === 1 ? 'p2.f2.resta1' : 'p2.f2.restam', { n: S.fmt(diasUteisAte(ets[i].fim), 0) }) + ' · ' : '') + S.t('p2.f2.rascunho', { n: S.fmt(t.rascunho || 0, 0) });
+      if (id === 'calibracao') return t.paradas ? '<span class="alerta">' + esc(S.t(t.paradas === 1 ? 'p2.f2.parada1' : 'p2.f2.paradas', { n: S.fmt(t.paradas, 0) })) + '</span>' : S.t('p2.f2.semParadas');
+      if (id === 'oficial') return S.t('p2.f2.negados', { n: S.fmt(t.negado || 0, 0) });
+      return S.t('p2.f2.bus', { n: S.fmt((d.porBu || []).length, 0) });
     };
     var html = ets.map(function (e, i) {
-      var k = conteudo[e.id] || {};
+      var k = q[e.id];
       var est = i < atual ? 'is-feita' : i === atual ? 'is-atual' : 'is-futura';
-      var tag = S.t(i < atual ? 'p2.ph.concluida' : i === atual ? 'ab.atual' : 'p2.ph.proxima');
-      var data = i < atual ? S.t('ab.encerrada', { d: dataCurta(e.fim) })
-        : e.id === 'oficial' ? S.t('ab.publicacao', { d: dataCurta(e.fim) })
-        : S.t('ab.ate', { d: dataCurta(e.fim) });
-      return '<li class="p2-et ' + est + '"' + (i === atual ? ' aria-current="step"' : '') + '>' +
-        '<p class="p2-et-n">' + String(i + 1).padStart(2, '0') + ' · ' + esc(tag) + '</p>' +
-        '<div class="p2-anel">' + k.anel + '<div class="p2-anel-txt"><strong>' + esc(k.num) + '</strong><span>' + esc(k.rot) + '</span></div></div>' +
-        '<h4 class="p2-et-nome">' + esc(S.t('et.' + e.id)) + '</h4>' +
-        '<p class="p2-et-data">' + esc(data) + '</p>' +
-        '<p class="p2-et-det">' + k.det + '</p></li>';
+      var num = p2.vis === 'pct' ? pct(fr(k.n)) : S.fmt(k.n, 0);
+      var f = fato(e.id, i);
+      var rotulo = S.t('p2.et.' + e.id) + ': ' + S.fmt(k.n, 0) + ' ' + k.rot + ' (' + pct(fr(k.n)) + ' ' + S.t('p2.doTotalCurto') + '), ' + S.t('p2.prazo') + ' ' + dataCurta(e.fim) +
+        (i === atual ? ', ' + S.t('ab.atual') : i < atual ? ', ' + S.t('p2.ph.concluida') : '');
+      return '<li class="p2-et ' + est + '"' + (i === atual ? ' aria-current="step"' : '') + ' aria-label="' + esc(rotulo) + '">' +
+        '<p class="p2-et-n" title="' + esc(String(i + 1).padStart(2, '0') + ' - ' + S.t('p2.et.' + e.id)) + '"><b>' + String(i + 1).padStart(2, '0') + '</b> - ' + esc(S.t('p2.et.' + e.id)) + '</p>' +
+        '<div class="p2-anel" aria-hidden="true">' + k.anel + '<div class="p2-anel-txt"><strong>' + esc(num) + '</strong></div></div>' +
+        '<p class="p2-et-data" aria-hidden="true">' + esc(dataCurta(e.fim)) + '</p>' +
+        '<p class="p2-et-det" aria-hidden="true">' + (f.indexOf('<span') === 0 ? f : esc(f)) + '</p></li>';
     }).join('');
 
     // Linha até hoje: etapas igualmente espaçadas; dentro da etapa atual, a posição segue a data
-    var frac = 0;
+    var frac = 0, etAtual = ets[atual];
     if (etAtual) {
       var a0 = atual === 0 ? dataDe(ets[0].inicio || ets[0].fim) : dataDe(ets[atual - 1].fim), a1 = dataDe(etAtual.fim);
       frac = Math.max(0, Math.min(1, (hoje - a0) / Math.max(1, a1 - a0)));
     }
-    // centros dos anéis em 12,5%, 37,5%, 62,5% e 87,5%; a etapa atual vai do anel anterior ao seu
     var pos = atual <= 0 ? 12.5 : 12.5 + 25 * (atual - 1) + 25 * frac;
     html += '<span class="p2-progresso" aria-hidden="true" style="width:' + (pos - 12.5).toFixed(2) + '%"></span>' +
       '<span class="p2-hoje" aria-hidden="true" style="left:' + pos.toFixed(2) + '%"><span>' + esc(S.t('p2.hoje', { d: dataCurta(hojeIso) })) + '</span></span>';
     $('p2Fases').innerHTML = html;
   }
+  $('p2Vis').addEventListener('click', function (e) {
+    var bt = e.target.closest('button'); if (!bt) return;
+    p2.vis = bt.getAttribute('data-vis'); p2GravarFiltro();
+    if (p2.dados) p2RenderLinha(p2.dados);
+  });
 
   // Seletor País › BU do painel (mesmo componente da T01; opções = BUs do ciclo)
   function p2RenderUnidade() {
@@ -2268,7 +2288,7 @@ window.VBMSetup = (function () {
     $('vistaPainel').hidden = h !== 'painel';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
-    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
