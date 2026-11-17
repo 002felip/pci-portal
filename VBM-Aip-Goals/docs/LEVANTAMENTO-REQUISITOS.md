@@ -24,7 +24,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | Item | Status | Observação |
 | --- | --- | --- |
 | Objetivo, dono do produto e escopo do MVP | A confirmar | Escopo definido; dono do produto a nomear (P-10) |
-| Perfis, fonte do perfil e recorte de dados | Decidido | Contribuidores veem só a própria BU; aprovadores veem todas; recorte da consulta a confirmar (P-13) |
+| Perfis, fonte do perfil e recorte de dados | Decidido | Todos veem todas as BUs; a edição cabe aos contribuidores da própria BU, conforme o cadastro no banco (D-11) |
 | Entidades, estados e transições | Decidido | Especificação, seções 3 e 4 |
 | Regras críticas | Decidido | Aprovação em nível único pelo grupo de aprovação (D-09) |
 | Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00, T01, T02, T03 e T13 Desdobramento desenvolvidas |
@@ -49,6 +49,8 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-08 | Nova tela T13 Desdobramento (CEO → COO → BUs) com a estrutura do material de referência 2027: scorecard do COO (75% resultado do CEO + metas próprias) e, por BU, 40% resultado do COO + 60% metas específicas | 17/11/2026 |
 | D-09 | Aprovação em nível único, feita por um grupo de usuários (grupo de aprovação P&CI/COO): qualquer membro aprova, devolve ou nega, e a decisão é final. Não há nível do Diretor da BU (encerra a P-11) | 17/11/2026 |
 | D-10 | Três grupos de acesso: contribuidores (preenchem e submetem os Goal Cards da BU), aprovadores (decidem) e consulta (só leitura); o administrador do ciclo configura os grupos | 17/11/2026 |
+| D-11 | Todos os usuários visualizam todos os dados de todas as BUs; a edição cabe só aos contribuidores da própria BU, conforme o cadastro no banco de dados (substitui o recorte de leitura da P-02 e encerra a P-13) | 17/11/2026 |
+| D-12 | Regras ajustadas: sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida pelo sistema, sem diferença possível (RN-16); card Aprovado pode ser reaberto dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17) | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 
@@ -56,7 +58,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | --- | --- |
 | Metas e pesos são cadastrados pelo administrador a partir do desdobramento do COO; a BU só preenche o card | Processo descrito no material |
 | Qualquer resubmissão volta para a fila do grupo de aprovação | Regra do material, ajustada ao nível único |
-| Card Aprovado só muda via Change Request | Regra do material |
+| Card Aprovado reabre na janela inicial do ciclo; depois, só via Change Request | Regra do material, ajustada (D-12) |
 | Exceções padrão definidas pelo administrador e não editáveis pela BU | Material (exceções pré-preenchidas) |
 | Stack, banco, variáveis (prefixo AIPGOALS_), localização (pasta VBM-Aip-Goals na raiz do portal-pci), identidade visual e cores de status | Padrão portal-pci (skill vbm-design; Especificação, seções 8 e 9) |
 | Piloto com uma BU por país antes de abrir para todas | Padrão de governança portal-pci |
@@ -73,14 +75,13 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | P-07 | Janela de Change Request | Fixa no ciclo / a qualquer momento | P&CI + RH | Não (F2) |
 | P-08 | Retenção de evidências e dados do ciclo | Anos de retenção | P&CI + Jurídico/RH | Não (F3) |
 | P-09 | Aprovação local da CEO-2 | Não incluir (nível único, D-09) / tratar fora do app | P&CI + COO | Não |
-| P-13 | Recorte do grupo de consulta | Só as BUs atribuídas / todas as BUs | P&CI | Não |
 | P-10 | Dono do produto e sustentação | Nome e área | P&CI | Não |
 
 ## 6. Próximas perguntas
 
 | Pergunta | Destrava |
 | --- | --- |
-| O grupo de consulta vê só as BUs atribuídas ou todas as BUs? | P-13 |
+| Quem reabre o card Aprovado na janela inicial: o grupo de aprovação, o administrador ou ambos? | D-12 |
 | O time de dados valida o modelo proposto ou indica ajustes? | P-12 |
 | Haverá aprovação local da CEO-2 antes do envio? | P-09 |
 | Quais BUs, pessoas e pesos entram no piloto, e quem é o dono do produto? | P-10 |

@@ -67,5 +67,5 @@ Portal (`AZURE_SQL_*`). Detalhe em `docs/projetos/aip-goals.md`.
 - **P-12 — modelo de dados:** validar a proposta (`database/README.md`) com o time de dados; enquanto isso as telas
   mostram "Dados de exemplo".
 - **Aprovação em nível único (D-09)** pelo grupo de aprovação, com os grupos contribuidores, aprovadores e consulta (D-10). O protótipo ainda mostra dois níveis e os papéis antigos; o ajuste entra na próxima entrega.
-- **P-13 — recorte do grupo de consulta:** só as BUs atribuídas ou todas.
+- **Leitura aberta e regras ajustadas (D-11, D-12):** todos veem todas as BUs e só os contribuidores da BU editam; sem alerta de pendência parada; soma dos pesos validada na gravação; card Aprovado reabre só na janela inicial do ciclo.
 - Card do AIP Goals na página inicial do Portal.

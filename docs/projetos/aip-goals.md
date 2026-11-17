@@ -19,10 +19,13 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Contribuidores** (grupo por BU): preenchem, submetem, recolhem e resubmetem os Goal Cards da BU.
 - **Aprovadores**: decidem e veem todas as BUs (T02 Painel do ciclo).
 - **Consulta**: só leitura (metas, Goal Cards, versões, Action Log, desdobramento); a API recusa escrita com 403.
-  Recorte a confirmar (P-13).
+- **Leitura aberta (D-11):** todos os usuários veem todos os dados de todas as BUs; a edição cabe só aos
+  contribuidores da própria BU, conforme o cadastro no banco (`AIP_PAPEL`).
+- **Regras ajustadas (D-12):** sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida na gravação
+  (RN-16); card Aprovado reabre dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17).
 - **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 descritas abaixo ainda mostram
-  dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos (ponto focal, diretor); passam ao nível único e aos
-  três grupos na próxima entrega.
+  dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos (ponto focal, diretor), filtram a leitura por BU e
+  mostram o alerta de pendência parada e o de soma dos pesos; passam às regras D-09 a D-12 na próxima entrega.
 ## Arquivos
 
 | Arquivo | O que é | Público? |
