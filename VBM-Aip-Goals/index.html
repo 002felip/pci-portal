@@ -407,17 +407,6 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   --tab-bg: #FFFFFF;
   --tab-line: rgba(13,38,64,.10);
   --skel: rgba(15,23,42,.07);
-  /* Banner: fundo sempre escuro (imagem VBM + navy), igual nos dois temas */
-  --hero-bg: #041523;
-  --hero-veu: linear-gradient(100deg, rgba(4,21,35,.96) 0%, rgba(4,21,35,.88) 50%, rgba(8,45,79,.78) 100%);
-  --hero-text: #FFFFFF;
-  --hero-soft: rgba(255,255,255,.72);
-  --hero-faint: rgba(255,255,255,.55);
-  --hero-eyebrow: #7DD3F0;
-  --hero-glass: rgba(255,255,255,.08);
-  --hero-glass-line: rgba(255,255,255,.16);
-  --hero-glass-on: rgba(60,181,229,.24);
-  --hero-alerta: #F5B94A;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -578,42 +567,6 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .etapa-data { display: inline-flex; align-items: center; gap: 0.375rem; margin-top: 0.375rem; font-size: .72rem; color: var(--text); font-variant-numeric: tabular-nums; }
 .etapa-tag { padding: 1px 0.5rem; border-radius: 62.4375rem; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 600 .62rem var(--font-ui); letter-spacing: .04em; }
 .etapa-ok { font: 600 .62rem var(--font-ui); color: var(--good); }
-/* ── Banner da tela (fundo VBM escuro + resumo em vidro) ── */
-.hero {
-  position: relative; overflow: hidden; border-radius: 1.25rem; padding: 1.625rem 1.75rem;
-  background: var(--hero-veu), url('assets/images/Fundo_VBM_2400x1145.webp') center / cover no-repeat, var(--hero-bg);
-  color: var(--hero-text);
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 26.25rem); gap: 1.25rem 1.75rem; align-items: center;
-}
-.hero-eyebrow { margin: 0 0 0.5rem; font: 600 .64rem var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--hero-eyebrow); }
-.hero-titulo { margin: 0; font: italic 700 clamp(1.5rem, 1rem + 2.4vw, 2.5rem)/1.05 var(--font-display); color: var(--hero-text); letter-spacing: -.01em; }
-.hero-sub { margin: 0.625rem 0 0; max-width: 52ch; font-size: .82rem; line-height: 1.55; color: var(--hero-soft); }
-.hero-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.875rem; }
-.hero-pill { display: inline-flex; align-items: center; gap: 0.375rem; padding: 3px 0.625rem; border-radius: 62.4375rem; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); color: var(--hero-soft); font: italic 500 .68rem var(--font-ui); }
-.hero-pill.is-wait { color: var(--hero-alerta); border-color: var(--hero-alerta); }
-.hero-pill[hidden] { display: none; }
-.hero-acoes { position: absolute; top: 0.875rem; right: 0.875rem; display: flex; gap: 0.375rem; }
-.hero-acao { width: 2.125rem; height: 2.125rem; display: grid; place-items: center; border-radius: 0.5625rem; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); color: var(--hero-text); cursor: pointer; }
-.hero-acao:hover { background: var(--hero-glass-on); }
-.hero-acao:focus-visible { outline: 2px solid var(--hero-eyebrow); outline-offset: 2px; }
-
-.resumo { margin-top: 1.875rem; padding: 0.875rem; border-radius: 1rem; border: 1px solid var(--hero-glass-line); background: var(--hero-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.resumo-tit { margin: 0 0 0.5rem; font: 600 .64rem var(--font-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--hero-faint); }
-.resumo-lista { display: flex; flex-direction: column; gap: 2px; }
-.resumo-item {
-  display: flex; align-items: center; gap: 0.625rem; width: 100%; min-height: 2.5rem; padding: 0.375rem 0.625rem; border: 1px solid transparent; border-radius: 0.625rem;
-  background: transparent; color: var(--hero-soft); font: 500 .78rem var(--font-ui); text-align: left; cursor: pointer;
-}
-.resumo-item .ico { font-size: 1rem; color: var(--hero-eyebrow); }
-.resumo-item:hover { background: var(--hero-glass); color: var(--hero-text); }
-.resumo-item[aria-pressed="true"] { background: var(--hero-glass-on); border-color: var(--hero-eyebrow); color: var(--hero-text); }
-.resumo-item:focus-visible { outline: 2px solid var(--hero-eyebrow); outline-offset: 1px; }
-.resumo-num { margin-left: auto; font: 600 1.05rem var(--font-display); color: var(--hero-text); font-variant-numeric: tabular-nums; }
-.resumo-sep { height: 1px; margin: 0.375rem 0; background: var(--hero-glass-line); }
-.resumo-alerta { display: flex; align-items: center; gap: 0.625rem; padding: 0.375rem 0.625rem; color: var(--hero-alerta); font: 600 .76rem var(--font-ui); }
-.resumo-alerta .resumo-num { color: var(--hero-alerta); }
-.resumo-alerta small { display: block; font: 400 .66rem var(--font-ui); color: var(--hero-faint); }
-
 /* ── Card de seção (cabeçalho com ícone) ── */
 .secao { background: var(--panel); border-radius: 1.25rem; padding: 1rem 1.125rem 0.875rem; display: flex; flex-direction: column; gap: 0.75rem; }
 .secao-head { display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; }
@@ -621,28 +574,6 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .secao-tit { margin: 0; font: italic 500 1.12rem var(--font-display); color: var(--text); }
 .secao-cont { padding: 1px 0.5625rem; border-radius: 62.4375rem; background: var(--ctl-on-bg); color: var(--ctl-on-text); font: 700 .68rem var(--font-ui); font-variant-numeric: tabular-nums; }
 .secao-total { margin-left: auto; font: 400 .74rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
-
-/* ── Fila em cartões ── */
-.fila { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
-.item {
-  display: grid; grid-template-columns: 2.5rem minmax(0, 2.2fr) minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 0.875rem; align-items: center;
-  padding: 0.75rem 0.875rem; border-radius: 0.875rem; border: 1px solid var(--card-line); background: var(--card-bg); box-shadow: var(--card-shadow);
-  transition: border-color .15s ease, background-color .15s ease;
-}
-.item:hover { background: var(--card-hover); border-color: var(--ctl-border); }
-.item-ico { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.6875rem; background: var(--st-review-bg); color: var(--accent-strong); font-size: 1.1rem; }
-.item-principal { min-width: 0; }
-.item-tipo { margin: 0; font: 600 .66rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); }
-.item-meta { margin: 2px 0 0; font: 600 .9rem var(--font-ui); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-meta .num { color: var(--accent-strong); font-variant-numeric: tabular-nums; }
-.item-det { margin: 3px 0 0; font-size: .74rem; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.item-linha { display: flex; flex-wrap: wrap; gap: 0.25rem 0.625rem; margin-top: 0.3125rem; font-size: .7rem; color: var(--text-soft); }
-.item-linha b { font-weight: 600; color: var(--text); }
-.item-sit { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; min-width: 0; }
-.item-nivel { font-size: .7rem; color: var(--text-soft); }
-.item-tempo { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; font-size: .74rem; color: var(--text); font-variant-numeric: tabular-nums; }
-.item-tempo small { font-size: .68rem; color: var(--text-soft); }
-.chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 
 /* Pílula de status do Goal Card: ponto + ícone + rótulo (nunca só cor) */
 .st { display: inline-flex; align-items: center; gap: 0.375rem; padding: 3px 0.625rem 3px 0.5rem; border-radius: 62.4375rem; font: 600 .7rem var(--font-ui); white-space: nowrap; }
@@ -686,10 +617,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .estado-tit { margin: 0; font: 500 1rem var(--font-display); color: var(--text); }
 .estado-txt { margin: 0; max-width: 46ch; font-size: .8rem; }
 .estado-erro .ico { color: var(--bad); }
-.item.is-skel { pointer-events: none; }
 .skel { display: block; height: 0.75rem; border-radius: 0.375rem; background: var(--skel); animation: skel 1.2s ease-in-out infinite; }
 @keyframes skel { 50% { opacity: .45; } }
-@media (prefers-reduced-motion: reduce) { .skel { animation: none; } .item { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
 
 /* ── Responsividade (pontos de quebra VBM) ── */
 /* Até 1080 px o menu vira gaveta sob a barra, aberta pelo botão de menu */
@@ -711,7 +641,6 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .topnav-menu-link { padding: 0 0.625rem; font-size: .74rem; }
   .topnav-menu-link::after { bottom: 0.625rem; }
   .page { padding-top: 0.875rem; gap: 0.875rem; }
-  .hero { padding: 1.25rem 1.375rem; }
 }
 /* Pouca altura (notebook com escala de 125–150%): banner compacto para a fila aparecer */
 @media (max-height: 820px) and (min-width: 721px) {
@@ -724,25 +653,11 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .jornada { padding: 1rem 1.25rem 1.125rem; }
   .jornada-tit { margin-bottom: 0.875rem; }
   .jornada-lista { gap: 1rem; }
-  .hero { padding: 1rem 1.25rem; gap: 0.75rem 1.375rem; }
-  .hero-titulo { font-size: 1.6rem; }
   /* escopo da vista: estas regras precisam vencer as regras base da T02, que vêm depois no arquivo */
   :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-topo { padding-bottom: 1.5rem; }
   :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-trilha { --anel: 6rem; margin-top: 1.25rem; }
   :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-titulo .ab-ano { font-size: 4.6rem; }
   :is(#vistaPainel, #vistaMetas, #vistaDesdobramento, #vistaGoalCard) .p2-trilha { --p2-esp: 0.875rem; }
-  .hero-sub { display: none; }
-  .hero-pills { margin-top: 0.5rem; }
-  .resumo { margin-top: 1.625rem; padding: 0.5rem 0.625rem; }
-  .resumo-tit { margin-bottom: 0.25rem; }
-  .resumo-item { min-height: 1.875rem; padding: 3px 0.5rem; font-size: .74rem; }
-  .resumo-num { font-size: .92rem; }
-  .resumo-sep { margin: 3px 0; }
-  .resumo-alerta { padding: 3px 0.5rem; }
-}
-@media (max-width: 1080px) {
-  .hero { grid-template-columns: minmax(0, 1fr); }
-  .resumo { margin-top: 0; }
 }
 @media (max-width: 1080px) {
   .abertura { grid-template-columns: minmax(0, 1fr); }
@@ -1140,7 +1055,7 @@ body { font-size: 0.875rem; overflow-x: clip; min-height: 100vh; min-height: 100
 img, video, svg, canvas, iframe { max-width: 100%; }
 .page { max-width: 92.5rem; }
 .abertura { max-width: 97.5rem; }
-p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
+p, dd { overflow-wrap: anywhere; }
 
 /* [RESPONSIVO] Barra superior — altura fluida (token --barra) no lugar dos 64/56px fixos */
 :root { --barra: clamp(3.5rem, 2.6rem + 1.1vw, 5.5rem); }
@@ -1152,38 +1067,16 @@ p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
 .unit-pop { width: min(22.5rem, calc(100vw - 2rem)); }
 
 /* [RESPONSIVO] Grids — mínimos com min(…, 100%), nunca estouram abaixo do mínimo */
-.hero { grid-template-columns: minmax(0, 1fr) minmax(min(17.5rem, 100%), 26.25rem); }
 .abertura { grid-template-columns: minmax(0, 1.15fr) minmax(min(22.5rem, 100%), .85fr); }
-@media (max-width: 1080px) {
-  .hero, .abertura { grid-template-columns: minmax(0, 1fr); }
-}
 
-/* [RESPONSIVO] Cartão da fila — o container manda (A5). Funciona igual em qualquer coluna, sem saber da viewport. */
-.fila { container-type: inline-size; container-name: fila; }
-@container fila (max-width: 60rem) {
-  .item { grid-template-columns: 2.5rem minmax(0, 1fr) auto; }
-  .item-sit, .item-tempo { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
-  .item-acao { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
-}
-@container fila (max-width: 36rem) {
-  .item { grid-template-columns: 2.25rem minmax(0, 1fr); }
-  .item-ico { width: 2.25rem; height: 2.25rem; }
-  .item-meta { white-space: normal; }
-  .item-sit, .item-tempo { grid-column: 1 / -1; }
-  .item-acao { grid-column: 1 / -1; grid-row: auto; }
-  .item-acao .btn { width: 100%; }
-}
-/* Cartão estreito (≈ 280–320px): o ícone é decorativo e sai; o texto ganha a largura */
 /* [RESPONSIVO] Vidro com degradação (A3): sem backdrop-filter ou com transparência reduzida, fundo opaco */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .topnav, .topnav-menu { background: var(--page); }
   .jornada { background: var(--card-bg); }
-  .resumo { background: var(--hero-bg); }
 }
 @media (prefers-reduced-transparency: reduce) {
   .topnav, .topnav-menu { background: var(--page); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .jornada { background: var(--card-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .resumo { background: var(--hero-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 /* [RESPONSIVO] Dobrável aberto: as duas colunas da abertura ficam uma de cada lado da dobra */
@@ -1213,7 +1106,6 @@ p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
   <h1 class="sr-only">AIP Goals</h1>
   <nav class="topnav-menu" id="topMenu" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
     <a class="topnav-menu-link" href="#inicio" data-tela="inicio" data-perfis="todos"><span data-i18n="nav.inicio">Início</span></a>
-    <a class="topnav-menu-link" href="#pendencias" data-tela="pendencias" data-perfis="todos"><span data-i18n="nav.pendencias">Minhas pendências</span><span class="topnav-menu-cont" id="navCont" hidden></span></a>
     <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
     <a class="topnav-menu-link" href="#desdobramento" data-tela="desdobramento" data-perfis="todos"><span data-i18n="nav.desdobramento">Desdobramento</span></a>
     <a class="topnav-menu-link" href="#aprovacoes" data-tela="aprovacoes" data-perfis="pci_coo admin aprovador" hidden><span data-i18n="nav.aprovacoes">Aprovações</span></a>
@@ -1345,106 +1237,6 @@ p, dd, .item-meta, .tipo-det { overflow-wrap: anywhere; }
       </section>
 
     </div>
-  </section>
-
-  <!-- ═══ T01 · Minhas pendências ═══ -->
-  <section class="vista" id="vistaPendencias" hidden aria-labelledby="titPend">
-
-    <header class="hero">
-      <div class="hero-texto">
-        <p class="hero-eyebrow"><span>AIP Goals</span><span id="heroCiclo"></span></p>
-        <h2 class="hero-titulo" id="titPend" data-i18n="t01.titulo">Minhas pendências</h2>
-        <p class="hero-sub" data-i18n="t01.sub">Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.</p>
-        <div class="hero-pills">
-          <span class="hero-pill" id="pillExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="t01.exemplo">Dados de exemplo — modelo de dados em validação (P-12)</span></span>
-          <span class="hero-pill is-wait" id="pillDesatualizado" hidden><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span data-i18n="t01.desatualizado">Dados desatualizados — exibindo a última leitura</span></span>
-        </div>
-      </div>
-
-      <!-- Resumo em vidro: cada linha filtra a fila (aria-pressed) -->
-      <div class="resumo">
-        <p class="resumo-tit" id="titResumo" data-i18n="t01.resumo">Resumo da fila</p>
-        <div class="resumo-lista" id="resumo" role="group" aria-labelledby="titResumo">
-          <button type="button" class="resumo-item" data-tipo="preencher" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-pen"/></svg><span data-i18n="tipo.preencher.plural">A preencher</span><span class="resumo-num" data-cont="preencher">—</span></button>
-          <button type="button" class="resumo-item" data-tipo="decidir" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-decide"/></svg><span data-i18n="tipo.decidir.plural">Decisões</span><span class="resumo-num" data-cont="decidir">—</span></button>
-          <button type="button" class="resumo-item" data-tipo="comentario" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-comment"/></svg><span data-i18n="tipo.comentario.plural">Comentários sem resposta</span><span class="resumo-num" data-cont="comentario">—</span></button>
-          <button type="button" class="resumo-item" data-tipo="acao" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span data-i18n="tipo.acao.plural">Ações atribuídas</span><span class="resumo-num" data-cont="acao">—</span></button>
-          <div class="resumo-sep" aria-hidden="true"></div>
-          <div class="resumo-alerta"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg><span><span data-i18n="t01.alertaTit">Paradas ou atrasadas</span><small id="alertaRodape"></small></span><span class="resumo-num" data-cont="alerta">—</span></div>
-        </div>
-      </div>
-
-      <div class="hero-acoes">
-        <button type="button" class="hero-acao" id="btnAtualizar" aria-label="Atualizar lista" title="Atualizar lista" data-i18n-aria="t01.atualizar" data-i18n-title="t01.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
-        <button type="button" class="hero-acao" id="btnTelaCheia" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
-      </div>
-    </header>
-
-    <!-- Filtros (padrão COO): rótulo em itálico em cima; estado na URL -->
-    <div class="filters">
-      <div class="filter">
-        <span class="filter-label" id="lblUnid">Business Unit:</span>
-        <div class="unit" id="unit">
-          <button type="button" class="unit-trigger" id="unitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="unitPop" aria-labelledby="lblUnid unitTrigger">
-            <span class="unit-pais" id="unitPais"></span><span class="unit-sep" id="unitSep">›</span><span class="unit-site" id="unitSite"></span>
-            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
-          </button>
-          <div class="unit-pop" id="unitPop" hidden>
-            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="unitPaises"></div></div>
-            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="unitBus"></div></div>
-          </div>
-        </div>
-      </div>
-      <div class="filter">
-        <span class="filter-label" id="lblOrd" data-i18n="f.ordenar">Ordenar por:</span>
-        <div class="seg" role="group" aria-labelledby="lblOrd" id="segOrd">
-          <button type="button" data-ord="urgencia" aria-pressed="true" data-i18n="f.urgencia">Urgência</button>
-          <button type="button" data-ord="prazo" aria-pressed="false" data-i18n="f.prazo">Prazo</button>
-          <button type="button" data-ord="idade" aria-pressed="false" data-i18n="f.idade">Idade</button>
-        </div>
-      </div>
-      <div class="filter">
-        <span class="filter-label" id="lblSo" data-i18n="f.soAlerta">Só paradas ou atrasadas:</span>
-        <button type="button" class="switch" id="swSo" role="switch" aria-checked="false" aria-labelledby="lblSo">
-          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
-        </button>
-      </div>
-    </div>
-
-    <section class="secao" aria-labelledby="titFila">
-      <div class="secao-head">
-        <span class="secao-ico" aria-hidden="true"><svg class="ico"><use href="#i-inbox"/></svg></span>
-        <h3 class="secao-tit" id="titFila" data-i18n="t01.fila">Fila de pendências</h3>
-        <span class="secao-cont" id="filaCont" hidden></span>
-        <span class="secao-total" id="listaTotal" aria-live="polite"></span>
-      </div>
-
-      <ul class="fila" id="fila" aria-labelledby="titFila"></ul>
-
-      <div class="estado" id="estVazio" hidden>
-        <svg class="ico" aria-hidden="true"><use href="#i-decide"/></svg>
-        <p class="estado-tit" data-i18n="est.vazioTit">Nenhuma pendência</p>
-        <p class="estado-txt" data-i18n="est.vazioTxt">Você está em dia neste ciclo. Novas pendências aparecem aqui e chegam por e-mail.</p>
-      </div>
-      <div class="estado" id="estFiltro" hidden>
-        <svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg>
-        <p class="estado-tit" data-i18n="est.filtroTit">Nada com estes filtros</p>
-        <button type="button" class="btn btn-sec" id="btnLimpar" data-i18n="est.limpar">Limpar filtros</button>
-      </div>
-      <div class="estado estado-erro" id="estErro" hidden>
-        <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
-        <p class="estado-tit" data-i18n="est.erroTit">Não foi possível carregar as pendências</p>
-        <p class="estado-txt" id="estErroTxt"></p>
-        <button type="button" class="btn" id="btnTentar" data-i18n="est.tentar">Tentar de novo</button>
-      </div>
-      <div class="estado" id="estSemAcesso" hidden>
-        <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
-        <p class="estado-tit" data-i18n="est.semAcessoTit">Sem acesso ao AIP Goals</p>
-        <p class="estado-txt" data-i18n="est.semAcessoTxt">Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&amp;CI).</p>
-      </div>
-
-      <p class="updated" id="atualizado"></p>
-    </section>
   </section>
 
   <!-- ═══ T02 · Painel do ciclo (P&CI/COO e administrador) ═══ -->
@@ -1899,18 +1691,15 @@ window.VBMSetup = (function () {
 
 </script>
 <script>
-/* ═══ AIP Goals — T01 Minhas pendências ═══
-   Dados: GET api/pendencias (aip-goals-api.js). As regras (idade, parada, atrasada,
-   recorte por BU) vêm prontas do servidor; a tela só exibe e filtra.
-   Filtros na URL (?tipo=&pais=&bu=&ord=&so=1): o Voltar do navegador volta com o mesmo filtro.
-   Vistas pelo hash (#pendencias, #metas, …), como as outras telas do Portal. */
+/* ═══ AIP Goals — telas da aplicação (T00 Início, T02 Painel do ciclo, T03 Metas da BU, T04 Goal Card) ═══
+   Dados: cada tela tem a sua rota em aip-goals-api.js (api/inicio, api/painel, api/metas, api/goal-card).
+   As regras (recorte, idade, campos obrigatórios) vêm prontas do servidor; a tela só exibe.
+   Vistas pelo hash (#inicio, #painel, #metas, #goal-card…), como as outras telas do Portal. */
 (function () {
   'use strict';
   var S = window.VBMSetup;
   var $ = function (id) { return document.getElementById(id); };
   var TIMEOUT_MS = 75000;
-  var TIPOS = ['preencher', 'decidir', 'comentario', 'acao'];
-  var ORDENS = ['urgencia', 'prazo', 'idade'];
 
   S.registrar({
     'pt-BR': {
@@ -2124,95 +1913,15 @@ window.VBMSetup = (function () {
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
   }
 
-  // ── Estado (filtros na URL) ──
+  // ── Início: ciclo ativo e papéis do usuário (api/inicio) ──
   var dados = null;
-  var filtro = lerFiltro();
-  function lerFiltro() {
-    var q = new URLSearchParams(location.search);
-    return {
-      tipo: TIPOS.indexOf(q.get('tipo')) >= 0 ? q.get('tipo') : '',
-      pais: q.get('pais') || '',
-      bu: q.get('bu') || '',
-      ord: ORDENS.indexOf(q.get('ord')) >= 0 ? q.get('ord') : 'urgencia',
-      so: q.get('so') === '1'
-    };
+  function carregar() {
+    return fetch('api/inicio', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then(function (j) { dados = j; renderTudo(); })
+      .catch(function (err) { console.error('[aip-goals] inicio:', err); });
   }
-  function gravarFiltro() {
-    var q = new URLSearchParams();
-    if (filtro.tipo) q.set('tipo', filtro.tipo);
-    if (filtro.pais) q.set('pais', filtro.pais);
-    if (filtro.bu) q.set('bu', filtro.bu);
-    if (filtro.ord !== 'urgencia') q.set('ord', filtro.ord);
-    if (filtro.so) q.set('so', '1');
-    var s = q.toString();
-    history.pushState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
-  }
-  window.addEventListener('popstate', function () { filtro = lerFiltro(); renderLista(); });
-
-  // ── Carga ──
-  function carregar(fresco) {
-    mostrarEstado(null);
-    renderCarregando();
-    var ctl = ('AbortController' in window) ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
-    // Sem retry automático (5xx/403/429): a pessoa decide pelo botão "Tentar de novo".
-    return fetch('api/pendencias' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
-      .then(function (r) {
-        if (r.status === 401 || r.status === 403) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
-        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
-        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
-        return r.json();
-      })
-      .then(function (j) {
-        dados = j;
-        if (fresco) toast(S.t('t01.atualizada'));
-        renderTudo();
-      })
-      .catch(function (err) {
-        dados = null;
-        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
-        if (tipo === 'acesso') return mostrarEstado('estSemAcesso', true);
-        $('estErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
-        mostrarEstado('estErro', true);
-      })
-      .then(function () { clearTimeout(timer); });
-  }
-
-  function mostrarEstado(id, esconderTabela) {
-    ['estVazio', 'estFiltro', 'estErro', 'estSemAcesso'].forEach(function (k) { $(k).hidden = k !== id; });
-    $('fila').hidden = !!esconderTabela;
-    if (esconderTabela) {
-      $('fila').innerHTML = ''; $('filaCont').hidden = true; $('listaTotal').textContent = ''; $('atualizado').textContent = '';
-      document.querySelectorAll('[data-cont]').forEach(function (el) { el.textContent = '—'; });
-      $('pillExemplo').hidden = true; $('pillDesatualizado').hidden = true;
-    }
-  }
-
-  function renderCarregando() {
-    var sk = function (w) { return '<span class="skel" style="width:' + w + ';max-width:100%"></span>'; };
-    var item = '<li class="item is-skel" aria-hidden="true"><span class="item-ico"></span>' +
-      '<div class="item-principal">' + sk('40%') + '<div style="height:8px"></div>' + sk('80%') + '</div>' +
-      '<div class="item-sit">' + sk('110px') + '</div><div class="item-tempo">' + sk('80px') + '</div><div class="item-acao">' + sk('96px') + '</div></li>';
-    $('fila').innerHTML = item + item + item + item;
-    $('listaTotal').textContent = '';
-  }
-
-  // ── Render ──
-  function renderTudo() {
-    if (!dados) return;
-    var c = dados.ciclo || {};
-    $('heroCiclo').textContent = c.nome ? ' · ' + S.t('nav.ciclo') + ' ' + c.nome : '';
-    $('pillExemplo').hidden = !dados.exemplo;
-    $('pillDesatualizado').hidden = !dados.desatualizado;
-    $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
-    var total = (dados.itens || []).length;
-    $('navCont').textContent = S.fmt(total, 0);
-    $('navCont').hidden = !total;
-    renderAbertura();
-    aplicarPerfis();
-    renderUnidade();
-    renderLista();
-  }
+  function renderTudo() { if (!dados) return; renderAbertura(); aplicarPerfis(); }
 
   // ── Início: estado do usuário e jornada do ciclo ──
   var ETAPAS = ['desdobramento', 'proposta', 'calibracao', 'oficial'];
@@ -2255,163 +1964,6 @@ window.VBMSetup = (function () {
     });
   }
 
-  function itensBase() {
-    // Itens dentro da BU escolhida (os cards de resumo contam só por BU, não por tipo)
-    return (dados.itens || []).filter(function (it) {
-      if (filtro.pais && it.bu.pais !== filtro.pais) return false;
-      if (filtro.bu && it.bu.sigla !== filtro.bu) return false;
-      return true;
-    });
-  }
-
-  function ordenar(lista) {
-    var pz = function (it) { return it.prazo || '9999-12-31'; };
-    var cmp = {
-      urgencia: function (a, b) {
-        return (b.atrasada - a.atrasada) || (b.parada - a.parada) || (pz(a) < pz(b) ? -1 : pz(a) > pz(b) ? 1 : 0) || (b.diasUteis - a.diasUteis);
-      },
-      prazo: function (a, b) { return (pz(a) < pz(b) ? -1 : pz(a) > pz(b) ? 1 : 0) || (b.diasUteis - a.diasUteis); },
-      idade: function (a, b) { return (b.diasUteis - a.diasUteis) || (pz(a) < pz(b) ? -1 : 1); }
-    }[filtro.ord];
-    return lista.slice().sort(cmp);
-  }
-
-  function renderLista() {
-    if (!dados) return;
-    var base = itensBase();
-    // Resumo
-    TIPOS.forEach(function (t) {
-      document.querySelector('[data-cont="' + t + '"]').textContent = S.fmt(base.filter(function (it) { return it.tipo === t; }).length, 0);
-    });
-    document.querySelector('[data-cont="alerta"]').textContent = S.fmt(base.filter(function (it) { return it.parada || it.atrasada; }).length, 0);
-    $('alertaRodape').textContent = S.t('t01.alertaRodape', { n: S.fmt((dados.parametros || {}).diasParado || 3, 0) });
-    document.querySelectorAll('.resumo-item[data-tipo]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tipo') === filtro.tipo)); });
-    document.querySelectorAll('#segOrd button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-ord') === filtro.ord)); });
-    $('swSo').setAttribute('aria-checked', String(filtro.so));
-    renderUnidadeRotulo();
-
-    var lista = ordenar(base.filter(function (it) {
-      if (filtro.tipo && it.tipo !== filtro.tipo) return false;
-      if (filtro.so && !(it.parada || it.atrasada)) return false;
-      return true;
-    }));
-    var total = (dados.itens || []).length;
-    $('listaTotal').textContent = S.t(lista.length === 1 ? 't01.total1' : 't01.total', { n: S.fmt(lista.length, 0), t: S.fmt(total, 0) });
-
-    if (!total) { mostrarEstado('estVazio', true); renderTudoRodape(); return; }
-    if (!lista.length) { mostrarEstado('estFiltro', true); renderTudoRodape(); return; }
-    mostrarEstado(null, false);
-    $('filaCont').textContent = S.fmt(lista.length, 0); $('filaCont').hidden = false;
-    $('fila').innerHTML = lista.map(itemHtml).join('');
-  }
-  // Mantém "Última atualização" e as pílulas quando a lista fica vazia pelo filtro
-  function renderTudoRodape() {
-    $('atualizado').textContent = dados.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(dados.atualizadoEm)) }) : '';
-    $('pillExemplo').hidden = !dados.exemplo;
-    $('pillDesatualizado').hidden = !dados.desatualizado;
-    $('listaTotal').textContent = S.t('t01.total', { n: S.fmt(0, 0), t: S.fmt((dados.itens || []).length, 0) });
-    renderUnidadeRotulo();
-    TIPOS.forEach(function (t) { document.querySelector('[data-cont="' + t + '"]').textContent = S.fmt(itensBase().filter(function (it) { return it.tipo === t; }).length, 0); });
-    document.querySelector('[data-cont="alerta"]').textContent = S.fmt(itensBase().filter(function (it) { return it.parada || it.atrasada; }).length, 0);
-  }
-
-  var ICO_TIPO = { preencher: 'i-pen', decidir: 'i-decide', comentario: 'i-comment', acao: 'i-flag' };
-  function linkDo(it) {
-    // Vistas pelo hash: o link abre a tela exata (card, seção ou ação) — §6.4
-    if (it.tipo === 'acao') return '#acoes?acao=' + encodeURIComponent(it.id);
-    var q = 'card=' + encodeURIComponent(it.card) + (it.secao ? '&secao=' + encodeURIComponent(it.secao) : '');
-    if (it.tipo === 'decidir') return '#aprovacoes?card=' + encodeURIComponent(it.card);
-    return '#goal-card?' + q;
-  }
-  function itemHtml(it) {
-    var rotTipo = S.t('tipo.' + it.tipo);
-    var nivel = it.nivel ? '<span class="item-nivel">' + esc(S.t('nivel', { a: S.fmt(it.nivel.atual, 0), t: S.fmt(it.nivel.total, 0), n: it.nivel.nome })) + '</span>' : '';
-    var versao = it.versao ? esc(S.t('versao', { n: S.fmt(it.versao, 0) })) : esc(S.t('semVersao'));
-    var prazo = it.prazo
-      ? '<span>' + esc(S.t(it.atrasada ? 'prazo.venceu' : 'prazo.vence', { d: dataCurta(it.prazo) })) + '</span>'
-      : '<small>' + esc(S.t('prazo.sem')) + '</small>';
-    var idade = '<small>' + (it.diasUteis ? esc(S.t(it.diasUteis === 1 ? 'idade.dia' : 'idade.dias', { n: S.fmt(it.diasUteis, 0) })) : esc(S.t('idade.hoje'))) + '</small>';
-    var chips = (it.atrasada ? '<span class="chip-atrasada">' + ico('i-alert') + esc(S.t('chip.atrasada')) + '</span>' : '') +
-      (it.parada ? '<span class="chip-parada">' + ico('i-clock') + esc(S.t('chip.parada')) + '</span>' : '');
-    var btn = it.tipo === 'preencher' && it.estado === 'em_revisao' ? 'btn.ajustar' : 'btn.' + it.tipo;
-    var rotBtn = S.t(btn);
-    return '<li class="item' + (it.parada || it.atrasada ? ' is-alerta' : '') + '">' +
-      '<span class="item-ico" aria-hidden="true">' + ico(ICO_TIPO[it.tipo]) + '</span>' +
-      '<div class="item-principal">' +
-        '<p class="item-tipo">' + esc(rotTipo) + '</p>' +
-        '<p class="item-meta"><span class="num">#' + esc(it.meta.numero) + '</span> ' + esc(it.meta.titulo) + '</p>' +
-        '<p class="item-det">' + esc(it.detalhe) + '</p>' +
-        '<div class="item-linha"><span><b>' + esc(it.bu.sigla) + '</b> · ' + esc(it.bu.pais) + '</span><span>' + esc(it.card) + ' · ' + versao + '</span></div>' +
-      '</div>' +
-      '<div class="item-sit"><span class="st st-' + esc(it.estado) + '">' + ico('i-st-' + it.estado) + esc(S.t('est.' + it.estado)) + '</span>' + nivel + '</div>' +
-      '<div class="item-tempo">' + prazo + idade + (chips ? '<span class="chips">' + chips + '</span>' : '') + '</div>' +
-      '<div class="item-acao"><a class="btn" href="' + esc(linkDo(it)) + '" aria-label="' + esc(rotBtn + ': ' + rotTipo + ' · ' + it.bu.sigla + ' #' + it.meta.numero + ' ' + it.meta.titulo) + '">' +
-        esc(rotBtn) + ico('i-arrow') + '</a></div>' +
-      '</li>';
-  }
-
-  // ── Seletor País › BU (padrão COO) ──
-  function unidades() {
-    var mapa = {};
-    (dados.itens || []).forEach(function (it) { (mapa[it.bu.pais] = mapa[it.bu.pais] || {})[it.bu.sigla] = true; });
-    return mapa;
-  }
-  function renderUnidadeRotulo() {
-    $('unitPais').textContent = filtro.pais || S.t('f.todos');
-    $('unitSep').hidden = !filtro.pais;
-    $('unitSite').textContent = filtro.pais ? (filtro.bu || S.t('f.todas')) : '';
-  }
-  function renderUnidade() {
-    if (!dados) return;
-    var mapa = unidades();
-    var paises = Object.keys(mapa).sort();
-    $('unitPaises').innerHTML = ['' ].concat(paises).map(function (p) {
-      return '<button type="button" data-pais="' + esc(p) + '" aria-pressed="' + (p === filtro.pais) + '">' + esc(p || S.t('f.todos')) + '</button>';
-    }).join('');
-    var bus = filtro.pais ? Object.keys(mapa[filtro.pais] || {}).sort() : [];
-    $('unitBus').innerHTML = filtro.pais ? [''].concat(bus).map(function (b) {
-      return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === filtro.bu) + '">' + esc(b || S.t('f.todas')) + '</button>';
-    }).join('') : '';
-    renderUnidadeRotulo();
-  }
-  function abrirUnidade(sim) {
-    $('unitPop').hidden = !sim;
-    $('unitTrigger').setAttribute('aria-expanded', String(sim));
-    if (sim) { var f = $('unitPop').querySelector('[aria-pressed="true"]') || $('unitPop').querySelector('button'); if (f) f.focus(); }
-  }
-  $('unitTrigger').addEventListener('click', function () { abrirUnidade($('unitPop').hidden); });
-  $('unitPaises').addEventListener('click', function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    filtro.pais = b.getAttribute('data-pais'); filtro.bu = '';
-    gravarFiltro(); renderUnidade(); renderLista();
-    if (!filtro.pais) { abrirUnidade(false); $('unitTrigger').focus(); }
-    else { var p = $('unitBus').querySelector('button'); if (p) p.focus(); }
-  });
-  $('unitBus').addEventListener('click', function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    filtro.bu = b.getAttribute('data-bu');
-    gravarFiltro(); renderUnidade(); renderLista();
-    abrirUnidade(false); $('unitTrigger').focus();
-  });
-  // Clique em botão redesenhado (já fora do documento) não conta como "clique fora"
-  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('unitPop').hidden && !$('unit').contains(e.target)) abrirUnidade(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('unitPop').hidden) { abrirUnidade(false); $('unitTrigger').focus(); } });
-
-  // ── Demais filtros ──
-  $('resumo').addEventListener('click', function (e) {
-    var b = e.target.closest('.resumo-item[data-tipo]'); if (!b) return;
-    var t = b.getAttribute('data-tipo');
-    filtro.tipo = filtro.tipo === t ? '' : t;
-    gravarFiltro(); renderLista();
-  });
-  $('segOrd').addEventListener('click', function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    filtro.ord = b.getAttribute('data-ord'); gravarFiltro(); renderLista();
-  });
-  $('swSo').addEventListener('click', function () { filtro.so = !filtro.so; gravarFiltro(); renderLista(); });
-  $('btnLimpar').addEventListener('click', function () { filtro = { tipo: '', pais: '', bu: '', ord: filtro.ord, so: false }; gravarFiltro(); renderUnidade(); renderLista(); });
-  $('btnTentar').addEventListener('click', function () { carregar(true); });
-  $('btnAtualizar').addEventListener('click', function () { carregar(true); });
   document.querySelectorAll('[data-tela-cheia]').forEach(function (b) {
     b.addEventListener('click', function () {
       if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
@@ -3196,10 +2748,9 @@ window.VBMSetup = (function () {
   // ── Vistas pelo hash ──
   function rota() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
-    var pronta = h === 'inicio' || h === 'pendencias' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
+    var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
-    $('vistaPendencias').hidden = h !== 'pendencias';
     $('vistaPainel').hidden = h !== 'painel';
     $('vistaMetas').hidden = h !== 'metas';
     $('vistaDesdobramento').hidden = h !== 'desdobramento';
@@ -3209,7 +2760,7 @@ window.VBMSetup = (function () {
     if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
     if (h === 'desdobramento') ddCarregar(false);
     if (h === 'goal-card') { gcLerParams(); gcCarregar(); }
-    var nome = h === 'inicio' ? '' : h === 'pendencias' ? S.t('t01.titulo') : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -3224,7 +2775,7 @@ window.VBMSetup = (function () {
   S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); });
 
   rota();
-  carregar(false);
+  carregar();
 })();
 
 </script>

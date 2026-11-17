@@ -27,7 +27,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | Perfis, fonte do perfil e recorte de dados | Decidido | Todos veem todas as BUs; a edição cabe aos contribuidores da própria BU, conforme o cadastro no banco (D-11) |
 | Entidades, estados e transições | Decidido | Especificação, seções 3 e 4 |
 | Regras críticas | Decidido | Aprovação em nível único pelo grupo de aprovação (D-09) |
-| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00, T01, T02, T03 e T04 desenvolvidas |
+| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00, T02, T03 e T04 desenvolvidas |
 | Fontes de dados confirmadas com o dono | Pendente | Modelo de dados a validar com o time de dados (P-12) |
 | Critérios de aceite | A confirmar | Especificação, seção 11; validar com P&CI |
 
@@ -51,6 +51,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil e Canadá) são definidas em PPT e e
 | D-11 | Todos os usuários visualizam todos os dados de todas as BUs; a edição cabe só aos contribuidores da própria BU, conforme o cadastro no banco de dados (substitui o recorte de leitura da P-02 e encerra a P-13) | 17/11/2026 |
 | D-12 | Regras ajustadas: sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida pelo sistema, sem diferença possível (RN-16); card Aprovado pode ser reaberto dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17) | 17/11/2026 |
 | D-13 | O Goal Card (T04) é a ficha de cadastro dos contribuidores, sem decisão; a aprovação acontece numa tela própria (T14 Aprovações) com todas as fichas em aprovação; no Goal Card, os comentários aparecem em pop-up só de leitura | 17/11/2026 |
+| D-14 | Retirada a tela T01 Minhas pendências (substitui a tela inicial da D-01): as decisões ficam na T14 Aprovações, exclusiva do grupo de aprovação; os contribuidores entram pela T03 Metas da BU e pelos avisos | 17/11/2026 |
 
 ## 4. Suposições a confirmar
 

@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, T01, T02, T03 e T04 Goal Card publicados com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, T02, T03 e T04 Goal Card publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -23,7 +23,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
   contribuidores da própria BU, conforme o cadastro no banco (`AIP_PAPEL`).
 - **Regras ajustadas (D-12):** sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida na gravação
   (RN-16); card Aprovado reabre dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17).
-- **Ajuste pendente no protótipo:** os dados de exemplo e as telas T01, T02 e T03 descritas abaixo ainda mostram
+- **Ajuste pendente no protótipo:** os dados de exemplo e as telas T02 e T03 descritas abaixo ainda mostram
   dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos (ponto focal, diretor), filtram a leitura por BU e
   mostram o alerta de pendência parada e o de soma dos pesos; passam às regras D-09 a D-12 na próxima entrega.
 ## Arquivos
@@ -32,11 +32,11 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 |---|---|---|
 | `index.html` | página única; tokens e componentes `vbm-design` e barra `setup-dashboards` colados no `<style>`/`<script>` | sim |
 | `assets/css/poppins.css` | Poppins local (faces embutidas) | sim |
-| `assets/images/Fundo_VBM_2400x1145.webp` | fundo dos três minerais (banner da T01; Início e T02 no tema escuro) | sim |
+| `assets/images/Fundo_VBM_2400x1145.webp` | fundo dos três minerais (Início, T02, T03 e T04 no tema escuro) | sim |
 | `assets/images/Fundo_VBM_claro_2400x1145.webp` | versão clara do mesmo fundo (Início e T02 no tema claro) | sim |
 | `portal.js` | montagem no Portal (pool próprio, health, router, bloqueio dos arquivos internos) | não |
 | `aip-goals-api.js` | rotas de dados (mesmo router no Portal e no standalone) | não |
-| `dados-exemplo.js` | fila de exemplo da T01, com datas relativas a hoje | não |
+| `dados-exemplo.js` | ciclo, papéis e Goal Cards de exemplo, com datas relativas a hoje | não |
 | `server.js` | app standalone para desenvolvimento (porta 8020) | não |
 | `tests/` | testes `node --test` (API, regras de idade/prazo, bloqueio de arquivos) | não |
 | `README.md` | documento da pasta (telas, estrutura, API, como rodar) | não |
@@ -48,7 +48,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | Vista | Tela | Situação |
 |---|---|---|
 | `#inicio` (padrão) | Início: menu da aplicação | publicada |
-| `#pendencias` | T01 Minhas pendências | publicada |
+| `#aprovacoes` | T14 Aprovações (só o grupo de aprovação) | em construção |
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
 | `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
 | `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
@@ -61,33 +61,13 @@ véu navy no escuro):
 - **Assinatura:** "AIP Goals" com o ano do ciclo em numerais vazados e uma linha sobre o planejamento
   das metas de AIP do ano. Abaixo, os fatos do ciclo: etapa atual e prazo, data de publicação dos Goal
   Cards oficiais e o número de Business Units do ciclo. A abertura não mostra
-  pendências pessoais: elas ficam na T01.
+  pendências pessoais.
 - **Jornada do ciclo** na vertical, em vidro, à direita (no lugar do antigo índice; o acesso às telas é pelo menu do topo): as quatro janelas (Desdobramento do COO, Proposta da BU, Calibração e aprovação,
   Goal Card oficial) com datas e a etapa atual marcada por texto ("Etapa atual") e ponto. Vem de
-  `ciclo.etapaAtual` e `ciclo.etapas[]` em `/pendencias` (configuração do ciclo, T11).
+  `ciclo.etapaAtual` e `ciclo.etapas[]` em `/inicio` (configuração do ciclo, T11).
 
 A barra superior é de vidro em todas as telas (desfoque + fundo translúcido no tom do tema): claro com
 logo e menu em navy, escuro com logo e menu em branco.
-
-### T01 Minhas pendências
-
-Fila pessoal do ciclo ativo: cards a preencher (rascunho ou devolvidos), decisões pendentes,
-comentários sem resposta e ações atribuídas.
-
-- **Menu no topo**, centralizado na própria barra (como as opções do Kaizen), só texto e com o item ativo sublinhado;
-  em janelas de até 1080 px vira gaveta aberta pelo botão de menu. Cada perfil vê só as telas que pode usar (§6.4):
-  Painel do ciclo só para P&CI/COO e administrador; Configuração só para o administrador.
-- **Banner** com o resumo por tipo; cada linha filtra a fila. "Paradas ou atrasadas" conta os itens há
-  mais de `parametros.diasParado` dias úteis em aprovação (RN-14) ou com prazo vencido.
-- **Filtros (padrão COO):** País › BU, Ordenar por (Urgência, Prazo, Idade) e "Só paradas ou atrasadas";
-  tudo na URL (`?tipo=&pais=&bu=&ord=&so=1`), e o Voltar do navegador volta com o mesmo filtro.
-- **Fila em cartões:** tipo, meta, detalhe, BU, card e versão, status (ícone + rótulo + cor do token
-  `--status-*`), nível da rota, prazo, idade e o botão que abre a tela exata (Preencher, Ajustar,
-  Analisar, Responder, Ver ação).
-- **Estados:** carregando, vazio, nada com os filtros, erro (com "Tentar de novo", sem retry
-  automático), sem acesso e desatualizado.
-- **Cores:** status pelo fluxo do Kaizen; "Parada" com `--wait` e "Atrasada" com `--late-bg`
-  (âmbar de ciclo, nunca verde/vermelho de desempenho).
 
 ### T02 Painel do ciclo
 
@@ -149,8 +129,8 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
 
 ### Dados de exemplo
 
-Os Goal Cards de exemplo (T01 a T04) seguem a estrutura do material de referência do ciclo 2027: por BU, 40% de
-resultado do scorecard do COO e 60% de metas específicas (63 cards); os cards citados em Minhas pendências têm a
+Os Goal Cards de exemplo (T02 a T04) seguem a estrutura do material de referência do ciclo 2027: por BU, 40% de
+resultado do scorecard do COO e 60% de metas específicas (63 cards); os cards com situação inicial definida têm a
 mesma situação em todas as telas.
 
 ## Responsividade
@@ -170,7 +150,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 
 | Rota | O que faz |
 |---|---|
-| `GET /pendencias` | fila do usuário pelo `X-Forwarded-Email` (sem ele, 401). Devolve `ciclo` (com `etapaAtual` e `etapas[]`), `usuario.papeis`, `parametros.diasParado`, `itens[]` (com `diasUteis`, `parada` e `atrasada` calculados no servidor), `atualizadoEm`, `exemplo` e `desatualizado` |
+| `GET /inicio` | T00: ciclo ativo (etapa, janelas, BUs) e papéis do usuário pelo `X-Forwarded-Email` (sem ele, 401) |
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
@@ -197,8 +177,8 @@ NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js   # http:
 
 ## Pontos de atenção
 
-- **P-12 (modelo de dados):** enquanto não for validado, a T01 mostra a pílula "Dados de exemplo". A
-  consulta real entra em `database/00N_*.sql`, parametrizada por e-mail e ciclo, e `/pendencias`
+- **P-12 (modelo de dados):** enquanto não for validado, as telas mostram a pílula "Dados de exemplo". A
+  consulta real entra em `database/00N_*.sql`, parametrizada por e-mail e ciclo, e as rotas
   passa a lê-la com `AIPGOALS_FONTE=banco`.
 - **Papéis:** hoje vêm dos dados de exemplo; no modelo validado saem de `AIP_PAPEL` (AC-02, AC-03).
 - **Card na página inicial do Portal:** ainda não adicionado.

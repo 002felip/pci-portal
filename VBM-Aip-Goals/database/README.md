@@ -33,7 +33,7 @@ Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio)
 
 | Script previsto | Rota | Parâmetros |
 |---|---|---|
-| `001_ciclo_ativo.sql` | `/pendencias`, `/painel` | — |
-| `002_pendencias_usuario.sql` | `/pendencias` (T01) | `@email`, `@ciclo` |
+| `001_ciclo_ativo.sql` | `/inicio`, `/painel` | — |
+| `002_papeis_usuario.sql` | `/inicio` (papéis para o menu) | `@email`, `@ciclo` |
 | `003_goal_cards_ciclo.sql` | `/painel` (T02) | `@ciclo` (filtro País › BU aplicado na API) |
 | `004_papeis_usuario.sql` | autorização (AC-01 a AC-07) | `@email`, `@ciclo` |

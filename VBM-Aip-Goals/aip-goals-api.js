@@ -9,7 +9,7 @@
  * `request.input` — nada da requisição é concatenado na SQL.
  *
  * FONTE DOS DADOS: o modelo de dados (Especificação técnica §9) ainda depende da
- * validação do time de dados (P-12). Até lá, /pendencias responde com os dados de
+ * validação do time de dados (P-12). Até lá, as rotas respondem com os dados de
  * exemplo de dados-exemplo.js, marcados `exemplo: true` (a tela mostra a pílula
  * "Dados de exemplo"). Quando as tabelas existirem, a consulta entra em
  * database/00N_*.sql e `fonte: 'banco'` passa a lê-la por aqui.
@@ -18,9 +18,7 @@
  *
  * Rotas:
  *   GET /ping          diagnóstico sem banco
- *   GET /pendencias    T01 — fila pessoal do usuário no ciclo ativo:
- *                      { ciclo, usuario, parametros, itens[], atualizadoEm, exemplo }
- *                      Cada item já sai com `diasUteis`, `parada` (RN-14) e `atrasada`.
+ *   GET /inicio        T00 — ciclo ativo e papéis do usuário: { ciclo, usuario: { papeis[] }, atualizadoEm, exemplo }
  *   GET /painel?pais=&bu=   T02 — Painel do ciclo (só P&CI/COO e administrador, AC-07):
  *                      { ciclo, parametros, filtro, cards[], totais, porBu[], funil[], niveis[], parados[] }
  *                      Tudo calculado aqui a partir de `cards` (CA-15: as contagens batem com a lista).
@@ -39,12 +37,11 @@
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, SECOES } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, cicloExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
 const LIMITE_POR_MINUTO = 240;
-const TIPOS = ['preencher', 'decidir', 'comentario', 'acao'];
 const ESTADOS = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado'];
 
 // Dias úteis (seg–sex) entre duas datas AAAA-MM-DD, sem contar o dia inicial.
@@ -59,21 +56,6 @@ function diasUteisEntre(inicioIso, fim) {
     if (x.getDay() !== 0 && x.getDay() !== 6) n++;
   }
   return n;
-}
-
-// Regras de idade e prazo no servidor (a tela só exibe):
-//   parada  = mesmo nível há MAIS que parametros.diasParado dias úteis (RN-14, CA-11)
-//   atrasada = prazo anterior a hoje
-function enriquecer(dados, hoje = new Date()) {
-  const limite = Number(dados.parametros && dados.parametros.diasParado) || 3;
-  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
-  const itens = (dados.itens || [])
-    .filter((it) => TIPOS.includes(it.tipo) && ESTADOS.includes(it.estado))
-    .map((it) => {
-      const diasUteis = it.desde ? diasUteisEntre(it.desde, hoje) : 0;
-      return { ...it, diasUteis, parada: diasUteis > limite, atrasada: !!it.prazo && it.prazo < hojeIso };
-    });
-  return { ...dados, parametros: { ...dados.parametros, diasParado: limite }, itens };
 }
 
 // T02 — agregados do Painel do ciclo, a partir da lista de Goal Cards já filtrada.
@@ -226,22 +208,20 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
 
   router.get('/ping', (req, res) => res.json({ ok: true, fonte }));
 
-  router.get('/pendencias', async (req, res) => {
+  // T00 Início: ciclo ativo (etapa, janelas, BUs) e os papéis do usuário para o menu (AC-02)
+  router.get('/inicio', async (req, res) => {
     const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    // Sem identidade do proxy não há fila pessoal (AC-01). Mensagem neutra (AC-04).
+    // Sem identidade do proxy não há acesso (AC-01). Mensagem neutra (AC-04).
     if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') {
-        // Modelo de dados pendente (P-12): a consulta real entra aqui, parametrizada por @email e @ciclo.
-        return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      }
+      // Modelo de dados pendente (P-12): a consulta real entra aqui, parametrizada por @email e @ciclo.
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
       const hoje = agora();
-      const dados = enriquecer(pendenciasExemplo(hoje), hoje);
-      res.json({ ...dados, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+      res.json({ ciclo: cicloExemplo(hoje), usuario: { papeis: papeisDe(email, hoje) }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
     } catch (err) {
       // O motivo fica no log; a resposta não leva texto do banco.
-      console.error(`${TAG} /pendencias:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar as pendências.', codigo: 'ERRO' });
+      console.error(`${TAG} /inicio:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar o início.', codigo: 'ERRO' });
     }
   });
 
@@ -387,4 +367,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, enriquecer, TIPOS, ESTADOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS };

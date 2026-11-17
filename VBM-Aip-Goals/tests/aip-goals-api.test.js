@@ -4,8 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
-const { criarAipGoalsRouter, diasUteisEntre, enriquecer, agregarMetas, camposObrigatorios, validarDecisao } = require('../aip-goals-api');
-const { pendenciasExemplo } = require('../dados-exemplo');
+const { criarAipGoalsRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao } = require('../aip-goals-api');
 
 // Segunda-feira, 16/11/2026
 const HOJE = new Date(2026, 10, 16, 10, 0, 0);
@@ -28,38 +27,23 @@ test('diasUteisEntre ignora fins de semana e não conta o dia inicial', () => {
   assert.strictEqual(diasUteisEntre('2026-11-20', HOJE), 0); // futuro
 });
 
-test('enriquecer: parada só ACIMA do limite de dias úteis (RN-14) e atrasada pelo prazo', () => {
-  const r = enriquecer({ parametros: { diasParado: 3 }, itens: [
-    { id: 'a', tipo: 'decidir', estado: 'em_aprovacao', desde: '2026-11-11', prazo: '2026-11-20' }, // 3 dias úteis
-    { id: 'b', tipo: 'decidir', estado: 'em_aprovacao', desde: '2026-11-10', prazo: '2026-11-13' }, // 4 dias úteis, venceu
-    { id: 'c', tipo: 'invalido', estado: 'em_aprovacao', desde: '2026-11-10' },
-  ] }, HOJE);
-  assert.deepStrictEqual(r.itens.map((i) => [i.id, i.diasUteis, i.parada, i.atrasada]), [['a', 3, false, false], ['b', 4, true, true]]);
-});
-
-test('dados de exemplo: só tipos e estados válidos, datas coerentes com o dia', () => {
-  const d = enriquecer(pendenciasExemplo(HOJE), HOJE);
-  assert.ok(d.itens.length >= 5);
-  assert.ok(d.itens.some((i) => i.parada) && d.itens.some((i) => i.atrasada));
-  assert.ok(d.itens.every((i) => /^\d{4}-\d{2}-\d{2}$/.test(i.desde)));
-});
-
-test('GET /pendencias exige a identidade do proxy (X-Forwarded-Email)', async () => {
+test('GET /inicio exige a identidade do proxy (X-Forwarded-Email) e devolve ciclo e papéis', async () => {
   const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
   try {
-    const sem = await pedir(s, '/api/pendencias');
-    assert.strictEqual(sem.status, 401);
-    const com = await pedir(s, '/api/pendencias', { 'X-Forwarded-Email': 'pessoa@vale.com' });
+    assert.strictEqual((await pedir(s, '/api/inicio')).status, 401);
+    const com = await pedir(s, '/api/inicio', { 'X-Forwarded-Email': 'pessoa@vale.com' });
     assert.strictEqual(com.status, 200);
     assert.strictEqual(com.corpo.exemplo, true);
-    assert.ok(Array.isArray(com.corpo.itens) && com.corpo.itens.every((i) => 'parada' in i && 'atrasada' in i && 'diasUteis' in i));
+    assert.strictEqual(com.corpo.ciclo.etapas.length, 4);
+    assert.ok(Array.isArray(com.corpo.usuario.papeis) && com.corpo.usuario.papeis.length > 0);
+    assert.strictEqual((await pedir(s, '/api/pendencias', { 'X-Forwarded-Email': 'pessoa@vale.com' })).status, 404); // T01 retirada
   } finally { s.close(); }
 });
 
 test('fonte "banco" sem modelo de dados responde 501 sem texto do banco', async () => {
   const s = await servidor(criarAipGoalsRouter({ fonte: 'banco', runQuery: async () => ({ recordset: [] }) }));
   try {
-    const r = await pedir(s, '/api/pendencias', { 'X-Forwarded-Email': 'pessoa@vale.com' });
+    const r = await pedir(s, '/api/inicio', { 'X-Forwarded-Email': 'pessoa@vale.com' });
     assert.strictEqual(r.status, 501);
     assert.strictEqual(r.corpo.codigo, 'MODELO_PENDENTE');
   } finally { s.close(); }

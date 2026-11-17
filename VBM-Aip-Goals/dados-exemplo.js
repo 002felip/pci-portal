@@ -1,5 +1,5 @@
 /**
- * AIP Goals — dados de exemplo da T00 (Início), T01 (Minhas pendências), T02 (Painel do ciclo), T03 (Metas da BU) e T13 (Desdobramento).
+ * AIP Goals — dados de exemplo da T00 (Início), T02 (Painel do ciclo), T03 (Metas da BU), T04 (Goal Card) e T13 (Desdobramento).
  *
  * Usados enquanto o modelo de dados (Especificação §9, pendência P-12) não é
  * validado pelo time de dados. A resposta da API leva `exemplo: true` e a tela
@@ -45,6 +45,8 @@ function cicloExemplo(hoje = new Date()) {
   };
 }
 
+// Papéis do usuário de demonstração e situação inicial de alguns cards (a T01 Minhas pendências foi retirada;
+// a lista segue como base dos papéis e das situações usadas no painel, nas metas e no Goal Card).
 function pendenciasExemplo(hoje = new Date()) {
   const desde = (n) => iso(somarDiasUteis(hoje, -n));
   const prazo = (n) => iso(somarDiasUteis(hoje, n));
@@ -195,7 +197,7 @@ function painelExemplo(hoje = new Date()) {
       });
     });
   });
-  // Cards citados em Minhas pendências seguem a situação da pendência (T01, T02, T03 e T04 coerentes)
+  // Cards da lista acima seguem a situação dela (T02, T03 e T04 coerentes)
   pendenciasExemplo(hoje).itens.filter((it) => it.tipo !== 'acao').forEach((it) => {
     const c = cards.find((x) => x.card === it.card);
     if (c) Object.assign(c, { estado: it.estado, versao: it.versao, nivel: it.nivel, desde: it.desde });
