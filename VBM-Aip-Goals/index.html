@@ -457,18 +457,19 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   --menu-drawer: rgba(255,255,255,.96);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF;
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF; --logo-ink: var(--vbm-blue);
   --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
 } }
 :root[data-theme="dark"] {
-  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF;
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF; --logo-ink: var(--vbm-blue);
   --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
 }
 .topnav {
   background: var(--vidro-bg); border-bottom: 1px solid var(--vidro-line); box-shadow: none;
   backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
 }
-.topnav-logo svg g path { fill: var(--vidro-ink); } /* só o desenho; a máscara do SVG continua branca */
+:root { --logo-ink: var(--vbm-blue-dark); } /* logo da Vale em azul (par escuro nos blocos do tema escuro) */
+.topnav-logo svg g path { fill: var(--logo-ink); } /* só o desenho; a máscara do SVG continua branca */
 .settings-btn, .topnav-menu-btn { color: var(--vidro-ink); }
 .settings-btn:hover { background: var(--menu-hover); }
 .settings-btn[aria-expanded="true"] { background: var(--menu-hover); }
@@ -816,6 +817,14 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .dd-nivel > span::before { content: '·'; margin: 0 0.5rem 0 0.25rem; }
 .dd-nivel-2 { margin: 0; }
 .dd-barra { display: flex; gap: 3px; height: 0.375rem; }
+/* Tela larga: o conteúdo ocupa a largura da janela, com margens fluidas (fontes e objetos escalam pela raiz fluida) */
+body.is-largo .page { max-width: none; padding-top: 0; padding-inline: clamp(1rem, 2.5vw, 3.5rem); }
+/* A foto começa no topo da tela: o topo sobe por baixo da barra de vidro */
+#vistaDesdobramento .p2-topo { position: relative; margin-top: calc(-1 * var(--barra)); padding-top: calc(var(--barra) + clamp(1.5rem, 4vh, 3rem)); }
+.dd-acoes-topo { position: absolute; top: calc(var(--barra) + 1rem); right: clamp(1rem, 2.5vw, 3.5rem); display: flex; gap: 0.5rem; }
+#vistaDesdobramento .p2-topo { padding-bottom: 1.5rem; }
+.pill-wait[hidden] { display: none; }
+#vistaDesdobramento #ddCorpo { margin-top: 0; background: color-mix(in srgb, var(--panel) 45%, var(--card-bg)); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); }
 /* Paleta executiva em degradê: uma cor por meta do scorecard, na ordem (tokens da abertura e das séries) */
 .dd-seg { --c: var(--ab-v1); --c2: var(--ab-v2); flex: 1 1 0; min-width: 0; border-radius: 999px; cursor: pointer;
   background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, var(--c2))); transition: opacity .2s, transform .2s; }
@@ -1426,16 +1435,13 @@ p, dd { overflow-wrap: anywhere; }
         <div class="dd-barra" id="ddBarra" role="img"></div>
         <ol class="dd-coo" id="ddCoo"></ol>
       </div>
+      <!-- Ações no canto superior direito da tela -->
+      <div class="dd-acoes-topo">
+        <button type="button" class="dash-acao" id="ddAtualizar" aria-label="Atualizar desdobramento" title="Atualizar desdobramento" data-i18n-aria="dd.atualizar" data-i18n-title="dd.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
     </header>
 
-    <div class="filters p2-filtro">
-      <p class="p2-pills">
-        <span class="pill-wait" id="ddAlerta" hidden role="status"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span id="ddAlertaTxt"></span></span>
-        <span class="pill-info" id="ddExemplo" hidden><svg class="ico" aria-hidden="true"><use href="#i-tool"/></svg><span data-i18n="dd.exemplo">Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada</span></span>
-      </p>
-      <button type="button" class="dash-acao" id="ddAtualizar" aria-label="Atualizar desdobramento" title="Atualizar desdobramento" data-i18n-aria="dd.atualizar" data-i18n-title="dd.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
-      <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
-    </div>
 
     <!-- Nível 2: o COO desdobra para cada BU 40% do resultado do seu scorecard + 60% de metas específicas -->
     <section class="secao" id="ddCorpo" aria-labelledby="ddTitMatriz">
@@ -1443,6 +1449,7 @@ p, dd { overflow-wrap: anywhere; }
         <p class="dd-nivel dd-nivel-2"><b>COO</b><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg><b>Business Units</b></p>
         <h3 class="sr-only" id="ddTitMatriz" data-i18n="dd.matriz">Desdobramento para as Business Units</h3>
         <span class="dd-resumo" id="ddResumo"></span>
+        <span class="pill-wait" id="ddAlerta" hidden role="status"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span id="ddAlertaTxt"></span></span>
         <ul class="legend p2-legenda" id="ddLegenda"></ul>
       </div>
       <div class="p2-tabela-wrap">
@@ -2358,7 +2365,6 @@ window.VBMSetup = (function () {
     var c = d.ciclo || {}, par = d.parametros || {}, sc = d.scorecardCoo || [], bus = d.bus || [], linhas = d.linhas || [], tot = d.totais || [];
     $('ddCiclo').textContent = c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '';
     $('ddAno').textContent = c.ano || '';
-    $('ddExemplo').hidden = !d.exemplo;
     $('ddAtualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
 
     // Nível 1 — barra fina da composição do scorecard do COO (sem rótulos; a meta escolhida fica em ênfase)
@@ -2751,6 +2757,7 @@ window.VBMSetup = (function () {
     var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
+    document.body.classList.toggle('is-largo', h === 'desdobramento');
     $('vistaPainel').hidden = h !== 'painel';
     $('vistaMetas').hidden = h !== 'metas';
     $('vistaDesdobramento').hidden = h !== 'desdobramento';
