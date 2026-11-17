@@ -81,7 +81,7 @@ Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis re
 - **Jornada do ciclo:** as quatro etapas ("01 - Desdobramento COO", "02 - Propostas BU's", "03 - Calibração e
   Aprovação", "04 - Goal Card oficial") numa linha contínua preenchida até hoje, com o marcador "Hoje". Cada anel
   mostra o percentual do total do ciclo (metas desdobradas, submetidos, em aprovação, aprovados). Abaixo, o prazo
-  discreto e o quantitativo ("27 de 41 Goal Cards submetidos"). A distância do anel ao texto de cima e ao de baixo
+  discreto e o quantitativo curto ("27 de 41"; o texto completo fica no aria-label). A distância do anel ao texto de cima e ao de baixo
   é a mesma (`--p2-esp`). Números dos totais do servidor, seguindo o filtro País › BU.
 - **Faixa de filtro:** País › BU, aviso de dados de exemplo e as ações atualizar e tela cheia.
 - **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de

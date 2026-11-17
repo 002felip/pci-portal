@@ -824,11 +824,11 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .p2-et.is-futura .v1 { stroke: var(--serie-a); }
 .p2-anel .v2 { stroke: var(--serie-p); }
 .p2-anel-txt { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.p2-anel-txt strong { font: 300 calc(var(--anel) * 0.27)/1 var(--font-display); /* proporcional ao anel: "100%" sempre cabe */ color: var(--ink-strong); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.p2-anel-txt strong { font: 300 calc(var(--anel) * 0.24)/1 var(--font-display); /* proporcional ao anel: "100%" sempre cabe */ color: var(--ink-strong); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 /* Abaixo do anel: o prazo discreto e, embaixo, o quantitativo */
-.p2-et-data { margin: var(--p2-esp) 0 0; font: 500 0.74rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.p2-et-data { margin: var(--p2-esp) 0 0; font: 500 0.84rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .p2-et.is-atual .p2-et-data { color: var(--accent-strong); font-weight: 600; }
-.p2-et-det { margin: 0.25rem 0 0; font: 500 0.9rem/1.4 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.p2-et-det { margin: 0.25rem 0 0; font: 500 0.78rem/1.4 var(--font-display); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
 .p2-et-det b { font-weight: 700; }
 
 .p2-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(min(22rem, 100%), 1fr); gap: 1rem; align-items: start; }
@@ -1552,7 +1552,7 @@ window.VBMSetup = (function () {
       'p2.ph.oficialRot': 'aprovados', 'p2.ph.oficialDet': '{a} de {t} Goal Cards aprovados<br>{g} negados · {c} a concluir',
       'p2.eyebrow': 'Planejamento anual', 'p2.vis': 'Exibir:', 'p2.visAbs': 'Números absolutos', 'p2.visPct': 'Percentual do total', 'p2.prazo': 'prazo', 'p2.doTotalCurto': 'do total',
       'p2.et.desdobramento': 'Desdobramento COO', 'p2.et.proposta': "Propostas BU's", 'p2.et.calibracao': 'Calibração e Aprovação', 'p2.et.oficial': 'Goal Card oficial',
-      'p2.qt': '{n} de {t} {r}', 'p2.q.desdobramento': 'metas desdobradas', 'p2.q.proposta': 'Goal Cards submetidos', 'p2.q.calibracao': 'Goal Cards em aprovação', 'p2.q.oficial': 'Goal Cards aprovados',
+      'p2.qt': '{n} de {t}', 'p2.qtFull': '{n} de {t} {r}', 'p2.q.desdobramento': 'metas desdobradas', 'p2.q.proposta': 'Goal Cards submetidos', 'p2.q.calibracao': 'Goal Cards em aprovação', 'p2.q.oficial': 'Goal Cards aprovados',
       'p2.f2.concluida': 'Concluída', 'p2.f2.restam': 'faltam {n} dias úteis', 'p2.f2.resta1': 'falta 1 dia útil', 'p2.f2.rascunho': '{n} em rascunho',
       'p2.f2.paradas': '{n} paradas', 'p2.f2.parada1': '1 parada', 'p2.f2.semParadas': 'sem paradas', 'p2.f2.negados': '{n} negados', 'p2.f2.bus': '{n} BUs',
       'p2.titulo': 'Ciclo AIP', 'p2.tituloAba': 'Painel do ciclo', 'p2.sub': 'Situação dos Goal Cards por Business Unit e tempo em cada nível de aprovação.',
@@ -1627,7 +1627,7 @@ window.VBMSetup = (function () {
       'p2.ph.oficialRot': 'approved', 'p2.ph.oficialDet': '{a} of {t} Goal Cards approved<br>{g} denied · {c} to complete',
       'p2.eyebrow': 'Annual planning', 'p2.vis': 'Show:', 'p2.visAbs': 'Absolute numbers', 'p2.visPct': 'Percent of total', 'p2.prazo': 'due', 'p2.doTotalCurto': 'of total',
       'p2.et.desdobramento': 'COO cascade', 'p2.et.proposta': 'BU proposals', 'p2.et.calibracao': 'Calibration and Approval', 'p2.et.oficial': 'Official Goal Card',
-      'p2.qt': '{n} of {t} {r}', 'p2.q.desdobramento': 'cascaded goals', 'p2.q.proposta': 'Goal Cards submitted', 'p2.q.calibracao': 'Goal Cards pending approval', 'p2.q.oficial': 'Goal Cards approved',
+      'p2.qt': '{n} of {t}', 'p2.qtFull': '{n} of {t} {r}', 'p2.q.desdobramento': 'cascaded goals', 'p2.q.proposta': 'Goal Cards submitted', 'p2.q.calibracao': 'Goal Cards pending approval', 'p2.q.oficial': 'Goal Cards approved',
       'p2.f2.concluida': 'Done', 'p2.f2.restam': '{n} business days left', 'p2.f2.resta1': '1 business day left', 'p2.f2.rascunho': '{n} in draft',
       'p2.f2.paradas': '{n} stalled', 'p2.f2.parada1': '1 stalled', 'p2.f2.semParadas': 'none stalled', 'p2.f2.negados': '{n} denied', 'p2.f2.bus': '{n} BUs',
       'p2.titulo': 'AIP Cycle', 'p2.tituloAba': 'Cycle dashboard', 'p2.sub': 'Goal Card status by Business Unit and time at each approval level.',
@@ -2185,8 +2185,8 @@ window.VBMSetup = (function () {
       var est = i < atual ? 'is-feita' : i === atual ? 'is-atual' : 'is-futura';
       var num = pct(fr(k.n));
       // Quantitativo sob a data: "27 de 41 Goal Cards submetidos"
-      var qt = S.t('p2.qt', { n: '<b>' + esc(S.fmt(k.n, 0)) + '</b>', t: '<b>' + esc(S.fmt(total, 0)) + '</b>', r: esc(k.rot) });
-      var rotulo = S.t('p2.et.' + e.id) + ': ' + num + ', ' + S.t('p2.qt', { n: S.fmt(k.n, 0), t: S.fmt(total, 0), r: k.rot }) + ', ' + S.t('p2.prazo') + ' ' + dataCurta(e.fim) +
+      var qt = esc(S.t('p2.qt', { n: S.fmt(k.n, 0), t: S.fmt(total, 0) }));
+      var rotulo = S.t('p2.et.' + e.id) + ': ' + num + ', ' + S.t('p2.qtFull', { n: S.fmt(k.n, 0), t: S.fmt(total, 0), r: k.rot }) + ', ' + S.t('p2.prazo') + ' ' + dataCurta(e.fim) +
         (i === atual ? ', ' + S.t('ab.atual') : i < atual ? ', ' + S.t('p2.ph.concluida') : '');
       return '<li class="p2-et ' + est + '"' + (i === atual ? ' aria-current="step"' : '') + ' aria-label="' + esc(rotulo) + '">' +
         '<p class="p2-et-n" title="' + esc(String(i + 1).padStart(2, '0') + ' - ' + S.t('p2.et.' + e.id)) + '"><b>' + String(i + 1).padStart(2, '0') + '</b> - ' + esc(S.t('p2.et.' + e.id)) + '</p>' +
