@@ -32,7 +32,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 ## Navegação e layout (D-17, D-19 — 17 e 18/11/2026)
 
 - **Menu no topo:** Início, Desdobramento, Painel do ciclo, Metas da BU e **Administração**, um submenu com
-  Aprovações (só o grupo de aprovação), Ações, Action Log e Configuração (só o administrador). Abre no clique,
+  Aprovações (só o grupo de aprovação), Action Log e Configuração (só o administrador). Abre no clique,
   fecha ao escolher, ao clicar fora ou com Esc; fica destacado quando uma tela dele está aberta e some se o perfil
   não vê nenhuma das telas. No modo gaveta (até 1080 px), as telas aparecem recuadas sob o título.
 - **Layout comum:** todas as telas, menos o Início, ocupam a largura da janela (`body.is-largo`) com margens
@@ -66,7 +66,10 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
 | `#goal-card?card=` | T04 Goal Card (também em popup pela T03) | publicada |
 | `#aprovacoes` | T14 Aprovações (submenu Administração, só o grupo de aprovação) | em construção |
-| `#acoes`, `#action-log`, `#configuracao` | T08, T07 e T11 (submenu Administração) | "Tela em construção" |
+| `#action-log`, `#configuracao` | T07 e T11 (submenu Administração) | "Tela em construção" |
+
+T05 (visão imprimível) e T08 (Ações) foram descontinuadas (D-20): saíram do menu e do catálogo, e qualquer
+endereço fora da lista de vistas (como o antigo `#acoes`) volta ao Início.
 
 ### Início (abertura)
 

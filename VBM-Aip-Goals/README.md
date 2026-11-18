@@ -19,9 +19,9 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | `#metas` | T03 Metas da BU — jornada do ciclo da BU e tabela de metas (peso em cascata, Status, Contribuidor, Versão, Última atualização); Abrir mostra o Goal Card em popup | publicada |
 | `#goal-card?card=` | T04 Goal Card — ficha de cadastro da meta pelos contribuidores e pelo administrador (campos obrigatórios, Salvar rascunho e Submeter, comentários em pop-up); leitura para os demais | publicada |
 | `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, no submenu Administração (a construir) | em construção |
-| `#acoes`, `#action-log`, `#configuracao` | T08, T07 e T11, no submenu Administração | "Tela em construção" |
+| `#action-log`, `#configuracao` | T07 e T11, no submenu Administração | "Tela em construção" |
 
-Menu: Início · Desdobramento · Painel do ciclo · Metas da BU · Administração (Aprovações, Ações, Action Log, Configuração). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
+Menu: Início · Desdobramento · Painel do ciclo · Metas da BU · Administração (Aprovações, Action Log, Configuração). T05 e T08 foram descontinuadas (D-20). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
 
 Uso em **notebook e desktop** (1024 px a 4K); celular fora do escopo.
 

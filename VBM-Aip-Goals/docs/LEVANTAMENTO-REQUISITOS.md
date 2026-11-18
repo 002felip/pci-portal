@@ -27,7 +27,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | Perfis, fonte do perfil e recorte de dados | Decidido | Todos veem todas as BUs; a edição cabe aos contribuidores da própria BU, conforme o cadastro no banco (D-11) |
 | Entidades, estados e transições | Decidido | Especificação, seções 3 e 4 |
 | Regras críticas | Decidido | Aprovação em nível único pelo grupo de aprovação (D-09) |
-| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13; T00, T02, T03 e T04 desenvolvidas |
+| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13: T00, T02, T03, T04, T06, T07, T11, T12 e T14; T00, T02, T03 e T04 desenvolvidas; T05 e T08 descontinuadas (D-20) |
 | Fontes de dados confirmadas com o dono | Pendente | Modelo de dados a validar com o time de dados (P-12) |
 | Critérios de aceite | A confirmar | Especificação, seção 11; validar com P&CI |
 
@@ -56,7 +56,8 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-16 | O administrador edita os Goal Cards de todas as BUs, com as mesmas regras de situação dos contribuidores (só Rascunho ou Devolvido para ajuste); quem edita um card não o decide (RN-12) | 17/11/2026 |
 | D-17 | Todas as telas ocupam a largura da janela, com fontes e objetos que se ajustam ao tamanho da tela; a foto do topo começa no alto da tela, atualizar e tela cheia ficam no canto superior direito, a pílula "Dados de exemplo" sai das telas e, em tela cheia, a barra com o menu continua visível | 17/11/2026 |
 | D-18 | T03 Metas da BU: jornada do ciclo igual à do Painel, na visão da BU; tabela com barra de peso em cascata na cor do status, Status sem aviso de parada e sem ícone, Contribuidor, Versão, Última atualização e colunas centralizadas; o botão Abrir mostra o Goal Card num popup grande, editável para quem pode editar | 18/11/2026 |
-| D-19 | Navegação: menu na ordem Início, Desdobramento, Painel do ciclo, Metas da BU e Administração; Administração é um submenu com Aprovações, Ações, Action Log e Configuração | 18/11/2026 |
+| D-19 | Navegação: menu na ordem Início, Desdobramento, Painel do ciclo, Metas da BU e Administração; Administração é um submenu com Aprovações, Action Log e Configuração (Ações saiu com a D-20) | 18/11/2026 |
+| D-20 | Descontinuadas a T05 Visão do Goal Card (impressão e PDF) e a T08 Ações (tarefas com responsável e prazo a partir de comentários), por acrescentarem complexidade sem ganho para o processo. O Goal Card oficial é consultado na T04 em leitura e o histórico na T06; os comentários do grupo de aprovação orientam o ajuste no fluxo Devolver → Resubmeter e ficam no Action Log. Saem também a tabela AIP_ACAO, as notificações de ação e os critérios CA-12 e CA-14 | 18/11/2026 |
 
 ## 4. Suposições a confirmar
 

@@ -22,10 +22,11 @@ respondem 501 até os scripts abaixo existirem.
 | `AIP_DECISAO` | versão, decisão, comentário, decidido por, data (nível único, D-09) |
 | `AIP_REVISAO_SECAO` | decisão, seção, marcação (OK ou Ajustar) |
 | `AIP_COMENTARIO` | card, seção, texto, autor, data, resposta a |
-| `AIP_ACAO` | comentário de origem, responsável, prazo, status |
 | `AIP_EVENTO_LOG` | tipo, quem, papel, quando, BU, meta, seção, antes, depois |
 | `AIP_NOTIFICACAO` | destinatário, evento, canal, enviado em, lido em |
-| `AIP_PARAMETRO` | limites configuráveis (caracteres mínimos, dias úteis de pendência parada, tamanho de anexo) |
+| `AIP_PARAMETRO` | limites configuráveis (caracteres mínimos, tamanho de anexo) |
+
+A antiga `AIP_ACAO` saiu do modelo com a descontinuação da T08 Ações (D-20).
 
 Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio) a definir com o time de dados.
 

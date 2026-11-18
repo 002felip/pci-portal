@@ -1191,7 +1191,6 @@ body.is-largo .acesso-bloqueio { margin: calc(-1 * var(--barra)) calc(50% - 50vw
       <button type="button" class="topnav-menu-link topnav-grupo-btn" id="menuAdminBtn" aria-expanded="false" aria-controls="menuAdminPop"><span data-i18n="nav.admin">Administração</span><svg class="ico topnav-grupo-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
       <div class="topnav-sub" id="menuAdminPop">
         <a class="topnav-menu-link" href="#aprovacoes" data-tela="aprovacoes" data-perfis="pci_coo admin aprovador" hidden><span data-i18n="nav.aprovacoes">Aprovações</span></a>
-        <a class="topnav-menu-link" href="#acoes" data-tela="acoes" data-perfis="todos"><span data-i18n="nav.acoes">Ações</span></a>
         <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
         <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.config">Configuração</span></a>
       </div>
@@ -1875,7 +1874,7 @@ window.VBMSetup = (function () {
       'et.proposta': 'Proposta da BU', 'et.proposta.quem': 'Goal Cards preenchidos · Pontos focais',
       'et.calibracao': 'Calibração e aprovação', 'et.calibracao.quem': 'Diretor da BU · Grupo P&CI/COO',
       'et.oficial': 'Goal Card oficial', 'et.oficial.quem': 'Versão aprovada e travada', 'nav.painel': 'Painel do ciclo',
-      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração', 'nav.admin': 'Administração', 't12.voltar': 'Voltar', 't12.tit': 'Acesso não autorizado', 't12.txt': 'Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.', 't12.inicio': 'Ir para o Início',
+      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.config': 'Configuração', 'nav.admin': 'Administração', 't12.voltar': 'Voltar', 't12.tit': 'Acesso não autorizado', 't12.txt': 'Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.', 't12.inicio': 'Ir para o Início',
       'ui.telaCheia': 'Tela cheia',
       't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
       't01.exemplo': 'Dados de exemplo — modelo de dados em validação (P-12)', 't01.desatualizado': 'Dados desatualizados — exibindo a última leitura',
@@ -1970,7 +1969,7 @@ window.VBMSetup = (function () {
       'et.proposta': 'BU proposal', 'et.proposta.quem': 'Goal Cards filled in · Focal points',
       'et.calibracao': 'Calibration and approval', 'et.calibracao.quem': 'BU Director · P&CI/COO group',
       'et.oficial': 'Official Goal Card', 'et.oficial.quem': 'Approved and locked version', 'nav.painel': 'Cycle dashboard',
-      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings', 'nav.admin': 'Administration', 't12.voltar': 'Back', 't12.tit': 'Access not authorized', 't12.txt': 'Your user is not enabled to access this AIP Goals screen. Contact the system administrator.', 't12.inicio': 'Go to Home',
+      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.config': 'Settings', 'nav.admin': 'Administration', 't12.voltar': 'Back', 't12.tit': 'Access not authorized', 't12.txt': 'Your user is not enabled to access this AIP Goals screen. Contact the system administrator.', 't12.inicio': 'Go to Home',
       'ui.telaCheia': 'Full screen',
       't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
       't01.exemplo': 'Sample data — data model under validation (P-12)', 't01.desatualizado': 'Outdated data — showing the last reading',
@@ -2888,8 +2887,11 @@ window.VBMSetup = (function () {
   document.addEventListener('click', function (e) { if ($('topMenu').classList.contains('is-aberto') && !e.target.closest('#topMenu, #topMenuBtn')) abrirMenu(false); });
 
   // ── Vistas pelo hash ──
+  var VISTAS = ['inicio', 'desdobramento', 'painel', 'metas', 'goal-card', 'aprovacoes', 'action-log', 'configuracao'];
   function rota() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
+    // Endereço fora do catálogo (ex.: telas descontinuadas, como T05 e T08 — D-20) volta ao Início
+    if (VISTAS.indexOf(h) < 0) { location.replace('#inicio'); return; }
     var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
