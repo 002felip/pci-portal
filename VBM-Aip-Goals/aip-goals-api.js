@@ -37,7 +37,7 @@
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, cicloExemplo } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, cicloExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -242,6 +242,33 @@ function validarConfiguracao(aba, dados, base) {
     if (!(d.bus || []).some((b) => b.ativa)) erros.push({ campo: 'bus', codigo: 'SEM_BU' });
   }
   return erros;
+}
+
+// ── T07 Action Log (§7.3): filtros BU, Meta, Seção, Tipo, Período e Goal Card; leitura aberta a quem tem papel no ciclo ──
+const TIPOS_EVENTO = ['submissao', 'recolhimento', 'decisao', 'reabertura', 'comentario', 'configuracao', 'acesso_negado'];
+const SECOES_LOG = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions', 'ciclo', 'bus', 'grupos', 'metas', 'parametros'];
+const PERIODOS = ['7', '30', 'ciclo'];
+// Valida o filtro (valor fora da lista → erro) e devolve os eventos que passam; `porTipo` ignora o filtro de tipo,
+// para os cartões do topo mostrarem quanto há de cada tipo no recorte atual.
+function filtrarEventos(eventos, q, hoje, metas, bus) {
+  const f = { bu: String(q.bu || ''), meta: String(q.meta || ''), secao: String(q.secao || ''), tipo: String(q.tipo || ''), periodo: String(q.periodo || 'ciclo'), card: String(q.card || '') };
+  const erros = [];
+  if (f.bu && !bus.some((b) => b.sigla === f.bu)) erros.push('bu');
+  if (f.meta && !metas.some((m) => String(m.numero) === f.meta)) erros.push('meta');
+  if (f.secao && !SECOES_LOG.includes(f.secao)) erros.push('secao');
+  if (f.tipo && !TIPOS_EVENTO.includes(f.tipo)) erros.push('tipo');
+  if (!PERIODOS.includes(f.periodo)) erros.push('periodo');
+  if (f.card && !/^GC-[A-Z]{2,3}-\d{2}$/.test(f.card)) erros.push('card');
+  if (erros.length) return { erros };
+  let limite = '';
+  if (f.periodo !== 'ciclo') {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - Number(f.periodo) + 1);
+    limite = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  const semTipo = eventos.filter((e) => (!f.bu || e.bu === f.bu) && (!f.meta || (e.meta && String(e.meta.numero) === f.meta)) &&
+    (!f.secao || e.secao === f.secao) && (!limite || e.quando.slice(0, 10) >= limite) && (!f.card || e.card === f.card));
+  const porTipo = Object.fromEntries(TIPOS_EVENTO.map((t) => [t, semTipo.filter((e) => e.tipo === t).length]));
+  return { filtro: f, lista: f.tipo ? semTipo.filter((e) => e.tipo === f.tipo) : semTipo, porTipo, totalSemTipo: semTipo.length };
 }
 
 // Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
@@ -469,7 +496,30 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  // T07 Action Log: todos os perfis com papel no ciclo leem (AC-07); paginado (40 por página) ou completo para exportar (tudo=1)
+  router.get('/action-log', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora();
+      if (!papeisDe(email, hoje).length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const base = actionLogExemplo(hoje);
+      const r = filtrarEventos(base.eventos, req.query, hoje, base.metas, base.bus);
+      if (r.erros) return res.status(400).json({ error: 'Filtro inválido.', codigo: 'FILTRO', erros: r.erros });
+      const tamanho = 40, total = r.lista.length;
+      const pagina = Math.max(1, Math.min(Math.ceil(total / tamanho) || 1, parseInt(req.query.pagina, 10) || 1));
+      const eventos = req.query.tudo === '1' ? r.lista : r.lista.slice((pagina - 1) * tamanho, pagina * tamanho);
+      res.json({ ciclo: base.ciclo, filtro: r.filtro, eventos, total, pagina, paginas: Math.ceil(total / tamanho) || 1, porTipo: r.porTipo, totalSemTipo: r.totalSemTipo,
+        opcoes: { bus: base.bus, metas: base.metas, secoes: SECOES_LOG, tipos: TIPOS_EVENTO },
+        atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /action-log:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar o Action Log.', codigo: 'ERRO' });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorBu, ABAS_CONFIG, GRUPOS, dataValida };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorBu, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };

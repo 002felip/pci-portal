@@ -333,4 +333,66 @@ function configuracaoExemplo(hoje = new Date()) {
   };
 }
 
-module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };
+// ── T07 Action Log: linha do tempo do ciclo (AIP_EVENTO_LOG), derivada dos mesmos cards de exemplo ──
+// Cada evento: quem, papel, quando, BU, meta, seção e, nas edições, valor antes e depois (§7.3).
+const APROVADORES = ['Gabriela Lima', 'Henrique Prado', 'Isabela Nunes', 'João Ferreira'];
+function actionLogExemplo(hoje = new Date()) {
+  const base = painelExemplo(hoje), cfg = configuracaoExemplo(hoje);
+  const ev = [];
+  let seq = 0;
+  // Data e hora determinísticas a partir de uma data ISO (dias úteis para trás) e de uma semente
+  const em = (isoDia, semente, deslocDias = 0) => {
+    const p = isoDia.split('-').map(Number);
+    const d = somarDiasUteis(new Date(p[0], p[1] - 1, p[2]), -deslocDias);
+    const h = 8 + (semente * 7) % 10, m = (semente * 13) % 60;
+    return `${iso(d)}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+  };
+  const add = (e) => ev.push({ id: `EV-${String(++seq).padStart(4, '0')}`, antes: null, depois: null, secao: null, versao: null, ...e });
+  base.cards.forEach((c, i) => {
+    const meta = { numero: c.meta.numero, titulo: c.meta.titulo };
+    const comum = { bu: c.bu.sigla, meta, card: c.card };
+    const contrib = c.contribuidor, aprov = APROVADORES[i % APROVADORES.length];
+    const regua = conteudoMeta(c.meta.numero, base.ciclo.ano).secoes.ruler;
+    if (c.estado === 'rascunho') {
+      if (i % 3 === 0) add({ ...comum, tipo: 'recolhimento', quando: em(c.desde, i, 1), quem: contrib, papel: 'contribuidor', versao: 1, detalhe: 'recolheu a submissão para ajustar a evidência' });
+      return;
+    }
+    const v = c.versao || 1;
+    if (v > 1) {
+      add({ ...comum, tipo: 'submissao', quando: em(c.desde, i, 9), quem: contrib, papel: 'contribuidor', versao: 1, detalhe: 'submeteu a v1' });
+      add({ ...comum, tipo: 'comentario', quando: em(c.desde, i + 1, 7), quem: aprov, papel: 'aprovador', secao: 'ruler', detalhe: 'Minimum is too close to the target; review the ruler with the budget sensitivity.' });
+      add({ ...comum, tipo: 'decisao', decisao: 'devolver', quando: em(c.desde, i + 2, 6), quem: aprov, papel: 'aprovador', versao: 1, secao: 'ruler', detalhe: 'devolveu a v1 para ajuste na seção Ruler' });
+      add({ ...comum, tipo: 'submissao', quando: em(c.desde, i + 3, 2), quem: contrib, papel: 'contribuidor', versao: v, secao: 'ruler', detalhe: `resubmeteu como v${v}`,
+        antes: `Mín. ${regua.min - (regua.min > regua.exc ? -2 : 2)} · Meta ${regua.meta} · Exc. ${regua.exc}`, depois: `Mín. ${regua.min} · Meta ${regua.meta} · Exc. ${regua.exc}` });
+    } else {
+      add({ ...comum, tipo: 'submissao', quando: em(c.desde, i, c.estado === 'em_aprovacao' ? 0 : 3), quem: contrib, papel: 'contribuidor', versao: 1, detalhe: 'submeteu a v1' });
+    }
+    if (c.estado === 'em_aprovacao' && i % 4 === 1) add({ ...comum, tipo: 'comentario', quando: em(c.desde, i + 4, 0), quem: aprov, papel: 'aprovador', secao: 'formula', detalhe: 'Should the formula include the FX effect?' });
+    if (c.estado === 'aprovado') add({ ...comum, tipo: 'decisao', decisao: 'aprovar', quando: em(c.desde, i + 5, 0), quem: aprov, papel: 'aprovador', versao: v, detalhe: `aprovou a v${v}; versão oficial` });
+    if (c.estado === 'negado') add({ ...comum, tipo: 'decisao', decisao: 'negar', quando: em(c.desde, i + 5, 0), quem: aprov, papel: 'aprovador', versao: v, detalhe: 'negou a meta: fora do desdobramento acordado com o COO' });
+    if (c.estado === 'em_revisao') {
+      add({ ...comum, tipo: 'comentario', quando: em(c.desde, i + 6, 1), quem: aprov, papel: 'aprovador', secao: 'unit', detalhe: 'Use the same unit as the COO scorecard (%).' });
+      add({ ...comum, tipo: 'decisao', decisao: 'devolver', quando: em(c.desde, i + 7, 0), quem: aprov, papel: 'aprovador', versao: v, secao: 'unit', detalhe: `devolveu a v${v} para ajuste nas seções Unit e Ruler` });
+    }
+  });
+  // Uma reabertura dentro da janela inicial (RN-17)
+  const aprovado = base.cards.find((c) => c.estado === 'aprovado');
+  if (aprovado) add({ bu: aprovado.bu.sigla, meta: { numero: aprovado.meta.numero, titulo: aprovado.meta.titulo }, card: aprovado.card, tipo: 'reabertura',
+    quando: em(iso(hoje), 3, 1), quem: 'Karen Duarte', papel: 'admin', versao: aprovado.versao, detalhe: 'reabriu o card na janela inicial: peso revisto no desdobramento',
+    antes: 'Aprovado', depois: 'Rascunho' });
+  // Configuração (T11), com antes e depois
+  const cfgEv = [
+    { d: 2, quem: 'Karen Duarte', secao: 'metas', detalhe: 'alterou o peso da meta 10 em Clydach', antes: '10 pts', depois: '15 pts', bu: 'Clydach' },
+    { d: 4, quem: 'Usuário Demonstração', secao: 'grupos', detalhe: 'incluiu Yuki Sato como contribuidora de Matsusaka', antes: '—', depois: 'Contribuidor · Matsusaka', bu: 'Matsusaka' },
+    { d: 9, quem: 'Karen Duarte', secao: 'ciclo', detalhe: "ajustou o fim da etapa Propostas BU's", antes: iso(somarDiasUteis(hoje, 6)), depois: cfg.ciclo.etapas[1].fim },
+    { d: 15, quem: 'Karen Duarte', secao: 'ciclo', detalhe: 'abriu o ciclo; contribuidores notificados', antes: 'Em preparação', depois: 'Aberto' },
+  ];
+  cfgEv.forEach((x, k) => add({ tipo: 'configuracao', quando: em(iso(hoje), 20 + k, x.d), quem: x.quem, papel: 'admin', bu: x.bu || null, meta: null, card: null, secao: x.secao, detalhe: x.detalhe, antes: x.antes, depois: x.depois }));
+  // Acessos negados (AC-03, AC-04, RN-19)
+  add({ tipo: 'acesso_negado', quando: em(iso(hoje), 31, 1), quem: 'Nicolas Barros', papel: 'consulta', bu: 'Salobo', meta: null, card: null, detalhe: 'tentou editar um Goal Card de Salobo (grupo de consulta)' });
+  add({ tipo: 'acesso_negado', quando: em(iso(hoje), 32, 5), quem: 'Lucas Teixeira', papel: 'contribuidor', bu: null, meta: null, card: null, secao: null, detalhe: 'tentou abrir a Configuração do ciclo' });
+  ev.sort((a, b) => (a.quando < b.quando ? 1 : a.quando > b.quando ? -1 : 0));
+  return { ciclo: base.ciclo, eventos: ev, bus: base.ciclo.bus, metas: [META_RESULTADO_COO].concat(METAS_BU).map((m) => ({ numero: m.numero, titulo: m.titulo })) };
+}
+
+module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };

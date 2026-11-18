@@ -256,3 +256,24 @@ test('T11 Configuração: só o administrador; RN-16 recusa soma diferente do to
     assert.strictEqual((await enviar(contrib, '/api/configuracao/salvar', { aba: 'metas', dados: { metas: base.metas } }, h)).status, 403);
   } finally { admin.close(); contrib.close(); }
 });
+
+test('T07 Action Log: leitura para quem tem papel; filtros validados; paginação de 40; porTipo ignora o tipo', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'consulta', bu: 'Salobo' }] }));
+  const sem = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
+  try {
+    const h = { 'X-Forwarded-Email': 'c@vale.com' };
+    const todos = await pedir(s, '/api/action-log', h);
+    assert.strictEqual(todos.status, 200);
+    assert.strictEqual(todos.corpo.eventos.length, Math.min(40, todos.corpo.total));
+    const dec = await pedir(s, '/api/action-log?tipo=decisao&bu=Salobo', h);
+    assert.ok(dec.corpo.eventos.every((e) => e.tipo === 'decisao' && e.bu === 'Salobo'));
+    assert.strictEqual(dec.corpo.porTipo.decisao, dec.corpo.total);
+    assert.ok(dec.corpo.totalSemTipo >= dec.corpo.total);
+    const tudo = await pedir(s, '/api/action-log?tudo=1', h);
+    assert.strictEqual(tudo.corpo.eventos.length, todos.corpo.total);
+    assert.ok(tudo.corpo.eventos.every((e, i, l) => i === 0 || l[i - 1].quando >= e.quando)); // mais recente primeiro
+    assert.strictEqual((await pedir(s, '/api/action-log?tipo=xx', h)).status, 400);
+    assert.strictEqual((await pedir(s, '/api/action-log?bu=Marte', h)).status, 400);
+    assert.strictEqual((await pedir(sem, '/api/action-log', h)).status, 403);
+  } finally { s.close(); sem.close(); }
+});
