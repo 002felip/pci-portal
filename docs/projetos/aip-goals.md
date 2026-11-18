@@ -247,6 +247,11 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 - **Breakpoint estrutural:** 1080px (menu em gaveta, banner e abertura em uma coluna). Pouca altura
   (≤ 820px, notebook com escala de 125–150%) deixa a raiz em 15px (`0.9375rem`): a aplicação toda fica
   um degrau menor (tudo é em `rem`), e o banner e a abertura ficam compactos.
+  Nessa mesma faixa, os rótulos miúdos (cabeçalhos de tabela, selos, tags, datas da jornada, antes/depois do
+  Log) têm piso de `0.7rem` (10,5px), e as linhas da ficha do Goal Card ficam um pouco mais baixas.
+- **Popup do Goal Card / Versões:** o conteúdo se ajusta à altura com zoom em JS (`dlgAjustar`) só até 90%
+  (`DLG_ZOOM_MIN`); abaixo disso o popup rola na vertical, para o texto não ficar ilegível (no notebook a 150%
+  o zoom chegava a 50%). O topo do popup é compacto: título e número vazado na mesma linha.
 - **Cartão da fila por container query** (`@container fila`), pela largura do próprio cartão.
 - **Vidro com degradação:** fundo opaco sem `backdrop-filter` ou com `prefers-reduced-transparency`.
 - Conferido sem rolagem lateral em 1024, 1180, 1280×590, 1280×800, 1440, 1920, 2560 e 3840px e com zoom de 200%

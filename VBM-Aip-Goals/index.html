@@ -1504,9 +1504,35 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
 .p2-tabela-wrap { position: relative; } /* textos só para leitor de tela (sr-only) ficam presos ao bloco que rola */
 
 /* ════ Popup do Goal Card: responsivo sem alterar o modelo ════
-   O layout do card é o mesmo da tela inteira; o popup só ajusta a escala do conteúdo à altura disponível (zoom
-   calculado em JS, dlgAjustar), para eliminar a barra de rolagem. */
+   O layout do card é o mesmo da tela inteira; o popup ajusta a escala do conteúdo à altura disponível (zoom
+   calculado em JS, dlgAjustar) até 90%. Abaixo disso o popup rola, para o texto continuar legível. */
 .m3-dlg-corpo { padding-bottom: 1rem; }
+/* [RESPONSIVO] Topo do popup compacto (todas as telas): o título e o número vazado na mesma linha e menos
+   respiro em volta da linha do tempo. A ficha é o foco e ganha a altura, sem precisar encolher o texto. */
+.m3-dlg #vistaGoalCard .p2-topo, .m3-dlg #vistaVersoes .p2-topo { padding-top: 1.25rem; padding-bottom: 1rem; }
+.m3-dlg #vistaGoalCard .p2-titulo, .m3-dlg #vistaVersoes .p2-titulo { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 0 0.875rem; line-height: 1; }
+.m3-dlg #vistaGoalCard .p2-titulo .ab-ano, .m3-dlg #vistaVersoes .p2-titulo .ab-ano { font-size: clamp(2.25rem, 1.5rem + 1.4vw, 3.5rem); }
+.m3-dlg #vistaGoalCard .gc-meta-tit { margin-top: 0.375rem; }
+.m3-dlg #vistaGoalCard .gc-chips { margin-top: 0.5rem; }
+.m3-dlg #vistaGoalCard .p2-trilha { margin-top: 0.875rem; }
+/* [RESPONSIVO] Notebook a 125–150% (~1270×590): linhas da ficha um pouco mais baixas, no popup e na tela inteira */
+@media (min-width: 721px) and (max-height: 820px) {
+  .gc-f-linha { padding: 0.625rem 1rem; }
+  .gc-f-rot { padding-top: 0.25rem; }
+  .gc-legenda { padding: 0.5rem 1rem; }
+  .m3-dlg #vistaGoalCard .p2-topo, .m3-dlg #vistaVersoes .p2-topo { padding-top: 1rem; padding-bottom: 0.75rem; }
+}
+/* [RESPONSIVO] Notebook a 125–150% (~1270×590), todas as vistas: piso de leitura para os rótulos miúdos.
+   Com a raiz em 15 px, os rótulos de 0.58–0.66rem caíam para 8,7–9,9 px (cabeçalhos de tabela, selos, tags,
+   datas da jornada, antes/depois do Log). Sobem para 0.7rem (10,5 px); o resto do layout não muda. */
+@media (min-width: 721px) and (max-height: 820px) {
+  .ab-fato dt, .jornada-tit, .etapa-tag, .etapa-ok, .chip-parada, .chip-atrasada, .p2-hoje span,
+  .p2-tabela th, .p2-pais td, .p2-etapa-val small, .p2-eixo, .p2-bu, .p2-nivel-nome small,
+  .dd-card-badge, .dd-tag, .gc-rot, .gc-pre, .gc-selo, .cf-jan-atual, .cf-nova, .lg-tipo,
+  .lg-antes small, .lg-depois small, .vs-no-v em, .vs-tag, .vs-tabela thead th small, .vs-flag, .cf-bu-antes,
+  .unit-h, .topnav-menu-cont { font-size: 0.7rem; }
+  .secao-cont, .p2-perda, .cf-ini { font-size: 0.72rem; }
+}
 
 </style>
 </head>
@@ -3017,8 +3043,10 @@ window.VBMSetup = (function () {
     $('m3Dlg').scrollTop = 0;
     dlgAjustar();
   }
-  // Ajusta o conteúdo do popup à altura disponível (sem barra de rolagem): mede sem escala e aplica zoom, com mínimo de 50%.
+  // Ajusta o conteúdo do popup à altura disponível: mede sem escala e aplica zoom, com mínimo de 90% (DLG_ZOOM_MIN).
+  // Abaixo disso o texto fica pequeno demais para ler (no notebook a 150% chegava a 50%): o popup rola na vertical.
   // O Histórico (lista longa, paginada) não é escalado: rola normalmente.
+  var DLG_ZOOM_MIN = 0.9;
   function dlgAjustar() {
     var dlg = $('m3Dlg'); if (!dlg.open) return;
     ['vistaGoalCard', 'vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).style.zoom = ''; });
@@ -3026,13 +3054,13 @@ window.VBMSetup = (function () {
     if (!v) return;
     var topo = v.getBoundingClientRect().top - dlg.getBoundingClientRect().top + dlg.scrollTop;
     var livre = dlg.clientHeight - topo - 16, alto = v.scrollHeight;
-    var z = alto > livre ? Math.max(0.5, livre / alto) : 1;
+    var z = alto > livre ? Math.max(DLG_ZOOM_MIN, livre / alto) : 1;
     // Repete até caber: com menos escala o texto quebra menos e a altura muda
-    for (var i = 0; i < 4 && z > 0.5; i++) {
+    for (var i = 0; i < 4 && z > DLG_ZOOM_MIN; i++) {
       v.style.zoom = String(Math.floor(z * 1000) / 1000);
       var sobra = dlg.scrollHeight - dlg.clientHeight;
       if (sobra <= 1) break;
-      z = Math.max(0.5, z * (dlg.clientHeight - topo * z - 16) / (dlg.scrollHeight - topo * z - 16));
+      z = Math.max(DLG_ZOOM_MIN, z * (dlg.clientHeight - topo * z - 16) / (dlg.scrollHeight - topo * z - 16));
     }
     v.style.zoom = z < 1 ? String(Math.floor(z * 1000) / 1000) : '';
   }
