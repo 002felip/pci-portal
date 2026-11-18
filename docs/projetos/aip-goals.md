@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, T02, T03 e T04 Goal Card publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, Desdobramento, T02, T03 e T04 Goal Card publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -23,9 +23,22 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
   contribuidores da própria BU, conforme o cadastro no banco (`AIP_PAPEL`).
 - **Regras ajustadas (D-12):** sem alerta de pendência parada (RN-14 retirada); soma dos pesos garantida na gravação
   (RN-16); card Aprovado reabre dentro da janela inicial do ciclo e, depois, só via Change Request (RN-17).
-- **Ajuste pendente no protótipo:** os dados de exemplo e as telas T02 e T03 descritas abaixo ainda mostram
-  dois níveis (Diretor da BU e P&CI/COO) e os papéis antigos (ponto focal, diretor), filtram a leitura por BU e
-  mostram o alerta de pendência parada e o de soma dos pesos; passam às regras D-09 a D-12 na próxima entrega.
+- **Edição pelo administrador (D-16):** o administrador edita os Goal Cards de todas as BUs, nas mesmas situações
+  dos contribuidores.
+- **Ajuste pendente no protótipo:** os dados de exemplo e a T02 ainda mostram dois níveis (Diretor da BU e P&CI/COO)
+  e o alerta de pendência parada; a API ainda filtra a leitura por BU e a T03 mostra o alerta de soma dos pesos;
+  passam às regras D-09 a D-12 na próxima entrega.
+
+## Navegação e layout (D-17, D-19 — 17 e 18/11/2026)
+
+- **Menu no topo:** Início, Desdobramento, Painel do ciclo, Metas da BU e **Administração**, um submenu com
+  Aprovações (só o grupo de aprovação), Ações, Action Log e Configuração (só o administrador). Abre no clique,
+  fecha ao escolher, ao clicar fora ou com Esc; fica destacado quando uma tela dele está aberta e some se o perfil
+  não vê nenhuma das telas. No modo gaveta (até 1080 px), as telas aparecem recuadas sob o título.
+- **Layout comum:** todas as telas, menos o Início, ocupam a largura da janela (`body.is-largo`) com margens
+  fluidas; o topo sobe por trás da barra de vidro, então a foto começa no alto da tela; atualizar e tela cheia
+  ficam no canto superior direito (`.topo-acoes`); os blocos usam cinza suave com borda leve. Sem a pílula
+  "Dados de exemplo". Em tela cheia, a barra com o menu continua visível.
 ## Arquivos
 
 | Arquivo | O que é | Público? |
@@ -47,11 +60,13 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 
 | Vista | Tela | Situação |
 |---|---|---|
-| `#inicio` (padrão) | Início: menu da aplicação | publicada |
-| `#aprovacoes` | T14 Aprovações (só o grupo de aprovação) | em construção |
+| `#inicio` (padrão) | T00 Início: abertura do ciclo | publicada |
+| `#desdobramento` | Desdobramento CEO → COO → BUs | publicada |
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
 | `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
-| `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T02, T03, T04–T06, T07, T08, T11 | "Tela em construção" |
+| `#goal-card?card=` | T04 Goal Card (também em popup pela T03) | publicada |
+| `#aprovacoes` | T14 Aprovações (submenu Administração, só o grupo de aprovação) | em construção |
+| `#acoes`, `#action-log`, `#configuracao` | T08, T07 e T11 (submenu Administração) | "Tela em construção" |
 
 ### Início (abertura)
 
@@ -81,7 +96,7 @@ Visão do ciclo para o grupo P&CI/COO e o administrador (AC-07; demais perfis re
   mostra o percentual do total do ciclo (metas desdobradas, submetidos, em aprovação, aprovados). Abaixo, o prazo
   discreto e o quantitativo curto ("27 de 41"; o texto completo fica no aria-label). A distância do anel ao texto de cima e ao de baixo
   é a mesma (`--p2-esp`). Números dos totais do servidor, seguindo o filtro País › BU.
-- **Faixa de filtro:** País › BU, aviso de dados de exemplo e as ações atualizar e tela cheia.
+- **Faixa de filtro:** País › BU. Atualizar e tela cheia ficam no canto superior direito do topo.
 - **Situação por Business Unit:** matriz BU × situação agrupada por país, com barra de composição (cores de
   status + números na linha), total e paradas; a BU leva à T03 filtrada.
 - **Funil do ciclo:** Goal Cards → submetidos → aprovados no nível 1 → aprovados, com a perda entre etapas.
@@ -97,18 +112,23 @@ lista de metas de cada BU (CA-15, coberto por teste).
 Metas de uma BU, no recorte do usuário (AC-04/AC-05): P&CI/COO e administrador escolhem qualquer BU; os demais,
 só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegador; a matriz da T02 leva direto à BU.
 
-- **Topo** no modelo da T02: "Metas da BU" e, embaixo, a sigla da BU em letras vazadas.
-- **Quatro anéis por peso** (fração do total de pontos da BU): peso distribuído, submetido, em aprovação e
-  aprovado; abaixo de cada um, o número de metas e "n de 100 pts". Mesma distância padrão da T02 (`--p2-esp`).
+- **Topo** no modelo da T02: "Metas da BU" e, embaixo, o nome da BU em letras vazadas.
+- **Jornada do ciclo** igual à da T02 (mesmo componente `jornadaHtml` e mesmo tamanho), na visão da BU: as quatro
+  etapas com prazo, linha até hoje e, em cada anel, os Goal Cards da BU naquela etapa (ex.: "6 de 10").
 - **Alerta da RN-16:** pílula âmbar "Soma dos pesos: n de 100 pts" quando a soma difere do total do desdobramento
   (nos dados de exemplo, todas as BUs somam 100, como no material de referência).
-- **Tabela de metas:** número, título, tipo (fórmula ou marcos) e card, peso com barra, situação (com "Parada"
-  quando passa do limite de dias úteis), nível, versão, data da situação e "Abrir" (T04); total de pesos no rodapé.
+- **Tabela de metas:** número, título, tipo (fórmula ou marcos) e card; peso com barra curta em cascata (o cinza
+  claro é o peso das metas anteriores e o trecho colorido, o da meta, na cor do status; todas somam o total);
+  Status do fluxo de aprovação (ponto e rótulo, sem ícone e sem aviso de parada); Contribuidor responsável; Versão;
+  Última atualização; Peso, Status, Versão e Última atualização centralizados; total de pesos no rodapé.
+- **Abrir:** mostra o Goal Card (a própria vista T04, movida para um `<dialog>`) num popup grande, editável para
+  quem pode editar; as setas e a lista trocam de meta sem fechar; X, Esc ou clique fora fecham e a lista se
+  atualiza. Ctrl+clique abre a tela inteira.
 
 ### T04 Goal Card
 
-`#goal-card?card=GC-ONP-05&secao=ruler`. Ficha de cadastro da meta pelos **contribuidores** (D-13): o servidor decide
-o modo — **edição** (contribuidores da BU, Rascunho ou Em revisão) ou **leitura** (demais casos, com o motivo no
+`#goal-card?card=GC-ONP-05&secao=ruler` (ou o popup da T03). Ficha de cadastro da meta pelos **contribuidores** (D-13)
+e pelo **administrador** (D-16): o servidor decide o modo — **edição** (contribuidores da BU ou administrador, Rascunho ou Em revisão) ou **leitura** (demais casos, com o motivo no
 rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 Aprovações** (a construir).
 
 - **Topo** no padrão da T02/T03: "Goal Card" com o número da meta vazado, título, pílula de situação, código e
@@ -127,9 +147,21 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
   campos que faltam) e responde `simulado: true` até o modelo de dados (P-12). `POST /goal-card/decisao` fica
   pronto para a T14 (RN-06, RN-08, RN-09, RN-12).
 
+### Desdobramento
+
+`#desdobramento`, segundo item do menu. Visão executiva do desdobramento das metas:
+
+- **CEO → COO · Scorecard do COO:** barra fina dos 100% na paleta executiva em degradê (uma cor por meta) e um card
+  por meta do scorecard do COO, com peso, régua e a barra dos 100% com o trecho da meta em destaque; abaixo, um
+  ponto por BU na cor da situação do Goal Card. O card selecionado fica em ênfase.
+- **COO → Business Units:** matriz meta × BU agrupada por país, com o peso desdobrado e a situação do Goal Card em
+  cada célula; legenda de status.
+- Dados de `GET /desdobramento` (`agregarDesdobramento`).
+
 ### Dados de exemplo
 
 O administrador edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU.
+O contribuidor de cada card é um nome de exemplo (o mesmo que aparece entre os editores do Goal Card).
 
 As BUs usam os nomes dos sites do COO Dashboard (D-15): Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries). O código do Goal Card usa 3 letras por site
 (ONP, SAL, SOS, ONT, VNL, CLY, MAT).
@@ -142,6 +174,7 @@ mesma situação em todas as telas.
 
 Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo.
 
+- **Largura total:** todas as telas, menos o Início, ocupam a largura da janela com margens fluidas.
 - **Raiz fluida:** `html { font-size: clamp(1rem, 0.357vw + 0.643rem, 1.5rem) }` (16px até 1600px, 24px em
   3840px); layout em `rem`; barra com altura fluida (`--barra`).
 - **Breakpoint estrutural:** 1080px (menu em gaveta, banner e abertura em uma coluna). Pouca altura
@@ -158,6 +191,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /inicio` | T00: ciclo ativo (etapa, janelas, BUs) e papéis do usuário pelo `X-Forwarded-Email` (sem ele, 401) |
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
+| `GET /desdobramento` | Desdobramento: metas do scorecard do COO e matriz meta × BU com peso e situação do Goal Card |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
 | `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: campos obrigatórios e decisão validados no servidor; simulação até o P-12 |
 | `GET /health` | `{ status }` |
@@ -182,7 +216,7 @@ NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js   # http:
 
 ## Pontos de atenção
 
-- **P-12 (modelo de dados):** enquanto não for validado, as telas mostram a pílula "Dados de exemplo". A
+- **P-12 (modelo de dados):** enquanto não for validado, as telas usam os dados de exemplo (sem pílula na tela). A
   consulta real entra em `database/00N_*.sql`, parametrizada por e-mail e ciclo, e as rotas
   passa a lê-la com `AIPGOALS_FONTE=banco`.
 - **Papéis:** hoje vêm dos dados de exemplo; no modelo validado saem de `AIP_PAPEL` (AC-02, AC-03).

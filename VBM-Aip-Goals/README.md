@@ -14,11 +14,14 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | Vista | Tela | Situação |
 |---|---|---|
 | `#inicio` (padrão) | T00 Início — abertura do ciclo AIP com a jornada do ciclo na vertical | publicada |
+| `#desdobramento` | Desdobramento — scorecard do COO e matriz meta × BU com peso e situação dos Goal Cards | publicada |
 | `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
-| `#goal-card?card=` | T04 Goal Card — ficha de cadastro da meta pelos contribuidores (campos obrigatórios, Salvar rascunho e Submeter, comentários em pop-up); leitura para os demais | publicada |
-| `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação (a construir) | em construção |
-| `#metas` | T03 Metas da BU — anéis por peso, alerta de soma dos pesos (RN-16) e tabela de metas, no recorte do usuário | publicada |
-| `#goal-card`, `#action-log`, `#acoes`, `#configuracao` | T04 a T08 e T11 | "Tela em construção" |
+| `#metas` | T03 Metas da BU — jornada do ciclo da BU e tabela de metas (peso em cascata, Status, Contribuidor, Versão, Última atualização); Abrir mostra o Goal Card em popup | publicada |
+| `#goal-card?card=` | T04 Goal Card — ficha de cadastro da meta pelos contribuidores e pelo administrador (campos obrigatórios, Salvar rascunho e Submeter, comentários em pop-up); leitura para os demais | publicada |
+| `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, no submenu Administração (a construir) | em construção |
+| `#acoes`, `#action-log`, `#configuracao` | T08, T07 e T11, no submenu Administração | "Tela em construção" |
+
+Menu: Início · Desdobramento · Painel do ciclo · Metas da BU · Administração (Aprovações, Ações, Action Log, Configuração). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
 
 Uso em **notebook e desktop** (1024 px a 4K); celular fora do escopo.
 
@@ -48,7 +51,8 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 |---|---|
 | `GET /inicio` | T00: ciclo ativo e papéis do usuário (identidade pelo `X-Forwarded-Email`) |
 | `GET /painel?pais=&bu=` | T02: agregados do ciclo, só P&CI/COO e administrador; filtro validado |
-| `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (fora do recorte → 404) |
+| `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (fora do recorte → 404), com o contribuidor de cada card |
+| `GET /desdobramento` | Desdobramento: scorecard do COO e matriz meta × BU |
 | `GET /goal-card?card=` · `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: Goal Card e escritas validadas (simulação até o P-12) |
 | `GET /health` · `GET /ping` | saúde e diagnóstico |
 
@@ -65,7 +69,7 @@ Portal (`AZURE_SQL_*`). Detalhe em `docs/projetos/aip-goals.md`.
 ## Pendências
 
 - **P-12 — modelo de dados:** validar a proposta (`database/README.md`) com o time de dados; enquanto isso as telas
-  mostram "Dados de exemplo".
+  usam dados de exemplo.
 - **Aprovação em nível único (D-09)** pelo grupo de aprovação, com os grupos contribuidores, aprovadores e consulta (D-10). O protótipo ainda mostra dois níveis e os papéis antigos; o ajuste entra na próxima entrega.
-- **Leitura aberta e regras ajustadas (D-11, D-12):** todos veem todas as BUs e só os contribuidores da BU editam; sem alerta de pendência parada; soma dos pesos validada na gravação; card Aprovado reabre só na janela inicial do ciclo.
+- **Leitura aberta e regras ajustadas (D-11, D-12, D-16):** todos veem todas as BUs; editam os contribuidores da BU e o administrador; sem alerta de pendência parada; soma dos pesos validada na gravação; card Aprovado reabre só na janela inicial do ciclo.
 - Card do AIP Goals na página inicial do Portal.

@@ -1,6 +1,6 @@
 # Levantamento de requisitos — AIP Goals
 
-> Cópia em Markdown do documento "AIP Goals — Especificação funcional e levantamento de requisitos" (aba Levantamento de requisitos), exportada em 17/11/2026.
+> Cópia em Markdown do documento "AIP Goals — Especificação funcional e levantamento de requisitos" (aba Levantamento de requisitos), atualizada em 18/11/2026.
 
 Versão 1 · 16 de nov de 2026 · Cristian · Tipo de projeto: app de fluxo/aprovação + painel de acompanhamento
 
@@ -54,6 +54,9 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-14 | Retirada a tela T01 Minhas pendências (substitui a tela inicial da D-01): as decisões ficam na T14 Aprovações, exclusiva do grupo de aprovação; os contribuidores entram pela T03 Metas da BU e pelos avisos | 17/11/2026 |
 | D-15 | Nomes das BUs iguais aos sites do COO Dashboard: Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries); as antigas siglas ON, VNL, UK, JPN e OP deixam de ser usadas | 17/11/2026 |
 | D-16 | O administrador edita os Goal Cards de todas as BUs, com as mesmas regras de situação dos contribuidores (só Rascunho ou Devolvido para ajuste); quem edita um card não o decide (RN-12) | 17/11/2026 |
+| D-17 | Todas as telas ocupam a largura da janela, com fontes e objetos que se ajustam ao tamanho da tela; a foto do topo começa no alto da tela, atualizar e tela cheia ficam no canto superior direito, a pílula "Dados de exemplo" sai das telas e, em tela cheia, a barra com o menu continua visível | 17/11/2026 |
+| D-18 | T03 Metas da BU: jornada do ciclo igual à do Painel, na visão da BU; tabela com barra de peso em cascata na cor do status, Status sem aviso de parada e sem ícone, Contribuidor, Versão, Última atualização e colunas centralizadas; o botão Abrir mostra o Goal Card num popup grande, editável para quem pode editar | 18/11/2026 |
+| D-19 | Navegação: menu na ordem Início, Desdobramento, Painel do ciclo, Metas da BU e Administração; Administração é um submenu com Aprovações, Ações, Action Log e Configuração | 18/11/2026 |
 
 ## 4. Suposições a confirmar
 
