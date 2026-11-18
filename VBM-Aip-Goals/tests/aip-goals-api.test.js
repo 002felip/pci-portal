@@ -232,3 +232,27 @@ test('Edição: contribuidor só na própria BU; administrador em todas as BUs (
   const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => contrib }));
   try { assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, { 'X-Forwarded-Email': 'c@vale.com' })).status, 403); } finally { s.close(); }
 });
+
+test('T11 Configuração: só o administrador; RN-16 recusa soma diferente do total; janelas em ordem', async () => {
+  const { validarConfiguracao, somaPesosPorBu } = require('../aip-goals-api');
+  const { configuracaoExemplo } = require('../dados-exemplo');
+  const base = configuracaoExemplo(HOJE);
+  assert.ok(somaPesosPorBu(base.metas, base.bus).every((x) => x.soma === 100)); // exemplo fecha 100 em todas as BUs
+  const metas = JSON.parse(JSON.stringify(base.metas)); metas[1].pesos.Salobo = 10;
+  const e = validarConfiguracao('metas', { metas }, base);
+  assert.deepStrictEqual(e.filter((x) => x.codigo === 'RN16').map((x) => [x.bu, x.soma]), [['Salobo', 105]]);
+  const etapas = base.ciclo.etapas.map((x) => ({ ...x })); etapas[2].fim = etapas[1].fim;
+  assert.ok(validarConfiguracao('ciclo', { nome: 'AIP', etapas }, base).some((x) => x.codigo === 'ORDEM'));
+  assert.ok(validarConfiguracao('grupos', { membros: [{ matricula: 'C1234', grupo: 'contribuidor', bu: 'X' }] }, base).some((x) => x.codigo === 'BU'));
+  const admin = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'admin', bu: null }] }));
+  const contrib = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'contribuidor', bu: 'Salobo' }] }));
+  try {
+    const h = { 'X-Forwarded-Email': 'a@vale.com' };
+    assert.strictEqual((await pedir(admin, '/api/configuracao', h)).status, 200);
+    assert.strictEqual((await pedir(contrib, '/api/configuracao', h)).status, 403);
+    const r = await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metas } }, h);
+    assert.strictEqual(r.status, 400); assert.strictEqual(r.corpo.codigo, 'RN16');
+    assert.strictEqual((await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metas: base.metas } }, h)).corpo.simulado, true);
+    assert.strictEqual((await enviar(contrib, '/api/configuracao/salvar', { aba: 'metas', dados: { metas: base.metas } }, h)).status, 403);
+  } finally { admin.close(); contrib.close(); }
+});

@@ -1158,6 +1158,165 @@ body.is-largo .acesso-bloqueio { margin: calc(-1 * var(--barra)) calc(50% - 50vw
 .acesso-btn.primario:hover { background: color-mix(in srgb, var(--acesso-prim) 85%, #000); }
 .acesso-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* ════ T11 · Configuração do ciclo ════
+   Topo no modelo das demais telas; resumo em cartões clicáveis (levam à seção); abas em .seg; edição na própria
+   tabela, com rodapé fixo da seção mostrando o que mudou e o que impede gravar (RN-16). Tokens vbm-design. */
+.cf-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(0.5rem, 1vw, 1rem); margin: 0; padding: 0; list-style: none; }
+.cf-tile { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; padding: clamp(0.75rem, 1.2vw, 1.1rem) clamp(0.85rem, 1.3vw, 1.25rem);
+  border-radius: 1rem; border: 1px solid var(--card-line); background: color-mix(in srgb, var(--card-bg) 82%, transparent); box-shadow: var(--card-shadow);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); text-align: left; cursor: pointer; color: var(--text); font: inherit; transition: border-color .2s, transform .2s; }
+.cf-tile:hover { border-color: var(--ctl-on-bg); transform: translateY(-1px); }
+.cf-tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.cf-tile.is-sel { border-color: var(--accent-strong); }
+.cf-tile-n { font: 300 clamp(1.6rem, 1.1rem + 1.3vw, 2.6rem)/1 var(--font-display); color: var(--ink-strong); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cf-tile-rot { font: 600 0.78rem var(--font-display); color: var(--ink-strong); }
+.cf-tile-sub { font-size: 0.7rem; color: var(--text-soft); }
+.cf-tile.is-alerta { border-color: color-mix(in srgb, var(--wait) 55%, transparent); }
+.cf-tile.is-alerta .cf-tile-n, .cf-tile.is-alerta .cf-tile-sub { color: var(--wait); }
+.cf-faixa { align-items: flex-end; }
+.cf-clonar { margin-left: auto; display: inline-flex; align-items: center; gap: 0.4rem; }
+.cf-abas button { position: relative; min-height: 2rem; padding: 0.25rem 0.9rem; font-size: 0.8rem; }
+.cf-tab-marca { position: absolute; top: 0.3rem; right: 0.3rem; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--accent-strong); }
+.cf-tab-marca.is-err { background: var(--wait); }
+.cf-aba-sub { font-size: 0.78rem; color: var(--text-soft); }
+.cf-corpo { gap: 1rem; }
+.cf-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1rem; align-items: start; }
+.cf-card { padding: 1rem 1.1rem; border-radius: 1rem; border: 1px solid var(--card-line); background: var(--card-bg); display: flex; flex-direction: column; gap: 0.75rem; }
+.cf-card-tit { margin: 0; display: flex; align-items: center; gap: 0.45rem; font: 600 0.9rem var(--font-display); color: var(--ink-strong); }
+.cf-card-tit .ico { width: 1rem; height: 1rem; color: var(--accent-strong); }
+.cf-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem 1rem; }
+.cf-campo { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.cf-largo { grid-column: 1 / -1; }
+.cf-rot { font: italic 400 0.74rem var(--font-display); color: var(--text-soft); }
+.cf-in { min-height: 2.25rem; padding: 0.4rem 0.65rem; border-radius: 0.6rem; border: 1px solid var(--ctl-border); background: var(--ctl-bg); color: var(--text); font: 400 0.82rem var(--font-ui); width: 100%; }
+.cf-in:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--ctl-on-bg); }
+.cf-in:disabled { opacity: .7; cursor: not-allowed; }
+.cf-in[aria-invalid="true"] { border-color: var(--wait); background: color-mix(in srgb, var(--wait) 7%, var(--ctl-bg)); }
+textarea.cf-in { resize: vertical; line-height: 1.5; }
+.cf-ajuda { margin: 0; font-size: 0.74rem; line-height: 1.5; color: var(--text-soft); display: flex; gap: 0.4rem; align-items: flex-start; }
+.cf-ajuda .ico { flex-shrink: 0; width: 1rem; height: 1rem; color: var(--accent-strong); margin-top: 0.1rem; }
+.cf-erro { margin: 0; font-size: 0.74rem; color: var(--wait); }
+.cf-erro:empty { display: none; }
+.cf-situ { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; border-radius: 999px; background: var(--st-approved-bg); color: var(--st-approved-ink); font: 600 0.74rem var(--font-ui); }
+.cf-situ::before { content: ''; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--status-approved); }
+/* Janelas: linha vertical com as 4 etapas (mesma numeração da jornada) */
+.cf-janelas { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.cf-jan { position: relative; display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: 0.75rem; padding: 0.75rem 0; }
+.cf-jan + .cf-jan { border-top: 1px dashed var(--line); }
+.cf-jan-n { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 1.5px solid var(--line); font: 300 0.85rem var(--font-display); color: var(--accent-strong); background: var(--page); }
+.cf-jan.is-atual .cf-jan-n { border-color: var(--accent-strong); box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--accent-strong) 14%, transparent); font-weight: 600; }
+.cf-jan.is-err .cf-jan-n { border-color: var(--wait); color: var(--wait); }
+.cf-jan-corpo { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.cf-jan-tit { margin: 0; font: 600 0.86rem var(--font-display); color: var(--ink-strong); }
+.cf-jan-atual { margin-left: 0.35rem; padding: 1px 0.5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent-strong) 12%, transparent); color: var(--accent-strong); font: 600 0.62rem var(--font-ui); vertical-align: middle; }
+.cf-jan-datas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; font-size: 0.76rem; color: var(--text-soft); }
+.cf-jan-datas label { display: inline-flex; align-items: center; gap: 0.4rem; }
+.cf-jan-datas .cf-in { width: auto; min-height: 2rem; }
+.cf-jan-de b { color: var(--text); font-weight: 600; }
+.cf-jan-dur { margin-left: auto; font: 500 0.72rem var(--font-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+/* Tabelas da configuração */
+.cf-tabela td, .cf-tabela th { vertical-align: middle; }
+.cf-tabela tbody th, .cf-tabela tfoot th { text-transform: none; letter-spacing: normal; font: 400 0.8rem var(--font-ui); color: var(--text); white-space: normal; }
+.cf-tabela tbody th.cf-bu { font-weight: 600; color: var(--ink-strong); }
+.cf-total th { font-weight: 600 !important; color: var(--ink-strong) !important; }
+.cf-bu { font-weight: 600; color: var(--ink-strong); }
+.cf-tabela tr.is-inativa td, .cf-tabela tr.is-inativa th { opacity: .55; }
+.cf-link { border: 0; background: none; padding: 0.15rem 0.4rem; border-radius: 0.4rem; color: var(--accent-strong); font: 600 0.8rem var(--font-ui); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.cf-link:hover { background: color-mix(in srgb, var(--accent-strong) 10%, transparent); }
+.cf-mini { min-height: 1.9rem; padding: 0.2rem 0.65rem; font-size: 0.74rem; }
+.cf-mudo { color: var(--text-soft); }
+.cf-soma { display: inline-flex; align-items: center; gap: 0.3rem; padding: 2px 0.6rem; border-radius: 999px; font: 600 0.74rem var(--font-ui); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cf-soma .ico { width: 0.8rem; height: 0.8rem; }
+.cf-soma.is-ok { background: var(--st-approved-bg); color: var(--st-approved-ink); }
+.cf-soma.is-pend { background: var(--st-pending-bg); color: var(--st-pending-ink); }
+/* Grupos: inclusão, filtros e lista de pessoas */
+.cf-add { display: grid; grid-template-columns: minmax(12rem, 1.6fr) minmax(10rem, 1fr) minmax(9rem, 1fr) auto; gap: 0.6rem 0.8rem; align-items: end;
+  padding: 0.9rem 1rem; border-radius: 1rem; border: 1px dashed color-mix(in srgb, var(--accent-strong) 40%, var(--line)); background: color-mix(in srgb, var(--accent-strong) 4%, var(--card-bg)); }
+.cf-add-tit { grid-column: 1 / -1; margin: 0; display: flex; align-items: center; gap: 0.4rem; font: 600 0.82rem var(--font-display); color: var(--ink-strong); }
+.cf-add-tit .ico { width: 0.95rem; height: 0.95rem; color: var(--accent-strong); }
+.cf-add .btn { min-height: 2.25rem; }
+.cf-add .cf-erro { grid-column: 1 / -1; }
+.cf-filtros { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.cf-cont { margin-left: 0.2rem; font-size: 0.68rem; opacity: .75; font-variant-numeric: tabular-nums; }
+.cf-sel-bu { width: auto; min-width: 10rem; }
+.cf-busca { width: auto; flex: 1 1 14rem; max-width: 22rem; margin-left: auto; }
+.cf-pessoa { display: inline-flex; align-items: center; gap: 0.6rem; }
+.cf-pessoa b { display: block; font-weight: 600; color: var(--ink-strong); }
+.cf-pessoa small { display: block; font-size: 0.68rem; color: var(--text-soft); }
+.cf-ini { display: grid; place-items: center; flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%; background: color-mix(in srgb, var(--accent-strong) 14%, var(--card-bg)); color: var(--accent-strong); font: 600 0.68rem var(--font-ui); }
+.cf-mat { font-variant-numeric: tabular-nums; color: var(--text-soft); }
+.cf-chip { display: inline-flex; align-items: center; padding: 2px 0.6rem; border-radius: 999px; border: 1px solid var(--line); background: var(--flat-bg, var(--ctl-bg)); color: var(--text); font: 500 0.7rem var(--font-ui); white-space: nowrap; }
+.cf-g-aprovacao { border-color: color-mix(in srgb, var(--accent-strong) 40%, transparent); color: var(--accent-strong); }
+.cf-g-admin { border-color: color-mix(in srgb, var(--ink-strong) 40%, transparent); color: var(--ink-strong); font-weight: 600; }
+.cf-rem { width: 2rem; height: 2rem; }
+.cf-vazio { padding: 1.5rem; text-align: center; color: var(--text-soft); }
+/* Metas e pesos: matriz editável meta × BU */
+.cf-metas-ajuda { padding: 0.6rem 0.8rem; border-radius: 0.75rem; background: color-mix(in srgb, var(--accent-strong) 6%, transparent); color: var(--text); }
+.cf-tab-metas { min-width: 56rem; }
+.cf-tab-metas td { padding-block: 0.35rem; }
+.cf-col-bu { min-width: 5rem; }
+.cf-tit { min-width: 15rem; }
+.cf-mini-sel { width: auto; min-height: 2rem; padding-block: 0.2rem; font-size: 0.76rem; }
+.cf-peso { width: 4.25rem; min-height: 2rem; padding: 0.2rem 0.4rem; text-align: center; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+.cf-peso::-webkit-outer-spin-button, .cf-peso::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cf-peso:placeholder-shown { color: var(--text-soft); background: transparent; }
+.cf-peso-fixo { display: inline-block; min-width: 4.25rem; padding: 0.3rem 0; border-radius: 0.6rem; background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+.cf-linha-coo { background: color-mix(in srgb, var(--text) 2.5%, transparent); }
+.cf-linha-coo .m3-meta-tipo .ico { width: 0.75rem; height: 0.75rem; margin-right: 0.25rem; vertical-align: -1px; }
+.cf-nova { display: inline-block; margin-top: 0.25rem; padding: 0 0.45rem; border-radius: 999px; background: color-mix(in srgb, var(--accent-strong) 12%, transparent); color: var(--accent-strong); font: 600 0.6rem var(--font-ui); text-transform: uppercase; letter-spacing: .06em; }
+.cf-total th, .cf-total td { padding-top: 0.6rem; border-top: 1px solid var(--line); font-weight: 600; color: var(--ink-strong); }
+.cf-aviso { margin: 0; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.8rem; border-radius: 0.75rem; background: var(--st-pending-bg); color: var(--st-pending-ink); font: 500 0.78rem var(--font-ui); }
+.cf-aviso .ico { width: 1rem; height: 1rem; flex-shrink: 0; }
+/* Parâmetros: um cartão por limite */
+.cf-params { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.8rem; }
+.cf-param { display: flex; flex-direction: column; gap: 0.4rem; padding: 1rem 1.1rem; border-radius: 1rem; border: 1px solid var(--card-line); background: var(--card-bg); }
+.cf-param.is-err { border-color: color-mix(in srgb, var(--wait) 55%, transparent); }
+.cf-param-tit { font: 600 0.86rem var(--font-display); color: var(--ink-strong); }
+.cf-param-txt { font-size: 0.74rem; line-height: 1.45; color: var(--text-soft); flex: 1; }
+.cf-param-val { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-soft); }
+.cf-param-val .cf-in { width: 6.5rem; font: 300 1.3rem var(--font-display); text-align: right; font-variant-numeric: tabular-nums; }
+.cf-param-faixa { font-size: 0.68rem; color: var(--text-soft); }
+.cf-param.is-err .cf-param-faixa { color: var(--wait); }
+/* Rodapé da seção: fica à vista enquanto se rola uma tabela longa */
+.cf-rodape { position: sticky; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem;
+  margin: 0 -1.125rem; padding: 0.75rem 1.125rem; border-top: 1px solid var(--card-line); background: color-mix(in srgb, var(--card-bg) 92%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.cf-status { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; font: 500 0.78rem var(--font-ui); color: var(--st-approved-ink); }
+.cf-status .ico { width: 1rem; height: 1rem; }
+.cf-status.is-alt { color: var(--accent-strong); }
+.cf-status.is-err { color: var(--wait); }
+.cf-status span { color: var(--text-soft); font-weight: 400; }
+.cf-rodape-acoes { display: flex; gap: 0.5rem; }
+.cf-rodape-acoes .btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Últimas alterações (Action Log, tipo Configuração) */
+.cf-ultimas { padding-top: 0.25rem; }
+.cf-ult-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+.cf-link-log { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--accent-strong); font: 600 0.74rem var(--font-ui); text-decoration: none; }
+.cf-link-log .ico { width: 0.9rem; height: 0.9rem; }
+.cf-link-log:hover { text-decoration: underline; }
+.cf-ult { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1.25rem; }
+.cf-ult li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid var(--line); font-size: 0.76rem; }
+.cf-ult-q { color: var(--text-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cf-ult-txt b { color: var(--ink-strong); }
+.cf-dlg { width: min(30rem, calc(100vw - 2rem)); }
+.cf-dlg-txt { margin: 0.25rem 0 0.75rem; font-size: 0.84rem; color: var(--text-soft); }
+.cf-dlg-lista { margin: 0 0 1.1rem; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; }
+.cf-dlg-lista li { display: flex; align-items: center; gap: 0.5rem; }
+.cf-dlg-lista .ico { width: 0.95rem; height: 0.95rem; color: var(--status-approved); }
+.cf-dlg-acoes { display: flex; justify-content: flex-end; gap: 0.5rem; }
+/* Telas menores (notebook com escala, ≤ 1280 px) e janelas estreitas */
+@media (max-width: 1280px) {
+  .cf-grid2 { grid-template-columns: 1fr; }
+  .cf-add { grid-template-columns: 1fr 1fr; }
+  .cf-ult { grid-template-columns: 1fr; }
+}
+@media (max-width: 1080px) {
+  .cf-resumo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cf-campos { grid-template-columns: 1fr; }
+  .cf-busca { margin-left: 0; max-width: none; }
+  .cf-clonar { margin-left: 0; }
+}
+
 </style>
 </head>
 <body>
@@ -1646,6 +1805,79 @@ body.is-largo .acesso-bloqueio { margin: calc(-1 * var(--barra)) calc(50% - 50vw
   </section>
 
   <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
+  <!-- ═══ T11 · Configuração do ciclo (só o administrador, §7.1) ═══ -->
+  <section class="vista" id="vistaConfig" hidden aria-labelledby="titConfig">
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="cf.eyebrow">Administração</span></p>
+        <h2 class="p2-titulo" id="titConfig"><span class="ab-nome" data-i18n="cf.titulo">Configuração do ciclo</span><span class="ab-ano" id="cfAno">—</span></h2>
+      </div>
+      <!-- Resumo do ciclo: BUs, pessoas nos grupos, metas e BUs que fecham o total de pontos (RN-16) -->
+      <div class="p2-trilha"><ul class="cf-resumo" id="cfResumo" aria-label="Resumo da configuração" data-i18n-aria="cf.resumoAria"></ul></div>
+      <div class="topo-acoes">
+        <button type="button" class="dash-acao" id="cfAtualizar" aria-label="Atualizar configuração" title="Atualizar configuração" data-i18n-aria="cf.atualizar" data-i18n-title="cf.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <!-- Seções da configuração (aba na URL: #configuracao?aba=metas) e criação do próximo ciclo -->
+    <div class="filters p2-filtro cf-faixa" id="cfFaixa">
+      <div class="filter">
+        <span class="filter-label" id="cfLblAbas" data-i18n="cf.secao">Seção:</span>
+        <div class="seg cf-abas" id="cfAbas" role="tablist" aria-labelledby="cfLblAbas"></div>
+      </div>
+      <button type="button" class="btn btn-sec cf-clonar" id="cfClonar"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span id="cfClonarTxt" data-i18n="cf.clonar">Novo ciclo a partir deste</span></button>
+    </div>
+
+    <section class="secao cf-corpo" id="cfCorpo" aria-labelledby="cfAbaTit">
+      <div class="secao-head">
+        <h3 class="secao-tit" id="cfAbaTit"></h3>
+        <span class="cf-aba-sub" id="cfAbaSub"></span>
+      </div>
+      <div id="cfConteudo" role="tabpanel" aria-labelledby="cfAbaTit"></div>
+      <!-- Rodapé fixo da seção: o que mudou, o que impede gravar e as ações -->
+      <footer class="cf-rodape" id="cfRodape">
+        <p class="cf-status" id="cfStatus" role="status" aria-live="polite"></p>
+        <div class="cf-rodape-acoes">
+          <button type="button" class="btn btn-sec" id="cfDescartar" data-i18n="cf.descartar">Descartar</button>
+          <button type="button" class="btn" id="cfSalvar" data-i18n="cf.salvar">Salvar alterações</button>
+        </div>
+      </footer>
+      <!-- Últimas alterações (eventos "Configuração" do Action Log) -->
+      <div class="cf-ultimas" id="cfUltimas"></div>
+    </section>
+
+    <div class="estado estado-erro" id="cfErro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="cf.erroTit">Não foi possível carregar a configuração</p>
+      <p class="estado-txt" id="cfErroTxt"></p>
+      <button type="button" class="btn" id="cfTentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <!-- T12 · Sem acesso / não encontrado: mesmo padrão da tela "Acesso não autorizado" do Portal PCI -->
+    <section class="acesso-bloqueio" id="cfSemAcesso" role="alert" aria-labelledby="cfAcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="cfAcTit" tabindex="-1" data-i18n="t12.tit">Acesso não autorizado</h2>
+        <p data-i18n="t12.txt">Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#inicio" data-i18n="t12.inicio">Ir para o Início</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Novo ciclo: confirmação no segundo clique, em caixa de diálogo (nunca confirm()) -->
+    <dialog class="gc-dlg cf-dlg" id="cfDlg" role="alertdialog" aria-labelledby="cfDlgTit" aria-describedby="cfDlgTxt">
+      <h3 class="gc-dlg-tit" id="cfDlgTit"></h3>
+      <p class="cf-dlg-txt" id="cfDlgTxt"></p>
+      <ul class="cf-dlg-lista" id="cfDlgLista"></ul>
+      <div class="cf-dlg-acoes">
+        <button type="button" class="btn btn-sec" id="cfDlgCancelar" data-i18n="gc.cancelar">Cancelar</button>
+        <button type="button" class="btn" id="cfDlgOk" data-i18n="cf.clonarOk">Criar ciclo</button>
+      </div>
+    </dialog>
+  </section>
+
   <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
     <div class="secao">
       <div class="secao-head">
@@ -1915,7 +2147,7 @@ window.VBMSetup = (function () {
       'dd.filtrar': 'Destacar as metas da BU que vêm de {m}', 'dd.limpar': 'Mostrar todas as metas',
       'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.badgeTodas': '{p}% de cada BU', 'dd.doScorecard': 'do scorecard do COO', 'dd.baseBus': 'Base do resultado do COO em {n} BUs', 'dd.aprovados': '{a} de {t} aprovados', 'dd.emAprov': '{n} em aprovação', 'dd.irBu': 'Abrir as metas de {b}',
       'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
-      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card'
+      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card', 'cf.eyebrow': "Administração", 'cf.titulo': "Configuração do ciclo", 'cf.resumoAria': "Resumo da configuração do ciclo", 'cf.atualizar': "Atualizar configuração", 'cf.secao': "Seção:", 'cf.clonar': "Novo ciclo a partir deste", 'cf.clonarAno': "Criar AIP {a} a partir deste", 'cf.clonarOk': "Criar ciclo", 'cf.descartar': "Descartar", 'cf.salvar': "Salvar alterações", 'cf.salvando': "Salvando…", 'cf.erroTit': "Não foi possível carregar a configuração", 'cf.aba.ciclo': "Ciclo", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Grupos", 'cf.aba.metas': "Metas e pesos", 'cf.aba.parametros': "Parâmetros", 'cf.sub.ciclo': "Nome, janelas da jornada e texto padrão de exceções", 'cf.sub.bus': "BUs do ciclo, pessoas por grupo e pontos por BU", 'cf.sub.grupos': "Quem preenche, quem aprova e quem consulta", 'cf.sub.metas': "Metas do desdobramento e peso de cada uma por BU", 'cf.sub.parametros': "Limites usados pelas regras da aplicação", 'cf.marcaErro': "Alterada, com pendência", 'cf.marcaAlt': "Alterada, não salva", 'cf.r.bus': "Business Units ativas", 'cf.r.busSub': "em {p} regiões", 'cf.r.pessoas': "Pessoas nos grupos", 'cf.r.pessoasSub': "{a} no grupo de aprovação", 'cf.r.metas': "Metas", 'cf.r.metasSub': "{n} novas neste ciclo", 'cf.r.pontos': "BUs com {t} pts", 'cf.r.pontosOk': "Todas fecham o total (RN-16)", 'cf.r.pontosPend': "{n} com soma diferente do total", 'cf.r.oficial': "Goal Cards oficiais", 'cf.r.etapa': "Etapa atual: {e}", 'cf.e.nome': "Informe o nome do ciclo.", 'cf.e.data': "Informe a data de {e}.", 'cf.e.ordem': "{e} precisa terminar depois da etapa anterior.", 'cf.e.titulo': "A meta {n} precisa de título.", 'cf.e.soma': "{b} soma {s} de {t} pts.", 'cf.e.semAprov': "O grupo de aprovação precisa de ao menos uma pessoa.", 'cf.e.semAdmin': "O ciclo precisa de ao menos um administrador.", 'cf.e.faixa': "{p}: use um valor entre {a} e {b}.", 'cf.e.semBu': "O ciclo precisa de ao menos uma BU ativa.", 'cf.e.matVazia': "Informe a matrícula ou escolha a pessoa na lista.", 'cf.e.matNao': "A matrícula {m} não está no cadastro de usuários do Portal.", 'cf.e.jaNoGrupo': "{n} já está neste grupo.", 'cf.e.rn16Srv': "O servidor recusou: há BU com soma de pesos diferente do total (RN-16).", 'cf.e.salvar': "Não foi possível salvar. Revise as pendências e tente de novo.", 'cf.e.clonar': "Não foi possível criar o novo ciclo.", 'cf.de': "De", 'cf.ate': "até", 'cf.du1': "1 dia útil", 'cf.du': "{n} dias úteis", 'cf.ident': "Identificação", 'cf.ano': "Ano", 'cf.situacao': "Situação", 'cf.aberto': "Aberto", 'cf.nome': "Nome do ciclo", 'cf.texto': "Texto padrão de exceções", 'cf.textoAjuda': "Aparece em todos os Goal Cards, na seção Exceptions and Considerations; a BU não edita.", 'cf.janelas': "Janelas do ciclo", 'cf.janelasAjuda': "As datas definem a jornada mostrada no Início, no Painel e nas Metas da BU. Cada etapa começa quando a anterior termina.", 'cf.g.todos': "Todos", 'cf.g.contribuidor': "Contribuidores", 'cf.g.aprovacao': "Aprovação", 'cf.g.consulta': "Consulta", 'cf.g.admin': "Administradores", 'cf.g1.contribuidor': "Contribuidor", 'cf.g1.aprovacao': "Grupo de aprovação", 'cf.g1.consulta': "Consulta", 'cf.g1.admin': "Administrador", 'cf.ativaAria': "{b} no ciclo", 'cf.ativa': "Ativa", 'cf.inativa': "Fora", 'cf.verMetas': "Metas", 'cf.pontos': "Pontos", 'cf.noCiclo': "No ciclo", 'cf.busAjuda': "Uma BU fora do ciclo não recebe Goal Cards nem notificações e sai das somas de pontos.", 'cf.somaDe': "{s} de {t}", 'cf.todasBus': "Todas as BUs", 'cf.remover': "Remover {n} de {g}", 'cf.removerCurto': "Remover do grupo", 'cf.semPessoas': "Nenhuma pessoa com esse filtro.", 'cf.addTit': "Incluir pessoa num grupo", 'cf.matricula': "Matrícula", 'cf.matriculaPh': "Matrícula ou nome", 'cf.grupo': "Grupo", 'cf.adicionar': "Incluir", 'cf.buscaPh': "Buscar por nome, matrícula ou e-mail", 'cf.pessoa': "Pessoa", 'cf.tipo': "Tipo", 'cf.cooFixo': "Vem do desdobramento do COO", 'cf.tituloAria': "Título da meta {n}", 'cf.nova': "Nova", 'cf.pesoAria': "Peso da meta {n} em {b}", 'cf.totalBu': "Total por BU (precisa fechar {t} pts)", 'cf.metasAjuda': "Cada BU ativa precisa somar {t} pts. {c} pts vêm do resultado do scorecard do COO; o restante se distribui entre as metas específicas.", 'cf.rn16': "{n} BU(s) ainda não fecham o total. O servidor só grava quando todas fecham (RN-16).", 'cf.par.pesoTotal': "Total de pontos por BU", 'cf.par.pesoResultadoCoo': "Pontos do resultado do COO", 'cf.par.minComentario': "Mínimo de caracteres no comentário", 'cf.par.anexoMb': "Tamanho máximo de anexo", 'cf.parTxt.pesoTotal': "Soma que cada BU precisa fechar para gravar as metas (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Parte de cada BU ligada ao resultado do scorecard do COO.", 'cf.parTxt.minComentario': "Exigido para devolver ou negar um Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Por arquivo, para Change Requests e evidências (fases 2 e 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "caracteres", 'cf.un.MB': "MB", 'cf.faixa': "Entre {a} e {b}", 'cf.paramAjuda': "Os limites ficam no banco (AIP_PARAMETRO); a interface nunca os fixa no código.", 'cf.tudoSalvo': "Tudo salvo", 'cf.pendente': "Pendência em: {a}.", 'cf.naoSalvas': "Alterações não salvas em: {a}", 'cf.ultimas': "Últimas alterações", 'cf.verLog': "Ver tudo no Action Log", 'cf.removido': "{n} sai do grupo ao salvar", 'cf.incluido': "{n} entra como {g} ao salvar", 'cf.descartado': "Alterações descartadas", 'cf.salvo': "Configuração salva (simulação, nada foi gravado)", 'cf.dlgTit': "Criar o ciclo AIP {a}?", 'cf.dlgTxt': "O novo ciclo nasce com a estrutura do {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} pessoas nos grupos", 'cf.dlgMetas': "{n} metas com os pesos atuais", 'cf.dlgJanelas': "Janelas em branco, para você definir", 'cf.clonado': "{c} criado (simulação, nada foi gravado)"
     },
     en: {
       'p2.linha': 'Cycle timeline', 'p2.hoje': 'Today · {d}',
@@ -2010,7 +2242,7 @@ window.VBMSetup = (function () {
       'dd.filtrar': 'Highlight the BU goals that come from {m}', 'dd.limpar': 'Show all goals',
       'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.badgeTodas': '{p}% of each BU', 'dd.doScorecard': 'of the COO scorecard', 'dd.baseBus': 'Basis of the COO result in {n} BUs', 'dd.aprovados': '{a} of {t} approved', 'dd.emAprov': '{n} pending approval', 'dd.irBu': 'Open the goals of {b}',
       'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
-      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card'
+      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card', 'cf.eyebrow': "Administration", 'cf.titulo': "Cycle settings", 'cf.resumoAria': "Cycle settings summary", 'cf.atualizar': "Refresh settings", 'cf.secao': "Section:", 'cf.clonar': "New cycle from this one", 'cf.clonarAno': "Create AIP {a} from this one", 'cf.clonarOk': "Create cycle", 'cf.descartar': "Discard", 'cf.salvar': "Save changes", 'cf.salvando': "Saving…", 'cf.erroTit': "Could not load the settings", 'cf.aba.ciclo': "Cycle", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Groups", 'cf.aba.metas': "Goals and weights", 'cf.aba.parametros': "Parameters", 'cf.sub.ciclo': "Name, journey windows and standard exceptions text", 'cf.sub.bus': "Cycle BUs, people per group and points per BU", 'cf.sub.grupos': "Who fills in, who approves and who reads", 'cf.sub.metas': "Cascade goals and the weight of each one per BU", 'cf.sub.parametros': "Limits used by the application rules", 'cf.marcaErro': "Changed, with an issue", 'cf.marcaAlt': "Changed, not saved", 'cf.r.bus': "Active Business Units", 'cf.r.busSub': "in {p} regions", 'cf.r.pessoas': "People in groups", 'cf.r.pessoasSub': "{a} in the approval group", 'cf.r.metas': "Goals", 'cf.r.metasSub': "{n} new this cycle", 'cf.r.pontos': "BUs at {t} pts", 'cf.r.pontosOk': "All close the total (RN-16)", 'cf.r.pontosPend': "{n} with a sum different from the total", 'cf.r.oficial': "Official Goal Cards", 'cf.r.etapa': "Current stage: {e}", 'cf.e.nome': "Enter the cycle name.", 'cf.e.data': "Enter the date for {e}.", 'cf.e.ordem': "{e} must end after the previous stage.", 'cf.e.titulo': "Goal {n} needs a title.", 'cf.e.soma': "{b} adds up to {s} of {t} pts.", 'cf.e.semAprov': "The approval group needs at least one person.", 'cf.e.semAdmin': "The cycle needs at least one administrator.", 'cf.e.faixa': "{p}: use a value between {a} and {b}.", 'cf.e.semBu': "The cycle needs at least one active BU.", 'cf.e.matVazia': "Enter the employee ID or pick the person from the list.", 'cf.e.matNao': "Employee ID {m} is not in the Portal user directory.", 'cf.e.jaNoGrupo': "{n} is already in this group.", 'cf.e.rn16Srv': "The server refused: a BU has a weight sum different from the total (RN-16).", 'cf.e.salvar': "Could not save. Review the issues and try again.", 'cf.e.clonar': "Could not create the new cycle.", 'cf.de': "From", 'cf.ate': "to", 'cf.du1': "1 business day", 'cf.du': "{n} business days", 'cf.ident': "Identification", 'cf.ano': "Year", 'cf.situacao': "Status", 'cf.aberto': "Open", 'cf.nome': "Cycle name", 'cf.texto': "Standard exceptions text", 'cf.textoAjuda': "Shown on every Goal Card, in Exceptions and Considerations; BUs cannot edit it.", 'cf.janelas': "Cycle windows", 'cf.janelasAjuda': "The dates drive the journey shown on Home, the Cycle dashboard and BU goals. Each stage starts when the previous one ends.", 'cf.g.todos': "All", 'cf.g.contribuidor': "Contributors", 'cf.g.aprovacao': "Approval", 'cf.g.consulta': "Read-only", 'cf.g.admin': "Administrators", 'cf.g1.contribuidor': "Contributor", 'cf.g1.aprovacao': "Approval group", 'cf.g1.consulta': "Read-only", 'cf.g1.admin': "Administrator", 'cf.ativaAria': "{b} in the cycle", 'cf.ativa': "Active", 'cf.inativa': "Out", 'cf.verMetas': "Goals", 'cf.pontos': "Points", 'cf.noCiclo': "In cycle", 'cf.busAjuda': "A BU out of the cycle receives no Goal Cards or notifications and leaves the point sums.", 'cf.somaDe': "{s} of {t}", 'cf.todasBus': "All BUs", 'cf.remover': "Remove {n} from {g}", 'cf.removerCurto': "Remove from group", 'cf.semPessoas': "No one matches this filter.", 'cf.addTit': "Add a person to a group", 'cf.matricula': "Employee ID", 'cf.matriculaPh': "Employee ID or name", 'cf.grupo': "Group", 'cf.adicionar': "Add", 'cf.buscaPh': "Search by name, ID or e-mail", 'cf.pessoa': "Person", 'cf.tipo': "Type", 'cf.cooFixo': "Comes from the COO cascade", 'cf.tituloAria': "Title of goal {n}", 'cf.nova': "New", 'cf.pesoAria': "Weight of goal {n} in {b}", 'cf.totalBu': "Total per BU (must close {t} pts)", 'cf.metasAjuda': "Each active BU must add up to {t} pts. {c} pts come from the COO scorecard result; the rest is split across the specific goals.", 'cf.rn16': "{n} BU(s) do not close the total yet. The server only saves when all of them do (RN-16).", 'cf.par.pesoTotal': "Total points per BU", 'cf.par.pesoResultadoCoo': "COO result points", 'cf.par.minComentario': "Minimum comment length", 'cf.par.anexoMb': "Maximum attachment size", 'cf.parTxt.pesoTotal': "Sum each BU must close to save its goals (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Share of each BU tied to the COO scorecard result.", 'cf.parTxt.minComentario': "Required to return or deny a Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Per file, for Change Requests and evidence (phases 2 and 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "characters", 'cf.un.MB': "MB", 'cf.faixa': "Between {a} and {b}", 'cf.paramAjuda': "Limits live in the database (AIP_PARAMETRO); the interface never hard-codes them.", 'cf.tudoSalvo': "All saved", 'cf.pendente': "Issue in: {a}.", 'cf.naoSalvas': "Unsaved changes in: {a}", 'cf.ultimas': "Latest changes", 'cf.verLog': "See all in the Action Log", 'cf.removido': "{n} leaves the group when you save", 'cf.incluido': "{n} joins as {g} when you save", 'cf.descartado': "Changes discarded", 'cf.salvo': "Settings saved (simulation, nothing saved)", 'cf.dlgTit': "Create the AIP {a} cycle?", 'cf.dlgTxt': "The new cycle starts with the structure of {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} people in groups", 'cf.dlgMetas': "{n} goals with the current weights", 'cf.dlgJanelas': "Blank windows for you to set", 'cf.clonado': "{c} created (simulation, nothing saved)"
     }
   });
 
@@ -2863,6 +3095,396 @@ window.VBMSetup = (function () {
   $('gcAtualizar').addEventListener('click', function () { gcCarregar(); });
   $('gcTentar').addEventListener('click', function () { gcCarregar(); });
 
+  // ═══ T11 · Configuração do ciclo (só o administrador, §7.1) ═══
+  // Dados: GET api/configuracao. Cada aba guarda as edições em memória (cf.edit) e compara com o original (cf.orig);
+  // "Salvar alterações" grava só as abas alteradas (POST api/configuracao/salvar), e o servidor repete as validações
+  // (RN-16: a soma dos pesos de cada BU fecha o total). Aba na URL (#configuracao?aba=metas).
+  var CF_ABAS = ['ciclo', 'bus', 'grupos', 'metas', 'parametros'];
+  var CF_GRUPOS = ['contribuidor', 'aprovacao', 'consulta', 'admin'];
+  var cf = { base: null, orig: null, edit: null, aba: 'ciclo', grupo: 'todos', bu: '', busca: '', erros: [], salvando: false };
+  var cfCopia = function (o) { return JSON.parse(JSON.stringify(o)); };
+  function cfLerAba() { var a = new URLSearchParams((location.hash.split('?')[1]) || '').get('aba'); cf.aba = CF_ABAS.indexOf(a) >= 0 ? a : 'ciclo'; }
+  function cfGravarAba() {
+    var alvo = '#configuracao?aba=' + cf.aba;
+    if (location.hash !== alvo) history.replaceState(null, '', location.pathname + location.search + alvo);
+  }
+  function cfEstado(qual) {
+    $('cfCorpo').hidden = qual !== 'ok'; $('cfErro').hidden = qual !== 'erro'; $('cfSemAcesso').hidden = qual !== 'acesso';
+    $('cfResumo').parentNode.hidden = qual !== 'ok'; $('cfFaixa').hidden = qual !== 'ok';
+  }
+  // Partes editáveis de cada aba (o que vai ao servidor)
+  function cfPartes(b) {
+    return {
+      ciclo: { nome: b.ciclo.nome, etapas: b.ciclo.etapas.map(function (e) { return { id: e.id, inicio: e.inicio || null, fim: e.fim }; }), texto: b.ciclo.textoPadraoExcecoes },
+      bus: { bus: b.bus.map(function (x) { return { sigla: x.sigla, pais: x.pais, ativa: x.ativa !== false }; }) },
+      grupos: { membros: b.membros.map(function (m) { return { nome: m.nome, matricula: m.matricula, email: m.email, grupo: m.grupo, bu: m.bu }; }) },
+      metas: { metas: b.metas.map(function (m) { return { numero: m.numero, titulo: m.titulo, tipo: m.tipo, polaridade: m.polaridade, resultado: !!m.resultado, nova: !!m.nova, pesos: cfCopia(m.pesos || {}) }; }) },
+      parametros: { parametros: b.parametros.map(function (p) { return { id: p.id, valor: p.valor }; }) }
+    };
+  }
+  function cfAlterada(aba) { return cf.orig && JSON.stringify(cf.edit[aba]) !== JSON.stringify(cf.orig[aba]); }
+  function cfParam(id) { var p = cf.edit.parametros.parametros.filter(function (x) { return x.id === id; })[0]; return p ? Number(p.valor) : 0; }
+  function cfBusAtivas() { return cf.edit.bus.bus.filter(function (b) { return b.ativa; }); }
+  function cfSomas() {
+    return cfBusAtivas().map(function (b) {
+      return { bu: b.sigla, soma: cf.edit.metas.metas.reduce(function (t, m) { return t + (Number(m.pesos[b.sigla]) || 0); }, 0) };
+    });
+  }
+  // Mesmas regras do servidor (validarConfiguracao), para mostrar o motivo antes de gravar
+  function cfValidar(aba) {
+    var e = [], d = cf.edit[aba];
+    if (aba === 'ciclo') {
+      if (!String(d.nome || '').trim()) e.push({ campo: 'nome', msg: S.t('cf.e.nome') });
+      var ant = d.etapas[0] && d.etapas[0].inicio;
+      if (!ant) e.push({ campo: 'inicio0', msg: S.t('cf.e.data', { e: S.t('p2.et.' + d.etapas[0].id) }) });
+      d.etapas.forEach(function (x, i) {
+        if (!x.fim) e.push({ campo: 'fim' + i, msg: S.t('cf.e.data', { e: S.t('p2.et.' + x.id) }) });
+        else if (ant && x.fim <= ant) e.push({ campo: 'fim' + i, msg: S.t('cf.e.ordem', { e: S.t('p2.et.' + x.id) }) });
+        ant = x.fim || ant;
+      });
+    }
+    if (aba === 'metas') {
+      var total = cfParam('pesoTotal');
+      d.metas.forEach(function (m, i) { if (!String(m.titulo || '').trim()) e.push({ campo: 'titulo' + i, msg: S.t('cf.e.titulo', { n: m.numero }) }); });
+      cfSomas().forEach(function (x) { if (x.soma !== total) e.push({ campo: 'soma-' + x.bu, msg: S.t('cf.e.soma', { b: x.bu, s: S.fmt(x.soma, 0), t: S.fmt(total, 0) }) }); });
+    }
+    if (aba === 'grupos') {
+      if (!d.membros.some(function (m) { return m.grupo === 'aprovacao'; })) e.push({ campo: 'membros', msg: S.t('cf.e.semAprov') });
+      if (!d.membros.some(function (m) { return m.grupo === 'admin'; })) e.push({ campo: 'membros', msg: S.t('cf.e.semAdmin') });
+    }
+    if (aba === 'parametros') {
+      d.parametros.forEach(function (p) {
+        var ref = cf.base.parametros.filter(function (x) { return x.id === p.id; })[0], v = Number(p.valor);
+        if (!ref || !isFinite(v) || String(p.valor).trim() === '' || v < ref.min || v > ref.max) e.push({ campo: 'par-' + p.id, msg: S.t('cf.e.faixa', { p: S.t('cf.par.' + p.id), a: ref.min, b: ref.max }) });
+      });
+    }
+    if (aba === 'bus' && !d.bus.some(function (b) { return b.ativa; })) e.push({ campo: 'bus', msg: S.t('cf.e.semBu') });
+    return e;
+  }
+  function cfCarregar(fresco) {
+    if (!fresco && cf.base) return Promise.resolve(cfRender());
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    return fetch('api/configuracao' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) {
+        cf.base = j; cf.orig = cfPartes(j); cf.edit = cfCopia(cf.orig); cf.erros = [];
+        if (fresco) toast(S.t('t01.atualizada'));
+        cfRender();
+      })
+      .catch(function (err) {
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] configuracao:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return cfEstado('acesso');
+        $('cfErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        cfEstado('erro');
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+  function cfRender() {
+    if (!cf.base) return;
+    cfEstado('ok');
+    $('cfAno').textContent = cf.base.ciclo.ano;
+    $('cfClonarTxt').textContent = S.t('cf.clonarAno', { a: cf.base.ciclo.ano + 1 });
+    cfRenderResumo();
+    $('cfAbas').innerHTML = CF_ABAS.map(function (a) {
+      var alt = cfAlterada(a), err = alt && cfValidar(a).length;
+      return '<button type="button" role="tab" id="cfTab-' + a + '" aria-selected="' + (a === cf.aba) + '" aria-pressed="' + (a === cf.aba) + '" data-aba="' + a + '">' +
+        esc(S.t('cf.aba.' + a)) + (alt ? '<span class="cf-tab-marca' + (err ? ' is-err' : '') + '" title="' + esc(S.t(err ? 'cf.marcaErro' : 'cf.marcaAlt')) + '"></span>' : '') + '</button>';
+    }).join('');
+    $('cfAbaTit').textContent = S.t('cf.aba.' + cf.aba);
+    $('cfAbaSub').textContent = S.t('cf.sub.' + cf.aba);
+    var foco = document.activeElement && document.activeElement.id;
+    $('cfConteudo').innerHTML = ({ ciclo: cfHtmlCiclo, bus: cfHtmlBus, grupos: cfHtmlGrupos, metas: cfHtmlMetas, parametros: cfHtmlParametros })[cf.aba]();
+    if (foco && $(foco) && $('cfConteudo').contains($(foco))) { var el = $(foco); el.focus(); if (el.setSelectionRange && el.type === 'text') { var n = el.value.length; el.setSelectionRange(n, n); } }
+    cfRenderRodape();
+    cfRenderUltimas();
+  }
+  function cfRenderResumo() {
+    var b = cf.edit, ativas = cfBusAtivas().length, total = cfParam('pesoTotal');
+    var fecham = cfSomas().filter(function (x) { return x.soma === total; }).length;
+    var grupos = {}; b.grupos.membros.forEach(function (m) { grupos[m.matricula] = 1; });
+    var novas = b.metas.metas.filter(function (m) { return m.nova; }).length;
+    var et = cf.base.ciclo.etapas, atual = cf.base.ciclo.etapaAtual;
+    var tiles = [
+      { n: ativas, rot: S.t('cf.r.bus'), sub: S.t('cf.r.busSub', { p: Object.keys(cf.base.bus.reduce(function (o, x) { o[x.pais] = 1; return o; }, {})).length }), aba: 'bus' },
+      { n: Object.keys(grupos).length, rot: S.t('cf.r.pessoas'), sub: S.t('cf.r.pessoasSub', { a: b.grupos.membros.filter(function (m) { return m.grupo === 'aprovacao'; }).length }), aba: 'grupos' },
+      { n: b.metas.metas.length, rot: S.t('cf.r.metas'), sub: S.t('cf.r.metasSub', { n: novas }), aba: 'metas' },
+      { n: fecham + '/' + ativas, rot: S.t('cf.r.pontos', { t: S.fmt(total, 0) }), sub: fecham === ativas ? S.t('cf.r.pontosOk') : S.t('cf.r.pontosPend', { n: ativas - fecham }), aba: 'metas', alerta: fecham !== ativas },
+      { n: dataCurta(et[et.length - 1].fim), rot: S.t('cf.r.oficial'), sub: S.t('cf.r.etapa', { e: S.t('p2.et.' + atual) }), aba: 'ciclo' }
+    ];
+    $('cfResumo').innerHTML = tiles.map(function (t) {
+      return '<li><button type="button" class="cf-tile' + (t.alerta ? ' is-alerta' : '') + (cf.aba === t.aba ? ' is-sel' : '') + '" data-aba="' + t.aba + '">' +
+        '<span class="cf-tile-n">' + esc(t.n) + '</span><span class="cf-tile-rot">' + esc(t.rot) + '</span><span class="cf-tile-sub">' + esc(t.sub) + '</span></button></li>';
+    }).join('');
+  }
+  function cfErroDe(campo) { var x = cf.erros.filter(function (e) { return e.campo === campo; })[0]; return x ? x.msg : ''; }
+  function cfHtmlCiclo() {
+    var d = cf.edit.ciclo, atual = cf.base.ciclo.etapaAtual;
+    cf.erros = cfValidar('ciclo');
+    var jan = d.etapas.map(function (e, i) {
+      var ini = i === 0 ? e.inicio : d.etapas[i - 1].fim;
+      var dur = ini && e.fim && e.fim > ini ? diasUteisEntreIso(ini, e.fim) : null;
+      var erroF = cfErroDe('fim' + i), erroI = i === 0 ? cfErroDe('inicio0') : '';
+      return '<li class="cf-jan' + (e.id === atual ? ' is-atual' : '') + ((erroF || erroI) ? ' is-err' : '') + '">' +
+        '<span class="cf-jan-n" aria-hidden="true">' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<div class="cf-jan-corpo"><p class="cf-jan-tit">' + esc(S.t('p2.et.' + e.id)) + (e.id === atual ? ' <span class="cf-jan-atual">' + esc(S.t('ab.atual')) + '</span>' : '') + '</p>' +
+        '<div class="cf-jan-datas">' +
+          (i === 0 ? '<label><span>' + esc(S.t('cf.de')) + '</span><input type="date" class="cf-in" data-cf="inicio0" id="cfInicio0" value="' + esc(e.inicio || '') + '"' + (erroI ? ' aria-invalid="true"' : '') + '></label>'
+            : '<span class="cf-jan-de">' + esc(S.t('cf.de')) + ' <b>' + esc(ini ? dataCurta(ini) : '—') + '</b></span>') +
+          '<label><span>' + esc(S.t('cf.ate')) + '</span><input type="date" class="cf-in" data-cf="fim" data-i="' + i + '" id="cfFim' + i + '" value="' + esc(e.fim || '') + '"' + (erroF ? ' aria-invalid="true"' : '') + '></label>' +
+          '<span class="cf-jan-dur">' + (dur != null ? esc(S.t(dur === 1 ? 'cf.du1' : 'cf.du', { n: dur })) : '') + '</span>' +
+        '</div>' + ((erroF || erroI) ? '<p class="cf-erro">' + esc(erroF || erroI) + '</p>' : '') + '</div></li>';
+    }).join('');
+    var eNome = cfErroDe('nome');
+    return '<div class="cf-grid2">' +
+      '<div class="cf-card"><h4 class="cf-card-tit">' + esc(S.t('cf.ident')) + '</h4><div class="cf-campos">' +
+        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.ano')) + '</span><input class="cf-in" value="' + esc(cf.base.ciclo.ano) + '" disabled></label>' +
+        '<div class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.situacao')) + '</span><span class="cf-situ">' + esc(S.t('cf.aberto')) + '</span></div>' +
+        '<label class="cf-campo cf-largo"><span class="cf-rot">' + esc(S.t('cf.nome')) + ' <b class="gc-obrig">*</b></span><input class="cf-in" id="cfNome" data-cf="nome" value="' + esc(d.nome) + '" maxlength="40"' + (eNome ? ' aria-invalid="true"' : '') + '>' + (eNome ? '<span class="cf-erro">' + esc(eNome) + '</span>' : '') + '</label>' +
+        '<label class="cf-campo cf-largo"><span class="cf-rot">' + esc(S.t('cf.texto')) + '</span><textarea class="cf-in" id="cfTexto" data-cf="texto" rows="4" maxlength="600">' + esc(d.texto) + '</textarea>' +
+          '<span class="cf-ajuda">' + esc(S.t('cf.textoAjuda')) + '</span></label>' +
+      '</div></div>' +
+      '<div class="cf-card"><h4 class="cf-card-tit">' + esc(S.t('cf.janelas')) + '</h4><p class="cf-ajuda">' + esc(S.t('cf.janelasAjuda')) + '</p><ol class="cf-janelas">' + jan + '</ol></div>' +
+    '</div>';
+  }
+  function diasUteisEntreIso(a, b) {
+    var d = dataDe(a), f = dataDe(b), n = 0;
+    while (d < f) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) n++; }
+    return n;
+  }
+  function cfHtmlBus() {
+    cf.erros = cfValidar('bus');
+    var total = cfParam('pesoTotal'), somas = {};
+    cfSomas().forEach(function (x) { somas[x.bu] = x.soma; });
+    var mem = cf.edit.grupos.membros, metas = cf.edit.metas.metas;
+    var porPais = {};
+    cf.edit.bus.bus.forEach(function (b, i) { (porPais[b.pais] = porPais[b.pais] || []).push({ b: b, i: i }); });
+    var linhas = Object.keys(porPais).map(function (p) {
+      return '<tr class="p2-pais"><td colspan="7">' + esc(p) + '</td></tr>' + porPais[p].map(function (x) {
+        var b = x.b, s = somas[b.sigla];
+        var nC = mem.filter(function (m) { return m.grupo === 'contribuidor' && m.bu === b.sigla; }).length;
+        var nQ = mem.filter(function (m) { return m.grupo === 'consulta' && m.bu === b.sigla; }).length;
+        var nM = metas.filter(function (m) { return Number(m.pesos[b.sigla]) > 0; }).length;
+        return '<tr' + (b.ativa ? '' : ' class="is-inativa"') + '><th scope="row" class="cf-bu">' + esc(b.sigla) + '</th>' +
+          '<td class="num"><button type="button" class="cf-link" data-ir-grupo="contribuidor" data-bu="' + esc(b.sigla) + '">' + nC + '</button></td>' +
+          '<td class="num"><button type="button" class="cf-link" data-ir-grupo="consulta" data-bu="' + esc(b.sigla) + '">' + nQ + '</button></td>' +
+          '<td class="num">' + nM + '</td>' +
+          '<td class="m3-centro">' + (b.ativa ? cfPillSoma(s, total) : '<span class="cf-mudo">—</span>') + '</td>' +
+          '<td class="m3-centro"><button type="button" class="switch" role="switch" aria-checked="' + b.ativa + '" data-cf-ativa="' + x.i + '" aria-label="' + esc(S.t('cf.ativaAria', { b: b.sigla })) + '"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">' + esc(S.t(b.ativa ? 'cf.ativa' : 'cf.inativa')) + '</span></button></td>' +
+          '<td class="m3-acao"><a class="btn btn-sec cf-mini" href="#metas?bu=' + encodeURIComponent(b.sigla) + '">' + esc(S.t('cf.verMetas')) + ico('i-arrow') + '</a></td></tr>';
+      }).join('');
+    }).join('');
+    return '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela"><caption class="sr-only">' + esc(S.t('cf.aba.bus')) + '</caption><thead><tr>' +
+      '<th scope="col">Business Unit</th><th scope="col" class="num">' + esc(S.t('cf.g.contribuidor')) + '</th><th scope="col" class="num">' + esc(S.t('cf.g.consulta')) + '</th><th scope="col" class="num">' + esc(S.t('cf.r.metas')) + '</th>' +
+      '<th scope="col" class="m3-centro">' + esc(S.t('cf.pontos')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.noCiclo')) + '</th><th scope="col"><span class="sr-only">' + esc(S.t('col.acao')) + '</span></th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+      '<p class="cf-ajuda">' + esc(S.t('cf.busAjuda')) + '</p>' + (cf.erros.length ? '<p class="cf-erro">' + esc(cf.erros[0].msg) + '</p>' : '');
+  }
+  function cfPillSoma(s, total) {
+    return s === total ? '<span class="cf-soma is-ok">' + ico('i-st-aprovado') + esc(S.fmt(s, 0)) + '</span>'
+      : '<span class="cf-soma is-pend">' + esc(S.t('cf.somaDe', { s: S.fmt(s, 0), t: S.fmt(total, 0) })) + '</span>';
+  }
+  function cfHtmlGrupos() {
+    cf.erros = cfValidar('grupos');
+    var mem = cf.edit.grupos.membros, bus = cf.edit.bus.bus;
+    var cont = { todos: mem.length }; CF_GRUPOS.forEach(function (g) { cont[g] = mem.filter(function (m) { return m.grupo === g; }).length; });
+    var q = cf.busca.trim().toLowerCase();
+    var lista = mem.map(function (m, i) { return { m: m, i: i }; }).filter(function (x) {
+      return (cf.grupo === 'todos' || x.m.grupo === cf.grupo) && (!cf.bu || x.m.bu === cf.bu) &&
+        (!q || (x.m.nome + ' ' + x.m.matricula + ' ' + x.m.email).toLowerCase().indexOf(q) >= 0);
+    });
+    var ordem = { aprovacao: 0, admin: 1, contribuidor: 2, consulta: 3 };
+    lista.sort(function (a, b) { return ordem[a.m.grupo] - ordem[b.m.grupo] || String(a.m.bu || '').localeCompare(String(b.m.bu || '')) || a.m.nome.localeCompare(b.m.nome); });
+    var segs = ['todos'].concat(CF_GRUPOS).map(function (g) {
+      return '<button type="button" aria-pressed="' + (cf.grupo === g) + '" data-cf-grupo="' + g + '">' + esc(S.t('cf.g.' + g)) + ' <span class="cf-cont">' + cont[g] + '</span></button>';
+    }).join('');
+    var opBu = '<option value="">' + esc(S.t('cf.todasBus')) + '</option>' + bus.map(function (b) { return '<option' + (cf.bu === b.sigla ? ' selected' : '') + '>' + esc(b.sigla) + '</option>'; }).join('');
+    var linhas = lista.map(function (x) {
+      var m = x.m;
+      return '<tr><th scope="row"><span class="cf-pessoa"><span class="cf-ini" aria-hidden="true">' + esc(iniciais(m.nome)) + '</span><span><b>' + esc(m.nome) + '</b><small>' + esc(m.email) + '</small></span></span></th>' +
+        '<td class="cf-mat">' + esc(m.matricula) + '</td><td><span class="cf-chip cf-g-' + m.grupo + '">' + esc(S.t('cf.g1.' + m.grupo)) + '</span></td>' +
+        '<td>' + esc(m.bu || S.t('cf.todasBus')) + '</td>' +
+        '<td class="m3-acao"><button type="button" class="dash-acao cf-rem" data-cf-rem="' + x.i + '" aria-label="' + esc(S.t('cf.remover', { n: m.nome, g: S.t('cf.g1.' + m.grupo) })) + '" title="' + esc(S.t('cf.removerCurto')) + '">' + ico('i-x') + '</button></td></tr>';
+    }).join('') || '<tr><td colspan="5" class="cf-vazio">' + esc(S.t('cf.semPessoas')) + '</td></tr>';
+    var opDir = cf.base.diretorio.map(function (p) { return '<option value="' + esc(p.matricula) + '">' + esc(p.nome) + '</option>'; }).join('');
+    var gNovo = cf.novoGrupo || 'contribuidor', precisaBu = gNovo === 'contribuidor' || gNovo === 'consulta';
+    return '<div class="cf-add" role="group" aria-labelledby="cfAddTit"><p class="cf-add-tit" id="cfAddTit">' + ico('i-pen') + esc(S.t('cf.addTit')) + '</p>' +
+        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.matricula')) + '</span><input class="cf-in" id="cfAddMat" list="cfDir" placeholder="' + esc(S.t('cf.matriculaPh')) + '" autocomplete="off" value="' + esc(cf.novaMat || '') + '"><datalist id="cfDir">' + opDir + '</datalist></label>' +
+        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.grupo')) + '</span><select class="cf-in" id="cfAddGrupo">' + CF_GRUPOS.map(function (g) { return '<option value="' + g + '"' + (g === gNovo ? ' selected' : '') + '>' + esc(S.t('cf.g1.' + g)) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="cf-campo"><span class="cf-rot">Business Unit</span><select class="cf-in" id="cfAddBu"' + (precisaBu ? '' : ' disabled') + '>' + (precisaBu ? bus.map(function (b) { return '<option' + (cf.novaBu === b.sigla ? ' selected' : '') + '>' + esc(b.sigla) + '</option>'; }).join('') : '<option>' + esc(S.t('cf.todasBus')) + '</option>') + '</select></label>' +
+        '<button type="button" class="btn" id="cfAddOk">' + esc(S.t('cf.adicionar')) + '</button>' +
+        '<p class="cf-erro" id="cfAddErro" role="alert"></p></div>' +
+      '<div class="cf-filtros"><div class="seg" role="group" aria-label="' + esc(S.t('cf.grupo')) + '">' + segs + '</div>' +
+        '<select class="cf-in cf-sel-bu" id="cfFiltroBu" aria-label="Business Unit">' + opBu + '</select>' +
+        '<input class="cf-in cf-busca" id="cfBusca" type="search" placeholder="' + esc(S.t('cf.buscaPh')) + '" value="' + esc(cf.busca) + '" aria-label="' + esc(S.t('cf.buscaPh')) + '"></div>' +
+      '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela cf-tab-grupos"><caption class="sr-only">' + esc(S.t('cf.aba.grupos')) + '</caption><thead><tr><th scope="col">' + esc(S.t('cf.pessoa')) + '</th><th scope="col">' + esc(S.t('cf.matricula')) + '</th><th scope="col">' + esc(S.t('cf.grupo')) + '</th><th scope="col">Business Unit</th><th scope="col"><span class="sr-only">' + esc(S.t('col.acao')) + '</span></th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+      (cf.erros.length ? '<p class="cf-erro">' + esc(cf.erros.map(function (e) { return e.msg; }).join(' ')) + '</p>' : '');
+  }
+  function iniciais(n) { var p = String(n).split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); }
+  function cfHtmlMetas() {
+    cf.erros = cfValidar('metas');
+    var bus = cfBusAtivas(), total = cfParam('pesoTotal'), somas = {};
+    cfSomas().forEach(function (x) { somas[x.bu] = x.soma; });
+    var cab = '<tr><th scope="col" class="num">#</th><th scope="col">' + esc(S.t('col.meta')) + '</th><th scope="col">' + esc(S.t('cf.tipo')) + '</th><th scope="col">' + esc(S.t('gc.polaridade')) + '</th>' +
+      bus.map(function (b) { return '<th scope="col" class="m3-centro cf-col-bu">' + esc(b.sigla) + '</th>'; }).join('') + '</tr>';
+    var linhas = cf.edit.metas.metas.map(function (m, i) {
+      var bloq = m.resultado, eT = cfErroDe('titulo' + i);
+      return '<tr' + (bloq ? ' class="cf-linha-coo"' : '') + '><td class="num">' + esc(m.numero) + '</td>' +
+        '<td>' + (bloq ? '<span class="m3-meta-tit">' + esc(m.titulo) + '</span><span class="m3-meta-tipo">' + ico('i-lock') + esc(S.t('cf.cooFixo')) + '</span>'
+          : '<input class="cf-in cf-tit" data-cf-meta="' + i + '" data-campo="titulo" id="cfTit' + i + '" value="' + esc(m.titulo) + '" maxlength="80"' + (eT ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.tituloAria', { n: m.numero })) + '">' + (m.nova ? '<span class="cf-nova">' + esc(S.t('cf.nova')) + '</span>' : '')) + '</td>' +
+        '<td>' + (bloq ? esc(S.t('m3.tipo.' + m.tipo)) : '<select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="tipo" id="cfTipo' + i + '" aria-label="' + esc(S.t('cf.tipo')) + '">' + ['formula', 'marcos'].map(function (t) { return '<option value="' + t + '"' + (m.tipo === t ? ' selected' : '') + '>' + esc(S.t('m3.tipo.' + t)) + '</option>'; }).join('') + '</select>') + '</td>' +
+        '<td>' + (bloq ? '↑ ' + esc(S.t('gc.pol.maior')) : '<select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="polaridade" id="cfPol' + i + '" aria-label="' + esc(S.t('gc.polaridade')) + '">' + ['maior', 'menor'].map(function (p) { return '<option value="' + p + '"' + (m.polaridade === p ? ' selected' : '') + '>' + (p === 'maior' ? '↑ ' : '↓ ') + esc(S.t('gc.pol.' + p)) + '</option>'; }).join('') + '</select>') + '</td>' +
+        bus.map(function (b) {
+          var v = m.pesos[b.sigla];
+          return '<td class="m3-centro">' + (bloq ? '<span class="cf-peso-fixo">' + esc(S.fmt(Number(v) || 0, 0)) + '</span>'
+            : '<input class="cf-in cf-peso" type="number" min="0" max="' + total + '" step="0.5" inputmode="decimal" data-cf-meta="' + i + '" data-campo="peso" data-bu="' + esc(b.sigla) + '" id="cfP' + i + '-' + esc(b.sigla.replace(/\W/g, '')) + '" value="' + (v == null || v === 0 ? '' : esc(v)) + '" placeholder="0" aria-label="' + esc(S.t('cf.pesoAria', { n: m.numero, b: b.sigla })) + '">') + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+    var rod = '<tr class="cf-total"><td></td><th scope="row" colspan="3">' + esc(S.t('cf.totalBu', { t: S.fmt(total, 0) })) + '</th>' + bus.map(function (b) { return '<td class="m3-centro">' + cfPillSoma(somas[b.sigla], total) + '</td>'; }).join('') + '</tr>';
+    var pend = cf.erros.filter(function (e) { return e.campo.indexOf('soma-') === 0; });
+    return '<p class="cf-ajuda cf-metas-ajuda">' + ico('i-target') + esc(S.t('cf.metasAjuda', { t: S.fmt(total, 0), c: S.fmt(cfParam('pesoResultadoCoo'), 0) })) + '</p>' +
+      '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela cf-tab-metas"><caption class="sr-only">' + esc(S.t('cf.aba.metas')) + '</caption><thead>' + cab + '</thead><tbody>' + linhas + '</tbody><tfoot>' + rod + '</tfoot></table></div>' +
+      (pend.length ? '<p class="cf-aviso" role="status">' + ico('i-alert') + esc(S.t('cf.rn16', { n: pend.length })) + '</p>' : '');
+  }
+  function cfHtmlParametros() {
+    cf.erros = cfValidar('parametros');
+    return '<div class="cf-params">' + cf.edit.parametros.parametros.map(function (p, i) {
+      var ref = cf.base.parametros.filter(function (x) { return x.id === p.id; })[0], e = cfErroDe('par-' + p.id);
+      return '<label class="cf-param' + (e ? ' is-err' : '') + '"><span class="cf-param-tit">' + esc(S.t('cf.par.' + p.id)) + '</span>' +
+        '<span class="cf-param-txt">' + esc(S.t('cf.parTxt.' + p.id)) + '</span>' +
+        '<span class="cf-param-val"><input class="cf-in" type="number" id="cfPar' + i + '" data-cf-par="' + i + '" min="' + ref.min + '" max="' + ref.max + '" value="' + esc(p.valor) + '"' + (e ? ' aria-invalid="true"' : '') + '><span>' + esc(S.t('cf.un.' + ref.unidade)) + '</span></span>' +
+        '<span class="cf-param-faixa">' + esc(e || S.t('cf.faixa', { a: ref.min, b: ref.max })) + '</span></label>';
+    }).join('') + '</div><p class="cf-ajuda">' + esc(S.t('cf.paramAjuda')) + '</p>';
+  }
+  function cfRenderRodape() {
+    var alt = CF_ABAS.filter(cfAlterada), comErro = alt.filter(function (a) { return cfValidar(a).length; });
+    var st = $('cfStatus');
+    st.classList.toggle('is-alt', alt.length > 0); st.classList.toggle('is-err', comErro.length > 0);
+    st.innerHTML = !alt.length ? ico('i-st-aprovado') + esc(S.t('cf.tudoSalvo'))
+      : comErro.length ? ico('i-alert') + esc(S.t('cf.pendente', { a: comErro.map(function (a) { return S.t('cf.aba.' + a); }).join(', ') })) + ' <span>' + esc(cfValidar(comErro[0])[0].msg) + '</span>'
+      : ico('i-pen') + esc(S.t('cf.naoSalvas', { a: alt.map(function (a) { return S.t('cf.aba.' + a); }).join(', ') }));
+    $('cfDescartar').disabled = !alt.length || cf.salvando;
+    $('cfSalvar').disabled = !alt.length || comErro.length > 0 || cf.salvando;
+    $('cfSalvar').textContent = S.t(cf.salvando ? 'cf.salvando' : 'cf.salvar');
+  }
+  function cfRenderUltimas() {
+    var l = cf.base.ultimasAlteracoes || [];
+    $('cfUltimas').innerHTML = '<div class="cf-ult-cab"><h4 class="cf-card-tit">' + ico('i-history') + esc(S.t('cf.ultimas')) + '</h4><a class="cf-link-log" href="#action-log?tipo=configuracao">' + esc(S.t('cf.verLog')) + ico('i-arrow') + '</a></div>' +
+      '<ol class="cf-ult">' + l.map(function (u) {
+        return '<li><span class="cf-ult-q">' + esc(dataCurta(u.quando.slice(0, 10))) + ' · ' + esc(u.quando.slice(11, 16)) + '</span><span class="cf-ult-txt"><b>' + esc(u.quem) + '</b> ' + esc(u.detalhe) + '</span><span class="cf-chip">' + esc(S.t('cf.aba.' + u.aba)) + '</span></li>';
+      }).join('') + '</ol>';
+  }
+  function cfIrAba(a) { if (CF_ABAS.indexOf(a) < 0) return; cf.aba = a; cfGravarAba(); cfRender(); var t = $('cfTab-' + a); if (t) t.focus(); }
+  // Edições: um único ouvinte por tipo, no contêiner da aba
+  $('cfAbas').addEventListener('click', function (e) { var b = e.target.closest('[data-aba]'); if (b) cfIrAba(b.getAttribute('data-aba')); });
+  $('cfAbas').addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var i = CF_ABAS.indexOf(cf.aba) + (e.key === 'ArrowRight' ? 1 : -1);
+    cfIrAba(CF_ABAS[(i + CF_ABAS.length) % CF_ABAS.length]); e.preventDefault();
+  });
+  $('cfResumo').addEventListener('click', function (e) { var b = e.target.closest('[data-aba]'); if (b) cfIrAba(b.getAttribute('data-aba')); });
+  $('cfConteudo').addEventListener('input', function (e) {
+    var t = e.target, d = cf.edit;
+    if (t.matches('[data-cf="nome"]')) d.ciclo.nome = t.value;
+    else if (t.matches('[data-cf="texto"]')) d.ciclo.texto = t.value;
+    else if (t.matches('[data-cf="inicio0"]')) d.ciclo.etapas[0].inicio = t.value || null;
+    else if (t.matches('[data-cf="fim"]')) d.ciclo.etapas[Number(t.getAttribute('data-i'))].fim = t.value || null;
+    else if (t.matches('[data-cf-meta]')) {
+      var m = d.metas.metas[Number(t.getAttribute('data-cf-meta'))], campo = t.getAttribute('data-campo');
+      if (campo === 'peso') { var v = t.value === '' ? 0 : Number(t.value); if (v) m.pesos[t.getAttribute('data-bu')] = v; else delete m.pesos[t.getAttribute('data-bu')]; }
+      else m[campo] = t.value;
+    } else if (t.matches('[data-cf-par]')) d.parametros.parametros[Number(t.getAttribute('data-cf-par'))].valor = t.value === '' ? '' : Number(t.value);
+    else if (t.id === 'cfBusca') { cf.busca = t.value; }
+    else if (t.id === 'cfAddMat') { cf.novaMat = t.value; return; }
+    else return;
+    // Texto livre não redesenha a aba a cada tecla (mantém o cursor); números e datas, sim
+    if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-campo="titulo"]')) { cfRenderRodape(); cfRenderResumo(); cfMarcarAbas(); return; }
+    cfRender();
+  });
+  function cfMarcarAbas() {
+    CF_ABAS.forEach(function (a) {
+      var b = $('cfTab-' + a); if (!b) return;
+      var alt = cfAlterada(a), err = alt && cfValidar(a).length, m = b.querySelector('.cf-tab-marca');
+      if (!alt && m) m.remove();
+      if (alt) { if (!m) { m = document.createElement('span'); b.appendChild(m); } m.className = 'cf-tab-marca' + (err ? ' is-err' : ''); }
+    });
+  }
+  $('cfConteudo').addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'cfFiltroBu') { cf.bu = t.value; cfRender(); }
+    else if (t.id === 'cfAddGrupo') { cf.novoGrupo = t.value; cfRender(); }
+    else if (t.id === 'cfAddBu') { cf.novaBu = t.value; }
+    else if (t.matches('[data-campo="titulo"], [data-cf="nome"], [data-cf="texto"]')) cfRender();
+  });
+  $('cfConteudo').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    var d = cf.edit;
+    if (t.hasAttribute('data-cf-ativa')) { var b = d.bus.bus[Number(t.getAttribute('data-cf-ativa'))]; b.ativa = !b.ativa; cfRender(); }
+    else if (t.hasAttribute('data-cf-grupo')) { cf.grupo = t.getAttribute('data-cf-grupo'); cfRender(); }
+    else if (t.hasAttribute('data-ir-grupo')) { cf.grupo = t.getAttribute('data-ir-grupo'); cf.bu = t.getAttribute('data-bu'); cfIrAba('grupos'); }
+    else if (t.hasAttribute('data-cf-rem')) {
+      var i = Number(t.getAttribute('data-cf-rem')), m = d.grupos.membros[i];
+      d.grupos.membros.splice(i, 1); cfRender(); toast(S.t('cf.removido', { n: m.nome }));
+    } else if (t.id === 'cfAddOk') cfAdicionar();
+  });
+  $('cfConteudo').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'cfAddMat') { e.preventDefault(); cfAdicionar(); } });
+  // Inclusão pela matrícula (ou pelo nome escolhido na lista do diretório, IBP.USERS)
+  function cfAdicionar() {
+    var v = String($('cfAddMat').value || '').trim(), g = $('cfAddGrupo').value, bu = $('cfAddBu').disabled ? null : $('cfAddBu').value;
+    var p = cf.base.diretorio.filter(function (x) { return x.matricula.toLowerCase() === v.toLowerCase() || x.nome.toLowerCase() === v.toLowerCase(); })[0];
+    var erro = !v ? S.t('cf.e.matVazia') : !p ? S.t('cf.e.matNao', { m: v }) :
+      cf.edit.grupos.membros.some(function (m) { return m.matricula === p.matricula && m.grupo === g && (m.bu || null) === bu; }) ? S.t('cf.e.jaNoGrupo', { n: p.nome }) : '';
+    if (erro) { $('cfAddErro').textContent = erro; $('cfAddMat').setAttribute('aria-invalid', 'true'); $('cfAddMat').focus(); return; }
+    cf.edit.grupos.membros.push({ nome: p.nome, matricula: p.matricula, email: p.email, grupo: g, bu: bu });
+    cf.novaMat = ''; cf.grupo = 'todos'; cf.bu = ''; cf.busca = '';
+    cfRender(); toast(S.t('cf.incluido', { n: p.nome, g: S.t('cf.g1.' + g) + (bu ? ' · ' + bu : '') }));
+    $('cfAddMat').focus();
+  }
+  $('cfDescartar').addEventListener('click', function () { cf.edit = cfCopia(cf.orig); cfRender(); toast(S.t('cf.descartado')); });
+  $('cfSalvar').addEventListener('click', function () {
+    var abas = CF_ABAS.filter(cfAlterada);
+    if (!abas.length || cf.salvando) return;
+    cf.salvando = true; cfRenderRodape();
+    abas.reduce(function (p, a) {
+      return p.then(function () {
+        return fetch('api/configuracao/salvar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ aba: a, dados: cf.edit[a] }) })
+          .then(function (r) { return r.json().then(function (j) { if (!r.ok) { var e = new Error('salvar'); e.j = j; e.aba = a; throw e; } return j; }); });
+      });
+    }, Promise.resolve())
+      .then(function () { cf.orig = cfCopia(cf.edit); toast(S.t('cf.salvo', { n: abas.length })); })
+      .catch(function (err) {
+        console.error('[aip-goals] configuracao/salvar:', err.j || err);
+        if (err.aba) cf.aba = err.aba;
+        toast(err.j && err.j.codigo === 'RN16' ? S.t('cf.e.rn16Srv') : S.t('cf.e.salvar'), true);
+      })
+      .then(function () { cf.salvando = false; cfGravarAba(); cfRender(); });
+  });
+  $('cfAtualizar').addEventListener('click', function () { cfCarregar(true); });
+  $('cfTentar').addEventListener('click', function () { cfCarregar(true); });
+  // Novo ciclo a partir deste (clona BUs, grupos e metas; janelas em branco) — confirmação em diálogo
+  $('cfClonar').addEventListener('click', function () {
+    var b = cf.base, a = b.ciclo.ano + 1;
+    $('cfDlgTit').textContent = S.t('cf.dlgTit', { a: a });
+    $('cfDlgTxt').textContent = S.t('cf.dlgTxt', { c: b.ciclo.nome });
+    $('cfDlgLista').innerHTML = [S.t('cf.dlgBus', { n: b.bus.length }), S.t('cf.dlgPessoas', { n: Object.keys(b.membros.reduce(function (o, m) { o[m.matricula] = 1; return o; }, {})).length }), S.t('cf.dlgMetas', { n: b.metas.length }), S.t('cf.dlgJanelas')]
+      .map(function (t) { return '<li>' + ico('i-st-aprovado') + esc(t) + '</li>'; }).join('');
+    $('cfDlg').showModal(); $('cfDlgCancelar').focus();
+  });
+  $('cfDlgCancelar').addEventListener('click', function () { $('cfDlg').close(); });
+  $('cfDlgOk').addEventListener('click', function () {
+    $('cfDlgOk').disabled = true;
+    fetch('api/configuracao/clonar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: '{}' })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw j; return j; }); })
+      .then(function (j) { $('cfDlg').close(); toast(S.t('cf.clonado', { c: j.novoCiclo.nome })); })
+      .catch(function (err) { console.error('[aip-goals] configuracao/clonar:', err); toast(S.t('cf.e.clonar'), true); })
+      .then(function () { $('cfDlgOk').disabled = false; });
+  });
+
   // ── T12 · Sem acesso: Voltar volta à tela anterior (ou ao Início); ao aparecer, o título recebe o foco ──
   document.querySelectorAll('.acesso-bloqueio').forEach(function (sec) {
     sec.querySelector('[data-voltar]').addEventListener('click', function () { if (history.length > 1) history.back(); else location.hash = '#inicio'; });
@@ -2892,7 +3514,7 @@ window.VBMSetup = (function () {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
     // Endereço fora do catálogo (ex.: telas descontinuadas, como T05 e T08 — D-20) volta ao Início
     if (VISTAS.indexOf(h) < 0) { location.replace('#inicio'); return; }
-    var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card';
+    var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card' || h === 'configuracao';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     document.body.classList.toggle('is-largo', h !== 'inicio'); // todas as telas ocupam a largura da janela
@@ -2900,12 +3522,14 @@ window.VBMSetup = (function () {
     $('vistaMetas').hidden = h !== 'metas';
     $('vistaDesdobramento').hidden = h !== 'desdobramento';
     $('vistaGoalCard').hidden = h !== 'goal-card';
+    $('vistaConfig').hidden = h !== 'configuracao';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
     if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
     if (h === 'desdobramento') ddCarregar(false);
     if (h === 'goal-card') { gcLerParams(); gcCarregar(); }
-    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'configuracao') { cfLerAba(); cfCarregar(false); }
+    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : h === 'configuracao' ? S.t('cf.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -2917,8 +3541,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); });
-  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); });
 
   rota();
   carregar();

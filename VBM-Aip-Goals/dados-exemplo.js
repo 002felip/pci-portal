@@ -282,4 +282,55 @@ function goalCardExemplo(codigo, hoje = new Date()) {
   };
 }
 
-module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };
+// ── T11 Configuração do ciclo ──
+// Diretório de exemplo (IBP.USERS): nome, matrícula e e-mail. No modelo validado, a pessoa entra no grupo pela matrícula.
+const DIRETORIO = [
+  'Ana Ribeiro', 'Bruno Costa', 'Carla Mendes', 'Daniel Souza', 'Elisa Martins', 'Felipe Araújo', 'Gabriela Lima', 'Henrique Prado',
+  'Isabela Nunes', 'João Ferreira', 'Karen Duarte', 'Lucas Teixeira', 'Mariana Rocha', 'Nicolas Barros', 'Olivia Campos', 'Paulo Moreira',
+  'Rafaela Pires', 'Sérgio Almeida', 'Tatiana Lopes', 'Vinícius Cardoso', 'William Grant', 'Emily Clarke', 'Hiroshi Tanaka', 'Yuki Sato',
+  'Owen Davies', 'Rhys Morgan', 'Jessica Tremblay', 'Marc Gagnon', 'Usuário Demonstração',
+];
+const semAcento = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '');
+const pessoaDe = (nome, i) => ({ nome, matricula: `C${String(410200 + i * 37).padStart(6, '0')}`, email: semAcento(nome).toLowerCase().replace(/\s+/g, '.') + '@vale.com' });
+function configuracaoExemplo(hoje = new Date()) {
+  const ciclo = cicloExemplo(hoje);
+  const pessoas = DIRETORIO.map(pessoaDe);
+  const por = (nome) => pessoas.find((p) => p.nome === nome);
+  const membros = [];
+  // Grupo de aprovação (P&CI/COO, nível único) e administrador: sem BU
+  ['Gabriela Lima', 'Henrique Prado', 'Isabela Nunes', 'João Ferreira', 'Usuário Demonstração'].forEach((n) => membros.push({ ...por(n), grupo: 'aprovacao', bu: null }));
+  ['Usuário Demonstração', 'Karen Duarte'].forEach((n) => membros.push({ ...por(n), grupo: 'admin', bu: null }));
+  // Contribuidores (2 por BU) e consulta (1 por BU)
+  const contrib = { 'Onça Puma': ['Ana Ribeiro', 'Lucas Teixeira'], Salobo: ['Carla Mendes', 'Usuário Demonstração'], Sossego: ['Daniel Souza', 'Usuário Demonstração'],
+    Ontario: ['Jessica Tremblay', 'Marc Gagnon'], VNL: ['William Grant', 'Emily Clarke'], Clydach: ['Owen Davies', 'Rhys Morgan'], Matsusaka: ['Hiroshi Tanaka', 'Yuki Sato'] };
+  const consulta = { 'Onça Puma': 'Mariana Rocha', Salobo: 'Nicolas Barros', Sossego: 'Olivia Campos', Ontario: 'Paulo Moreira', VNL: 'Rafaela Pires', Clydach: 'Sérgio Almeida', Matsusaka: 'Tatiana Lopes' };
+  ciclo.bus.forEach((b) => {
+    contrib[b.sigla].forEach((n) => membros.push({ ...por(n), grupo: 'contribuidor', bu: b.sigla }));
+    membros.push({ ...por(consulta[b.sigla]), grupo: 'consulta', bu: b.sigla });
+  });
+  const metas = [{ ...META_RESULTADO_COO, polaridade: 'maior', pesos: todas(PESO_RESULTADO_COO) }]
+    .concat(METAS_BU.map((m) => ({ numero: m.numero, titulo: m.titulo, tipo: m.tipo, polaridade: conteudoMeta(m.numero, ciclo.ano).polaridade, origem: m.origem || null, nova: !!m.nova, pesos: { ...m.pesos } })));
+  const quando = (dias, h) => `${iso(somarDiasUteis(hoje, -dias))}T${h}:00`;
+  return {
+    ciclo: { ...ciclo, status: 'aberto', textoPadraoExcecoes: TEXTO_PADRAO_EXCECOES },
+    bus: ciclo.bus.map((b) => ({ ...b, ativa: true })),
+    membros,
+    diretorio: pessoas,
+    metas,
+    parametros: [
+      { id: 'pesoTotal', valor: PESO_TOTAL, unidade: 'pts', min: 1, max: 1000 },
+      { id: 'pesoResultadoCoo', valor: PESO_RESULTADO_COO, unidade: 'pts', min: 0, max: 100 },
+      { id: 'minComentario', valor: 10, unidade: 'caracteres', min: 1, max: 500 },
+      { id: 'anexoMb', valor: 25, unidade: 'MB', min: 1, max: 100 },
+    ],
+    // Últimas alterações de configuração (vêm do Action Log, tipo Configuração)
+    ultimasAlteracoes: [
+      { quando: quando(2, '16:40'), quem: 'Karen Duarte', aba: 'metas', detalhe: 'Peso da meta 10 em Clydach: 10 → 15 pts' },
+      { quando: quando(4, '10:05'), quem: 'Usuário Demonstração', aba: 'grupos', detalhe: 'Yuki Sato incluída como contribuidora de Matsusaka' },
+      { quando: quando(9, '09:12'), quem: 'Karen Duarte', aba: 'ciclo', detalhe: 'Fim da etapa Propostas BU\'s ajustado' },
+      { quando: quando(15, '14:30'), quem: 'Karen Duarte', aba: 'ciclo', detalhe: 'Ciclo aberto; contribuidores notificados' },
+    ],
+  };
+}
+
+module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };

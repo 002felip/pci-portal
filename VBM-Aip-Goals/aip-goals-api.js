@@ -37,7 +37,7 @@
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, cicloExemplo } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, cicloExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -185,6 +185,63 @@ function linhaDoCard(card) {
   ev.push({ id: 'em_aprovacao', feito: sub, atual: card.estado === 'em_aprovacao' });
   ev.push({ id: card.estado === 'negado' ? 'negado' : card.estado === 'em_revisao' ? 'em_revisao' : 'aprovado', feito: decidido, quando: decidido ? card.desde : null });
   return ev;
+}
+
+// ── T11 Configuração do ciclo (só o administrador, §7.1) ──
+const ABAS_CONFIG = ['ciclo', 'bus', 'grupos', 'metas', 'parametros'];
+const GRUPOS = ['contribuidor', 'aprovacao', 'consulta', 'admin'];
+const dataValida = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(v));
+// Soma dos pesos por BU ativa (RN-16: o servidor só grava quando a soma fecha o total)
+function somaPesosPorBu(metas, bus) {
+  return bus.filter((b) => b.ativa !== false).map((b) => ({ bu: b.sigla, soma: (metas || []).reduce((t, m) => t + (Number((m.pesos || {})[b.sigla]) || 0), 0) }));
+}
+// Valida uma aba da configuração; devolve a lista de erros ({ campo, codigo, ... }) — vazia = pode gravar.
+function validarConfiguracao(aba, dados, base) {
+  const erros = [];
+  const d = dados || {};
+  if (!ABAS_CONFIG.includes(aba)) return [{ campo: 'aba', codigo: 'ABA' }];
+  if (aba === 'ciclo') {
+    if (!String(d.nome || '').trim()) erros.push({ campo: 'nome', codigo: 'OBRIGATORIO' });
+    const et = Array.isArray(d.etapas) ? d.etapas : [];
+    if (et.length !== 4) erros.push({ campo: 'etapas', codigo: 'ETAPAS' });
+    let anterior = et[0] && et[0].inicio;
+    if (!dataValida(anterior)) erros.push({ campo: 'etapas.0.inicio', codigo: 'DATA' });
+    et.forEach((e, i) => {
+      if (!dataValida(e.fim)) erros.push({ campo: `etapas.${i}.fim`, codigo: 'DATA' });
+      else if (dataValida(anterior) && e.fim <= anterior) erros.push({ campo: `etapas.${i}.fim`, codigo: 'ORDEM' });
+      anterior = e.fim;
+    });
+  }
+  if (aba === 'metas') {
+    const total = Number((base.parametros.find((p) => p.id === 'pesoTotal') || {}).valor) || 100;
+    (d.metas || []).forEach((m, i) => {
+      if (!String(m.titulo || '').trim()) erros.push({ campo: `metas.${i}.titulo`, codigo: 'OBRIGATORIO' });
+      Object.values(m.pesos || {}).forEach((p) => { if (!(Number(p) >= 0 && Number(p) <= total)) erros.push({ campo: `metas.${i}.pesos`, codigo: 'PESO' }); });
+    });
+    somaPesosPorBu(d.metas, base.bus).filter((x) => x.soma !== total).forEach((x) => erros.push({ campo: 'pesos', codigo: 'RN16', bu: x.bu, soma: x.soma, total }));
+  }
+  if (aba === 'grupos') {
+    const siglas = base.bus.map((b) => b.sigla);
+    (d.membros || []).forEach((m, i) => {
+      if (!/^[A-Za-z0-9]{4,12}$/.test(String(m.matricula || ''))) erros.push({ campo: `membros.${i}.matricula`, codigo: 'MATRICULA' });
+      if (!GRUPOS.includes(m.grupo)) erros.push({ campo: `membros.${i}.grupo`, codigo: 'GRUPO' });
+      const precisaBu = m.grupo === 'contribuidor' || m.grupo === 'consulta';
+      if (precisaBu && !siglas.includes(m.bu)) erros.push({ campo: `membros.${i}.bu`, codigo: 'BU' });
+    });
+    if (!(d.membros || []).some((m) => m.grupo === 'aprovacao')) erros.push({ campo: 'membros', codigo: 'SEM_APROVADOR' });
+    if (!(d.membros || []).some((m) => m.grupo === 'admin')) erros.push({ campo: 'membros', codigo: 'SEM_ADMIN' });
+  }
+  if (aba === 'parametros') {
+    (d.parametros || []).forEach((p, i) => {
+      const ref = base.parametros.find((x) => x.id === p.id);
+      const v = Number(p.valor);
+      if (!ref || !Number.isFinite(v) || v < ref.min || v > ref.max) erros.push({ campo: `parametros.${i}`, codigo: 'FAIXA', id: p.id });
+    });
+  }
+  if (aba === 'bus') {
+    if (!(d.bus || []).some((b) => b.ativa)) erros.push({ campo: 'bus', codigo: 'SEM_BU' });
+  }
+  return erros;
 }
 
 // Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
@@ -367,7 +424,52 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  // T11 Configuração do ciclo: leitura e gravação só do administrador (§7.1, T11); demais perfis, 403 (T12).
+  const exigirAdmin = (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) { res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' }); return null; }
+    if (fonte !== 'exemplo') { res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' }); return null; }
+    const hoje = agora();
+    if (!ehAdmin(papeisDe(email, hoje))) { res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' }); return null; }
+    return { email, hoje };
+  };
+  router.get('/configuracao', async (req, res) => {
+    try {
+      const ctx = exigirAdmin(req, res); if (!ctx) return;
+      const base = configuracaoExemplo(ctx.hoje);
+      res.json({ ...base, somas: somaPesosPorBu(base.metas, base.bus), atualizadoEm: ctx.hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /configuracao:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar a configuração.', codigo: 'ERRO' });
+    }
+  });
+  router.post('/configuracao/salvar', express.json({ limit: '200kb' }), async (req, res) => {
+    try {
+      const ctx = exigirAdmin(req, res); if (!ctx) return;
+      const base = configuracaoExemplo(ctx.hoje);
+      const { aba, dados } = req.body || {};
+      const erros = validarConfiguracao(aba, dados, base);
+      if (erros.length) return res.status(400).json({ error: 'Configuração com pendências.', codigo: erros.some((e) => e.codigo === 'RN16') ? 'RN16' : 'VALIDACAO', erros });
+      // Modelo de dados pendente (P-12): a gravação e o evento "Configuração" no Action Log (antes e depois) entram aqui.
+      res.json({ ok: true, simulado: true, aba, evento: { tipo: 'configuracao', quem: ctx.email, quando: ctx.hoje.toISOString() } });
+    } catch (err) {
+      console.error(`${TAG} /configuracao/salvar:`, err.message);
+      res.status(500).json({ error: 'Não foi possível salvar a configuração.', codigo: 'ERRO' });
+    }
+  });
+  router.post('/configuracao/clonar', express.json({ limit: '10kb' }), async (req, res) => {
+    try {
+      const ctx = exigirAdmin(req, res); if (!ctx) return;
+      const base = configuracaoExemplo(ctx.hoje);
+      const ano = base.ciclo.ano + 1;
+      res.json({ ok: true, simulado: true, novoCiclo: { id: `AIP-${ano}`, nome: `AIP ${ano}`, bus: base.bus.length, membros: base.membros.length, metas: base.metas.length } });
+    } catch (err) {
+      console.error(`${TAG} /configuracao/clonar:`, err.message);
+      res.status(500).json({ error: 'Não foi possível criar o novo ciclo.', codigo: 'ERRO' });
+    }
+  });
+
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorBu, ABAS_CONFIG, GRUPOS, dataValida };
