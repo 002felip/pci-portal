@@ -204,6 +204,9 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
 - **Clique na célula:** abre o Goal Card daquela meta na BU no mesmo popup da T03, mas fixo na meta clicada (sem
   seletor nem setas para trocar de meta, `.m3-dlg.is-fixo`); o servidor decide leitura ou edição (contribuidor da BU
   ou administrador, em Rascunho ou Devolvido). Ctrl+clique abre a tela inteira.
+- **Versões e Histórico no popup:** os links do Goal Card trocam o conteúdo do mesmo popup pela T06 ou pela T07
+  (filtrada pelo card, sem filtros de BU e meta), com o botão "← Goal Card" para voltar; o endereço da página não muda.
+  Vale também para o popup da T03.
 - Dados de `GET /desdobramento` (`agregarDesdobramento`).
 
 ### T12 Sem acesso / não encontrado
