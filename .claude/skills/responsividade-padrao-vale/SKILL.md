@@ -17,7 +17,7 @@ disposição ficam iguais; mudam tamanhos e espaços). **Celular está fora do e
 - **Tudo é em `rem`.** A raiz é fluida e é ela que escala a aplicação inteira:
   `html { font-size: clamp(1rem, 0.357vw + 0.643rem, 1.5rem) }`, ou seja, 16 px até 1600 px de largura e 24 px em 3840 px.
   Para mudar o tamanho de **todas as telas** de uma vez, mexa na raiz dentro de uma media query, **sempre em `rem`**
-  (ex.: `0.9375rem`), nunca em `px`, para o zoom do navegador seguir valendo (WCAG 1.4.4).
+  (ex.: `0.8125rem`), nunca em `px`, para o zoom do navegador seguir valendo (WCAG 1.4.4).
 - **Barra superior** com altura fluida pelo token `--barra` (`clamp(3.5rem, 2.6rem + 1.1vw, 5.5rem)`). Não use 56/64 px fixos.
 - **Os CSS copiados das skills `vbm-design` e `setup-dashboards` não são editados.** O que eles fixam em px é
   sobrescrito na camada `[RESPONSIVO]`, no fim do `<style>`.
@@ -32,7 +32,7 @@ disposição ficam iguais; mudam tamanhos e espaços). **Celular está fora do e
 | Estrutural | `max-width: 1080px` | menu vira gaveta sob a barra; banner (`.hero`) e abertura (`.abertura`) em uma coluna |
 | Painel em uma coluna | `max-width: 1280px` | `.p2-grade` em coluna; funil e tempo lado a lado abaixo da matriz |
 | Largura média | `max-width: 1440px, max-height: 820px` | itens do menu e padding do banner um degrau menores |
-| **Notebook 125–150%** | `(min-width: 721px) and (max-height: 820px)` | raiz em `0.9375rem` (15 px) e banner/abertura compactos (`.ab-ano`, `.ab-nome`, `.indice-desc` oculta, anéis do Painel em `--anel: 6rem`) |
+| **Notebook 125–150%** | `(min-width: 721px) and (max-height: 820px)` | raiz em `0.8125rem` (13 px) e banner/abertura compactos (`.ab-ano`, `.ab-nome`, `.indice-desc` oculta, anéis do Painel em `--anel: 6rem`) |
 | Telas grandes | raiz fluida | de 1600 a 3840 px a raiz cresce sozinha até 24 px; não crie degraus fixos por cima sem medir |
 
 Referência do notebook corporativo: Windows em 150% numa tela 1920×1080 dá **~1270×590 úteis** no navegador. A
@@ -46,9 +46,9 @@ tela inicial tem de caber inteira nesse tamanho (título, índice "Go to" e a jo
   uma regra genérica da media query.
 - **Cartões da fila são por container query** (`@container fila`, 60rem e 36rem): mexa no container, não na
   viewport.
-- **Não encolha o conteúdo para caber.** O popup do Goal Card usa zoom em JS (`dlgAjustar`) com mínimo de 90%
+- **Não encolha o conteúdo para caber.** O popup do Goal Card usa zoom em JS (`dlgAjustar`) com mínimo de 85%
   (`DLG_ZOOM_MIN`); se não couber, o popup rola. Nunca baixe esse mínimo: a 50% o texto fica ilegível.
-- **Piso de leitura no notebook:** nenhum texto abaixo de `0.7rem` (10,5 px com a raiz em 15 px). Rótulo novo
+- **Piso de leitura no notebook:** nenhum texto abaixo de `0.75rem` (~9,8 px com a raiz em 13 px). Rótulo novo
   menor que isso entra na lista do piso, na faixa `(min-width: 721px) and (max-height: 820px)`.
 - **Todas as vistas, inclusive o popup:** confira `#goal-card`, `#versoes` e o Goal Card aberto a partir de
   `#metas` (popup `#m3Dlg`), além de `#desdobramento`, `#aprovacoes`, `#action-log` e `#configuracao`.
@@ -85,3 +85,6 @@ tela inicial tem de caber inteira nesse tamanho (título, índice "Go to" e a jo
   `(min-width: 721px) and (max-height: 820px)`; 1440×900 para cima não mudou (PR #95).
 - Nov/2026: o popup do Goal Card aberto em `#metas` caía para zoom 50% no notebook (texto ilegível) → zoom mínimo
   de 90% com rolagem vertical, topo do popup compacto e piso de `0.7rem` para os rótulos miúdos em todas as vistas.
+- Nov/2026: com a raiz em 15 px o usuário achou a letra grande demais no notebook a 150% (popup e demais telas) →
+  raiz em `0.8125rem` (13 px, o tamanho do desktop a 100%), piso de rótulo em `0.75rem`, zoom mínimo do popup em
+  85% e `.gc-sel`/`.gc-in` sem o `max(16px)` nessa faixa. Para o notebook, a referência é o tamanho do desktop a 100%.

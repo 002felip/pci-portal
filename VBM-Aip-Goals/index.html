@@ -1104,10 +1104,11 @@ html {
   overflow-x: clip;
 }
 body { font-size: 0.875rem; overflow-x: clip; min-height: 100vh; min-height: 100svh; }
-/* [RESPONSIVO] Notebook com escala de 125–150% do Windows (~1270×590 úteis): toda a aplicação um
-   degrau menor, pela raiz (tudo é em rem). Em rem, e não em px, para o zoom do navegador seguir valendo. */
+/* [RESPONSIVO] Notebook com escala de 125–150% do Windows (~1270×590 úteis): toda a aplicação menor,
+   pela raiz (tudo é em rem): 13 px, que no Windows a 150% equivale ao tamanho do desktop a 100%.
+   Em rem, e não em px, para o zoom do navegador seguir valendo. */
 @media (min-width: 721px) and (max-height: 820px) {
-  html { font-size: 0.9375rem; }
+  html { font-size: 0.8125rem; }
 }
 img, video, svg, canvas, iframe { max-width: 100%; }
 .page { max-width: 92.5rem; }
@@ -1505,7 +1506,7 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
 
 /* ════ Popup do Goal Card: responsivo sem alterar o modelo ════
    O layout do card é o mesmo da tela inteira; o popup ajusta a escala do conteúdo à altura disponível (zoom
-   calculado em JS, dlgAjustar) até 90%. Abaixo disso o popup rola, para o texto continuar legível. */
+   calculado em JS, dlgAjustar) até 85%. Abaixo disso o popup rola, para o texto continuar legível. */
 .m3-dlg-corpo { padding-bottom: 1rem; }
 /* [RESPONSIVO] Topo do popup compacto (todas as telas): o título e o número vazado na mesma linha e menos
    respiro em volta da linha do tempo. A ficha é o foco e ganha a altura, sem precisar encolher o texto. */
@@ -1524,14 +1525,16 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
 }
 /* [RESPONSIVO] Notebook a 125–150% (~1270×590), todas as vistas: piso de leitura para os rótulos miúdos.
    Com a raiz em 15 px, os rótulos de 0.58–0.66rem caíam para 8,7–9,9 px (cabeçalhos de tabela, selos, tags,
-   datas da jornada, antes/depois do Log). Sobem para 0.7rem (10,5 px); o resto do layout não muda. */
+   datas da jornada, antes/depois do Log). Sobem para 0.75rem (~9,8 px com a raiz em 13 px); o resto do layout não muda. */
 @media (min-width: 721px) and (max-height: 820px) {
   .ab-fato dt, .jornada-tit, .etapa-tag, .etapa-ok, .chip-parada, .chip-atrasada, .p2-hoje span,
   .p2-tabela th, .p2-pais td, .p2-etapa-val small, .p2-eixo, .p2-bu, .p2-nivel-nome small,
   .dd-card-badge, .dd-tag, .gc-rot, .gc-pre, .gc-selo, .cf-jan-atual, .cf-nova, .lg-tipo,
   .lg-antes small, .lg-depois small, .vs-no-v em, .vs-tag, .vs-tabela thead th small, .vs-flag, .cf-bu-antes,
-  .unit-h, .topnav-menu-cont { font-size: 0.7rem; }
-  .secao-cont, .p2-perda, .cf-ini { font-size: 0.72rem; }
+  .unit-h, .topnav-menu-cont { font-size: 0.75rem; }
+  .secao-cont, .p2-perda, .cf-ini { font-size: 0.78rem; }
+  /* o max(16px) dos campos é para o iOS não dar zoom; no notebook deixava o seletor de meta maior que o resto */
+  .gc-sel, .gc-in { font-size: 0.875rem; }
 }
 
 </style>
@@ -3043,10 +3046,10 @@ window.VBMSetup = (function () {
     $('m3Dlg').scrollTop = 0;
     dlgAjustar();
   }
-  // Ajusta o conteúdo do popup à altura disponível: mede sem escala e aplica zoom, com mínimo de 90% (DLG_ZOOM_MIN).
+  // Ajusta o conteúdo do popup à altura disponível: mede sem escala e aplica zoom, com mínimo de 85% (DLG_ZOOM_MIN).
   // Abaixo disso o texto fica pequeno demais para ler (no notebook a 150% chegava a 50%): o popup rola na vertical.
   // O Histórico (lista longa, paginada) não é escalado: rola normalmente.
-  var DLG_ZOOM_MIN = 0.9;
+  var DLG_ZOOM_MIN = 0.85;
   function dlgAjustar() {
     var dlg = $('m3Dlg'); if (!dlg.open) return;
     ['vistaGoalCard', 'vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).style.zoom = ''; });
