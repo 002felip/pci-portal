@@ -1498,6 +1498,11 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
 #cfConteudo, .cf-corpo > * { min-width: 0; } /* a tabela larga rola dentro do bloco, sem empurrar a página */
 .p2-tabela-wrap { position: relative; } /* textos só para leitor de tela (sr-only) ficam presos ao bloco que rola */
 
+/* ════ Popup do Goal Card: responsivo sem alterar o modelo ════
+   O layout do card é o mesmo da tela inteira; o popup só ajusta a escala do conteúdo à altura disponível (zoom
+   calculado em JS, dlgAjustar), para eliminar a barra de rolagem. */
+.m3-dlg-corpo { padding-bottom: 1rem; }
+
 </style>
 </head>
 <body>
@@ -3005,7 +3010,29 @@ window.VBMSetup = (function () {
     $('m3DlgVoltarTxt').textContent = 'Goal Card ' + gc.card;
     $('m3Dlg').classList.toggle('is-sub', qual !== 'card');
     $('m3Dlg').scrollTop = 0;
+    dlgAjustar();
   }
+  // Ajusta o conteúdo do popup à altura disponível (sem barra de rolagem): mede sem escala e aplica zoom, com mínimo de 50%.
+  // O Histórico (lista longa, paginada) não é escalado: rola normalmente.
+  function dlgAjustar() {
+    var dlg = $('m3Dlg'); if (!dlg.open) return;
+    ['vistaGoalCard', 'vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).style.zoom = ''; });
+    var v = ['vistaGoalCard', 'vistaVersoes'].map($).filter(function (x) { return x.parentNode === $('m3DlgCorpo') && !x.hidden; })[0];
+    if (!v) return;
+    var topo = v.getBoundingClientRect().top - dlg.getBoundingClientRect().top + dlg.scrollTop;
+    var livre = dlg.clientHeight - topo - 16, alto = v.scrollHeight;
+    var z = alto > livre ? Math.max(0.5, livre / alto) : 1;
+    // Repete até caber: com menos escala o texto quebra menos e a altura muda
+    for (var i = 0; i < 4 && z > 0.5; i++) {
+      v.style.zoom = String(Math.floor(z * 1000) / 1000);
+      var sobra = dlg.scrollHeight - dlg.clientHeight;
+      if (sobra <= 1) break;
+      z = Math.max(0.5, z * (dlg.clientHeight - topo * z - 16) / (dlg.scrollHeight - topo * z - 16));
+    }
+    v.style.zoom = z < 1 ? String(Math.floor(z * 1000) / 1000) : '';
+  }
+  var dlgTimer = null;
+  window.addEventListener('resize', function () { clearTimeout(dlgTimer); dlgTimer = setTimeout(dlgAjustar, 120); });
   $('m3DlgVoltar').addEventListener('click', function () { dlgVer('card'); $('gcVersoes').focus(); });
   $('gcVersoes').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('versoes'); } });
   $('gcHistorico').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('log'); } });
@@ -3238,6 +3265,7 @@ window.VBMSetup = (function () {
     $('gcSecoes').innerHTML = gcFicha(d, pre);
     gcRenderSeletor(d);
     gcRenderLado();
+    if ($('m3Dlg').open) { requestAnimationFrame(dlgAjustar); setTimeout(dlgAjustar, 350); }
     if (gc.secao) { var sec = gc.secao, alvo = document.getElementById('gcSec-' + sec); gc.secao = ''; if (alvo) setTimeout(function () { alvo.scrollIntoView({ block: 'center' }); gcAbrirComentarios(sec); }, 50); }
   }
   function gcRenderLinha(d) {
@@ -4221,8 +4249,9 @@ window.VBMSetup = (function () {
         '<p class="estado-txt">' + esc(S.t('vs.semDica')) + '</p><a class="btn btn-sec" href="#goal-card?card=' + encodeURIComponent(d.card) + '">' + esc(S.t('vs.abrirCard')) + '</a></div>';
       return;
     }
-    if (ns.length === 1) { vsRenderUnica(vsVersao(ns[0])); return; }
+    if (ns.length === 1) { vsRenderUnica(vsVersao(ns[0])); if ($('m3Dlg').open) requestAnimationFrame(dlgAjustar); return; }
     vsRenderComparacao(vsVersao(vs.a), vsVersao(vs.b));
+    if ($('m3Dlg').open) requestAnimationFrame(dlgAjustar);
   }
   function vsRenderLinha() {
     var d = vs.dados, lista = d.versoes.slice().reverse();

@@ -212,6 +212,9 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
 - **Versões e Histórico no popup:** os links do Goal Card trocam o conteúdo do mesmo popup pela T06 ou pela T07
   (filtrada pelo card, sem filtros de BU e meta), com o botão "← Goal Card" para voltar; o endereço da página não muda.
   Vale também para o popup da T03.
+- **Popup sem barra de rolagem:** o card mantém o mesmo modelo da tela inteira; o popup só ajusta a escala do conteúdo
+  à altura disponível (`dlgAjustar`, zoom proporcional, mínimo de 50%). Abaixo desse mínimo (telas muito baixas, como
+  1280×590 ou 1024×700), a rolagem volta como último recurso. O Histórico, que é uma lista paginada, não é escalado.
 - Dados de `GET /desdobramento` (`agregarDesdobramento`).
 
 ### T12 Sem acesso / não encontrado
