@@ -312,3 +312,41 @@ test('T06 Versões: rascunho sem versão; versões mais recentes primeiro; ofici
     assert.strictEqual((await pedir(s, '/api/versoes?card=x', h)).status, 400);
   } finally { s.close(); }
 });
+
+test('GET /aprovacoes (T14): só o grupo de aprovação; fila Em aprovação com filtros e RN-12', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    assert.strictEqual((await pedir(s, '/api/aprovacoes')).status, 401);
+    const r = await pedir(s, '/api/aprovacoes', h);
+    assert.strictEqual(r.status, 200);
+    assert.ok(r.corpo.itens.length > 0 && r.corpo.itens.length === r.corpo.total);
+    // mais antigos primeiro
+    r.corpo.itens.forEach((it, i, l) => { if (i) assert.ok(l[i - 1].idade >= it.idade); });
+    // o usuário de demonstração é contribuidor em Salobo e Sossego: lá não decide (RN-12)
+    assert.ok(r.corpo.itens.filter((it) => ['Salobo', 'Sossego'].includes(it.bu.sigla)).every((it) => it.podeDecidir === false));
+    assert.ok(r.corpo.itens.filter((it) => !['Salobo', 'Sossego'].includes(it.bu.sigla)).every((it) => it.podeDecidir === true));
+    const bu = await pedir(s, '/api/aprovacoes?bu=VNL', h);
+    assert.ok(bu.corpo.itens.length && bu.corpo.itens.every((it) => it.bu.sigla === 'VNL'));
+    const velhos = await pedir(s, '/api/aprovacoes?idade=5', h);
+    assert.ok(velhos.corpo.itens.every((it) => it.idade >= 5));
+    assert.strictEqual((await pedir(s, '/api/aprovacoes?idade=99', h)).corpo.filtro.idade, 'todas');
+  } finally { s.close(); }
+  const outros = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'contribuidor', bu: 'Salobo' }, { papel: 'consulta', bu: null }] }));
+  try {
+    const h = { 'X-Forwarded-Email': 'contrib@vale.com' };
+    assert.strictEqual((await pedir(outros, '/api/aprovacoes', h)).status, 403); // AC-08, CA-19
+    assert.strictEqual((await enviar(outros, '/api/goal-card/comentario', { card: 'GC-VNL-04', secao: 'ruler', texto: 'Rever a régua' }, h)).status, 403);
+  } finally { outros.close(); }
+});
+
+test('POST /goal-card/comentario: seção válida e texto obrigatório (simulação, RN-13)', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE }));
+  try {
+    const h = { 'X-Forwarded-Email': 'pessoa@vale.com' };
+    const ok = await enviar(s, '/api/goal-card/comentario', { card: 'GC-VNL-04', secao: 'ruler', texto: 'Rever a régua com o orçamento.' }, h);
+    assert.strictEqual(ok.status, 200); assert.strictEqual(ok.corpo.simulado, true); assert.strictEqual(ok.corpo.comentario.secao, 'ruler');
+    assert.strictEqual((await enviar(s, '/api/goal-card/comentario', { card: 'GC-VNL-04', secao: 'xyz', texto: 'a' }, h)).status, 400);
+    assert.strictEqual((await enviar(s, '/api/goal-card/comentario', { card: 'GC-VNL-04', secao: 'ruler', texto: '   ' }, h)).status, 400);
+  } finally { s.close(); }
+});

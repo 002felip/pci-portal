@@ -34,6 +34,11 @@
  *                      ou leitura. A T04 não tem decisão: ela fica na fila de aprovação (T14).
  *   POST /goal-card/submeter  { card, secoes }   campos obrigatórios no servidor (RN-03); só contribuidor da BU (AC-04)
  *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12 (usada pela fila de aprovação, T14)
+ *   POST /goal-card/comentario { card, secao, texto }   comentário ancorado a uma seção (§7.3, RN-13); só o grupo de aprovação, na T14
+ *   GET  /aprovacoes?pais=&bu=&idade=   T14 — fila do grupo de aprovação (AC-08: demais perfis, 403):
+ *                      { ciclo, parametros, filtro, itens[], total }
+ *                      `itens` = cards Em aprovação, os mais antigos primeiro, com a idade em dias úteis,
+ *                      se é resubmissão e se o usuário pode decidir (RN-12).
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
@@ -142,6 +147,23 @@ const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'p
 const ehAdmin = (papeis) => papeis.some((p) => p.papel === 'admin');
 const podeEditar = (papeis, sigla) => ehAdmin(papeis) || contribuidorDe(papeis, sigla);
 const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (configurável no banco, AIP_PARAMETRO)
+const MAX_COMENTARIO = 2000;  // tamanho máximo de um comentário de seção
+const SECOES_CARD = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
+const IDADES = ['todas', '3', '5']; // filtro de idade da T14: todas, há 3+ ou 5+ dias úteis na fila
+
+// T14 Aprovações: fila do grupo de aprovação a partir da lista de cards (mesma fonte do Painel, CA-15)
+function filaAprovacao(cards, filtro, hoje, podeDecidirCard) {
+  const f = filtro || {};
+  const min = f.idade && f.idade !== 'todas' ? Number(f.idade) : 0;
+  const pend = cards.filter((c) => c.estado === 'em_aprovacao');
+  const itens = pend
+    .filter((c) => (!f.pais || c.bu.pais === f.pais) && (!f.bu || c.bu.sigla === f.bu))
+    .map((c) => ({ card: c.card, bu: c.bu, meta: c.meta, versao: c.versao, desde: c.desde, idade: diasUteisEntre(c.desde, hoje),
+      resubmissao: (c.versao || 0) > 1, contribuidor: c.contribuidor || null, podeDecidir: podeDecidirCard(c) }))
+    .filter((it) => it.idade >= min)
+    .sort((a, b) => b.idade - a.idade || a.card.localeCompare(b.card));
+  return { itens, total: pend.length };
+}
 
 // Campos obrigatórios (§5): Submeter fica bloqueado enquanto algum estiver vazio (cliente e servidor).
 const OBRIGATORIOS = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence'];
@@ -494,6 +516,47 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     }
   });
 
+  // Comentário ancorado a uma seção (§7.3, RN-13): feito na T14 pelo grupo de aprovação; não muda o estado do card.
+  router.post('/goal-card/comentario', express.json({ limit: '20kb' }), async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      const hoje = agora(); const papeis = papeisDe(email, hoje);
+      const card = lerCard(req, res, hoje); if (!card) return;
+      // Consulta nunca comenta (RN-19); na T14, só o grupo de aprovação (AC-08)
+      if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Comentário restrito ao grupo de aprovação.', codigo: 'SEM_ACESSO' });
+      const secao = String(req.body.secao || ''), texto = String(req.body.texto || '').trim();
+      if (!SECOES_CARD.includes(secao)) return res.status(400).json({ error: 'Seção inválida.', codigo: 'VALIDACAO', erros: ['secao'] });
+      if (!texto || texto.length > MAX_COMENTARIO) return res.status(400).json({ error: 'Comentário vazio ou longo demais.', codigo: 'VALIDACAO', erros: ['texto'] });
+      res.json({ ok: true, simulado: true, comentario: { id: `${card.card}-n${Date.now()}`, secao, autor: nomeDe(email), papel: 'aprovador', quando: hoje.toISOString().slice(0, 10), texto, respostas: [] } });
+    } catch (err) {
+      console.error(`${TAG} /goal-card/comentario:`, err.message);
+      res.status(500).json({ error: 'Não foi possível publicar o comentário.', codigo: 'ERRO' });
+    }
+  });
+
+  // T14 Aprovações: fila do grupo de aprovação (AC-08, CA-19). Demais perfis: 403 (a tela mostra a T12).
+  router.get('/aprovacoes', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora(); const papeis = papeisDe(email, hoje);
+      if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const base = painelExemplo(hoje);
+      const filtro = { pais: String(req.query.pais || ''), bu: String(req.query.bu || ''), idade: IDADES.includes(String(req.query.idade)) ? String(req.query.idade) : 'todas' };
+      if (filtro.pais && !base.ciclo.bus.some((b) => b.pais === filtro.pais)) filtro.pais = '';
+      if (filtro.bu && !base.ciclo.bus.some((b) => b.sigla === filtro.bu && (!filtro.pais || b.pais === filtro.pais))) filtro.bu = '';
+      const nome = nomeDe(email);
+      const decide = (c) => { const gc = goalCardExemplo(c.card, hoje); return !!gc && podeDecidir(gc, papeis, nome); };
+      res.json({ ciclo: base.ciclo, parametros: { diasParado: base.parametros.diasParado, minComentario: LIMITE_COMENTARIO, maxComentario: MAX_COMENTARIO },
+        filtro, ...filaAprovacao(base.cards, filtro, hoje, decide), atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /aprovacoes:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar a fila de aprovação.', codigo: 'ERRO' });
+    }
+  });
+
   // T11 Configuração do ciclo: leitura e gravação só do administrador (§7.1, T11); demais perfis, 403 (T12).
   const exigirAdmin = (req, res) => {
     const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
@@ -584,4 +647,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
+module.exports = { filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };

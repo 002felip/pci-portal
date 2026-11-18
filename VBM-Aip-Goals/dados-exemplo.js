@@ -259,6 +259,8 @@ function goalCardExemplo(codigo, hoje = new Date()) {
   const n = c.meta.numero, k = (n + c.bu.sigla.length) % PESSOAS.length;
   // Rascunho em andamento: faltam área e evidência (a pré-checagem mostra o que falta)
   if (c.estado === 'rascunho') { sec.area = { area: '', responsavel: '' }; sec.evidence = ''; }
+  // Resubmissão: a exceção da BU entrou na v2 (a mesma das Versões, T06), para o "antes" da T14 bater
+  if (c.versao > 1 && c.estado !== 'rascunho') sec.exceptions.bu = 'FX effect excluded from the result, as agreed with P&CI.';
   const comentarios = [];
   let ajustar = [];
   if (c.estado === 'em_revisao') {
