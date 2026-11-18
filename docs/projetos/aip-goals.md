@@ -201,6 +201,9 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
   ponto por BU na cor da situação do Goal Card. O card selecionado fica em ênfase.
 - **COO → Business Units:** matriz meta × BU agrupada por país, com o peso desdobrado e a situação do Goal Card em
   cada célula; legenda de status.
+- **Clique na célula:** abre o Goal Card daquela meta na BU no mesmo popup da T03, mas fixo na meta clicada (sem
+  seletor nem setas para trocar de meta, `.m3-dlg.is-fixo`); o servidor decide leitura ou edição (contribuidor da BU
+  ou administrador, em Rascunho ou Devolvido). Ctrl+clique abre a tela inteira.
 - Dados de `GET /desdobramento` (`agregarDesdobramento`).
 
 ### T12 Sem acesso / não encontrado

@@ -838,6 +838,8 @@ body.is-inicio .page { max-width: none; padding: 0; }
 body.is-largo .m3-dlg .p2-topo { margin: 0 calc(-1 * clamp(1rem, 2.5vw, 2.5rem)); padding: 1.5rem clamp(1rem, 2.5vw, 2.5rem) 1.5rem; }
 .m3-dlg .topo-acoes { top: 1rem; right: 4rem; }
 .m3-dlg .gc-voltar { display: none; }
+/* Popup aberto pelo Desdobramento: só a meta clicada, sem seletor nem setas de troca de meta */
+.m3-dlg.is-fixo .gc-filtro-meta { display: none; }
 .m3-dlg .p2-titulo .ab-ano { font-size: clamp(2.5rem, 1.5rem + 2.5vw, 4.5rem); }
 .m3-meta-tit { font-weight: 600; color: var(--ink-strong); }
 .m3-meta-tipo { display: block; margin-top: 0.125rem; font-size: 0.7rem; color: var(--text-soft); }
@@ -2926,7 +2928,11 @@ window.VBMSetup = (function () {
   $('m3Atualizar').addEventListener('click', function () { m3.cache = {}; m3Carregar(true); });
   // Abrir: o Goal Card abre num popup grande, já pronto para editar (a vista T04 é movida para dentro dele)
   var m3Vaga = document.createComment('vista T04');
-  function m3AbrirCard(card) {
+  // origem 'dd' (Desdobramento): o popup mostra só a meta clicada, sem trocar de meta; edição só para quem pode editar (servidor)
+  var m3Origem = '';
+  function m3AbrirCard(card, origem) {
+    m3Origem = origem || 'metas';
+    $('m3Dlg').classList.toggle('is-fixo', m3Origem === 'dd');
     var v = $('vistaGoalCard');
     if (!m3Vaga.parentNode) v.parentNode.insertBefore(m3Vaga, v);
     $('m3DlgCorpo').appendChild(v); v.hidden = false;
@@ -2943,7 +2949,14 @@ window.VBMSetup = (function () {
   $('m3Dlg').addEventListener('close', function () {
     var v = $('vistaGoalCard'); v.hidden = true;
     if (m3Vaga.parentNode) m3Vaga.parentNode.insertBefore(v, m3Vaga);
-    m3Carregar(true); // a lista volta atualizada
+    if (m3Origem === 'metas') m3Carregar(true); // a lista volta atualizada
+    $('m3Dlg').classList.remove('is-fixo'); m3Origem = '';
+  });
+  // Desdobramento: o clique na célula meta × BU abre o Goal Card daquela BU no popup (Ctrl+clique abre a tela inteira)
+  $('ddCorpo').addEventListener('click', function (e) {
+    var a = e.target.closest('a[data-card]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || !$('m3Dlg').showModal) return;
+    e.preventDefault(); m3AbrirCard(a.getAttribute('data-card'), 'dd');
   });
   $('m3Tentar').addEventListener('click', function () { m3Carregar(true); });
 
@@ -3047,7 +3060,7 @@ window.VBMSetup = (function () {
           var k = Math.max(0, Math.min(1, (x.peso - 5) / Math.max(1, maxPeso - 5)));
           var rot = S.t('dd.celula', { b: b.sigla, m: l.titulo, p: S.fmt(x.peso, 0), e: est }) + (x.card ? ' · ' + x.card : '');
           var conteudo = '<span class="dd-bolha' + (x.estado ? ' dd-st-' + esc(x.estado) : '') + '" style="--k:' + k.toFixed(3) + '">' + esc(S.fmt(x.peso, 0)) + '</span>';
-          return '<td class="dd-cel">' + (x.card ? '<a href="#goal-card?card=' + encodeURIComponent(x.card) + '" title="' + esc(rot) + '" aria-label="' + esc(rot) + '">' + conteudo + '</a>' : '<span title="' + esc(rot) + '">' + conteudo + '</span>') + '</td>';
+          return '<td class="dd-cel">' + (x.card ? '<a href="#goal-card?card=' + encodeURIComponent(x.card) + '" data-card="' + esc(x.card) + '" title=""' + esc(rot) + '" aria-label="' + esc(rot) + '">' + conteudo + '</a>' : '<span title="' + esc(rot) + '">' + conteudo + '</span>') + '</td>';
         }).join('') + '</tr>';
     };
     var res = linhas.filter(function (l) { return l.resultado; }), esp = linhas.filter(function (l) { return !l.resultado; });
@@ -3354,7 +3367,7 @@ window.VBMSetup = (function () {
       .catch(function () {});
   }
   function gcIrPara(card) {
-    if (!card || card === gc.card) return;
+    if (!card || card === gc.card || $('m3Dlg').classList.contains('is-fixo')) return; // popup do Desdobramento: meta fixa
     if ($('m3Dlg').open) { gc.card = card; gc.secao = ''; return gcCarregar(); } // dentro do popup da T03: troca a meta sem sair
     location.hash = '#goal-card?card=' + encodeURIComponent(card);
   }
