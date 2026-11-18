@@ -365,6 +365,7 @@ def enrich_snapshot(code_or_id: str, label: str | None = None,
         "archived_by": None,
         "notes": None,
         "uploaded_at": None,
+        "restored_from": None,
     }
 
 
@@ -402,7 +403,7 @@ def resolve_period(existing: Sequence[SnapshotOut], fiscal_year: int,
             "original_filename": None, "reason": None, "created_by": None,
             "published_by": None, "published_at": None, "is_baseline": False,
             "archived_at": None, "archived_by": None, "notes": None,
-            "uploaded_at": None,
+            "uploaded_at": None, "restored_from": None,
         }
         return PeriodResolution("new", None, identity)
 
@@ -411,10 +412,16 @@ def resolve_period(existing: Sequence[SnapshotOut], fiscal_year: int,
     # draft that is still archived -- invisible in every picker, with no
     # obvious way for the operator to work out why. `notes` is deliberately
     # left alone: operator commentary survives a reload.
+    #
+    # Every load bumps the revision -- a draft reload too -- because the
+    # outgoing contents are archived under the current number (see
+    # SnapshotRevision) and must stay restorable; `restored_from` is cleared
+    # since the new contents come from a workbook, not a rollback.
     identity = match.model_dump()
-    identity.update(archived_at=None, archived_by=None)
+    identity.pop("initiative_count", None)
+    identity.update(archived_at=None, archived_by=None, restored_from=None)
     if match.state == "draft":
-        identity["label"] = label or identity["label"]
+        identity.update(revision=match.revision + 1, label=label or identity["label"])
         return PeriodResolution("draft_exists", match, identity)
 
     identity.update(revision=match.revision + 1, state="draft",

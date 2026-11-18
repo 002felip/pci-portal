@@ -27,6 +27,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 os.environ.setdefault("DATA_BACKEND", "json")
+# A known snapshot admin, so reopen/rollback can be exercised both ways.
+ADMIN = "smoke.admin@vale.com"
+os.environ.setdefault("UNLOCK_ADMINS", ADMIN)
 
 DATA = ROOT / "backend" / "data"
 SANDBOX = ROOT / "backend" / "_smoke_data"
@@ -471,6 +474,67 @@ def main() -> int:
     check("otherwise a fresh {BU}-NNN is minted",
           len(assigned) == 2 and assigned[1].startswith(f"{bu}-") and assigned[1] != sid,
           str(assigned))
+
+    print("\n13. A reload never overwrites: earlier versions can be rolled back")
+    admin = {"X-Forwarded-Email": ADMIN}
+    other = {"X-Forwarded-Email": "someone.else@vale.com"}
+    period = {"fiscal_year": "2032", "period_type": "Q", "period_ordinal": "2",
+              "dry_run": "false"}
+
+    def load(rows, headers=admin, **extra):
+        files = {"file": ("smoke.xlsx", workbook(rows),
+                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        resp = c.post("/api/uploads/excel", data={**period, **extra}, files=files,
+                      headers=headers)
+        return resp.json() if resp.status_code == 200 else {"status": resp.status_code}
+
+    v1 = load([{**base, "Initiative ID": f"{bu}-9901", "Initiative Name": "Rollback one"},
+               {**base, "Initiative ID": f"{bu}-9902", "Initiative Name": "Rollback two"}])
+    check("first load writes", v1.get("status") == "loaded", str(v1.get("status")))
+    sid_ = v1.get("snapshot_id")
+    revs = lambda: c.get(f"/api/snapshots/{sid_}/revisions").json()   # noqa: E731
+    snap_ = lambda: next(x for x in c.get("/api/snapshots").json()     # noqa: E731
+                         if x["id"] == sid_)
+    check("a fresh period has only its current version",
+          [(r["revision"], r["is_current"]) for r in revs()] == [(1, True)])
+
+    v2 = load([{**base, "Initiative ID": f"{bu}-9901", "Initiative Name": "Rollback one"}])
+    check("reloading a draft bumps the revision",
+          v2.get("revision") == 2 and snap_()["revision"] == 2, str(v2.get("revision")))
+    check("the replaced version is kept in the history",
+          [(r["revision"], r["is_current"], r["initiative_count"]) for r in revs()]
+          == [(2, True, 1), (1, False, 2)])
+
+    body = {"revision": 1, "reason": "smoke"}
+    check("rollback by a non-admin -> 403",
+          c.post(f"/api/snapshots/{sid_}/rollback", json=body,
+                 headers=other).status_code == 403)
+    check("rollback without a reason -> 400",
+          c.post(f"/api/snapshots/{sid_}/rollback", json={"revision": 1, "reason": " "},
+                 headers=admin).status_code == 400)
+    check("rollback to an unknown revision -> 404",
+          c.post(f"/api/snapshots/{sid_}/rollback", json={"revision": 7, "reason": "x"},
+                 headers=admin).status_code == 404)
+    r = c.post(f"/api/snapshots/{sid_}/rollback", json=body, headers=admin)
+    after = snap_()
+    check("an admin rollback restores the earlier contents as a new revision",
+          r.status_code == 200 and after["revision"] == 3
+          and after["initiative_count"] == 2 and after["restored_from"] == 1,
+          f'{r.status_code} rev={after["revision"]} n={after["initiative_count"]}')
+    check("the rolled-back-from version is itself kept",
+          [r_["revision"] for r_ in revs()] == [3, 2, 1])
+    v4 = load([{**base, "Initiative ID": f"{bu}-9901", "Initiative Name": "Rollback one"}])
+    check("the next upload clears restored_from",
+          v4.get("revision") == 4 and snap_()["restored_from"] is None)
+
+    check("/meta tells the UI who is a snapshot admin",
+          c.get("/api/meta", headers=admin).json()["is_snapshot_admin"] is True
+          and c.get("/api/meta", headers=other).json()["is_snapshot_admin"] is False)
+    c.post(f"/api/snapshots/{sid_}/publish", headers=admin)
+    c.post(f"/api/snapshots/{sid_}/close")
+    check("rollback of a locked snapshot -> 409",
+          c.post(f"/api/snapshots/{sid_}/rollback", json=body,
+                 headers=admin).status_code == 409)
 
     shutil.rmtree(SANDBOX, ignore_errors=True)
 

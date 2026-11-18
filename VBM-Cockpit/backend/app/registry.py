@@ -161,7 +161,7 @@ VOCAB: dict[str, VocabDomain] = {
     "lever": VocabDomain(
         "lever", "Value Lever",
         (
-            ("COST", "Cost Reduction / Cost Avoidance", 10, "#2C6E9B"),
+            ("COST", "Cost Reduction", 10, "#2C6E9B"),
             ("PRODUCTIVITY", "Productivity / Capability Improvement", 20, "#3E9E74"),
             ("WORKING_CAPITAL", "Working Capital", 30, "#7E5AA6"),
             ("REVENUE", "Revenue Uplift", 40, "#C77D28"),

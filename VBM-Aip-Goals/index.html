@@ -1104,10 +1104,11 @@ html {
   overflow-x: clip;
 }
 body { font-size: 0.875rem; overflow-x: clip; min-height: 100vh; min-height: 100svh; }
-/* [RESPONSIVO] Notebook com escala de 125–150% do Windows (~1270×590 úteis): toda a aplicação um
-   degrau menor, pela raiz (tudo é em rem). Em rem, e não em px, para o zoom do navegador seguir valendo. */
+/* [RESPONSIVO] Notebook com escala de 125–150% do Windows (~1270×590 úteis): toda a aplicação menor,
+   pela raiz (tudo é em rem): 13 px, que no Windows a 150% equivale ao tamanho do desktop a 100%.
+   Em rem, e não em px, para o zoom do navegador seguir valendo. */
 @media (min-width: 721px) and (max-height: 820px) {
-  html { font-size: 0.9375rem; }
+  html { font-size: 0.8125rem; }
 }
 img, video, svg, canvas, iframe { max-width: 100%; }
 .page { max-width: 92.5rem; }
@@ -1504,9 +1505,133 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
 .p2-tabela-wrap { position: relative; } /* textos só para leitor de tela (sr-only) ficam presos ao bloco que rola */
 
 /* ════ Popup do Goal Card: responsivo sem alterar o modelo ════
-   O layout do card é o mesmo da tela inteira; o popup só ajusta a escala do conteúdo à altura disponível (zoom
-   calculado em JS, dlgAjustar), para eliminar a barra de rolagem. */
+   O layout do card é o mesmo da tela inteira; o popup ajusta a escala do conteúdo à altura disponível (zoom
+   calculado em JS, dlgAjustar) até 85%. Abaixo disso o popup rola, para o texto continuar legível. */
 .m3-dlg-corpo { padding-bottom: 1rem; }
+/* [RESPONSIVO] Topo do popup compacto (todas as telas): o título e o número vazado na mesma linha e menos
+   respiro em volta da linha do tempo. A ficha é o foco e ganha a altura, sem precisar encolher o texto. */
+.m3-dlg #vistaGoalCard .p2-topo, .m3-dlg #vistaVersoes .p2-topo { padding-top: 1.25rem; padding-bottom: 1rem; }
+.m3-dlg #vistaGoalCard .p2-titulo, .m3-dlg #vistaVersoes .p2-titulo { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 0 0.875rem; line-height: 1; }
+.m3-dlg #vistaGoalCard .p2-titulo .ab-ano, .m3-dlg #vistaVersoes .p2-titulo .ab-ano { font-size: clamp(2.25rem, 1.5rem + 1.4vw, 3.5rem); }
+.m3-dlg #vistaGoalCard .gc-meta-tit { margin-top: 0.375rem; }
+.m3-dlg #vistaGoalCard .gc-chips { margin-top: 0.5rem; }
+.m3-dlg #vistaGoalCard .p2-trilha { margin-top: 0.875rem; }
+/* [RESPONSIVO] Notebook a 125–150% (~1270×590): linhas da ficha um pouco mais baixas, no popup e na tela inteira */
+@media (min-width: 721px) and (max-height: 820px) {
+  .gc-f-linha { padding: 0.625rem 1rem; }
+  .gc-f-rot { padding-top: 0.25rem; }
+  .gc-legenda { padding: 0.5rem 1rem; }
+  .m3-dlg #vistaGoalCard .p2-topo, .m3-dlg #vistaVersoes .p2-topo { padding-top: 1rem; padding-bottom: 0.75rem; }
+}
+/* [RESPONSIVO] Notebook a 125–150% (~1270×590), todas as vistas: piso de leitura para os rótulos miúdos.
+   Com a raiz em 15 px, os rótulos de 0.58–0.66rem caíam para 8,7–9,9 px (cabeçalhos de tabela, selos, tags,
+   datas da jornada, antes/depois do Log). Sobem para 0.75rem (~9,8 px com a raiz em 13 px); o resto do layout não muda. */
+@media (min-width: 721px) and (max-height: 820px) {
+  .ab-fato dt, .jornada-tit, .etapa-tag, .etapa-ok, .chip-parada, .chip-atrasada, .p2-hoje span,
+  .p2-tabela th, .p2-pais td, .p2-etapa-val small, .p2-eixo, .p2-bu, .p2-nivel-nome small,
+  .dd-card-badge, .dd-tag, .gc-rot, .gc-pre, .gc-selo, .cf-jan-atual, .cf-nova, .lg-tipo,
+  .lg-antes small, .lg-depois small, .vs-no-v em, .vs-tag, .vs-tabela thead th small, .vs-flag, .cf-bu-antes,
+  .unit-h, .topnav-menu-cont { font-size: 0.75rem; }
+  .secao-cont, .p2-perda, .cf-ini { font-size: 0.78rem; }
+  /* o max(16px) dos campos é para o iOS não dar zoom; no notebook deixava o seletor de meta maior que o resto */
+  .gc-sel, .gc-in { font-size: 0.875rem; }
+}
+/* ── T14 Aprovações: fila à esquerda, análise da ficha à direita (uma coluna até 1080 px) ── */
+.ap-corpo { display: grid; grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.ap-corpo[hidden] { display: none; }
+.ap-fila { position: sticky; top: calc(var(--barra) + 1rem); max-height: calc(100vh - var(--barra) - 2rem); min-width: 0; }
+.ap-fila-sub { margin: -0.25rem 0 0; font-size: 0.72rem; color: var(--text-soft); }
+.ap-lista { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; padding: 0 0.25rem 0 0; list-style: none; overflow-y: auto; min-height: 0; }
+.ap-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.75rem; width: 100%; padding: 0.625rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--card-line); background: var(--card-bg); color: var(--text); text-align: left; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+.ap-item:hover { border-color: color-mix(in srgb, var(--accent-strong) 45%, var(--card-line)); }
+.ap-item[aria-current="true"] { border-color: var(--accent-strong); box-shadow: inset 3px 0 0 var(--accent-strong); background: color-mix(in srgb, var(--accent-strong) 7%, var(--card-bg)); }
+.ap-item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ap-item-bu { font: 600 0.7rem var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent-strong); }
+.ap-item-bu span { color: var(--text-soft); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.ap-item-tit { grid-column: 1 / -1; margin: 0; font: 600 0.86rem/1.35 var(--font-display); color: var(--ink-strong); overflow-wrap: anywhere; }
+.ap-item-info { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; font-size: 0.72rem; color: var(--text-soft); }
+.ap-idade { justify-self: end; display: inline-flex; align-items: center; gap: 0.25rem; padding: 1px 0.5rem; border-radius: 999px; background: var(--flat-bg); color: var(--flat); font: 600 0.7rem var(--font-ui); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ap-idade.is-parado { background: var(--wait-bg); color: var(--wait); }
+.ap-tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0 0.45rem; border-radius: 999px; border: 1px solid var(--card-line); font: 600 0.66rem var(--font-ui); color: var(--text-soft); }
+.ap-tag.is-resub { border-color: color-mix(in srgb, var(--accent-strong) 40%, transparent); color: var(--accent-strong); }
+.ap-tag.is-rn12 { border-color: var(--wait-line); color: var(--wait); }
+.ap-vazio .ico { font-size: 1.75rem; color: var(--good, var(--accent-strong)); }
+.ap-analise { min-width: 0; outline: none; }
+.ap-analise .estado { background: var(--panel); border-radius: 1.25rem; }
+/* Cabeçalho da ficha em análise */
+.ap-cab { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.75rem 1.5rem; padding: 1rem 1.125rem; border-bottom: 1px solid var(--card-line); }
+.ap-cab-txt { min-width: 0; display: flex; flex-direction: column; gap: 0.375rem; }
+.ap-cab-eyebrow { margin: 0; font: 600 0.7rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-strong); }
+.ap-cab-tit { margin: 0; font: 600 clamp(1.1rem, 0.9rem + 0.6vw, 1.5rem)/1.25 var(--font-display); color: var(--ink-strong); outline: none; }
+.ap-cab-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ap-cab-links .btn { min-height: 2rem; padding-block: 0.25rem; font-size: 0.76rem; }
+.ap-aviso { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0; padding: 0.625rem 1.125rem; border-bottom: 1px solid var(--card-line); background: var(--panel); font-size: 0.78rem; color: var(--text); }
+.ap-aviso .ico { flex-shrink: 0; margin-top: 0.15rem; color: var(--accent-strong); }
+.ap-aviso.is-rn12 { background: var(--wait-bg); }
+.ap-aviso.is-rn12 .ico { color: var(--wait); }
+.ap-prog { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.625rem 1.125rem; border-bottom: 1px solid var(--card-line); font-size: 0.76rem; color: var(--text-soft); }
+.ap-prog-barra { flex: 1 1 8rem; max-width: 14rem; height: 0.375rem; border-radius: 999px; background: var(--flat-bg); overflow: hidden; display: flex; }
+.ap-prog-barra span { height: 100%; }
+.ap-prog-barra .ok { background: var(--st-approved-ink, var(--accent-strong)); }
+.ap-prog-barra .aj { background: var(--wait); }
+.ap-prog .btn-link { margin-left: auto; }
+.btn-link { padding: 0.125rem 0.25rem; border: 0; background: none; color: var(--accent-strong); font: 500 0.74rem var(--font-ui); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.btn-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+/* Linhas da ficha: rótulo, valor (com o antes da versão anterior quando mudou) e revisão OK/Ajustar + comentário */
+.ap-ficha .gc-f-linha { grid-template-columns: minmax(8.5rem, 12rem) minmax(0, 1fr) auto; }
+.ap-ficha .gc-f-linha.is-alterada { box-shadow: inset 3px 0 0 var(--accent-strong); }
+.ap-ficha .gc-f-linha.is-rev-ajustar.is-alterada { box-shadow: inset 3px 0 0 var(--accent-strong), inset 0 0 0 1px var(--wait-line); }
+.ap-rev { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.375rem 0.5rem; }
+.ap-rev .seg button { min-width: 4.25rem; }
+.ap-rev .seg button[data-rev="ajustar"][aria-pressed="true"] { background: var(--wait); color: var(--page); }
+.ap-antes { margin: 0.625rem 0 0; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border-left: 3px solid var(--card-line); background: var(--panel); font-size: 0.8rem; color: var(--text-soft); overflow-wrap: anywhere; }
+.ap-antes b { display: block; margin-bottom: 0.125rem; font: 600 0.7rem var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
+.ap-antes del { text-decoration-color: color-mix(in srgb, var(--text-soft) 60%, transparent); }
+.ap-coms { grid-column: 2 / -1; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.625rem; }
+.ap-coms[hidden] { display: none; }
+.ap-com-novo { display: flex; flex-direction: column; gap: 0.5rem; }
+.ap-com-novo textarea, .ap-decisao textarea { width: 100%; min-height: 4.5rem; resize: vertical; }
+.ap-com-novo .gc-acoes { justify-content: flex-end; }
+/* Decisão no rodapé da ficha */
+.ap-decisao { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem 1.5rem; align-items: start; padding: 1rem 1.125rem; border-top: 1px solid var(--card-line); background: var(--panel); }
+.ap-decisao-txt { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+.ap-decisao-tit { margin: 0; font: 600 0.92rem var(--font-display); color: var(--ink-strong); }
+.ap-decisao-sub { margin: 0; font-size: 0.74rem; color: var(--text-soft); }
+.ap-decisao label { font: italic 500 0.74rem var(--font-ui); color: var(--text-soft); }
+.ap-cont { font-size: 0.7rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.ap-decisao-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 0.625rem; padding-top: 1.75rem; }
+.ap-decisao .gc-confirma { max-width: 24rem; }
+@media (max-width: 1080px) {
+  .ap-corpo { grid-template-columns: minmax(0, 1fr); }
+  .ap-fila { position: static; max-height: none; }
+  .ap-lista { max-height: 22rem; }
+  .ap-decisao { grid-template-columns: minmax(0, 1fr); }
+  .ap-decisao-acoes { align-items: flex-start; padding-top: 0; }
+  .ap-ficha .gc-f-linha { grid-template-columns: minmax(0, 1fr) auto; }
+  .ap-coms { grid-column: 1 / -1; }
+}
+@media (min-width: 721px) and (max-height: 820px) {
+  .ap-item { padding: 0.5rem 0.625rem; }
+  .ap-tag { font-size: 0.75rem; }
+}
+/* Respiro dos títulos (todas as vistas): eyebrow "Vale Base Metals", título, nome vazado e o texto abaixo um pouco
+   mais afastados, para o topo ficar mais leve. No modelo base o título e o vazado quase se tocavam. */
+.ab-eyebrow { margin-bottom: 1.375rem; }
+.ab-titulo .ab-ano, .p2-titulo .ab-ano { margin-top: 0.625rem; }
+.ab-lead { margin-top: 1.75rem; }
+.ab-fatos { margin-top: 2rem; }
+/* Nome da BU vazado (BU goals): nomes longos ("Onça Puma", "Matsusaka") ocupavam meia tela e o "ç" encostava
+   na jornada. Menor, com a altura da linha inteira para as letras com descendente, e mais espaço até a jornada. */
+#vistaMetas .p2-titulo .ab-ano { font-size: clamp(2.75rem, 1.6rem + 2.6vw, 5.25rem); line-height: 1; letter-spacing: -.035em; }
+#vistaMetas .p2-trilha { margin-top: 2.5rem; }
+@media (min-width: 721px) and (max-height: 820px) {
+  .ab-eyebrow { margin-bottom: 0.875rem; }
+  .ab-titulo .ab-ano, .p2-titulo .ab-ano { margin-top: 0.5rem; }
+  .ab-lead { margin-top: 1.125rem; }
+  .ab-fatos { margin-top: 1.375rem; }
+  #vistaMetas .p2-titulo .ab-ano { font-size: 3.5rem; }
+  #vistaMetas .p2-trilha { margin-top: 1.75rem; }
+}
 
 </style>
 </head>
@@ -2198,6 +2323,80 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
     </section>
   </section>
 
+  <!-- ═══ T14 · Aprovações (só o grupo de aprovação, AC-08): fila das fichas Em aprovação e análise por seção ═══ -->
+  <section class="vista" id="vistaAprov" hidden aria-labelledby="titAprov">
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="cf.eyebrow">Administração</span></p>
+        <h2 class="p2-titulo" id="titAprov"><span class="ab-nome" data-i18n="ap.titulo">Aprovações</span></h2>
+      </div>
+      <div class="topo-acoes">
+        <button type="button" class="dash-acao" id="apAtualizar" aria-label="Atualizar fila" title="Atualizar fila" data-i18n-aria="ap.atualizar" data-i18n-title="ap.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <!-- Filtros no padrão COO, guardados na URL (#aprovacoes?pais=&bu=&idade=&card=) -->
+    <div class="filters p2-filtro ap-filtros">
+      <div class="filter">
+        <span class="filter-label" id="apLblUnid">Business Unit:</span>
+        <div class="unit" id="apUnit">
+          <button type="button" class="unit-trigger" id="apUnitTrigger" aria-expanded="false" aria-haspopup="true" aria-controls="apUnitPop" aria-labelledby="apLblUnid apUnitTrigger">
+            <span class="unit-pais" id="apUnitPais"></span><span class="unit-sep" id="apUnitSep">›</span><span class="unit-site" id="apUnitSite"></span>
+            <svg class="ico unit-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+          </button>
+          <div class="unit-pop" id="apUnitPop" hidden>
+            <div class="unit-col"><span class="unit-h" data-i18n="f.pais">País</span><div class="unit-list" id="apPaises"></div></div>
+            <div class="unit-col"><span class="unit-h">Business Unit</span><div class="unit-list" id="apBus"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter">
+        <span class="filter-label" id="apLblIdade" data-i18n="ap.idade">Na fila há:</span>
+        <div class="seg" id="apIdade" role="group" aria-labelledby="apLblIdade"></div>
+      </div>
+    </div>
+
+    <div class="ap-corpo" id="apCorpo">
+      <section class="secao ap-fila" aria-labelledby="apTitFila">
+        <div class="secao-head">
+          <h3 class="secao-tit" id="apTitFila" data-i18n="ap.fila">Fila de aprovação</h3>
+          <span class="secao-cont" id="apCont"></span>
+        </div>
+        <p class="ap-fila-sub" id="apFilaSub"></p>
+        <ol class="ap-lista" id="apLista" aria-labelledby="apTitFila"></ol>
+        <div class="estado ap-vazio" id="apVazio" hidden>
+          <svg class="ico" aria-hidden="true"><use href="#i-st-aprovado"/></svg>
+          <p class="estado-tit" id="apVazioTit"></p>
+          <p class="estado-txt" id="apVazioTxt"></p>
+        </div>
+        <p class="updated" id="apAtualizado"></p>
+      </section>
+      <section class="ap-analise" id="apAnalise" aria-labelledby="apTitCard" tabindex="-1">
+        <div id="apFicha"></div>
+      </section>
+    </div>
+
+    <div class="estado estado-erro" id="apErro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="ap.erroTit">Não foi possível carregar a fila de aprovação</p>
+      <p class="estado-txt" id="apErroTxt"></p>
+      <button type="button" class="btn" id="apTentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <!-- T12 · Sem acesso: a T14 é exclusiva do grupo de aprovação (AC-08, CA-19) -->
+    <section class="acesso-bloqueio" id="apSemAcesso" role="alert" aria-labelledby="apAcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="apAcTit" tabindex="-1" data-i18n="t12.tit">Acesso não autorizado</h2>
+        <p data-i18n="t12.txt">Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#inicio" data-i18n="t12.inicio">Ir para o Início</a>
+        </div>
+      </div>
+    </section>
+  </section>
+
   <section class="vista" id="vistaConstrucao" hidden aria-labelledby="titConstr">
     <div class="secao">
       <div class="secao-head">
@@ -2454,7 +2653,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'Sem acesso ao AIP Goals', 'est.semAcessoTxt': 'Seu usuário não tem papel no ciclo ativo. Fale com o administrador do ciclo (P&CI).',
       'est.construcaoTit': 'Tela em construção', 'est.construcaoTxt': 'Esta tela faz parte do MVP e ainda não foi publicada.',
       'est.voltar': 'Voltar para o início',
-      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU e administrador", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Obrigatório", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.obrigatorios': "Campos obrigatórios", 'gc.deObrig': "de {t} preenchidos", 'gc.faltam': "Falta preencher:", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os campos obrigatórios preenchidos.", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.obrigatorios': "Há campos obrigatórios sem preencher.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU e pelo administrador; decisão só pelo grupo de aprovação.", 'gc.selo.desdobramento': 'Desdobramento', 'gc.selo.ciclo': 'Padrão do ciclo', 'gc.polaridade': 'Direção da meta', 'gc.leg.travado': 'Vem do desdobramento ou do ciclo (somente leitura)', 'gc.leg.bu': 'Preenchido pela BU', 'gc.leg.obrig': 'obrigatório', 'gc.meta': 'Meta:', 'gc.ant': 'Meta anterior', 'gc.prox': 'Próxima meta', 'gc.acao.salvar': 'Salvar rascunho', 'gc.salvoToast': 'Rascunho salvo neste navegador (simulação, nada foi gravado)', 'gc.verComs': '{n} comentário(s) em {s} — ver', 'gc.comsDe': 'Comentários · {s}', 'gc.fechar': 'Fechar', 'gc.leitura.rascunho': 'Rascunho: só os contribuidores da BU e o administrador editam.', 'gc.leitura.em_revisao': 'Devolvido para ajuste: só os contribuidores da BU e o administrador editam.', 'gc.leitura.em_aprovacao': 'Em aprovação: a decisão é feita pelo grupo de aprovação, na fila de aprovação.', 'gc.leitura.aprovado': 'Versão oficial: travada (reabertura só na janela inicial do ciclo, RN-17).', 'gc.leitura.negado': 'Meta negada: só o administrador reabre.', 'gc.ph.ruler.min': 'Mín.', 'gc.ph.ruler.meta': 'Meta', 'gc.ph.ruler.exc': 'Exc.', 'gc.ph.objective': 'Descreva o que a meta quer alcançar', 'gc.ph.formula': 'Ex.: produção realizada ÷ produção orçada', 'gc.ph.area.area': 'Área responsável', 'gc.ph.area.responsavel': 'Nome do responsável', 'gc.ph.evidence': 'Documento ou relatório que comprova o resultado', 'gc.ph.exceptions.bu': 'Exceções específicas da BU (opcional)', 'nav.aprovacoes': 'Aprovações', 'tela.aprovacoes': 'Aprovações', "gc.voce": "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)",
+      'gc.linhaAria': "Linha do tempo do Goal Card", 'gc.exemplo': "Dados de exemplo — ações validadas e simuladas, nada é gravado (P-12)", 'gc.atualizar': "Atualizar Goal Card", 'gc.erroTit': "Não foi possível carregar o Goal Card", 'gc.naoEncontradoTit': "Goal Card não encontrado", 'gc.naoEncontradoTxt': "O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.", 'gc.irMetas': "Ir para Metas da BU", 'gc.voltar': "Metas da BU {b}", 'gc.modo.edicao': "Edição — contribuidores da BU e administrador", 'gc.modo.analise': "Análise — grupo de aprovação", 'gc.modo.leitura': "Somente leitura", 'gc.pol.maior': "Maior é melhor", 'gc.pol.menor': "Menor é melhor", 'gc.grupoAprov': "Grupo de aprovação (nível único)", 'gc.passo.rascunho': "Rascunho", 'gc.passo.submetido': "Submetido", 'gc.passo.em_aprovacao': "Em aprovação", 'gc.passo.aprovado': "Aprovado", 'gc.passo.negado': "Negado", 'gc.passo.em_revisao': "Devolvido para ajuste", 'gc.peso': "Peso", 'gc.origem': "Origem", 'gc.desdobramento': "Desdobramento do COO (somente leitura)", 'gc.ajustar': "Ajustar", 'gc.alterada': "Alterada desde a v{v}", 'gc.completa': "Completa", 'gc.pendente': "Obrigatório", 'gc.revisaoAria': "Revisão da seção {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Ajustar", 'gc.com1': "1 comentário", 'gc.coms': "{n} comentários", 'gc.semCom': "Comentar", 'gc.naoPreenchido': "Não preenchido", 'gc.caracteres': "{n} caracteres", 'gc.regua.min': "Mín.", 'gc.regua.meta': "Meta", 'gc.regua.exc': "Exc.", 'gc.area': "Área", 'gc.responsavel': "Responsável", 'gc.textoPadrao': "Texto padrão do ciclo (não editável)", 'gc.excecoesBu': "Exceções da BU", 'gc.papel.aprovador': "Grupo de aprovação", 'gc.papel.contribuidor': "Contribuidor", 'gc.novoCom': "Escreva um comentário nesta seção", 'gc.publicar': "Publicar", 'gc.semPermCom': "O grupo de consulta não comenta.", 'gc.obrigatorios': "Campos obrigatórios", 'gc.deObrig': "de {t} preenchidos", 'gc.faltam': "Falta preencher:", 'gc.de': "de {t} itens", 'gc.salvoLocal': "Salvo às {h} neste navegador", 'gc.semAlteracao': "Sem alterações", 'gc.submeterDica': "Submeter fica ativo com todos os campos obrigatórios preenchidos.", 'gc.decisao': "Decisão", 'gc.decisaoSub': "Marque cada seção como OK ou Ajustar. A decisão do grupo é final.", 'gc.semAnalise': "sem análise", 'gc.alteradasResumo': "Alteradas desde a v{v}: {l}", 'gc.comentario': "Comentário da decisão", 'gc.minimo': "Mínimo de {n} caracteres para devolver ou negar", 'gc.erro.comentario': "Escreva um comentário com pelo menos {n} caracteres.", 'gc.erro.secaoAjustar': "Para devolver, marque ao menos uma seção como Ajustar.", 'gc.erro.obrigatorios': "Há campos obrigatórios sem preencher.", 'gc.acao.submeter': "Submeter", 'gc.acao.aprovar': "Aprovar", 'gc.acao.devolver': "Devolver", 'gc.acao.negar': "Negar", 'gc.confirmar': "Confirmar", 'gc.cancelar': "Cancelar", 'gc.conf.submeter.tit': "Submeter o Goal Card?", 'gc.conf.submeter.txt': "Gera a versão v{v} e envia ao grupo de aprovação.", 'gc.conf.aprovar.tit': "Aprovar o Goal Card?", 'gc.conf.aprovar.txt': "A v{v} vira a versão oficial e o card fica travado.", 'gc.conf.devolver.tit': "Devolver para ajuste?", 'gc.conf.devolver.txt': "O card volta aos contribuidores nas seções marcadas Ajustar.", 'gc.conf.negar.tit': "Negar a meta?", 'gc.conf.negar.txt': "A meta não será usada no ciclo. Só o administrador reabre.", 'gc.feito.submeter': "Goal Card submetido (simulação, nada foi gravado)", 'gc.feito.aprovar': "Goal Card aprovado (simulação, nada foi gravado)", 'gc.feito.devolver': "Goal Card devolvido (simulação, nada foi gravado)", 'gc.feito.negar': "Meta negada (simulação, nada foi gravado)", 'gc.resumo': "Resumo", 'gc.somenteLeitura': "Somente leitura", 'gc.submetidoPor': "Submetido por", 'gc.rn12': "Você editou ou submeteu este card: a decisão fica com os demais membros do grupo (RN-12).", 'gc.leituraDica': "Edição só pelos contribuidores da BU e pelo administrador; decisão só pelo grupo de aprovação.", 'gc.selo.desdobramento': 'Desdobramento', 'gc.selo.ciclo': 'Padrão do ciclo', 'gc.polaridade': 'Direção da meta', 'gc.leg.travado': 'Vem do desdobramento ou do ciclo (somente leitura)', 'gc.leg.bu': 'Preenchido pela BU', 'gc.leg.obrig': 'obrigatório', 'gc.meta': 'Meta:', 'gc.ant': 'Meta anterior', 'gc.prox': 'Próxima meta', 'gc.acao.salvar': 'Salvar rascunho', 'gc.salvoToast': 'Rascunho salvo neste navegador (simulação, nada foi gravado)', 'gc.verComs': '{n} comentário(s) em {s} — ver', 'gc.comsDe': 'Comentários · {s}', 'gc.fechar': 'Fechar', 'gc.leitura.rascunho': 'Rascunho: só os contribuidores da BU e o administrador editam.', 'gc.leitura.em_revisao': 'Devolvido para ajuste: só os contribuidores da BU e o administrador editam.', 'gc.leitura.em_aprovacao': 'Em aprovação: a decisão é feita pelo grupo de aprovação, na fila de aprovação.', 'gc.leitura.aprovado': 'Versão oficial: travada (reabertura só na janela inicial do ciclo, RN-17).', 'gc.leitura.negado': 'Meta negada: só o administrador reabre.', 'gc.ph.ruler.min': 'Mín.', 'gc.ph.ruler.meta': 'Meta', 'gc.ph.ruler.exc': 'Exc.', 'gc.ph.objective': 'Descreva o que a meta quer alcançar', 'gc.ph.formula': 'Ex.: produção realizada ÷ produção orçada', 'gc.ph.area.area': 'Área responsável', 'gc.ph.area.responsavel': 'Nome do responsável', 'gc.ph.evidence': 'Documento ou relatório que comprova o resultado', 'gc.ph.exceptions.bu': 'Exceções específicas da BU (opcional)', 'nav.aprovacoes': 'Aprovações', 'tela.aprovacoes': 'Aprovações', "gc.voce": "Você", 'gc.comPublicado': "Comentário publicado (simulação, nada foi gravado)", 'ap.titulo': 'Aprovações', 'ap.atualizar': 'Atualizar fila', 'ap.idade': 'Na fila há:', 'ap.idade.todas': 'Qualquer tempo', 'ap.idade.3': '3+ dias úteis', 'ap.idade.5': '5+ dias úteis', 'ap.fila': 'Fila de aprovação', 'ap.filaSub': 'Os mais antigos primeiro · qualquer membro do grupo decide (RN-06)', 'ap.erroTit': 'Não foi possível carregar a fila de aprovação', 'ap.vazioTit': 'Nenhum Goal Card aguardando decisão', 'ap.vazioTxt': 'Quando uma BU submeter um Goal Card, ele aparece aqui.', 'ap.vazioFiltroTxt': 'Nada na fila com este filtro. Troque a BU ou o tempo na fila.', 'ap.dias': '{n} d', 'ap.diasFull': 'Na fila há {n} dias úteis', 'ap.hoje': 'hoje', 'ap.resub': 'Resubmissão', 'ap.voceEditou': 'Você editou', 'ap.rn12Curto': 'Você editou ou submeteu este card: decide outro membro do grupo (RN-12)', 'ap.selecione': 'Selecione um Goal Card na fila para analisar.', 'ap.carregando': 'Carregando o Goal Card…', 'ap.erroCard': 'Não foi possível carregar este Goal Card.', 'ap.abrirCard': 'Abrir Goal Card', 'ap.historico': 'Histórico', 'ap.progresso': '{n} de {t} seções analisadas', 'ap.nAjustar': '{n} para ajustar', 'ap.antes': 'Antes (v{v})', 'ap.alteradas': 'Alteradas desde a v{v}: {l}. As seções alteradas estão destacadas.', 'ap.semAlteracao': 'Primeira submissão (v1): não há versão anterior para comparar.', 'ap.secaoRev': 'Revisão de {s}', 'ap.comentar': 'Comentar', 'ap.comentarSecao': 'Comentar em {s}', 'ap.novoCom': 'Comentário nesta seção (visível para a BU)', 'ap.publicar': 'Publicar', 'ap.cancelar': 'Cancelar', 'ap.decisaoTit': 'Decisão do grupo de aprovação', 'ap.decisaoSub': 'Marque cada seção como OK ou Ajustar. Devolver exige ao menos uma seção Ajustar; devolver e negar exigem comentário. A decisão é final (nível único).', 'ap.restantes': '{n} restantes na fila', 'ap.restante1': '1 restante na fila', 'ap.filaVazia': 'Fila concluída', 'ap.submetidoPor': 'Submetido por {p}', 'ap.desde': 'desde {d}', 'ap.peso': '{n} pts', 'ap.marcarTodas': 'Marcar as não analisadas como OK', 'ap.limpar': 'Limpar revisão',
       'nav.desdobramento': 'Desdobramento', 'tela.desdobramento': 'Desdobramento', 'ini.dDesd': 'Do scorecard do COO às metas e pesos de cada Business Unit.',
       'dd.titulo': 'Desdobramento', 'dd.nivel1': 'Scorecard do COO', 'dd.atualizar': 'Atualizar desdobramento', 'dd.matriz': 'Desdobramento para as Business Units',
       'dd.exemplo': 'Dados de exemplo — estrutura do material de referência 2027 (draft); situação dos cards simulada',
@@ -2549,7 +2748,7 @@ window.VBMSetup = (function () {
       'est.semAcessoTit': 'No access to AIP Goals', 'est.semAcessoTxt': 'Your user has no role in the active cycle. Contact the cycle administrator (P&CI).',
       'est.construcaoTit': 'Screen under construction', 'est.construcaoTxt': 'This screen is part of the MVP and has not been published yet.',
       'est.voltar': 'Back to home',
-      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors and administrator", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Required", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.obrigatorios': "Required fields", 'gc.deObrig': "of {t} filled in", 'gc.faltam': "Still to fill in:", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every required field is filled in.", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.obrigatorios': "There are required fields not filled in.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors and the administrator edit; only the approval group decides.", 'gc.selo.desdobramento': 'Cascade', 'gc.selo.ciclo': 'Cycle standard', 'gc.polaridade': 'Goal direction', 'gc.leg.travado': 'Comes from the cascade or the cycle (read only)', 'gc.leg.bu': 'Filled in by the BU', 'gc.leg.obrig': 'required', 'gc.meta': 'Goal:', 'gc.ant': 'Previous goal', 'gc.prox': 'Next goal', 'gc.acao.salvar': 'Save draft', 'gc.salvoToast': 'Draft saved in this browser (simulation, nothing saved)', 'gc.verComs': '{n} comment(s) on {s} — view', 'gc.comsDe': 'Comments · {s}', 'gc.fechar': 'Close', 'gc.leitura.rascunho': 'Draft: only the BU contributors and the administrator edit.', 'gc.leitura.em_revisao': 'Returned for changes: only the BU contributors and the administrator edit.', 'gc.leitura.em_aprovacao': 'Pending approval: the approval group decides in the approval queue.', 'gc.leitura.aprovado': 'Official version: locked (reopening only in the initial cycle window, RN-17).', 'gc.leitura.negado': 'Goal denied: only the administrator reopens.', 'gc.ph.ruler.min': 'Min', 'gc.ph.ruler.meta': 'Target', 'gc.ph.ruler.exc': 'Exc.', 'gc.ph.objective': 'Describe what the goal aims to achieve', 'gc.ph.formula': 'E.g. actual production ÷ budgeted production', 'gc.ph.area.area': 'Responsible area', 'gc.ph.area.responsavel': 'Owner name', 'gc.ph.evidence': 'Document or report that proves the result', 'gc.ph.exceptions.bu': 'BU-specific exceptions (optional)', 'nav.aprovacoes': 'Approvals', 'tela.aprovacoes': 'Approvals', "gc.voce": "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)",
+      'gc.linhaAria': "Goal Card timeline", 'gc.exemplo': "Sample data — actions validated and simulated, nothing is saved (P-12)", 'gc.atualizar': "Refresh Goal Card", 'gc.erroTit': "Could not load the Goal Card", 'gc.naoEncontradoTit': "Goal Card not found", 'gc.naoEncontradoTxt': "The address does not match a Goal Card of the active cycle, or your user has no role in the cycle.", 'gc.irMetas': "Go to BU goals", 'gc.voltar': "{b} goals", 'gc.modo.edicao': "Editing — BU contributors and administrator", 'gc.modo.analise': "Review — approval group", 'gc.modo.leitura': "Read only", 'gc.pol.maior': "Higher is better", 'gc.pol.menor': "Lower is better", 'gc.grupoAprov': "Approval group (single level)", 'gc.passo.rascunho': "Draft", 'gc.passo.submetido': "Submitted", 'gc.passo.em_aprovacao': "Pending approval", 'gc.passo.aprovado': "Approved", 'gc.passo.negado': "Denied", 'gc.passo.em_revisao': "Returned for changes", 'gc.peso': "Weight", 'gc.origem': "Source", 'gc.desdobramento': "COO cascade (read only)", 'gc.ajustar': "Adjust", 'gc.alterada': "Changed since v{v}", 'gc.completa': "Complete", 'gc.pendente': "Required", 'gc.revisaoAria': "Review of section {s}", 'gc.rev.ok': "OK", 'gc.rev.ajustar': "Adjust", 'gc.com1': "1 comment", 'gc.coms': "{n} comments", 'gc.semCom': "Comment", 'gc.naoPreenchido': "Not filled in", 'gc.caracteres': "{n} characters", 'gc.regua.min': "Min", 'gc.regua.meta': "Target", 'gc.regua.exc': "Exc.", 'gc.area': "Area", 'gc.responsavel': "Owner", 'gc.textoPadrao': "Standard cycle text (not editable)", 'gc.excecoesBu': "BU exceptions", 'gc.papel.aprovador': "Approval group", 'gc.papel.contribuidor': "Contributor", 'gc.novoCom': "Write a comment on this section", 'gc.publicar': "Post", 'gc.semPermCom': "The read-only group does not comment.", 'gc.obrigatorios': "Required fields", 'gc.deObrig': "of {t} filled in", 'gc.faltam': "Still to fill in:", 'gc.de': "of {t} items", 'gc.salvoLocal': "Saved at {h} in this browser", 'gc.semAlteracao': "No changes", 'gc.submeterDica': "Submit becomes active when every required field is filled in.", 'gc.decisao': "Decision", 'gc.decisaoSub': "Mark each section as OK or Adjust. The group decision is final.", 'gc.semAnalise': "not reviewed", 'gc.alteradasResumo': "Changed since v{v}: {l}", 'gc.comentario': "Decision comment", 'gc.minimo': "At least {n} characters to return or deny", 'gc.erro.comentario': "Write a comment with at least {n} characters.", 'gc.erro.secaoAjustar': "To return, mark at least one section as Adjust.", 'gc.erro.obrigatorios': "There are required fields not filled in.", 'gc.acao.submeter': "Submit", 'gc.acao.aprovar': "Approve", 'gc.acao.devolver': "Return", 'gc.acao.negar': "Deny", 'gc.confirmar': "Confirm", 'gc.cancelar': "Cancel", 'gc.conf.submeter.tit': "Submit the Goal Card?", 'gc.conf.submeter.txt': "Creates version v{v} and sends it to the approval group.", 'gc.conf.aprovar.tit': "Approve the Goal Card?", 'gc.conf.aprovar.txt': "v{v} becomes the official version and the card is locked.", 'gc.conf.devolver.tit': "Return for changes?", 'gc.conf.devolver.txt': "The card goes back to the contributors on the sections marked Adjust.", 'gc.conf.negar.tit': "Deny the goal?", 'gc.conf.negar.txt': "The goal will not be used in the cycle. Only the administrator can reopen it.", 'gc.feito.submeter': "Goal Card submitted (simulation, nothing saved)", 'gc.feito.aprovar': "Goal Card approved (simulation, nothing saved)", 'gc.feito.devolver': "Goal Card returned (simulation, nothing saved)", 'gc.feito.negar': "Goal denied (simulation, nothing saved)", 'gc.resumo': "Summary", 'gc.somenteLeitura': "Read only", 'gc.submetidoPor': "Submitted by", 'gc.rn12': "You edited or submitted this card: the decision stays with the other group members (RN-12).", 'gc.leituraDica': "Only BU contributors and the administrator edit; only the approval group decides.", 'gc.selo.desdobramento': 'Cascade', 'gc.selo.ciclo': 'Cycle standard', 'gc.polaridade': 'Goal direction', 'gc.leg.travado': 'Comes from the cascade or the cycle (read only)', 'gc.leg.bu': 'Filled in by the BU', 'gc.leg.obrig': 'required', 'gc.meta': 'Goal:', 'gc.ant': 'Previous goal', 'gc.prox': 'Next goal', 'gc.acao.salvar': 'Save draft', 'gc.salvoToast': 'Draft saved in this browser (simulation, nothing saved)', 'gc.verComs': '{n} comment(s) on {s} — view', 'gc.comsDe': 'Comments · {s}', 'gc.fechar': 'Close', 'gc.leitura.rascunho': 'Draft: only the BU contributors and the administrator edit.', 'gc.leitura.em_revisao': 'Returned for changes: only the BU contributors and the administrator edit.', 'gc.leitura.em_aprovacao': 'Pending approval: the approval group decides in the approval queue.', 'gc.leitura.aprovado': 'Official version: locked (reopening only in the initial cycle window, RN-17).', 'gc.leitura.negado': 'Goal denied: only the administrator reopens.', 'gc.ph.ruler.min': 'Min', 'gc.ph.ruler.meta': 'Target', 'gc.ph.ruler.exc': 'Exc.', 'gc.ph.objective': 'Describe what the goal aims to achieve', 'gc.ph.formula': 'E.g. actual production ÷ budgeted production', 'gc.ph.area.area': 'Responsible area', 'gc.ph.area.responsavel': 'Owner name', 'gc.ph.evidence': 'Document or report that proves the result', 'gc.ph.exceptions.bu': 'BU-specific exceptions (optional)', 'nav.aprovacoes': 'Approvals', 'tela.aprovacoes': 'Approvals', "gc.voce": "You", 'gc.comPublicado': "Comment posted (simulation, nothing saved)", 'ap.titulo': 'Approvals', 'ap.atualizar': 'Refresh queue', 'ap.idade': 'In the queue for:', 'ap.idade.todas': 'Any time', 'ap.idade.3': '3+ business days', 'ap.idade.5': '5+ business days', 'ap.fila': 'Approval queue', 'ap.filaSub': 'Oldest first · any group member decides (RN-06)', 'ap.erroTit': 'Could not load the approval queue', 'ap.vazioTit': 'No Goal Card waiting for a decision', 'ap.vazioTxt': 'When a BU submits a Goal Card, it shows up here.', 'ap.vazioFiltroTxt': 'Nothing in the queue with this filter. Change the BU or the time in the queue.', 'ap.dias': '{n} d', 'ap.diasFull': 'In the queue for {n} business days', 'ap.hoje': 'today', 'ap.resub': 'Resubmission', 'ap.voceEditou': 'You edited', 'ap.rn12Curto': 'You edited or submitted this card: another group member decides (RN-12)', 'ap.selecione': 'Select a Goal Card in the queue to review.', 'ap.carregando': 'Loading the Goal Card…', 'ap.erroCard': 'Could not load this Goal Card.', 'ap.abrirCard': 'Open Goal Card', 'ap.historico': 'History', 'ap.progresso': '{n} of {t} sections reviewed', 'ap.nAjustar': '{n} to adjust', 'ap.antes': 'Before (v{v})', 'ap.alteradas': 'Changed since v{v}: {l}. Changed sections are highlighted.', 'ap.semAlteracao': 'First submission (v1): there is no previous version to compare.', 'ap.secaoRev': 'Review of {s}', 'ap.comentar': 'Comment', 'ap.comentarSecao': 'Comment on {s}', 'ap.novoCom': 'Comment on this section (visible to the BU)', 'ap.publicar': 'Post', 'ap.cancelar': 'Cancel', 'ap.decisaoTit': 'Approval group decision', 'ap.decisaoSub': 'Mark each section as OK or Adjust. Returning needs at least one Adjust section; returning and denying need a comment. The decision is final (single level).', 'ap.restantes': '{n} left in the queue', 'ap.restante1': '1 left in the queue', 'ap.filaVazia': 'Queue completed', 'ap.submetidoPor': 'Submitted by {p}', 'ap.desde': 'since {d}', 'ap.peso': '{n} pts', 'ap.marcarTodas': 'Mark unreviewed sections as OK', 'ap.limpar': 'Clear review',
       'nav.desdobramento': 'Cascade', 'tela.desdobramento': 'Goal cascade', 'ini.dDesd': 'From the COO scorecard to the goals and weights of each Business Unit.',
       'dd.titulo': 'Goal cascade', 'dd.nivel1': 'COO scorecard', 'dd.atualizar': 'Refresh cascade', 'dd.matriz': 'Cascade to the Business Units',
       'dd.exemplo': 'Sample data — structure from the 2027 reference material (draft); card status simulated',
@@ -3017,8 +3216,10 @@ window.VBMSetup = (function () {
     $('m3Dlg').scrollTop = 0;
     dlgAjustar();
   }
-  // Ajusta o conteúdo do popup à altura disponível (sem barra de rolagem): mede sem escala e aplica zoom, com mínimo de 50%.
+  // Ajusta o conteúdo do popup à altura disponível: mede sem escala e aplica zoom, com mínimo de 85% (DLG_ZOOM_MIN).
+  // Abaixo disso o texto fica pequeno demais para ler (no notebook a 150% chegava a 50%): o popup rola na vertical.
   // O Histórico (lista longa, paginada) não é escalado: rola normalmente.
+  var DLG_ZOOM_MIN = 0.85;
   function dlgAjustar() {
     var dlg = $('m3Dlg'); if (!dlg.open) return;
     ['vistaGoalCard', 'vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).style.zoom = ''; });
@@ -3026,13 +3227,13 @@ window.VBMSetup = (function () {
     if (!v) return;
     var topo = v.getBoundingClientRect().top - dlg.getBoundingClientRect().top + dlg.scrollTop;
     var livre = dlg.clientHeight - topo - 16, alto = v.scrollHeight;
-    var z = alto > livre ? Math.max(0.5, livre / alto) : 1;
+    var z = alto > livre ? Math.max(DLG_ZOOM_MIN, livre / alto) : 1;
     // Repete até caber: com menos escala o texto quebra menos e a altura muda
-    for (var i = 0; i < 4 && z > 0.5; i++) {
+    for (var i = 0; i < 4 && z > DLG_ZOOM_MIN; i++) {
       v.style.zoom = String(Math.floor(z * 1000) / 1000);
       var sobra = dlg.scrollHeight - dlg.clientHeight;
       if (sobra <= 1) break;
-      z = Math.max(0.5, z * (dlg.clientHeight - topo * z - 16) / (dlg.scrollHeight - topo * z - 16));
+      z = Math.max(DLG_ZOOM_MIN, z * (dlg.clientHeight - topo * z - 16) / (dlg.scrollHeight - topo * z - 16));
     }
     v.style.zoom = z < 1 ? String(Math.floor(z * 1000) / 1000) : '';
   }
@@ -3687,8 +3888,7 @@ window.VBMSetup = (function () {
         var acoes = editando
           ? '<button type="button" class="btn cf-mini" data-bu-ok="' + i + '">' + esc(S.t('cf.ok')) + '</button>'
           : '<button type="button" class="dash-acao" data-bu-editar="' + i + '" title="' + esc(S.t('cf.editar')) + '" aria-label="' + esc(S.t('cf.editarBu', { b: b.sigla })) + '">' + ico('i-pen') + '</button>' +
-            '<button type="button" class="dash-acao cf-excluir" data-bu-excluir="' + i + '"' + (podeExcluir ? '' : ' disabled') + ' title="' + esc(podeExcluir ? S.t('cf.excluir') : S.t('cf.naoExclui', { n: b.cardsSubmetidos })) + '" aria-label="' + esc(S.t('cf.excluirBu', { b: b.sigla })) + '">' + ico('i-x') + '</button>' +
-            '<a class="btn btn-sec cf-mini" href="#metas?bu=' + encodeURIComponent(b.sigla) + '">' + esc(S.t('cf.verMetas')) + ico('i-arrow') + '</a>';
+            '<button type="button" class="dash-acao cf-excluir" data-bu-excluir="' + i + '"' + (podeExcluir ? '' : ' disabled') + ' title="' + esc(podeExcluir ? S.t('cf.excluir') : S.t('cf.naoExclui', { n: b.cardsSubmetidos })) + '" aria-label="' + esc(S.t('cf.excluirBu', { b: b.sigla })) + '">' + ico('i-x') + '</button>';
         return '<tr' + (b.ativa ? '' : ' class="is-inativa"') + '><th scope="row" class="cf-bu">' + nome + ((eN || eP) ? '<span class="cf-erro">' + esc(eN || eP) + '</span>' : '') + '</th>' +
           '<td class="m3-centro"><button type="button" class="cf-link" data-ir-grupo="contribuidor" data-bu="' + esc(b.sigla) + '">' + nC + '</button></td>' +
           '<td class="m3-centro"><button type="button" class="cf-link" data-ir-grupo="consulta" data-bu="' + esc(b.sigla) + '">' + nQ + '</button></td>' +
@@ -4340,6 +4540,330 @@ window.VBMSetup = (function () {
   $('vsAtualizar').addEventListener('click', function () { vsCarregar(true); });
   $('vsTentar').addEventListener('click', function () { vsCarregar(true); });
 
+  // ═══ T14 · Aprovações (só o grupo de aprovação, AC-08) ═══
+  // Dados: GET api/aprovacoes?pais=&bu=&idade= (fila Em aprovação, mais antigos primeiro) e, para a ficha em análise,
+  // GET api/goal-card?card= e, nas resubmissões, GET api/versoes?card= (o "antes" de cada seção alterada, RN-10).
+  // Revisão por seção (OK / Ajustar / sem análise), comentário por seção (POST api/goal-card/comentario, RN-13) e
+  // decisão Aprovar / Devolver / Negar com confirmação no segundo clique (POST api/goal-card/decisao: RN-06, RN-08, RN-09, RN-12).
+  // Estado na URL (#aprovacoes?pais=&bu=&idade=&card=). Escritas validadas no servidor e simuladas até o P-12.
+  var AP_IDADES = ['todas', '3', '5'];
+  var ap = { dados: null, filtro: { pais: '', bu: '', idade: 'todas' }, sel: '', card: null, antes: null, carregandoCard: false, erroCard: false,
+    revisao: {}, abertos: {}, rascunhos: {}, comentario: '', confirma: '', erros: [], enviando: false, decididos: {}, pedido: 0 };
+  function apLerFiltro() {
+    var q = new URLSearchParams((location.hash.split('?')[1]) || '');
+    var idade = q.get('idade') || 'todas';
+    ap.filtro = { pais: q.get('pais') || '', bu: q.get('bu') || '', idade: AP_IDADES.indexOf(idade) >= 0 ? idade : 'todas' };
+    var c = q.get('card') || '';
+    if (c && c !== ap.sel) { ap.sel = c; ap.card = null; }
+  }
+  function apGravar() {
+    var q = new URLSearchParams();
+    if (ap.filtro.pais) q.set('pais', ap.filtro.pais);
+    if (ap.filtro.bu) q.set('bu', ap.filtro.bu);
+    if (ap.filtro.idade !== 'todas') q.set('idade', ap.filtro.idade);
+    if (ap.sel) q.set('card', ap.sel);
+    var alvo = '#aprovacoes' + (q.toString() ? '?' + q.toString() : '');
+    if (location.hash !== alvo) history.replaceState(null, '', location.pathname + location.search + alvo);
+  }
+  function apEstado(qual) {
+    $('apCorpo').hidden = qual !== 'ok'; $('apErro').hidden = qual !== 'erro'; $('apSemAcesso').hidden = qual !== 'acesso';
+    document.querySelector('#vistaAprov .ap-filtros').hidden = qual === 'acesso';
+  }
+  function apBuscar(url) {
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    return fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        clearTimeout(timer);
+        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      }, function (err) { clearTimeout(timer); throw err; });
+  }
+  function apCarregar(fresco) {
+    var f = ap.filtro, q = new URLSearchParams();
+    if (f.pais) q.set('pais', f.pais); if (f.bu) q.set('bu', f.bu); if (f.idade !== 'todas') q.set('idade', f.idade);
+    return apBuscar('api/aprovacoes' + (q.toString() ? '?' + q.toString() : ''))
+      .then(function (j) { ap.dados = j; if (fresco) { ap.decididos = {}; toast(S.t('t01.atualizada')); } apRender(); })
+      .catch(function (err) {
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] aprovacoes:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return apEstado('acesso');
+        $('apErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        apEstado('erro');
+      });
+  }
+  // Fila sem os cards já decididos nesta sessão (RN-06: a decisão tira o card da fila do grupo)
+  function apItens() { return ((ap.dados && ap.dados.itens) || []).filter(function (it) { return !ap.decididos[it.card]; }); }
+  function apItem(card) { return apItens().filter(function (it) { return it.card === card; })[0]; }
+  function apRender() {
+    var d = ap.dados; if (!d) return;
+    apEstado('ok');
+    apRenderUnidade(); apRenderIdade();
+    var itens = apItens();
+    // Card do endereço fora da fila filtrada (ou já decidido): abre o primeiro da fila
+    if (!apItem(ap.sel)) { ap.sel = itens.length ? itens[0].card : ''; ap.card = null; }
+    var par = d.parametros || {};
+    $('apCont').textContent = S.fmt(itens.length, 0);
+    $('apFilaSub').textContent = S.t('ap.filaSub');
+    $('apLista').innerHTML = itens.map(function (it) {
+      var m = it.meta, parado = it.idade >= (par.diasParado || 3);
+      var info = [esc(S.t('versao', { n: S.fmt(it.versao || 1, 0) })), it.contribuidor ? esc(it.contribuidor) : '', esc(S.t('ap.desde', { d: dataCurta(it.desde) }))].filter(Boolean).join(' · ');
+      return '<li><button type="button" class="ap-item" data-card="' + esc(it.card) + '" aria-current="' + (it.card === ap.sel) + '">' +
+        '<span class="ap-item-bu">' + esc(it.bu.sigla) + ' <span>· ' + esc(it.card) + '</span></span>' +
+        '<span class="ap-idade' + (parado ? ' is-parado' : '') + '" title="' + esc(S.t('ap.diasFull', { n: S.fmt(it.idade, 0) })) + '">' + ico('i-clock') + '<span aria-hidden="true">' + esc(it.idade ? S.t('ap.dias', { n: S.fmt(it.idade, 0) }) : S.t('ap.hoje')) + '</span><span class="sr-only">' + esc(S.t('ap.diasFull', { n: S.fmt(it.idade, 0) })) + '</span></span>' +
+        '<p class="ap-item-tit">' + esc((m.numero ? String(m.numero).padStart(2, '0') : 'COO') + ' · ' + m.titulo) + '</p>' +
+        '<span class="ap-item-info">' + info +
+          (it.resubmissao ? '<span class="ap-tag is-resub">' + esc(S.t('ap.resub')) + '</span>' : '') +
+          (!it.podeDecidir ? '<span class="ap-tag is-rn12" title="' + esc(S.t('ap.rn12Curto')) + '">' + ico('i-lock') + esc(S.t('ap.voceEditou')) + '</span>' : '') +
+        '</span></button></li>';
+    }).join('');
+    var semFiltro = !ap.filtro.pais && !ap.filtro.bu && ap.filtro.idade === 'todas';
+    $('apVazio').hidden = itens.length > 0; $('apLista').hidden = !itens.length;
+    $('apVazioTit').textContent = S.t(Object.keys(ap.decididos).length && !itens.length ? 'ap.filaVazia' : 'ap.vazioTit');
+    $('apVazioTxt').textContent = S.t(semFiltro ? 'ap.vazioTxt' : 'ap.vazioFiltroTxt');
+    $('apAtualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
+    apGravar();
+    if (ap.sel && (!ap.card || ap.card.card !== ap.sel) && !ap.carregandoCard) apAbrir(ap.sel); else apRenderFicha();
+  }
+  function apRenderIdade() {
+    $('apIdade').innerHTML = AP_IDADES.map(function (k) { return '<button type="button" data-idade="' + k + '" aria-pressed="' + (ap.filtro.idade === k) + '">' + esc(S.t('ap.idade.' + k)) + '</button>'; }).join('');
+  }
+  // Seletor País › BU (mesmo componente do Painel; opções = BUs do ciclo)
+  function apRenderUnidade() {
+    var c = (ap.dados && ap.dados.ciclo) || {}, porPais = {}, f = ap.filtro;
+    (c.bus || []).forEach(function (b) { (porPais[b.pais] = porPais[b.pais] || []).push(b.sigla); });
+    $('apUnitPais').textContent = f.pais || S.t('f.todos');
+    $('apUnitSep').hidden = !f.pais;
+    $('apUnitSite').textContent = f.pais ? (f.bu || S.t('f.todas')) : '';
+    $('apPaises').innerHTML = [''].concat(Object.keys(porPais)).map(function (pz) { return '<button type="button" data-pais="' + esc(pz) + '" aria-pressed="' + (pz === f.pais) + '">' + esc(pz || S.t('f.todos')) + '</button>'; }).join('');
+    $('apBus').innerHTML = f.pais ? [''].concat(porPais[f.pais] || []).map(function (b) { return '<button type="button" data-bu="' + esc(b) + '" aria-pressed="' + (b === f.bu) + '">' + esc(b || S.t('f.todas')) + '</button>'; }).join('') : '';
+  }
+  function apAbrirUnidade(sim) {
+    $('apUnitPop').hidden = !sim; $('apUnitTrigger').setAttribute('aria-expanded', String(sim));
+    if (sim) { var x = $('apUnitPop').querySelector('[aria-pressed="true"]') || $('apUnitPop').querySelector('button'); if (x) x.focus(); }
+  }
+  function apTrocarFiltro() { ap.sel = ''; ap.card = null; apGravar(); apCarregar(false); }
+  $('apUnitTrigger').addEventListener('click', function () { apAbrirUnidade($('apUnitPop').hidden); });
+  $('apPaises').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    ap.filtro.pais = b.getAttribute('data-pais'); ap.filtro.bu = '';
+    apRenderUnidade(); apTrocarFiltro();
+    if (!ap.filtro.pais) { apAbrirUnidade(false); $('apUnitTrigger').focus(); } else { var x = $('apBus').querySelector('button'); if (x) x.focus(); }
+  });
+  $('apBus').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    ap.filtro.bu = b.getAttribute('data-bu');
+    apAbrirUnidade(false); $('apUnitTrigger').focus(); apTrocarFiltro();
+  });
+  document.addEventListener('click', function (e) { if (e.target.isConnected && !$('apUnitPop').hidden && !$('apUnit').contains(e.target)) apAbrirUnidade(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('apUnitPop').hidden) { apAbrirUnidade(false); $('apUnitTrigger').focus(); } });
+  $('apIdade').addEventListener('click', function (e) { var b = e.target.closest('[data-idade]'); if (!b || b.getAttribute('data-idade') === ap.filtro.idade) return; ap.filtro.idade = b.getAttribute('data-idade'); apTrocarFiltro(); });
+  $('apLista').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-card]'); if (!b) return;
+    var c = b.getAttribute('data-card'); if (c === ap.sel && ap.card) return;
+    ap.sel = c; apAbrir(c);
+    document.querySelectorAll('#apLista .ap-item').forEach(function (x) { x.setAttribute('aria-current', String(x.getAttribute('data-card') === c)); });
+    apGravar();
+    if (window.matchMedia('(max-width: 1080px)').matches) $('apAnalise').scrollIntoView({ block: 'start' });
+  });
+  // Ficha em análise: Goal Card e, se for resubmissão, a versão anterior (o "antes" das seções alteradas)
+  function apAbrir(card) {
+    var n = ++ap.pedido;
+    ap.card = null; ap.antes = null; ap.erroCard = false; ap.carregandoCard = true;
+    ap.revisao = {}; ap.abertos = {}; ap.rascunhos = {}; ap.comentario = ''; ap.confirma = ''; ap.erros = [];
+    apRenderFicha();
+    apBuscar('api/goal-card?card=' + encodeURIComponent(card))
+      .then(function (j) {
+        if (n !== ap.pedido) return null;
+        ap.card = j;
+        return j.versao > 1 ? apBuscar('api/versoes?card=' + encodeURIComponent(card)).catch(function () { return null; }) : null;
+      })
+      .then(function (v) {
+        if (n !== ap.pedido) return;
+        if (v && v.versoes && ap.card) {
+          var ant = v.versoes.filter(function (x) { return x.versao === ap.card.versao - 1; })[0];
+          ap.antes = ant ? { versao: ant.versao, secoes: ant.secoes } : null;
+        }
+        ap.carregandoCard = false; apRenderFicha();
+      })
+      .catch(function (err) {
+        if (n !== ap.pedido) return;
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] aprovacoes card:', err);
+        ap.carregandoCard = false; ap.erroCard = true; apRenderFicha();
+      });
+  }
+  // Valor de uma seção em texto (para o "antes"), no mesmo formato da comparação da T06
+  function apTexto(sec, id) { var c = vsCampos(sec || {}).filter(function (x) { return x.id === id; })[0]; return c ? (c.v || '') : ''; }
+  function apValor(d, id) {
+    var s = d.secoes || {}, m = d.meta;
+    var texto = function (v) { return v ? '<p class="gc-texto">' + esc(v) + '</p>' : '<p class="gc-vazio">' + esc(S.t('gc.naoPreenchido')) + '</p>'; };
+    if (id === 'ruler') {
+      var r = s.ruler || {};
+      var col = function (k) { return '<div class="gc-regua-col"><span class="gc-rot">' + esc(S.t('gc.regua.' + k)) + '</span><b>' + esc(r[k] == null || r[k] === '' ? '—' : S.fmt(Number(r[k]), Number(r[k]) % 1 ? 1 : 0)) + '</b></div>'; };
+      return '<div class="gc-regua">' + col('min') + col('meta') + col('exc') + '</div><p class="gc-regua-nota">' + esc(S.t('gc.pol.' + m.polaridade)) + (s.unit ? ' · ' + esc(s.unit) : '') + '</p>';
+    }
+    if (id === 'area') {
+      var a = s.area || {};
+      return '<div class="gc-duas"><div><span class="gc-rot">' + esc(S.t('gc.area')) + '</span>' + texto(a.area) + '</div><div><span class="gc-rot">' + esc(S.t('gc.responsavel')) + '</span>' + texto(a.responsavel) + '</div></div>';
+    }
+    if (id === 'exceptions') {
+      var e = s.exceptions || {};
+      return '<p class="gc-padrao"><span class="gc-rot">' + esc(S.t('gc.textoPadrao')) + '</span>' + esc(e.padrao || '') + '</p><span class="gc-rot">' + esc(S.t('gc.excecoesBu')) + '</span>' + texto(e.bu);
+    }
+    return texto(s[id]);
+  }
+  function apComentarios(d, id) {
+    var coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
+    var item = function (k) { return '<li><p class="gc-com-cab"><b>' + esc(k.autor) + '</b> · ' + esc(S.t('gc.papel.' + k.papel)) + ' · ' + esc(dataCurta(k.quando)) + '</p><p class="gc-com-txt">' + esc(k.texto) + '</p>' +
+      ((k.respostas || []).length ? '<ul class="gc-com-resp">' + k.respostas.map(item).join('') + '</ul>' : '') + '</li>'; };
+    var max = (ap.dados && ap.dados.parametros && ap.dados.parametros.maxComentario) || 2000;
+    return '<div class="ap-coms" id="apComs-' + id + '"' + (ap.abertos[id] ? '' : ' hidden') + '>' +
+      (coms.length ? '<ul class="gc-com-lista">' + coms.map(item).join('') + '</ul>' : '') +
+      '<div class="ap-com-novo"><label class="sr-only" for="apComTxt-' + id + '">' + esc(S.t('ap.novoCom')) + '</label>' +
+      '<textarea class="cf-in" id="apComTxt-' + id + '" data-com-txt="' + id + '" rows="2" maxlength="' + max + '" placeholder="' + esc(S.t('ap.novoCom')) + '">' + esc(ap.rascunhos[id] || '') + '</textarea>' +
+      '<div class="gc-acoes"><button type="button" class="btn btn-sec" data-com-cancelar="' + id + '">' + esc(S.t('ap.cancelar')) + '</button><button type="button" class="btn" data-com-publicar="' + id + '"' + ((ap.rascunhos[id] || '').trim() ? '' : ' disabled') + '>' + esc(S.t('ap.publicar')) + '</button></div></div></div>';
+  }
+  function apRenderFicha() {
+    var alvo = $('apFicha');
+    if (!ap.sel) { alvo.innerHTML = apItens().length ? '<div class="estado"><p class="estado-txt">' + esc(S.t('ap.selecione')) + '</p></div>' : ''; return; }
+    if (ap.carregandoCard && !ap.card) { alvo.innerHTML = '<div class="estado" aria-busy="true"><p class="estado-txt">' + esc(S.t('ap.carregando')) + '</p></div>'; return; }
+    if (ap.erroCard || !ap.card) { alvo.innerHTML = '<div class="estado estado-erro"><p class="estado-tit">' + esc(S.t('ap.erroCard')) + '</p><button type="button" class="btn" data-ap-tentar>' + esc(S.t('est.tentar')) + '</button></div>'; return; }
+    var d = ap.card, m = d.meta, it = apItem(d.card) || {}, pode = it.podeDecidir !== false && d.estado === 'em_aprovacao';
+    var alt = (d.alteradasDesde && d.alteradasDesde.secoes) || [];
+    var nomes = alt.map(function (id) { return GC_NOMES[id]; }).join(', ');
+    var revs = GC_SECOES.map(function (id) { return ap.revisao[id]; }), nOk = revs.filter(function (v) { return v === 'ok'; }).length, nAj = revs.filter(function (v) { return v === 'ajustar'; }).length, t = GC_SECOES.length;
+    var cab = '<header class="ap-cab"><div class="ap-cab-txt"><p class="ap-cab-eyebrow">' + esc(d.bu.sigla + ' · ' + d.card) + '</p>' +
+      '<h3 class="ap-cab-tit" id="apTitCard" tabindex="-1">' + esc((m.numero ? String(m.numero).padStart(2, '0') : 'COO') + ' · ' + m.titulo) + '</h3>' +
+      '<div class="gc-chips"><span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span>' +
+      (d.versao ? '<span class="gc-chip">' + esc(S.t('versao', { n: S.fmt(d.versao, 0) })) + '</span>' : '') +
+      '<span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span><span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' +
+      '<span class="gc-chip">' + (m.polaridade === 'menor' ? '↓ ' : '↑ ') + esc(S.t('gc.pol.' + m.polaridade)) + '</span>' +
+      (d.submetidoPor ? '<span class="gc-chip">' + esc(S.t('ap.submetidoPor', { p: d.submetidoPor })) + '</span>' : '') +
+      (it.idade != null ? '<span class="gc-chip">' + ico('i-clock') + esc(S.t('ap.diasFull', { n: S.fmt(it.idade, 0) })) + '</span>' : '') + '</div></div>' +
+      '<div class="ap-cab-links"><a class="btn btn-sec" href="#goal-card?card=' + encodeURIComponent(d.card) + '">' + esc(S.t('ap.abrirCard')) + '</a>' +
+      (d.versao ? '<a class="btn btn-sec" href="#versoes?card=' + encodeURIComponent(d.card) + '">' + ico('i-history') + esc(S.t(d.versao === 1 ? 'vs.link1' : 'vs.link', { n: d.versao })) + '</a>' : '') +
+      '<a class="btn btn-sec" href="#action-log?card=' + encodeURIComponent(d.card) + '">' + esc(S.t('ap.historico')) + '</a></div></header>';
+    var aviso = (d.versao > 1 && alt.length ? '<p class="ap-aviso">' + ico('i-history') + '<span>' + esc(S.t('ap.alteradas', { v: S.fmt(d.alteradasDesde.versao, 0), l: nomes })) + '</span></p>' : '') +
+      (!pode ? '<p class="ap-aviso is-rn12" role="note">' + ico('i-lock') + '<span>' + esc(S.t('gc.rn12')) + '</span></p>' : '');
+    var prog = pode ? '<div class="ap-prog" aria-live="polite"><span>' + esc(S.t('ap.progresso', { n: S.fmt(nOk + nAj, 0), t: S.fmt(t, 0) })) + (nAj ? ' · <b>' + esc(S.t('ap.nAjustar', { n: S.fmt(nAj, 0) })) + '</b>' : '') + '</span>' +
+      '<span class="ap-prog-barra" aria-hidden="true"><span class="ok" style="width:' + (nOk / t * 100).toFixed(1) + '%"></span><span class="aj" style="width:' + (nAj / t * 100).toFixed(1) + '%"></span></span>' +
+      (nOk + nAj < t ? '<button type="button" class="btn-link" data-rev-todas>' + esc(S.t('ap.marcarTodas')) + '</button>' : '<button type="button" class="btn-link" data-rev-limpar>' + esc(S.t('ap.limpar')) + '</button>') + '</div>' : '';
+    var linhas = GC_SECOES.map(function (id) {
+      var rv = ap.revisao[id] || '', mudou = alt.indexOf(id) >= 0;
+      var coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
+      var nCom = coms.reduce(function (s2, k) { return s2 + 1 + (k.respostas || []).length; }, 0);
+      var antes = mudou && ap.antes ? apTexto(ap.antes.secoes, id) : null;
+      var chips = (mudou ? '<span class="gc-chip gc-chip-info">' + esc(S.t('gc.alterada', { v: S.fmt(d.alteradasDesde.versao, 0) })) + '</span>' : '') +
+        (rv ? '' : pode ? '<span class="ap-tag">' + esc(S.t('gc.semAnalise')) + '</span>' : '');
+      var rev = '<div class="ap-rev">' + (pode ? '<div class="seg" role="group" aria-label="' + esc(S.t('ap.secaoRev', { s: GC_NOMES[id] })) + '">' +
+        ['ok', 'ajustar'].map(function (k) { return '<button type="button" data-rev="' + k + '" data-sec="' + id + '" aria-pressed="' + (rv === k) + '">' + esc(S.t('gc.rev.' + k)) + '</button>'; }).join('') + '</div>' : '') +
+        '<button type="button" class="gc-com-btn' + (nCom ? ' tem' : '') + '" data-com-abrir="' + id + '" aria-expanded="' + !!ap.abertos[id] + '" aria-controls="apComs-' + id + '" aria-label="' + esc(nCom ? S.t('gc.verComs', { n: S.fmt(nCom, 0), s: GC_NOMES[id] }) : S.t('ap.comentarSecao', { s: GC_NOMES[id] })) + '">' + ico('i-comment') + '<span>' + (nCom ? S.fmt(nCom, 0) : esc(S.t('ap.comentar'))) + '</span></button></div>';
+      return '<div class="gc-f-linha' + (rv === 'ok' ? ' is-rev-ok' : rv === 'ajustar' ? ' is-rev-ajustar' : '') + (mudou ? ' is-alterada' : '') + '" id="apSec-' + id + '" role="group" aria-labelledby="apSecTit-' + id + '">' +
+        '<div class="gc-f-rot"><span class="gc-f-nome" id="apSecTit-' + id + '">' + esc(GC_NOMES[id]) + '</span>' + (id === 'exceptions' ? gcSelo('ciclo') : '') + '<span class="chips">' + chips + '</span></div>' +
+        '<div class="gc-f-val">' + apValor(d, id) + (antes != null ? '<p class="ap-antes"><b>' + esc(S.t('ap.antes', { v: S.fmt(ap.antes.versao, 0) })) + '</b><del>' + esc(antes || S.t('gc.naoPreenchido')) + '</del></p>' : '') + '</div>' +
+        '<div class="gc-f-acoes">' + rev + '</div>' + apComentarios(d, id) + '</div>';
+    }).join('');
+    var dec = '';
+    if (pode) {
+      var min = (ap.dados.parametros && ap.dados.parametros.minComentario) || 10, n = ap.comentario.trim().length;
+      var erros = ap.erros.map(function (e) { return '<p class="gc-erro" role="alert">' + ico('i-alert') + esc(S.t('gc.erro.' + e, { n: S.fmt(min, 0) })) + '</p>'; }).join('');
+      var conf = ap.confirma;
+      dec = '<div class="ap-decisao"><div class="ap-decisao-txt"><p class="ap-decisao-tit">' + esc(S.t('ap.decisaoTit')) + '</p><p class="ap-decisao-sub">' + esc(S.t('ap.decisaoSub')) + '</p>' +
+        '<label for="apComentario">' + esc(S.t('gc.comentario')) + '</label><textarea class="cf-in" id="apComentario" rows="3" maxlength="' + ((ap.dados.parametros && ap.dados.parametros.maxComentario) || 2000) + '" aria-describedby="apComCont">' + esc(ap.comentario) + '</textarea>' +
+        '<span class="ap-cont" id="apComCont">' + esc(n >= min ? S.t('gc.caracteres', { n: S.fmt(n, 0) }) : S.t('gc.minimo', { n: S.fmt(min, 0) })) + '</span>' + erros + '</div>' +
+        '<div class="ap-decisao-acoes"><div class="gc-acoes">' +
+        [{ id: 'aprovar', cls: 'btn' }, { id: 'devolver', cls: 'btn btn-sec' }, { id: 'negar', cls: 'btn btn-sec' }].map(function (b) {
+          return '<button type="button" class="' + b.cls + '" data-decidir="' + b.id + '"' + (ap.enviando ? ' disabled' : '') + '>' + esc(S.t('gc.acao.' + b.id)) + '</button>';
+        }).join('') + '</div>' +
+        (conf ? '<div class="gc-confirma" role="alertdialog" aria-labelledby="apConfTit" aria-describedby="apConfTxt"><p class="gc-confirma-tit" id="apConfTit">' + esc(S.t('gc.conf.' + conf + '.tit')) + '</p>' +
+          '<p class="gc-confirma-txt" id="apConfTxt">' + esc(S.t('gc.conf.' + conf + '.txt', { v: S.fmt(d.versao || 1, 0) })) + '</p>' +
+          '<div class="gc-acoes"><button type="button" class="btn" data-ap-confirmar="' + conf + '"' + (ap.enviando ? ' disabled' : '') + '>' + esc(S.t('gc.confirmar')) + '</button><button type="button" class="btn btn-sec" data-ap-cancelar>' + esc(S.t('gc.cancelar')) + '</button></div></div>' : '') +
+        '</div></div>';
+    }
+    alvo.innerHTML = '<article class="gc-ficha ap-ficha" aria-label="Goal Card ' + esc(d.card) + '">' + cab + aviso + prog + linhas + dec + '</article>';
+  }
+  // Validação local (mesma regra do servidor, validarDecisao): Devolver = comentário + uma seção Ajustar; Negar = comentário
+  function apValidar(acao) {
+    var min = (ap.dados.parametros && ap.dados.parametros.minComentario) || 10, txt = ap.comentario.trim(), e = [];
+    if ((acao === 'devolver' || acao === 'negar') && txt.length < min) e.push('comentario');
+    if (acao === 'devolver' && !GC_SECOES.some(function (id) { return ap.revisao[id] === 'ajustar'; })) e.push('secaoAjustar');
+    return e;
+  }
+  function apFocar(sel) { var x = $('apFicha').querySelector(sel); if (x) x.focus(); }
+  function apDecidir(acao) {
+    var d = ap.card; if (!d || ap.enviando) return;
+    ap.enviando = true; apRenderFicha();
+    var revisao = {}; GC_SECOES.forEach(function (id) { if (ap.revisao[id]) revisao[id] = ap.revisao[id]; });
+    fetch('api/goal-card/decisao', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ card: d.card, decisao: acao, comentario: ap.comentario.trim(), revisao: revisao }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (x) {
+        ap.enviando = false; ap.confirma = '';
+        if (x.status === 400) { ap.erros = x.j.erros || []; apRenderFicha(); apFocar('#apComentario'); return; }
+        if (x.status !== 200) { toast(x.j.error || S.t('est.erroGeral'), true); apRenderFicha(); return; }
+        // Decidido: sai da fila (RN-06) e abre a próxima ficha ("3 restantes"); fila vazia → volta à lista
+        ap.decididos[d.card] = acao;
+        var rest = apItens();
+        toast(S.t('gc.feito.' + acao) + ' · ' + (rest.length ? (rest.length === 1 ? S.t('ap.restante1') : S.t('ap.restantes', { n: S.fmt(rest.length, 0) })) : S.t('ap.filaVazia')));
+        ap.sel = rest.length ? rest[0].card : ''; ap.card = null;
+        apRender();
+        setTimeout(function () { var h = $('apTitCard'); if (h) h.focus({ preventScroll: true }); else $('apTitFila').scrollIntoView({ block: 'nearest' }); }, 60);
+      })
+      .catch(function () { ap.enviando = false; toast(S.t('est.erroRede'), true); apRenderFicha(); });
+  }
+  function apPublicar(id) {
+    var d = ap.card, txt = (ap.rascunhos[id] || '').trim(); if (!d || !txt) return;
+    fetch('api/goal-card/comentario', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ card: d.card, secao: id, texto: txt }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (x) {
+        if (x.status !== 200) { toast(x.j.error || S.t('est.erroGeral'), true); return; }
+        // Simulação: o comentário entra na lista da seção só nesta tela (RN-13: o estado do card não muda)
+        var c = x.j.comentario || { secao: id, autor: S.t('gc.voce'), papel: 'aprovador', quando: new Date().toISOString().slice(0, 10), texto: txt, respostas: [] };
+        if (c.autor === 'Usuário Demonstração') c.autor = S.t('gc.voce');
+        d.comentarios = (d.comentarios || []).concat([c]); ap.rascunhos[id] = '';
+        toast(S.t('gc.comPublicado')); apRenderFicha(); apFocar('[data-com-abrir="' + id + '"]');
+      })
+      .catch(function () { toast(S.t('est.erroRede'), true); });
+  }
+  $('apFicha').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !ap.card) { if (b && b.hasAttribute('data-ap-tentar') && ap.sel) apAbrir(ap.sel); return; }
+    if (b.hasAttribute('data-rev')) {
+      var sec = b.getAttribute('data-sec'), k = b.getAttribute('data-rev');
+      ap.revisao[sec] = ap.revisao[sec] === k ? '' : k; // segundo clique na mesma opção volta a "sem análise"
+      ap.confirma = ''; ap.erros = ap.erros.filter(function (x) { return x !== 'secaoAjustar' || !GC_SECOES.some(function (i) { return ap.revisao[i] === 'ajustar'; }); });
+      apRenderFicha(); apFocar('[data-rev="' + k + '"][data-sec="' + sec + '"]'); return;
+    }
+    if (b.hasAttribute('data-rev-todas')) { GC_SECOES.forEach(function (id) { if (!ap.revisao[id]) ap.revisao[id] = 'ok'; }); apRenderFicha(); apFocar('[data-rev-limpar]'); return; }
+    if (b.hasAttribute('data-rev-limpar')) { ap.revisao = {}; ap.confirma = ''; apRenderFicha(); apFocar('[data-rev-todas]'); return; }
+    if (b.hasAttribute('data-com-abrir')) { var id = b.getAttribute('data-com-abrir'); ap.abertos[id] = !ap.abertos[id]; apRenderFicha(); apFocar(ap.abertos[id] ? '#apComTxt-' + id : '[data-com-abrir="' + id + '"]'); return; }
+    if (b.hasAttribute('data-com-cancelar')) { var c = b.getAttribute('data-com-cancelar'); ap.abertos[c] = false; ap.rascunhos[c] = ''; apRenderFicha(); apFocar('[data-com-abrir="' + c + '"]'); return; }
+    if (b.hasAttribute('data-com-publicar')) { apPublicar(b.getAttribute('data-com-publicar')); return; }
+    if (b.hasAttribute('data-decidir')) {
+      var a = b.getAttribute('data-decidir'), erros = apValidar(a);
+      ap.erros = erros; ap.confirma = erros.length ? '' : a; apRenderFicha();
+      apFocar(erros.length ? (erros[0] === 'comentario' ? '#apComentario' : '[data-rev="ajustar"]') : '[data-ap-confirmar]'); return;
+    }
+    if (b.hasAttribute('data-ap-confirmar')) { apDecidir(b.getAttribute('data-ap-confirmar')); return; }
+    if (b.hasAttribute('data-ap-cancelar')) { var v = ap.confirma; ap.confirma = ''; apRenderFicha(); apFocar('[data-decidir="' + v + '"]'); }
+  });
+  $('apFicha').addEventListener('input', function (e) {
+    if (e.target.id === 'apComentario') {
+      ap.comentario = e.target.value; ap.confirma = '';
+      var min = (ap.dados.parametros && ap.dados.parametros.minComentario) || 10, n = e.target.value.trim().length;
+      $('apComCont').textContent = n >= min ? S.t('gc.caracteres', { n: S.fmt(n, 0) }) : S.t('gc.minimo', { n: S.fmt(min, 0) });
+      var cf = $('apFicha').querySelector('.ap-decisao .gc-confirma'); if (cf) cf.remove();
+      return;
+    }
+    var sec = e.target.getAttribute('data-com-txt');
+    if (sec) { ap.rascunhos[sec] = e.target.value; var p = $('apFicha').querySelector('[data-com-publicar="' + sec + '"]'); if (p) p.disabled = !e.target.value.trim(); }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ap.confirma && !$('vistaAprov').hidden) { var v = ap.confirma; ap.confirma = ''; apRenderFicha(); apFocar('[data-decidir="' + v + '"]'); } });
+  $('apAtualizar').addEventListener('click', function () { ap.card = null; apCarregar(true); });
+  $('apTentar').addEventListener('click', function () { apCarregar(false); });
+
   // ── T12 · Sem acesso: Voltar volta à tela anterior (ou ao Início); ao aparecer, o título recebe o foco ──
   document.querySelectorAll('.acesso-bloqueio').forEach(function (sec) {
     sec.querySelector('[data-voltar]').addEventListener('click', function () { if (history.length > 1) history.back(); else location.hash = '#inicio'; });
@@ -4370,7 +4894,7 @@ window.VBMSetup = (function () {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
     // Endereço fora do catálogo (ex.: telas descontinuadas, como T05 e T08 — D-20) volta ao Início
     if (VISTAS.indexOf(h) < 0) { location.replace('#inicio'); return; }
-    var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card' || h === 'configuracao' || h === 'action-log' || h === 'versoes';
+    var pronta = h === 'aprovacoes' || h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card' || h === 'configuracao' || h === 'action-log' || h === 'versoes';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     document.body.classList.toggle('is-largo', h !== 'inicio'); // todas as telas ocupam a largura da janela
@@ -4381,6 +4905,7 @@ window.VBMSetup = (function () {
     $('vistaConfig').hidden = h !== 'configuracao';
     $('vistaLog').hidden = h !== 'action-log';
     $('vistaVersoes').hidden = h !== 'versoes';
+    $('vistaAprov').hidden = h !== 'aprovacoes';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
     if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
@@ -4389,7 +4914,8 @@ window.VBMSetup = (function () {
     if (h === 'configuracao') { cfLerAba(); cfCarregar(false); }
     if (h === 'action-log') { lgLerFiltro(); lgCarregar(false); }
     if (h === 'versoes') { vsLerParams(); vsCarregar(false); }
-    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : h === 'configuracao' ? S.t('cf.titulo') : h === 'action-log' ? 'Action Log' : h === 'versoes' ? S.t('vs.titulo') + (vs.card ? ' · ' + vs.card : '') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'aprovacoes') { apLerFiltro(); apCarregar(false); }
+    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : h === 'configuracao' ? S.t('cf.titulo') : h === 'action-log' ? 'Action Log' : h === 'versoes' ? S.t('vs.titulo') + (vs.card ? ' · ' + vs.card : '') : h === 'aprovacoes' ? S.t('ap.titulo') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -4401,8 +4927,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender(); });
-  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender(); if (ap.dados && !$('vistaAprov').hidden) apRender(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender();  if (ap.dados && !$('vistaAprov').hidden) apRenderFicha(); });
 
   rota();
   carregar();

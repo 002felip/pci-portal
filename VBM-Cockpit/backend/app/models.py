@@ -167,9 +167,51 @@ class Snapshot(Base):
     # first appear". Null for anything loaded before the column existed.
     uploaded_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True)
+    # Non-null when the current contents came from a rollback to that revision
+    # (see SnapshotRevision) rather than from an upload. Cleared by the next load.
+    restored_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
         Index("ix_snapshot_period_key", "period_key"),
+    )
+
+
+class SnapshotRevision(Base):
+    """
+    A superseded version of a snapshot's contents. A load replaces a period's
+    initiatives in place (the snapshot id is stable, so links, pins, plan
+    baseline and overrides keep working); before it does, the outgoing
+    contents are copied here, so an earlier upload can always be restored.
+
+    `payload` is self-contained -- `{"initiatives": [...rows with metrics and
+    edited_fields...], "overrides": {scope_key: payload}}` -- so a rollback
+    needs neither the original workbook nor the parser version that read it.
+    The live revision is never in this table; it is the snapshot row itself.
+    """
+
+    __tablename__ = "snapshot_revision"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    snapshot_id: Mapped[str] = mapped_column(
+        ForeignKey("snapshot.id", ondelete="CASCADE"))
+    revision: Mapped[int] = mapped_column(Integer)
+    # Set when this version was itself produced by a rollback to that revision.
+    restored_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    original_filename: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    content_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    uploaded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True)
+    initiative_count: Mapped[int] = mapped_column(Integer, default=0)
+    superseded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now())
+    superseded_by: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+
+    __table_args__ = (
+        UniqueConstraint("snapshot_id", "revision", name="uq_snapshot_revision"),
     )
 
 

@@ -28,7 +28,7 @@ import {
 import { PageHead } from "../App";
 import {
   AttainmentLine, Bars, CumulativeLines, Donut, FunnelBars,
-  DEFAULT_ORDER, StatusTreemap, chartColour, type Stage, type TreemapMeasure,
+  DEFAULT_ORDER, StatusTreemap, chartColour, type FunnelConfig, type Stage, type TreemapMeasure,
 } from "../charts";
 import { useFunnelConfig } from "../funnelConfig";
 import {
@@ -220,7 +220,7 @@ function Body() {
         {noMatch ? none("in the funnel") : pipeline.data ? (
           funnelStages.some((st) => st.count) ? (
             <>
-              <Stats items={funnelStats(pipeline.data, registry, actuals)} />
+              <Stats items={funnelStats(pipeline.data, registry, actuals, funnel.config)} />
               <FunnelBars registry={registry} stages={funnelStages} actualsLabel={actualsLabel}
                 config={funnel.config} saving={funnel.saving}
                 onSave={funnel.save} onReset={funnel.reset} />
@@ -439,18 +439,27 @@ function Stats({ items }: { items: Stat[] }) {
 }
 
 function funnelStats(data: StageMatrixOut, registry: Registry | undefined,
-  actuals: ActualsBasis): Stat[] {
-  const entries = Object.entries(data.funnel);
-  if (!entries.length) return [];
+  actuals: ActualsBasis, config: FunnelConfig): Stat[] {
+  // UNKNOWN is the backend's bucket for stage-less rows; reported on its own.
+  const unknown = data.funnel.UNKNOWN?.count ?? 0;
+  const noStage = unknown
+    ? [{ label: "No stage", value: fmt.int(unknown), tone: "warn" as const }] : [];
+  // The totals follow the chart: only stages drawn inside the funnel count.
+  // Off-funnel ones (cancelled, on hold, unknown, ...) are parked, not in flow.
+  const entries = Object.entries(data.funnel)
+    .filter(([code]) => (config.track[code] ?? "funnel") === "funnel");
+  if (!entries.length) return noStage;
   const total = entries.reduce((a, [, v]) => a + v.count, 0);
   const value = entries.reduce((a, [, v]) => a + v.value_musd, 0);
   const actual = entries.reduce((a, [, v]) => a + v[actualKey(actuals)], 0);
   const peak = [...entries].sort((a, b) => b[1].count - a[1].count)[0];
+  const label = config.labels[peak[0]] ?? display(registry, "stage_code", peak[0]);
   return [
     { label: "In funnel", value: fmt.int(total) },
     { label: "Value", value: fmt.musd(value) },
     { label: ACTUALS_LABEL[actuals], value: fmt.musd(actual), tone: "good" },
-    { label: "Largest stage", value: `${display(registry, "stage_code", peak[0])} · ${peak[1].count}` },
+    { label: "Largest stage", value: `${label} · ${peak[1].count}` },
+    ...noStage,
   ];
 }
 

@@ -470,6 +470,7 @@ export const DEFAULT_ORDER = [
   "ON_HOLD",
   "CLOSED",
   "CANCELLED",
+  "UNKNOWN",
 ];
 
 /**
@@ -478,7 +479,14 @@ export const DEFAULT_ORDER = [
  * the taper -- doing so implies a progression that does not exist and
  * corrupts the stage-to-stage conversion figures.
  */
-const OFF_FUNNEL = new Set(["ON_HOLD", "CLOSED", "CANCELLED"]);
+const OFF_FUNNEL = new Set(["ON_HOLD", "CLOSED", "CANCELLED", "UNKNOWN"]);
+
+/** Backend sentinel (analytics.UNKNOWN_STAGE) for initiatives with no stage
+ * entered. Not a registry vocab term, so it needs its own label and colour. */
+const UNKNOWN_STAGE = "UNKNOWN";
+const DEFAULT_LABELS: Record<string, string> = { [UNKNOWN_STAGE]: "Unknown" };
+const stageColour = (registry: Registry | undefined, code: string, i: number) =>
+  code.toUpperCase() === UNKNOWN_STAGE ? "#B8C0CA" : chartColour(registry, "stage_code", code, i);
 
 /** Case-insensitive membership test against DEFAULT_ORDER / OFF_FUNNEL,
  * since data sources are not guaranteed to match the vocab's casing. */
@@ -617,7 +625,8 @@ export function FunnelBars({
     .filter((c) => byCode[c])
     .map((c, i) => ({
       ...byCode[c],
-      label: active.labels[c] ?? display(registry, "stage_code", c),
+      label: active.labels[c] ?? DEFAULT_LABELS[c.toUpperCase()]
+        ?? display(registry, "stage_code", c),
       track: active.track[c] ?? "funnel",
       mag: metric === "value" ? byCode[c].value_musd : byCode[c].count,
       idx: i,
@@ -718,7 +727,7 @@ export function FunnelBars({
                 onClick={() => move(r.code, 1)}>▶</button>
               <span style={{
                 width: 10, height: 10, borderRadius: 2,
-                background: chartColour(registry, "stage_code", r.code, r.idx),
+                background: stageColour(registry, r.code, r.idx),
               }} />
               <input value={r.label} style={INPUT}
                 onChange={(e) => rename(r.code, e.target.value)} />
@@ -757,7 +766,7 @@ export function FunnelBars({
                   onMouseLeave={() => setHover(null)}
                   style={{ cursor: "default" }}>
                   <polygon points={pts}
-                    fill={chartColour(registry, "stage_code", d.code, d.idx)}
+                    fill={stageColour(registry, d.code, d.idx)}
                     fillOpacity={hover === null || hover === d.code ? 1 : 0.45}
                     style={{ transition: "fill-opacity .15s" }} />
                   {inside && (
@@ -837,7 +846,7 @@ export function FunnelBars({
             {side.map((d) => (
               <div key={d.code} style={{
                 ...SIDE_CARD,
-                borderLeft: `3px solid ${chartColour(registry, "stage_code", d.code, d.idx)}`,
+                borderLeft: `3px solid ${stageColour(registry, d.code, d.idx)}`,
               }}>
                 <div style={{ fontSize: AXIS.fontSize, color: INK.strong }}>{d.label}</div>
                 <div style={{ fontSize: 17, fontWeight: 700, color: INK.strong }}>
