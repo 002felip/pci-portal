@@ -168,8 +168,7 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
 
 `#action-log`, no submenu Administração. Linha do tempo única e imutável do ciclo (§7.3).
 
-- **Resumo por tipo** (eventos, submissões, decisões, comentários, configuração, acessos negados) em cartões que
-  filtram ao clique; o total ignora o filtro de tipo.
+- **Topo** só com o título, sem o ano e sem cartões de resumo; o total de eventos aparece ao lado de "Linha do tempo".
 - **Filtros na URL:** Período (7 dias, 30 dias, ciclo), BU, Meta, Seção, Tipo e Goal Card (chip removível).
 - **Linha do tempo** por dia: hora, ponto colorido pelo tipo (decisão pela cor do resultado), frase traduzível
   ("aprovou a v2…"), comentário citado, antes → depois, etiquetas BU/Meta/Seção que viram filtro e links para o
@@ -181,8 +180,7 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
 
 `#configuracao?aba=ciclo|bus|grupos|metas|parametros`, só o administrador (403 → T12). §7.1.
 
-- **Resumo** em cartões que levam à aba: BUs ativas, pessoas nos grupos, metas, BUs que fecham o total de pontos
-  e data dos Goal Cards oficiais.
+- **Topo** só com o título, sem o ano e sem cartões de resumo; a navegação é pelas abas.
 - **Ciclo:** nome, texto padrão de exceções e as 4 janelas (datas, dias úteis, etapa atual, ordem validada).
 - **Business Units:** pessoas por grupo (o número leva aos Grupos filtrados), metas, soma de pontos e chave "no ciclo".
 - **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;

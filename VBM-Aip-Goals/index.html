@@ -1948,10 +1948,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
     <header class="p2-topo">
       <div class="p2-cab">
         <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="cf.eyebrow">Administração</span></p>
-        <h2 class="p2-titulo" id="titConfig"><span class="ab-nome" data-i18n="cf.titulo">Configuração do ciclo</span><span class="ab-ano" id="cfAno">—</span></h2>
+        <h2 class="p2-titulo" id="titConfig"><span class="ab-nome" data-i18n="cf.titulo">Configuração do ciclo</span></h2>
       </div>
-      <!-- Resumo do ciclo: BUs, pessoas nos grupos, metas e BUs que fecham o total de pontos (RN-16) -->
-      <div class="p2-trilha"><ul class="cf-resumo" id="cfResumo" aria-label="Resumo da configuração" data-i18n-aria="cf.resumoAria"></ul></div>
       <div class="topo-acoes">
         <button type="button" class="dash-acao" id="cfAtualizar" aria-label="Atualizar configuração" title="Atualizar configuração" data-i18n-aria="cf.atualizar" data-i18n-title="cf.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
         <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
@@ -2021,10 +2019,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
     <header class="p2-topo">
       <div class="p2-cab">
         <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="cf.eyebrow">Administração</span></p>
-        <h2 class="p2-titulo" id="titLog"><span class="ab-nome">Action Log</span><span class="ab-ano" id="lgAno">—</span></h2>
+        <h2 class="p2-titulo" id="titLog"><span class="ab-nome">Action Log</span></h2>
       </div>
-      <!-- Quanto há de cada tipo no recorte atual; o clique filtra pelo tipo -->
-      <div class="p2-trilha"><ul class="cf-resumo lg-resumo" id="lgResumo" aria-label="Eventos por tipo" data-i18n-aria="lg.resumoAria"></ul></div>
       <div class="topo-acoes">
         <button type="button" class="dash-acao" id="lgExportar" aria-label="Exportar para Excel" title="Exportar para Excel" data-i18n-aria="lg.exportar" data-i18n-title="lg.exportar"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg></button>
         <button type="button" class="dash-acao" id="lgAtualizar" aria-label="Atualizar Action Log" title="Atualizar Action Log" data-i18n-aria="lg.atualizar" data-i18n-title="lg.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
@@ -3383,7 +3379,7 @@ window.VBMSetup = (function () {
   }
   function cfEstado(qual) {
     $('cfCorpo').hidden = qual !== 'ok'; $('cfErro').hidden = qual !== 'erro'; $('cfSemAcesso').hidden = qual !== 'acesso';
-    $('cfResumo').parentNode.hidden = qual !== 'ok'; $('cfFaixa').hidden = qual !== 'ok';
+    $('cfFaixa').hidden = qual !== 'ok';
   }
   // Partes editáveis de cada aba (o que vai ao servidor)
   function cfPartes(b) {
@@ -3462,9 +3458,7 @@ window.VBMSetup = (function () {
   function cfRender() {
     if (!cf.base) return;
     cfEstado('ok');
-    $('cfAno').textContent = cf.base.ciclo.ano;
     $('cfClonarTxt').textContent = S.t('cf.clonarAno', { a: cf.base.ciclo.ano + 1 });
-    cfRenderResumo();
     $('cfAbas').innerHTML = CF_ABAS.map(function (a) {
       var alt = cfAlterada(a), err = alt && cfValidar(a).length;
       return '<button type="button" role="tab" id="cfTab-' + a + '" aria-selected="' + (a === cf.aba) + '" aria-pressed="' + (a === cf.aba) + '" data-aba="' + a + '">' +
@@ -3477,24 +3471,6 @@ window.VBMSetup = (function () {
     if (foco && $(foco) && $('cfConteudo').contains($(foco))) { var el = $(foco); el.focus(); if (el.setSelectionRange && el.type === 'text') { var n = el.value.length; el.setSelectionRange(n, n); } }
     cfRenderRodape();
     cfRenderUltimas();
-  }
-  function cfRenderResumo() {
-    var b = cf.edit, ativas = cfBusAtivas().length, total = cfParam('pesoTotal');
-    var fecham = cfSomas().filter(function (x) { return x.soma === total; }).length;
-    var grupos = {}; b.grupos.membros.forEach(function (m) { grupos[m.matricula] = 1; });
-    var novas = b.metas.metas.filter(function (m) { return m.nova; }).length;
-    var et = cf.base.ciclo.etapas, atual = cf.base.ciclo.etapaAtual;
-    var tiles = [
-      { n: ativas, rot: S.t('cf.r.bus'), sub: S.t('cf.r.busSub', { p: Object.keys(cf.base.bus.reduce(function (o, x) { o[x.pais] = 1; return o; }, {})).length }), aba: 'bus' },
-      { n: Object.keys(grupos).length, rot: S.t('cf.r.pessoas'), sub: S.t('cf.r.pessoasSub', { a: b.grupos.membros.filter(function (m) { return m.grupo === 'aprovacao'; }).length }), aba: 'grupos' },
-      { n: b.metas.metas.length, rot: S.t('cf.r.metas'), sub: S.t('cf.r.metasSub', { n: novas }), aba: 'metas' },
-      { n: fecham + '/' + ativas, rot: S.t('cf.r.pontos', { t: S.fmt(total, 0) }), sub: fecham === ativas ? S.t('cf.r.pontosOk') : S.t('cf.r.pontosPend', { n: ativas - fecham }), aba: 'metas', alerta: fecham !== ativas },
-      { n: dataCurta(et[et.length - 1].fim), rot: S.t('cf.r.oficial'), sub: S.t('cf.r.etapa', { e: S.t('p2.et.' + atual) }), aba: 'ciclo' }
-    ];
-    $('cfResumo').innerHTML = tiles.map(function (t) {
-      return '<li><button type="button" class="cf-tile' + (t.alerta ? ' is-alerta' : '') + (cf.aba === t.aba ? ' is-sel' : '') + '" data-aba="' + t.aba + '">' +
-        '<span class="cf-tile-n">' + esc(t.n) + '</span><span class="cf-tile-rot">' + esc(t.rot) + '</span><span class="cf-tile-sub">' + esc(t.sub) + '</span></button></li>';
-    }).join('');
   }
   function cfErroDe(campo) { var x = cf.erros.filter(function (e) { return e.campo === campo; })[0]; return x ? x.msg : ''; }
   function cfHtmlCiclo() {
@@ -3660,7 +3636,6 @@ window.VBMSetup = (function () {
     var i = CF_ABAS.indexOf(cf.aba) + (e.key === 'ArrowRight' ? 1 : -1);
     cfIrAba(CF_ABAS[(i + CF_ABAS.length) % CF_ABAS.length]); e.preventDefault();
   });
-  $('cfResumo').addEventListener('click', function (e) { var b = e.target.closest('[data-aba]'); if (b) cfIrAba(b.getAttribute('data-aba')); });
   $('cfConteudo').addEventListener('input', function (e) {
     var t = e.target, d = cf.edit;
     if (t.matches('[data-cf="nome"]')) d.ciclo.nome = t.value;
@@ -3676,7 +3651,7 @@ window.VBMSetup = (function () {
     else if (t.id === 'cfAddMat') { cf.novaMat = t.value; return; }
     else return;
     // Texto livre não redesenha a aba a cada tecla (mantém o cursor); números e datas, sim
-    if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-campo="titulo"]')) { cfRenderRodape(); cfRenderResumo(); cfMarcarAbas(); return; }
+    if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-campo="titulo"]')) { cfRenderRodape(); cfMarcarAbas(); return; }
     cfRender();
   });
   function cfMarcarAbas() {
@@ -3777,7 +3752,7 @@ window.VBMSetup = (function () {
   }
   function lgEstado(qual) {
     $('lgCorpo').hidden = qual !== 'ok'; $('lgErro').hidden = qual !== 'erro'; $('lgSemAcesso').hidden = qual !== 'acesso';
-    $('lgResumo').parentNode.hidden = qual !== 'ok'; $('lgFiltros').hidden = qual !== 'ok';
+    $('lgFiltros').hidden = qual !== 'ok';
   }
   function lgQuery(extra) {
     var q = new URLSearchParams();
@@ -3835,16 +3810,6 @@ window.VBMSetup = (function () {
   function lgRender() {
     var d = lg.dados; if (!d) return;
     lgEstado('ok');
-    $('lgAno').textContent = d.ciclo.ano;
-    // Resumo por tipo (o total ignora o filtro de tipo; o clique filtra)
-    var tiles = [{ t: '', n: d.totalSemTipo, rot: S.t('lg.r.todos'), sub: S.t('lg.per.' + lg.f.periodo) }].concat(['submissao', 'decisao', 'comentario', 'configuracao', 'acesso_negado'].map(function (t) {
-      return { t: t, n: d.porTipo[t] || 0, rot: S.t('lg.tp.' + t), sub: t === 'decisao' ? S.t('lg.r.decSub') : t === 'acesso_negado' ? S.t('lg.r.negSub') : t === 'configuracao' ? S.t('lg.r.cfgSub') : t === 'comentario' ? S.t('lg.r.comSub') : S.t('lg.r.subSub'), alerta: t === 'acesso_negado' && d.porTipo[t] > 0 };
-    }));
-    $('lgResumo').innerHTML = tiles.map(function (x) {
-      return '<li><button type="button" class="cf-tile lg-tile' + (x.alerta ? ' is-alerta' : '') + (lg.f.tipo === x.t ? ' is-sel' : '') + '" data-tipo="' + x.t + '" aria-pressed="' + (lg.f.tipo === x.t) + '">' +
-        (x.t ? '<span class="lg-tile-ico ' + lgClasse({ tipo: x.t, decisao: 'aprovar' }) + '">' + ico(LG_ICO[x.t]) + '</span>' : '') +
-        '<span class="cf-tile-n">' + esc(S.fmt(x.n, 0)) + '</span><span class="cf-tile-rot">' + esc(x.rot) + '</span><span class="cf-tile-sub">' + esc(x.sub) + '</span></button></li>';
-    }).join('');
     // Filtros
     $('lgPeriodo').innerHTML = ['7', '30', 'ciclo'].map(function (p) { return '<button type="button" data-periodo="' + p + '" aria-pressed="' + (lg.f.periodo === p) + '">' + esc(S.t('lg.per.' + p)) + '</button>'; }).join('');
     var op = function (v, txt, sel) { return '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(txt) + '</option>'; };
@@ -3887,7 +3852,6 @@ window.VBMSetup = (function () {
     $('lgMais').textContent = S.t('lg.mais', { n: Math.min(40, resta), t: S.fmt(resta, 0) });
   }
   function lgMudar(k, v) { lg.f[k] = v; lgGravarFiltro(); lgCarregar(false); }
-  $('lgResumo').addEventListener('click', function (e) { var b = e.target.closest('[data-tipo]'); if (b) lgMudar('tipo', b.getAttribute('data-tipo') === lg.f.tipo ? '' : b.getAttribute('data-tipo')); });
   $('lgPeriodo').addEventListener('click', function (e) { var b = e.target.closest('[data-periodo]'); if (b) lgMudar('periodo', b.getAttribute('data-periodo')); });
   ['bu', 'meta', 'secao', 'tipo'].forEach(function (k) { $('lg' + k.charAt(0).toUpperCase() + k.slice(1)).addEventListener('change', function () { lgMudar(k, this.value); }); });
   $('lgAtivos').addEventListener('click', function (e) {
