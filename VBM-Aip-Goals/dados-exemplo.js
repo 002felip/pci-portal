@@ -308,27 +308,60 @@ function configuracaoExemplo(hoje = new Date()) {
     contrib[b.sigla].forEach((n) => membros.push({ ...por(n), grupo: 'contribuidor', bu: b.sigla }));
     membros.push({ ...por(consulta[b.sigla]), grupo: 'consulta', bu: b.sigla });
   });
-  const metas = [{ ...META_RESULTADO_COO, polaridade: 'maior', pesos: todas(PESO_RESULTADO_COO) }]
-    .concat(METAS_BU.map((m) => ({ numero: m.numero, titulo: m.titulo, tipo: m.tipo, polaridade: conteudoMeta(m.numero, ciclo.ano).polaridade, origem: m.origem || null, nova: !!m.nova, pesos: { ...m.pesos } })));
-  const quando = (dias, h) => `${iso(somarDiasUteis(hoje, -dias))}T${h}:00`;
+  // Desdobramento em níveis (CEO → COO → BU → GG → GA): cada unidade de um nível recebe os pontos herdados do
+  // nível acima (linha "Resultado do nível acima") e distribui o restante entre as metas do seu nível (RN-16).
+  const niveis = [
+    { id: 'ceo', nome: 'CEO', total: 100, herdado: 0, ativo: true, fixo: true },
+    { id: 'coo', nome: 'COO', total: 100, herdado: 75, ativo: true, fixo: true },
+    { id: 'bu', nome: 'Business Unit', total: PESO_TOTAL, herdado: PESO_RESULTADO_COO, ativo: true, fixo: true },
+    { id: 'gg', nome: 'Gerência Geral (GG)', total: 100, herdado: 50, ativo: true, fixo: false },
+    { id: 'ga', nome: 'Gerência de Área (GA)', total: 100, herdado: 60, ativo: true, fixo: false },
+  ];
+  // Unidades acima e abaixo das BUs (as BUs vêm da aba Business Units): GG por BU e GA por GG
+  const unidades = [{ id: 'CEO', nivel: 'ceo', nome: 'CEO VBM', pai: null }, { id: 'COO', nivel: 'coo', nome: 'COO VBM', pai: 'CEO' }];
+  ciclo.bus.forEach((b) => {
+    const cod = CODIGO_SITE[b.sigla];
+    [['MIN', `GG Mina ${b.sigla}`], ['PRO', `GG Processo ${b.sigla}`]].forEach(([g, nome]) => {
+      const gid = `${cod}-${g}`;
+      unidades.push({ id: gid, nivel: 'gg', nome, pai: b.sigla });
+      const gas = g === 'MIN' ? [['LAV', 'GA Lavra'], ['MAN', 'GA Manutenção Mina']] : [['BEN', 'GA Beneficiamento'], ['MAN', 'GA Manutenção Usina']];
+      gas.forEach(([a, n]) => unidades.push({ id: `${gid}-${a}`, nivel: 'ga', nome: `${n} ${b.sigla}`, pai: gid }));
+    });
+  });
+  const de = (nivel, valor) => Object.fromEntries(unidades.filter((u) => u.nivel === nivel).map((u) => [u.id, valor]));
+  const metasNivel = {
+    ceo: [
+      { numero: 1, titulo: 'Safety & Sustainability', tipo: 'formula', polaridade: 'maior', pesos: { CEO: 20 } },
+      { numero: 2, titulo: 'Financial Results (EBITDA)', tipo: 'formula', polaridade: 'maior', pesos: { CEO: 50 } },
+      { numero: 3, titulo: 'Growth Projects', tipo: 'marcos', polaridade: 'maior', pesos: { CEO: 15 } },
+      { numero: 4, titulo: 'People & Culture', tipo: 'formula', polaridade: 'maior', pesos: { CEO: 15 } },
+    ],
+    coo: SCORECARD_COO.filter((m) => !m.resultado).map((m, k) => ({ numero: k + 2, titulo: m.titulo, tipo: k >= 2 ? 'marcos' : 'formula', polaridade: 'maior', pesos: { COO: m.peso } })),
+    bu: METAS_BU.map((m) => ({ numero: m.numero, titulo: m.titulo, tipo: m.tipo, polaridade: conteudoMeta(m.numero, ciclo.ano).polaridade, origem: m.origem || null, nova: !!m.nova, pesos: { ...m.pesos } })),
+    gg: [
+      { numero: 1, titulo: 'GG Safety Routine Adherence', tipo: 'formula', polaridade: 'maior', pesos: de('gg', 15) },
+      { numero: 2, titulo: 'GG Cost Adherence', tipo: 'formula', polaridade: 'menor', pesos: de('gg', 20) },
+      { numero: 3, titulo: 'GG Production Plan', tipo: 'formula', polaridade: 'maior', pesos: de('gg', 15) },
+    ],
+    ga: [
+      { numero: 1, titulo: 'GA Asset Availability', tipo: 'formula', polaridade: 'maior', pesos: de('ga', 20) },
+      { numero: 2, titulo: 'GA Safety Observations Closed', tipo: 'formula', polaridade: 'maior', pesos: de('ga', 20) },
+    ],
+  };
+  // Goal Cards já submetidos por BU: a BU com card submetido não pode ser excluída (só tirada do ciclo)
+  const submetidos = {};
+  painelExemplo(hoje).cards.forEach((c) => { if (c.estado !== 'rascunho') submetidos[c.bu.sigla] = (submetidos[c.bu.sigla] || 0) + 1; });
   return {
     ciclo: { ...ciclo, status: 'aberto', textoPadraoExcecoes: TEXTO_PADRAO_EXCECOES },
-    bus: ciclo.bus.map((b) => ({ ...b, ativa: true })),
+    bus: ciclo.bus.map((b) => ({ ...b, ativa: true, cardsSubmetidos: submetidos[b.sigla] || 0 })),
     membros,
     diretorio: pessoas,
-    metas,
+    niveis,
+    unidades,
+    metasNivel,
     parametros: [
-      { id: 'pesoTotal', valor: PESO_TOTAL, unidade: 'pts', min: 1, max: 1000 },
-      { id: 'pesoResultadoCoo', valor: PESO_RESULTADO_COO, unidade: 'pts', min: 0, max: 100 },
       { id: 'minComentario', valor: 10, unidade: 'caracteres', min: 1, max: 500 },
       { id: 'anexoMb', valor: 25, unidade: 'MB', min: 1, max: 100 },
-    ],
-    // Últimas alterações de configuração (vêm do Action Log, tipo Configuração)
-    ultimasAlteracoes: [
-      { quando: quando(2, '16:40'), quem: 'Karen Duarte', aba: 'metas', detalhe: 'Peso da meta 10 em Clydach: 10 → 15 pts' },
-      { quando: quando(4, '10:05'), quem: 'Usuário Demonstração', aba: 'grupos', detalhe: 'Yuki Sato incluída como contribuidora de Matsusaka' },
-      { quando: quando(9, '09:12'), quem: 'Karen Duarte', aba: 'ciclo', detalhe: 'Fim da etapa Propostas BU\'s ajustado' },
-      { quando: quando(15, '14:30'), quem: 'Karen Duarte', aba: 'ciclo', detalhe: 'Ciclo aberto; contribuidores notificados' },
     ],
   };
 }

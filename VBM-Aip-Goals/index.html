@@ -1466,6 +1466,38 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
 .m3-dlg [data-tela-cheia] { display: none; }
 .m3-dlg #vistaVersoes .gc-filtro-meta, .m3-dlg #vistaLog .lg-filtros .filter:has(#lgBu), .m3-dlg #vistaLog .lg-filtros .filter:has(#lgMeta), .m3-dlg .lg-chip-card button { display: none; }
 
+/* T11 · Cadastro de BU (nova, editar, tirar do ciclo, excluir) e desdobramento de pontos por nível (CEO → GA) */
+.cf-barra-bu { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; }
+.cf-add-bu { grid-template-columns: minmax(12rem, 1.4fr) minmax(10rem, 1fr) auto; }
+.cf-add-acoes { display: inline-flex; gap: 0.5rem; }
+.cf-bu-nome { font-weight: 600; color: var(--ink-strong); }
+.cf-bu-antes { display: block; font-size: 0.66rem; color: var(--text-soft); }
+.cf-bu-in { min-height: 2rem; padding-block: 0.2rem; font-size: 0.8rem; margin-bottom: 0.25rem; }
+.cf-acoes-bu { display: inline-flex; align-items: center; gap: 0.35rem; }
+.cf-acoes-bu .dash-acao { width: 2rem; height: 2rem; }
+.cf-excluir:not(:disabled):hover { color: var(--status-rejected); border-color: color-mix(in srgb, var(--status-rejected) 45%, transparent); }
+.cf-excluir:disabled { opacity: .35; cursor: not-allowed; }
+.cf-tab-bus th:first-child { min-width: 12rem; }
+.cf-metas-topo { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1.25rem; }
+.cf-niveis { align-items: center; }
+.cf-niveis button { min-height: 2rem; padding: 0.25rem 0.85rem; font-size: 0.78rem; }
+.cf-niv-seta { color: var(--text-soft); font-size: 0.9rem; padding: 0 0.1rem; }
+.cf-cont.is-err { display: inline-grid; place-items: center; min-width: 1.1rem; height: 1.1rem; padding: 0 0.3rem; border-radius: 999px; background: var(--wait); color: #fff; opacity: 1; font-weight: 700; }
+.cf-pai { min-width: 14rem; }
+.cf-pai .cf-in { min-height: 2rem; padding-block: 0.2rem; }
+.cf-add-meta { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; }
+.cf-add-meta .ico { width: 0.9rem; height: 0.9rem; }
+.cf-aviso span { font-weight: 400; opacity: .85; }
+.cf-tab-niveis td, .cf-tab-niveis th { vertical-align: middle; }
+.cf-tab-niveis .cf-in:not(.cf-peso) { min-width: 14rem; }
+.cf-niv-n .cf-jan-n { width: 1.9rem; height: 1.9rem; font-size: 0.78rem; }
+.cf-livre { font: 300 1.1rem var(--font-display); color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.cf-sub-tit { margin-top: 0.5rem; }
+.cf-chip .ico { width: 0.7rem; height: 0.7rem; margin-right: 0.25rem; }
+.cf-tabela th.m3-centro, .cf-tabela td.m3-centro { text-align: center; }
+#cfConteudo, .cf-corpo > * { min-width: 0; } /* a tabela larga rola dentro do bloco, sem empurrar a página */
+.p2-tabela-wrap { position: relative; } /* textos só para leitor de tela (sr-only) ficam presos ao bloco que rola */
+
 </style>
 </head>
 <body>
@@ -1994,8 +2026,6 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
           <button type="button" class="btn" id="cfSalvar" data-i18n="cf.salvar">Salvar alterações</button>
         </div>
       </footer>
-      <!-- Últimas alterações (eventos "Configuração" do Action Log) -->
-      <div class="cf-ultimas" id="cfUltimas"></div>
     </section>
 
     <div class="estado estado-erro" id="cfErro" hidden>
@@ -2427,7 +2457,7 @@ window.VBMSetup = (function () {
       'dd.filtrar': 'Destacar as metas da BU que vêm de {m}', 'dd.limpar': 'Mostrar todas as metas',
       'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.badgeTodas': '{p}% de cada BU', 'dd.doScorecard': 'do scorecard do COO', 'dd.baseBus': 'Base do resultado do COO em {n} BUs', 'dd.aprovados': '{a} de {t} aprovados', 'dd.emAprov': '{n} em aprovação', 'dd.irBu': 'Abrir as metas de {b}',
       'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
-      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card', 'vs.titulo': "Versões", 'vs.linhaAria': "Versões do Goal Card", 'vs.atualizar': "Atualizar versões", 'vs.comparar': "Comparar:", 'vs.origem': "Versão de origem", 'vs.trocar': "Inverter as versões", 'vs.destino': "Versão de destino", 'vs.exibir': "Exibir:", 'vs.soMudou': "Só o que mudou", 'vs.verLog': "Histórico no Action Log", 'vs.erroTit': "Não foi possível carregar as versões", 'vs.oficialN': "Oficial: v{n}", 'vs.oficial': "Oficial", 'vs.semTit': "Ainda sem versão", 'vs.semTxt': "Este card está em rascunho: a v1 nasce na primeira submissão.", 'vs.semDica': "Rascunho não gera versão; cada submissão, resubmissão ou CR aprovado gera uma versão imutável.", 'vs.abrirCard': "Abrir o Goal Card", 'vs.semLinha': "sem versão submetida", 'vs.dec.aprovar': "Aprovada", 'vs.dec.devolver': "Devolvida para ajuste", 'vs.dec.negar': "Negada", 'vs.dec.pendente': "Aguardando decisão do grupo de aprovação", 'vs.noAria': "Versão {v}: {m}. {d}", 'vs.mot.submissao': "Submissão", 'vs.mot.resubmissao': "Resubmissão", 'vs.mot.reabertura': "Reabertura", 'vs.mot.cr': "Change Request", 'vs.de': "De", 'vs.para': "Para", 'vs.unicaTit': "v{v} · única versão", 'vs.unicaTxt': "A comparação aparece a partir da segunda submissão.", 'vs.campo': "Campo", 'vs.notaPend': "v{v} aguarda a decisão do grupo de aprovação.", 'vs.mudou1': "1 campo alterado", 'vs.mudou': "{n} campos alterados", 'vs.igual1': "1 igual", 'vs.iguais': "{n} iguais", 'vs.nadaMudou': "Nenhum campo mudou entre as duas versões", 'vs.caption': "Comparação da v{a} com a v{b}", 'vs.alterado': "Alterado", 'vs.pedido': "Pedido de ajuste", 'vs.verIguais': "Mostrar também os {n} campos iguais", 'vs.link1': "1 versão", 'vs.link': "{n} versões", 'vs.historico': "Histórico", 'tela.versoes': "Versões", 'lg.resumoAria': "Eventos por tipo", 'lg.exportar': "Exportar para Excel", 'lg.atualizar': "Atualizar Action Log", 'lg.periodo': "Período:", 'lg.meta': "Meta:", 'lg.secao': "Seção:", 'lg.tipo': "Tipo:", 'lg.linha': "Linha do tempo", 'lg.imutavel': "Registro imutável: nenhum evento pode ser editado ou apagado", 'lg.erroTit': "Não foi possível carregar o Action Log", 'lg.f.submeteu': "submeteu a v{v}", 'lg.f.resubmeteu': "resubmeteu como v{v}", 'lg.f.recolheu': "recolheu a submissão", 'lg.f.aprovar': "aprovou a v{v}, que vira a versão oficial", 'lg.f.devolver': "devolveu a v{v} para ajuste", 'lg.f.negar': "negou a meta (v{v})", 'lg.f.reabriu': "reabriu o card na janela inicial do ciclo (RN-17)", 'lg.f.comentou': "comentou na seção {s}", 'lg.hoje': "Hoje", 'lg.ontem': "Ontem", 'lg.r.todos': "Eventos", 'lg.r.decSub': "aprovar, devolver ou negar", 'lg.r.negSub': "tentativas bloqueadas", 'lg.r.cfgSub': "mudanças na T11", 'lg.r.comSub': "do grupo de aprovação", 'lg.r.subSub': "inclui resubmissões", 'lg.tp.submissao': "Submissão", 'lg.tp.recolhimento': "Recolhimento", 'lg.tp.decisao': "Decisão", 'lg.tp.reabertura': "Reabertura", 'lg.tp.comentario': "Comentário", 'lg.tp.configuracao': "Configuração", 'lg.tp.acesso_negado': "Acesso negado", 'lg.per.7': "7 dias", 'lg.per.30': "30 dias", 'lg.per.ciclo': "Ciclo todo", 'lg.todasMetas': "Todas as metas", 'lg.todasSecoes': "Todas as seções", 'lg.todosTipos': "Todos os tipos", 'lg.tirarCard': "Tirar o filtro do Goal Card", 'lg.limpar': "Limpar filtros", 'lg.vazioTit': "Nenhum evento neste recorte", 'lg.vazioTxt': "Amplie o período ou tire algum filtro.", 'lg.antesDepois': "Valor antes e depois", 'lg.antes': "Antes", 'lg.depois': "Depois", 'lg.metaN': "Meta {n}", 'lg.versoes': "Versões", 'lg.papel.contribuidor': "Contribuidor", 'lg.papel.aprovador': "Grupo de aprovação", 'lg.papel.consulta': "Consulta", 'lg.papel.admin': "Administrador", 'lg.mais': "Mostrar mais {n} (faltam {t})", 'lg.col.quando': "Quando", 'lg.col.tipo': "Tipo", 'lg.col.quem': "Quem", 'lg.col.papel': "Papel", 'lg.col.bu': "BU", 'lg.col.meta': "Meta", 'lg.col.card': "Goal Card", 'lg.col.secao': "Seção", 'lg.col.versao': "Versão", 'lg.col.detalhe': "Detalhe", 'lg.col.antes': "Antes", 'lg.col.depois': "Depois", 'lg.exportado': "{n} eventos exportados", 'lg.erroExportar': "Não foi possível exportar.", 'cf.eyebrow': "Administração", 'cf.titulo': "Configuração do ciclo", 'cf.resumoAria': "Resumo da configuração do ciclo", 'cf.atualizar': "Atualizar configuração", 'cf.secao': "Seção:", 'cf.clonar': "Novo ciclo a partir deste", 'cf.clonarAno': "Criar AIP {a} a partir deste", 'cf.clonarOk': "Criar ciclo", 'cf.descartar': "Descartar", 'cf.salvar': "Salvar alterações", 'cf.salvando': "Salvando…", 'cf.erroTit': "Não foi possível carregar a configuração", 'cf.aba.ciclo': "Ciclo", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Grupos", 'cf.aba.metas': "Metas e pesos", 'cf.aba.parametros': "Parâmetros", 'cf.sub.ciclo': "Nome, janelas da jornada e texto padrão de exceções", 'cf.sub.bus': "BUs do ciclo, pessoas por grupo e pontos por BU", 'cf.sub.grupos': "Quem preenche, quem aprova e quem consulta", 'cf.sub.metas': "Metas do desdobramento e peso de cada uma por BU", 'cf.sub.parametros': "Limites usados pelas regras da aplicação", 'cf.marcaErro': "Alterada, com pendência", 'cf.marcaAlt': "Alterada, não salva", 'cf.r.bus': "Business Units ativas", 'cf.r.busSub': "em {p} regiões", 'cf.r.pessoas': "Pessoas nos grupos", 'cf.r.pessoasSub': "{a} no grupo de aprovação", 'cf.r.metas': "Metas", 'cf.r.metasSub': "{n} novas neste ciclo", 'cf.r.pontos': "BUs com {t} pts", 'cf.r.pontosOk': "Todas fecham o total (RN-16)", 'cf.r.pontosPend': "{n} com soma diferente do total", 'cf.r.oficial': "Goal Cards oficiais", 'cf.r.etapa': "Etapa atual: {e}", 'cf.e.nome': "Informe o nome do ciclo.", 'cf.e.data': "Informe a data de {e}.", 'cf.e.ordem': "{e} precisa terminar depois da etapa anterior.", 'cf.e.titulo': "A meta {n} precisa de título.", 'cf.e.soma': "{b} soma {s} de {t} pts.", 'cf.e.semAprov': "O grupo de aprovação precisa de ao menos uma pessoa.", 'cf.e.semAdmin': "O ciclo precisa de ao menos um administrador.", 'cf.e.faixa': "{p}: use um valor entre {a} e {b}.", 'cf.e.semBu': "O ciclo precisa de ao menos uma BU ativa.", 'cf.e.matVazia': "Informe a matrícula ou escolha a pessoa na lista.", 'cf.e.matNao': "A matrícula {m} não está no cadastro de usuários do Portal.", 'cf.e.jaNoGrupo': "{n} já está neste grupo.", 'cf.e.rn16Srv': "O servidor recusou: há BU com soma de pesos diferente do total (RN-16).", 'cf.e.salvar': "Não foi possível salvar. Revise as pendências e tente de novo.", 'cf.e.clonar': "Não foi possível criar o novo ciclo.", 'cf.de': "De", 'cf.ate': "até", 'cf.du1': "1 dia útil", 'cf.du': "{n} dias úteis", 'cf.ident': "Identificação", 'cf.ano': "Ano", 'cf.situacao': "Situação", 'cf.aberto': "Aberto", 'cf.nome': "Nome do ciclo", 'cf.texto': "Texto padrão de exceções", 'cf.textoAjuda': "Aparece em todos os Goal Cards, na seção Exceptions and Considerations; a BU não edita.", 'cf.janelas': "Janelas do ciclo", 'cf.janelasAjuda': "As datas definem a jornada mostrada no Início, no Painel e nas Metas da BU. Cada etapa começa quando a anterior termina.", 'cf.g.todos': "Todos", 'cf.g.contribuidor': "Contribuidores", 'cf.g.aprovacao': "Aprovação", 'cf.g.consulta': "Consulta", 'cf.g.admin': "Administradores", 'cf.g1.contribuidor': "Contribuidor", 'cf.g1.aprovacao': "Grupo de aprovação", 'cf.g1.consulta': "Consulta", 'cf.g1.admin': "Administrador", 'cf.ativaAria': "{b} no ciclo", 'cf.ativa': "Ativa", 'cf.inativa': "Fora", 'cf.verMetas': "Metas", 'cf.pontos': "Pontos", 'cf.noCiclo': "No ciclo", 'cf.busAjuda': "Uma BU fora do ciclo não recebe Goal Cards nem notificações e sai das somas de pontos.", 'cf.somaDe': "{s} de {t}", 'cf.todasBus': "Todas as BUs", 'cf.remover': "Remover {n} de {g}", 'cf.removerCurto': "Remover do grupo", 'cf.semPessoas': "Nenhuma pessoa com esse filtro.", 'cf.addTit': "Incluir pessoa num grupo", 'cf.matricula': "Matrícula", 'cf.matriculaPh': "Matrícula ou nome", 'cf.grupo': "Grupo", 'cf.adicionar': "Incluir", 'cf.buscaPh': "Buscar por nome, matrícula ou e-mail", 'cf.pessoa': "Pessoa", 'cf.tipo': "Tipo", 'cf.cooFixo': "Vem do desdobramento do COO", 'cf.tituloAria': "Título da meta {n}", 'cf.nova': "Nova", 'cf.pesoAria': "Peso da meta {n} em {b}", 'cf.totalBu': "Total por BU (precisa fechar {t} pts)", 'cf.metasAjuda': "Cada BU ativa precisa somar {t} pts. {c} pts vêm do resultado do scorecard do COO; o restante se distribui entre as metas específicas.", 'cf.rn16': "{n} BU(s) ainda não fecham o total. O servidor só grava quando todas fecham (RN-16).", 'cf.par.pesoTotal': "Total de pontos por BU", 'cf.par.pesoResultadoCoo': "Pontos do resultado do COO", 'cf.par.minComentario': "Mínimo de caracteres no comentário", 'cf.par.anexoMb': "Tamanho máximo de anexo", 'cf.parTxt.pesoTotal': "Soma que cada BU precisa fechar para gravar as metas (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Parte de cada BU ligada ao resultado do scorecard do COO.", 'cf.parTxt.minComentario': "Exigido para devolver ou negar um Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Por arquivo, para Change Requests e evidências (fases 2 e 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "caracteres", 'cf.un.MB': "MB", 'cf.faixa': "Entre {a} e {b}", 'cf.paramAjuda': "Os limites ficam no banco (AIP_PARAMETRO); a interface nunca os fixa no código.", 'cf.tudoSalvo': "Tudo salvo", 'cf.pendente': "Pendência em: {a}.", 'cf.naoSalvas': "Alterações não salvas em: {a}", 'cf.ultimas': "Últimas alterações", 'cf.verLog': "Ver tudo no Action Log", 'cf.removido': "{n} sai do grupo ao salvar", 'cf.incluido': "{n} entra como {g} ao salvar", 'cf.descartado': "Alterações descartadas", 'cf.salvo': "Configuração salva (simulação, nada foi gravado)", 'cf.dlgTit': "Criar o ciclo AIP {a}?", 'cf.dlgTxt': "O novo ciclo nasce com a estrutura do {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} pessoas nos grupos", 'cf.dlgMetas': "{n} metas com os pesos atuais", 'cf.dlgJanelas': "Janelas em branco, para você definir", 'cf.clonado': "{c} criado (simulação, nada foi gravado)"
+      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card', 'cf.e.ano': "Informe um ano entre 2020 e 2100.", 'cf.anoMudou': "Ano alterado (era {a}); confira também o nome e as janelas do ciclo.", 'cf.e.tituloN': "A meta {n} do nível {l} precisa de título.", 'cf.e.nivelNome': "Todo nível precisa de nome.", 'cf.e.nivelTotal': "{l}: o total por unidade vai de 1 a 1000 pts.", 'cf.e.nivelHerdado': "{l}: os pontos herdados precisam ficar entre 0 e o total (o primeiro nível não herda).", 'cf.e.salto': "A GA só fica ativa com a GG ativa: o desdobramento não pula nível.", 'cf.e.buNome': "Informe o nome da BU.", 'cf.e.buDup': "Já existe uma BU chamada {b}.", 'cf.e.buPais': "Informe o país ou a região da BU.", 'cf.buNome': "Nome da BU", 'cf.buPais': "País ou região", 'cf.antes': "antes: {b}", 'cf.ok': "Concluir", 'cf.editar': "Editar", 'cf.editarBu': "Editar {b}", 'cf.excluir': "Excluir", 'cf.naoExclui': "Tem {n} Goal Card(s) submetido(s): não pode ser excluída; tire do ciclo", 'cf.excluirBu': "Excluir {b}", 'cf.novaBuTit': "Nova Business Unit", 'cf.buNomePh': "Ex.: Voisey's Bay", 'cf.buPaisPh': "Ex.: Canadá", 'cf.busCiclo': "As alterações valem para o ciclo {c}, o ciclo aberto que você está configurando.", 'cf.novaBu': "Nova BU", 'cf.cardsSub': "Cards submetidos", 'cf.noCicloN': "No ciclo {c}", 'cf.nivelAria': "Nível do desdobramento", 'cf.paiBu': "Business Unit:", 'cf.paiGg': "Gerência Geral:", 'cf.resultadoDe': "Resultado do {l}", 'cf.herdadoTxt': "Pontos herdados do nível acima (Parâmetros)", 'cf.remMeta': "Remover a meta", 'cf.remMetaAria': "Remover a meta {n}", 'cf.totalUn': "Total por unidade (precisa fechar {t} pts)", 'cf.metasAjudaN': "Cada unidade do nível {l} precisa somar {t} pts: {h} pts vêm do resultado do {a}; o restante se distribui entre as metas deste nível.", 'cf.metasAjudaTopo': "Cada unidade do nível {l} precisa somar {t} pts, distribuídos entre as metas deste nível.", 'cf.addMeta': "Nova meta em {l}", 'cf.rn16N': "{n} unidade(s) ainda não fecham o total. O servidor só grava quando todas fecham (RN-16).", 'cf.nivelNomeAria': "Nome do nível {n}", 'cf.nivelTotalAria': "Total de pontos por unidade em {l}", 'cf.nivelHerdadoAria': "Pontos que {l} herda de {a}", 'cf.obrigatorio': "Obrigatório", 'cf.nivelAtivoAria': "{l} no desdobramento", 'cf.inativo': "Fora", 'cf.niveisTit': "Níveis do desdobramento de pontos", 'cf.niveisAjuda': "O desdobramento desce do CEO até a Gerência de Área. Em cada nível, toda unidade fecha o total de pontos: uma parte vem do resultado do nível acima e o restante vai para as metas do nível (aba Metas e pesos).", 'cf.nivel': "Nível", 'cf.unidades': "Unidades", 'cf.totalPts': "Total por unidade", 'cf.herdadoPts': "Herdado do nível acima", 'cf.livrePts': "Para as metas do nível", 'cf.noDesdob': "No desdobramento", 'cf.limitesTit': "Limites das regras", 'cf.metaRemovida': "Meta {n} sai ao salvar", 'cf.buIncluida': "{b} entra no ciclo ao salvar", 'cf.excluirTit': "Excluir a BU {b}?", 'cf.excluirTxt': "A BU não tem Goal Card submetido. Ao salvar, sai também:", 'cf.excluirPessoas': "{n} pessoa(s) dos grupos desta BU", 'cf.excluirPesos': "Os pesos das metas desta BU", 'cf.excluirGg': "{n} Gerência(s) Geral(is) e as GAs ligadas a elas", 'cf.excluirOk': "Excluir BU", 'cf.buExcluida': "{b} sai ao salvar", 'vs.titulo': "Versões", 'vs.linhaAria': "Versões do Goal Card", 'vs.atualizar': "Atualizar versões", 'vs.comparar': "Comparar:", 'vs.origem': "Versão de origem", 'vs.trocar': "Inverter as versões", 'vs.destino': "Versão de destino", 'vs.exibir': "Exibir:", 'vs.soMudou': "Só o que mudou", 'vs.verLog': "Histórico no Action Log", 'vs.erroTit': "Não foi possível carregar as versões", 'vs.oficialN': "Oficial: v{n}", 'vs.oficial': "Oficial", 'vs.semTit': "Ainda sem versão", 'vs.semTxt': "Este card está em rascunho: a v1 nasce na primeira submissão.", 'vs.semDica': "Rascunho não gera versão; cada submissão, resubmissão ou CR aprovado gera uma versão imutável.", 'vs.abrirCard': "Abrir o Goal Card", 'vs.semLinha': "sem versão submetida", 'vs.dec.aprovar': "Aprovada", 'vs.dec.devolver': "Devolvida para ajuste", 'vs.dec.negar': "Negada", 'vs.dec.pendente': "Aguardando decisão do grupo de aprovação", 'vs.noAria': "Versão {v}: {m}. {d}", 'vs.mot.submissao': "Submissão", 'vs.mot.resubmissao': "Resubmissão", 'vs.mot.reabertura': "Reabertura", 'vs.mot.cr': "Change Request", 'vs.de': "De", 'vs.para': "Para", 'vs.unicaTit': "v{v} · única versão", 'vs.unicaTxt': "A comparação aparece a partir da segunda submissão.", 'vs.campo': "Campo", 'vs.notaPend': "v{v} aguarda a decisão do grupo de aprovação.", 'vs.mudou1': "1 campo alterado", 'vs.mudou': "{n} campos alterados", 'vs.igual1': "1 igual", 'vs.iguais': "{n} iguais", 'vs.nadaMudou': "Nenhum campo mudou entre as duas versões", 'vs.caption': "Comparação da v{a} com a v{b}", 'vs.alterado': "Alterado", 'vs.pedido': "Pedido de ajuste", 'vs.verIguais': "Mostrar também os {n} campos iguais", 'vs.link1': "1 versão", 'vs.link': "{n} versões", 'vs.historico': "Histórico", 'tela.versoes': "Versões", 'lg.resumoAria': "Eventos por tipo", 'lg.exportar': "Exportar para Excel", 'lg.atualizar': "Atualizar Action Log", 'lg.periodo': "Período:", 'lg.meta': "Meta:", 'lg.secao': "Seção:", 'lg.tipo': "Tipo:", 'lg.linha': "Linha do tempo", 'lg.imutavel': "Registro imutável: nenhum evento pode ser editado ou apagado", 'lg.erroTit': "Não foi possível carregar o Action Log", 'lg.f.submeteu': "submeteu a v{v}", 'lg.f.resubmeteu': "resubmeteu como v{v}", 'lg.f.recolheu': "recolheu a submissão", 'lg.f.aprovar': "aprovou a v{v}, que vira a versão oficial", 'lg.f.devolver': "devolveu a v{v} para ajuste", 'lg.f.negar': "negou a meta (v{v})", 'lg.f.reabriu': "reabriu o card na janela inicial do ciclo (RN-17)", 'lg.f.comentou': "comentou na seção {s}", 'lg.hoje': "Hoje", 'lg.ontem': "Ontem", 'lg.r.todos': "Eventos", 'lg.r.decSub': "aprovar, devolver ou negar", 'lg.r.negSub': "tentativas bloqueadas", 'lg.r.cfgSub': "mudanças na T11", 'lg.r.comSub': "do grupo de aprovação", 'lg.r.subSub': "inclui resubmissões", 'lg.tp.submissao': "Submissão", 'lg.tp.recolhimento': "Recolhimento", 'lg.tp.decisao': "Decisão", 'lg.tp.reabertura': "Reabertura", 'lg.tp.comentario': "Comentário", 'lg.tp.configuracao': "Configuração", 'lg.tp.acesso_negado': "Acesso negado", 'lg.per.7': "7 dias", 'lg.per.30': "30 dias", 'lg.per.ciclo': "Ciclo todo", 'lg.todasMetas': "Todas as metas", 'lg.todasSecoes': "Todas as seções", 'lg.todosTipos': "Todos os tipos", 'lg.tirarCard': "Tirar o filtro do Goal Card", 'lg.limpar': "Limpar filtros", 'lg.vazioTit': "Nenhum evento neste recorte", 'lg.vazioTxt': "Amplie o período ou tire algum filtro.", 'lg.antesDepois': "Valor antes e depois", 'lg.antes': "Antes", 'lg.depois': "Depois", 'lg.metaN': "Meta {n}", 'lg.versoes': "Versões", 'lg.papel.contribuidor': "Contribuidor", 'lg.papel.aprovador': "Grupo de aprovação", 'lg.papel.consulta': "Consulta", 'lg.papel.admin': "Administrador", 'lg.mais': "Mostrar mais {n} (faltam {t})", 'lg.col.quando': "Quando", 'lg.col.tipo': "Tipo", 'lg.col.quem': "Quem", 'lg.col.papel': "Papel", 'lg.col.bu': "BU", 'lg.col.meta': "Meta", 'lg.col.card': "Goal Card", 'lg.col.secao': "Seção", 'lg.col.versao': "Versão", 'lg.col.detalhe': "Detalhe", 'lg.col.antes': "Antes", 'lg.col.depois': "Depois", 'lg.exportado': "{n} eventos exportados", 'lg.erroExportar': "Não foi possível exportar.", 'cf.eyebrow': "Administração", 'cf.titulo': "Configuração do ciclo", 'cf.resumoAria': "Resumo da configuração do ciclo", 'cf.atualizar': "Atualizar configuração", 'cf.secao': "Seção:", 'cf.clonar': "Novo ciclo a partir deste", 'cf.clonarAno': "Criar AIP {a} a partir deste", 'cf.clonarOk': "Criar ciclo", 'cf.descartar': "Descartar", 'cf.salvar': "Salvar alterações", 'cf.salvando': "Salvando…", 'cf.erroTit': "Não foi possível carregar a configuração", 'cf.aba.ciclo': "Ciclo", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Grupos", 'cf.aba.metas': "Metas e pesos", 'cf.aba.parametros': "Parâmetros", 'cf.sub.ciclo': "Nome, janelas da jornada e texto padrão de exceções", 'cf.sub.bus': "Cadastro das BUs do ciclo aberto: criar, editar, tirar do ciclo ou excluir", 'cf.sub.grupos': "Quem preenche, quem aprova e quem consulta", 'cf.sub.metas': "Metas e pesos de cada nível do desdobramento, do CEO à Gerência de Área", 'cf.sub.parametros': "Níveis do desdobramento de pontos e limites das regras", 'cf.marcaErro': "Alterada, com pendência", 'cf.marcaAlt': "Alterada, não salva", 'cf.r.bus': "Business Units ativas", 'cf.r.busSub': "em {p} regiões", 'cf.r.pessoas': "Pessoas nos grupos", 'cf.r.pessoasSub': "{a} no grupo de aprovação", 'cf.r.metas': "Metas", 'cf.r.metasSub': "{n} novas neste ciclo", 'cf.r.pontos': "BUs com {t} pts", 'cf.r.pontosOk': "Todas fecham o total (RN-16)", 'cf.r.pontosPend': "{n} com soma diferente do total", 'cf.r.oficial': "Goal Cards oficiais", 'cf.r.etapa': "Etapa atual: {e}", 'cf.e.nome': "Informe o nome do ciclo.", 'cf.e.data': "Informe a data de {e}.", 'cf.e.ordem': "{e} precisa terminar depois da etapa anterior.", 'cf.e.titulo': "A meta {n} precisa de título.", 'cf.e.soma': "{b} soma {s} de {t} pts.", 'cf.e.semAprov': "O grupo de aprovação precisa de ao menos uma pessoa.", 'cf.e.semAdmin': "O ciclo precisa de ao menos um administrador.", 'cf.e.faixa': "{p}: use um valor entre {a} e {b}.", 'cf.e.semBu': "O ciclo precisa de ao menos uma BU ativa.", 'cf.e.matVazia': "Informe a matrícula ou escolha a pessoa na lista.", 'cf.e.matNao': "A matrícula {m} não está no cadastro de usuários do Portal.", 'cf.e.jaNoGrupo': "{n} já está neste grupo.", 'cf.e.rn16Srv': "O servidor recusou: há BU com soma de pesos diferente do total (RN-16).", 'cf.e.salvar': "Não foi possível salvar. Revise as pendências e tente de novo.", 'cf.e.clonar': "Não foi possível criar o novo ciclo.", 'cf.de': "De", 'cf.ate': "até", 'cf.du1': "1 dia útil", 'cf.du': "{n} dias úteis", 'cf.ident': "Identificação", 'cf.ano': "Ano", 'cf.situacao': "Situação", 'cf.aberto': "Aberto", 'cf.nome': "Nome do ciclo", 'cf.texto': "Texto padrão de exceções", 'cf.textoAjuda': "Aparece em todos os Goal Cards, na seção Exceptions and Considerations; a BU não edita.", 'cf.janelas': "Janelas do ciclo", 'cf.janelasAjuda': "As datas definem a jornada mostrada no Início, no Painel e nas Metas da BU. Cada etapa começa quando a anterior termina.", 'cf.g.todos': "Todos", 'cf.g.contribuidor': "Contribuidores", 'cf.g.aprovacao': "Aprovação", 'cf.g.consulta': "Consulta", 'cf.g.admin': "Administradores", 'cf.g1.contribuidor': "Contribuidor", 'cf.g1.aprovacao': "Grupo de aprovação", 'cf.g1.consulta': "Consulta", 'cf.g1.admin': "Administrador", 'cf.ativaAria': "{b} no ciclo {c}", 'cf.ativa': "Ativa", 'cf.inativa': "Fora", 'cf.verMetas': "Metas", 'cf.pontos': "Pontos", 'cf.noCiclo': "No ciclo", 'cf.busAjuda': "Fora do ciclo: a BU fica no cadastro, mas não recebe Goal Cards nem notificações e sai das somas de pontos. Excluir só é possível para BU sem Goal Card submetido.", 'cf.somaDe': "{s} de {t}", 'cf.todasBus': "Todas as BUs", 'cf.remover': "Remover {n} de {g}", 'cf.removerCurto': "Remover do grupo", 'cf.semPessoas': "Nenhuma pessoa com esse filtro.", 'cf.addTit': "Incluir pessoa num grupo", 'cf.matricula': "Matrícula", 'cf.matriculaPh': "Matrícula ou nome", 'cf.grupo': "Grupo", 'cf.adicionar': "Incluir", 'cf.buscaPh': "Buscar por nome, matrícula ou e-mail", 'cf.pessoa': "Pessoa", 'cf.tipo': "Tipo", 'cf.cooFixo': "Vem do desdobramento do COO", 'cf.tituloAria': "Título da meta {n}", 'cf.nova': "Nova", 'cf.pesoAria': "Peso da meta {n} em {b}", 'cf.totalBu': "Total por BU (precisa fechar {t} pts)", 'cf.metasAjuda': "Cada BU ativa precisa somar {t} pts. {c} pts vêm do resultado do scorecard do COO; o restante se distribui entre as metas específicas.", 'cf.rn16': "{n} BU(s) ainda não fecham o total. O servidor só grava quando todas fecham (RN-16).", 'cf.par.pesoTotal': "Total de pontos por BU", 'cf.par.pesoResultadoCoo': "Pontos do resultado do COO", 'cf.par.minComentario': "Mínimo de caracteres no comentário", 'cf.par.anexoMb': "Tamanho máximo de anexo", 'cf.parTxt.pesoTotal': "Soma que cada BU precisa fechar para gravar as metas (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Parte de cada BU ligada ao resultado do scorecard do COO.", 'cf.parTxt.minComentario': "Exigido para devolver ou negar um Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Por arquivo, para Change Requests e evidências (fases 2 e 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "caracteres", 'cf.un.MB': "MB", 'cf.faixa': "Entre {a} e {b}", 'cf.paramAjuda': "Os limites ficam no banco (AIP_PARAMETRO); a interface nunca os fixa no código.", 'cf.tudoSalvo': "Tudo salvo", 'cf.pendente': "Pendência em: {a}.", 'cf.naoSalvas': "Alterações não salvas em: {a}", 'cf.ultimas': "Últimas alterações", 'cf.verLog': "Ver tudo no Action Log", 'cf.removido': "{n} sai do grupo ao salvar", 'cf.incluido': "{n} entra como {g} ao salvar", 'cf.descartado': "Alterações descartadas", 'cf.salvo': "Configuração salva (simulação, nada foi gravado)", 'cf.dlgTit': "Criar o ciclo AIP {a}?", 'cf.dlgTxt': "O novo ciclo nasce com a estrutura do {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} pessoas nos grupos", 'cf.dlgMetas': "{n} metas com os pesos atuais", 'cf.dlgJanelas': "Janelas em branco, para você definir", 'cf.clonado': "{c} criado (simulação, nada foi gravado)"
     },
     en: {
       'p2.linha': 'Cycle timeline', 'p2.hoje': 'Today · {d}',
@@ -2522,7 +2552,7 @@ window.VBMSetup = (function () {
       'dd.filtrar': 'Highlight the BU goals that come from {m}', 'dd.limpar': 'Show all goals',
       'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.badgeTodas': '{p}% of each BU', 'dd.doScorecard': 'of the COO scorecard', 'dd.baseBus': 'Basis of the COO result in {n} BUs', 'dd.aprovados': '{a} of {t} approved', 'dd.emAprov': '{n} pending approval', 'dd.irBu': 'Open the goals of {b}',
       'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
-      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card', 'vs.titulo': "Versions", 'vs.linhaAria': "Goal Card versions", 'vs.atualizar': "Refresh versions", 'vs.comparar': "Compare:", 'vs.origem': "From version", 'vs.trocar': "Swap versions", 'vs.destino': "To version", 'vs.exibir': "Show:", 'vs.soMudou': "Only what changed", 'vs.verLog': "History in the Action Log", 'vs.erroTit': "Could not load the versions", 'vs.oficialN': "Official: v{n}", 'vs.oficial': "Official", 'vs.semTit': "No version yet", 'vs.semTxt': "This card is a draft: v1 is created on the first submission.", 'vs.semDica': "Drafts do not create versions; each submission, resubmission or approved CR creates an immutable version.", 'vs.abrirCard': "Open the Goal Card", 'vs.semLinha': "no submitted version", 'vs.dec.aprovar': "Approved", 'vs.dec.devolver': "Returned for changes", 'vs.dec.negar': "Denied", 'vs.dec.pendente': "Awaiting the approval group decision", 'vs.noAria': "Version {v}: {m}. {d}", 'vs.mot.submissao': "Submission", 'vs.mot.resubmissao': "Resubmission", 'vs.mot.reabertura': "Reopening", 'vs.mot.cr': "Change Request", 'vs.de': "From", 'vs.para': "To", 'vs.unicaTit': "v{v} · only version", 'vs.unicaTxt': "The comparison appears from the second submission on.", 'vs.campo': "Field", 'vs.notaPend': "v{v} awaits the approval group decision.", 'vs.mudou1': "1 field changed", 'vs.mudou': "{n} fields changed", 'vs.igual1': "1 unchanged", 'vs.iguais': "{n} unchanged", 'vs.nadaMudou': "No field changed between the two versions", 'vs.caption': "Comparison of v{a} with v{b}", 'vs.alterado': "Changed", 'vs.pedido': "Change requested", 'vs.verIguais': "Also show the {n} unchanged fields", 'vs.link1': "1 version", 'vs.link': "{n} versions", 'vs.historico': "History", 'tela.versoes': "Versions", 'lg.resumoAria': "Events by type", 'lg.exportar': "Export to Excel", 'lg.atualizar': "Refresh Action Log", 'lg.periodo': "Period:", 'lg.meta': "Goal:", 'lg.secao': "Section:", 'lg.tipo': "Type:", 'lg.linha': "Timeline", 'lg.imutavel': "Immutable record: no event can be edited or deleted", 'lg.erroTit': "Could not load the Action Log", 'lg.f.submeteu': "submitted v{v}", 'lg.f.resubmeteu': "resubmitted as v{v}", 'lg.f.recolheu': "withdrew the submission", 'lg.f.aprovar': "approved v{v}, now the official version", 'lg.f.devolver': "returned v{v} for changes", 'lg.f.negar': "denied the goal (v{v})", 'lg.f.reabriu': "reopened the card in the initial cycle window (RN-17)", 'lg.f.comentou': "commented on {s}", 'lg.hoje': "Today", 'lg.ontem': "Yesterday", 'lg.r.todos': "Events", 'lg.r.decSub': "approve, return or deny", 'lg.r.negSub': "blocked attempts", 'lg.r.cfgSub': "changes in T11", 'lg.r.comSub': "from the approval group", 'lg.r.subSub': "includes resubmissions", 'lg.tp.submissao': "Submission", 'lg.tp.recolhimento': "Withdrawal", 'lg.tp.decisao': "Decision", 'lg.tp.reabertura': "Reopening", 'lg.tp.comentario': "Comment", 'lg.tp.configuracao': "Settings", 'lg.tp.acesso_negado': "Access denied", 'lg.per.7': "7 days", 'lg.per.30': "30 days", 'lg.per.ciclo': "Whole cycle", 'lg.todasMetas': "All goals", 'lg.todasSecoes': "All sections", 'lg.todosTipos': "All types", 'lg.tirarCard': "Remove the Goal Card filter", 'lg.limpar': "Clear filters", 'lg.vazioTit': "No events in this view", 'lg.vazioTxt': "Widen the period or remove a filter.", 'lg.antesDepois': "Value before and after", 'lg.antes': "Before", 'lg.depois': "After", 'lg.metaN': "Goal {n}", 'lg.versoes': "Versions", 'lg.papel.contribuidor': "Contributor", 'lg.papel.aprovador': "Approval group", 'lg.papel.consulta': "Read-only", 'lg.papel.admin': "Administrator", 'lg.mais': "Show {n} more ({t} left)", 'lg.col.quando': "When", 'lg.col.tipo': "Type", 'lg.col.quem': "Who", 'lg.col.papel': "Role", 'lg.col.bu': "BU", 'lg.col.meta': "Goal", 'lg.col.card': "Goal Card", 'lg.col.secao': "Section", 'lg.col.versao': "Version", 'lg.col.detalhe': "Detail", 'lg.col.antes': "Before", 'lg.col.depois': "After", 'lg.exportado': "{n} events exported", 'lg.erroExportar': "Could not export.", 'cf.eyebrow': "Administration", 'cf.titulo': "Cycle settings", 'cf.resumoAria': "Cycle settings summary", 'cf.atualizar': "Refresh settings", 'cf.secao': "Section:", 'cf.clonar': "New cycle from this one", 'cf.clonarAno': "Create AIP {a} from this one", 'cf.clonarOk': "Create cycle", 'cf.descartar': "Discard", 'cf.salvar': "Save changes", 'cf.salvando': "Saving…", 'cf.erroTit': "Could not load the settings", 'cf.aba.ciclo': "Cycle", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Groups", 'cf.aba.metas': "Goals and weights", 'cf.aba.parametros': "Parameters", 'cf.sub.ciclo': "Name, journey windows and standard exceptions text", 'cf.sub.bus': "Cycle BUs, people per group and points per BU", 'cf.sub.grupos': "Who fills in, who approves and who reads", 'cf.sub.metas': "Cascade goals and the weight of each one per BU", 'cf.sub.parametros': "Limits used by the application rules", 'cf.marcaErro': "Changed, with an issue", 'cf.marcaAlt': "Changed, not saved", 'cf.r.bus': "Active Business Units", 'cf.r.busSub': "in {p} regions", 'cf.r.pessoas': "People in groups", 'cf.r.pessoasSub': "{a} in the approval group", 'cf.r.metas': "Goals", 'cf.r.metasSub': "{n} new this cycle", 'cf.r.pontos': "BUs at {t} pts", 'cf.r.pontosOk': "All close the total (RN-16)", 'cf.r.pontosPend': "{n} with a sum different from the total", 'cf.r.oficial': "Official Goal Cards", 'cf.r.etapa': "Current stage: {e}", 'cf.e.nome': "Enter the cycle name.", 'cf.e.data': "Enter the date for {e}.", 'cf.e.ordem': "{e} must end after the previous stage.", 'cf.e.titulo': "Goal {n} needs a title.", 'cf.e.soma': "{b} adds up to {s} of {t} pts.", 'cf.e.semAprov': "The approval group needs at least one person.", 'cf.e.semAdmin': "The cycle needs at least one administrator.", 'cf.e.faixa': "{p}: use a value between {a} and {b}.", 'cf.e.semBu': "The cycle needs at least one active BU.", 'cf.e.matVazia': "Enter the employee ID or pick the person from the list.", 'cf.e.matNao': "Employee ID {m} is not in the Portal user directory.", 'cf.e.jaNoGrupo': "{n} is already in this group.", 'cf.e.rn16Srv': "The server refused: a BU has a weight sum different from the total (RN-16).", 'cf.e.salvar': "Could not save. Review the issues and try again.", 'cf.e.clonar': "Could not create the new cycle.", 'cf.de': "From", 'cf.ate': "to", 'cf.du1': "1 business day", 'cf.du': "{n} business days", 'cf.ident': "Identification", 'cf.ano': "Year", 'cf.situacao': "Status", 'cf.aberto': "Open", 'cf.nome': "Cycle name", 'cf.texto': "Standard exceptions text", 'cf.textoAjuda': "Shown on every Goal Card, in Exceptions and Considerations; BUs cannot edit it.", 'cf.janelas': "Cycle windows", 'cf.janelasAjuda': "The dates drive the journey shown on Home, the Cycle dashboard and BU goals. Each stage starts when the previous one ends.", 'cf.g.todos': "All", 'cf.g.contribuidor': "Contributors", 'cf.g.aprovacao': "Approval", 'cf.g.consulta': "Read-only", 'cf.g.admin': "Administrators", 'cf.g1.contribuidor': "Contributor", 'cf.g1.aprovacao': "Approval group", 'cf.g1.consulta': "Read-only", 'cf.g1.admin': "Administrator", 'cf.ativaAria': "{b} in the cycle", 'cf.ativa': "Active", 'cf.inativa': "Out", 'cf.verMetas': "Goals", 'cf.pontos': "Points", 'cf.noCiclo': "In cycle", 'cf.busAjuda': "A BU out of the cycle receives no Goal Cards or notifications and leaves the point sums.", 'cf.somaDe': "{s} of {t}", 'cf.todasBus': "All BUs", 'cf.remover': "Remove {n} from {g}", 'cf.removerCurto': "Remove from group", 'cf.semPessoas': "No one matches this filter.", 'cf.addTit': "Add a person to a group", 'cf.matricula': "Employee ID", 'cf.matriculaPh': "Employee ID or name", 'cf.grupo': "Group", 'cf.adicionar': "Add", 'cf.buscaPh': "Search by name, ID or e-mail", 'cf.pessoa': "Person", 'cf.tipo': "Type", 'cf.cooFixo': "Comes from the COO cascade", 'cf.tituloAria': "Title of goal {n}", 'cf.nova': "New", 'cf.pesoAria': "Weight of goal {n} in {b}", 'cf.totalBu': "Total per BU (must close {t} pts)", 'cf.metasAjuda': "Each active BU must add up to {t} pts. {c} pts come from the COO scorecard result; the rest is split across the specific goals.", 'cf.rn16': "{n} BU(s) do not close the total yet. The server only saves when all of them do (RN-16).", 'cf.par.pesoTotal': "Total points per BU", 'cf.par.pesoResultadoCoo': "COO result points", 'cf.par.minComentario': "Minimum comment length", 'cf.par.anexoMb': "Maximum attachment size", 'cf.parTxt.pesoTotal': "Sum each BU must close to save its goals (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Share of each BU tied to the COO scorecard result.", 'cf.parTxt.minComentario': "Required to return or deny a Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Per file, for Change Requests and evidence (phases 2 and 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "characters", 'cf.un.MB': "MB", 'cf.faixa': "Between {a} and {b}", 'cf.paramAjuda': "Limits live in the database (AIP_PARAMETRO); the interface never hard-codes them.", 'cf.tudoSalvo': "All saved", 'cf.pendente': "Issue in: {a}.", 'cf.naoSalvas': "Unsaved changes in: {a}", 'cf.ultimas': "Latest changes", 'cf.verLog': "See all in the Action Log", 'cf.removido': "{n} leaves the group when you save", 'cf.incluido': "{n} joins as {g} when you save", 'cf.descartado': "Changes discarded", 'cf.salvo': "Settings saved (simulation, nothing saved)", 'cf.dlgTit': "Create the AIP {a} cycle?", 'cf.dlgTxt': "The new cycle starts with the structure of {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} people in groups", 'cf.dlgMetas': "{n} goals with the current weights", 'cf.dlgJanelas': "Blank windows for you to set", 'cf.clonado': "{c} created (simulation, nothing saved)"
+      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card', 'cf.e.ano': "Enter a year between 2020 and 2100.", 'cf.anoMudou': "Year changed (was {a}); also check the cycle name and windows.", 'cf.e.tituloN': "Goal {n} at level {l} needs a title.", 'cf.e.nivelNome': "Every level needs a name.", 'cf.e.nivelTotal': "{l}: the total per unit ranges from 1 to 1000 pts.", 'cf.e.nivelHerdado': "{l}: inherited points must be between 0 and the total (the first level inherits none).", 'cf.e.salto': "GA can only be active with GG active: the cascade does not skip levels.", 'cf.e.buNome': "Enter the BU name.", 'cf.e.buDup': "A BU named {b} already exists.", 'cf.e.buPais': "Enter the BU country or region.", 'cf.buNome': "BU name", 'cf.buPais': "Country or region", 'cf.antes': "was: {b}", 'cf.ok': "Done", 'cf.editar': "Edit", 'cf.editarBu': "Edit {b}", 'cf.excluir': "Delete", 'cf.naoExclui': "Has {n} submitted Goal Card(s): cannot be deleted; take it out of the cycle", 'cf.excluirBu': "Delete {b}", 'cf.novaBuTit': "New Business Unit", 'cf.buNomePh': "E.g. Voisey's Bay", 'cf.buPaisPh': "E.g. Canada", 'cf.busCiclo': "Changes apply to {c}, the open cycle you are configuring.", 'cf.novaBu': "New BU", 'cf.cardsSub': "Submitted cards", 'cf.noCicloN': "In {c}", 'cf.nivelAria': "Cascade level", 'cf.paiBu': "Business Unit:", 'cf.paiGg': "General Management:", 'cf.resultadoDe': "{l} result", 'cf.herdadoTxt': "Points inherited from the level above (Parameters)", 'cf.remMeta': "Remove the goal", 'cf.remMetaAria': "Remove goal {n}", 'cf.totalUn': "Total per unit (must close {t} pts)", 'cf.metasAjudaN': "Each {l} unit must add up to {t} pts: {h} pts come from the {a} result; the rest is split across this level goals.", 'cf.metasAjudaTopo': "Each {l} unit must add up to {t} pts, split across this level goals.", 'cf.addMeta': "New goal in {l}", 'cf.rn16N': "{n} unit(s) do not close the total yet. The server only saves when all do (RN-16).", 'cf.nivelNomeAria': "Name of level {n}", 'cf.nivelTotalAria': "Total points per unit in {l}", 'cf.nivelHerdadoAria': "Points {l} inherits from {a}", 'cf.obrigatorio': "Required", 'cf.nivelAtivoAria': "{l} in the cascade", 'cf.inativo': "Off", 'cf.niveisTit': "Point cascade levels", 'cf.niveisAjuda': "The cascade goes from the CEO down to Area Management. At each level every unit closes the total points: part comes from the level above result and the rest goes to the level goals (Goals and weights tab).", 'cf.nivel': "Level", 'cf.unidades': "Units", 'cf.totalPts': "Total per unit", 'cf.herdadoPts': "Inherited from above", 'cf.livrePts': "For this level goals", 'cf.noDesdob': "In the cascade", 'cf.limitesTit': "Rule limits", 'cf.metaRemovida': "Goal {n} is removed when you save", 'cf.buIncluida': "{b} joins the cycle when you save", 'cf.excluirTit': "Delete BU {b}?", 'cf.excluirTxt': "The BU has no submitted Goal Card. When you save, these also go:", 'cf.excluirPessoas': "{n} people in this BU groups", 'cf.excluirPesos': "This BU goal weights", 'cf.excluirGg': "{n} General Management unit(s) and their Area units", 'cf.excluirOk': "Delete BU", 'cf.buExcluida': "{b} is removed when you save", 'vs.titulo': "Versions", 'vs.linhaAria': "Goal Card versions", 'vs.atualizar': "Refresh versions", 'vs.comparar': "Compare:", 'vs.origem': "From version", 'vs.trocar': "Swap versions", 'vs.destino': "To version", 'vs.exibir': "Show:", 'vs.soMudou': "Only what changed", 'vs.verLog': "History in the Action Log", 'vs.erroTit': "Could not load the versions", 'vs.oficialN': "Official: v{n}", 'vs.oficial': "Official", 'vs.semTit': "No version yet", 'vs.semTxt': "This card is a draft: v1 is created on the first submission.", 'vs.semDica': "Drafts do not create versions; each submission, resubmission or approved CR creates an immutable version.", 'vs.abrirCard': "Open the Goal Card", 'vs.semLinha': "no submitted version", 'vs.dec.aprovar': "Approved", 'vs.dec.devolver': "Returned for changes", 'vs.dec.negar': "Denied", 'vs.dec.pendente': "Awaiting the approval group decision", 'vs.noAria': "Version {v}: {m}. {d}", 'vs.mot.submissao': "Submission", 'vs.mot.resubmissao': "Resubmission", 'vs.mot.reabertura': "Reopening", 'vs.mot.cr': "Change Request", 'vs.de': "From", 'vs.para': "To", 'vs.unicaTit': "v{v} · only version", 'vs.unicaTxt': "The comparison appears from the second submission on.", 'vs.campo': "Field", 'vs.notaPend': "v{v} awaits the approval group decision.", 'vs.mudou1': "1 field changed", 'vs.mudou': "{n} fields changed", 'vs.igual1': "1 unchanged", 'vs.iguais': "{n} unchanged", 'vs.nadaMudou': "No field changed between the two versions", 'vs.caption': "Comparison of v{a} with v{b}", 'vs.alterado': "Changed", 'vs.pedido': "Change requested", 'vs.verIguais': "Also show the {n} unchanged fields", 'vs.link1': "1 version", 'vs.link': "{n} versions", 'vs.historico': "History", 'tela.versoes': "Versions", 'lg.resumoAria': "Events by type", 'lg.exportar': "Export to Excel", 'lg.atualizar': "Refresh Action Log", 'lg.periodo': "Period:", 'lg.meta': "Goal:", 'lg.secao': "Section:", 'lg.tipo': "Type:", 'lg.linha': "Timeline", 'lg.imutavel': "Immutable record: no event can be edited or deleted", 'lg.erroTit': "Could not load the Action Log", 'lg.f.submeteu': "submitted v{v}", 'lg.f.resubmeteu': "resubmitted as v{v}", 'lg.f.recolheu': "withdrew the submission", 'lg.f.aprovar': "approved v{v}, now the official version", 'lg.f.devolver': "returned v{v} for changes", 'lg.f.negar': "denied the goal (v{v})", 'lg.f.reabriu': "reopened the card in the initial cycle window (RN-17)", 'lg.f.comentou': "commented on {s}", 'lg.hoje': "Today", 'lg.ontem': "Yesterday", 'lg.r.todos': "Events", 'lg.r.decSub': "approve, return or deny", 'lg.r.negSub': "blocked attempts", 'lg.r.cfgSub': "changes in T11", 'lg.r.comSub': "from the approval group", 'lg.r.subSub': "includes resubmissions", 'lg.tp.submissao': "Submission", 'lg.tp.recolhimento': "Withdrawal", 'lg.tp.decisao': "Decision", 'lg.tp.reabertura': "Reopening", 'lg.tp.comentario': "Comment", 'lg.tp.configuracao': "Settings", 'lg.tp.acesso_negado': "Access denied", 'lg.per.7': "7 days", 'lg.per.30': "30 days", 'lg.per.ciclo': "Whole cycle", 'lg.todasMetas': "All goals", 'lg.todasSecoes': "All sections", 'lg.todosTipos': "All types", 'lg.tirarCard': "Remove the Goal Card filter", 'lg.limpar': "Clear filters", 'lg.vazioTit': "No events in this view", 'lg.vazioTxt': "Widen the period or remove a filter.", 'lg.antesDepois': "Value before and after", 'lg.antes': "Before", 'lg.depois': "After", 'lg.metaN': "Goal {n}", 'lg.versoes': "Versions", 'lg.papel.contribuidor': "Contributor", 'lg.papel.aprovador': "Approval group", 'lg.papel.consulta': "Read-only", 'lg.papel.admin': "Administrator", 'lg.mais': "Show {n} more ({t} left)", 'lg.col.quando': "When", 'lg.col.tipo': "Type", 'lg.col.quem': "Who", 'lg.col.papel': "Role", 'lg.col.bu': "BU", 'lg.col.meta': "Goal", 'lg.col.card': "Goal Card", 'lg.col.secao': "Section", 'lg.col.versao': "Version", 'lg.col.detalhe': "Detail", 'lg.col.antes': "Before", 'lg.col.depois': "After", 'lg.exportado': "{n} events exported", 'lg.erroExportar': "Could not export.", 'cf.eyebrow': "Administration", 'cf.titulo': "Cycle settings", 'cf.resumoAria': "Cycle settings summary", 'cf.atualizar': "Refresh settings", 'cf.secao': "Section:", 'cf.clonar': "New cycle from this one", 'cf.clonarAno': "Create AIP {a} from this one", 'cf.clonarOk': "Create cycle", 'cf.descartar': "Discard", 'cf.salvar': "Save changes", 'cf.salvando': "Saving…", 'cf.erroTit': "Could not load the settings", 'cf.aba.ciclo': "Cycle", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Groups", 'cf.aba.metas': "Goals and weights", 'cf.aba.parametros': "Parameters", 'cf.sub.ciclo': "Name, journey windows and standard exceptions text", 'cf.sub.bus': "Open cycle BUs: create, edit, take out of the cycle or delete", 'cf.sub.grupos': "Who fills in, who approves and who reads", 'cf.sub.metas': "Goals and weights for each cascade level, from the CEO to Area Management", 'cf.sub.parametros': "Point cascade levels and rule limits", 'cf.marcaErro': "Changed, with an issue", 'cf.marcaAlt': "Changed, not saved", 'cf.r.bus': "Active Business Units", 'cf.r.busSub': "in {p} regions", 'cf.r.pessoas': "People in groups", 'cf.r.pessoasSub': "{a} in the approval group", 'cf.r.metas': "Goals", 'cf.r.metasSub': "{n} new this cycle", 'cf.r.pontos': "BUs at {t} pts", 'cf.r.pontosOk': "All close the total (RN-16)", 'cf.r.pontosPend': "{n} with a sum different from the total", 'cf.r.oficial': "Official Goal Cards", 'cf.r.etapa': "Current stage: {e}", 'cf.e.nome': "Enter the cycle name.", 'cf.e.data': "Enter the date for {e}.", 'cf.e.ordem': "{e} must end after the previous stage.", 'cf.e.titulo': "Goal {n} needs a title.", 'cf.e.soma': "{b} adds up to {s} of {t} pts.", 'cf.e.semAprov': "The approval group needs at least one person.", 'cf.e.semAdmin': "The cycle needs at least one administrator.", 'cf.e.faixa': "{p}: use a value between {a} and {b}.", 'cf.e.semBu': "The cycle needs at least one active BU.", 'cf.e.matVazia': "Enter the employee ID or pick the person from the list.", 'cf.e.matNao': "Employee ID {m} is not in the Portal user directory.", 'cf.e.jaNoGrupo': "{n} is already in this group.", 'cf.e.rn16Srv': "The server refused: a BU has a weight sum different from the total (RN-16).", 'cf.e.salvar': "Could not save. Review the issues and try again.", 'cf.e.clonar': "Could not create the new cycle.", 'cf.de': "From", 'cf.ate': "to", 'cf.du1': "1 business day", 'cf.du': "{n} business days", 'cf.ident': "Identification", 'cf.ano': "Year", 'cf.situacao': "Status", 'cf.aberto': "Open", 'cf.nome': "Cycle name", 'cf.texto': "Standard exceptions text", 'cf.textoAjuda': "Shown on every Goal Card, in Exceptions and Considerations; BUs cannot edit it.", 'cf.janelas': "Cycle windows", 'cf.janelasAjuda': "The dates drive the journey shown on Home, the Cycle dashboard and BU goals. Each stage starts when the previous one ends.", 'cf.g.todos': "All", 'cf.g.contribuidor': "Contributors", 'cf.g.aprovacao': "Approval", 'cf.g.consulta': "Read-only", 'cf.g.admin': "Administrators", 'cf.g1.contribuidor': "Contributor", 'cf.g1.aprovacao': "Approval group", 'cf.g1.consulta': "Read-only", 'cf.g1.admin': "Administrator", 'cf.ativaAria': "{b} in cycle {c}", 'cf.ativa': "Active", 'cf.inativa': "Out", 'cf.verMetas': "Goals", 'cf.pontos': "Points", 'cf.noCiclo': "In cycle", 'cf.busAjuda': "Out of the cycle: the BU stays registered but receives no Goal Cards or notifications and leaves the point sums. Only a BU with no submitted Goal Card can be deleted.", 'cf.somaDe': "{s} of {t}", 'cf.todasBus': "All BUs", 'cf.remover': "Remove {n} from {g}", 'cf.removerCurto': "Remove from group", 'cf.semPessoas': "No one matches this filter.", 'cf.addTit': "Add a person to a group", 'cf.matricula': "Employee ID", 'cf.matriculaPh': "Employee ID or name", 'cf.grupo': "Group", 'cf.adicionar': "Add", 'cf.buscaPh': "Search by name, ID or e-mail", 'cf.pessoa': "Person", 'cf.tipo': "Type", 'cf.cooFixo': "Comes from the COO cascade", 'cf.tituloAria': "Title of goal {n}", 'cf.nova': "New", 'cf.pesoAria': "Weight of goal {n} in {b}", 'cf.totalBu': "Total per BU (must close {t} pts)", 'cf.metasAjuda': "Each active BU must add up to {t} pts. {c} pts come from the COO scorecard result; the rest is split across the specific goals.", 'cf.rn16': "{n} BU(s) do not close the total yet. The server only saves when all of them do (RN-16).", 'cf.par.pesoTotal': "Total points per BU", 'cf.par.pesoResultadoCoo': "COO result points", 'cf.par.minComentario': "Minimum comment length", 'cf.par.anexoMb': "Maximum attachment size", 'cf.parTxt.pesoTotal': "Sum each BU must close to save its goals (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Share of each BU tied to the COO scorecard result.", 'cf.parTxt.minComentario': "Required to return or deny a Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Per file, for Change Requests and evidence (phases 2 and 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "characters", 'cf.un.MB': "MB", 'cf.faixa': "Between {a} and {b}", 'cf.paramAjuda': "Limits live in the database (AIP_PARAMETRO); the interface never hard-codes them.", 'cf.tudoSalvo': "All saved", 'cf.pendente': "Issue in: {a}.", 'cf.naoSalvas': "Unsaved changes in: {a}", 'cf.ultimas': "Latest changes", 'cf.verLog': "See all in the Action Log", 'cf.removido': "{n} leaves the group when you save", 'cf.incluido': "{n} joins as {g} when you save", 'cf.descartado': "Changes discarded", 'cf.salvo': "Settings saved (simulation, nothing saved)", 'cf.dlgTit': "Create the AIP {a} cycle?", 'cf.dlgTxt': "The new cycle starts with the structure of {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} people in groups", 'cf.dlgMetas': "{n} goals with the current weights", 'cf.dlgJanelas': "Blank windows for you to set", 'cf.clonado': "{c} created (simulation, nothing saved)"
     }
   });
 
@@ -3426,7 +3456,8 @@ window.VBMSetup = (function () {
   // (RN-16: a soma dos pesos de cada BU fecha o total). Aba na URL (#configuracao?aba=metas).
   var CF_ABAS = ['ciclo', 'bus', 'grupos', 'metas', 'parametros'];
   var CF_GRUPOS = ['contribuidor', 'aprovacao', 'consulta', 'admin'];
-  var cf = { base: null, orig: null, edit: null, aba: 'ciclo', grupo: 'todos', bu: '', busca: '', erros: [], salvando: false };
+  var cf = { base: null, orig: null, edit: null, aba: 'ciclo', grupo: 'todos', bu: '', busca: '', erros: [], salvando: false, nivel: 'bu', pai: '', buEdit: -1, buNova: false, dlgAcao: null };
+  var CF_NIVEIS = ['ceo', 'coo', 'bu', 'gg', 'ga'];
   var cfCopia = function (o) { return JSON.parse(JSON.stringify(o)); };
   function cfLerAba() { var a = new URLSearchParams((location.hash.split('?')[1]) || '').get('aba'); cf.aba = CF_ABAS.indexOf(a) >= 0 ? a : 'ciclo'; }
   function cfGravarAba() {
@@ -3440,25 +3471,43 @@ window.VBMSetup = (function () {
   // Partes editáveis de cada aba (o que vai ao servidor)
   function cfPartes(b) {
     return {
-      ciclo: { nome: b.ciclo.nome, etapas: b.ciclo.etapas.map(function (e) { return { id: e.id, inicio: e.inicio || null, fim: e.fim }; }), texto: b.ciclo.textoPadraoExcecoes },
-      bus: { bus: b.bus.map(function (x) { return { sigla: x.sigla, pais: x.pais, ativa: x.ativa !== false }; }) },
+      ciclo: { ano: b.ciclo.ano, nome: b.ciclo.nome, etapas: b.ciclo.etapas.map(function (e) { return { id: e.id, inicio: e.inicio || null, fim: e.fim }; }), texto: b.ciclo.textoPadraoExcecoes },
+      bus: { bus: b.bus.map(function (x) { return { sigla: x.sigla, pais: x.pais, ativa: x.ativa !== false, origem: x.sigla, cardsSubmetidos: x.cardsSubmetidos || 0 }; }) },
       grupos: { membros: b.membros.map(function (m) { return { nome: m.nome, matricula: m.matricula, email: m.email, grupo: m.grupo, bu: m.bu }; }) },
-      metas: { metas: b.metas.map(function (m) { return { numero: m.numero, titulo: m.titulo, tipo: m.tipo, polaridade: m.polaridade, resultado: !!m.resultado, nova: !!m.nova, pesos: cfCopia(m.pesos || {}) }; }) },
-      parametros: { parametros: b.parametros.map(function (p) { return { id: p.id, valor: p.valor }; }) }
+      metas: { metasNivel: cfCopia(b.metasNivel), unidades: cfCopia(b.unidades) },
+      parametros: { parametros: b.parametros.map(function (p) { return { id: p.id, valor: p.valor }; }), niveis: cfCopia(b.niveis) }
     };
   }
+  // O que vai ao servidor por aba (metas leva também níveis, unidades e BUs, para a soma por nível)
+  function cfPayload(a) {
+    if (a === 'metas') return { metasNivel: cf.edit.metas.metasNivel, unidades: cf.edit.metas.unidades, niveis: cf.edit.parametros.niveis, bus: cf.edit.bus.bus };
+    return cf.edit[a];
+  }
   function cfAlterada(aba) { return cf.orig && JSON.stringify(cf.edit[aba]) !== JSON.stringify(cf.orig[aba]); }
-  function cfParam(id) { var p = cf.edit.parametros.parametros.filter(function (x) { return x.id === id; })[0]; return p ? Number(p.valor) : 0; }
+  function cfNivel(id) { return cf.edit.parametros.niveis.filter(function (n) { return n.id === id; })[0]; }
+  function cfNiveisAtivos() { return cf.edit.parametros.niveis.filter(function (n) { return n.ativo; }); }
   function cfBusAtivas() { return cf.edit.bus.bus.filter(function (b) { return b.ativa; }); }
-  function cfSomas() {
-    return cfBusAtivas().map(function (b) {
-      return { bu: b.sigla, soma: cf.edit.metas.metas.reduce(function (t, m) { return t + (Number(m.pesos[b.sigla]) || 0); }, 0) };
+  // Unidades ativas de um nível (mesma regra do servidor, unidadesAtivas)
+  function cfUnidades(nivel) {
+    var busOn = cfBusAtivas().map(function (b) { return b.sigla; }), un = cf.edit.metas.unidades;
+    if (nivel === 'bu') return busOn.map(function (b) { return { id: b, nome: b, nivel: 'bu', pai: 'COO' }; });
+    var gg = un.filter(function (u) { return u.nivel === 'gg' && busOn.indexOf(u.pai) >= 0; });
+    if (nivel === 'gg') return gg;
+    if (nivel === 'ga') return un.filter(function (u) { return u.nivel === 'ga' && gg.some(function (g) { return g.id === u.pai; }); });
+    return un.filter(function (u) { return u.nivel === nivel; });
+  }
+  function cfSomas(nivel) {
+    var n = cfNivel(nivel), metas = cf.edit.metas.metasNivel[nivel] || [];
+    return cfUnidades(nivel).map(function (u) {
+      return { id: u.id, nome: u.nome, pai: u.pai, total: Number(n.total), soma: Number(n.herdado || 0) + metas.reduce(function (t, m) { return t + (Number(m.pesos[u.id]) || 0); }, 0) };
     });
   }
   // Mesmas regras do servidor (validarConfiguracao), para mostrar o motivo antes de gravar
   function cfValidar(aba) {
     var e = [], d = cf.edit[aba];
     if (aba === 'ciclo') {
+      var ano = Number(d.ano);
+      if (!(ano >= 2020 && ano <= 2100 && Math.floor(ano) === ano)) e.push({ campo: 'ano', msg: S.t('cf.e.ano') });
       if (!String(d.nome || '').trim()) e.push({ campo: 'nome', msg: S.t('cf.e.nome') });
       var ant = d.etapas[0] && d.etapas[0].inicio;
       if (!ant) e.push({ campo: 'inicio0', msg: S.t('cf.e.data', { e: S.t('p2.et.' + d.etapas[0].id) }) });
@@ -3469,9 +3518,10 @@ window.VBMSetup = (function () {
       });
     }
     if (aba === 'metas') {
-      var total = cfParam('pesoTotal');
-      d.metas.forEach(function (m, i) { if (!String(m.titulo || '').trim()) e.push({ campo: 'titulo' + i, msg: S.t('cf.e.titulo', { n: m.numero }) }); });
-      cfSomas().forEach(function (x) { if (x.soma !== total) e.push({ campo: 'soma-' + x.bu, msg: S.t('cf.e.soma', { b: x.bu, s: S.fmt(x.soma, 0), t: S.fmt(total, 0) }) }); });
+      cfNiveisAtivos().forEach(function (n) {
+        (d.metasNivel[n.id] || []).forEach(function (m, i) { if (!String(m.titulo || '').trim()) e.push({ campo: 'titulo-' + n.id + '-' + i, nivel: n.id, msg: S.t('cf.e.tituloN', { n: m.numero, l: n.nome }) }); });
+        cfSomas(n.id).forEach(function (x) { if (x.soma !== x.total) e.push({ campo: 'soma-' + n.id + '-' + x.id, nivel: n.id, msg: S.t('cf.e.soma', { b: x.nome, s: S.fmt(x.soma, 0), t: S.fmt(x.total, 0) }) }); });
+      });
     }
     if (aba === 'grupos') {
       if (!d.membros.some(function (m) { return m.grupo === 'aprovacao'; })) e.push({ campo: 'membros', msg: S.t('cf.e.semAprov') });
@@ -3482,10 +3532,29 @@ window.VBMSetup = (function () {
         var ref = cf.base.parametros.filter(function (x) { return x.id === p.id; })[0], v = Number(p.valor);
         if (!ref || !isFinite(v) || String(p.valor).trim() === '' || v < ref.min || v > ref.max) e.push({ campo: 'par-' + p.id, msg: S.t('cf.e.faixa', { p: S.t('cf.par.' + p.id), a: ref.min, b: ref.max }) });
       });
+      d.niveis.forEach(function (n, i) {
+        if (!String(n.nome || '').trim()) e.push({ campo: 'niv-nome-' + n.id, msg: S.t('cf.e.nivelNome') });
+        var t = Number(n.total), h = Number(n.herdado);
+        if (!(t >= 1 && t <= 1000)) e.push({ campo: 'niv-total-' + n.id, msg: S.t('cf.e.nivelTotal', { l: n.nome }) });
+        if (!(h >= 0 && h < t) || (i === 0 && h !== 0)) e.push({ campo: 'niv-herdado-' + n.id, msg: S.t('cf.e.nivelHerdado', { l: n.nome }) });
+      });
+      var gg = cfNivelDe(d.niveis, 'gg'), ga = cfNivelDe(d.niveis, 'ga');
+      if (ga && ga.ativo && gg && !gg.ativo) e.push({ campo: 'niv-ativo-ga', msg: S.t('cf.e.salto') });
     }
-    if (aba === 'bus' && !d.bus.some(function (b) { return b.ativa; })) e.push({ campo: 'bus', msg: S.t('cf.e.semBu') });
+    if (aba === 'bus') {
+      if (!d.bus.some(function (b) { return b.ativa; })) e.push({ campo: 'bus', msg: S.t('cf.e.semBu') });
+      var vistos = {};
+      d.bus.forEach(function (b, i) {
+        var k = String(b.sigla || '').trim().toLowerCase();
+        if (!k) e.push({ campo: 'bu-nome-' + i, msg: S.t('cf.e.buNome') });
+        else if (vistos[k]) e.push({ campo: 'bu-nome-' + i, msg: S.t('cf.e.buDup', { b: b.sigla }) });
+        vistos[k] = 1;
+        if (!String(b.pais || '').trim()) e.push({ campo: 'bu-pais-' + i, msg: S.t('cf.e.buPais') });
+      });
+    }
     return e;
   }
+  function cfNivelDe(lista, id) { return lista.filter(function (n) { return n.id === id; })[0]; }
   function cfCarregar(fresco) {
     if (!fresco && cf.base) return Promise.resolve(cfRender());
     var ctl = ('AbortController' in window) ? new AbortController() : null;
@@ -3526,7 +3595,6 @@ window.VBMSetup = (function () {
     $('cfConteudo').innerHTML = ({ ciclo: cfHtmlCiclo, bus: cfHtmlBus, grupos: cfHtmlGrupos, metas: cfHtmlMetas, parametros: cfHtmlParametros })[cf.aba]();
     if (foco && $(foco) && $('cfConteudo').contains($(foco))) { var el = $(foco); el.focus(); if (el.setSelectionRange && el.type === 'text') { var n = el.value.length; el.setSelectionRange(n, n); } }
     cfRenderRodape();
-    cfRenderUltimas();
   }
   function cfErroDe(campo) { var x = cf.erros.filter(function (e) { return e.campo === campo; })[0]; return x ? x.msg : ''; }
   function cfHtmlCiclo() {
@@ -3549,7 +3617,8 @@ window.VBMSetup = (function () {
     var eNome = cfErroDe('nome');
     return '<div class="cf-grid2">' +
       '<div class="cf-card"><h4 class="cf-card-tit">' + esc(S.t('cf.ident')) + '</h4><div class="cf-campos">' +
-        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.ano')) + '</span><input class="cf-in" value="' + esc(cf.base.ciclo.ano) + '" disabled></label>' +
+        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.ano')) + ' <b class="gc-obrig">*</b></span><input class="cf-in" type="number" min="2020" max="2100" step="1" id="cfAnoIn" data-cf="ano" value="' + esc(d.ano) + '"' + (cfErroDe('ano') ? ' aria-invalid="true"' : '') + '>' +
+          (cfErroDe('ano') ? '<span class="cf-erro">' + esc(cfErroDe('ano')) + '</span>' : (Number(d.ano) !== cf.base.ciclo.ano ? '<span class="cf-ajuda">' + esc(S.t('cf.anoMudou', { a: cf.base.ciclo.ano })) + '</span>' : '')) + '</label>' +
         '<div class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.situacao')) + '</span><span class="cf-situ">' + esc(S.t('cf.aberto')) + '</span></div>' +
         '<label class="cf-campo cf-largo"><span class="cf-rot">' + esc(S.t('cf.nome')) + ' <b class="gc-obrig">*</b></span><input class="cf-in" id="cfNome" data-cf="nome" value="' + esc(d.nome) + '" maxlength="40"' + (eNome ? ' aria-invalid="true"' : '') + '>' + (eNome ? '<span class="cf-erro">' + esc(eNome) + '</span>' : '') + '</label>' +
         '<label class="cf-campo cf-largo"><span class="cf-rot">' + esc(S.t('cf.texto')) + '</span><textarea class="cf-in" id="cfTexto" data-cf="texto" rows="4" maxlength="600">' + esc(d.texto) + '</textarea>' +
@@ -3565,29 +3634,48 @@ window.VBMSetup = (function () {
   }
   function cfHtmlBus() {
     cf.erros = cfValidar('bus');
-    var total = cfParam('pesoTotal'), somas = {};
-    cfSomas().forEach(function (x) { somas[x.bu] = x.soma; });
-    var mem = cf.edit.grupos.membros, metas = cf.edit.metas.metas;
+    var mem = cf.edit.grupos.membros, metasBu = cf.edit.metas.metasNivel.bu || [], somas = {}, nBu = cfNivel('bu');
+    cfSomas('bu').forEach(function (x) { somas[x.id] = x.soma; });
+    var paises = []; cf.edit.bus.bus.forEach(function (b) { if (b.pais && paises.indexOf(b.pais) < 0) paises.push(b.pais); });
+    var dl = '<datalist id="cfPaises">' + paises.map(function (p) { return '<option value="' + esc(p) + '">'; }).join('') + '</datalist>';
     var porPais = {};
-    cf.edit.bus.bus.forEach(function (b, i) { (porPais[b.pais] = porPais[b.pais] || []).push({ b: b, i: i }); });
+    cf.edit.bus.bus.forEach(function (b, i) { (porPais[b.pais || '—'] = porPais[b.pais || '—'] || []).push({ b: b, i: i }); });
     var linhas = Object.keys(porPais).map(function (p) {
-      return '<tr class="p2-pais"><td colspan="7">' + esc(p) + '</td></tr>' + porPais[p].map(function (x) {
-        var b = x.b, s = somas[b.sigla];
+      return '<tr class="p2-pais"><td colspan="8">' + esc(p) + '</td></tr>' + porPais[p].map(function (x) {
+        var b = x.b, i = x.i, s = somas[b.sigla], editando = cf.buEdit === i;
         var nC = mem.filter(function (m) { return m.grupo === 'contribuidor' && m.bu === b.sigla; }).length;
         var nQ = mem.filter(function (m) { return m.grupo === 'consulta' && m.bu === b.sigla; }).length;
-        var nM = metas.filter(function (m) { return Number(m.pesos[b.sigla]) > 0; }).length;
-        return '<tr' + (b.ativa ? '' : ' class="is-inativa"') + '><th scope="row" class="cf-bu">' + esc(b.sigla) + '</th>' +
-          '<td class="num"><button type="button" class="cf-link" data-ir-grupo="contribuidor" data-bu="' + esc(b.sigla) + '">' + nC + '</button></td>' +
-          '<td class="num"><button type="button" class="cf-link" data-ir-grupo="consulta" data-bu="' + esc(b.sigla) + '">' + nQ + '</button></td>' +
-          '<td class="num">' + nM + '</td>' +
-          '<td class="m3-centro">' + (b.ativa ? cfPillSoma(s, total) : '<span class="cf-mudo">—</span>') + '</td>' +
-          '<td class="m3-centro"><button type="button" class="switch" role="switch" aria-checked="' + b.ativa + '" data-cf-ativa="' + x.i + '" aria-label="' + esc(S.t('cf.ativaAria', { b: b.sigla })) + '"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">' + esc(S.t(b.ativa ? 'cf.ativa' : 'cf.inativa')) + '</span></button></td>' +
-          '<td class="m3-acao"><a class="btn btn-sec cf-mini" href="#metas?bu=' + encodeURIComponent(b.sigla) + '">' + esc(S.t('cf.verMetas')) + ico('i-arrow') + '</a></td></tr>';
+        var nM = metasBu.filter(function (m) { return Number(m.pesos[b.sigla]) > 0; }).length;
+        var eN = cfErroDe('bu-nome-' + i), eP = cfErroDe('bu-pais-' + i);
+        var nome = editando ? '<input class="cf-in cf-bu-in" id="cfBuNome' + i + '" data-cf-bu="' + i + '" data-campo="sigla" value="' + esc(b.sigla) + '" maxlength="40"' + (eN ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.buNome')) + '">' +
+            '<input class="cf-in cf-bu-in" id="cfBuPais' + i + '" data-cf-bu="' + i + '" data-campo="pais" list="cfPaises" value="' + esc(b.pais) + '" maxlength="40"' + (eP ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.buPais')) + '">'
+          : '<span class="cf-bu-nome">' + esc(b.sigla) + '</span>' + (!b.origem ? '<span class="cf-nova">' + esc(S.t('cf.nova')) + '</span>' : '') + (b.origem && b.origem !== b.sigla ? '<small class="cf-bu-antes">' + esc(S.t('cf.antes', { b: b.origem })) + '</small>' : '');
+        var podeExcluir = !(b.cardsSubmetidos > 0);
+        var acoes = editando
+          ? '<button type="button" class="btn cf-mini" data-bu-ok="' + i + '">' + esc(S.t('cf.ok')) + '</button>'
+          : '<button type="button" class="dash-acao" data-bu-editar="' + i + '" title="' + esc(S.t('cf.editar')) + '" aria-label="' + esc(S.t('cf.editarBu', { b: b.sigla })) + '">' + ico('i-pen') + '</button>' +
+            '<button type="button" class="dash-acao cf-excluir" data-bu-excluir="' + i + '"' + (podeExcluir ? '' : ' disabled') + ' title="' + esc(podeExcluir ? S.t('cf.excluir') : S.t('cf.naoExclui', { n: b.cardsSubmetidos })) + '" aria-label="' + esc(S.t('cf.excluirBu', { b: b.sigla })) + '">' + ico('i-x') + '</button>' +
+            '<a class="btn btn-sec cf-mini" href="#metas?bu=' + encodeURIComponent(b.sigla) + '">' + esc(S.t('cf.verMetas')) + ico('i-arrow') + '</a>';
+        return '<tr' + (b.ativa ? '' : ' class="is-inativa"') + '><th scope="row" class="cf-bu">' + nome + ((eN || eP) ? '<span class="cf-erro">' + esc(eN || eP) + '</span>' : '') + '</th>' +
+          '<td class="m3-centro"><button type="button" class="cf-link" data-ir-grupo="contribuidor" data-bu="' + esc(b.sigla) + '">' + nC + '</button></td>' +
+          '<td class="m3-centro"><button type="button" class="cf-link" data-ir-grupo="consulta" data-bu="' + esc(b.sigla) + '">' + nQ + '</button></td>' +
+          '<td class="m3-centro">' + nM + '</td>' +
+          '<td class="m3-centro">' + (b.ativa ? cfPillSoma(s, Number(nBu.total)) : '<span class="cf-mudo">—</span>') + '</td>' +
+          '<td class="m3-centro">' + (b.cardsSubmetidos || 0) + '</td>' +
+          '<td class="m3-centro"><button type="button" class="switch" role="switch" aria-checked="' + b.ativa + '" data-cf-ativa="' + i + '" aria-label="' + esc(S.t('cf.ativaAria', { b: b.sigla, c: cf.edit.ciclo.nome })) + '"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">' + esc(S.t(b.ativa ? 'cf.ativa' : 'cf.inativa')) + '</span></button></td>' +
+          '<td class="m3-acao"><span class="cf-acoes-bu">' + acoes + '</span></td></tr>';
       }).join('');
     }).join('');
-    return '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela"><caption class="sr-only">' + esc(S.t('cf.aba.bus')) + '</caption><thead><tr>' +
-      '<th scope="col">Business Unit</th><th scope="col" class="num">' + esc(S.t('cf.g.contribuidor')) + '</th><th scope="col" class="num">' + esc(S.t('cf.g.consulta')) + '</th><th scope="col" class="num">' + esc(S.t('cf.r.metas')) + '</th>' +
-      '<th scope="col" class="m3-centro">' + esc(S.t('cf.pontos')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.noCiclo')) + '</th><th scope="col"><span class="sr-only">' + esc(S.t('col.acao')) + '</span></th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+    var nova = cf.buNova ? '<div class="cf-add cf-add-bu" role="group" aria-labelledby="cfNovaBuTit"><p class="cf-add-tit" id="cfNovaBuTit">' + ico('i-pen') + esc(S.t('cf.novaBuTit')) + '</p>' +
+        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.buNome')) + '</span><input class="cf-in" id="cfNovaBuNome" maxlength="40" placeholder="' + esc(S.t('cf.buNomePh')) + '"></label>' +
+        '<label class="cf-campo"><span class="cf-rot">' + esc(S.t('cf.buPais')) + '</span><input class="cf-in" id="cfNovaBuPais" list="cfPaises" maxlength="40" placeholder="' + esc(S.t('cf.buPaisPh')) + '"></label>' +
+        '<span class="cf-add-acoes"><button type="button" class="btn btn-sec" id="cfNovaBuCancelar">' + esc(S.t('gc.cancelar')) + '</button><button type="button" class="btn" id="cfNovaBuOk">' + esc(S.t('cf.adicionar')) + '</button></span>' +
+        '<p class="cf-erro" id="cfNovaBuErro" role="alert"></p></div>' : '';
+    return '<div class="cf-barra-bu"><p class="cf-ajuda">' + ico('i-target') + esc(S.t('cf.busCiclo', { c: cf.edit.ciclo.nome })) + '</p>' +
+        (cf.buNova ? '' : '<button type="button" class="btn" id="cfNovaBu">' + esc(S.t('cf.novaBu')) + '</button>') + '</div>' + nova + dl +
+      '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela cf-tab-bus"><caption class="sr-only">' + esc(S.t('cf.aba.bus')) + '</caption><thead><tr>' +
+      '<th scope="col">Business Unit</th><th scope="col" class="m3-centro">' + esc(S.t('cf.g.contribuidor')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.g.consulta')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.r.metas')) + '</th>' +
+      '<th scope="col" class="m3-centro">' + esc(S.t('cf.pontos')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.cardsSub')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.noCicloN', { c: cf.edit.ciclo.nome })) + '</th><th scope="col"><span class="sr-only">' + esc(S.t('col.acao')) + '</span></th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
       '<p class="cf-ajuda">' + esc(S.t('cf.busAjuda')) + '</p>' + (cf.erros.length ? '<p class="cf-erro">' + esc(cf.erros[0].msg) + '</p>' : '');
   }
   function cfPillSoma(s, total) {
@@ -3633,41 +3721,83 @@ window.VBMSetup = (function () {
   function iniciais(n) { var p = String(n).split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); }
   function cfHtmlMetas() {
     cf.erros = cfValidar('metas');
-    var bus = cfBusAtivas(), total = cfParam('pesoTotal'), somas = {};
-    cfSomas().forEach(function (x) { somas[x.bu] = x.soma; });
+    var ativos = cfNiveisAtivos();
+    if (!ativos.some(function (n) { return n.id === cf.nivel; })) cf.nivel = 'bu';
+    var nv = cfNivel(cf.nivel), idx = CF_NIVEIS.indexOf(cf.nivel), acima = cfNivel(CF_NIVEIS[idx - 1]);
+    // GG e GA mostram as unidades de uma BU (GG) ou de uma GG (GA): seletor da unidade-mãe
+    var pais = cf.nivel === 'gg' ? cfUnidades('bu') : cf.nivel === 'ga' ? cfUnidades('gg') : null;
+    if (pais && !pais.some(function (p) { return p.id === cf.pai; })) cf.pai = pais.length ? pais[0].id : '';
+    var unids = cfUnidades(cf.nivel).filter(function (u) { return !pais || u.pai === cf.pai; });
+    var somas = {}; cfSomas(cf.nivel).forEach(function (x) { somas[x.id] = x; });
+    var pendNivel = {}; cf.erros.forEach(function (e) { if (e.nivel) pendNivel[e.nivel] = (pendNivel[e.nivel] || 0) + 1; });
+    var seg = '<div class="seg cf-niveis" role="group" aria-label="' + esc(S.t('cf.nivelAria')) + '">' + ativos.map(function (n) {
+      return '<button type="button" data-cf-nivel="' + n.id + '" aria-pressed="' + (n.id === cf.nivel) + '">' + esc(n.nome) + (pendNivel[n.id] ? ' <span class="cf-cont is-err">' + pendNivel[n.id] + '</span>' : '') + '</button>';
+    }).join('<span class="cf-niv-seta" aria-hidden="true">›</span>') + '</div>';
+    var selPai = pais ? '<label class="cf-campo cf-pai"><span class="cf-rot">' + esc(S.t(cf.nivel === 'gg' ? 'cf.paiBu' : 'cf.paiGg')) + '</span><select class="cf-in" id="cfPai">' +
+      pais.map(function (p) { var pend = cfSomas(cf.nivel).some(function (x) { return x.pai === p.id && x.soma !== x.total; }); return '<option value="' + esc(p.id) + '"' + (p.id === cf.pai ? ' selected' : '') + '>' + esc(p.nome) + (pend ? ' ⚠' : '') + '</option>'; }).join('') + '</select></label>' : '';
+    var lista = cf.edit.metas.metasNivel[cf.nivel] || [];
     var cab = '<tr><th scope="col" class="num">#</th><th scope="col">' + esc(S.t('col.meta')) + '</th><th scope="col">' + esc(S.t('cf.tipo')) + '</th><th scope="col">' + esc(S.t('gc.polaridade')) + '</th>' +
-      bus.map(function (b) { return '<th scope="col" class="m3-centro cf-col-bu">' + esc(b.sigla) + '</th>'; }).join('') + '</tr>';
-    var linhas = cf.edit.metas.metas.map(function (m, i) {
-      var bloq = m.resultado, eT = cfErroDe('titulo' + i);
-      return '<tr' + (bloq ? ' class="cf-linha-coo"' : '') + '><td class="num">' + esc(m.numero) + '</td>' +
-        '<td>' + (bloq ? '<span class="m3-meta-tit">' + esc(m.titulo) + '</span><span class="m3-meta-tipo">' + ico('i-lock') + esc(S.t('cf.cooFixo')) + '</span>'
-          : '<input class="cf-in cf-tit" data-cf-meta="' + i + '" data-campo="titulo" id="cfTit' + i + '" value="' + esc(m.titulo) + '" maxlength="80"' + (eT ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.tituloAria', { n: m.numero })) + '">' + (m.nova ? '<span class="cf-nova">' + esc(S.t('cf.nova')) + '</span>' : '')) + '</td>' +
-        '<td>' + (bloq ? esc(S.t('m3.tipo.' + m.tipo)) : '<select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="tipo" id="cfTipo' + i + '" aria-label="' + esc(S.t('cf.tipo')) + '">' + ['formula', 'marcos'].map(function (t) { return '<option value="' + t + '"' + (m.tipo === t ? ' selected' : '') + '>' + esc(S.t('m3.tipo.' + t)) + '</option>'; }).join('') + '</select>') + '</td>' +
-        '<td>' + (bloq ? '↑ ' + esc(S.t('gc.pol.maior')) : '<select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="polaridade" id="cfPol' + i + '" aria-label="' + esc(S.t('gc.polaridade')) + '">' + ['maior', 'menor'].map(function (p) { return '<option value="' + p + '"' + (m.polaridade === p ? ' selected' : '') + '>' + (p === 'maior' ? '↑ ' : '↓ ') + esc(S.t('gc.pol.' + p)) + '</option>'; }).join('') + '</select>') + '</td>' +
-        bus.map(function (b) {
-          var v = m.pesos[b.sigla];
-          return '<td class="m3-centro">' + (bloq ? '<span class="cf-peso-fixo">' + esc(S.fmt(Number(v) || 0, 0)) + '</span>'
-            : '<input class="cf-in cf-peso" type="number" min="0" max="' + total + '" step="0.5" inputmode="decimal" data-cf-meta="' + i + '" data-campo="peso" data-bu="' + esc(b.sigla) + '" id="cfP' + i + '-' + esc(b.sigla.replace(/\W/g, '')) + '" value="' + (v == null || v === 0 ? '' : esc(v)) + '" placeholder="0" aria-label="' + esc(S.t('cf.pesoAria', { n: m.numero, b: b.sigla })) + '">') + '</td>';
-        }).join('') + '</tr>';
+      unids.map(function (u) { return '<th scope="col" class="m3-centro cf-col-bu">' + esc(u.nome) + '</th>'; }).join('') + '<th scope="col"><span class="sr-only">' + esc(S.t('col.acao')) + '</span></th></tr>';
+    var herdado = Number(nv.herdado || 0);
+    var linhaHerd = herdado ? '<tr class="cf-linha-coo"><td class="num">0</td><td><span class="m3-meta-tit">' + esc(S.t('cf.resultadoDe', { l: acima ? acima.nome : '' })) + '</span><span class="m3-meta-tipo">' + ico('i-lock') + esc(S.t('cf.herdadoTxt')) + '</span></td>' +
+      '<td>' + esc(S.t('m3.tipo.formula')) + '</td><td>↑ ' + esc(S.t('gc.pol.maior')) + '</td>' + unids.map(function () { return '<td class="m3-centro"><span class="cf-peso-fixo">' + esc(S.fmt(herdado, 0)) + '</span></td>'; }).join('') + '<td></td></tr>' : '';
+    var linhas = lista.map(function (m, i) {
+      var eT = cfErroDe('titulo-' + cf.nivel + '-' + i);
+      return '<tr><td class="num">' + esc(m.numero) + '</td>' +
+        '<td><input class="cf-in cf-tit" data-cf-meta="' + i + '" data-campo="titulo" id="cfTit' + cf.nivel + i + '" value="' + esc(m.titulo) + '" maxlength="80"' + (eT ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.tituloAria', { n: m.numero })) + '">' + (m.nova ? '<span class="cf-nova">' + esc(S.t('cf.nova')) + '</span>' : '') + '</td>' +
+        '<td><select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="tipo" id="cfTipo' + cf.nivel + i + '" aria-label="' + esc(S.t('cf.tipo')) + '">' + ['formula', 'marcos'].map(function (t) { return '<option value="' + t + '"' + (m.tipo === t ? ' selected' : '') + '>' + esc(S.t('m3.tipo.' + t)) + '</option>'; }).join('') + '</select></td>' +
+        '<td><select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="polaridade" id="cfPol' + cf.nivel + i + '" aria-label="' + esc(S.t('gc.polaridade')) + '">' + ['maior', 'menor'].map(function (p) { return '<option value="' + p + '"' + (m.polaridade === p ? ' selected' : '') + '>' + (p === 'maior' ? '↑ ' : '↓ ') + esc(S.t('gc.pol.' + p)) + '</option>'; }).join('') + '</select></td>' +
+        unids.map(function (u) {
+          var v = m.pesos[u.id];
+          return '<td class="m3-centro"><input class="cf-in cf-peso" type="number" min="0" max="' + nv.total + '" step="0.5" inputmode="decimal" data-cf-meta="' + i + '" data-campo="peso" data-un="' + esc(u.id) + '" id="cfP' + cf.nivel + i + '-' + esc(u.id.replace(/\W/g, '')) + '" value="' + (v == null || v === 0 ? '' : esc(v)) + '" placeholder="0" aria-label="' + esc(S.t('cf.pesoAria', { n: m.numero, b: u.nome })) + '"></td>';
+        }).join('') +
+        '<td class="m3-acao"><button type="button" class="dash-acao cf-rem" data-cf-meta-rem="' + i + '" title="' + esc(S.t('cf.remMeta')) + '" aria-label="' + esc(S.t('cf.remMetaAria', { n: m.numero })) + '">' + ico('i-x') + '</button></td></tr>';
     }).join('');
-    var rod = '<tr class="cf-total"><td></td><th scope="row" colspan="3">' + esc(S.t('cf.totalBu', { t: S.fmt(total, 0) })) + '</th>' + bus.map(function (b) { return '<td class="m3-centro">' + cfPillSoma(somas[b.sigla], total) + '</td>'; }).join('') + '</tr>';
+    var rod = '<tr class="cf-total"><td></td><th scope="row" colspan="3">' + esc(S.t('cf.totalUn', { t: S.fmt(Number(nv.total), 0) })) + '</th>' + unids.map(function (u) { return '<td class="m3-centro">' + cfPillSoma(somas[u.id] ? somas[u.id].soma : herdado, Number(nv.total)) + '</td>'; }).join('') + '<td></td></tr>';
     var pend = cf.erros.filter(function (e) { return e.campo.indexOf('soma-') === 0; });
-    return '<p class="cf-ajuda cf-metas-ajuda">' + ico('i-target') + esc(S.t('cf.metasAjuda', { t: S.fmt(total, 0), c: S.fmt(cfParam('pesoResultadoCoo'), 0) })) + '</p>' +
-      '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela cf-tab-metas"><caption class="sr-only">' + esc(S.t('cf.aba.metas')) + '</caption><thead>' + cab + '</thead><tbody>' + linhas + '</tbody><tfoot>' + rod + '</tfoot></table></div>' +
-      (pend.length ? '<p class="cf-aviso" role="status">' + ico('i-alert') + esc(S.t('cf.rn16', { n: pend.length })) + '</p>' : '');
+    return '<div class="cf-metas-topo">' + seg + selPai + '</div>' +
+      '<p class="cf-ajuda cf-metas-ajuda">' + ico('i-target') + esc(herdado ? S.t('cf.metasAjudaN', { l: nv.nome, t: S.fmt(Number(nv.total), 0), h: S.fmt(herdado, 0), a: acima ? acima.nome : '' }) : S.t('cf.metasAjudaTopo', { l: nv.nome, t: S.fmt(Number(nv.total), 0) })) + '</p>' +
+      '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela cf-tab-metas"><caption class="sr-only">' + esc(S.t('cf.aba.metas') + ' · ' + nv.nome) + '</caption><thead>' + cab + '</thead><tbody>' + linhaHerd + linhas + '</tbody><tfoot>' + rod + '</tfoot></table></div>' +
+      '<button type="button" class="btn btn-sec cf-add-meta" id="cfAddMeta">' + ico('i-pen') + esc(S.t('cf.addMeta', { l: nv.nome })) + '</button>' +
+      (pend.length ? '<p class="cf-aviso" role="status">' + ico('i-alert') + esc(S.t('cf.rn16N', { n: pend.length })) + ' <span>' + esc(pend.slice(0, 3).map(function (e) { return e.msg; }).join(' ')) + '</span></p>' : '');
   }
   function cfHtmlParametros() {
     cf.erros = cfValidar('parametros');
-    return '<div class="cf-params">' + cf.edit.parametros.parametros.map(function (p, i) {
-      var ref = cf.base.parametros.filter(function (x) { return x.id === p.id; })[0], e = cfErroDe('par-' + p.id);
-      return '<label class="cf-param' + (e ? ' is-err' : '') + '"><span class="cf-param-tit">' + esc(S.t('cf.par.' + p.id)) + '</span>' +
-        '<span class="cf-param-txt">' + esc(S.t('cf.parTxt.' + p.id)) + '</span>' +
-        '<span class="cf-param-val"><input class="cf-in" type="number" id="cfPar' + i + '" data-cf-par="' + i + '" min="' + ref.min + '" max="' + ref.max + '" value="' + esc(p.valor) + '"' + (e ? ' aria-invalid="true"' : '') + '><span>' + esc(S.t('cf.un.' + ref.unidade)) + '</span></span>' +
-        '<span class="cf-param-faixa">' + esc(e || S.t('cf.faixa', { a: ref.min, b: ref.max })) + '</span></label>';
-    }).join('') + '</div><p class="cf-ajuda">' + esc(S.t('cf.paramAjuda')) + '</p>';
+    var niveis = cf.edit.parametros.niveis;
+    var linhas = niveis.map(function (n, i) {
+      var acima = niveis[i - 1], eNo = cfErroDe('niv-nome-' + n.id), eT = cfErroDe('niv-total-' + n.id), eH = cfErroDe('niv-herdado-' + n.id);
+      var nUn = n.id === 'bu' ? cfBusAtivas().length : cf.edit.metas.unidades.filter(function (u) { return u.nivel === n.id; }).length;
+      return '<tr' + (n.ativo ? '' : ' class="is-inativa"') + '><td class="cf-niv-n"><span class="cf-jan-n">' + (i + 1) + '</span></td>' +
+        '<td><input class="cf-in" id="cfNivNome' + i + '" data-cf-niv="' + i + '" data-campo="nome" value="' + esc(n.nome) + '" maxlength="40"' + (eNo ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.nivelNomeAria', { n: i + 1 })) + '"></td>' +
+        '<td class="m3-centro">' + nUn + '</td>' +
+        '<td class="m3-centro"><input class="cf-in cf-peso" type="number" min="1" max="1000" id="cfNivTot' + i + '" data-cf-niv="' + i + '" data-campo="total" value="' + esc(n.total) + '"' + (eT ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.nivelTotalAria', { l: n.nome })) + '"></td>' +
+        '<td class="m3-centro">' + (i === 0 ? '<span class="cf-mudo">—</span>' : '<input class="cf-in cf-peso" type="number" min="0" max="' + (Number(n.total) - 1) + '" id="cfNivHer' + i + '" data-cf-niv="' + i + '" data-campo="herdado" value="' + esc(n.herdado) + '"' + (eH ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.nivelHerdadoAria', { l: n.nome, a: acima.nome })) + '">') + '</td>' +
+        '<td class="m3-centro cf-livre">' + esc(S.fmt(Number(n.total) - Number(n.herdado || 0), 0)) + '</td>' +
+        '<td class="m3-centro">' + (n.fixo ? '<span class="cf-chip">' + ico('i-lock') + esc(S.t('cf.obrigatorio')) + '</span>'
+          : '<button type="button" class="switch" role="switch" aria-checked="' + n.ativo + '" data-cf-niv-ativo="' + i + '" aria-label="' + esc(S.t('cf.nivelAtivoAria', { l: n.nome })) + '"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">' + esc(S.t(n.ativo ? 'cf.ativa' : 'cf.inativo')) + '</span></button>') + '</td></tr>';
+    }).join('');
+    var erroNiv = cf.erros.filter(function (e) { return e.campo.indexOf('niv-') === 0; });
+    return '<div class="cf-card"><h4 class="cf-card-tit">' + ico('i-sliders') + esc(S.t('cf.niveisTit')) + '</h4><p class="cf-ajuda">' + esc(S.t('cf.niveisAjuda')) + '</p>' +
+        '<div class="p2-tabela-wrap"><table class="p2-tabela cf-tabela cf-tab-niveis"><caption class="sr-only">' + esc(S.t('cf.niveisTit')) + '</caption><thead><tr><th scope="col">#</th><th scope="col">' + esc(S.t('cf.nivel')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.unidades')) + '</th>' +
+        '<th scope="col" class="m3-centro">' + esc(S.t('cf.totalPts')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.herdadoPts')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.livrePts')) + '</th><th scope="col" class="m3-centro">' + esc(S.t('cf.noDesdob')) + '</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+        (erroNiv.length ? '<p class="cf-erro">' + esc(erroNiv.map(function (e) { return e.msg; }).join(' ')) + '</p>' : '') + '</div>' +
+      '<h4 class="cf-card-tit cf-sub-tit">' + ico('i-tool') + esc(S.t('cf.limitesTit')) + '</h4>' +
+      '<div class="cf-params">' + cf.edit.parametros.parametros.map(function (p, i) {
+        var ref = cf.base.parametros.filter(function (x) { return x.id === p.id; })[0], e = cfErroDe('par-' + p.id);
+        return '<label class="cf-param' + (e ? ' is-err' : '') + '"><span class="cf-param-tit">' + esc(S.t('cf.par.' + p.id)) + '</span>' +
+          '<span class="cf-param-txt">' + esc(S.t('cf.parTxt.' + p.id)) + '</span>' +
+          '<span class="cf-param-val"><input class="cf-in" type="number" id="cfPar' + i + '" data-cf-par="' + i + '" min="' + ref.min + '" max="' + ref.max + '" value="' + esc(p.valor) + '"' + (e ? ' aria-invalid="true"' : '') + '><span>' + esc(S.t('cf.un.' + ref.unidade)) + '</span></span>' +
+          '<span class="cf-param-faixa">' + esc(e || S.t('cf.faixa', { a: ref.min, b: ref.max })) + '</span></label>';
+      }).join('') + '</div><p class="cf-ajuda">' + esc(S.t('cf.paramAjuda')) + '</p>';
+  }
+  // Abas a gravar: as alteradas e, se níveis ou BUs mudaram, também Metas e pesos (a soma por unidade depende deles)
+  function cfAbasGravar() {
+    var alt = CF_ABAS.filter(cfAlterada);
+    if ((alt.indexOf('parametros') >= 0 || alt.indexOf('bus') >= 0) && alt.indexOf('metas') < 0) alt.push('metas');
+    return alt;
   }
   function cfRenderRodape() {
-    var alt = CF_ABAS.filter(cfAlterada), comErro = alt.filter(function (a) { return cfValidar(a).length; });
+    var alt = cfAbasGravar(), comErro = alt.filter(function (a) { return cfValidar(a).length; });
     var st = $('cfStatus');
     st.classList.toggle('is-alt', alt.length > 0); st.classList.toggle('is-err', comErro.length > 0);
     st.innerHTML = !alt.length ? ico('i-st-aprovado') + esc(S.t('cf.tudoSalvo'))
@@ -3676,13 +3806,6 @@ window.VBMSetup = (function () {
     $('cfDescartar').disabled = !alt.length || cf.salvando;
     $('cfSalvar').disabled = !alt.length || comErro.length > 0 || cf.salvando;
     $('cfSalvar').textContent = S.t(cf.salvando ? 'cf.salvando' : 'cf.salvar');
-  }
-  function cfRenderUltimas() {
-    var l = cf.base.ultimasAlteracoes || [];
-    $('cfUltimas').innerHTML = '<div class="cf-ult-cab"><h4 class="cf-card-tit">' + ico('i-history') + esc(S.t('cf.ultimas')) + '</h4><a class="cf-link-log" href="#action-log?tipo=configuracao">' + esc(S.t('cf.verLog')) + ico('i-arrow') + '</a></div>' +
-      '<ol class="cf-ult">' + l.map(function (u) {
-        return '<li><span class="cf-ult-q">' + esc(dataCurta(u.quando.slice(0, 10))) + ' · ' + esc(u.quando.slice(11, 16)) + '</span><span class="cf-ult-txt"><b>' + esc(u.quem) + '</b> ' + esc(u.detalhe) + '</span><span class="cf-chip">' + esc(S.t('cf.aba.' + u.aba)) + '</span></li>';
-      }).join('') + '</ol>';
   }
   function cfIrAba(a) { if (CF_ABAS.indexOf(a) < 0) return; cf.aba = a; cfGravarAba(); cfRender(); var t = $('cfTab-' + a); if (t) t.focus(); }
   // Edições: um único ouvinte por tipo, no contêiner da aba
@@ -3694,20 +3817,27 @@ window.VBMSetup = (function () {
   });
   $('cfConteudo').addEventListener('input', function (e) {
     var t = e.target, d = cf.edit;
-    if (t.matches('[data-cf="nome"]')) d.ciclo.nome = t.value;
+    if (t.matches('[data-cf="ano"]')) d.ciclo.ano = t.value === '' ? '' : Number(t.value);
+    else if (t.matches('[data-cf="nome"]')) d.ciclo.nome = t.value;
     else if (t.matches('[data-cf="texto"]')) d.ciclo.texto = t.value;
     else if (t.matches('[data-cf="inicio0"]')) d.ciclo.etapas[0].inicio = t.value || null;
     else if (t.matches('[data-cf="fim"]')) d.ciclo.etapas[Number(t.getAttribute('data-i'))].fim = t.value || null;
     else if (t.matches('[data-cf-meta]')) {
-      var m = d.metas.metas[Number(t.getAttribute('data-cf-meta'))], campo = t.getAttribute('data-campo');
-      if (campo === 'peso') { var v = t.value === '' ? 0 : Number(t.value); if (v) m.pesos[t.getAttribute('data-bu')] = v; else delete m.pesos[t.getAttribute('data-bu')]; }
+      var m = d.metas.metasNivel[cf.nivel][Number(t.getAttribute('data-cf-meta'))], campo = t.getAttribute('data-campo');
+      if (campo === 'peso') { var v = t.value === '' ? 0 : Number(t.value); if (v) m.pesos[t.getAttribute('data-un')] = v; else delete m.pesos[t.getAttribute('data-un')]; }
       else m[campo] = t.value;
+    } else if (t.matches('[data-cf-niv]')) {
+      var nv = d.parametros.niveis[Number(t.getAttribute('data-cf-niv'))], cn = t.getAttribute('data-campo');
+      nv[cn] = cn === 'nome' ? t.value : (t.value === '' ? '' : Number(t.value));
+    } else if (t.matches('[data-cf-bu]')) {
+      cfRenomearBu(Number(t.getAttribute('data-cf-bu')), t.getAttribute('data-campo'), t.value);
+      cfRenderRodape(); cfMarcarAbas(); return;
     } else if (t.matches('[data-cf-par]')) d.parametros.parametros[Number(t.getAttribute('data-cf-par'))].valor = t.value === '' ? '' : Number(t.value);
     else if (t.id === 'cfBusca') { cf.busca = t.value; }
     else if (t.id === 'cfAddMat') { cf.novaMat = t.value; return; }
     else return;
     // Texto livre não redesenha a aba a cada tecla (mantém o cursor); números e datas, sim
-    if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-campo="titulo"]')) { cfRenderRodape(); cfMarcarAbas(); return; }
+    if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-campo="titulo"], [data-cf-niv][data-campo="nome"]')) { cfRenderRodape(); cfMarcarAbas(); return; }
     cfRender();
   });
   function cfMarcarAbas() {
@@ -3723,7 +3853,8 @@ window.VBMSetup = (function () {
     if (t.id === 'cfFiltroBu') { cf.bu = t.value; cfRender(); }
     else if (t.id === 'cfAddGrupo') { cf.novoGrupo = t.value; cfRender(); }
     else if (t.id === 'cfAddBu') { cf.novaBu = t.value; }
-    else if (t.matches('[data-campo="titulo"], [data-cf="nome"], [data-cf="texto"]')) cfRender();
+    else if (t.id === 'cfPai') { cf.pai = t.value; cfRender(); }
+    else if (t.matches('[data-campo="titulo"], [data-cf="nome"], [data-cf="texto"], [data-cf-niv][data-campo="nome"]')) cfRender();
   });
   $('cfConteudo').addEventListener('click', function (e) {
     var t = e.target.closest('button'); if (!t) return;
@@ -3735,7 +3866,63 @@ window.VBMSetup = (function () {
       var i = Number(t.getAttribute('data-cf-rem')), m = d.grupos.membros[i];
       d.grupos.membros.splice(i, 1); cfRender(); toast(S.t('cf.removido', { n: m.nome }));
     } else if (t.id === 'cfAddOk') cfAdicionar();
+    else if (t.hasAttribute('data-cf-nivel')) { cf.nivel = t.getAttribute('data-cf-nivel'); cf.pai = ''; cfRender(); }
+    else if (t.hasAttribute('data-cf-niv-ativo')) { var nv = d.parametros.niveis[Number(t.getAttribute('data-cf-niv-ativo'))]; nv.ativo = !nv.ativo; cfRender(); }
+    else if (t.id === 'cfAddMeta') {
+      var lst = d.metas.metasNivel[cf.nivel] = d.metas.metasNivel[cf.nivel] || [];
+      var num = lst.reduce(function (mx, m) { return Math.max(mx, Number(m.numero) || 0); }, 0) + 1;
+      lst.push({ numero: num, titulo: '', tipo: 'formula', polaridade: 'maior', nova: true, pesos: {} });
+      cfRender(); var nt = $('cfTit' + cf.nivel + (lst.length - 1)); if (nt) nt.focus();
+    } else if (t.hasAttribute('data-cf-meta-rem')) {
+      var lm = d.metas.metasNivel[cf.nivel], im = Number(t.getAttribute('data-cf-meta-rem')), mm = lm[im];
+      lm.splice(im, 1); cfRender(); toast(S.t('cf.metaRemovida', { n: mm.numero }));
+    } else if (t.id === 'cfNovaBu') { cf.buNova = true; cf.buEdit = -1; cfRender(); $('cfNovaBuNome').focus(); }
+    else if (t.id === 'cfNovaBuCancelar') { cf.buNova = false; cfRender(); }
+    else if (t.id === 'cfNovaBuOk') cfNovaBu();
+    else if (t.hasAttribute('data-bu-editar')) { cf.buEdit = Number(t.getAttribute('data-bu-editar')); cf.buNova = false; cfRender(); var bi = $('cfBuNome' + cf.buEdit); if (bi) bi.focus(); }
+    else if (t.hasAttribute('data-bu-ok')) { cf.buEdit = -1; cfRender(); }
+    else if (t.hasAttribute('data-bu-excluir')) cfPedirExclusao(Number(t.getAttribute('data-bu-excluir')));
   });
+  // Nova BU: nome e país/região; entra ativa no ciclo, sem pessoas nem pesos (a soma fica pendente até distribuir as metas)
+  function cfNovaBu() {
+    var nome = String($('cfNovaBuNome').value || '').trim(), pais = String($('cfNovaBuPais').value || '').trim();
+    var erro = !nome ? S.t('cf.e.buNome') : !pais ? S.t('cf.e.buPais') :
+      cf.edit.bus.bus.some(function (b) { return b.sigla.toLowerCase() === nome.toLowerCase(); }) ? S.t('cf.e.buDup', { b: nome }) : '';
+    if (erro) { $('cfNovaBuErro').textContent = erro; return; }
+    cf.edit.bus.bus.push({ sigla: nome, pais: pais, ativa: true, origem: null, cardsSubmetidos: 0 });
+    cf.buNova = false; cfRender(); toast(S.t('cf.buIncluida', { b: nome }));
+  }
+  // Renomear a BU atualiza as referências: pesos das metas, pessoas dos grupos e GG ligadas a ela
+  function cfRenomearBu(i, campo, valor) {
+    var b = cf.edit.bus.bus[i];
+    if (campo === 'pais') { b.pais = valor; return; }
+    var antigo = b.sigla; b.sigla = valor;
+    (cf.edit.metas.metasNivel.bu || []).forEach(function (m) { if (antigo in m.pesos) { m.pesos[valor] = m.pesos[antigo]; delete m.pesos[antigo]; } });
+    cf.edit.grupos.membros.forEach(function (m) { if (m.bu === antigo) m.bu = valor; });
+    cf.edit.metas.unidades.forEach(function (u) { if (u.nivel === 'gg' && u.pai === antigo) u.pai = valor; });
+  }
+  // Excluir: só BU sem Goal Card submetido; confirmação no segundo clique, em diálogo
+  function cfPedirExclusao(i) {
+    var b = cf.edit.bus.bus[i];
+    if (b.cardsSubmetidos > 0) return;
+    var gg = cf.edit.metas.unidades.filter(function (u) { return u.nivel === 'gg' && u.pai === b.sigla; });
+    var nP = cf.edit.grupos.membros.filter(function (m) { return m.bu === b.sigla; }).length;
+    $('cfDlgTit').textContent = S.t('cf.excluirTit', { b: b.sigla });
+    $('cfDlgTxt').textContent = S.t('cf.excluirTxt');
+    $('cfDlgLista').innerHTML = [S.t('cf.excluirPessoas', { n: nP }), S.t('cf.excluirPesos'), S.t('cf.excluirGg', { n: gg.length })]
+      .map(function (t) { return '<li>' + ico('i-x') + esc(t) + '</li>'; }).join('');
+    $('cfDlgOk').textContent = S.t('cf.excluirOk');
+    cf.dlgAcao = function () {
+      var sig = b.sigla, d = cf.edit, ggIds = gg.map(function (u) { return u.id; });
+      var gaIds = d.metas.unidades.filter(function (u) { return u.nivel === 'ga' && ggIds.indexOf(u.pai) >= 0; }).map(function (u) { return u.id; });
+      d.bus.bus.splice(d.bus.bus.indexOf(b), 1);
+      d.grupos.membros = d.grupos.membros.filter(function (m) { return m.bu !== sig; });
+      d.metas.unidades = d.metas.unidades.filter(function (u) { return ggIds.indexOf(u.id) < 0 && gaIds.indexOf(u.id) < 0; });
+      Object.keys(d.metas.metasNivel).forEach(function (k) { d.metas.metasNivel[k].forEach(function (m) { [sig].concat(ggIds, gaIds).forEach(function (id) { delete m.pesos[id]; }); }); });
+      $('cfDlg').close(); cfRender(); toast(S.t('cf.buExcluida', { b: sig }));
+    };
+    $('cfDlg').showModal(); $('cfDlgCancelar').focus();
+  }
   $('cfConteudo').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'cfAddMat') { e.preventDefault(); cfAdicionar(); } });
   // Inclusão pela matrícula (ou pelo nome escolhido na lista do diretório, IBP.USERS)
   function cfAdicionar() {
@@ -3751,12 +3938,12 @@ window.VBMSetup = (function () {
   }
   $('cfDescartar').addEventListener('click', function () { cf.edit = cfCopia(cf.orig); cfRender(); toast(S.t('cf.descartado')); });
   $('cfSalvar').addEventListener('click', function () {
-    var abas = CF_ABAS.filter(cfAlterada);
+    var abas = cfAbasGravar();
     if (!abas.length || cf.salvando) return;
     cf.salvando = true; cfRenderRodape();
     abas.reduce(function (p, a) {
       return p.then(function () {
-        return fetch('api/configuracao/salvar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ aba: a, dados: cf.edit[a] }) })
+        return fetch('api/configuracao/salvar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ aba: a, dados: cfPayload(a) }) })
           .then(function (r) { return r.json().then(function (j) { if (!r.ok) { var e = new Error('salvar'); e.j = j; e.aba = a; throw e; } return j; }); });
       });
     }, Promise.resolve())
@@ -3775,12 +3962,14 @@ window.VBMSetup = (function () {
     var b = cf.base, a = b.ciclo.ano + 1;
     $('cfDlgTit').textContent = S.t('cf.dlgTit', { a: a });
     $('cfDlgTxt').textContent = S.t('cf.dlgTxt', { c: b.ciclo.nome });
-    $('cfDlgLista').innerHTML = [S.t('cf.dlgBus', { n: b.bus.length }), S.t('cf.dlgPessoas', { n: Object.keys(b.membros.reduce(function (o, m) { o[m.matricula] = 1; return o; }, {})).length }), S.t('cf.dlgMetas', { n: b.metas.length }), S.t('cf.dlgJanelas')]
+    cf.dlgAcao = null; $('cfDlgOk').textContent = S.t('cf.clonarOk');
+    $('cfDlgLista').innerHTML = [S.t('cf.dlgBus', { n: b.bus.length }), S.t('cf.dlgPessoas', { n: Object.keys(b.membros.reduce(function (o, m) { o[m.matricula] = 1; return o; }, {})).length }), S.t('cf.dlgMetas', { n: Object.keys(b.metasNivel).reduce(function (t, k) { return t + b.metasNivel[k].length; }, 0) }), S.t('cf.dlgJanelas')]
       .map(function (t) { return '<li>' + ico('i-st-aprovado') + esc(t) + '</li>'; }).join('');
     $('cfDlg').showModal(); $('cfDlgCancelar').focus();
   });
   $('cfDlgCancelar').addEventListener('click', function () { $('cfDlg').close(); });
   $('cfDlgOk').addEventListener('click', function () {
+    if (cf.dlgAcao) return cf.dlgAcao();
     $('cfDlgOk').disabled = true;
     fetch('api/configuracao/clonar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: '{}' })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw j; return j; }); })

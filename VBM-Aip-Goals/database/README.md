@@ -16,7 +16,10 @@ respondem 501 até os scripts abaixo existirem.
 | `AIP_CICLO` | ano, nome, janelas (desdobramento, proposta, calibração, oficial), textos padrão, status |
 | `AIP_CICLO_BU` | BU do ciclo, país, ativo |
 | `AIP_PAPEL` | matrícula, ciclo, BU (nula para aprovadores e administrador), papel (contribuidor, aprovador, consulta, administrador), ativo |
-| `AIP_META` | ciclo, BU, número, título, peso, tipo, polaridade, ativo |
+| `AIP_NIVEL` | ciclo, nível (CEO, COO, BU, GG, GA), nome, total por unidade, herdado do nível acima, ativo |
+| `AIP_UNIDADE` | ciclo, nível, unidade, nome, unidade-mãe |
+| `AIP_META` | ciclo, nível, número, título, tipo, polaridade, ativo |
+| `AIP_META_PESO` | meta, unidade, peso |
 | `AIP_GOAL_CARD` | estado atual, versão oficial, rascunho corrente |
 | `AIP_GOAL_CARD_VERSAO` | snapshot imutável dos campos, vN, motivo, autor, data |
 | `AIP_DECISAO` | versão, decisão, comentário, decidido por, data (nível único, D-09) |

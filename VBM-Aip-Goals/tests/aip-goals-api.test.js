@@ -233,27 +233,42 @@ test('Edição: contribuidor só na própria BU; administrador em todas as BUs (
   try { assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, { 'X-Forwarded-Email': 'c@vale.com' })).status, 403); } finally { s.close(); }
 });
 
-test('T11 Configuração: só o administrador; RN-16 recusa soma diferente do total; janelas em ordem', async () => {
-  const { validarConfiguracao, somaPesosPorBu } = require('../aip-goals-api');
+test('T11 Configuração: só o administrador; RN-16 por nível (CEO → GA); ano, janelas e BUs validados', async () => {
+  const { validarConfiguracao, somaPesosPorNivel } = require('../aip-goals-api');
   const { configuracaoExemplo } = require('../dados-exemplo');
   const base = configuracaoExemplo(HOJE);
-  assert.ok(somaPesosPorBu(base.metas, base.bus).every((x) => x.soma === 100)); // exemplo fecha 100 em todas as BUs
-  const metas = JSON.parse(JSON.stringify(base.metas)); metas[1].pesos.Salobo = 10;
-  const e = validarConfiguracao('metas', { metas }, base);
-  assert.deepStrictEqual(e.filter((x) => x.codigo === 'RN16').map((x) => [x.bu, x.soma]), [['Salobo', 105]]);
+  const somas = somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus);
+  assert.ok(somas.length > 7 && somas.every((x) => x.soma === x.total)); // exemplo fecha 100 em todos os níveis
+  assert.deepStrictEqual([...new Set(somas.map((x) => x.nivel))], ['ceo', 'coo', 'bu', 'gg', 'ga']);
+  const metasNivel = JSON.parse(JSON.stringify(base.metasNivel)); metasNivel.bu[0].pesos.Salobo = 10;
+  const e = validarConfiguracao('metas', { metasNivel }, base);
+  assert.deepStrictEqual(e.filter((x) => x.codigo === 'RN16').map((x) => [x.nivel, x.unidade, x.soma]), [['bu', 'Salobo', 105]]);
+  // Herdado da BU sobe para 50: todas as BUs passam do total
+  const niveis = base.niveis.map((n) => (n.id === 'bu' ? { ...n, herdado: 50 } : n));
+  assert.strictEqual(validarConfiguracao('metas', { metasNivel: base.metasNivel, niveis }, base).filter((x) => x.nivel === 'bu').length, 7);
+  // GG desligada: suas unidades saem da conta; GA ativa sem GG é recusada nos parâmetros
+  const semGg = base.niveis.map((n) => (n.id === 'gg' ? { ...n, ativo: false } : n));
+  assert.ok(validarConfiguracao('parametros', { parametros: base.parametros, niveis: semGg }, base).some((x) => x.codigo === 'SALTO'));
+  assert.ok(validarConfiguracao('parametros', { parametros: base.parametros, niveis: base.niveis.map((n) => (n.id === 'bu' ? { ...n, ativo: false } : n)) }, base).some((x) => x.codigo === 'FIXO'));
   const etapas = base.ciclo.etapas.map((x) => ({ ...x })); etapas[2].fim = etapas[1].fim;
-  assert.ok(validarConfiguracao('ciclo', { nome: 'AIP', etapas }, base).some((x) => x.codigo === 'ORDEM'));
+  assert.ok(validarConfiguracao('ciclo', { ano: 2027, nome: 'AIP', etapas }, base).some((x) => x.codigo === 'ORDEM'));
+  assert.ok(validarConfiguracao('ciclo', { ano: 1999, nome: 'AIP', etapas: base.ciclo.etapas }, base).some((x) => x.codigo === 'ANO'));
   assert.ok(validarConfiguracao('grupos', { membros: [{ matricula: 'C1234', grupo: 'contribuidor', bu: 'X' }] }, base).some((x) => x.codigo === 'BU'));
+  // BUs: nova BU entra; BU com Goal Card submetido não pode ser excluída; nome duplicado é recusado
+  const bus = base.bus.map((b) => ({ ...b, origem: b.sigla }));
+  assert.deepStrictEqual(validarConfiguracao('bus', { bus: bus.concat([{ sigla: "Voisey's Bay", pais: 'Canadá', ativa: true, origem: null }]) }, base), []);
+  assert.ok(validarConfiguracao('bus', { bus: bus.slice(1) }, base).some((x) => x.codigo === 'BU_COM_CARDS' && x.bu === bus[0].sigla));
+  assert.ok(validarConfiguracao('bus', { bus: bus.concat([{ sigla: 'salobo', pais: 'Brasil', ativa: true }]) }, base).some((x) => x.codigo === 'DUPLICADA'));
   const admin = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'admin', bu: null }] }));
   const contrib = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'contribuidor', bu: 'Salobo' }] }));
   try {
     const h = { 'X-Forwarded-Email': 'a@vale.com' };
     assert.strictEqual((await pedir(admin, '/api/configuracao', h)).status, 200);
     assert.strictEqual((await pedir(contrib, '/api/configuracao', h)).status, 403);
-    const r = await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metas } }, h);
+    const r = await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel } }, h);
     assert.strictEqual(r.status, 400); assert.strictEqual(r.corpo.codigo, 'RN16');
-    assert.strictEqual((await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metas: base.metas } }, h)).corpo.simulado, true);
-    assert.strictEqual((await enviar(contrib, '/api/configuracao/salvar', { aba: 'metas', dados: { metas: base.metas } }, h)).status, 403);
+    assert.strictEqual((await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel: base.metasNivel } }, h)).corpo.simulado, true);
+    assert.strictEqual((await enviar(contrib, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel: base.metasNivel } }, h)).status, 403);
   } finally { admin.close(); contrib.close(); }
 });
 

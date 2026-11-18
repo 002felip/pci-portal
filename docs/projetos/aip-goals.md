@@ -181,15 +181,20 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
 `#configuracao?aba=ciclo|bus|grupos|metas|parametros`, só o administrador (403 → T12). §7.1.
 
 - **Topo** só com o título, sem o ano e sem cartões de resumo; a navegação é pelas abas.
-- **Ciclo:** nome, texto padrão de exceções e as 4 janelas (datas, dias úteis, etapa atual, ordem validada).
-- **Business Units:** pessoas por grupo (o número leva aos Grupos filtrados), metas, soma de pontos e chave "no ciclo".
+- **Ciclo:** ano editável (2020 a 2100), nome, texto padrão de exceções e as 4 janelas (datas, dias úteis, etapa atual, ordem validada).
+- **Business Units:** Nova BU (nome e país ou região), editar (renomear atualiza pesos, pessoas e GGs), chave "No ciclo AIP 2027"
+  (vale para o ciclo aberto que está sendo configurado) e excluir só BU sem Goal Card submetido, com confirmação; números
+  centralizados (pessoas por grupo, metas, pontos e cards submetidos).
 - **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;
   o ciclo precisa de ao menos um aprovador e um administrador.
-- **Metas e pesos:** matriz meta × BU editável (título, tipo, direção e peso), linha do resultado do COO travada e
-  total por BU; Salvar fica bloqueado enquanto alguma BU não fecha o total (RN-16), e o servidor recusa com 400.
-- **Parâmetros:** total por BU, pontos do COO, mínimo de caracteres e tamanho de anexo, com faixa permitida.
+- **Metas e pesos por nível:** seletor CEO › COO › BU › GG › GA (só os níveis ativos), com a unidade-mãe para GG (BU) e
+  GA (GG); matriz meta × unidade editável, linha "Resultado do nível acima" travada com os pontos herdados, nova meta e
+  remoção; total por unidade e contador de pendências por nível. Salvar fica bloqueado enquanto alguma unidade não fecha
+  o total (RN-16), e o servidor recusa com 400 (`somaPesosPorNivel`).
+- **Parâmetros:** níveis do desdobramento (nome, total por unidade, herdado do nível acima, pontos livres; CEO, COO e BU
+  obrigatórios, GG e GA ligáveis sem pular nível) e os limites (mínimo de caracteres e tamanho de anexo).
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Novo ciclo a
-  partir deste em diálogo de confirmação. Últimas alterações com link para o Action Log filtrado.
+  partir deste em diálogo de confirmação. Sem histórico de últimas alterações na tela (fica no Action Log).
 - Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` e `/configuracao/clonar` (`validarConfiguracao`), simuladas até a P-12.
 
 ### Desdobramento

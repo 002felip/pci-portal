@@ -191,9 +191,25 @@ function linhaDoCard(card) {
 const ABAS_CONFIG = ['ciclo', 'bus', 'grupos', 'metas', 'parametros'];
 const GRUPOS = ['contribuidor', 'aprovacao', 'consulta', 'admin'];
 const dataValida = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(v));
-// Soma dos pesos por BU ativa (RN-16: o servidor só grava quando a soma fecha o total)
-function somaPesosPorBu(metas, bus) {
-  return bus.filter((b) => b.ativa !== false).map((b) => ({ bu: b.sigla, soma: (metas || []).reduce((t, m) => t + (Number((m.pesos || {})[b.sigla]) || 0), 0) }));
+// Unidades ativas de cada nível: CEO e COO (unidades), BUs ativas, GG das BUs ativas e GA dessas GG
+function unidadesAtivas(nivel, unidades, bus) {
+  const busOn = (bus || []).filter((b) => b.ativa !== false).map((b) => b.sigla);
+  if (nivel === 'bu') return busOn.map((b) => ({ id: b, nome: b, nivel: 'bu' }));
+  const gg = (unidades || []).filter((u) => u.nivel === 'gg' && busOn.includes(u.pai));
+  if (nivel === 'gg') return gg;
+  if (nivel === 'ga') return (unidades || []).filter((u) => u.nivel === 'ga' && gg.some((g) => g.id === u.pai));
+  return (unidades || []).filter((u) => u.nivel === nivel);
+}
+// Soma por unidade de cada nível ativo: pontos herdados do nível acima + pesos das metas do nível (RN-16: fecha o total)
+function somaPesosPorNivel(metasNivel, niveis, unidades, bus) {
+  const r = [];
+  (niveis || []).filter((n) => n.ativo).forEach((n) => {
+    unidadesAtivas(n.id, unidades, bus).forEach((u) => {
+      const soma = Number(n.herdado || 0) + ((metasNivel || {})[n.id] || []).reduce((t, m) => t + (Number((m.pesos || {})[u.id]) || 0), 0);
+      r.push({ nivel: n.id, unidade: u.id, nome: u.nome, soma, total: Number(n.total) });
+    });
+  });
+  return r;
 }
 // Valida uma aba da configuração; devolve a lista de erros ({ campo, codigo, ... }) — vazia = pode gravar.
 function validarConfiguracao(aba, dados, base) {
@@ -201,6 +217,8 @@ function validarConfiguracao(aba, dados, base) {
   const d = dados || {};
   if (!ABAS_CONFIG.includes(aba)) return [{ campo: 'aba', codigo: 'ABA' }];
   if (aba === 'ciclo') {
+    const ano = Number(d.ano);
+    if (!Number.isInteger(ano) || ano < 2020 || ano > 2100) erros.push({ campo: 'ano', codigo: 'ANO' });
     if (!String(d.nome || '').trim()) erros.push({ campo: 'nome', codigo: 'OBRIGATORIO' });
     const et = Array.isArray(d.etapas) ? d.etapas : [];
     if (et.length !== 4) erros.push({ campo: 'etapas', codigo: 'ETAPAS' });
@@ -213,15 +231,16 @@ function validarConfiguracao(aba, dados, base) {
     });
   }
   if (aba === 'metas') {
-    const total = Number((base.parametros.find((p) => p.id === 'pesoTotal') || {}).valor) || 100;
-    (d.metas || []).forEach((m, i) => {
-      if (!String(m.titulo || '').trim()) erros.push({ campo: `metas.${i}.titulo`, codigo: 'OBRIGATORIO' });
-      Object.values(m.pesos || {}).forEach((p) => { if (!(Number(p) >= 0 && Number(p) <= total)) erros.push({ campo: `metas.${i}.pesos`, codigo: 'PESO' }); });
-    });
-    somaPesosPorBu(d.metas, base.bus).filter((x) => x.soma !== total).forEach((x) => erros.push({ campo: 'pesos', codigo: 'RN16', bu: x.bu, soma: x.soma, total }));
+    const niveis = d.niveis || base.niveis, unidades = d.unidades || base.unidades, bus = d.bus || base.bus;
+    Object.entries(d.metasNivel || {}).forEach(([nivel, lista]) => (lista || []).forEach((m, i) => {
+      if (!String(m.titulo || '').trim()) erros.push({ campo: `metas.${nivel}.${i}.titulo`, codigo: 'OBRIGATORIO' });
+      Object.values(m.pesos || {}).forEach((p) => { if (!(Number(p) >= 0 && Number(p) <= 1000)) erros.push({ campo: `metas.${nivel}.${i}.pesos`, codigo: 'PESO' }); });
+    }));
+    somaPesosPorNivel(d.metasNivel, niveis, unidades, bus).filter((x) => x.soma !== x.total)
+      .forEach((x) => erros.push({ campo: 'pesos', codigo: 'RN16', nivel: x.nivel, unidade: x.unidade, soma: x.soma, total: x.total }));
   }
   if (aba === 'grupos') {
-    const siglas = base.bus.map((b) => b.sigla);
+    const siglas = base.bus.map((b) => b.sigla).concat((d.bus || []).map((b) => b.sigla));
     (d.membros || []).forEach((m, i) => {
       if (!/^[A-Za-z0-9]{4,12}$/.test(String(m.matricula || ''))) erros.push({ campo: `membros.${i}.matricula`, codigo: 'MATRICULA' });
       if (!GRUPOS.includes(m.grupo)) erros.push({ campo: `membros.${i}.grupo`, codigo: 'GRUPO' });
@@ -237,9 +256,33 @@ function validarConfiguracao(aba, dados, base) {
       const v = Number(p.valor);
       if (!ref || !Number.isFinite(v) || v < ref.min || v > ref.max) erros.push({ campo: `parametros.${i}`, codigo: 'FAIXA', id: p.id });
     });
+    (d.niveis || []).forEach((n, i) => {
+      const ref = base.niveis.find((x) => x.id === n.id);
+      if (!ref) return erros.push({ campo: `niveis.${i}`, codigo: 'NIVEL' });
+      if (!String(n.nome || '').trim()) erros.push({ campo: `niveis.${i}.nome`, codigo: 'OBRIGATORIO' });
+      const t = Number(n.total), h = Number(n.herdado);
+      if (!Number.isFinite(t) || t < 1 || t > 1000) erros.push({ campo: `niveis.${i}.total`, codigo: 'FAIXA' });
+      if (!Number.isFinite(h) || h < 0 || h >= t || (i === 0 && h !== 0)) erros.push({ campo: `niveis.${i}.herdado`, codigo: 'FAIXA' });
+      if (ref.fixo && !n.ativo) erros.push({ campo: `niveis.${i}.ativo`, codigo: 'FIXO' });
+    });
+    // GA só fica ativo com a GG ativa (o desdobramento não pula nível)
+    const nv = Object.fromEntries((d.niveis || []).map((n) => [n.id, n]));
+    if (nv.ga && nv.ga.ativo && nv.gg && !nv.gg.ativo) erros.push({ campo: 'niveis.ga.ativo', codigo: 'SALTO' });
   }
   if (aba === 'bus') {
-    if (!(d.bus || []).some((b) => b.ativa)) erros.push({ campo: 'bus', codigo: 'SEM_BU' });
+    const bus = d.bus || [];
+    if (!bus.some((b) => b.ativa)) erros.push({ campo: 'bus', codigo: 'SEM_BU' });
+    const vistos = new Set();
+    bus.forEach((b, i) => {
+      const nome = String(b.sigla || '').trim();
+      if (!nome) erros.push({ campo: `bus.${i}.sigla`, codigo: 'OBRIGATORIO' });
+      else if (vistos.has(nome.toLowerCase())) erros.push({ campo: `bus.${i}.sigla`, codigo: 'DUPLICADA' });
+      vistos.add(nome.toLowerCase());
+      if (!String(b.pais || '').trim()) erros.push({ campo: `bus.${i}.pais`, codigo: 'OBRIGATORIO' });
+    });
+    // Exclusão: só BU sem Goal Card submetido no ciclo (com card, tira-se do ciclo)
+    base.bus.filter((o) => o.cardsSubmetidos > 0 && !bus.some((b) => (b.origem || b.sigla) === o.sigla))
+      .forEach((o) => erros.push({ campo: 'bus', codigo: 'BU_COM_CARDS', bu: o.sigla }));
   }
   return erros;
 }
@@ -464,7 +507,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     try {
       const ctx = exigirAdmin(req, res); if (!ctx) return;
       const base = configuracaoExemplo(ctx.hoje);
-      res.json({ ...base, somas: somaPesosPorBu(base.metas, base.bus), atualizadoEm: ctx.hoje.toISOString(), exemplo: true, desatualizado: false });
+      res.json({ ...base, somas: somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus), atualizadoEm: ctx.hoje.toISOString(), exemplo: true, desatualizado: false });
     } catch (err) {
       console.error(`${TAG} /configuracao:`, err.message);
       res.status(500).json({ error: 'Não foi possível carregar a configuração.', codigo: 'ERRO' });
@@ -541,4 +584,4 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
   return router;
 }
 
-module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorBu, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
+module.exports = { criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
