@@ -379,6 +379,11 @@ def build_quarters(rows: list[dict], stack_by: str) -> QuarterOut:
 
 
 # =========================================================== stage matrix ===
+#: Funnel bucket for initiatives with no stage entered. Not a vocab term; the
+#: frontend renders it as an off-funnel "Unknown" card.
+UNKNOWN_STAGE = "UNKNOWN"
+
+
 def build_stage_matrix(rows: list[dict]) -> StageMatrixOut:
     """BU x Value Lever grid, each cell split by stage; plus the stage funnel."""
     cells: dict[tuple[str, str], dict[str, dict[str, float]]] = defaultdict(
@@ -389,12 +394,15 @@ def build_stage_matrix(rows: list[dict]) -> StageMatrixOut:
 
     for r in rows:
         bu, lever, stage = r.get("bu_code"), r.get("lever_code"), r.get("stage_code")
-        if not (bu and lever and stage):
-            continue
         add = {"count": 1, "value_musd": _musd(r.get("value_target_cy")),
                "actual_ytd_musd": _musd(r.get("value_actual_ytd")),
                "actual_fy_musd": _musd(r.get("value_actual_fy"))}
-        for into in (cells[(bu, lever)][stage], funnel[stage]):
+        # The funnel takes every row -- stage-less ones under UNKNOWN_STAGE so
+        # they stay visible; the grid needs a real stage, a BU and a lever.
+        targets = [funnel[stage or UNKNOWN_STAGE]]
+        if stage and bu and lever:
+            targets.append(cells[(bu, lever)][stage])
+        for into in targets:
             for k, v in add.items():
                 into[k] += v
 

@@ -19,7 +19,7 @@
  * is how a new period comes into existence.
  */
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -27,10 +27,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   fmt, idCheckKey, TEMPLATE_URL, useAllSnapshots, useArchiveSnapshot, useClearPlanBaseline, useCloseSnapshot,
   useMeta, usePatchSnapshot, usePublishSnapshot, useReopenSnapshot,
-  useResolvePeriod, useRestoreSnapshot,
-  useSetPlanBaseline, useUploadExcel,
+  useResolvePeriod, useRestoreSnapshot, useRollbackSnapshot,
+  useSetPlanBaseline, useSnapshotRevisions, useUploadExcel,
   type IdCheck, type PeriodType, type SnapshotInfo, type SnapshotPatch,
-  type UploadReport,
+  type SnapshotRevision, type UploadReport,
 } from "../api";
 import { PageHead } from "../App";
 import { useChartTooltip } from "../ChartTooltip";
@@ -70,20 +70,6 @@ function standardLabel(fy: number, pt: PeriodType, ord: number | null): string {
   return String(fy);
 }
 
-type LabelPreset = "standard" | "close" | "forecast" | "restated" | "custom";
-const LABEL_PRESETS: { value: LabelPreset; label: string }[] = [
-  { value: "standard", label: "Standard" }, { value: "close", label: "Close" },
-  { value: "forecast", label: "Forecast" }, { value: "restated", label: "Restated" },
-  { value: "custom", label: "Custom…" },
-];
-
-function presetLabel(preset: LabelPreset, base: string): string {
-  if (preset === "close") return `${base} close`;
-  if (preset === "forecast") return `${base} forecast`;
-  if (preset === "restated") return `${base} restated`;
-  return base;
-}
-
 export default function SnapshotsPage() {
   const [manual, setManual] = useState(false);
   return (
@@ -97,6 +83,7 @@ export default function SnapshotsPage() {
         </button>
       </PageHead>
       <Registry />
+      <PlanBaselines />
       <Upload />
       {manual && <Manual onClose={() => setManual(false)} />}
     </>
@@ -214,13 +201,31 @@ function Manual({ onClose }: { onClose: () => void }) {
           first.
         </p>
 
-        <h4>Revisions</h4>
+        <h4>Revisions — a reload never overwrites</h4>
         <p className="sm">
-          Loading a workbook for a period that already exists creates a revision:
-          the revision number goes up, the period returns to draft, and you are
-          asked for a reason — which is kept against the period permanently. Use a
+          Loading a workbook for a period that already exists creates a new
+          revision of it: the revision number goes up and the new file's figures
+          become the current ones. The version it replaces is not thrown away — it
+          is kept in the period's <b>version history</b> (click the row). If the
+          period was already published or locked, it goes back to draft and you are
+          asked for a reason, which is kept against the period permanently. Use a
           revision when the numbers were wrong. Use archiving when the period
           should never have been loaded.
+        </p>
+        <p className="sm">
+          Loading the exact same file that is already the current version changes
+          nothing, and the result says so. You will be offered to load it again
+          anyway — only useful if initiatives were added or deleted by hand since.
+        </p>
+
+        <h4>Rolling back</h4>
+        <p className="sm">
+          A snapshot admin (an operator named in <code>UNLOCK_ADMINS</code>) can
+          restore any earlier version from the version history. The restore is
+          itself a new revision, and the version it replaces is kept too, so a
+          rollback can always be undone. It needs a reason. A locked period has to
+          be reopened first. The label, notes, pin and plan baseline are about the
+          period, not the file, so a rollback leaves them as they are.
         </p>
 
         <h4>The two flags</h4>
@@ -232,15 +237,17 @@ function Manual({ onClose }: { onClose: () => void }) {
             that is placement, not figures.</dd>
           <dt>Plan baseline</dt>
           <dd>The fixed anchor "Vs. plan" compares against for a fiscal year,
-            whichever period is currently selected. One per fiscal year, and it is
-            always pinned — an un-pinned baseline could age out of the picker and
-            stop resolving.</dd>
+            whichever period is currently selected. One per fiscal year — choose it
+            in the <b>Plan baseline</b> panel or with the star in the table — and it
+            is always pinned, since an un-pinned baseline could age out of the
+            picker and stop resolving.</dd>
         </dl>
 
         <h4>What you can edit</h4>
         <p className="sm">
-          Click any row to change its <b>label</b> and <b>notes</b>; the pin also
-          toggles directly in its column.
+          Click any row to change its <b>label</b> (the name shown in the period
+          pickers — display only) and <b>notes</b>, and to see its version history;
+          the pin also toggles directly in its column.
           Everything else — the period it covers, its revision number, its phase —
           is derived from the load or owned by the buttons above, so that two
           people reading "2026-Q3" are always reading the same quarter.
@@ -440,7 +447,14 @@ function Registry() {
         return <i className={`pill sm ${STATUS_TONE[st]}`}>{st}</i>;
       },
     },
-    { id: "revision", accessorKey: "revision", header: "Rev", size: 50 },
+    {
+      id: "revision", accessorKey: "revision", header: "Rev", size: 50,
+      cell: (ctx) => <span className="cell"
+        title={ctx.row.original.restored_from
+          ? `Rolled back to revision ${ctx.row.original.restored_from}`
+          : "How many times this period has been loaded — click the row for its history"}>
+        {ctx.getValue()}{ctx.row.original.restored_from ? " ↺" : ""}</span>,
+    },
     {
       id: "initiative_count", accessorKey: "initiative_count",
       header: "Initiatives", size: 80, sortingFn: "basic",
@@ -618,8 +632,9 @@ function Registry() {
             : <DataTable data={rows} columns={columns} globalFilter={query}
               dense onRowClick={setEditing} />}
           <p className="muted sm">
-            Click a row to edit its label, notes and pin. Period, revision and
-            state are derived — they change only by uploading or by the actions above.
+            Click a row to edit its label, notes and pin, or to see and restore
+            earlier versions. Period, revision and state are derived — they change
+            only by uploading or by the actions above.
           </p>
         </>
       )}
@@ -706,6 +721,11 @@ function Editor({ snapshot, onClose }: { snapshot: SnapshotInfo; onClose: () => 
           </fieldset>
 
           <fieldset>
+            <legend>Version history</legend>
+            <History snapshot={snapshot} onRestored={onClose} />
+          </fieldset>
+
+          <fieldset>
             <legend>Derived — changes only by uploading</legend>
             <Facts snapshot={snapshot} />
           </fieldset>
@@ -734,7 +754,8 @@ function Facts({ snapshot: s }: { snapshot: SnapshotInfo }) {
     ["Fiscal year", s.fiscal_year],
     ["Period", `${s.period_type}${s.period_ordinal ?? ""}`],
     ["State", s.state],
-    ["Revision", s.revision],
+    ["Revision", s.restored_from
+      ? `${s.revision} (rolled back to revision ${s.restored_from})` : s.revision],
     ["Initiatives", fmt.int(s.initiative_count)],
     ["Reason for revision", s.reason ?? "—"],
     ["Original file", s.original_filename ?? "—"],
@@ -751,6 +772,153 @@ function Facts({ snapshot: s }: { snapshot: SnapshotInfo }) {
       <span className="sm">{v}</span>
     </div>
   ))}</>;
+}
+
+/* =============================================================== history = */
+/**
+ * Every load archives the version it replaces, so a period's history is a
+ * list of restorable versions. Restoring is a snapshot-admin action; the
+ * server enforces it, and this only hides what the reader cannot use.
+ */
+function History({ snapshot, onRestored }: {
+  snapshot: SnapshotInfo; onRestored: () => void;
+}) {
+  const { data: meta } = useMeta();
+  const { data: revisions, isLoading, error } = useSnapshotRevisions(snapshot.id);
+  const rollback = useRollbackSnapshot();
+  const [target, setTarget] = useState<SnapshotRevision | null>(null);
+  const [reason, setReason] = useState("");
+
+  const admin = Boolean(meta?.is_snapshot_admin);
+  const blocked = snapshot.state === "locked" ? "Locked — reopen it before restoring a version"
+    : snapshot.archived_at ? "Archived — restore it before restoring a version" : undefined;
+
+  if (isLoading) return <Loading what="versions" />;
+  if (error) return <Problem error={error} />;
+  const rows = revisions ?? [];
+  const earlier = rows.filter((r) => !r.is_current);
+
+  const restore = () => {
+    if (!target || !reason.trim()) return;
+    rollback.mutate({ id: snapshot.id, revision: target.revision, reason: reason.trim() },
+      { onSuccess: () => { setTarget(null); setReason(""); onRestored(); } });
+  };
+
+  return (
+    <>
+      <div className="tablewrap">
+        <table className="grid dense">
+          <thead>
+            <tr><th>Rev</th><th>Loaded</th><th>By</th><th>File</th>
+              <th>Initiatives</th><th>Reason</th>{admin && <th />}</tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.revision}>
+                <td>{r.revision}{r.is_current
+                  && <i className="pill sm good" style={{ marginLeft: 6 }}>current</i>}</td>
+                <td title={r.uploaded_at ? new Date(r.uploaded_at).toLocaleString() : undefined}>
+                  {fmt.date(r.uploaded_at)}</td>
+                <td>{r.created_by ?? "—"}</td>
+                <td>{r.original_filename ?? "—"}</td>
+                <td>{fmt.int(r.initiative_count)}</td>
+                <td>{r.reason ?? (r.restored_from ? `Rollback to r${r.restored_from}` : "—")}</td>
+                {admin && (
+                  <td>
+                    {!r.is_current && (
+                      <button type="button" className="link sm"
+                        disabled={Boolean(blocked) || rollback.isPending}
+                        title={blocked ?? `Make revision ${r.revision} the current version again`}
+                        onClick={() => { setTarget(r); setReason(""); }}>
+                        Restore
+                      </button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {!earlier.length && (
+        <p className="muted sm">
+          No earlier versions yet. From the next reload of this period onwards, the
+          version being replaced is kept here and can be restored.
+        </p>
+      )}
+      {earlier.length > 0 && !admin && (
+        <p className="muted sm">
+          Only snapshot admins (<code>UNLOCK_ADMINS</code>) can restore an earlier version.
+        </p>
+      )}
+      {admin && blocked && earlier.length > 0 && <p className="muted sm">{blocked}.</p>}
+
+      {target && (
+        <div className="report warn">
+          <p className="sm">
+            <b>Restore revision {target.revision}?</b> Its {fmt.int(target.initiative_count)}{" "}
+            initiative(s) replace the current {fmt.int(snapshot.initiative_count)}, as a
+            new revision. The current version is kept in this history, so this can be
+            undone. Label, notes, pin and plan baseline are not changed.
+          </p>
+          <label className="field">
+            <span className="sm muted">Reason (kept against the period)</span>
+            <textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
+          </label>
+          <div className="modal-actions">
+            <button className="ghost" onClick={() => setTarget(null)}>Cancel</button>
+            <button className="primary" disabled={!reason.trim() || rollback.isPending}
+              onClick={restore}>
+              {rollback.isPending ? "Restoring…" : `Restore revision ${target.revision}`}
+            </button>
+          </div>
+        </div>
+      )}
+      {rollback.error && <Problem error={rollback.error} prefix="Could not restore" />}
+    </>
+  );
+}
+
+/* ======================================================== plan baselines = */
+/**
+ * One dropdown per fiscal year, so the control stays the same size however
+ * many periods a year accumulates. Offers only picker-visible periods, since
+ * the baseline has to be one a reader could select.
+ */
+function PlanBaselines() {
+  const { options } = usePeriod();
+  const set = useSetPlanBaseline();
+  const clear = useClearPlanBaseline();
+  const years = options?.by_year ?? [];
+  if (!years.length) return null;
+
+  return (
+    <Panel title="Plan baseline"
+      actions={<span className="muted sm">
+        What "Vs. plan" compares against — one fixed period per fiscal year
+      </span>}>
+      <div className="formrow-group">
+        {years.map((g) => {
+          const current = g.snapshots.find((s) => s.is_baseline);
+          return (
+            <Select key={g.year} label={`FY ${g.year}`} value={current?.id ?? ""}
+              onChange={(v) => {
+                if (set.isPending || clear.isPending) return;
+                if (v) set.mutate(v);
+                else if (current) clear.mutate(current.id);
+              }}
+              options={[{ value: "", label: "— none —" },
+                ...g.snapshots.map((s) => ({ value: s.id, label: s.label }))]} />
+          );
+        })}
+      </div>
+      <p className="muted sm">
+        Unlike "previous period" or "same period last year", which move with the
+        selection, the plan baseline stays put. Setting one also pins it.
+      </p>
+      {(set.error || clear.error) && <Problem error={(set.error ?? clear.error)!} />}
+    </Panel>
+  );
 }
 
 /* =============================================================== confirm = */
@@ -776,19 +944,17 @@ function Confirm({ confirmation, busy, onCancel }: {
 /* ================================================================ upload = */
 function Upload() {
   const { data: meta } = useMeta();
-  const { options } = usePeriod();
   const upload = useUploadExcel();
 
   const [file, setFile] = useState<File | null>(null);
   const [fiscalYear, setFiscalYear] = useState(CURRENT_FY);
   const [periodType, setPeriodType] = useState<PeriodType>("Q");
   const [periodOrdinal, setPeriodOrdinal] = useState<number | null>(1);
-  const [labelPreset, setLabelPreset] = useState<LabelPreset>("standard");
-  const [customLabel, setCustomLabel] = useState("");
-  const [customBaseAtEntry, setCustomBaseAtEntry] = useState<string | null>(null);
+  // A typed name belongs to the period it was typed for: changing the period
+  // discards it, so the field always starts from the selected period's name.
+  const [typedLabel, setTypedLabel] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [dryRun, setDryRun] = useState(true);
-  const [force, setForce] = useState(false);
   const [report, setReport] = useState<UploadReport | null>(null);
   // "BU|ID" of reused IDs the uploader has confirmed are the same initiative.
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
@@ -829,20 +995,19 @@ function Upload() {
   };
 
   const base = standardLabel(fiscalYear, periodType, periodOrdinal);
-  const effectiveLabel = labelPreset === "custom" ? customLabel : presetLabel(labelPreset, base);
-  const labelDrifted = labelPreset === "custom" && customBaseAtEntry !== null
-    && customBaseAtEntry !== base && customLabel.trim() !== "";
-
-  const changeLabelPreset = (preset: LabelPreset) => {
-    if (preset === "custom" && labelPreset !== "custom") {
-      setCustomLabel(base);
-      setCustomBaseAtEntry(base);
-    }
-    setLabelPreset(preset);
-  };
-
   const periodKey = buildPeriodKey(fiscalYear, periodType, periodOrdinal);
   const resolve = useResolvePeriod(fiscalYear, periodType, periodOrdinal);
+
+  useEffect(() => setTypedLabel(null), [periodKey]);
+
+  // Always suggest the standard "Q3 2026" name, never the stored one: stored
+  // names can carry leftovers (e.g. the retired "… close" presets). If the
+  // period is already named differently, say so and offer to keep that name.
+  const effectiveLabel = typedLabel ?? base;
+  const existingLabel = resolve.data?.existing_snapshot?.label;
+  // A blank name is not sent, and the server then keeps the stored one.
+  const renames = existingLabel != null && effectiveLabel.trim() !== ""
+    && existingLabel !== effectiveLabel.trim();
   const needsReason = resolve.data?.state === "revision";
   // A draft is visible only to its owner, so someone else's draft looks like an
   // empty period from here -- say whose it is before it is replaced.
@@ -863,14 +1028,22 @@ function Upload() {
     missing.push(`confirmation of ${unconfirmed.length} reused Initiative ID(s) below`);
   }
 
-  const run = () => {
+  /** `force` is only ever set from the duplicate result's "load it again"
+   *  button -- it is not a standing option, because it is almost never wanted. */
+  const run = (force = false) => {
     if (missing.length) return;
     upload.mutate({
       file: file!, fiscalYear, periodType, periodOrdinal,
-      label: effectiveLabel || undefined, reason: needsReason ? reason.trim() : undefined,
-      dryRun, force, confirmedIds: [...confirmed],
+      label: effectiveLabel.trim() || undefined,
+      reason: needsReason ? reason.trim() : undefined,
+      dryRun: force ? false : dryRun, force, confirmedIds: [...confirmed],
     }, { onSuccess: setReport });
   };
+  const existingRev = resolve.data?.existing_snapshot?.revision;
+  const keptNote = existingRev
+    ? ` The current version (revision ${existingRev}) is kept in the version history `
+      + `and can be restored by a snapshot admin.`
+    : "";
 
   return (
     <Panel title="Load a workbook"
@@ -892,25 +1065,29 @@ function Upload() {
               onChange={(v) => setPeriodOrdinal(Number(v))}
               options={ordinalOptions(periodType)} />
           )}
-          <Select label="Label" value={labelPreset}
-            onChange={(v) => changeLabelPreset(v as LabelPreset)}
-            options={LABEL_PRESETS} />
-          {labelPreset === "custom" && (
-            <label className="field">
-              <span className="sm muted">Custom label</span>
-              <input type="text" value={customLabel}
-                onChange={(e) => setCustomLabel(e.target.value)} />
-            </label>
-          )}
+          <label className="field">
+            <span className="sm muted">Name shown in pickers</span>
+            <input type="text" maxLength={120} value={effectiveLabel}
+              onChange={(e) => setTypedLabel(e.target.value)} />
+          </label>
         </div>
-        {labelDrifted && (
-          <p className="muted sm">Label no longer matches the selected period.</p>
+        <p className="muted sm">
+          The name is display only and can be changed later. The period key below
+          is what identifies the snapshot.
+        </p>
+        {renames && (
+          <p className="muted sm">
+            {periodKey} is currently named “{existingLabel}”; loading will rename it
+            to “{effectiveLabel.trim()}”.{" "}
+            <button type="button" className="link sm"
+              onClick={() => setTypedLabel(existingLabel)}>Keep “{existingLabel}”</button>
+          </p>
         )}
 
         <div className="periodpreview">
           <div><span className="muted sm">Period key</span><b> {periodKey}</b>
             <span className="muted sm"> (identity — permanent, never changes)</span></div>
-          <div><span className="muted sm">Label</span><b> {effectiveLabel || "—"}</b>
+          <div><span className="muted sm">Name</span><b> {effectiveLabel || "—"}</b>
             <span className="muted sm"> (display — editable later)</span></div>
           <div><span className="muted sm">Stored file</span><b> {storedFilename}</b></div>
         </div>
@@ -921,13 +1098,15 @@ function Upload() {
               `${periodKey} is a new period. Loading it will create the snapshot.`}
             {resolve.data.state === "draft_exists" && (foreignDraftOwner
               ? `An unpublished draft for ${periodKey} created by ${foreignDraftOwner} `
-                + `already exists. Loading will replace its contents and make the draft `
-                + `yours -- it will then appear in your period picker instead of theirs.`
-              : `A draft for ${periodKey} already exists. Loading will replace its contents.`)}
+                + `already exists. Loading makes revision ${resolve.data.next_revision} `
+                + `and makes the draft yours -- it will then appear in your period `
+                + `picker instead of theirs.${keptNote}`
+              : `A draft for ${periodKey} already exists. Loading makes revision `
+                + `${resolve.data.next_revision}.${keptNote}`)}
             {resolve.data.state === "revision" &&
               `${periodKey} already exists (${resolve.data.existing_snapshot?.label ?? "published"}). `
-              + `This will be loaded as revision ${resolve.data.next_revision} and will `
-              + `require a reason before publishing.`}
+              + `This will be loaded as revision ${resolve.data.next_revision}, which goes `
+              + `back to draft until published again and needs a reason.${keptNote}`}
           </p>
         )}
         {reloadsArchived && (
@@ -968,18 +1147,15 @@ function Upload() {
             onChange={(e) => setDryRun(e.target.checked)} />
           Validate only (write nothing)
         </label>
-        <p className="muted sm">Checks the workbook and reports issues without writing.</p>
-        <label className="check">
-          <input type="checkbox" checked={force}
-            onChange={(e) => setForce(e.target.checked)} />
-          Force replay of identical bytes
-        </label>
-        <p className="muted sm">Re-loads even if these exact bytes were already loaded once.</p>
+        <p className="muted sm">
+          Checks the workbook and reports issues without writing. Untick to load it.
+        </p>
       </fieldset>
 
       <fieldset>
         <legend>4. Result</legend>
-        <button className="primary" onClick={run} disabled={missing.length > 0 || upload.isPending}>
+        <button className="primary" onClick={() => run()}
+          disabled={missing.length > 0 || upload.isPending}>
           {upload.isPending ? "Processing…" : dryRun ? "Validate" : "Load"}
         </button>
         {missing.length > 0 && (
@@ -989,58 +1165,17 @@ function Upload() {
         )}
         {upload.error && <Problem error={upload.error} />}
         {report && <Report report={report} confirmed={confirmed}
-          onToggle={toggleConfirmed} />}
-      </fieldset>
-
-      <fieldset>
-        <legend>5. Plan baseline</legend>
-        <p className="muted sm">
-          The fixed anchor the "Vs. plan" comparison mode resolves to for
-          fiscal year {fiscalYear}, regardless of which period is currently
-          selected -- unlike sequential/YoY, which shift with the selection.
-        </p>
-        <PlanBaseline fiscalYear={fiscalYear} snapshots={
-          options?.by_year.find((g) => g.year === fiscalYear)?.snapshots ?? []
-        } />
+          onToggle={toggleConfirmed} onForce={() => run(true)}
+          forcing={upload.isPending} />}
       </fieldset>
     </Panel>
   );
 }
 
-function PlanBaseline({ fiscalYear, snapshots }: {
-  fiscalYear: number; snapshots: { id: string; label: string; is_baseline: boolean }[];
-}) {
-  const set = useSetPlanBaseline();
-  const clear = useClearPlanBaseline();
-  const busy = set.isPending || clear.isPending;
-
-  if (!snapshots.length) {
-    return <Empty>No snapshots loaded yet for fiscal year {fiscalYear}.</Empty>;
-  }
-
-  return (
-    <div className="planbaseline">
-      {snapshots.map((s) => (
-        <label key={s.id} className="check">
-          <input type="radio" name="plan-baseline" disabled={busy}
-            checked={s.is_baseline}
-            onChange={() => set.mutate(s.id)} />
-          {s.label}
-          {s.is_baseline && (
-            <button type="button" className="link sm" disabled={busy}
-              onClick={(e) => { e.preventDefault(); clear.mutate(s.id); }}>
-              (clear)
-            </button>
-          )}
-        </label>
-      ))}
-      {(set.error || clear.error) && <Problem error={(set.error ?? clear.error)!} />}
-    </div>
-  );
-}
-
-function Report({ report, confirmed, onToggle }: {
+function Report({ report, confirmed, onToggle, onForce, forcing }: {
   report: UploadReport; confirmed: Set<string>; onToggle: (key: string) => void;
+  /** Re-submit the same file with force, after a `duplicate` result. */
+  onForce: () => void; forcing: boolean;
 }) {
   const { set } = usePeriod();
   const navigate = useNavigate();
@@ -1085,6 +1220,17 @@ function Report({ report, confirmed, onToggle }: {
       )}
       {publish.error && <Problem error={publish.error} />}
       {report.message && <p className="sm">{report.message}</p>}
+      {report.status === "duplicate" && (
+        <p className="sm">
+          <button type="button" className="ghost" disabled={forcing} onClick={onForce}>
+            {forcing ? "Loading…" : "Load it again anyway"}
+          </button>
+          <span className="muted sm" style={{ marginLeft: 8 }}>
+            Only needed if initiatives were added or deleted by hand since this file
+            was loaded — reloading puts the file's rows back.
+          </span>
+        </p>
+      )}
       <p className="muted sm">
         Batch {report.batch_id || "—"} · sha256 {report.content_sha256.slice(0, 16)}…
       </p>

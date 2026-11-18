@@ -192,8 +192,6 @@ function PrintButton() {
 export default function App() {
   return (
     <QueryClientProvider client={client}>
-      {/* basename: o mesmo prefixo do build (vazio no build padrão), para as
-          rotas /portfolio, /data-quality... funcionarem dentro do Portal PCI. */}
       <BrowserRouter basename={BASE_PATH || undefined}>
         <PeriodProvider>
           <FilterProvider>

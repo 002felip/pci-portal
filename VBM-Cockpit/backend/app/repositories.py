@@ -51,7 +51,8 @@ from .registry import (
 )
 from .schemas import (
     CompareOut, CompletenessOut, InitiativeListOut, InitiativeOut, MonthlySeries,
-    OverrideOut, QuarterOut, SettingOut, SnapshotOut, StageMatrixOut, TopOut, TreeOut,
+    OverrideOut, QuarterOut, SettingOut, SnapshotOut, SnapshotRevisionOut,
+    StageMatrixOut, TopOut, TreeOut,
 )
 
 _LOCK = threading.RLock()
@@ -105,8 +106,19 @@ class SettingStore(Protocol):
     def delete_setting(self, key: str) -> None: ...
 
 
+@runtime_checkable
+class RevisionStore(Protocol):
+    """Superseded versions of a snapshot's contents -- see `SnapshotRevision`.
+    A load archives the live contents first; a rollback restores one."""
+
+    def archive_live(self, snapshot_id: str, actor: str | None) -> bool: ...
+    def list_revisions(self, snapshot_id: str) -> list[SnapshotRevisionOut]: ...
+    def restore_revision(self, snapshot_id: str, revision: int,
+                         actor: str | None, reason: str) -> None: ...
+
+
 class FullRepository(ReadRepository, WriteRepository, OverrideStore, SettingStore,
-                     Protocol):
+                     RevisionStore, Protocol):
     """The union. Concrete backends satisfy this; consumers should not ask for it."""
 
 
@@ -119,6 +131,28 @@ class AnalyticsMixin:
     This is the mechanical guarantee behind "the two backends cannot disagree" --
     there is no second copy of these six calls to drift.
     """
+
+    # ---------------------------------------------------------- revisions --
+    def _snapshot(self, snapshot_id: str) -> SnapshotOut | None:
+        return next((s for s in self.list_snapshots() if s.id == snapshot_id), None)
+
+    def list_revisions(self, snapshot_id: str) -> list[SnapshotRevisionOut]:
+        """Newest first; the live version is the snapshot row, tagged current."""
+        snap = self._snapshot(snapshot_id)
+        if snap is None:
+            raise KeyError(snapshot_id)
+        out = [SnapshotRevisionOut(**m) for m in self._archived_revisions(snapshot_id)
+               if m["revision"] != snap.revision]
+        out.append(SnapshotRevisionOut(
+            revision=snap.revision, is_current=True, label=snap.label,
+            original_filename=snap.original_filename, reason=snap.reason,
+            created_by=snap.created_by, uploaded_at=snap.uploaded_at,
+            initiative_count=snap.initiative_count, restored_from=snap.restored_from))
+        return sorted(out, key=lambda r: r.revision, reverse=True)
+
+    def _next_revision(self, snap: SnapshotOut) -> int:
+        archived = [m["revision"] for m in self._archived_revisions(snap.id)]
+        return max([snap.revision, *archived]) + 1
 
     def resolver(self, current_user: str | None = None) -> PeriodResolver:
         s = get_settings()
@@ -188,6 +222,33 @@ class AnalyticsMixin:
 
 
 # ================================================================== helpers ==
+def _revision_meta(snap: SnapshotOut, actor: str | None,
+                   content_sha256: str | None) -> dict[str, Any]:
+    """What the archive keeps about a version besides its rows."""
+    return {"revision": snap.revision, "label": snap.label,
+            "original_filename": snap.original_filename, "reason": snap.reason,
+            "created_by": snap.created_by, "uploaded_at": snap.uploaded_at,
+            "initiative_count": snap.initiative_count,
+            "restored_from": snap.restored_from, "content_sha256": content_sha256,
+            "superseded_at": datetime.now(timezone.utc).isoformat(),
+            "superseded_by": actor}
+
+
+def _rollback_identity(snap: SnapshotOut, target: dict, revision: int,
+                       actor: str | None, reason: str) -> dict[str, Any]:
+    """The snapshot row after a rollback: a NEW revision whose contents are an
+    old one's. State, label, notes, pin and plan baseline are left alone --
+    those are about the period, not about which workbook is behind it."""
+    out = snap.model_dump()
+    out.pop("initiative_count", None)
+    out.update(revision=revision, restored_from=target["revision"],
+               reason=f"Rolled back to r{target['revision']}: {reason}",
+               original_filename=target.get("original_filename"),
+               uploaded_at=datetime.now(timezone.utc).isoformat(),
+               created_by=actor or snap.created_by)
+    return out
+
+
 def apply_registry_coercion(payload: dict) -> dict:
     """
     Every write goes through the registry's coercers. A hand-edit from the UI
@@ -256,6 +317,10 @@ class JsonRepository(AnalyticsMixin):
     @property
     def settings_path(self) -> Path:
         return self.dir / "settings.json"
+
+    @property
+    def revisions_path(self) -> Path:
+        return self.dir / "revisions.json"
 
     @staticmethod
     def _stamp_of(path: Path) -> tuple[float, int] | None:
@@ -495,6 +560,71 @@ class JsonRepository(AnalyticsMixin):
             return {"written": len(records), "carried_edits": carried,
                     "carried_edits_flagged": carried_flagged}
 
+    # ---------------------------------------------------------- revisions --
+    def _revisions(self) -> dict[str, list[dict]]:
+        if not self.revisions_path.exists():
+            return {}
+        return json.loads(self.revisions_path.read_text("utf-8"))
+
+    def _write_revisions(self, data: dict) -> None:
+        self.dir.mkdir(parents=True, exist_ok=True)
+        self.revisions_path.write_text(json.dumps(data, ensure_ascii=False,
+                                                  default=str), "utf-8")
+
+    def _archived_revisions(self, snapshot_id: str) -> list[dict]:
+        return [{k: v for k, v in e.items()
+                 if k in SnapshotRevisionOut.model_fields}
+                for e in self._revisions().get(snapshot_id, [])]
+
+    def archive_live(self, snapshot_id: str, actor: str | None) -> bool:
+        with _LOCK:
+            try:
+                snap = self._snapshot(snapshot_id)
+            except SeedMissingError:
+                return False
+            if snap is None or snap.initiative_count == 0:
+                return False
+            rows = [json.loads(json.dumps(r, default=str))
+                    for r in self._load().get("initiatives", [])
+                    if r.get("snapshot_id") == snapshot_id]
+            entry = _revision_meta(snap, actor, rows[0].get("load_batch_id"))
+            entry["payload"] = {"initiatives": rows,
+                                "overrides": self.override_map(f"summary:{snapshot_id}")}
+            revs = self._revisions()
+            kept = [e for e in revs.get(snapshot_id, []) if e["revision"] != snap.revision]
+            revs[snapshot_id] = sorted([*kept, entry], key=lambda e: e["revision"])
+            self._write_revisions(revs)
+            return True
+
+    def restore_revision(self, snapshot_id: str, revision: int,
+                         actor: str | None, reason: str) -> None:
+        with _LOCK:
+            target = next((e for e in self._revisions().get(snapshot_id, [])
+                           if e["revision"] == revision), None)
+            snap = self._snapshot(snapshot_id)
+            if target is None or snap is None or revision == snap.revision:
+                raise KeyError(revision)
+            new_revision = self._next_revision(snap)
+            self.archive_live(snapshot_id, actor)
+
+            data = self._load_or_empty()
+            data["initiatives"] = [r for r in data["initiatives"]
+                                   if r.get("snapshot_id") != snapshot_id]
+            data["initiatives"].extend(json.loads(json.dumps(
+                target["payload"]["initiatives"])))
+            identity = _rollback_identity(snap, target, new_revision, actor, reason)
+            data["snapshots"] = [{**s, **identity} if s["id"] == snapshot_id else s
+                                 for s in data.get("snapshots", [])]
+            self._flush(data)
+
+            scope = f"summary:{snapshot_id}"
+            overrides = {k: v for k, v in self._overrides().items()
+                         if not k.startswith(f"{scope}:")}
+            now = datetime.now(timezone.utc).isoformat()
+            for key, payload in (target["payload"].get("overrides") or {}).items():
+                overrides[f"{scope}:{key}"] = {"payload": payload, "updated_at": now}
+            self._write_overrides(overrides)
+
     # ---------------------------------------------------------- overrides --
     def _overrides(self) -> dict[str, dict[str, Any]]:
         if not self.overrides_path.exists():
@@ -637,6 +767,7 @@ class SqlRepository(AnalyticsMixin):
                 archived_at=s.archived_at.isoformat() if s.archived_at else None,
                 archived_by=s.archived_by, notes=s.notes,
                 uploaded_at=s.uploaded_at.isoformat() if s.uploaded_at else None,
+                restored_from=s.restored_from,
                 initiative_count=int(counts.get(s.id, 0))))
         return out
 
@@ -778,6 +909,145 @@ class SqlRepository(AnalyticsMixin):
         # batch/lineage transaction. Present only to satisfy WriteRepository.
         raise NotImplementedError(
             "Use etl.load_parse_result for the SQL backend -- it owns lineage.")
+
+    # ---------------------------------------------------------- revisions --
+    def _archived_revisions(self, snapshot_id: str) -> list[dict]:
+        from sqlalchemy import select
+
+        from .models import SnapshotRevision as R
+
+        cols = [R.revision, R.label, R.original_filename, R.reason, R.created_by,
+                R.uploaded_at, R.initiative_count, R.restored_from,
+                R.superseded_at, R.superseded_by]
+        out = []
+        for row in self.session.execute(
+                select(*cols).where(R.snapshot_id == snapshot_id)).mappings():
+            m = dict(row)
+            for k in ("uploaded_at", "superseded_at"):
+                m[k] = m[k].isoformat() if m[k] else None
+            out.append(m)
+        return out
+
+    def current_batch(self, snapshot_id: str):
+        """The load batch behind the snapshot's live contents: the most
+        recently completed one (a rollback re-stamps the batch it restores)."""
+        from sqlalchemy import select
+
+        from .models import LoadBatch
+
+        return self.session.scalar(
+            select(LoadBatch)
+            .where(LoadBatch.snapshot_id == snapshot_id, LoadBatch.status == "loaded")
+            .order_by(LoadBatch.completed_at.desc().nulls_last(),
+                      LoadBatch.created_at.desc())
+            .limit(1))
+
+    def archive_live(self, snapshot_id: str, actor: str | None) -> bool:
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        from .models import Initiative, SnapshotRevision
+
+        snap = self._snapshot(snapshot_id)
+        if snap is None or snap.initiative_count == 0:
+            return False
+        rows = []
+        for r in self.session.scalars(
+                self._base(snapshot_id).options(selectinload(Initiative.metrics))).all():
+            d = self._to_dict(r, with_metrics=True)
+            d["extra"] = r.extra
+            rows.append(d)
+        payload = json.loads(json.dumps(
+            {"initiatives": rows, "overrides": self.override_map(f"summary:{snapshot_id}")},
+            default=str))
+        batch = self.current_batch(snapshot_id)
+        meta = _revision_meta(snap, actor, batch.content_sha256 if batch else None)
+        for k in ("uploaded_at", "superseded_at"):
+            meta[k] = datetime.fromisoformat(meta[k]) if meta[k] else None
+
+        row = self.session.scalar(select(SnapshotRevision).where(
+            SnapshotRevision.snapshot_id == snapshot_id,
+            SnapshotRevision.revision == snap.revision))
+        if row is None:
+            row = SnapshotRevision(snapshot_id=snapshot_id)
+            self.session.add(row)
+        for k, v in meta.items():
+            setattr(row, k, v)
+        row.payload = payload
+        self.session.flush()
+        return True
+
+    def restore_revision(self, snapshot_id: str, revision: int,
+                         actor: str | None, reason: str) -> None:
+        import hashlib
+
+        from sqlalchemy import delete, select
+
+        from .models import (
+            Initiative, InitiativeMetricMonthly, LoadBatch, Override, SnapshotRevision,
+        )
+
+        target_row = self.session.scalar(select(SnapshotRevision).where(
+            SnapshotRevision.snapshot_id == snapshot_id,
+            SnapshotRevision.revision == revision))
+        snap = self._snapshot(snapshot_id)
+        if target_row is None or snap is None or revision == snap.revision:
+            raise KeyError(revision)
+        payload = target_row.payload
+        target = {"revision": target_row.revision,
+                  "original_filename": target_row.original_filename}
+        sha = target_row.content_sha256
+        new_revision = self._next_revision(snap)
+        self.archive_live(snapshot_id, actor)
+
+        live = select(Initiative.id).where(Initiative.snapshot_id == snapshot_id)
+        self.session.execute(delete(InitiativeMetricMonthly)
+                             .where(InitiativeMetricMonthly.initiative_id.in_(live)))
+        self.session.execute(delete(Initiative).where(Initiative.snapshot_id == snapshot_id))
+        self.session.expire_all()
+
+        # Lineage: the restored rows trace back to the batch that first loaded
+        # those bytes. Re-stamping it makes it the current batch again, which
+        # is also what the ETL's duplicate check compares against.
+        if not sha:
+            sha = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+        batch = self.session.scalar(select(LoadBatch).where(
+            LoadBatch.snapshot_id == snapshot_id, LoadBatch.content_sha256 == sha))
+        if batch is None:
+            batch = LoadBatch(source_name=f"rollback to r{revision}", source_kind="rollback",
+                              content_sha256=sha, snapshot_id=snapshot_id)
+            self.session.add(batch)
+        batch.status = "loaded"
+        batch.created_by = actor
+        batch.row_count = len(payload["initiatives"])
+        batch.completed_at = datetime.now(timezone.utc)
+        self.session.flush()
+
+        dates = {f.column for f in INITIATIVE_FIELDS if f.kind is Kind.DATE}
+        for r in payload["initiatives"]:
+            values = {k: r.get(k) for k in COLUMNS + list(DERIVED) if k in r}
+            for k in dates & values.keys():
+                if isinstance(values[k], str):
+                    values[k] = date.fromisoformat(values[k][:10])
+            self.session.add(Initiative(
+                id=_uuid.UUID(r["id"]), snapshot_id=snapshot_id, extra=r.get("extra"),
+                edited_fields=r.get("edited_fields"), updated_by=r.get("updated_by"),
+                load_batch_id=batch.id, **values))
+        self.session.flush()
+        for r in payload["initiatives"]:
+            for m in r.get("metrics") or []:
+                self.session.add(InitiativeMetricMonthly(
+                    initiative_id=_uuid.UUID(r["id"]), metric_code=m["metric_code"],
+                    scenario_code=m["scenario_code"],
+                    period_month=date.fromisoformat(str(m["period_month"])[:10]),
+                    value=m.get("value"), load_batch_id=batch.id))
+
+        scope = f"summary:{snapshot_id}"
+        self.session.execute(delete(Override).where(Override.scope == scope))
+        for key, value in (payload.get("overrides") or {}).items():
+            self.session.add(Override(scope=scope, scope_key=key, payload=value,
+                                      updated_by=actor))
+        self.upsert_snapshot(_rollback_identity(snap, target, new_revision, actor, reason))
 
     # ---------------------------------------------------------- overrides --
     def override_map(self, scope: str) -> dict[str, dict]:

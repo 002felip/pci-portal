@@ -115,7 +115,30 @@ class SnapshotOut(BaseModel):
     archived_by: str | None = None
     notes: str | None = None
     uploaded_at: str | None = None
+    restored_from: int | None = None
     initiative_count: int = 0
+
+
+class SnapshotRevisionOut(BaseModel):
+    """One version of a snapshot's contents. `is_current` marks the live one
+    (the snapshot row itself); every other entry is restorable by an admin."""
+
+    revision: int
+    is_current: bool = False
+    label: str | None = None
+    original_filename: str | None = None
+    reason: str | None = None
+    created_by: str | None = None
+    uploaded_at: str | None = None
+    initiative_count: int = 0
+    restored_from: int | None = None
+    superseded_at: str | None = None
+    superseded_by: str | None = None
+
+
+class RollbackIn(BaseModel):
+    revision: int
+    reason: str
 
 
 class SnapshotPatch(BaseModel):
@@ -160,6 +183,11 @@ class MetaOut(BaseModel):
     registry: dict[str, Any]
     data_backend: str
     app_version: str = "2.0.0"
+    # Who the platform says is asking, and whether they are in UNLOCK_ADMINS --
+    # so the UI can offer reopen/rollback only to people who may use them.
+    # The server re-checks on every such call; this is presentation only.
+    current_actor: str | None = None
+    is_snapshot_admin: bool = False
 
 
 class InitiativeQuery(BaseModel):

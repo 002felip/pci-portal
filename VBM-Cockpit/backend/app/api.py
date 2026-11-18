@@ -37,9 +37,9 @@ from .repositories import get_repository
 from .schemas import (
     CompareOut, CompletenessOut, InitiativeCreate, InitiativeListOut,
     InitiativePatch, InitiativeQuery, MetaOut, MonthlySeries, OverrideIn,
-    OverrideOut, PeriodOptions, QuarterOut, SettingIn, SettingOut, SnapshotOut,
-    SnapshotPatch, SnapshotResolveOut, StageMatrixOut, TopOut, TreeOut,
-    UploadReport, VocabItem,
+    OverrideOut, PeriodOptions, QuarterOut, RollbackIn, SettingIn, SettingOut,
+    SnapshotOut, SnapshotPatch, SnapshotResolveOut, SnapshotRevisionOut,
+    StageMatrixOut, TopOut, TreeOut, UploadReport, VocabItem,
 )
 
 log = logging.getLogger("cockpit.api")
@@ -198,7 +198,9 @@ def meta(repo: Repo, actor: Actor = None) -> MetaOut:
         periods=repo.resolver(actor).options(),
         vocab={d: [VocabItem(**t) for t in v["terms"]] for d, v in reg["vocab"].items()},
         registry=reg,
-        data_backend=repo.backend)
+        data_backend=repo.backend,
+        current_actor=actor,
+        is_snapshot_admin=_is_snapshot_admin(actor))
 
 
 @router.get("/meta/periods", response_model=PeriodOptions)
@@ -511,10 +513,13 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
     if s.data_backend == "sql":
         from .core import session_scope
         with session_scope() as session:
+            from .repositories import SqlRepository
+            archive = SqlRepository(session).archive_live
             report = load_parse_result(session, parsed, raw_bytes=raw,
                                        source_name=name, snapshot_id=snapshot_id,
                                        dry_run=dry_run, force=force,
-                                       snapshot_identity=identity)
+                                       snapshot_identity=identity,
+                                       before_write=lambda: archive(snapshot_id, actor))
         report.id_checks = id_checks
         return UploadReport(**report.as_dict())
 
@@ -538,6 +543,8 @@ async def upload_excel(repo: Repo, file: UploadFile = File(...),
             metric_rows=sum(len(r.metrics) for r in parsed.records),
             message="Validation only - no rows written.").as_dict())
 
+    # The outgoing contents stay restorable -- a load never simply overwrites.
+    repo.archive_live(snapshot_id, actor)
     result = repo.replace_snapshot(
         identity, records_to_json(parsed.records, snapshot_id, digest[:12]))
     written = result["written"]
@@ -582,18 +589,25 @@ def list_snapshots(repo: Repo) -> list[SnapshotOut]:
     return repo.list_snapshots()
 
 
-def _ensure_may_unlock(actor: str | None) -> None:
-    """Unlocking reverses a sign-off, so it is restricted to the operators named
-    in UNLOCK_ADMINS. An unset list means nobody may unlock -- an environment
-    that never configured this should not silently allow everyone."""
+def _is_snapshot_admin(actor: str | None) -> bool:
+    allowed = get_settings().unlock_admin_list
+    return bool(actor) and actor.strip().lower() in allowed
+
+
+def _ensure_snapshot_admin(actor: str | None, action: str) -> None:
+    """Reopening a locked period and rolling a period back to an earlier upload
+    both rewrite what leadership was shown, so they are restricted to the
+    operators named in UNLOCK_ADMINS. An unset list means nobody may -- an
+    environment that never configured this should not silently allow everyone.
+    `action` completes "may not ..." in the refusal."""
     allowed = get_settings().unlock_admin_list
     if not allowed:
-        raise HTTPException(403, "Unlocking is not enabled in this environment. "
-                                 "Set UNLOCK_ADMINS to the operators who may "
-                                 "reopen a locked period.")
-    if not actor or actor.strip().lower() not in allowed:
-        raise HTTPException(403, f"{actor or 'This user'} may not unlock a "
-                                 f"snapshot. Ask one of: {', '.join(allowed)}.")
+        raise HTTPException(403, f"Snapshot admin actions are not enabled in this "
+                                 f"environment, so nobody may {action}. Set "
+                                 f"UNLOCK_ADMINS to the operators who may.")
+    if not _is_snapshot_admin(actor):
+        raise HTTPException(403, f"{actor or 'This user'} may not {action}. "
+                                 f"Ask one of: {', '.join(allowed)}.")
 
 
 def _refetch(repo, snapshot_id: str) -> SnapshotOut:
@@ -657,18 +671,61 @@ def reopen_snapshot(repo: Repo, snapshot_id: str,
                     actor: Actor = None) -> SnapshotOut:
     """
     locked -> published, reversing a sign-off. Restricted to UNLOCK_ADMINS (see
-    `_ensure_may_unlock`) because a locked snapshot is the record of what
+    `_ensure_snapshot_admin`) because a locked snapshot is the record of what
     leadership was shown; reopening it makes those figures editable again.
 
     The revision history is untouched, so the audit trail still shows the period
     was locked and by whom.
     """
-    _ensure_may_unlock(actor)
+    _ensure_snapshot_admin(actor, "unlock a snapshot")
     snap = _refetch(repo, snapshot_id)
     if snap.state != "locked":
         raise HTTPException(409, f"Only a locked snapshot can be reopened "
                                  f"(state={snap.state}).")
     repo.upsert_snapshot({**snap.model_dump(), "state": "published"})
+    return _refetch(repo, snapshot_id)
+
+
+@router.get("/snapshots/{snapshot_id}/revisions",
+            response_model=list[SnapshotRevisionOut])
+def list_revisions(repo: Repo, snapshot_id: str) -> list[SnapshotRevisionOut]:
+    """Every version of this snapshot's contents, newest first. The live one is
+    tagged `is_current`; the rest can be restored with `/rollback`. History
+    starts with the first load after versioning shipped."""
+    try:
+        return repo.list_revisions(snapshot_id)
+    except KeyError as exc:
+        raise HTTPException(404, f"No snapshot {snapshot_id}.") from exc
+
+
+@router.post("/snapshots/{snapshot_id}/rollback", response_model=SnapshotOut)
+def rollback_snapshot(repo: Repo, snapshot_id: str, body: RollbackIn,
+                      actor: Actor = None) -> SnapshotOut:
+    """
+    Restores an earlier version's initiatives, monthly figures and overrides as
+    a NEW revision -- the version being replaced is archived first, so a
+    rollback is itself reversible and the history stays linear. Label, notes,
+    pin, plan baseline and state are untouched. Snapshot admins only.
+    """
+    _ensure_snapshot_admin(actor, "roll a snapshot back")
+    reason = (body.reason or "").strip()
+    if not reason:
+        raise HTTPException(400, "A reason is required to roll a snapshot back.")
+    snap = _refetch(repo, snapshot_id)
+    if snap.state == "locked":
+        raise HTTPException(409, f"'{snap.label}' is locked. Reopen it first, then "
+                                 f"roll it back.")
+    if snap.archived_at:
+        raise HTTPException(409, f"'{snap.label}' is archived. Restore it first, "
+                                 f"then roll it back.")
+    if body.revision == snap.revision:
+        raise HTTPException(409, f"Revision {body.revision} is already the current "
+                                 f"version of '{snap.label}'.")
+    try:
+        repo.restore_revision(snapshot_id, body.revision, actor, reason[:500])
+    except KeyError as exc:
+        raise HTTPException(404, f"'{snap.label}' has no stored revision "
+                                 f"{body.revision}.") from exc
     return _refetch(repo, snapshot_id)
 
 

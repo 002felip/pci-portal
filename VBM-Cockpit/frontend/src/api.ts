@@ -126,7 +126,25 @@ export interface SnapshotInfo {
   /** When the workbook currently behind this period was loaded. Re-stamped by
    *  every revision. Null for periods loaded before the column existed. */
   uploaded_at: string | null;
+  /** Set when the current contents came from rolling back to that revision. */
+  restored_from: number | null;
   initiative_count: number;
+}
+
+/** One version of a snapshot's contents. Every load archives the version it
+ *  replaces, so all but the current one can be restored by a snapshot admin. */
+export interface SnapshotRevision {
+  revision: number;
+  is_current: boolean;
+  label: string | null;
+  original_filename: string | null;
+  reason: string | null;
+  created_by: string | null;
+  uploaded_at: string | null;
+  initiative_count: number;
+  restored_from: number | null;
+  superseded_at: string | null;
+  superseded_by: string | null;
 }
 
 /** The three snapshot fields an operator may edit; everything else is either
@@ -156,6 +174,11 @@ export interface MetaOut {
   registry: Registry;
   data_backend: string;
   app_version: string;
+  /** Who the platform says is asking; null when no auth is configured. */
+  current_actor: string | null;
+  /** In UNLOCK_ADMINS: may reopen locked periods and roll back versions.
+   *  Presentation only -- the server re-checks every such call. */
+  is_snapshot_admin: boolean;
 }
 
 /* ========================================================= computed shapes */
@@ -341,6 +364,7 @@ export const keys = {
   meta: ["meta"] as const,
   periods: ["periods"] as const,
   snapshots: ["snapshots"] as const,
+  revisions: (id: string) => ["snapshots", id, "revisions"] as const,
   initiatives: (p: unknown) => ["initiatives", p] as const,
   compare: (a: string, b: string, f?: Scope) => ["compare", a, b, f ?? {}] as const,
   top: (a: string, b: string, n: number, basis: TopBasis, f?: Scope) =>
@@ -618,6 +642,26 @@ export function useReopenSnapshot() {
   return useMutation({
     mutationFn: (snapshotId: string) =>
       api.del<SnapshotInfo>(`/snapshots/${snapshotId}/close`),
+    onSuccess: () => void qc.invalidateQueries(),
+  });
+}
+
+/** Every version of one snapshot's contents, newest first. */
+export function useSnapshotRevisions(snapshotId: string) {
+  return useQuery({
+    queryKey: keys.revisions(snapshotId),
+    queryFn: () => api.get<SnapshotRevision[]>(`/snapshots/${snapshotId}/revisions`),
+    ...FRESH,
+  });
+}
+
+/** Restores an earlier version as a new revision. Snapshot admins only. */
+export function useRollbackSnapshot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; revision: number; reason: string }) =>
+      api.post<SnapshotInfo>(`/snapshots/${v.id}/rollback`,
+        { revision: v.revision, reason: v.reason }),
     onSuccess: () => void qc.invalidateQueries(),
   });
 }

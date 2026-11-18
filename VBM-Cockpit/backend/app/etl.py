@@ -20,9 +20,12 @@ upstream does not break the load.
 
 IDEMPOTENCY
 -----------
-`load_batch` is UNIQUE (content_sha256, snapshot_id). Re-uploading the same
-bytes returns the original batch and writes nothing (status `duplicate`);
-`force=True` overrides for a deliberate replay. Initiatives upsert on
+`load_batch` is UNIQUE (content_sha256, snapshot_id). Re-uploading the bytes
+behind a snapshot's CURRENT contents returns that batch and writes nothing
+(status `duplicate`); `force=True` overrides for a deliberate replay. Bytes
+that an earlier, since-replaced revision was loaded from are a real load (that
+is how an old workbook is brought back), and reuse their original batch row
+so the unique constraint holds. Initiatives upsert on
 (snapshot, bu, source_id) so a row keeps its UUID -- and therefore its metric
 history and any FK references -- across reloads.
 """
@@ -33,7 +36,7 @@ import datetime as dt
 import hashlib
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, BinaryIO, Iterable
+from typing import Any, BinaryIO, Callable, Iterable
 
 from .periods import enrich_snapshot
 from .registry import (
@@ -379,12 +382,17 @@ def records_to_json(records: list[InitiativeRecord], snapshot_id: str,
 def load_parse_result(session, parsed: ParseResult, raw_bytes: bytes,
                       source_name: str, snapshot_id: str,
                       dry_run: bool = False, force: bool = False,
-                      snapshot_identity: dict | None = None) -> LoadReport:
+                      snapshot_identity: dict | None = None,
+                      before_write: Callable[[], None] | None = None) -> LoadReport:
     """
     `snapshot_identity` is the fully-resolved identity dict (see
     `periods.enrich_snapshot`) computed once by the caller; when omitted, an
     identity is derived from `snapshot_id` directly (the legacy path, ahead of
     the structured period builder).
+
+    `before_write` runs once every check has passed and just before the first
+    write, in the same transaction -- the upload route uses it to archive the
+    snapshot's outgoing contents (see `SnapshotRevision`).
     """
     from sqlalchemy import select
 
@@ -407,19 +415,25 @@ def load_parse_result(session, parsed: ParseResult, raw_bytes: bytes,
         return LoadReport(**{**base, "status": "failed",
                              "message": f"{len(errors)} blocking error(s); nothing written."})
 
+    from .repositories import SqlRepository
+
     existing = session.scalar(select(LoadBatch).where(
         LoadBatch.content_sha256 == digest,
         LoadBatch.snapshot_id == snapshot_id))
-    if existing and not force:
+    live_batch = SqlRepository(session).current_batch(snapshot_id)
+    if existing and live_batch is not None and existing.id == live_batch.id and not force:
         return LoadReport(**{**base, "batch_id": str(existing.id), "status": "duplicate",
-                             "message": "Identical bytes already loaded for this "
-                                        "snapshot; nothing written."})
+                             "message": f"This file is identical to the current version "
+                                        f"of {identity.get('period_key') or snapshot_id}; "
+                                        f"nothing was changed."})
     if dry_run:
         return LoadReport(**{**base, "status": "dry_run",
                              "initiatives_inserted": len(parsed.records),
                              "metric_rows": sum(len(r.metrics) for r in parsed.records),
                              "message": "Validation only - no rows written."})
 
+    if before_write is not None:
+        before_write()
     seed_vocabulary(session)
     snapshot_row = session.get(Snapshot, snapshot_id)
     if snapshot_row is None:
@@ -434,10 +448,17 @@ def load_parse_result(session, parsed: ParseResult, raw_bytes: bytes,
     # before snapshot, which the FK rejects on a brand-new period.
     session.flush()
 
-    batch = LoadBatch(source_name=source_name, content_sha256=digest,
-                      snapshot_id=snapshot_id, row_count=len(parsed.records),
-                      status="running")
-    session.add(batch)
+    if existing is not None:
+        # Same bytes loaded before (a forced replay, or an earlier revision's
+        # workbook brought back): reuse the batch, the constraint allows one.
+        batch = existing
+        batch.source_name, batch.row_count, batch.status = (
+            source_name, len(parsed.records), "running")
+    else:
+        batch = LoadBatch(source_name=source_name, content_sha256=digest,
+                          snapshot_id=snapshot_id, row_count=len(parsed.records),
+                          status="running")
+        session.add(batch)
     session.flush()
 
     current = {(r.bu_code, r.source_initiative_id): r for r in session.scalars(
