@@ -1387,9 +1387,9 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
         <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="m3Ciclo">AIP</span></p>
         <h2 class="p2-titulo" id="titMetas"><span class="ab-nome" data-i18n="m3.titulo">Metas da BU</span><span class="ab-ano" id="m3Bu">—</span></h2>
       </div>
-      <!-- Anéis por peso: quanto do total de pontos da BU está distribuído, submetido, em aprovação e aprovado -->
+      <!-- Jornada do ciclo (mesma visão do Painel) com os Goal Cards da BU em cada etapa -->
       <div class="p2-trilha">
-        <ol class="p2-jornada m3-aneis" id="m3Aneis" aria-label="Peso das metas por situação" data-i18n-aria="m3.aneisAria"></ol>
+        <ol class="p2-jornada m3-aneis" id="m3Aneis" aria-label="Jornada do ciclo · Goal Cards da BU por etapa" data-i18n-aria="m3.aneisAria"></ol>
       </div>
       <!-- Ações no canto superior direito da tela -->
       <div class="topo-acoes">
@@ -1759,7 +1759,7 @@ window.VBMSetup = (function () {
       'p2.ph.calibracaoRot': 'em aprovação', 'p2.ph.calibracaoDet': '{a} com o Diretor da BU · {b} com P&CI/COO',
       'p2.ph.paradas': '{n} paradas há mais de {l} dias úteis', 'p2.ph.parada1': '1 parada há mais de {l} dias úteis',
       'p2.ph.oficialRot': 'aprovados', 'p2.ph.oficialDet': '{a} de {t} Goal Cards aprovados<br>{g} negados · {c} a concluir',
-      'm3.titulo': 'Metas da BU', 'm3.aneisAria': 'Peso das metas por situação', 'm3.atualizar': 'Atualizar metas', 'm3.lista': 'Metas do desdobramento',
+      'm3.titulo': 'Metas da BU', 'm3.aneisAria': 'Jornada do ciclo · Goal Cards da BU por etapa', 'm3.atualizar': 'Atualizar metas', 'm3.lista': 'Metas do desdobramento',
       'm3.caption': 'Metas da Business Unit com peso, status, contribuidor, versão e última atualização', 'm3.colPeso': 'Peso (pts)', 'm3.colStatus': 'Status', 'm3.colContrib': 'Contribuidor', 'm3.colAtualizacao': 'Última atualização', 'm3.colNivel': 'Nível', 'm3.colDesde': 'Na situação desde',
       'm3.erroTit': 'Não foi possível carregar as metas', 'm3.semAcessoTit': 'Sem Business Unit no seu recorte',
       'm3.semAcessoTxt': 'Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.',
@@ -1854,7 +1854,7 @@ window.VBMSetup = (function () {
       'p2.ph.calibracaoRot': 'pending approval', 'p2.ph.calibracaoDet': '{a} with the BU Director · {b} with P&CI/COO',
       'p2.ph.paradas': '{n} stalled for more than {l} business days', 'p2.ph.parada1': '1 stalled for more than {l} business days',
       'p2.ph.oficialRot': 'approved', 'p2.ph.oficialDet': '{a} of {t} Goal Cards approved<br>{g} denied · {c} to complete',
-      'm3.titulo': 'BU goals', 'm3.aneisAria': 'Goal weight by status', 'm3.atualizar': 'Refresh goals', 'm3.lista': 'Cascaded goals',
+      'm3.titulo': 'BU goals', 'm3.aneisAria': 'Cycle journey · BU Goal Cards by stage', 'm3.atualizar': 'Refresh goals', 'm3.lista': 'Cascaded goals',
       'm3.caption': 'Business Unit goals with weight, status, contributor, version and last update', 'm3.colPeso': 'Weight (pts)', 'm3.colStatus': 'Status', 'm3.colContrib': 'Contributor', 'm3.colAtualizacao': 'Last update', 'm3.colNivel': 'Level', 'm3.colDesde': 'In status since',
       'm3.erroTit': 'Could not load the goals', 'm3.semAcessoTit': 'No Business Unit in your scope',
       'm3.semAcessoTxt': 'Your user has no role in any BU of the active cycle, or the requested BU is outside your scope.',
@@ -2168,21 +2168,24 @@ window.VBMSetup = (function () {
     return '<svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trilho" cx="60" cy="60" r="' + R + '"/>' + arco('v1', a, 0) + arco('v2', b, a) + '</svg>';
   }
   function p2RenderLinha(d) {
-    var c = d.ciclo || {}, t = d.totais || {}, niv = d.niveis || [];
+    var t = d.totais || {}, niv = d.niveis || [];
+    $('p2Fases').innerHTML = jornadaHtml(d.ciclo || {}, t.total || 0, { submetidos: t.submetidos || 0, n1: (niv[0] || {}).cards || 0, n2: (niv[1] || {}).cards || 0, aprovado: t.aprovado || 0 });
+  }
+  // Jornada do ciclo (anéis por etapa, linha até hoje): a mesma visão no Painel (todas as BUs) e na T03 (uma BU)
+  function jornadaHtml(c, total, n) {
     var ets = (c.etapas || []).filter(function (e) { return ETAPAS.indexOf(e.id) >= 0; });
-    if (!ets.length) { $('p2Fases').innerHTML = ''; return; }
+    if (!ets.length) return '';
     var atual = ETAPAS.indexOf(c.etapaAtual);
     var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     var hojeIso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
 
     // Quantitativo de cada etapa (dos totais do servidor, CA-15); o anel mostra a fração do total do ciclo
-    var total = t.total || 0, n1 = (niv[0] || {}).cards || 0, n2 = (niv[1] || {}).cards || 0;
     var fr = function (v) { return total ? v / total : 0; };
     var q = {
       desdobramento: { n: total, anel: anel(1), rot: S.t('p2.q.desdobramento') },
-      proposta: { n: t.submetidos || 0, anel: anel(fr(t.submetidos || 0)), rot: S.t('p2.q.proposta') },
-      calibracao: { n: t.em_aprovacao || 0, anel: anel(fr(n1), fr(n2)), rot: S.t('p2.q.calibracao') },
-      oficial: { n: t.aprovado || 0, anel: anel(fr(t.aprovado || 0)), rot: S.t('p2.q.oficial') }
+      proposta: { n: n.submetidos, anel: anel(fr(n.submetidos)), rot: S.t('p2.q.proposta') },
+      calibracao: { n: n.n1 + n.n2, anel: anel(fr(n.n1), fr(n.n2)), rot: S.t('p2.q.calibracao') },
+      oficial: { n: n.aprovado, anel: anel(fr(n.aprovado)), rot: S.t('p2.q.oficial') }
     };
     var html = ets.map(function (e, i) {
       var k = q[e.id];
@@ -2208,7 +2211,7 @@ window.VBMSetup = (function () {
     var pos = atual <= 0 ? 12.5 : 12.5 + 25 * (atual - 1) + 25 * frac;
     html += '<span class="p2-progresso" aria-hidden="true" style="width:' + (pos - 12.5).toFixed(2) + '%"></span>' +
       '<span class="p2-hoje" aria-hidden="true" style="left:' + pos.toFixed(2) + '%"><span>' + esc(S.t('p2.hoje', { d: dataCurta(hojeIso) })) + '</span></span>';
-    $('p2Fases').innerHTML = html;
+    return html;
   }
 
   // Seletor País › BU do painel (mesmo componente da T01; opções = BUs do ciclo)
@@ -2298,32 +2301,9 @@ window.VBMSetup = (function () {
     $('m3AlertaPesos').hidden = !d.alertaPesos;
     $('m3AlertaTxt').textContent = S.t('m3.alerta', { n: S.fmt(t.pesoTotal || 0, 0), t: S.fmt(esp, 0) });
 
-    // Anéis por peso (fração do total de pontos da BU)
-    var fr = function (v) { return esp ? v / esp : 0; };
-    var p = t.peso || {}, qn = t.qtd || {};
-    var n = function (k) { return S.t(k === 1 ? 'm3.meta1' : 'm3.metas', { n: S.fmt(k, 0) }); };
-    var aneis = [
-      { id: 'distribuido', cls: '', v: t.pesoTotal || 0, metas: t.metas || 0 },
-      { id: 'submetido', cls: '', v: t.pesoSubmetido || 0, metas: (t.metas || 0) - (qn.rascunho || 0) },
-      { id: 'aprovacao', cls: '', v: p.em_aprovacao || 0, metas: qn.em_aprovacao || 0 },
-      { id: 'aprovado', cls: '', v: p.aprovado || 0, metas: qn.aprovado || 0 }
-    ];
-    // Etapa atual = primeira ainda incompleta (como na jornada do Painel): as anteriores ficam concluídas
-    var atual = 0; while (atual < aneis.length - 1 && fr(aneis[atual].v) >= 1) atual++;
-    aneis.forEach(function (a, i) { a.cls = i < atual ? 'is-feita' : i === atual ? 'is-atual' : 'is-futura'; });
-    var m3Pos = atual ? 25 * (atual - 1) + 25 * Math.min(1, fr(aneis[atual].v)) : 0;
-    var hj = new Date(), m3Hoje = hj.getFullYear() + '-' + String(hj.getMonth() + 1).padStart(2, '0') + '-' + String(hj.getDate()).padStart(2, '0');
-    $('m3Aneis').innerHTML = aneis.map(function (a, i) {
-      var rot = S.t('m3.a.' + a.id), pts = S.t('m3.pts', { n: S.fmt(a.v, 0), t: S.fmt(esp, 0) });
-      return '<li class="p2-et ' + a.cls + '"' + (i === atual ? ' aria-current="step"' : '') + ' aria-label="' + esc(S.t('m3.anelAria', { e: rot, p: pct(fr(a.v)), q: pts, m: n(a.metas) })) + '">' +
-        '<p class="p2-et-n" aria-hidden="true"><b>' + String(i + 1).padStart(2, '0') + '</b> - ' + esc(rot) + '</p>' +
-        '<div class="p2-anel" aria-hidden="true">' + anel(fr(a.v)) + '<div class="p2-anel-txt"><strong>' + esc(pct(fr(a.v))) + '</strong></div></div>' +
-        '<p class="p2-et-data" aria-hidden="true">' + esc(n(a.metas)) + '</p>' +
-        '<p class="p2-et-det" aria-hidden="true">' + esc(pts) + '</p></li>';
-    }).join('') +
-      // Linha preenchida do primeiro anel até a etapa atual, na proporção do peso já alcançado nela
-      '<span class="p2-progresso" aria-hidden="true" style="width:' + m3Pos.toFixed(2) + '%"></span>' +
-      '<span class="p2-hoje" aria-hidden="true" style="left:' + (12.5 + m3Pos).toFixed(2) + '%"><span>' + esc(S.t('p2.hoje', { d: dataCurta(m3Hoje) })) + '</span></span>';
+    // Jornada do ciclo na visão da BU (mesmo modelo do Painel): cards da BU por etapa
+    var fr = function (v) { return esp ? v / esp : 0; }, qn = t.qtd || {};
+    $('m3Aneis').innerHTML = jornadaHtml(c, t.metas || 0, { submetidos: (t.metas || 0) - (qn.rascunho || 0), n1: qn.em_aprovacao || 0, n2: 0, aprovado: qn.aprovado || 0 });
 
     // Tabela de metas
     // Barra de peso em cascata: cada meta começa onde a anterior termina e todas somam o total da BU
