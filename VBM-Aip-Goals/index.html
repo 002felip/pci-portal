@@ -457,18 +457,18 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
   --menu-drawer: rgba(255,255,255,.96);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF; --logo-ink: var(--vbm-blue);
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF; --logo-ink: var(--vbm-blue); --acesso-prim: #0B6E99;
   --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
 } }
 :root[data-theme="dark"] {
-  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF; --logo-ink: var(--vbm-blue);
+  --vidro-bg: rgba(6,25,43,.55); --vidro-line: rgba(255,255,255,.10); --vidro-ink: #FFFFFF; --logo-ink: var(--vbm-blue); --acesso-prim: #0B6E99;
   --menu-text: rgba(255,255,255,.74); --menu-text-on: #FFFFFF; --menu-line: rgba(255,255,255,.18); --menu-hover: rgba(255,255,255,.08); --menu-drawer: rgba(7,40,66,.97);
 }
 .topnav {
   background: var(--vidro-bg); border-bottom: 1px solid var(--vidro-line); box-shadow: none;
   backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
 }
-:root { --logo-ink: var(--vbm-blue-dark); } /* logo da Vale em azul (par escuro nos blocos do tema escuro) */
+:root { --logo-ink: var(--vbm-blue-dark); --acesso-prim: #0B6E99; /* botão principal da T12, igual ao do Portal (AA com texto branco nos dois temas) */ } /* logo da Vale em azul (par escuro nos blocos do tema escuro) */
 .topnav-logo svg g path { fill: var(--logo-ink); } /* só o desenho; a máscara do SVG continua branca */
 .settings-btn, .topnav-menu-btn { color: var(--vidro-ink); }
 .settings-btn:hover { background: var(--menu-hover); }
@@ -1136,6 +1136,28 @@ html.is-fs .topnav { display: flex; }
 /* Construção: sem topo próprio, recebe o espaço da barra */
 body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
 
+/* ════ T12 · Sem acesso / não encontrado ════
+   Mesmo padrão da tela "Acesso não autorizado" do Portal PCI (index.html da raiz): cartão central em vidro,
+   cadeado num quadrado vermelho suave, título, mensagem e botões Voltar + ação principal. Cores por token
+   (tema claro e escuro); quando o bloqueio aparece, o resto da vista sai de cena. */
+.acesso-bloqueio { min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.acesso-bloqueio[hidden] { display: none; }
+.vista:has(> .acesso-bloqueio:not([hidden])) > :not(.acesso-bloqueio) { display: none; }
+/* Como no Portal, o cartão fica sobre a foto dos minerais com véu, ocupando a tela toda por trás da barra */
+body.is-largo .acesso-bloqueio { margin: calc(-1 * var(--barra)) calc(50% - 50vw) 0; padding: calc(var(--barra) + 2rem) 1rem 2rem; min-height: 100vh; background: linear-gradient(90deg, color-mix(in srgb, var(--page) 92%, transparent), color-mix(in srgb, var(--page) 80%, transparent)), var(--ab-foto) center / cover no-repeat; }
+.acesso-card { width: 100%; max-width: 28.75rem; padding: 1.75rem; border-radius: 1rem; text-align: center; background: var(--card-bg); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.acesso-icone { width: 2.875rem; height: 2.875rem; margin: 0 auto 1rem; border-radius: 0.8rem; display: flex; align-items: center; justify-content: center; background: var(--st-rejected-bg); border: 1px solid color-mix(in srgb, var(--status-rejected) 45%, transparent); color: var(--st-rejected-ink); }
+.acesso-icone .ico { width: 1.25rem; height: 1.25rem; }
+.acesso-card h2 { margin: 0 0 0.6rem; font: 600 1.15rem var(--font-display); color: var(--text); }
+.acesso-card h2:focus { outline: none; } /* foco só para o leitor de tela anunciar o bloqueio */
+.acesso-card p { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-soft); }
+.acesso-acoes { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.4rem; }
+.acesso-btn { min-width: 6.75rem; padding: 0.55rem 1rem; border-radius: 0.6rem; cursor: pointer; text-decoration: none; text-align: center; font: 600 0.78rem var(--font-ui); color: var(--text); background: color-mix(in srgb, var(--text) 6%, transparent); border: 1px solid var(--line); transition: background .2s, border-color .2s; }
+.acesso-btn:hover { background: color-mix(in srgb, var(--text) 12%, transparent); }
+.acesso-btn.primario { color: #fff; background: var(--acesso-prim); border-color: var(--acesso-prim); }
+.acesso-btn.primario:hover { background: color-mix(in srgb, var(--acesso-prim) 85%, #000); }
+.acesso-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
 </style>
 </head>
 <body>
@@ -1397,11 +1419,18 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       <p class="estado-txt" id="p2ErroTxt"></p>
       <button type="button" class="btn" id="p2Tentar" data-i18n="est.tentar">Tentar de novo</button>
     </div>
-    <div class="estado" id="p2SemAcesso" hidden>
-      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
-      <p class="estado-tit" data-i18n="p2.semAcessoTit">Painel restrito ao grupo P&amp;CI/COO</p>
-      <p class="estado-txt" data-i18n="p2.semAcessoTxt">O Painel do ciclo é visível para o grupo de aprovação final e para o administrador do ciclo.</p>
-    </div>
+    <!-- T12 · Sem acesso / não encontrado: mesmo padrão da tela "Acesso não autorizado" do Portal PCI -->
+    <section class="acesso-bloqueio" id="p2SemAcesso" role="alert" aria-labelledby="p2AcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="p2AcTit" tabindex="-1" data-i18n="p2.semAcessoTit">Painel restrito ao grupo P&amp;CI/COO</h2>
+        <p data-i18n="p2.semAcessoTxt">O Painel do ciclo é visível para o grupo de aprovação final e para o administrador do ciclo.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#inicio" data-i18n="t12.inicio">Ir para o Início</a>
+        </div>
+      </div>
+    </section>
   </section>
 
   <!-- ═══ T03 · Metas da BU (recorte do usuário) ═══ -->
@@ -1473,11 +1502,18 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       <p class="estado-txt" id="m3ErroTxt"></p>
       <button type="button" class="btn" id="m3Tentar" data-i18n="est.tentar">Tentar de novo</button>
     </div>
-    <div class="estado" id="m3SemAcesso" hidden>
-      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
-      <p class="estado-tit" data-i18n="m3.semAcessoTit">Sem Business Unit no seu recorte</p>
-      <p class="estado-txt" data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
-    </div>
+    <!-- T12 · Sem acesso / não encontrado: mesmo padrão da tela "Acesso não autorizado" do Portal PCI -->
+    <section class="acesso-bloqueio" id="m3SemAcesso" role="alert" aria-labelledby="m3AcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="m3AcTit" tabindex="-1" data-i18n="m3.semAcessoTit">Sem Business Unit no seu recorte</h2>
+        <p data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#inicio" data-i18n="t12.inicio">Ir para o Início</a>
+        </div>
+      </div>
+    </section>
   </section>
 
   <!-- Popup grande com o Goal Card: a vista T04 é movida para cá ao abrir pela T03 e devolvida ao fechar -->
@@ -1532,11 +1568,18 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       <p class="estado-txt" id="ddErroTxt"></p>
       <button type="button" class="btn" id="ddTentar" data-i18n="est.tentar">Tentar de novo</button>
     </div>
-    <div class="estado" id="ddSemAcesso" hidden>
-      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
-      <p class="estado-tit" data-i18n="m3.semAcessoTit">Sem Business Unit no seu recorte</p>
-      <p class="estado-txt" data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
-    </div>
+    <!-- T12 · Sem acesso / não encontrado: mesmo padrão da tela "Acesso não autorizado" do Portal PCI -->
+    <section class="acesso-bloqueio" id="ddSemAcesso" role="alert" aria-labelledby="ddAcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="ddAcTit" tabindex="-1" data-i18n="m3.semAcessoTit">Sem Business Unit no seu recorte</h2>
+        <p data-i18n="m3.semAcessoTxt">Seu usuário não tem papel em nenhuma BU do ciclo ativo, ou a BU pedida não está no seu recorte.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#inicio" data-i18n="t12.inicio">Ir para o Início</a>
+        </div>
+      </div>
+    </section>
   </section>
 
   <!-- ═══ T04 · Goal Card (edição, análise ou leitura, pelo grupo do usuário) ═══ -->
@@ -1589,12 +1632,18 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
       <p class="estado-txt" id="gcErroTxt"></p>
       <button type="button" class="btn" id="gcTentar" data-i18n="est.tentar">Tentar de novo</button>
     </div>
-    <div class="estado" id="gcSemAcesso" hidden>
-      <svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>
-      <p class="estado-tit" data-i18n="gc.naoEncontradoTit">Goal Card não encontrado</p>
-      <p class="estado-txt" data-i18n="gc.naoEncontradoTxt">O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.</p>
-      <a class="btn btn-sec" href="#metas" data-i18n="gc.irMetas">Ir para Metas da BU</a>
-    </div>
+    <!-- T12 · Sem acesso / não encontrado: mesmo padrão da tela "Acesso não autorizado" do Portal PCI -->
+    <section class="acesso-bloqueio" id="gcSemAcesso" role="alert" aria-labelledby="gcAcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="gcAcTit" tabindex="-1" data-i18n="gc.naoEncontradoTit">Goal Card não encontrado</h2>
+        <p data-i18n="gc.naoEncontradoTxt">O endereço não corresponde a um Goal Card do ciclo ativo, ou seu usuário não tem papel no ciclo.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#metas" data-i18n="gc.irMetas">Ir para Metas da BU</a>
+        </div>
+      </div>
+    </section>
   </section>
 
   <!-- Telas seguintes do catálogo (§10): ainda não construídas -->
@@ -1826,7 +1875,7 @@ window.VBMSetup = (function () {
       'et.proposta': 'Proposta da BU', 'et.proposta.quem': 'Goal Cards preenchidos · Pontos focais',
       'et.calibracao': 'Calibração e aprovação', 'et.calibracao.quem': 'Diretor da BU · Grupo P&CI/COO',
       'et.oficial': 'Goal Card oficial', 'et.oficial.quem': 'Versão aprovada e travada', 'nav.painel': 'Painel do ciclo',
-      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração', 'nav.admin': 'Administração',
+      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração', 'nav.admin': 'Administração', 't12.voltar': 'Voltar', 't12.inicio': 'Ir para o Início',
       'ui.telaCheia': 'Tela cheia',
       't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
       't01.exemplo': 'Dados de exemplo — modelo de dados em validação (P-12)', 't01.desatualizado': 'Dados desatualizados — exibindo a última leitura',
@@ -1921,7 +1970,7 @@ window.VBMSetup = (function () {
       'et.proposta': 'BU proposal', 'et.proposta.quem': 'Goal Cards filled in · Focal points',
       'et.calibracao': 'Calibration and approval', 'et.calibracao.quem': 'BU Director · P&CI/COO group',
       'et.oficial': 'Official Goal Card', 'et.oficial.quem': 'Approved and locked version', 'nav.painel': 'Cycle dashboard',
-      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings', 'nav.admin': 'Administration',
+      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings', 'nav.admin': 'Administration', 't12.voltar': 'Back', 't12.inicio': 'Go to Home',
       'ui.telaCheia': 'Full screen',
       't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
       't01.exemplo': 'Sample data — data model under validation (P-12)', 't01.desatualizado': 'Outdated data — showing the last reading',
@@ -2814,6 +2863,12 @@ window.VBMSetup = (function () {
   $('gcProx').addEventListener('click', function () { gcIrPara(this.getAttribute('data-card')); });
   $('gcAtualizar').addEventListener('click', function () { gcCarregar(); });
   $('gcTentar').addEventListener('click', function () { gcCarregar(); });
+
+  // ── T12 · Sem acesso: Voltar volta à tela anterior (ou ao Início); ao aparecer, o título recebe o foco ──
+  document.querySelectorAll('.acesso-bloqueio').forEach(function (sec) {
+    sec.querySelector('[data-voltar]').addEventListener('click', function () { if (history.length > 1) history.back(); else location.hash = '#inicio'; });
+    new MutationObserver(function () { if (!sec.hidden) { var h = sec.querySelector('h2'); if (h) h.focus({ preventScroll: true }); } }).observe(sec, { attributes: true, attributeFilter: ['hidden'] });
+  });
 
   // ── Menu no topo: no celular/tablet vira gaveta (botão de menu) ──
   function abrirMenu(sim) {

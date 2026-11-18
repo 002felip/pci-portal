@@ -158,6 +158,13 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
   cada célula; legenda de status.
 - Dados de `GET /desdobramento` (`agregarDesdobramento`).
 
+### T12 Sem acesso / não encontrado
+
+Mesmo padrão da tela "Acesso não autorizado" do Portal PCI (`index.html` da raiz): cartão central em vidro sobre a
+foto dos minerais, cadeado num quadrado vermelho suave, título, mensagem e os botões Voltar e a ação principal
+(Início ou Metas da BU). Aparece no Desdobramento, na T02, na T03 e na T04 quando a API responde 401, 403 ou 404;
+o resto da vista sai de cena e o título recebe o foco (leitor de tela). Cores por token, nos dois temas.
+
 ### Dados de exemplo
 
 O administrador edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU.
