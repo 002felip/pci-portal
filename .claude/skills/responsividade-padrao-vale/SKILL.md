@@ -46,6 +46,12 @@ tela inicial tem de caber inteira nesse tamanho (título, índice "Go to" e a jo
   uma regra genérica da media query.
 - **Cartões da fila são por container query** (`@container fila`, 60rem e 36rem): mexa no container, não na
   viewport.
+- **Não encolha o conteúdo para caber.** O popup do Goal Card usa zoom em JS (`dlgAjustar`) com mínimo de 90%
+  (`DLG_ZOOM_MIN`); se não couber, o popup rola. Nunca baixe esse mínimo: a 50% o texto fica ilegível.
+- **Piso de leitura no notebook:** nenhum texto abaixo de `0.7rem` (10,5 px com a raiz em 15 px). Rótulo novo
+  menor que isso entra na lista do piso, na faixa `(min-width: 721px) and (max-height: 820px)`.
+- **Todas as vistas, inclusive o popup:** confira `#goal-card`, `#versoes` e o Goal Card aberto a partir de
+  `#metas` (popup `#m3Dlg`), além de `#desdobramento`, `#aprovacoes`, `#action-log` e `#configuracao`.
 - **Grids com `minmax(min(Xrem, 100%), …)`** e filhos com `min-width: 0`: nada pode estourar a largura.
 - **Vidro com degradação**: sem `backdrop-filter` ou com `prefers-reduced-transparency`, fundo opaco. Não remova.
 - **Telas que estão boas não mudam.** Antes de entregar, confira que 1440×900 e 1920×1080 ficaram iguais (raiz em
@@ -77,3 +83,5 @@ tela inicial tem de caber inteira nesse tamanho (título, índice "Go to" e a jo
 
 - Nov/2026: no notebook a 150% (~1270×590) a jornada da tela inicial saía cortada → raiz em `0.9375rem` na faixa
   `(min-width: 721px) and (max-height: 820px)`; 1440×900 para cima não mudou (PR #95).
+- Nov/2026: o popup do Goal Card aberto em `#metas` caía para zoom 50% no notebook (texto ilegível) → zoom mínimo
+  de 90% com rolagem vertical, topo do popup compacto e piso de `0.7rem` para os rótulos miúdos em todas as vistas.
