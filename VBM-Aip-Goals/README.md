@@ -21,7 +21,7 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | `#versoes?card=` | T06 Versões — linha das versões e comparação campo a campo | publicada |
 | `#action-log` | T07 Action Log — linha do tempo do ciclo com filtros e exportação (submenu Administração) | publicada |
 | `#configuracao` | T11 Configuração do ciclo — ciclo, BUs, grupos, metas e pesos, parâmetros (só o administrador) | publicada |
-| `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, no submenu Administração (a construir) | em construção |
+| `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, revisão OK/Ajustar e comentários por seção e decisão Aprovar/Devolver/Negar (só o grupo de aprovação) | pronta |
 
 Menu: Início · Desdobramento · Painel do ciclo · Metas da BU · Administração (Aprovações, Action Log, Configuração). T05 e T08 foram descontinuadas (D-20). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
 
@@ -59,6 +59,7 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 | `GET /action-log` | T07: eventos filtrados e paginados |
 | `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/clonar` | T11: só o administrador; RN-16 validada no servidor |
 | `GET /goal-card?card=` · `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: Goal Card e escritas validadas (simulação até o P-12) |
+| `GET /aprovacoes` · `POST /goal-card/comentario` | T14: fila do grupo de aprovação e comentário por seção (só o grupo de aprovação) |
 | `GET /health` · `GET /ping` | saúde e diagnóstico |
 
 ## Rodar e testar

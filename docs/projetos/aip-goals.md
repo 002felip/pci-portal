@@ -68,7 +68,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `#versoes?card=&de=&para=` | T06 Versões (pelos links do Goal Card e do Action Log) | publicada |
 | `#action-log?bu=&meta=&secao=&tipo=&periodo=&card=` | T07 Action Log (submenu Administração) | publicada |
 | `#configuracao?aba=` | T11 Configuração do ciclo (submenu Administração, só o administrador) | publicada |
-| `#aprovacoes` | T14 Aprovações (submenu Administração, só o grupo de aprovação) | em construção |
+| `#aprovacoes` | T14 Aprovações (submenu Administração, só o grupo de aprovação) | pronta |
 
 T05 (visão imprimível) e T08 (Ações) foram descontinuadas (D-20): saíram do menu e do catálogo, e qualquer
 endereço fora da lista de vistas (como o antigo `#acoes`) volta ao Início.
@@ -134,7 +134,7 @@ só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegad
 
 `#goal-card?card=GC-ONP-05&secao=ruler` (ou o popup da T03). Ficha de cadastro da meta pelos **contribuidores** (D-13)
 e pelo **administrador** (D-16): o servidor decide o modo — **edição** (contribuidores da BU ou administrador, Rascunho ou Em revisão) ou **leitura** (demais casos, com o motivo no
-rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 Aprovações** (a construir).
+rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 Aprovações**.
 
 - **Topo** no padrão da T02/T03: "Goal Card" com o número da meta vazado, título, pílula de situação, código e
   versão; linha do tempo do card (rascunho → submetido → em aprovação → decisão).
@@ -149,8 +149,8 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
 - **Comentários:** o campo com comentário mostra o indicador com o número; o clique abre um pop-up (`<dialog>`)
   só de leitura com as mensagens; um link com `secao` abre o pop-up do campo.
 - **Escritas:** `POST /goal-card/submeter` valida no servidor (403 fora da BU, 409 fora da situação, 400 com os
-  campos que faltam) e responde `simulado: true` até o modelo de dados (P-12). `POST /goal-card/decisao` fica
-  pronto para a T14 (RN-06, RN-08, RN-09, RN-12).
+  campos que faltam) e responde `simulado: true` até o modelo de dados (P-12). `POST /goal-card/decisao` é usado
+  pela T14 (RN-06, RN-08, RN-09, RN-12).
 
 ### T06 Versões
 
@@ -163,6 +163,30 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
   valor antigo riscado e o novo em destaque, e a marca "Pedido de ajuste" nas seções devolvidas.
 - **Casos:** versão única é mostrada inteira; rascunho explica que a v1 nasce na primeira submissão.
 - Dados de `GET /versoes?card=` (`versoesExemplo`): snapshot imutável de cada versão.
+
+### T14 Aprovações
+
+`#aprovacoes?pais=&bu=&idade=&card=`, no submenu Administração. **Só o grupo de aprovação** (AC-08, CA-19): para os
+demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a T12).
+
+- **Topo** no padrão do Action Log (título "Aprovações", atualizar e tela cheia); **filtros** País › BU (`.unit`) e
+  tempo na fila (qualquer, 3+ ou 5+ dias úteis), na URL.
+- **Fila** à esquerda, fixa ao rolar: as fichas Em aprovação, das mais antigas para as mais novas, com BU, código,
+  meta, versão, contribuidor, data de entrada e idade em dias úteis (âmbar a partir do limite `diasParado`); etiqueta
+  "Resubmissão" (v2+) e "Você editou" quando o usuário editou ou submeteu o card (RN-12).
+- **Análise** à direita: cabeçalho com situação, versão, peso, tipo, direção, quem submeteu e a idade, e links para
+  o Goal Card, as Versões e o histórico no Action Log. Em resubmissão, aviso com as seções alteradas, que ficam
+  destacadas e mostram o **antes** da versão anterior (RN-10, vem de `GET /versoes`).
+- **Revisão por seção** (§4): cada uma das 7 seções recebe OK, Ajustar ou fica sem análise (segundo clique desfaz),
+  com o progresso ("2 de 7 seções analisadas · 1 para ajustar") e o atalho "Marcar as não analisadas como OK".
+- **Comentários por seção** (§7.3, RN-13): a thread da seção abre na própria linha, com o campo para publicar
+  (`POST /goal-card/comentario`); o estado do card não muda.
+- **Decisão** no rodapé: comentário com contador, Aprovar (`.btn`), Devolver e Negar (`.btn-sec`), confirmação no
+  segundo clique em `role="alertdialog"`. Devolver exige uma seção Ajustar e comentário de 10+ caracteres (RN-08);
+  Negar, a justificativa (RN-09); mesma regra no cliente e no servidor. Quem editou ou submeteu o card não vê os
+  botões, só o aviso da RN-12.
+- **Depois da decisão**, o card sai da fila (RN-06) e a próxima ficha abre ("21 restantes na fila"); com a fila
+  vazia, "Fila concluída". Escritas validadas e simuladas até o modelo de dados (P-12).
 
 ### T07 Action Log
 
@@ -269,7 +293,9 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /action-log?bu=&meta=&secao=&tipo=&periodo=&card=&pagina=&tudo=` | T07: eventos filtrados (40 por página; `tudo=1` para exportar), `porTipo` e opções dos filtros |
 | `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/clonar` | T11: só o administrador; validação por aba e RN-16 no servidor; simulação até a P-12 |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
-| `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: campos obrigatórios e decisão validados no servidor; simulação até o P-12 |
+| `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04/T14: campos obrigatórios e decisão validados no servidor; simulação até o P-12 |
+| `GET /aprovacoes?pais=&bu=&idade=` | T14: só o grupo de aprovação (403 para os demais). Fila Em aprovação (mais antigos primeiro) com `idade`, `resubmissao` e `podeDecidir` (RN-12), e `total` sem filtro |
+| `POST /goal-card/comentario` | T14: comentário ancorado a uma seção (só o grupo de aprovação; seção válida e texto de 1 a 2.000 caracteres); simulação até o P-12 |
 | `GET /health` | `{ status }` |
 | `GET /ping` | diagnóstico sem banco |
 
