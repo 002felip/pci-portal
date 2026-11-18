@@ -492,6 +492,19 @@ body { margin: 0; background: var(--page); color: var(--text); font-family: var(
 .topnav-menu-link[aria-current="page"]::after { transform: scaleX(1); }
 .topnav-menu-link:focus-visible { outline: 2px solid var(--focus); outline-offset: -6px; border-radius: 0.5rem; }
 .topnav-menu-link[hidden] { display: none; }
+/* Submenu Administração: lista suspensa sob o item, no mesmo vidro da barra */
+.topnav-grupo { position: relative; display: flex; align-items: stretch; }
+.topnav-grupo[hidden] { display: none; }
+.topnav-grupo-btn { border: 0; background: none; cursor: pointer; }
+.topnav-grupo-chev { width: 0.875rem; height: 0.875rem; transition: transform .2s ease; }
+.topnav-grupo.is-aberto .topnav-grupo-chev { transform: rotate(180deg); }
+.topnav-grupo.is-atual .topnav-grupo-btn { color: var(--menu-text-on); font-weight: 500; }
+.topnav-grupo.is-atual .topnav-grupo-btn::after { transform: scaleX(1); }
+.topnav-sub { position: absolute; top: calc(100% - 0.5rem); left: 50%; transform: translateX(-50%); min-width: 12rem; display: none; flex-direction: column; gap: 2px; padding: 0.375rem; border-radius: 0.75rem; border: 1px solid var(--menu-line); background: var(--menu-drawer); box-shadow: var(--cyc-shadow); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 110; }
+.topnav-grupo.is-aberto .topnav-sub { display: flex; }
+.topnav-sub .topnav-menu-link { min-height: 2.5rem; padding: 0 0.75rem; border-radius: 0.5rem; }
+.topnav-sub .topnav-menu-link::after { display: none; }
+.topnav-sub .topnav-menu-link:hover, .topnav-sub .topnav-menu-link[aria-current="page"] { background: var(--menu-hover); }
 .topnav-menu-cont { min-width: 1.25rem; padding: 1px 0.4375rem; border-radius: 62.4375rem; background: var(--vbm-blue); color: var(--vbm-blue-navy); font: 700 .64rem var(--font-ui); text-align: center; font-variant-numeric: tabular-nums; }
 .topnav-menu-cont[hidden] { display: none; }
 .topnav-menu-btn { display: none; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; border: 0; border-radius: 0.625rem; background: transparent; color: var(--menu-text-on); cursor: pointer; }
@@ -636,6 +649,11 @@ body.is-inicio .page { max-width: none; padding: 0; }
   .topnav-menu-link::after { display: none; }
   .topnav-menu-link[aria-current="page"] { background: var(--menu-hover); }
   .topnav-menu-link:hover { background: var(--menu-hover); }
+  /* Na gaveta, Administração vira um título com as telas recuadas logo abaixo, sempre visíveis */
+  .topnav-grupo { flex-direction: column; }
+  .topnav-grupo-btn { pointer-events: none; }
+  .topnav-grupo-chev { display: none; }
+  .topnav-sub { position: static; transform: none; display: flex; min-width: 0; padding: 0 0 0 1rem; border: 0; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 @media (max-width: 1440px), (max-height: 820px) {
@@ -1143,13 +1161,19 @@ body.is-largo #vistaConstrucao { padding-top: clamp(1.5rem, 4vh, 3rem); }
   <h1 class="sr-only">AIP Goals</h1>
   <nav class="topnav-menu" id="topMenu" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
     <a class="topnav-menu-link" href="#inicio" data-tela="inicio" data-perfis="todos"><span data-i18n="nav.inicio">Início</span></a>
-    <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
     <a class="topnav-menu-link" href="#desdobramento" data-tela="desdobramento" data-perfis="todos"><span data-i18n="nav.desdobramento">Desdobramento</span></a>
+    <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
     <a class="topnav-menu-link" href="#aprovacoes" data-tela="aprovacoes" data-perfis="pci_coo admin aprovador" hidden><span data-i18n="nav.aprovacoes">Aprovações</span></a>
     <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
-    <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
     <a class="topnav-menu-link" href="#acoes" data-tela="acoes" data-perfis="todos"><span data-i18n="nav.acoes">Ações</span></a>
-    <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.config">Configuração</span></a>
+    <!-- Administração: telas de apoio agrupadas num submenu (abre no clique; no modo gaveta fica aberto, recuado) -->
+    <div class="topnav-grupo" id="menuAdmin">
+      <button type="button" class="topnav-menu-link topnav-grupo-btn" id="menuAdminBtn" aria-expanded="false" aria-controls="menuAdminPop"><span data-i18n="nav.admin">Administração</span><svg class="ico topnav-grupo-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      <div class="topnav-sub" id="menuAdminPop">
+        <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="todos"><span>Action Log</span></a>
+        <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.config">Configuração</span></a>
+      </div>
+    </div>
   </nav>
   <div class="topnav-actions">
     <button class="topnav-menu-btn" id="topMenuBtn" type="button" aria-expanded="false" aria-controls="topMenu" aria-label="Abrir menu" title="Menu" data-i18n-aria="nav.abrir" data-i18n-title="nav.menuCurto">
@@ -1802,7 +1826,7 @@ window.VBMSetup = (function () {
       'et.proposta': 'Proposta da BU', 'et.proposta.quem': 'Goal Cards preenchidos · Pontos focais',
       'et.calibracao': 'Calibração e aprovação', 'et.calibracao.quem': 'Diretor da BU · Grupo P&CI/COO',
       'et.oficial': 'Goal Card oficial', 'et.oficial.quem': 'Versão aprovada e travada', 'nav.painel': 'Painel do ciclo',
-      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração',
+      'nav.metas': 'Metas da BU', 'nav.registro': 'Registro', 'nav.acoes': 'Ações', 'nav.config': 'Configuração', 'nav.admin': 'Administração',
       'ui.telaCheia': 'Tela cheia',
       't01.titulo': 'Minhas pendências', 't01.sub': 'Cards a preencher, decisões, comentários sem resposta e ações atribuídas a você.', 't01.resumo': 'Resumo da fila',
       't01.exemplo': 'Dados de exemplo — modelo de dados em validação (P-12)', 't01.desatualizado': 'Dados desatualizados — exibindo a última leitura',
@@ -1897,7 +1921,7 @@ window.VBMSetup = (function () {
       'et.proposta': 'BU proposal', 'et.proposta.quem': 'Goal Cards filled in · Focal points',
       'et.calibracao': 'Calibration and approval', 'et.calibracao.quem': 'BU Director · P&CI/COO group',
       'et.oficial': 'Official Goal Card', 'et.oficial.quem': 'Approved and locked version', 'nav.painel': 'Cycle dashboard',
-      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings',
+      'nav.metas': 'BU goals', 'nav.registro': 'Records', 'nav.acoes': 'Actions', 'nav.config': 'Settings', 'nav.admin': 'Administration',
       'ui.telaCheia': 'Full screen',
       't01.titulo': 'My pending items', 't01.sub': 'Cards to fill in, decisions, unanswered comments and actions assigned to you.', 't01.resumo': 'Queue summary',
       't01.exemplo': 'Sample data — data model under validation (P-12)', 't01.desatualizado': 'Outdated data — showing the last reading',
@@ -2010,6 +2034,8 @@ window.VBMSetup = (function () {
       var pode = (a.getAttribute('data-perfis') || '').split(' ');
       a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
     });
+    // Administração só aparece se o perfil vê ao menos uma das telas dela
+    $('menuAdmin').hidden = !$('menuAdminPop').querySelector('.topnav-menu-link:not([hidden])');
   }
 
   document.querySelectorAll('[data-tela-cheia]').forEach(function (b) {
@@ -2795,6 +2821,12 @@ window.VBMSetup = (function () {
     $('topMenuBtn').setAttribute('aria-expanded', String(sim));
     if (sim) { var f = $('topMenu').querySelector('.topnav-menu-link:not([hidden])'); if (f) f.focus(); }
   }
+  // Submenu Administração
+  function abrirAdmin(sim) { $('menuAdmin').classList.toggle('is-aberto', sim); $('menuAdminBtn').setAttribute('aria-expanded', String(sim)); }
+  $('menuAdminBtn').addEventListener('click', function () { abrirAdmin(!$('menuAdmin').classList.contains('is-aberto')); });
+  $('menuAdminPop').addEventListener('click', function (e) { if (e.target.closest('a')) abrirAdmin(false); });
+  document.addEventListener('click', function (e) { if (!e.target.closest('#menuAdmin')) abrirAdmin(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('menuAdmin').classList.contains('is-aberto')) { abrirAdmin(false); $('menuAdminBtn').focus(); } });
   $('topMenuBtn').addEventListener('click', function () { abrirMenu(!$('topMenu').classList.contains('is-aberto')); });
   $('topMenu').addEventListener('click', function (e) { if (e.target.closest('a')) abrirMenu(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('topMenu').classList.contains('is-aberto')) { abrirMenu(false); $('topMenuBtn').focus(); } });
@@ -2821,6 +2853,7 @@ window.VBMSetup = (function () {
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
       if (a.getAttribute('data-tela') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      $('menuAdmin').classList.toggle('is-atual', !!$('menuAdminPop').querySelector('[aria-current="page"]'));
     });
     window.scrollTo(0, 0);
   }
