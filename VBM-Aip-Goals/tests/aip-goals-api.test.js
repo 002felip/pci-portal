@@ -277,3 +277,23 @@ test('T07 Action Log: leitura para quem tem papel; filtros validados; paginaçã
     assert.strictEqual((await pedir(sem, '/api/action-log', h)).status, 403);
   } finally { s.close(); sem.close(); }
 });
+
+test('T06 Versões: rascunho sem versão; versões mais recentes primeiro; oficial = última aprovada; leitura para todos', async () => {
+  const { painelExemplo } = require('../dados-exemplo');
+  const cards = painelExemplo(HOJE).cards;
+  const aprovadoV2 = cards.find((c) => c.estado === 'aprovado' && c.versao > 1) || cards.find((c) => c.versao > 1);
+  const rascunho = cards.find((c) => c.estado === 'rascunho');
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'consulta', bu: 'Salobo' }] }));
+  try {
+    const h = { 'X-Forwarded-Email': 'c@vale.com' };
+    const r = await pedir(s, '/api/versoes?card=' + aprovadoV2.card, h);
+    assert.strictEqual(r.status, 200);
+    assert.deepStrictEqual(r.corpo.versoes.map((v) => v.versao), [aprovadoV2.versao, 1]);
+    assert.strictEqual(r.corpo.versoes[1].decisao.tipo, 'devolver');
+    if (aprovadoV2.estado === 'aprovado') assert.strictEqual(r.corpo.oficial, aprovadoV2.versao);
+    assert.strictEqual(r.corpo.versoes.filter((v) => v.oficial).length, aprovadoV2.estado === 'aprovado' ? 1 : 0);
+    assert.deepStrictEqual((await pedir(s, '/api/versoes?card=' + rascunho.card, h)).corpo.versoes, []);
+    assert.strictEqual((await pedir(s, '/api/versoes?card=GC-ZZZ-99', h)).status, 404);
+    assert.strictEqual((await pedir(s, '/api/versoes?card=x', h)).status, 400);
+  } finally { s.close(); }
+});

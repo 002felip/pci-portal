@@ -1388,6 +1388,70 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
   .lg-links { margin-left: 0; }
 }
 
+/* ════ T06 · Versões ════
+   Topo no modelo do Goal Card; linha das versões (v1 → v2 …) com a decisão de cada uma e o selo da oficial;
+   comparação em tabela de 3 colunas (campo · de · para), campos alterados em destaque e iguais recolhidos. */
+.vs-linha { display: flex; flex-wrap: wrap; gap: clamp(0.6rem, 1.2vw, 1.25rem); margin: 0; padding: 0; list-style: none; }
+.vs-no { position: relative; flex: 1 1 16rem; max-width: 26rem; }
+.vs-no + .vs-no::before { content: ''; position: absolute; left: calc(-1 * clamp(0.6rem, 1.2vw, 1.25rem)); top: 2.1rem; width: clamp(0.6rem, 1.2vw, 1.25rem); height: 2px; background: var(--ab-trilho, var(--line)); }
+.vs-no-btn { width: 100%; display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 0.75rem; row-gap: 0.15rem; align-items: center;
+  padding: 0.8rem 1rem; border-radius: 1rem; border: 1px solid var(--card-line); background: color-mix(in srgb, var(--card-bg) 85%, transparent); box-shadow: var(--card-shadow);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); text-align: left; color: var(--text); font: inherit; cursor: pointer; transition: border-color .2s, transform .2s; }
+.vs-no-btn:hover { border-color: var(--ctl-on-bg); transform: translateY(-1px); }
+.vs-no-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.vs-no.is-b .vs-no-btn { border-color: var(--accent-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 14%, transparent), var(--card-shadow); }
+.vs-no.is-a .vs-no-btn { border-style: dashed; border-color: color-mix(in srgb, var(--accent-strong) 55%, transparent); }
+.vs-no-ponto { grid-row: 1 / span 3; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 2px solid var(--vs-cor, var(--line)); color: var(--vs-cor, var(--text-soft)); background: var(--page); }
+.vs-no-ponto .ico { width: 1.05rem; height: 1.05rem; }
+.vs-d-aprovar { --vs-cor: var(--status-approved); }
+.vs-d-devolver { --vs-cor: var(--status-review); }
+.vs-d-negar { --vs-cor: var(--status-rejected); }
+.vs-d-pendente { --vs-cor: var(--status-pending); }
+.vs-no-v { font: 300 1.5rem/1 var(--font-display); color: var(--ink-strong); }
+.vs-no-v em { margin-left: 0.3rem; padding: 2px 0.5rem; border-radius: 999px; background: var(--st-approved-bg); color: var(--st-approved-ink); font: 600 0.62rem var(--font-ui); font-style: normal; vertical-align: 0.35rem; }
+.vs-no-txt { font-size: 0.72rem; color: var(--text-soft); }
+.vs-no-dec { font: 600 0.72rem var(--font-ui); color: var(--vs-cor, var(--text-soft)); }
+.vs-no.is-vazio { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; border-radius: 1rem; border: 1px dashed var(--line); }
+.vs-no.is-vazio .vs-no-ponto { grid-row: auto; width: 2rem; height: 2rem; }
+.vs-tag { display: inline-block; padding: 1px 0.45rem; border-radius: 0.35rem; background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text-soft); font: 600 0.6rem var(--font-ui); font-style: normal; letter-spacing: .06em; text-transform: uppercase; vertical-align: 0.3rem; }
+.vs-tag.is-b, .vs-no.is-b .vs-tag { background: color-mix(in srgb, var(--accent-strong) 14%, transparent); color: var(--accent-strong); }
+.vs-selo { display: inline-flex; align-items: center; gap: 0.3rem; padding: 3px 0.65rem; border-radius: 999px; background: var(--st-approved-bg); color: var(--st-approved-ink); font: 600 0.7rem var(--font-ui); }
+.vs-selo .ico { width: 0.8rem; height: 0.8rem; }
+.vs-filtros { gap: 0.6rem 1.1rem; }
+.vs-comp { display: inline-flex; align-items: center; gap: 0.4rem; }
+.vs-comp .lg-sel { min-width: 7.5rem; }
+.vs-comparar[hidden] { display: none; }
+.vs-resumo { font-size: 0.78rem; color: var(--text-soft); }
+.vs-n-mudou { color: var(--accent-strong); font-weight: 600; }
+.vs-log { margin-left: auto; }
+.vs-tabela { table-layout: fixed; }
+.vs-tabela col:first-child, .vs-tabela th:first-child { width: 14rem; }
+.vs-tabela thead th small { display: block; margin-top: 0.15rem; font: 400 0.66rem var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text-soft); }
+.vs-tabela tbody th { text-transform: none; letter-spacing: normal; font: 600 0.82rem var(--font-display); color: var(--ink-strong); white-space: normal; vertical-align: top; }
+.vs-tabela td { font-size: 0.84rem; line-height: 1.5; vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.vs-tabela tr.is-mudou .vs-a { color: var(--text-soft); background: color-mix(in srgb, var(--status-rejected) 6%, transparent); }
+.vs-tabela tr.is-mudou .vs-a .vs-v { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--status-rejected) 45%, transparent); }
+.vs-tabela tr.is-mudou .vs-b { background: color-mix(in srgb, var(--status-approved) 9%, transparent); color: var(--text); font-weight: 500; }
+.vs-tabela tr.is-igual td { color: var(--text-soft); }
+.vs-flag { display: block; width: fit-content; margin-top: 0.3rem; padding: 1px 0.5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent-strong) 12%, transparent); color: var(--accent-strong); font: 600 0.6rem var(--font-ui); letter-spacing: .04em; }
+.vs-flag.is-ajustar { background: var(--st-review-bg); color: var(--st-review-ink); }
+.vs-padrao { display: flex; align-items: flex-start; gap: 0.3rem; margin-top: 0.4rem; font-size: 0.72rem; color: var(--text-soft); text-decoration: none; }
+.vs-padrao .ico { width: 0.75rem; height: 0.75rem; margin-top: 0.15rem; flex-shrink: 0; }
+.vs-ver-iguais { align-self: flex-start; }
+.vs-decisoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.vs-nota { margin: 0; display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.7rem 0.9rem; border-radius: 0.8rem; border: 1px solid var(--card-line); background: var(--card-bg); font-size: 0.8rem; color: var(--text); }
+.vs-nota .ico { width: 1rem; height: 1rem; flex-shrink: 0; margin-top: 0.1rem; color: var(--vs-cor, var(--status-pending)); }
+.vs-nota b { color: var(--vs-cor, var(--ink-strong)); }
+.vs-nota q { display: block; margin-top: 0.3rem; font-style: italic; color: var(--text-soft); }
+.gc-link { display: inline-flex; align-items: center; gap: 0.35rem; }
+.gc-link[hidden] { display: none; }
+.gc-link .ico { width: 0.85rem; height: 0.85rem; }
+@media (max-width: 1080px) {
+  .vs-decisoes { grid-template-columns: 1fr; }
+  .vs-tabela th:first-child { width: 9rem; }
+  .vs-log { margin-left: 0; }
+}
+
 </style>
 </head>
 <body>
@@ -1841,6 +1905,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
       </div>
       <p class="p2-pills">
         <span class="pill-info" id="gcModo"></span>
+        <a class="btn btn-sec cf-mini gc-link" id="gcVersoes" href="#versoes"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span id="gcVersoesTxt">Versões</span></a>
+        <a class="btn btn-sec cf-mini gc-link" id="gcHistorico" href="#action-log"><svg class="ico" aria-hidden="true"><use href="#i-tasks"/></svg><span data-i18n="vs.historico">Histórico</span></a>
       </p>
     </div>
 
@@ -2005,6 +2071,77 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
         <div class="acesso-acoes">
           <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
           <a class="acesso-btn primario" href="#inicio" data-i18n="t12.inicio">Ir para o Início</a>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ═══ T06 · Versões (§7.2): versões imutáveis do Goal Card e comparação campo a campo ═══ -->
+  <section class="vista" id="vistaVersoes" hidden aria-labelledby="titVersoes">
+    <header class="p2-topo">
+      <div class="p2-cab">
+        <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span id="vsCiclo">AIP</span></p>
+        <h2 class="p2-titulo" id="titVersoes"><span class="ab-nome" data-i18n="vs.titulo">Versões</span><span class="ab-ano" id="vsNum">—</span></h2>
+        <p class="gc-meta-tit" id="vsTitulo"></p>
+        <p class="gc-chips" id="vsChips"></p>
+      </div>
+      <!-- Linha das versões: v1 → v2 → …, com a decisão de cada uma e o selo da oficial -->
+      <div class="p2-trilha"><ol class="vs-linha" id="vsLinha" aria-label="Versões do Goal Card" data-i18n-aria="vs.linhaAria"></ol></div>
+      <div class="topo-acoes">
+        <button type="button" class="dash-acao" id="vsAtualizar" aria-label="Atualizar versões" title="Atualizar versões" data-i18n-aria="vs.atualizar" data-i18n-title="vs.atualizar"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="dash-acao" data-tela-cheia aria-label="Tela cheia" title="Tela cheia" data-i18n-aria="ui.telaCheia" data-i18n-title="ui.telaCheia"><svg class="ico" aria-hidden="true"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <div class="filters p2-filtro vs-filtros" id="vsFiltros">
+      <a class="btn btn-sec gc-voltar" id="vsVoltar" href="#goal-card"><svg class="ico gc-voltar-ico" aria-hidden="true"><use href="#i-arrow"/></svg><span id="vsVoltarTxt">Goal Card</span></a>
+      <div class="filter gc-filtro-meta">
+        <label class="filter-label" for="vsSel" data-i18n="gc.meta">Meta:</label>
+        <div class="gc-nav">
+          <button type="button" class="dash-acao" id="vsAnt" aria-label="Meta anterior" title="Meta anterior" data-i18n-aria="gc.ant" data-i18n-title="gc.ant"><svg class="ico gc-voltar-ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <select class="gc-sel" id="vsSel"></select>
+          <button type="button" class="dash-acao" id="vsProx" aria-label="Próxima meta" title="Próxima meta" data-i18n-aria="gc.prox" data-i18n-title="gc.prox"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+      <div class="filter vs-comparar" id="vsComparar">
+        <span class="filter-label" id="vsLblComp" data-i18n="vs.comparar">Comparar:</span>
+        <div class="vs-comp" role="group" aria-labelledby="vsLblComp">
+          <select class="cf-in lg-sel" id="vsA" aria-label="Versão de origem" data-i18n-aria="vs.origem"></select>
+          <button type="button" class="dash-acao" id="vsTrocar" aria-label="Inverter as versões" title="Inverter as versões" data-i18n-aria="vs.trocar" data-i18n-title="vs.trocar"><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <select class="cf-in lg-sel" id="vsB" aria-label="Versão de destino" data-i18n-aria="vs.destino"></select>
+        </div>
+      </div>
+      <div class="filter">
+        <span class="filter-label" id="vsLblSo" data-i18n="vs.exibir">Exibir:</span>
+        <button type="button" class="switch" role="switch" id="vsSo" aria-checked="true" aria-labelledby="vsLblSo vsSoTxt"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label" id="vsSoTxt" data-i18n="vs.soMudou">Só o que mudou</span></button>
+      </div>
+    </div>
+
+    <section class="secao vs-corpo" id="vsCorpo" aria-labelledby="vsTitComp">
+      <div class="secao-head">
+        <h3 class="secao-tit" id="vsTitComp"></h3>
+        <span class="vs-resumo" id="vsResumo"></span>
+        <a class="cf-link-log vs-log" id="vsLog" href="#action-log"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span data-i18n="vs.verLog">Histórico no Action Log</span></a>
+      </div>
+      <div id="vsConteudo"></div>
+      <p class="updated" id="vsAtualizado"></p>
+    </section>
+
+    <div class="estado estado-erro" id="vsErro" hidden>
+      <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+      <p class="estado-tit" data-i18n="vs.erroTit">Não foi possível carregar as versões</p>
+      <p class="estado-txt" id="vsErroTxt"></p>
+      <button type="button" class="btn" id="vsTentar" data-i18n="est.tentar">Tentar de novo</button>
+    </div>
+    <!-- T12 · Sem acesso / não encontrado: mesmo padrão da tela "Acesso não autorizado" do Portal PCI -->
+    <section class="acesso-bloqueio" id="vsSemAcesso" role="alert" aria-labelledby="vsAcTit" hidden>
+      <div class="acesso-card">
+        <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
+        <h2 id="vsAcTit" tabindex="-1" data-i18n="t12.tit">Acesso não autorizado</h2>
+        <p data-i18n="t12.txt">Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.</p>
+        <div class="acesso-acoes">
+          <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
+          <a class="acesso-btn primario" href="#metas" data-i18n="gc.irMetas">Ir para Metas da BU</a>
         </div>
       </div>
     </section>
@@ -2279,7 +2416,7 @@ window.VBMSetup = (function () {
       'dd.filtrar': 'Destacar as metas da BU que vêm de {m}', 'dd.limpar': 'Mostrar todas as metas',
       'dd.alerta': 'Soma dos pesos diferente de {t} pts em {l} — revisar com o administrador do ciclo', 'dd.badgeTodas': '{p}% de cada BU', 'dd.doScorecard': 'do scorecard do COO', 'dd.baseBus': 'Base do resultado do COO em {n} BUs', 'dd.aprovados': '{a} de {t} aprovados', 'dd.emAprov': '{n} em aprovação', 'dd.irBu': 'Abrir as metas de {b}',
       'tela.painel': 'Painel do ciclo', 'tela.metas': 'Metas da BU', 'tela.action-log': 'Action Log', 'tela.acoes': 'Ações',
-      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card', 'lg.resumoAria': "Eventos por tipo", 'lg.exportar': "Exportar para Excel", 'lg.atualizar': "Atualizar Action Log", 'lg.periodo': "Período:", 'lg.meta': "Meta:", 'lg.secao': "Seção:", 'lg.tipo': "Tipo:", 'lg.linha': "Linha do tempo", 'lg.imutavel': "Registro imutável: nenhum evento pode ser editado ou apagado", 'lg.erroTit': "Não foi possível carregar o Action Log", 'lg.f.submeteu': "submeteu a v{v}", 'lg.f.resubmeteu': "resubmeteu como v{v}", 'lg.f.recolheu': "recolheu a submissão", 'lg.f.aprovar': "aprovou a v{v}, que vira a versão oficial", 'lg.f.devolver': "devolveu a v{v} para ajuste", 'lg.f.negar': "negou a meta (v{v})", 'lg.f.reabriu': "reabriu o card na janela inicial do ciclo (RN-17)", 'lg.f.comentou': "comentou na seção {s}", 'lg.hoje': "Hoje", 'lg.ontem': "Ontem", 'lg.r.todos': "Eventos", 'lg.r.decSub': "aprovar, devolver ou negar", 'lg.r.negSub': "tentativas bloqueadas", 'lg.r.cfgSub': "mudanças na T11", 'lg.r.comSub': "do grupo de aprovação", 'lg.r.subSub': "inclui resubmissões", 'lg.tp.submissao': "Submissão", 'lg.tp.recolhimento': "Recolhimento", 'lg.tp.decisao': "Decisão", 'lg.tp.reabertura': "Reabertura", 'lg.tp.comentario': "Comentário", 'lg.tp.configuracao': "Configuração", 'lg.tp.acesso_negado': "Acesso negado", 'lg.per.7': "7 dias", 'lg.per.30': "30 dias", 'lg.per.ciclo': "Ciclo todo", 'lg.todasMetas': "Todas as metas", 'lg.todasSecoes': "Todas as seções", 'lg.todosTipos': "Todos os tipos", 'lg.tirarCard': "Tirar o filtro do Goal Card", 'lg.limpar': "Limpar filtros", 'lg.vazioTit': "Nenhum evento neste recorte", 'lg.vazioTxt': "Amplie o período ou tire algum filtro.", 'lg.antesDepois': "Valor antes e depois", 'lg.antes': "Antes", 'lg.depois': "Depois", 'lg.metaN': "Meta {n}", 'lg.versoes': "Versões", 'lg.papel.contribuidor': "Contribuidor", 'lg.papel.aprovador': "Grupo de aprovação", 'lg.papel.consulta': "Consulta", 'lg.papel.admin': "Administrador", 'lg.mais': "Mostrar mais {n} (faltam {t})", 'lg.col.quando': "Quando", 'lg.col.tipo': "Tipo", 'lg.col.quem': "Quem", 'lg.col.papel': "Papel", 'lg.col.bu': "BU", 'lg.col.meta': "Meta", 'lg.col.card': "Goal Card", 'lg.col.secao': "Seção", 'lg.col.versao': "Versão", 'lg.col.detalhe': "Detalhe", 'lg.col.antes': "Antes", 'lg.col.depois': "Depois", 'lg.exportado': "{n} eventos exportados", 'lg.erroExportar': "Não foi possível exportar.", 'cf.eyebrow': "Administração", 'cf.titulo': "Configuração do ciclo", 'cf.resumoAria': "Resumo da configuração do ciclo", 'cf.atualizar': "Atualizar configuração", 'cf.secao': "Seção:", 'cf.clonar': "Novo ciclo a partir deste", 'cf.clonarAno': "Criar AIP {a} a partir deste", 'cf.clonarOk': "Criar ciclo", 'cf.descartar': "Descartar", 'cf.salvar': "Salvar alterações", 'cf.salvando': "Salvando…", 'cf.erroTit': "Não foi possível carregar a configuração", 'cf.aba.ciclo': "Ciclo", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Grupos", 'cf.aba.metas': "Metas e pesos", 'cf.aba.parametros': "Parâmetros", 'cf.sub.ciclo': "Nome, janelas da jornada e texto padrão de exceções", 'cf.sub.bus': "BUs do ciclo, pessoas por grupo e pontos por BU", 'cf.sub.grupos': "Quem preenche, quem aprova e quem consulta", 'cf.sub.metas': "Metas do desdobramento e peso de cada uma por BU", 'cf.sub.parametros': "Limites usados pelas regras da aplicação", 'cf.marcaErro': "Alterada, com pendência", 'cf.marcaAlt': "Alterada, não salva", 'cf.r.bus': "Business Units ativas", 'cf.r.busSub': "em {p} regiões", 'cf.r.pessoas': "Pessoas nos grupos", 'cf.r.pessoasSub': "{a} no grupo de aprovação", 'cf.r.metas': "Metas", 'cf.r.metasSub': "{n} novas neste ciclo", 'cf.r.pontos': "BUs com {t} pts", 'cf.r.pontosOk': "Todas fecham o total (RN-16)", 'cf.r.pontosPend': "{n} com soma diferente do total", 'cf.r.oficial': "Goal Cards oficiais", 'cf.r.etapa': "Etapa atual: {e}", 'cf.e.nome': "Informe o nome do ciclo.", 'cf.e.data': "Informe a data de {e}.", 'cf.e.ordem': "{e} precisa terminar depois da etapa anterior.", 'cf.e.titulo': "A meta {n} precisa de título.", 'cf.e.soma': "{b} soma {s} de {t} pts.", 'cf.e.semAprov': "O grupo de aprovação precisa de ao menos uma pessoa.", 'cf.e.semAdmin': "O ciclo precisa de ao menos um administrador.", 'cf.e.faixa': "{p}: use um valor entre {a} e {b}.", 'cf.e.semBu': "O ciclo precisa de ao menos uma BU ativa.", 'cf.e.matVazia': "Informe a matrícula ou escolha a pessoa na lista.", 'cf.e.matNao': "A matrícula {m} não está no cadastro de usuários do Portal.", 'cf.e.jaNoGrupo': "{n} já está neste grupo.", 'cf.e.rn16Srv': "O servidor recusou: há BU com soma de pesos diferente do total (RN-16).", 'cf.e.salvar': "Não foi possível salvar. Revise as pendências e tente de novo.", 'cf.e.clonar': "Não foi possível criar o novo ciclo.", 'cf.de': "De", 'cf.ate': "até", 'cf.du1': "1 dia útil", 'cf.du': "{n} dias úteis", 'cf.ident': "Identificação", 'cf.ano': "Ano", 'cf.situacao': "Situação", 'cf.aberto': "Aberto", 'cf.nome': "Nome do ciclo", 'cf.texto': "Texto padrão de exceções", 'cf.textoAjuda': "Aparece em todos os Goal Cards, na seção Exceptions and Considerations; a BU não edita.", 'cf.janelas': "Janelas do ciclo", 'cf.janelasAjuda': "As datas definem a jornada mostrada no Início, no Painel e nas Metas da BU. Cada etapa começa quando a anterior termina.", 'cf.g.todos': "Todos", 'cf.g.contribuidor': "Contribuidores", 'cf.g.aprovacao': "Aprovação", 'cf.g.consulta': "Consulta", 'cf.g.admin': "Administradores", 'cf.g1.contribuidor': "Contribuidor", 'cf.g1.aprovacao': "Grupo de aprovação", 'cf.g1.consulta': "Consulta", 'cf.g1.admin': "Administrador", 'cf.ativaAria': "{b} no ciclo", 'cf.ativa': "Ativa", 'cf.inativa': "Fora", 'cf.verMetas': "Metas", 'cf.pontos': "Pontos", 'cf.noCiclo': "No ciclo", 'cf.busAjuda': "Uma BU fora do ciclo não recebe Goal Cards nem notificações e sai das somas de pontos.", 'cf.somaDe': "{s} de {t}", 'cf.todasBus': "Todas as BUs", 'cf.remover': "Remover {n} de {g}", 'cf.removerCurto': "Remover do grupo", 'cf.semPessoas': "Nenhuma pessoa com esse filtro.", 'cf.addTit': "Incluir pessoa num grupo", 'cf.matricula': "Matrícula", 'cf.matriculaPh': "Matrícula ou nome", 'cf.grupo': "Grupo", 'cf.adicionar': "Incluir", 'cf.buscaPh': "Buscar por nome, matrícula ou e-mail", 'cf.pessoa': "Pessoa", 'cf.tipo': "Tipo", 'cf.cooFixo': "Vem do desdobramento do COO", 'cf.tituloAria': "Título da meta {n}", 'cf.nova': "Nova", 'cf.pesoAria': "Peso da meta {n} em {b}", 'cf.totalBu': "Total por BU (precisa fechar {t} pts)", 'cf.metasAjuda': "Cada BU ativa precisa somar {t} pts. {c} pts vêm do resultado do scorecard do COO; o restante se distribui entre as metas específicas.", 'cf.rn16': "{n} BU(s) ainda não fecham o total. O servidor só grava quando todas fecham (RN-16).", 'cf.par.pesoTotal': "Total de pontos por BU", 'cf.par.pesoResultadoCoo': "Pontos do resultado do COO", 'cf.par.minComentario': "Mínimo de caracteres no comentário", 'cf.par.anexoMb': "Tamanho máximo de anexo", 'cf.parTxt.pesoTotal': "Soma que cada BU precisa fechar para gravar as metas (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Parte de cada BU ligada ao resultado do scorecard do COO.", 'cf.parTxt.minComentario': "Exigido para devolver ou negar um Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Por arquivo, para Change Requests e evidências (fases 2 e 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "caracteres", 'cf.un.MB': "MB", 'cf.faixa': "Entre {a} e {b}", 'cf.paramAjuda': "Os limites ficam no banco (AIP_PARAMETRO); a interface nunca os fixa no código.", 'cf.tudoSalvo': "Tudo salvo", 'cf.pendente': "Pendência em: {a}.", 'cf.naoSalvas': "Alterações não salvas em: {a}", 'cf.ultimas': "Últimas alterações", 'cf.verLog': "Ver tudo no Action Log", 'cf.removido': "{n} sai do grupo ao salvar", 'cf.incluido': "{n} entra como {g} ao salvar", 'cf.descartado': "Alterações descartadas", 'cf.salvo': "Configuração salva (simulação, nada foi gravado)", 'cf.dlgTit': "Criar o ciclo AIP {a}?", 'cf.dlgTxt': "O novo ciclo nasce com a estrutura do {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} pessoas nos grupos", 'cf.dlgMetas': "{n} metas com os pesos atuais", 'cf.dlgJanelas': "Janelas em branco, para você definir", 'cf.clonado': "{c} criado (simulação, nada foi gravado)"
+      'tela.configuracao': 'Configuração do ciclo', 'tela.goal-card': 'Goal Card', 'vs.titulo': "Versões", 'vs.linhaAria': "Versões do Goal Card", 'vs.atualizar': "Atualizar versões", 'vs.comparar': "Comparar:", 'vs.origem': "Versão de origem", 'vs.trocar': "Inverter as versões", 'vs.destino': "Versão de destino", 'vs.exibir': "Exibir:", 'vs.soMudou': "Só o que mudou", 'vs.verLog': "Histórico no Action Log", 'vs.erroTit': "Não foi possível carregar as versões", 'vs.oficialN': "Oficial: v{n}", 'vs.oficial': "Oficial", 'vs.semTit': "Ainda sem versão", 'vs.semTxt': "Este card está em rascunho: a v1 nasce na primeira submissão.", 'vs.semDica': "Rascunho não gera versão; cada submissão, resubmissão ou CR aprovado gera uma versão imutável.", 'vs.abrirCard': "Abrir o Goal Card", 'vs.semLinha': "sem versão submetida", 'vs.dec.aprovar': "Aprovada", 'vs.dec.devolver': "Devolvida para ajuste", 'vs.dec.negar': "Negada", 'vs.dec.pendente': "Aguardando decisão do grupo de aprovação", 'vs.noAria': "Versão {v}: {m}. {d}", 'vs.mot.submissao': "Submissão", 'vs.mot.resubmissao': "Resubmissão", 'vs.mot.reabertura': "Reabertura", 'vs.mot.cr': "Change Request", 'vs.de': "De", 'vs.para': "Para", 'vs.unicaTit': "v{v} · única versão", 'vs.unicaTxt': "A comparação aparece a partir da segunda submissão.", 'vs.campo': "Campo", 'vs.notaPend': "v{v} aguarda a decisão do grupo de aprovação.", 'vs.mudou1': "1 campo alterado", 'vs.mudou': "{n} campos alterados", 'vs.igual1': "1 igual", 'vs.iguais': "{n} iguais", 'vs.nadaMudou': "Nenhum campo mudou entre as duas versões", 'vs.caption': "Comparação da v{a} com a v{b}", 'vs.alterado': "Alterado", 'vs.pedido': "Pedido de ajuste", 'vs.verIguais': "Mostrar também os {n} campos iguais", 'vs.link1': "1 versão", 'vs.link': "{n} versões", 'vs.historico': "Histórico", 'tela.versoes': "Versões", 'lg.resumoAria': "Eventos por tipo", 'lg.exportar': "Exportar para Excel", 'lg.atualizar': "Atualizar Action Log", 'lg.periodo': "Período:", 'lg.meta': "Meta:", 'lg.secao': "Seção:", 'lg.tipo': "Tipo:", 'lg.linha': "Linha do tempo", 'lg.imutavel': "Registro imutável: nenhum evento pode ser editado ou apagado", 'lg.erroTit': "Não foi possível carregar o Action Log", 'lg.f.submeteu': "submeteu a v{v}", 'lg.f.resubmeteu': "resubmeteu como v{v}", 'lg.f.recolheu': "recolheu a submissão", 'lg.f.aprovar': "aprovou a v{v}, que vira a versão oficial", 'lg.f.devolver': "devolveu a v{v} para ajuste", 'lg.f.negar': "negou a meta (v{v})", 'lg.f.reabriu': "reabriu o card na janela inicial do ciclo (RN-17)", 'lg.f.comentou': "comentou na seção {s}", 'lg.hoje': "Hoje", 'lg.ontem': "Ontem", 'lg.r.todos': "Eventos", 'lg.r.decSub': "aprovar, devolver ou negar", 'lg.r.negSub': "tentativas bloqueadas", 'lg.r.cfgSub': "mudanças na T11", 'lg.r.comSub': "do grupo de aprovação", 'lg.r.subSub': "inclui resubmissões", 'lg.tp.submissao': "Submissão", 'lg.tp.recolhimento': "Recolhimento", 'lg.tp.decisao': "Decisão", 'lg.tp.reabertura': "Reabertura", 'lg.tp.comentario': "Comentário", 'lg.tp.configuracao': "Configuração", 'lg.tp.acesso_negado': "Acesso negado", 'lg.per.7': "7 dias", 'lg.per.30': "30 dias", 'lg.per.ciclo': "Ciclo todo", 'lg.todasMetas': "Todas as metas", 'lg.todasSecoes': "Todas as seções", 'lg.todosTipos': "Todos os tipos", 'lg.tirarCard': "Tirar o filtro do Goal Card", 'lg.limpar': "Limpar filtros", 'lg.vazioTit': "Nenhum evento neste recorte", 'lg.vazioTxt': "Amplie o período ou tire algum filtro.", 'lg.antesDepois': "Valor antes e depois", 'lg.antes': "Antes", 'lg.depois': "Depois", 'lg.metaN': "Meta {n}", 'lg.versoes': "Versões", 'lg.papel.contribuidor': "Contribuidor", 'lg.papel.aprovador': "Grupo de aprovação", 'lg.papel.consulta': "Consulta", 'lg.papel.admin': "Administrador", 'lg.mais': "Mostrar mais {n} (faltam {t})", 'lg.col.quando': "Quando", 'lg.col.tipo': "Tipo", 'lg.col.quem': "Quem", 'lg.col.papel': "Papel", 'lg.col.bu': "BU", 'lg.col.meta': "Meta", 'lg.col.card': "Goal Card", 'lg.col.secao': "Seção", 'lg.col.versao': "Versão", 'lg.col.detalhe': "Detalhe", 'lg.col.antes': "Antes", 'lg.col.depois': "Depois", 'lg.exportado': "{n} eventos exportados", 'lg.erroExportar': "Não foi possível exportar.", 'cf.eyebrow': "Administração", 'cf.titulo': "Configuração do ciclo", 'cf.resumoAria': "Resumo da configuração do ciclo", 'cf.atualizar': "Atualizar configuração", 'cf.secao': "Seção:", 'cf.clonar': "Novo ciclo a partir deste", 'cf.clonarAno': "Criar AIP {a} a partir deste", 'cf.clonarOk': "Criar ciclo", 'cf.descartar': "Descartar", 'cf.salvar': "Salvar alterações", 'cf.salvando': "Salvando…", 'cf.erroTit': "Não foi possível carregar a configuração", 'cf.aba.ciclo': "Ciclo", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Grupos", 'cf.aba.metas': "Metas e pesos", 'cf.aba.parametros': "Parâmetros", 'cf.sub.ciclo': "Nome, janelas da jornada e texto padrão de exceções", 'cf.sub.bus': "BUs do ciclo, pessoas por grupo e pontos por BU", 'cf.sub.grupos': "Quem preenche, quem aprova e quem consulta", 'cf.sub.metas': "Metas do desdobramento e peso de cada uma por BU", 'cf.sub.parametros': "Limites usados pelas regras da aplicação", 'cf.marcaErro': "Alterada, com pendência", 'cf.marcaAlt': "Alterada, não salva", 'cf.r.bus': "Business Units ativas", 'cf.r.busSub': "em {p} regiões", 'cf.r.pessoas': "Pessoas nos grupos", 'cf.r.pessoasSub': "{a} no grupo de aprovação", 'cf.r.metas': "Metas", 'cf.r.metasSub': "{n} novas neste ciclo", 'cf.r.pontos': "BUs com {t} pts", 'cf.r.pontosOk': "Todas fecham o total (RN-16)", 'cf.r.pontosPend': "{n} com soma diferente do total", 'cf.r.oficial': "Goal Cards oficiais", 'cf.r.etapa': "Etapa atual: {e}", 'cf.e.nome': "Informe o nome do ciclo.", 'cf.e.data': "Informe a data de {e}.", 'cf.e.ordem': "{e} precisa terminar depois da etapa anterior.", 'cf.e.titulo': "A meta {n} precisa de título.", 'cf.e.soma': "{b} soma {s} de {t} pts.", 'cf.e.semAprov': "O grupo de aprovação precisa de ao menos uma pessoa.", 'cf.e.semAdmin': "O ciclo precisa de ao menos um administrador.", 'cf.e.faixa': "{p}: use um valor entre {a} e {b}.", 'cf.e.semBu': "O ciclo precisa de ao menos uma BU ativa.", 'cf.e.matVazia': "Informe a matrícula ou escolha a pessoa na lista.", 'cf.e.matNao': "A matrícula {m} não está no cadastro de usuários do Portal.", 'cf.e.jaNoGrupo': "{n} já está neste grupo.", 'cf.e.rn16Srv': "O servidor recusou: há BU com soma de pesos diferente do total (RN-16).", 'cf.e.salvar': "Não foi possível salvar. Revise as pendências e tente de novo.", 'cf.e.clonar': "Não foi possível criar o novo ciclo.", 'cf.de': "De", 'cf.ate': "até", 'cf.du1': "1 dia útil", 'cf.du': "{n} dias úteis", 'cf.ident': "Identificação", 'cf.ano': "Ano", 'cf.situacao': "Situação", 'cf.aberto': "Aberto", 'cf.nome': "Nome do ciclo", 'cf.texto': "Texto padrão de exceções", 'cf.textoAjuda': "Aparece em todos os Goal Cards, na seção Exceptions and Considerations; a BU não edita.", 'cf.janelas': "Janelas do ciclo", 'cf.janelasAjuda': "As datas definem a jornada mostrada no Início, no Painel e nas Metas da BU. Cada etapa começa quando a anterior termina.", 'cf.g.todos': "Todos", 'cf.g.contribuidor': "Contribuidores", 'cf.g.aprovacao': "Aprovação", 'cf.g.consulta': "Consulta", 'cf.g.admin': "Administradores", 'cf.g1.contribuidor': "Contribuidor", 'cf.g1.aprovacao': "Grupo de aprovação", 'cf.g1.consulta': "Consulta", 'cf.g1.admin': "Administrador", 'cf.ativaAria': "{b} no ciclo", 'cf.ativa': "Ativa", 'cf.inativa': "Fora", 'cf.verMetas': "Metas", 'cf.pontos': "Pontos", 'cf.noCiclo': "No ciclo", 'cf.busAjuda': "Uma BU fora do ciclo não recebe Goal Cards nem notificações e sai das somas de pontos.", 'cf.somaDe': "{s} de {t}", 'cf.todasBus': "Todas as BUs", 'cf.remover': "Remover {n} de {g}", 'cf.removerCurto': "Remover do grupo", 'cf.semPessoas': "Nenhuma pessoa com esse filtro.", 'cf.addTit': "Incluir pessoa num grupo", 'cf.matricula': "Matrícula", 'cf.matriculaPh': "Matrícula ou nome", 'cf.grupo': "Grupo", 'cf.adicionar': "Incluir", 'cf.buscaPh': "Buscar por nome, matrícula ou e-mail", 'cf.pessoa': "Pessoa", 'cf.tipo': "Tipo", 'cf.cooFixo': "Vem do desdobramento do COO", 'cf.tituloAria': "Título da meta {n}", 'cf.nova': "Nova", 'cf.pesoAria': "Peso da meta {n} em {b}", 'cf.totalBu': "Total por BU (precisa fechar {t} pts)", 'cf.metasAjuda': "Cada BU ativa precisa somar {t} pts. {c} pts vêm do resultado do scorecard do COO; o restante se distribui entre as metas específicas.", 'cf.rn16': "{n} BU(s) ainda não fecham o total. O servidor só grava quando todas fecham (RN-16).", 'cf.par.pesoTotal': "Total de pontos por BU", 'cf.par.pesoResultadoCoo': "Pontos do resultado do COO", 'cf.par.minComentario': "Mínimo de caracteres no comentário", 'cf.par.anexoMb': "Tamanho máximo de anexo", 'cf.parTxt.pesoTotal': "Soma que cada BU precisa fechar para gravar as metas (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Parte de cada BU ligada ao resultado do scorecard do COO.", 'cf.parTxt.minComentario': "Exigido para devolver ou negar um Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Por arquivo, para Change Requests e evidências (fases 2 e 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "caracteres", 'cf.un.MB': "MB", 'cf.faixa': "Entre {a} e {b}", 'cf.paramAjuda': "Os limites ficam no banco (AIP_PARAMETRO); a interface nunca os fixa no código.", 'cf.tudoSalvo': "Tudo salvo", 'cf.pendente': "Pendência em: {a}.", 'cf.naoSalvas': "Alterações não salvas em: {a}", 'cf.ultimas': "Últimas alterações", 'cf.verLog': "Ver tudo no Action Log", 'cf.removido': "{n} sai do grupo ao salvar", 'cf.incluido': "{n} entra como {g} ao salvar", 'cf.descartado': "Alterações descartadas", 'cf.salvo': "Configuração salva (simulação, nada foi gravado)", 'cf.dlgTit': "Criar o ciclo AIP {a}?", 'cf.dlgTxt': "O novo ciclo nasce com a estrutura do {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} pessoas nos grupos", 'cf.dlgMetas': "{n} metas com os pesos atuais", 'cf.dlgJanelas': "Janelas em branco, para você definir", 'cf.clonado': "{c} criado (simulação, nada foi gravado)"
     },
     en: {
       'p2.linha': 'Cycle timeline', 'p2.hoje': 'Today · {d}',
@@ -2374,7 +2511,7 @@ window.VBMSetup = (function () {
       'dd.filtrar': 'Highlight the BU goals that come from {m}', 'dd.limpar': 'Show all goals',
       'dd.alerta': 'Sum of weights differs from {t} pts in {l} — review with the cycle administrator', 'dd.badgeTodas': '{p}% of each BU', 'dd.doScorecard': 'of the COO scorecard', 'dd.baseBus': 'Basis of the COO result in {n} BUs', 'dd.aprovados': '{a} of {t} approved', 'dd.emAprov': '{n} pending approval', 'dd.irBu': 'Open the goals of {b}',
       'tela.painel': 'Cycle dashboard', 'tela.metas': 'BU goals', 'tela.action-log': 'Action Log', 'tela.acoes': 'Actions',
-      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card', 'lg.resumoAria': "Events by type", 'lg.exportar': "Export to Excel", 'lg.atualizar': "Refresh Action Log", 'lg.periodo': "Period:", 'lg.meta': "Goal:", 'lg.secao': "Section:", 'lg.tipo': "Type:", 'lg.linha': "Timeline", 'lg.imutavel': "Immutable record: no event can be edited or deleted", 'lg.erroTit': "Could not load the Action Log", 'lg.f.submeteu': "submitted v{v}", 'lg.f.resubmeteu': "resubmitted as v{v}", 'lg.f.recolheu': "withdrew the submission", 'lg.f.aprovar': "approved v{v}, now the official version", 'lg.f.devolver': "returned v{v} for changes", 'lg.f.negar': "denied the goal (v{v})", 'lg.f.reabriu': "reopened the card in the initial cycle window (RN-17)", 'lg.f.comentou': "commented on {s}", 'lg.hoje': "Today", 'lg.ontem': "Yesterday", 'lg.r.todos': "Events", 'lg.r.decSub': "approve, return or deny", 'lg.r.negSub': "blocked attempts", 'lg.r.cfgSub': "changes in T11", 'lg.r.comSub': "from the approval group", 'lg.r.subSub': "includes resubmissions", 'lg.tp.submissao': "Submission", 'lg.tp.recolhimento': "Withdrawal", 'lg.tp.decisao': "Decision", 'lg.tp.reabertura': "Reopening", 'lg.tp.comentario': "Comment", 'lg.tp.configuracao': "Settings", 'lg.tp.acesso_negado': "Access denied", 'lg.per.7': "7 days", 'lg.per.30': "30 days", 'lg.per.ciclo': "Whole cycle", 'lg.todasMetas': "All goals", 'lg.todasSecoes': "All sections", 'lg.todosTipos': "All types", 'lg.tirarCard': "Remove the Goal Card filter", 'lg.limpar': "Clear filters", 'lg.vazioTit': "No events in this view", 'lg.vazioTxt': "Widen the period or remove a filter.", 'lg.antesDepois': "Value before and after", 'lg.antes': "Before", 'lg.depois': "After", 'lg.metaN': "Goal {n}", 'lg.versoes': "Versions", 'lg.papel.contribuidor': "Contributor", 'lg.papel.aprovador': "Approval group", 'lg.papel.consulta': "Read-only", 'lg.papel.admin': "Administrator", 'lg.mais': "Show {n} more ({t} left)", 'lg.col.quando': "When", 'lg.col.tipo': "Type", 'lg.col.quem': "Who", 'lg.col.papel': "Role", 'lg.col.bu': "BU", 'lg.col.meta': "Goal", 'lg.col.card': "Goal Card", 'lg.col.secao': "Section", 'lg.col.versao': "Version", 'lg.col.detalhe': "Detail", 'lg.col.antes': "Before", 'lg.col.depois': "After", 'lg.exportado': "{n} events exported", 'lg.erroExportar': "Could not export.", 'cf.eyebrow': "Administration", 'cf.titulo': "Cycle settings", 'cf.resumoAria': "Cycle settings summary", 'cf.atualizar': "Refresh settings", 'cf.secao': "Section:", 'cf.clonar': "New cycle from this one", 'cf.clonarAno': "Create AIP {a} from this one", 'cf.clonarOk': "Create cycle", 'cf.descartar': "Discard", 'cf.salvar': "Save changes", 'cf.salvando': "Saving…", 'cf.erroTit': "Could not load the settings", 'cf.aba.ciclo': "Cycle", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Groups", 'cf.aba.metas': "Goals and weights", 'cf.aba.parametros': "Parameters", 'cf.sub.ciclo': "Name, journey windows and standard exceptions text", 'cf.sub.bus': "Cycle BUs, people per group and points per BU", 'cf.sub.grupos': "Who fills in, who approves and who reads", 'cf.sub.metas': "Cascade goals and the weight of each one per BU", 'cf.sub.parametros': "Limits used by the application rules", 'cf.marcaErro': "Changed, with an issue", 'cf.marcaAlt': "Changed, not saved", 'cf.r.bus': "Active Business Units", 'cf.r.busSub': "in {p} regions", 'cf.r.pessoas': "People in groups", 'cf.r.pessoasSub': "{a} in the approval group", 'cf.r.metas': "Goals", 'cf.r.metasSub': "{n} new this cycle", 'cf.r.pontos': "BUs at {t} pts", 'cf.r.pontosOk': "All close the total (RN-16)", 'cf.r.pontosPend': "{n} with a sum different from the total", 'cf.r.oficial': "Official Goal Cards", 'cf.r.etapa': "Current stage: {e}", 'cf.e.nome': "Enter the cycle name.", 'cf.e.data': "Enter the date for {e}.", 'cf.e.ordem': "{e} must end after the previous stage.", 'cf.e.titulo': "Goal {n} needs a title.", 'cf.e.soma': "{b} adds up to {s} of {t} pts.", 'cf.e.semAprov': "The approval group needs at least one person.", 'cf.e.semAdmin': "The cycle needs at least one administrator.", 'cf.e.faixa': "{p}: use a value between {a} and {b}.", 'cf.e.semBu': "The cycle needs at least one active BU.", 'cf.e.matVazia': "Enter the employee ID or pick the person from the list.", 'cf.e.matNao': "Employee ID {m} is not in the Portal user directory.", 'cf.e.jaNoGrupo': "{n} is already in this group.", 'cf.e.rn16Srv': "The server refused: a BU has a weight sum different from the total (RN-16).", 'cf.e.salvar': "Could not save. Review the issues and try again.", 'cf.e.clonar': "Could not create the new cycle.", 'cf.de': "From", 'cf.ate': "to", 'cf.du1': "1 business day", 'cf.du': "{n} business days", 'cf.ident': "Identification", 'cf.ano': "Year", 'cf.situacao': "Status", 'cf.aberto': "Open", 'cf.nome': "Cycle name", 'cf.texto': "Standard exceptions text", 'cf.textoAjuda': "Shown on every Goal Card, in Exceptions and Considerations; BUs cannot edit it.", 'cf.janelas': "Cycle windows", 'cf.janelasAjuda': "The dates drive the journey shown on Home, the Cycle dashboard and BU goals. Each stage starts when the previous one ends.", 'cf.g.todos': "All", 'cf.g.contribuidor': "Contributors", 'cf.g.aprovacao': "Approval", 'cf.g.consulta': "Read-only", 'cf.g.admin': "Administrators", 'cf.g1.contribuidor': "Contributor", 'cf.g1.aprovacao': "Approval group", 'cf.g1.consulta': "Read-only", 'cf.g1.admin': "Administrator", 'cf.ativaAria': "{b} in the cycle", 'cf.ativa': "Active", 'cf.inativa': "Out", 'cf.verMetas': "Goals", 'cf.pontos': "Points", 'cf.noCiclo': "In cycle", 'cf.busAjuda': "A BU out of the cycle receives no Goal Cards or notifications and leaves the point sums.", 'cf.somaDe': "{s} of {t}", 'cf.todasBus': "All BUs", 'cf.remover': "Remove {n} from {g}", 'cf.removerCurto': "Remove from group", 'cf.semPessoas': "No one matches this filter.", 'cf.addTit': "Add a person to a group", 'cf.matricula': "Employee ID", 'cf.matriculaPh': "Employee ID or name", 'cf.grupo': "Group", 'cf.adicionar': "Add", 'cf.buscaPh': "Search by name, ID or e-mail", 'cf.pessoa': "Person", 'cf.tipo': "Type", 'cf.cooFixo': "Comes from the COO cascade", 'cf.tituloAria': "Title of goal {n}", 'cf.nova': "New", 'cf.pesoAria': "Weight of goal {n} in {b}", 'cf.totalBu': "Total per BU (must close {t} pts)", 'cf.metasAjuda': "Each active BU must add up to {t} pts. {c} pts come from the COO scorecard result; the rest is split across the specific goals.", 'cf.rn16': "{n} BU(s) do not close the total yet. The server only saves when all of them do (RN-16).", 'cf.par.pesoTotal': "Total points per BU", 'cf.par.pesoResultadoCoo': "COO result points", 'cf.par.minComentario': "Minimum comment length", 'cf.par.anexoMb': "Maximum attachment size", 'cf.parTxt.pesoTotal': "Sum each BU must close to save its goals (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Share of each BU tied to the COO scorecard result.", 'cf.parTxt.minComentario': "Required to return or deny a Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Per file, for Change Requests and evidence (phases 2 and 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "characters", 'cf.un.MB': "MB", 'cf.faixa': "Between {a} and {b}", 'cf.paramAjuda': "Limits live in the database (AIP_PARAMETRO); the interface never hard-codes them.", 'cf.tudoSalvo': "All saved", 'cf.pendente': "Issue in: {a}.", 'cf.naoSalvas': "Unsaved changes in: {a}", 'cf.ultimas': "Latest changes", 'cf.verLog': "See all in the Action Log", 'cf.removido': "{n} leaves the group when you save", 'cf.incluido': "{n} joins as {g} when you save", 'cf.descartado': "Changes discarded", 'cf.salvo': "Settings saved (simulation, nothing saved)", 'cf.dlgTit': "Create the AIP {a} cycle?", 'cf.dlgTxt': "The new cycle starts with the structure of {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} people in groups", 'cf.dlgMetas': "{n} goals with the current weights", 'cf.dlgJanelas': "Blank windows for you to set", 'cf.clonado': "{c} created (simulation, nothing saved)"
+      'tela.configuracao': 'Cycle settings', 'tela.goal-card': 'Goal Card', 'vs.titulo': "Versions", 'vs.linhaAria': "Goal Card versions", 'vs.atualizar': "Refresh versions", 'vs.comparar': "Compare:", 'vs.origem': "From version", 'vs.trocar': "Swap versions", 'vs.destino': "To version", 'vs.exibir': "Show:", 'vs.soMudou': "Only what changed", 'vs.verLog': "History in the Action Log", 'vs.erroTit': "Could not load the versions", 'vs.oficialN': "Official: v{n}", 'vs.oficial': "Official", 'vs.semTit': "No version yet", 'vs.semTxt': "This card is a draft: v1 is created on the first submission.", 'vs.semDica': "Drafts do not create versions; each submission, resubmission or approved CR creates an immutable version.", 'vs.abrirCard': "Open the Goal Card", 'vs.semLinha': "no submitted version", 'vs.dec.aprovar': "Approved", 'vs.dec.devolver': "Returned for changes", 'vs.dec.negar': "Denied", 'vs.dec.pendente': "Awaiting the approval group decision", 'vs.noAria': "Version {v}: {m}. {d}", 'vs.mot.submissao': "Submission", 'vs.mot.resubmissao': "Resubmission", 'vs.mot.reabertura': "Reopening", 'vs.mot.cr': "Change Request", 'vs.de': "From", 'vs.para': "To", 'vs.unicaTit': "v{v} · only version", 'vs.unicaTxt': "The comparison appears from the second submission on.", 'vs.campo': "Field", 'vs.notaPend': "v{v} awaits the approval group decision.", 'vs.mudou1': "1 field changed", 'vs.mudou': "{n} fields changed", 'vs.igual1': "1 unchanged", 'vs.iguais': "{n} unchanged", 'vs.nadaMudou': "No field changed between the two versions", 'vs.caption': "Comparison of v{a} with v{b}", 'vs.alterado': "Changed", 'vs.pedido': "Change requested", 'vs.verIguais': "Also show the {n} unchanged fields", 'vs.link1': "1 version", 'vs.link': "{n} versions", 'vs.historico': "History", 'tela.versoes': "Versions", 'lg.resumoAria': "Events by type", 'lg.exportar': "Export to Excel", 'lg.atualizar': "Refresh Action Log", 'lg.periodo': "Period:", 'lg.meta': "Goal:", 'lg.secao': "Section:", 'lg.tipo': "Type:", 'lg.linha': "Timeline", 'lg.imutavel': "Immutable record: no event can be edited or deleted", 'lg.erroTit': "Could not load the Action Log", 'lg.f.submeteu': "submitted v{v}", 'lg.f.resubmeteu': "resubmitted as v{v}", 'lg.f.recolheu': "withdrew the submission", 'lg.f.aprovar': "approved v{v}, now the official version", 'lg.f.devolver': "returned v{v} for changes", 'lg.f.negar': "denied the goal (v{v})", 'lg.f.reabriu': "reopened the card in the initial cycle window (RN-17)", 'lg.f.comentou': "commented on {s}", 'lg.hoje': "Today", 'lg.ontem': "Yesterday", 'lg.r.todos': "Events", 'lg.r.decSub': "approve, return or deny", 'lg.r.negSub': "blocked attempts", 'lg.r.cfgSub': "changes in T11", 'lg.r.comSub': "from the approval group", 'lg.r.subSub': "includes resubmissions", 'lg.tp.submissao': "Submission", 'lg.tp.recolhimento': "Withdrawal", 'lg.tp.decisao': "Decision", 'lg.tp.reabertura': "Reopening", 'lg.tp.comentario': "Comment", 'lg.tp.configuracao': "Settings", 'lg.tp.acesso_negado': "Access denied", 'lg.per.7': "7 days", 'lg.per.30': "30 days", 'lg.per.ciclo': "Whole cycle", 'lg.todasMetas': "All goals", 'lg.todasSecoes': "All sections", 'lg.todosTipos': "All types", 'lg.tirarCard': "Remove the Goal Card filter", 'lg.limpar': "Clear filters", 'lg.vazioTit': "No events in this view", 'lg.vazioTxt': "Widen the period or remove a filter.", 'lg.antesDepois': "Value before and after", 'lg.antes': "Before", 'lg.depois': "After", 'lg.metaN': "Goal {n}", 'lg.versoes': "Versions", 'lg.papel.contribuidor': "Contributor", 'lg.papel.aprovador': "Approval group", 'lg.papel.consulta': "Read-only", 'lg.papel.admin': "Administrator", 'lg.mais': "Show {n} more ({t} left)", 'lg.col.quando': "When", 'lg.col.tipo': "Type", 'lg.col.quem': "Who", 'lg.col.papel': "Role", 'lg.col.bu': "BU", 'lg.col.meta': "Goal", 'lg.col.card': "Goal Card", 'lg.col.secao': "Section", 'lg.col.versao': "Version", 'lg.col.detalhe': "Detail", 'lg.col.antes': "Before", 'lg.col.depois': "After", 'lg.exportado': "{n} events exported", 'lg.erroExportar': "Could not export.", 'cf.eyebrow': "Administration", 'cf.titulo': "Cycle settings", 'cf.resumoAria': "Cycle settings summary", 'cf.atualizar': "Refresh settings", 'cf.secao': "Section:", 'cf.clonar': "New cycle from this one", 'cf.clonarAno': "Create AIP {a} from this one", 'cf.clonarOk': "Create cycle", 'cf.descartar': "Discard", 'cf.salvar': "Save changes", 'cf.salvando': "Saving…", 'cf.erroTit': "Could not load the settings", 'cf.aba.ciclo': "Cycle", 'cf.aba.bus': "Business Units", 'cf.aba.grupos': "Groups", 'cf.aba.metas': "Goals and weights", 'cf.aba.parametros': "Parameters", 'cf.sub.ciclo': "Name, journey windows and standard exceptions text", 'cf.sub.bus': "Cycle BUs, people per group and points per BU", 'cf.sub.grupos': "Who fills in, who approves and who reads", 'cf.sub.metas': "Cascade goals and the weight of each one per BU", 'cf.sub.parametros': "Limits used by the application rules", 'cf.marcaErro': "Changed, with an issue", 'cf.marcaAlt': "Changed, not saved", 'cf.r.bus': "Active Business Units", 'cf.r.busSub': "in {p} regions", 'cf.r.pessoas': "People in groups", 'cf.r.pessoasSub': "{a} in the approval group", 'cf.r.metas': "Goals", 'cf.r.metasSub': "{n} new this cycle", 'cf.r.pontos': "BUs at {t} pts", 'cf.r.pontosOk': "All close the total (RN-16)", 'cf.r.pontosPend': "{n} with a sum different from the total", 'cf.r.oficial': "Official Goal Cards", 'cf.r.etapa': "Current stage: {e}", 'cf.e.nome': "Enter the cycle name.", 'cf.e.data': "Enter the date for {e}.", 'cf.e.ordem': "{e} must end after the previous stage.", 'cf.e.titulo': "Goal {n} needs a title.", 'cf.e.soma': "{b} adds up to {s} of {t} pts.", 'cf.e.semAprov': "The approval group needs at least one person.", 'cf.e.semAdmin': "The cycle needs at least one administrator.", 'cf.e.faixa': "{p}: use a value between {a} and {b}.", 'cf.e.semBu': "The cycle needs at least one active BU.", 'cf.e.matVazia': "Enter the employee ID or pick the person from the list.", 'cf.e.matNao': "Employee ID {m} is not in the Portal user directory.", 'cf.e.jaNoGrupo': "{n} is already in this group.", 'cf.e.rn16Srv': "The server refused: a BU has a weight sum different from the total (RN-16).", 'cf.e.salvar': "Could not save. Review the issues and try again.", 'cf.e.clonar': "Could not create the new cycle.", 'cf.de': "From", 'cf.ate': "to", 'cf.du1': "1 business day", 'cf.du': "{n} business days", 'cf.ident': "Identification", 'cf.ano': "Year", 'cf.situacao': "Status", 'cf.aberto': "Open", 'cf.nome': "Cycle name", 'cf.texto': "Standard exceptions text", 'cf.textoAjuda': "Shown on every Goal Card, in Exceptions and Considerations; BUs cannot edit it.", 'cf.janelas': "Cycle windows", 'cf.janelasAjuda': "The dates drive the journey shown on Home, the Cycle dashboard and BU goals. Each stage starts when the previous one ends.", 'cf.g.todos': "All", 'cf.g.contribuidor': "Contributors", 'cf.g.aprovacao': "Approval", 'cf.g.consulta': "Read-only", 'cf.g.admin': "Administrators", 'cf.g1.contribuidor': "Contributor", 'cf.g1.aprovacao': "Approval group", 'cf.g1.consulta': "Read-only", 'cf.g1.admin': "Administrator", 'cf.ativaAria': "{b} in the cycle", 'cf.ativa': "Active", 'cf.inativa': "Out", 'cf.verMetas': "Goals", 'cf.pontos': "Points", 'cf.noCiclo': "In cycle", 'cf.busAjuda': "A BU out of the cycle receives no Goal Cards or notifications and leaves the point sums.", 'cf.somaDe': "{s} of {t}", 'cf.todasBus': "All BUs", 'cf.remover': "Remove {n} from {g}", 'cf.removerCurto': "Remove from group", 'cf.semPessoas': "No one matches this filter.", 'cf.addTit': "Add a person to a group", 'cf.matricula': "Employee ID", 'cf.matriculaPh': "Employee ID or name", 'cf.grupo': "Group", 'cf.adicionar': "Add", 'cf.buscaPh': "Search by name, ID or e-mail", 'cf.pessoa': "Person", 'cf.tipo': "Type", 'cf.cooFixo': "Comes from the COO cascade", 'cf.tituloAria': "Title of goal {n}", 'cf.nova': "New", 'cf.pesoAria': "Weight of goal {n} in {b}", 'cf.totalBu': "Total per BU (must close {t} pts)", 'cf.metasAjuda': "Each active BU must add up to {t} pts. {c} pts come from the COO scorecard result; the rest is split across the specific goals.", 'cf.rn16': "{n} BU(s) do not close the total yet. The server only saves when all of them do (RN-16).", 'cf.par.pesoTotal': "Total points per BU", 'cf.par.pesoResultadoCoo': "COO result points", 'cf.par.minComentario': "Minimum comment length", 'cf.par.anexoMb': "Maximum attachment size", 'cf.parTxt.pesoTotal': "Sum each BU must close to save its goals (RN-16).", 'cf.parTxt.pesoResultadoCoo': "Share of each BU tied to the COO scorecard result.", 'cf.parTxt.minComentario': "Required to return or deny a Goal Card (RN-08, RN-09).", 'cf.parTxt.anexoMb': "Per file, for Change Requests and evidence (phases 2 and 3).", 'cf.un.pts': "pts", 'cf.un.caracteres': "characters", 'cf.un.MB': "MB", 'cf.faixa': "Between {a} and {b}", 'cf.paramAjuda': "Limits live in the database (AIP_PARAMETRO); the interface never hard-codes them.", 'cf.tudoSalvo': "All saved", 'cf.pendente': "Issue in: {a}.", 'cf.naoSalvas': "Unsaved changes in: {a}", 'cf.ultimas': "Latest changes", 'cf.verLog': "See all in the Action Log", 'cf.removido': "{n} leaves the group when you save", 'cf.incluido': "{n} joins as {g} when you save", 'cf.descartado': "Changes discarded", 'cf.salvo': "Settings saved (simulation, nothing saved)", 'cf.dlgTit': "Create the AIP {a} cycle?", 'cf.dlgTxt': "The new cycle starts with the structure of {c}:", 'cf.dlgBus': "{n} Business Units", 'cf.dlgPessoas': "{n} people in groups", 'cf.dlgMetas': "{n} goals with the current weights", 'cf.dlgJanelas': "Blank windows for you to set", 'cf.clonado': "{c} created (simulation, nothing saved)"
     }
   });
 
@@ -3012,6 +3149,10 @@ window.VBMSetup = (function () {
     $('gcVoltarTxt').textContent = S.t('gc.voltar', { b: d.bu.sigla });
     var modo = d.modo;
     $('gcModo').innerHTML = ico(modo === 'edicao' ? 'i-pen' : 'i-lock') + '<span>' + esc(S.t('gc.modo.' + modo)) + '</span>';
+    // Versões (T06) e histórico do card no Action Log (T07)
+    $('gcVersoes').href = '#versoes?card=' + encodeURIComponent(d.card); $('gcVersoes').hidden = !d.versao;
+    $('gcVersoesTxt').textContent = S.t(d.versao === 1 ? 'vs.link1' : 'vs.link', { n: d.versao || 0 });
+    $('gcHistorico').href = '#action-log?card=' + encodeURIComponent(d.card);
     gcRenderLinha(d);
     var pre = gcObrigatorios(gc.edit);
     $('gcSecoes').innerHTML = gcFicha(d, pre);
@@ -3782,6 +3923,178 @@ window.VBMSetup = (function () {
     }).catch(function () { toast(S.t('lg.erroExportar'), true); }).then(function () { b.disabled = false; });
   });
 
+  // ═══ T06 · Versões (§7.2) ═══
+  // Dados: GET api/versoes?card=. A tela lista as versões (mais recente primeiro) e compara duas, campo a campo,
+  // na ordem das 7 seções do Goal Card. Por padrão compara a última com a anterior e mostra só o que mudou.
+  var vs = { dados: null, card: '', a: null, b: null, so: true };
+  function vsLerParams() {
+    var q = new URLSearchParams((location.hash.split('?')[1]) || '');
+    vs.card = q.get('card') || ''; vs.a = Number(q.get('de')) || null; vs.b = Number(q.get('para')) || null;
+  }
+  function vsGravar() {
+    var q = new URLSearchParams(); q.set('card', vs.card);
+    if (vs.dados && vs.dados.versoes.length > 1) { q.set('de', vs.a); q.set('para', vs.b); }
+    var alvo = '#versoes?' + q.toString();
+    if (location.hash !== alvo) history.replaceState(null, '', location.pathname + location.search + alvo);
+  }
+  function vsEstado(qual) {
+    $('vsCorpo').hidden = qual !== 'ok'; $('vsErro').hidden = qual !== 'erro'; $('vsSemAcesso').hidden = qual !== 'acesso';
+    $('vsLinha').parentNode.hidden = qual !== 'ok'; $('vsFiltros').hidden = qual !== 'ok';
+  }
+  function vsCarregar(fresco) {
+    if (!vs.card) return vsEstado('acesso');
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    return fetch('api/versoes?card=' + encodeURIComponent(vs.card) + (fresco ? '&fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
+        if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
+        return r.json();
+      })
+      .then(function (j) {
+        vs.dados = j;
+        var ns = j.versoes.map(function (v) { return v.versao; });
+        if (ns.indexOf(vs.b) < 0) vs.b = ns[0] || null;
+        if (ns.indexOf(vs.a) < 0 || vs.a === vs.b) vs.a = ns.filter(function (n) { return n !== vs.b; })[0] || null;
+        if (fresco) toast(S.t('t01.atualizada'));
+        vsGravar(); vsRender();
+      })
+      .catch(function (err) {
+        if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] versoes:', err);
+        var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
+        if (tipo === 'acesso') return vsEstado('acesso');
+        $('vsErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
+        vsEstado('erro');
+      })
+      .then(function () { clearTimeout(timer); });
+  }
+  // Valor de cada campo em texto (para comparar e exibir)
+  function vsCampos(sec) {
+    var r = sec.ruler || {}, a = sec.area || {}, x = sec.exceptions || {};
+    return [
+      { id: 'objective', v: sec.objective },
+      { id: 'formula', v: sec.formula },
+      { id: 'unit', v: sec.unit },
+      { id: 'ruler', v: S.t('gc.regua.min') + ' ' + (r.min == null ? '—' : r.min) + ' · ' + S.t('gc.regua.meta') + ' ' + (r.meta == null ? '—' : r.meta) + ' · ' + S.t('gc.regua.exc') + ' ' + (r.exc == null ? '—' : r.exc) },
+      { id: 'area', v: (a.area || '—') + ' · ' + (a.responsavel || '—') },
+      { id: 'evidence', v: sec.evidence },
+      { id: 'exceptions', v: x.bu || '', padrao: x.padrao }
+    ];
+  }
+  function vsVersao(n) { return vs.dados.versoes.filter(function (v) { return v.versao === n; })[0]; }
+  function vsDataHora(isoTxt) { return dataCurta(isoTxt.slice(0, 10)) + ' · ' + isoTxt.slice(11, 16); }
+  function vsRender() {
+    var d = vs.dados; if (!d) return;
+    vsEstado('ok');
+    var m = d.meta;
+    $('vsCiclo').textContent = (d.ciclo.nome ? S.t('nav.ciclo') + ' ' + d.ciclo.nome : '') + ' · ' + d.bu.sigla;
+    $('vsNum').textContent = m.numero ? String(m.numero).padStart(2, '0') : 'COO';
+    $('vsTitulo').textContent = m.titulo;
+    $('vsChips').innerHTML = '<span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span><span class="gc-chip">' + esc(d.card) + '</span>' +
+      (d.oficial ? '<span class="vs-selo">' + ico('i-st-aprovado') + esc(S.t('vs.oficialN', { n: d.oficial })) + '</span>' : '');
+    $('vsVoltar').href = '#goal-card?card=' + encodeURIComponent(d.card);
+    $('vsVoltarTxt').textContent = 'Goal Card ' + d.card;
+    $('vsLog').href = '#action-log?card=' + encodeURIComponent(d.card);
+    vsRenderLinha(); vsRenderSeletor();
+    var ns = d.versoes.map(function (v) { return v.versao; });
+    var op = function (sel) { return ns.map(function (n) { return '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>v' + n + (vsVersao(n).oficial ? ' · ' + S.t('vs.oficial') : '') + '</option>'; }).join(''); };
+    $('vsA').innerHTML = op(vs.a); $('vsB').innerHTML = op(vs.b);
+    $('vsComparar').hidden = ns.length < 2;
+    $('vsSo').parentNode.hidden = ns.length < 2;
+    $('vsSo').setAttribute('aria-checked', String(vs.so));
+    $('vsAtualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
+    if (!ns.length) {
+      $('vsTitComp').textContent = S.t('vs.semTit'); $('vsResumo').textContent = '';
+      $('vsConteudo').innerHTML = '<div class="estado"><svg class="ico" aria-hidden="true"><use href="#i-pen"/></svg><p class="estado-tit">' + esc(S.t('vs.semTxt')) + '</p>' +
+        '<p class="estado-txt">' + esc(S.t('vs.semDica')) + '</p><a class="btn btn-sec" href="#goal-card?card=' + encodeURIComponent(d.card) + '">' + esc(S.t('vs.abrirCard')) + '</a></div>';
+      return;
+    }
+    if (ns.length === 1) { vsRenderUnica(vsVersao(ns[0])); return; }
+    vsRenderComparacao(vsVersao(vs.a), vsVersao(vs.b));
+  }
+  function vsRenderLinha() {
+    var d = vs.dados, lista = d.versoes.slice().reverse();
+    if (!lista.length) { $('vsLinha').innerHTML = '<li class="vs-no is-vazio"><span class="vs-no-ponto" aria-hidden="true"></span><span class="vs-no-v">' + esc(S.t('est.rascunho')) + '</span><span class="vs-no-txt">' + esc(S.t('vs.semLinha')) + '</span></li>'; return; }
+    $('vsLinha').innerHTML = lista.map(function (v) {
+      var dec = v.decisao, sel = v.versao === vs.a ? ' is-a' : v.versao === vs.b ? ' is-b' : '';
+      var decTxt = dec ? S.t('vs.dec.' + dec.tipo) + ' · ' + dec.quem + ' · ' + vsDataHora(dec.quando) : S.t('vs.dec.pendente');
+      return '<li class="vs-no' + sel + (v.oficial ? ' is-oficial' : '') + ' vs-d-' + (dec ? dec.tipo : 'pendente') + '">' +
+        '<button type="button" class="vs-no-btn" data-v="' + v.versao + '" aria-label="' + esc(S.t('vs.noAria', { v: v.versao, m: S.t('vs.mot.' + v.motivo), d: decTxt })) + '">' +
+        '<span class="vs-no-ponto" aria-hidden="true">' + ico(dec ? (dec.tipo === 'aprovar' ? 'i-st-aprovado' : dec.tipo === 'negar' ? 'i-st-negado' : 'i-history') : 'i-clock') + '</span>' +
+        '<span class="vs-no-v">v' + v.versao + (v.oficial ? ' <em>' + esc(S.t('vs.oficial')) + '</em>' : '') + (sel ? ' <i class="vs-tag">' + (sel === ' is-a' ? S.t('vs.de') : S.t('vs.para')) + '</i>' : '') + '</span>' +
+        '<span class="vs-no-txt">' + esc(S.t('vs.mot.' + v.motivo)) + ' · ' + esc(v.autor) + ' · ' + esc(vsDataHora(v.quando)) + '</span>' +
+        '<span class="vs-no-dec">' + esc(decTxt) + '</span></button></li>';
+    }).join('');
+  }
+  function vsRenderUnica(v) {
+    $('vsTitComp').textContent = S.t('vs.unicaTit', { v: v.versao });
+    $('vsResumo').textContent = S.t('vs.unicaTxt');
+    $('vsConteudo').innerHTML = '<div class="p2-tabela-wrap"><table class="p2-tabela vs-tabela vs-unica"><caption class="sr-only">v' + v.versao + '</caption><thead><tr><th scope="col">' + esc(S.t('vs.campo')) + '</th><th scope="col">v' + v.versao + '</th></tr></thead><tbody>' +
+      vsCampos(v.secoes).map(function (c) { return '<tr><th scope="row">' + esc(GC_NOMES[c.id]) + '</th><td>' + vsValor(c) + '</td></tr>'; }).join('') + '</tbody></table></div>' + vsDecisaoHtml(v);
+  }
+  function vsValor(c) { return '<span class="vs-v">' + (c.v ? esc(c.v) : '<span class="cf-mudo">' + esc(S.t('gc.naoPreenchido')) + '</span>') + '</span>' + (c.padrao ? '<span class="vs-padrao">' + ico('i-lock') + esc(S.t('gc.selo.ciclo')) + ': ' + esc(c.padrao) + '</span>' : ''); }
+  function vsDecisaoHtml(v) {
+    var dec = v.decisao; if (!dec) return '<p class="vs-nota">' + ico('i-clock') + esc(S.t('vs.notaPend', { v: v.versao })) + '</p>';
+    return '<p class="vs-nota vs-d-' + dec.tipo + '">' + ico(dec.tipo === 'aprovar' ? 'i-st-aprovado' : dec.tipo === 'negar' ? 'i-st-negado' : 'i-history') +
+      '<span><b>' + esc(S.t('vs.dec.' + dec.tipo)) + '</b> · ' + esc(dec.quem) + ' · ' + esc(vsDataHora(dec.quando)) + (dec.comentario ? '<q>' + esc(dec.comentario) + '</q>' : '') + '</span></p>';
+  }
+  function vsRenderComparacao(va, vb) {
+    var ca = vsCampos(va.secoes), cb = vsCampos(vb.secoes);
+    var linhas = ca.map(function (a, i) { return { id: a.id, a: a, b: cb[i], mudou: String(a.v || '') !== String(cb[i].v || '') }; });
+    var mudaram = linhas.filter(function (l) { return l.mudou; }).length, iguais = linhas.length - mudaram;
+    $('vsTitComp').textContent = 'v' + va.versao + ' → v' + vb.versao;
+    $('vsResumo').innerHTML = mudaram ? '<span class="vs-n-mudou">' + esc(S.t(mudaram === 1 ? 'vs.mudou1' : 'vs.mudou', { n: mudaram })) + '</span> · ' + esc(S.t(iguais === 1 ? 'vs.igual1' : 'vs.iguais', { n: iguais })) : esc(S.t('vs.nadaMudou'));
+    var visiveis = vs.so && mudaram ? linhas.filter(function (l) { return l.mudou; }) : linhas;
+    var cabA = 'v' + va.versao + (va.oficial ? ' · ' + S.t('vs.oficial') : ''), cabB = 'v' + vb.versao + (vb.oficial ? ' · ' + S.t('vs.oficial') : '');
+    $('vsConteudo').innerHTML = '<div class="p2-tabela-wrap"><table class="p2-tabela vs-tabela"><caption class="sr-only">' + esc(S.t('vs.caption', { a: va.versao, b: vb.versao })) + '</caption><thead><tr>' +
+      '<th scope="col">' + esc(S.t('vs.campo')) + '</th><th scope="col"><span class="vs-tag">' + esc(S.t('vs.de')) + '</span> ' + esc(cabA) + '<small>' + esc(vsDataHora(va.quando)) + '</small></th>' +
+      '<th scope="col"><span class="vs-tag is-b">' + esc(S.t('vs.para')) + '</span> ' + esc(cabB) + '<small>' + esc(vsDataHora(vb.quando)) + '</small></th></tr></thead><tbody>' +
+      visiveis.map(function (l) {
+        var revis = va.decisao && (va.decisao.secoes || []).indexOf(l.id) >= 0;
+        return '<tr class="' + (l.mudou ? 'is-mudou' : 'is-igual') + '"><th scope="row">' + esc(GC_NOMES[l.id]) +
+          (l.mudou ? '<span class="vs-flag">' + esc(S.t('vs.alterado')) + '</span>' : '') + (revis ? '<span class="vs-flag is-ajustar">' + esc(S.t('vs.pedido')) + '</span>' : '') + '</th>' +
+          '<td class="vs-a">' + vsValor(l.a) + '</td><td class="vs-b">' + vsValor(l.b) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (vs.so && mudaram && iguais ? '<button type="button" class="cf-link vs-ver-iguais" id="vsVerIguais">' + esc(S.t('vs.verIguais', { n: iguais })) + '</button>' : '') +
+      '<div class="vs-decisoes">' + vsDecisaoHtml(va) + vsDecisaoHtml(vb) + '</div>';
+  }
+  // Seletor das metas da BU (mesma lista do Goal Card)
+  function vsRenderSeletor() {
+    var d = vs.dados, bu = d.bu.sigla, lista = gcListas[bu];
+    var pinta = function (l) {
+      $('vsSel').innerHTML = l.map(function (x) { return '<option value="' + esc(x.card) + '"' + (x.card === d.card ? ' selected' : '') + '>' + esc((x.meta.numero ? String(x.meta.numero).padStart(2, '0') : 'COO') + ' · ' + x.meta.titulo + (x.versao ? ' — v' + x.versao : ' — ' + S.t('est.rascunho'))) + '</option>'; }).join('');
+      var k = l.map(function (x) { return x.card; }).indexOf(d.card);
+      $('vsAnt').disabled = k <= 0; $('vsProx').disabled = k < 0 || k >= l.length - 1;
+      $('vsAnt').setAttribute('data-card', k > 0 ? l[k - 1].card : ''); $('vsProx').setAttribute('data-card', k >= 0 && k < l.length - 1 ? l[k + 1].card : '');
+    };
+    if (lista) return pinta(lista);
+    $('vsSel').innerHTML = '<option>' + esc(d.card) + '</option>';
+    fetch('api/metas?bu=' + encodeURIComponent(bu), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.metas) { gcListas[bu] = j.metas; if (vs.dados && vs.dados.bu.sigla === bu) pinta(j.metas); } })
+      .catch(function () {});
+  }
+  function vsIrPara(card) { if (card && card !== vs.card) location.hash = '#versoes?card=' + encodeURIComponent(card); }
+  $('vsSel').addEventListener('change', function () { vsIrPara(this.value); });
+  $('vsAnt').addEventListener('click', function () { vsIrPara(this.getAttribute('data-card')); });
+  $('vsProx').addEventListener('click', function () { vsIrPara(this.getAttribute('data-card')); });
+  $('vsA').addEventListener('change', function () { vs.a = Number(this.value); if (vs.a === vs.b) vs.b = vs.dados.versoes.map(function (v) { return v.versao; }).filter(function (n) { return n !== vs.a; })[0]; vsGravar(); vsRender(); });
+  $('vsB').addEventListener('change', function () { vs.b = Number(this.value); if (vs.a === vs.b) vs.a = vs.dados.versoes.map(function (v) { return v.versao; }).filter(function (n) { return n !== vs.b; })[0]; vsGravar(); vsRender(); });
+  $('vsTrocar').addEventListener('click', function () { var t = vs.a; vs.a = vs.b; vs.b = t; vsGravar(); vsRender(); });
+  $('vsSo').addEventListener('click', function () { vs.so = !vs.so; vsRender(); });
+  $('vsConteudo').addEventListener('click', function (e) { if (e.target.closest('#vsVerIguais')) { vs.so = false; vsRender(); } });
+  // Clique numa versão da linha: vira o "para"; a anterior a ela vira o "de"
+  $('vsLinha').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-v]'); if (!b || !vs.dados || vs.dados.versoes.length < 2) return;
+    var n = Number(b.getAttribute('data-v')), ns = vs.dados.versoes.map(function (v) { return v.versao; });
+    if (n === vs.b) return;
+    vs.b = n; vs.a = ns.filter(function (x) { return x < n; })[0] || ns.filter(function (x) { return x !== n; })[0];
+    vsGravar(); vsRender();
+  });
+  $('vsAtualizar').addEventListener('click', function () { vsCarregar(true); });
+  $('vsTentar').addEventListener('click', function () { vsCarregar(true); });
+
   // ── T12 · Sem acesso: Voltar volta à tela anterior (ou ao Início); ao aparecer, o título recebe o foco ──
   document.querySelectorAll('.acesso-bloqueio').forEach(function (sec) {
     sec.querySelector('[data-voltar]').addEventListener('click', function () { if (history.length > 1) history.back(); else location.hash = '#inicio'; });
@@ -3806,12 +4119,13 @@ window.VBMSetup = (function () {
   document.addEventListener('click', function (e) { if ($('topMenu').classList.contains('is-aberto') && !e.target.closest('#topMenu, #topMenuBtn')) abrirMenu(false); });
 
   // ── Vistas pelo hash ──
-  var VISTAS = ['inicio', 'desdobramento', 'painel', 'metas', 'goal-card', 'aprovacoes', 'action-log', 'configuracao'];
+  var VISTAS = ['inicio', 'desdobramento', 'painel', 'metas', 'goal-card', 'versoes', 'aprovacoes', 'action-log', 'configuracao'];
   function rota() {
+    if ($('m3Dlg').open) $('m3Dlg').close(); // link de dentro do popup do Goal Card (ex.: Versões) leva para outra tela
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
     // Endereço fora do catálogo (ex.: telas descontinuadas, como T05 e T08 — D-20) volta ao Início
     if (VISTAS.indexOf(h) < 0) { location.replace('#inicio'); return; }
-    var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card' || h === 'configuracao' || h === 'action-log';
+    var pronta = h === 'inicio' || h === 'painel' || h === 'metas' || h === 'desdobramento' || h === 'goal-card' || h === 'configuracao' || h === 'action-log' || h === 'versoes';
     $('vistaInicio').hidden = h !== 'inicio';
     document.body.classList.toggle('is-inicio', h === 'inicio');
     document.body.classList.toggle('is-largo', h !== 'inicio'); // todas as telas ocupam a largura da janela
@@ -3821,6 +4135,7 @@ window.VBMSetup = (function () {
     $('vistaGoalCard').hidden = h !== 'goal-card';
     $('vistaConfig').hidden = h !== 'configuracao';
     $('vistaLog').hidden = h !== 'action-log';
+    $('vistaVersoes').hidden = h !== 'versoes';
     $('vistaConstrucao').hidden = pronta;
     if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
     if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
@@ -3828,7 +4143,8 @@ window.VBMSetup = (function () {
     if (h === 'goal-card') { gcLerParams(); gcCarregar(); }
     if (h === 'configuracao') { cfLerAba(); cfCarregar(false); }
     if (h === 'action-log') { lgLerFiltro(); lgCarregar(false); }
-    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : h === 'configuracao' ? S.t('cf.titulo') : h === 'action-log' ? 'Action Log' : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
+    if (h === 'versoes') { vsLerParams(); vsCarregar(false); }
+    var nome = h === 'inicio' ? '' : h === 'painel' ? S.t('p2.tituloAba') : h === 'metas' ? S.t('m3.titulo') : h === 'desdobramento' ? S.t('tela.desdobramento') : h === 'goal-card' ? 'Goal Card' + (gc.card ? ' · ' + gc.card : '') : h === 'configuracao' ? S.t('cf.titulo') : h === 'action-log' ? 'Action Log' : h === 'versoes' ? S.t('vs.titulo') + (vs.card ? ' · ' + vs.card : '') : (S.t('tela.' + h) !== 'tela.' + h ? S.t('tela.' + h) : h);
     if (!pronta) $('titConstr').textContent = nome;
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
@@ -3840,8 +4156,8 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // Idioma, formato e tema redesenham o que o JS monta
-  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); });
-  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); });
+  S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender(); });
+  S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender(); });
 
   rota();
   carregar();

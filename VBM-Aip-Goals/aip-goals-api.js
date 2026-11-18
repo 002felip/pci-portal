@@ -37,7 +37,7 @@
  *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, cicloExemplo } = require('./dados-exemplo');
+const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, versoesExemplo, cicloExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -516,6 +516,25 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     } catch (err) {
       console.error(`${TAG} /action-log:`, err.message);
       res.status(500).json({ error: 'Não foi possível carregar o Action Log.', codigo: 'ERRO' });
+    }
+  });
+
+  // T06 Versões (§7.2): todos os perfis com papel leem; ninguém altera. Rascunho não tem versão (lista vazia).
+  router.get('/versoes', async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
+      const hoje = agora();
+      if (!papeisDe(email, hoje).length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const codigo = String(req.query.card || '');
+      if (!/^GC-[A-Z]{2,3}-\d{2}$/.test(codigo)) return res.status(400).json({ error: 'Goal Card inválido.', codigo: 'CARD' });
+      const v = versoesExemplo(codigo, hoje);
+      if (!v) return res.status(404).json({ error: 'Goal Card não encontrado.', codigo: 'NAO_ENCONTRADO' });
+      res.json({ ...v, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
+    } catch (err) {
+      console.error(`${TAG} /versoes:`, err.message);
+      res.status(500).json({ error: 'Não foi possível carregar as versões.', codigo: 'ERRO' });
     }
   });
 

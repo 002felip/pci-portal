@@ -395,4 +395,39 @@ function actionLogExemplo(hoje = new Date()) {
   return { ciclo: base.ciclo, eventos: ev, bus: base.ciclo.bus, metas: [META_RESULTADO_COO].concat(METAS_BU).map((m) => ({ numero: m.numero, titulo: m.titulo })) };
 }
 
-module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };
+// ── T06 Versões (§7.2): cada submissão gera uma versão imutável (snapshot das 7 seções). Rascunho não gera versão. ──
+function versoesExemplo(codigo, hoje = new Date()) {
+  const gc = goalCardExemplo(codigo, hoje);
+  if (!gc) return null;
+  const base = { ciclo: gc.ciclo, card: gc.card, bu: gc.bu, meta: gc.meta, estado: gc.estado, versaoAtual: gc.versao, contribuidor: gc.submetidoPor };
+  if (!gc.versao) return { ...base, versoes: [], oficial: null };
+  const n = gc.meta.numero, k = (n + gc.bu.sigla.length) % PESSOAS.length;
+  const autor = gc.submetidoPor || PESSOAS[k], aprov = APROVADORES[(n + gc.bu.sigla.length) % APROVADORES.length];
+  const p = gc.desde.split('-').map(Number), d0 = new Date(p[0], p[1] - 1, p[2]);
+  const quando = (dias, h) => `${iso(somarDiasUteis(d0, -dias))}T${h}:00`;
+  const atual = JSON.parse(JSON.stringify(gc.secoes));
+  // No exemplo, a versão atual de um card em revisão/aprovação já tem área e evidência (o rascunho em edição é outro)
+  if (!atual.area.area) atual.area = conteudoMeta(n, gc.ciclo.ano).secoes.area;
+  if (!atual.evidence) atual.evidence = conteudoMeta(n, gc.ciclo.ano).secoes.evidence;
+  const versoes = [];
+  if (gc.versao > 1) {
+    // v1: régua mais apertada, fórmula preliminar e sem a exceção da BU; devolvida pelo grupo de aprovação
+    const v1 = JSON.parse(JSON.stringify(atual));
+    const passo = atual.ruler.min > atual.ruler.exc ? -2 : 2;
+    v1.ruler = { ...atual.ruler, min: atual.ruler.min + passo };
+    v1.formula = atual.formula.includes(' vs budget') ? atual.formula.replace(' vs budget', ' vs plan') : `${atual.formula} (preliminary)`;
+    v1.exceptions = { ...atual.exceptions, bu: '' };
+    atual.exceptions = { ...atual.exceptions, bu: 'FX effect excluded from the result, as agreed with P&CI.' };
+    versoes.push({ versao: 1, quando: quando(9, '10:12'), autor, motivo: 'submissao', secoes: v1,
+      decisao: { tipo: 'devolver', quem: aprov, quando: quando(6, '16:48'), secoes: ['ruler', 'formula'], comentario: 'Minimum is too close to the target; review the ruler with the budget sensitivity.' } });
+  }
+  const dec = { aprovado: 'aprovar', negado: 'negar', em_revisao: 'devolver' }[gc.estado];
+  versoes.push({ versao: gc.versao, quando: quando(gc.versao > 1 ? 2 : 3, '09:40'), autor, motivo: gc.versao > 1 ? 'resubmissao' : 'submissao', secoes: atual,
+    decisao: dec ? { tipo: dec, quem: aprov, quando: quando(0, '15:20'), secoes: dec === 'devolver' ? ['ruler', 'unit'] : [],
+      comentario: dec === 'negar' ? 'Goal outside the cascade agreed with the COO.' : dec === 'devolver' ? 'Use the same unit as the COO scorecard (%).' : '' } : null });
+  const oficial = gc.estado === 'aprovado' ? gc.versao : null;
+  versoes.forEach((v) => { v.oficial = v.versao === oficial; });
+  return { ...base, versoes: versoes.reverse(), oficial };
+}
+
+module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, versoesExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };

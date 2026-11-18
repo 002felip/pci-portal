@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, Desdobramento, T02, T03 e T04 Goal Card publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, Desdobramento, T02, T03, T04 Goal Card, T06 Versões, T07 Action Log e T11 Configuração do ciclo publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -65,8 +65,10 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
 | `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
 | `#goal-card?card=` | T04 Goal Card (também em popup pela T03) | publicada |
+| `#versoes?card=&de=&para=` | T06 Versões (pelos links do Goal Card e do Action Log) | publicada |
+| `#action-log?bu=&meta=&secao=&tipo=&periodo=&card=` | T07 Action Log (submenu Administração) | publicada |
+| `#configuracao?aba=` | T11 Configuração do ciclo (submenu Administração, só o administrador) | publicada |
 | `#aprovacoes` | T14 Aprovações (submenu Administração, só o grupo de aprovação) | em construção |
-| `#action-log`, `#configuracao` | T07 e T11 (submenu Administração) | "Tela em construção" |
 
 T05 (visão imprimível) e T08 (Ações) foram descontinuadas (D-20): saíram do menu e do catálogo, e qualquer
 endereço fora da lista de vistas (como o antigo `#acoes`) volta ao Início.
@@ -150,6 +152,48 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
   campos que faltam) e responde `simulado: true` até o modelo de dados (P-12). `POST /goal-card/decisao` fica
   pronto para a T14 (RN-06, RN-08, RN-09, RN-12).
 
+### T06 Versões
+
+`#versoes?card=GC-SOS-03&de=1&para=2`, aberta pelos links "Versões" do Goal Card (ao lado do modo, também no popup
+da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
+
+- **Linha das versões** (v1 → v2…): motivo, autor, data e a decisão de cada uma, com o selo da oficial; o clique
+  numa versão compara com a anterior.
+- **Comparação:** de/para em listas, inverter, chave "Só o que mudou"; tabela campo · de · para nas 7 seções, com o
+  valor antigo riscado e o novo em destaque, e a marca "Pedido de ajuste" nas seções devolvidas.
+- **Casos:** versão única é mostrada inteira; rascunho explica que a v1 nasce na primeira submissão.
+- Dados de `GET /versoes?card=` (`versoesExemplo`): snapshot imutável de cada versão.
+
+### T07 Action Log
+
+`#action-log`, no submenu Administração. Linha do tempo única e imutável do ciclo (§7.3).
+
+- **Resumo por tipo** (eventos, submissões, decisões, comentários, configuração, acessos negados) em cartões que
+  filtram ao clique; o total ignora o filtro de tipo.
+- **Filtros na URL:** Período (7 dias, 30 dias, ciclo), BU, Meta, Seção, Tipo e Goal Card (chip removível).
+- **Linha do tempo** por dia: hora, ponto colorido pelo tipo (decisão pela cor do resultado), frase traduzível
+  ("aprovou a v2…"), comentário citado, antes → depois, etiquetas BU/Meta/Seção que viram filtro e links para o
+  Goal Card e as Versões. 40 por página, com "Mostrar mais".
+- **Exportar:** CSV com BOM e `;` (abre direto no Excel), com os filtros aplicados.
+- Dados de `GET /action-log` (`filtrarEventos`, `actionLogExemplo`); filtro inválido → 400 e a tela volta ao ciclo todo.
+
+### T11 Configuração do ciclo
+
+`#configuracao?aba=ciclo|bus|grupos|metas|parametros`, só o administrador (403 → T12). §7.1.
+
+- **Resumo** em cartões que levam à aba: BUs ativas, pessoas nos grupos, metas, BUs que fecham o total de pontos
+  e data dos Goal Cards oficiais.
+- **Ciclo:** nome, texto padrão de exceções e as 4 janelas (datas, dias úteis, etapa atual, ordem validada).
+- **Business Units:** pessoas por grupo (o número leva aos Grupos filtrados), metas, soma de pontos e chave "no ciclo".
+- **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;
+  o ciclo precisa de ao menos um aprovador e um administrador.
+- **Metas e pesos:** matriz meta × BU editável (título, tipo, direção e peso), linha do resultado do COO travada e
+  total por BU; Salvar fica bloqueado enquanto alguma BU não fecha o total (RN-16), e o servidor recusa com 400.
+- **Parâmetros:** total por BU, pontos do COO, mínimo de caracteres e tamanho de anexo, com faixa permitida.
+- **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Novo ciclo a
+  partir deste em diálogo de confirmação. Últimas alterações com link para o Action Log filtrado.
+- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` e `/configuracao/clonar` (`validarConfiguracao`), simuladas até a P-12.
+
 ### Desdobramento
 
 `#desdobramento`, segundo item do menu. Visão executiva do desdobramento das metas:
@@ -203,6 +247,9 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /painel?pais=&bu=` | T02: só P&CI/COO e administrador (403 para os demais). Filtro validado contra as BUs do ciclo (400 fora da lista). Devolve `ciclo`, `filtro`, `cards[]` (com `diasUteis` e `parada`), `totais`, `porBu[]`, `funil[]`, `niveis[]` e `parados[]` |
 | `GET /metas?bu=` | T03: metas de uma BU no recorte do usuário (BU fora do recorte ou inexistente → 404; sem BU no recorte → 403). Devolve `ciclo`, `bu`, `bus[]` (recorte), `metas[]` (com `diasUteis` e `parada`), `totais` (quantidade e peso por situação, `pesoTotal`, `pesoEsperado`, `pesoSubmetido`) e `alertaPesos` (RN-16) |
 | `GET /desdobramento` | Desdobramento: metas do scorecard do COO e matriz meta × BU com peso e situação do Goal Card |
+| `GET /versoes?card=` | T06: versões do card (mais recente primeiro), com snapshot, decisão e a oficial |
+| `GET /action-log?bu=&meta=&secao=&tipo=&periodo=&card=&pagina=&tudo=` | T07: eventos filtrados (40 por página; `tudo=1` para exportar), `porTipo` e opções dos filtros |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/clonar` | T11: só o administrador; validação por aba e RN-16 no servidor; simulação até a P-12 |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
 | `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: campos obrigatórios e decisão validados no servidor; simulação até o P-12 |
 | `GET /health` | `{ status }` |

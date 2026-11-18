@@ -27,7 +27,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | Perfis, fonte do perfil e recorte de dados | Decidido | Todos veem todas as BUs; a edição cabe aos contribuidores da própria BU, conforme o cadastro no banco (D-11) |
 | Entidades, estados e transições | Decidido | Especificação, seções 3 e 4 |
 | Regras críticas | Decidido | Aprovação em nível único pelo grupo de aprovação (D-09) |
-| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13: T00, T02, T03, T04, T06, T07, T11, T12 e T14; T00, T02, T03 e T04 desenvolvidas; T05 e T08 descontinuadas (D-20) |
+| Lista de telas do MVP | Decidido | Especificação, seções 10 e 13: T00, T02, T03, T04, T06, T07, T11, T12 e T14; T00, T02, T03, T04, T06, T07 e T11 desenvolvidas; T05 e T08 descontinuadas (D-20) |
 | Fontes de dados confirmadas com o dono | Pendente | Modelo de dados a validar com o time de dados (P-12) |
 | Critérios de aceite | A confirmar | Especificação, seção 11; validar com P&CI |
 
