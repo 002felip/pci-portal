@@ -56,4 +56,4 @@ env:
   # (and on tables created later) to the roles below: the client id of the
   # Portal PCI app's service principal. Comma-separated. Empty = no grants.
   - name: SCHEMA_GRANT_TO
-    value: ""
+    value: "af4a0711-1274-462f-be88-f4cce8e2b0b0"
