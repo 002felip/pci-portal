@@ -846,6 +846,11 @@ body.is-largo .m3-dlg .p2-topo { margin: 0 calc(-1 * clamp(1rem, 2.5vw, 2.5rem))
 .m3-dlg .gc-voltar { display: none; }
 /* Popup aberto pelo Desdobramento: só a meta clicada, sem seletor nem setas de troca de meta */
 .m3-dlg.is-fixo .gc-filtro-meta { display: none; }
+/* Popup aberto por AIP BU's: mesmo desenho do COO AIP (sem o seletor de meta), com as setas de navegação depois dos botões Versão/Histórico */
+.m3-dlg:not(.is-fixo) #vistaGoalCard .gc-filtro-meta, .m3-dlg:not(.is-fixo) #vistaGoalCard .gc-nav { display: contents; }
+.m3-dlg:not(.is-fixo) #vistaGoalCard .gc-filtro-meta > .filter-label, .m3-dlg:not(.is-fixo) #vistaGoalCard #gcSel { display: none; }
+.m3-dlg:not(.is-fixo) #vistaGoalCard .p2-filtro { justify-content: flex-start; gap: 0.5rem; }
+.m3-dlg:not(.is-fixo) #vistaGoalCard #gcAnt, .m3-dlg:not(.is-fixo) #vistaGoalCard #gcProx { order: 2; align-self: center; margin: 0; }
 .m3-dlg .p2-titulo .ab-ano { font-size: clamp(2.5rem, 1.5rem + 2.5vw, 4.5rem); }
 .m3-meta-tit { font-weight: 600; color: var(--ink-strong); }
 .m3-meta-tipo { display: block; margin-top: 0.125rem; font-size: 0.7rem; color: var(--text-soft); }
