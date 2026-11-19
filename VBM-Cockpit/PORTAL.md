@@ -67,13 +67,23 @@ As variáveis do Lakebase (`PG*`, `LAKEBASE_*`, `DATABRICKS_WAREHOUSE_ID`, `DB_P
 - `/VBM-Cockpit/api/health`: a saúde do próprio Cockpit.
 - Logs do Portal: as linhas do Cockpit saem com o prefixo `[vbm-cockpit]`.
 
-## Permissões do Portal nas tabelas (`SCHEMA_GRANT_TO`)
+## Schema próprio do Portal (`cockpit`)
 
-As tabelas do Lakebase pertencem ao service principal do **app standalone**, que as criou. No Postgres, só o dono altera uma tabela ou dá `GRANT` nela; nem o administrador do Lakebase consegue (`must be owner of table`). Por isso, quando uma versão nova traz coluna ou tabela nova (ex.: `snapshot.restored_from` e `snapshot_revision`), quem aplica a mudança é o standalone:
+As tabelas antigas, no schema `public`, pertencem ao service principal do **antigo app standalone** (`1998393e-…`), que as criou. No Postgres, só o dono altera uma tabela, e nem o administrador do Lakebase consegue: dá `must be owner of table` e `permission denied to grant role`. Por isso o Portal não conseguia criar as colunas e tabelas das versões novas (ex.: `snapshot.restored_from` e `snapshot_revision`) e o Cockpit respondia 500.
 
-1. No `app.yaml` desta pasta (o do standalone), preencha `SCHEMA_GRANT_TO` com o client id do service principal do app do Portal.
-2. Publique a versão nova no app standalone (`databricks bundle deploy` e `databricks bundle run`) ou reinicie o app.
-3. Na subida, o standalone roda `ensure_schema()` como dono (cria as colunas e tabelas novas) e concede ao Portal leitura e escrita em todas as tabelas e sequências, inclusive nas criadas depois (`ALTER DEFAULT PRIVILEGES`). O log mostra `Schema access granted to …`.
-4. Reinicie o app do Portal.
+Desde então, dentro do Portal, o Cockpit usa o schema **`cockpit`** (`DB_SCHEMA=cockpit`, padrão definido no `server.js`):
 
-No Portal, a subida continua registrando `Could not ensure schema` (o Portal não é dono); o Cockpit funciona porque o standalone já aplicou o schema.
+- todas as conexões abrem com `search_path = cockpit`;
+- na subida, `ensure_schema()` cria o schema (se faltar) e as tabelas nele, com o service principal do Portal como **dono**. Assim, as próximas versões voltam a criar sozinhas as colunas e tabelas novas;
+- na **primeira** subida, se `cockpit.snapshot` estiver vazia e `public.snapshot` tiver dados, os dados são **copiados** de `public` (colunas casadas pelo nome, sequências ajustadas). `public` só é lido e fica como backup. O log mostra `Copied N rows of public.<tabela>` e `Data moved from public into schema cockpit`.
+
+Preparação, uma única vez, com um usuário administrador do Lakebase (no SQL Editor, no banco do Cockpit):
+
+```sql
+CREATE SCHEMA IF NOT EXISTS cockpit;
+GRANT USAGE, CREATE ON SCHEMA cockpit TO "<sp-portal>";   -- af4a0711-1274-462f-be88-f4cce8e2b0b0
+```
+
+Para isso funcionar, o service principal do Portal precisa continuar com `SELECT` nas tabelas de `public` (os `GRANT` acima já davam isso). Depois, reinicie o app do Portal.
+
+`SCHEMA_GRANT_TO` (no `app.yaml` desta pasta) só vale para o app standalone, se ele voltar a ser usado; o Portal não depende dele.
