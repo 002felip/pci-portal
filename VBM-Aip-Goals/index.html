@@ -818,9 +818,8 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .m3-peso { display: flex; align-items: center; gap: 0.625rem; }
 .m3-peso b { min-width: 1.75rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
 /* Barra curta em cascata: o trecho cinza claro é o peso das metas anteriores; o colorido, o desta meta (soma = total da BU) */
-.m3-parcelas { flex: 0 1 14rem; min-width: 10rem; display: flex; gap: 3px; height: 0.4rem; }
+.m3-parcelas { flex: 0 1 14rem; min-width: 10rem; display: flex; gap: 2px; height: 0.4rem; }
 .m3-parcela { flex-basis: 0; min-width: 8px; border-radius: 999px; }
-.m3-parcela.is-ant { opacity: .55; }
 .m3-parcela.is-vazia { background: var(--line); }
 .m3-meta-link { display: block; color: inherit; text-decoration: none; }
 .m3-meta-link:hover .m3-meta-tit { color: var(--accent-strong); text-decoration: underline; }
@@ -3159,9 +3158,12 @@ window.VBMSetup = (function () {
     $('m3Legenda').innerHTML = '';
     // Parcelas do peso (cada linha mostra as parcelas até ela, de cima para baixo): uma por meta, separadas, na cor do status; a da própria linha em destaque
     var parcelas = function (k) {
-      return '<span class="m3-parcelas" aria-hidden="true">' + metas.map(function (x, n) {
-        return '<span class="m3-parcela ' + (n <= k ? 'p2-seg-' + esc(x.estado) + (n < k ? ' is-ant' : '') : 'is-vazia') + '" style="flex-grow:' + (x.meta.peso || 0.5) + '"></span>';
-      }).join('') + '</span>';
+      var resto = 0;
+      var h = metas.map(function (x, n) {
+        if (n > k) { resto += x.meta.peso || 0.5; return ''; }
+        return '<span class="m3-parcela p2-seg-' + esc(x.estado) + '" style="flex-grow:' + (x.meta.peso || 0.5) + '"></span>';
+      }).join('');
+      return '<span class="m3-parcelas" aria-hidden="true">' + h + (resto ? '<span class="m3-parcela is-vazia" style="flex-grow:' + resto + '"></span>' : '') + '</span>';
     };
     $('m3Linhas').innerHTML = metas.map(function (m, k) {
       var link = '#goal-card?card=' + encodeURIComponent(m.card);
