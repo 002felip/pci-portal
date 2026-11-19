@@ -285,7 +285,7 @@ function validarConfiguracao(aba, dados, base) {
       const t = Number(n.total), h = Number(n.herdado);
       if (!Number.isFinite(t) || t < 1 || t > 1000) erros.push({ campo: `niveis.${i}.total`, codigo: 'FAIXA' });
       if (!Number.isFinite(h) || h < 0 || h >= t || (i === 0 && h !== 0)) erros.push({ campo: `niveis.${i}.herdado`, codigo: 'FAIXA' });
-      if (ref.fixo && !n.ativo) erros.push({ campo: `niveis.${i}.ativo`, codigo: 'FIXO' });
+      if (n.fixo && !n.ativo) erros.push({ campo: `niveis.${i}.ativo`, codigo: 'FIXO' });
     });
     // GA só fica ativo com a GG ativa (o desdobramento não pula nível)
     const nv = Object.fromEntries((d.niveis || []).map((n) => [n.id, n]));
