@@ -818,10 +818,9 @@ body.is-inicio .page { max-width: none; padding: 0; }
 .m3-peso { display: flex; align-items: center; gap: 0.625rem; }
 .m3-peso b { min-width: 1.75rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
 /* Barra curta em cascata: o trecho cinza claro é o peso das metas anteriores; o colorido, o desta meta (soma = total da BU) */
-.m3-col-gauge { width: 1.5rem; }
-.m3-gauge { padding: 0.5rem 0; position: relative; width: 1.5rem; }
-.m3-gauge-col { position: absolute; top: 0.5rem; bottom: 0.5rem; left: 50%; width: 0.5rem; transform: translateX(-50%); display: flex; flex-direction: column; gap: 3px; }
-.m3-parcela { flex-basis: 0; min-height: 4px; border-radius: 999px; }
+.m3-parcelas { display: flex; gap: 3px; height: 0.375rem; margin: 0.25rem 0 0.75rem; }
+.m3-parcelas:empty { display: none; }
+.m3-parcela { flex-basis: 0; min-width: 4px; border-radius: 999px; }
 .m3-meta-link { display: block; color: inherit; text-decoration: none; }
 .m3-meta-link:hover .m3-meta-tit { color: var(--accent-strong); text-decoration: underline; }
 .m3-peso-barra { position: relative; flex: 0 1 8rem; min-width: 4rem; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
@@ -1970,6 +1969,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
         <span class="secao-cont" id="m3Cont" hidden></span>
         <ul class="legend p2-legenda" id="m3Legenda"></ul>
       </div>
+      <!-- Parcelas do peso: linha horizontal, uma parcela por meta (largura = peso), separadas e na cor do status -->
+      <div class="m3-parcelas" id="m3Parcelas" role="img"></div>
       <div class="p2-tabela-wrap">
         <table class="p2-tabela m3-tabela">
           <caption class="sr-only" data-i18n="m3.caption">Metas da Business Unit com peso, status, contribuidor, versão e última atualização</caption>
@@ -1977,7 +1978,6 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
             <th scope="col" class="num">#</th>
             <th scope="col" data-i18n="col.meta">Meta</th>
             <th scope="col" class="m3-col-peso m3-centro" data-i18n="m3.colPeso">Peso (pts)</th>
-            <th scope="col" class="m3-col-gauge"><span class="sr-only">Parcelas do peso</span></th>
             <th scope="col" class="m3-centro" data-i18n="m3.colStatus">Status</th>
             <th scope="col" data-i18n="m3.colContrib">Contribuidor</th>
             <th scope="col" class="m3-centro" data-i18n="lbl.versao">Versão</th>
@@ -3158,15 +3158,16 @@ window.VBMSetup = (function () {
     var metas = d.metas || [];
     $('m3Cont').textContent = S.fmt(metas.length, 0); $('m3Cont').hidden = !metas.length;
     $('m3Legenda').innerHTML = '';
-    var gauge = '<td class="m3-gauge" rowspan="' + metas.length + '"><span class="m3-gauge-col" role="img" aria-label="' + esc(S.t('m3.colPeso')) + '">' + metas.map(function (m) {
-      return '<span class="m3-parcela p2-seg-' + esc(m.estado) + '" style="flex-grow:' + (m.meta.peso || 0.5) + '" title="#' + esc(m.meta.numero) + ' · ' + esc(S.fmt(m.meta.peso || 0, 0)) + ' · ' + esc(S.t('est.' + m.estado)) + '"></span>';
-    }).join('') + '</span></td>';
+    $('m3Parcelas').setAttribute('aria-label', S.t('m3.colPeso'));
+    $('m3Parcelas').innerHTML = metas.map(function (m) {
+      return '<span class="m3-parcela p2-seg-' + esc(m.estado) + '" style="flex-grow:' + (m.meta.peso || 0.5) + '" title="#' + esc(m.meta.numero) + ' ' + esc(m.meta.titulo) + ' · ' + esc(S.fmt(m.meta.peso || 0, 0)) + ' pts · ' + esc(S.t('est.' + m.estado)) + '"></span>';
+    }).join('');
     $('m3Linhas').innerHTML = metas.map(function (m, k) {
       var link = '#goal-card?card=' + encodeURIComponent(m.card);
       return '<tr>' +
         '<td class="num">' + esc(m.meta.numero) + '</td>' +
         '<td><a class="m3-meta-link" data-card="' + esc(m.card) + '" href="' + esc(link) + '"><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></a></td>' +
-        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b></span></td>' + (k ? '' : gauge) +
+        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b></span></td>' +
         '<td class="m3-centro"><span class="st st-' + esc(m.estado) + '">' + esc(S.t('est.' + m.estado)) + '</span></td>' +
         '<td>' + esc(m.contribuidor || '—') + '</td>' +
         '<td class="m3-centro">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
@@ -3174,7 +3175,7 @@ window.VBMSetup = (function () {
         '<td class="m3-acao m3-centro"><a class="dash-acao" data-card="' + esc(m.card) + '" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '" title="' + esc(S.t('m3.abrir')) + '">' + ico('i-eye') + '</a></td></tr>';
     }).join('');
     $('m3Rodape').innerHTML = '<tr><td></td><td>' + esc(S.t('m3.total')) + '</td><td class="m3-centro"><span class="m3-peso"><b' + (d.alertaPesos ? ' class="m3-alerta"' : '') + '>' +
-      esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td></td><td colspan="5"></td></tr>';
+      esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td colspan="5"></td></tr>';
     m3RenderUnidade();
   }
   // Seletor País › BU com as BUs do recorte do usuário (sempre uma BU escolhida)
