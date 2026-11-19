@@ -814,10 +814,16 @@ body.is-inicio .page { max-width: none; padding: 0; }
 /* ── T03 Metas da BU ──
    Reaproveita o topo, os anéis (.p2-et, .p2-anel) e a tabela (.p2-tabela) da T02; sem tokens novos. */
 .m3-aneis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
-.m3-tabela .m3-col-peso { width: 14%; }
+.m3-tabela .m3-col-peso { width: 8%; }
 .m3-peso { display: flex; align-items: center; gap: 0.625rem; }
 .m3-peso b { min-width: 1.75rem; text-align: right; font-weight: 600; color: var(--ink-strong); }
 /* Barra curta em cascata: o trecho cinza claro é o peso das metas anteriores; o colorido, o desta meta (soma = total da BU) */
+.m3-col-gauge { width: 1.5rem; }
+.m3-gauge { padding: 0.5rem 0; position: relative; width: 1.5rem; }
+.m3-gauge-col { position: absolute; top: 0.5rem; bottom: 0.5rem; left: 50%; width: 0.5rem; transform: translateX(-50%); display: flex; flex-direction: column; gap: 3px; }
+.m3-parcela { flex-basis: 0; min-height: 4px; border-radius: 999px; }
+.m3-meta-link { display: block; color: inherit; text-decoration: none; }
+.m3-meta-link:hover .m3-meta-tit { color: var(--accent-strong); text-decoration: underline; }
 .m3-peso-barra { position: relative; flex: 0 1 8rem; min-width: 4rem; height: 0.375rem; border-radius: 999px; background: var(--line); overflow: hidden; }
 .m3-peso-barra span { position: absolute; top: 0; bottom: 0; left: 0; }
 .m3-peso-ant { background: color-mix(in srgb, var(--flat) 22%, var(--line)); }
@@ -1768,6 +1774,7 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></symbol>
   <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
@@ -1970,11 +1977,12 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
             <th scope="col" class="num">#</th>
             <th scope="col" data-i18n="col.meta">Meta</th>
             <th scope="col" class="m3-col-peso m3-centro" data-i18n="m3.colPeso">Peso (pts)</th>
+            <th scope="col" class="m3-col-gauge"><span class="sr-only">Parcelas do peso</span></th>
             <th scope="col" class="m3-centro" data-i18n="m3.colStatus">Status</th>
             <th scope="col" data-i18n="m3.colContrib">Contribuidor</th>
             <th scope="col" class="m3-centro" data-i18n="lbl.versao">Versão</th>
             <th scope="col" class="m3-centro" data-i18n="m3.colAtualizacao">Última atualização</th>
-            <th scope="col"><span class="sr-only" data-i18n="col.acao">Ação</span></th>
+            <th scope="col" class="m3-centro">Goal Card</th>
           </tr></thead>
           <tbody id="m3Linhas"></tbody>
           <tfoot id="m3Rodape"></tfoot>
@@ -3146,25 +3154,27 @@ window.VBMSetup = (function () {
     $('m3Aneis').innerHTML = jornadaHtml(c, t.metas || 0, { submetidos: (t.metas || 0) - (qn.rascunho || 0), n1: qn.em_aprovacao || 0, n2: 0, aprovado: qn.aprovado || 0 });
 
     // Tabela de metas
-    // Barra de peso em cascata: cada meta começa onde a anterior termina e todas somam o total da BU
-    var acum = 0;
-    $('m3Cont').textContent = S.fmt((d.metas || []).length, 0); $('m3Cont').hidden = !(d.metas || []).length;
+    // Parcelas do peso: uma coluna vertical, de cima para baixo, uma parcela por meta (altura proporcional ao peso), separadas e na cor do status
+    var metas = d.metas || [];
+    $('m3Cont').textContent = S.fmt(metas.length, 0); $('m3Cont').hidden = !metas.length;
     $('m3Legenda').innerHTML = '';
-    $('m3Linhas').innerHTML = (d.metas || []).map(function (m) {
-      var ini = fr(acum) * 100, larg = fr(m.meta.peso || 0) * 100; acum += m.meta.peso || 0;
+    var gauge = '<td class="m3-gauge" rowspan="' + metas.length + '"><span class="m3-gauge-col" role="img" aria-label="' + esc(S.t('m3.colPeso')) + '">' + metas.map(function (m) {
+      return '<span class="m3-parcela p2-seg-' + esc(m.estado) + '" style="flex-grow:' + (m.meta.peso || 0.5) + '" title="#' + esc(m.meta.numero) + ' · ' + esc(S.fmt(m.meta.peso || 0, 0)) + ' · ' + esc(S.t('est.' + m.estado)) + '"></span>';
+    }).join('') + '</span></td>';
+    $('m3Linhas').innerHTML = metas.map(function (m, k) {
       var link = '#goal-card?card=' + encodeURIComponent(m.card);
       return '<tr>' +
         '<td class="num">' + esc(m.meta.numero) + '</td>' +
-        '<td><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></td>' +
-        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b><span class="m3-peso-barra" aria-hidden="true"><span class="m3-peso-ant" style="width:' + ini.toFixed(1) + '%"></span><span class="m3-peso-seg p2-seg-' + esc(m.estado) + '" style="left:' + ini.toFixed(1) + '%;width:' + larg.toFixed(1) + '%"></span></span></span></td>' +
+        '<td><a class="m3-meta-link" data-card="' + esc(m.card) + '" href="' + esc(link) + '"><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></a></td>' +
+        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b></span></td>' + (k ? '' : gauge) +
         '<td class="m3-centro"><span class="st st-' + esc(m.estado) + '">' + esc(S.t('est.' + m.estado)) + '</span></td>' +
         '<td>' + esc(m.contribuidor || '—') + '</td>' +
         '<td class="m3-centro">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
         '<td class="m3-centro">' + esc(dataCurta(m.desde)) + '</td>' +
-        '<td class="m3-acao"><a class="btn btn-sec" data-card="' + esc(m.card) + '" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '">' + esc(S.t('m3.abrir')) + ico('i-arrow') + '</a></td></tr>';
+        '<td class="m3-acao m3-centro"><a class="dash-acao" data-card="' + esc(m.card) + '" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '" title="' + esc(S.t('m3.abrir')) + '">' + ico('i-eye') + '</a></td></tr>';
     }).join('');
     $('m3Rodape').innerHTML = '<tr><td></td><td>' + esc(S.t('m3.total')) + '</td><td class="m3-centro"><span class="m3-peso"><b' + (d.alertaPesos ? ' class="m3-alerta"' : '') + '>' +
-      esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td colspan="5"></td></tr>';
+      esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td></td><td colspan="5"></td></tr>';
     m3RenderUnidade();
   }
   // Seletor País › BU com as BUs do recorte do usuário (sempre uma BU escolhida)
