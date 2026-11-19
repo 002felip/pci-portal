@@ -212,14 +212,16 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   centralizados (pessoas por grupo, metas, pontos e cards submetidos).
 - **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;
   o ciclo precisa de ao menos um aprovador e um administrador.
-- **Metas e pesos por nível:** seletor CEO › COO › BU › GG › GA (só os níveis ativos), com a unidade-mãe para GG (BU) e
-  GA (GG); matriz meta × unidade editável, linha "Resultado do nível acima" travada com os pontos herdados, nova meta e
-  remoção; total por unidade e contador de pendências por nível. Salvar fica bloqueado enquanto alguma unidade não fecha
+- **Metas e pesos por nível:** seletor CEO › COO › BU (GG e GA saíram desta aba); matriz meta × unidade editável,
+  linha "Resultado do nível acima" editável com os pontos herdados, nova meta e remoção; total por unidade e contador de pendências por nível. Salvar fica bloqueado enquanto alguma unidade não fecha
   o total (RN-16), e o servidor recusa com 400 (`somaPesosPorNivel`).
-- **Parâmetros:** níveis do desdobramento (nome, total por unidade, herdado do nível acima, pontos livres; CEO, COO e BU
-  obrigatórios, GG e GA ligáveis sem pular nível) e os limites (mínimo de caracteres e tamanho de anexo).
-- **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Novo ciclo a
-  partir deste em diálogo de confirmação. Sem histórico de últimas alterações na tela (fica no Action Log).
+- **Parâmetros:** níveis do desdobramento (nome, total por unidade, herdado do nível acima, pontos livres e a escolha
+  Obrigatório/Opcional por nível, com o interruptor Ativa nos opcionais, sem pular nível). Os limites das regras saíram da tela.
+- **Ciclo:** tela renomeada para Administração; lista de ciclos no campo Ano, um ciclo aberto por vez, Fechar, Reabrir e
+  Abrir novo ciclo; janelas desativadas em ciclo fechado.
+- **Grupos:** seções por grupo e BU com cards de pessoa e popup Novo usuário com busca no diretório (MDM).
+- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (16 tabelas).
+- **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
 - Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` e `/configuracao/clonar` (`validarConfiguracao`), simuladas até a P-12.
 
 ### Desdobramento
