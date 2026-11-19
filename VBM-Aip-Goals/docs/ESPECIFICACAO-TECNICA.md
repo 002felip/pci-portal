@@ -252,7 +252,7 @@ DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `mode
 | --- | --- |
 | AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), texto padrão de exceções, ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início do desdobramento e fim de cada etapa) |
 | IBP.SITES (existente) | A BU é o site do IBP: `ID_SITE` é o ID da BU em todo o modelo; nome e país vêm de NM_SITE e NM_PAIS |
-| AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, quem incluiu |
+| AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, data da última atualização |
 | AIP_NIVEL | Ciclo, nível (CEO, COO, BU; GG e GA fora no primeiro momento), ordem, nome, total por unidade, herdado do nível acima, obrigatório, ativo |
 | AIP_UNIDADE | Nível, nome, BU (ID_SITE, no nível BU), ativa (a unidade de nível BU é a participação da BU no ciclo) |
 | AIP_META | Nível, número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |

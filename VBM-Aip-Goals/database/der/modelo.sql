@@ -106,8 +106,7 @@ create table aip_papel (
   tp_grupo varchar(20) not null,
   id_site integer constraint fk_aip_papel_sites references sites (id_site),
   sg_ativo char(1) not null default 'S' constraint ck_aip_papel_sg_ativo check (sg_ativo in ('S', 'N')),
-  dt_inclusao timestamp(0) not null default localtimestamp(0),
-  cd_matricula_inclusao varchar(20) not null,
+  dt_atualizacao timestamp(0) not null default localtimestamp(0),
   constraint ck_aip_papel_grupo check (tp_grupo in ('CONTRIBUIDOR', 'APROVACAO', 'CONSULTA', 'ADMIN')),
   constraint ck_aip_papel_bu check ((tp_grupo in ('CONTRIBUIDOR', 'CONSULTA')) = (id_site is not null))
 );
