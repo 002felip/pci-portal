@@ -55,6 +55,26 @@ viraram colunas da `AIP_GOAL_CARD_VERSAO` (eram `AIP_DECISAO` e `AIP_REVISAO_SEC
 
 Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio) a definir com o time de dados.
 
+## Telas × tabelas
+
+| Tela | Lê | Grava |
+|---|---|---|
+| Início (T00) | `AIP_CICLO`, `AIP_PAPEL`, `IBP.SITES` | — |
+| COO AIP (T13) | `AIP_NIVEL`, `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO`, `AIP_GOAL_CARD`, `IBP.SITES` | — |
+| AIP BU's (T03) | `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO`, `AIP_GOAL_CARD`, `AIP_PAPEL`, `AIP_CICLO` | — |
+| Goal Card (T04) | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_META`, `AIP_META_PESO`, `AIP_CICLO` (texto padrão), `AIP_EVENTO_LOG` (comentários), `AIP_PAPEL` | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_EVENTO_LOG`, `AIP_NOTIFICACAO` |
+| Versões (T06) | `AIP_GOAL_CARD_VERSAO` | — |
+| Action Log (T07) | `AIP_EVENTO_LOG`, `AIP_GOAL_CARD`, `AIP_META` | — |
+| Aprovações (T14) | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_EVENTO_LOG`, `AIP_PAPEL` | `AIP_GOAL_CARD_VERSAO` (decisão), `AIP_GOAL_CARD`, `AIP_EVENTO_LOG`, `AIP_NOTIFICACAO` |
+| Administração · Ciclo | `AIP_CICLO` | `AIP_CICLO`, `AIP_EVENTO_LOG` |
+| Administração · Business Units | `AIP_UNIDADE`, `IBP.SITES`, `AIP_GOAL_CARD` | `AIP_UNIDADE` (`SG_ATIVA`), `AIP_EVENTO_LOG` |
+| Administração · Grupos | `AIP_PAPEL`, MDM | `AIP_PAPEL`, `AIP_EVENTO_LOG` |
+| Administração · Metas e pesos | `AIP_NIVEL`, `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO` | `AIP_META`, `AIP_META_PESO`, `AIP_NIVEL`, `AIP_EVENTO_LOG` |
+| Administração · Parâmetros | `AIP_NIVEL` | `AIP_NIVEL`, `AIP_EVENTO_LOG` |
+| Acesso negado (T12) | — | `AIP_EVENTO_LOG` (`ACESSO_NEGADO`) |
+
+`AIP_EVENTO_LOG` e `AIP_GOAL_CARD_VERSAO` são as tabelas mais compartilhadas; `AIP_NOTIFICACAO` não tem tela de leitura.
+
 ## Consultas que a API vai precisar
 
 | Script previsto | Rota | Parâmetros |
