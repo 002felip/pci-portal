@@ -1,13 +1,13 @@
 {
  "titulo": "DER do AIP Goals",
- "subtitulo": "VBM AIP Goals · modelo proposto (fase 1) · alvo Azure SQL BDIBPBMSA, convenções do Schema IBP de 21/10/2026 · versão de 19/11/2026 · prefixos ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_ (S/N), QTDE_, VL_",
+ "subtitulo": "VBM AIP Goals · modelo proposto (fase 1) · Azure SQL, convenções do Schema IBP · 19/11/2026",
  "descricao_svg": "Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.",
  "lang": "pt-BR",
  "legenda_figura": "O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. O <b>AIP_CICLO</b> organiza tudo: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b>",
  "texto_exemplos": "Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Campos SG_ usam S/N, como no esquema IBP. Os IDs batem entre as tabelas: o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.",
  "grupos": {
   "cic": {
-   "nome": "CICLO E PESSOAS",
+   "nome": "CICLO",
    "claro": "#dfe8e2",
    "escuro": "#233229"
   },
@@ -22,9 +22,14 @@
    "escuro": "#1f2c38"
   },
   "aud": {
-   "nome": "LOG E AVISOS",
+   "nome": "LOG",
    "claro": "#e9e1ec",
    "escuro": "#2e2533"
+  },
+  "ibp": {
+   "nome": "IBP",
+   "claro": "#e6e6e6",
+   "escuro": "#2b2b2b"
   }
  },
  "layout": {
@@ -44,30 +49,6 @@
   "prefixos_percentual": []
  },
  "tabelas": {
-  "AIP_BU": {
-   "grupo": "des",
-   "pos": [
-    0,
-    679
-   ],
-   "proposito": "Cadastro das Business Units (nome e país ou região). A BU entra em cada ciclo pela AIP_CICLO_BU.",
-   "regras": [
-    "Nome único.",
-    "ID_SITE é ligação implícita com IBP.SITES (outro esquema, sem FK física).",
-    "Só se exclui BU sem Goal Card submetido; com card, tira-se do ciclo (AIP_CICLO_BU)."
-   ],
-   "campos": {
-    "ID_BU": "Número interno da BU.",
-    "NM_BU": "Nome da BU; não se repete. Renomear atualiza pesos, pessoas e unidades ligadas.",
-    "NM_PAIS": "País ou região que agrupa as BUs nas telas (Brasil, Canadá, International Refineries), como NM_PAIS da IBP.SITES.",
-    "ID_SITE": "Ligação com a IBP.SITES (ID_SITE) quando a BU existe lá. Vazio = BU só do AIP.",
-    "DT_CRIACAO": "Quando a BU foi cadastrada."
-   },
-   "exemplos": [
-    "1 · Onça Puma, Brasil",
-    "2 · Ontario, Canadá"
-   ]
-  },
   "AIP_CICLO": {
    "grupo": "cic",
    "pos": [
@@ -102,19 +83,42 @@
     "CD_MATRICULA_FECHAMENTO": "se FECHADO"
    }
   },
+  "SITES": {
+   "grupo": "ibp",
+   "pos": [
+    0,
+    679
+   ],
+   "proposito": "Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.",
+   "regras": [
+    "Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.",
+    "Recriada aqui só para o teste do DER."
+   ],
+   "campos": {
+    "ID_SITE": "Identificador do site, usado como ID da BU no AIP.",
+    "ID_SISTEMA": "Sistema do IBP a que o site pertence.",
+    "NM_SITE": "Nome do site, mostrado como nome da BU (ex.: Ontario).",
+    "NM_PAIS": "País ou região que agrupa as BUs nas telas.",
+    "SG_REGIAO": "Sigla de região do IBP."
+   },
+   "exemplos": [
+    "12 · Onça Puma, Brasil",
+    "15 · Ontario, Canadá"
+   ]
+  },
   "AIP_CICLO_BU": {
    "grupo": "des",
    "pos": [
     1,
     20
    ],
-   "proposito": "Quais BUs participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.",
+   "proposito": "Quais BUs (sites do IBP) participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.",
    "regras": [
     "Uma linha por BU em cada ciclo."
    ],
    "campos": {
     "ID_CICLO": "Ciclo.",
-    "ID_BU": "BU.",
+    "ID_SITE": "BU (site do IBP).",
     "SG_ATIVA": "S = a BU está no ciclo; N = fora do ciclo."
    },
    "exemplos": [
@@ -204,7 +208,7 @@
     "ID_CICLO": "Ciclo em que o papel vale.",
     "CD_MATRICULA": "Matrícula da pessoa; nome, e-mail, cargo, estado e cidade são lidos do MDM.",
     "TP_GRUPO": "CONTRIBUIDOR, APROVACAO, CONSULTA ou ADMIN.",
-    "ID_BU": "BU do contribuidor ou da consulta. Vazio para aprovação e administração.",
+    "ID_SITE": "BU (site do IBP) do contribuidor ou da consulta. Vazio para aprovação e administração.",
     "SG_ATIVO": "N = a pessoa perde o acesso sem apagar o histórico.",
     "DT_INCLUSAO": "Quando foi incluída (popup Adicionar usuário).",
     "CD_MATRICULA_INCLUSAO": "Quem incluiu."
@@ -215,7 +219,7 @@
     "3 · Administrador"
    ],
    "condicional": {
-    "ID_BU": "se contribuidor ou consulta"
+    "ID_SITE": "se contribuidor ou consulta"
    }
   },
   "AIP_META": {
@@ -259,7 +263,7 @@
     "ID_UNIDADE": "Número interno da unidade.",
     "ID_NIVEL": "Nível da unidade.",
     "NM_UNIDADE": "Nome mostrado (ex.: Ontario).",
-    "ID_BU": "BU correspondente, quando a unidade é do nível BU.",
+    "ID_SITE": "BU (site do IBP) correspondente, quando a unidade é do nível BU.",
     "ID_UNIDADE_PAI": "Unidade do nível acima (a BU aponta para o COO; a GG para a BU)."
    },
    "exemplos": [
@@ -268,7 +272,7 @@
     "3 · Onça Puma, abaixo do COO"
    ],
    "condicional": {
-    "ID_BU": "se nível BU",
+    "ID_SITE": "se nível BU",
     "ID_UNIDADE_PAI": "exceto o CEO"
    }
   },
@@ -509,9 +513,9 @@
   },
   {
    "filho": "AIP_CICLO_BU",
-   "campo": "ID_BU",
-   "pai": "AIP_BU",
-   "chave": "ID_BU",
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
    "rotulo": "inclui"
   },
   {
@@ -544,9 +548,9 @@
   },
   {
    "filho": "AIP_UNIDADE",
-   "campo": "ID_BU",
-   "pai": "AIP_BU",
-   "chave": "ID_BU",
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
    "rotulo": "representa"
   },
   {
@@ -593,9 +597,9 @@
   },
   {
    "filho": "AIP_PAPEL",
-   "campo": "ID_BU",
-   "pai": "AIP_BU",
-   "chave": "ID_BU",
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
    "rotulo": "atua na"
   },
   {
@@ -672,7 +676,7 @@
   "AIP_CICLO",
   "AIP_CICLO_JANELA",
   "AIP_PAPEL",
-  "AIP_BU",
+  "SITES",
   "AIP_CICLO_BU",
   "AIP_NIVEL",
   "AIP_UNIDADE",

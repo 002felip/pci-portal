@@ -43,20 +43,21 @@ create table aip_ciclo_janela (
 );
 
 -- ═══ DESDOBRAMENTO ═══
-create table aip_bu (
-  id_bu integer generated always as identity constraint pk_aip_bu primary key,
-  nm_bu varchar(100) not null,
-  nm_pais varchar(100) not null,
-  id_site integer, -- ligação com IBP.SITES (ID_SITE), quando a BU existir lá
-  dt_criacao timestamp(0) not null default localtimestamp(0),
-  constraint uq_aip_bu_nome unique (nm_bu)
+-- BU = site do IBP: a tabela IBP.SITES já existe no banco (ID_SITE é o ID da BU). Aqui ela é recriada só para o
+-- teste do DER, com a mesma estrutura; no Azure SQL as FKs apontam para IBP.SITES e o AIP não cria esta tabela.
+create table sites (
+  id_site integer constraint pk_sites primary key,
+  id_sistema integer not null,
+  nm_site varchar(25),
+  nm_pais varchar(25),
+  sg_regiao varchar(1)
 );
 
 create table aip_ciclo_bu (
   id_ciclo integer not null constraint fk_aip_ciclo_bu_aip_ciclo references aip_ciclo (id_ciclo),
-  id_bu integer not null constraint fk_aip_ciclo_bu_aip_bu references aip_bu (id_bu),
+  id_site integer not null constraint fk_aip_ciclo_bu_sites references sites (id_site),
   sg_ativa char(1) not null default 'S' constraint ck_aip_ciclo_bu_sg_ativa check (sg_ativa in ('S', 'N')),
-  constraint pk_aip_ciclo_bu primary key (id_ciclo, id_bu)
+  constraint pk_aip_ciclo_bu primary key (id_ciclo, id_site)
 );
 
 create table aip_nivel (
@@ -80,7 +81,7 @@ create table aip_unidade (
   id_unidade integer generated always as identity constraint pk_aip_unidade primary key,
   id_nivel integer not null constraint fk_aip_unidade_aip_nivel references aip_nivel (id_nivel),
   nm_unidade varchar(100) not null,
-  id_bu integer constraint fk_aip_unidade_aip_bu references aip_bu (id_bu),
+  id_site integer constraint fk_aip_unidade_sites references sites (id_site),
   id_unidade_pai integer constraint fk_aip_unidade_aip_unidade references aip_unidade (id_unidade),
   constraint uq_aip_unidade unique (id_nivel, nm_unidade)
 );
@@ -113,15 +114,15 @@ create table aip_papel (
   id_ciclo integer not null constraint fk_aip_papel_aip_ciclo references aip_ciclo (id_ciclo),
   cd_matricula varchar(20) not null,
   tp_grupo varchar(20) not null,
-  id_bu integer constraint fk_aip_papel_aip_bu references aip_bu (id_bu),
+  id_site integer constraint fk_aip_papel_sites references sites (id_site),
   sg_ativo char(1) not null default 'S' constraint ck_aip_papel_sg_ativo check (sg_ativo in ('S', 'N')),
   dt_inclusao timestamp(0) not null default localtimestamp(0),
   cd_matricula_inclusao varchar(20) not null,
   constraint ck_aip_papel_grupo check (tp_grupo in ('CONTRIBUIDOR', 'APROVACAO', 'CONSULTA', 'ADMIN')),
-  constraint ck_aip_papel_bu check ((tp_grupo in ('CONTRIBUIDOR', 'CONSULTA')) = (id_bu is not null))
+  constraint ck_aip_papel_bu check ((tp_grupo in ('CONTRIBUIDOR', 'CONSULTA')) = (id_site is not null))
 );
-create unique index uq_aip_papel_sem_bu on aip_papel (id_ciclo, cd_matricula, tp_grupo) where id_bu is null;
-create unique index uq_aip_papel_bu on aip_papel (id_ciclo, cd_matricula, tp_grupo, id_bu) where id_bu is not null;
+create unique index uq_aip_papel_sem_bu on aip_papel (id_ciclo, cd_matricula, tp_grupo) where id_site is null;
+create unique index uq_aip_papel_bu on aip_papel (id_ciclo, cd_matricula, tp_grupo, id_site) where id_site is not null;
 
 -- ═══ GOAL CARD ═══
 create table aip_goal_card (
@@ -216,13 +217,13 @@ create table aip_notificacao (
 
 -- Índices de apoio das FKs (FK sem índice na filha é um dos alertas do relatório do Schema IBP)
 create index ix_aip_ciclo_fk_aip_ciclo on aip_ciclo (id_ciclo_origem);
-create index ix_aip_ciclo_bu_fk_aip_bu on aip_ciclo_bu (id_bu);
-create index ix_aip_unidade_fk_aip_bu on aip_unidade (id_bu);
+create index ix_aip_ciclo_bu_fk_sites on aip_ciclo_bu (id_site);
+create index ix_aip_unidade_fk_sites on aip_unidade (id_site);
 create index ix_aip_unidade_fk_aip_unidade on aip_unidade (id_unidade_pai);
 create index ix_aip_meta_fk_aip_meta on aip_meta (id_meta_origem);
 create index ix_aip_meta_peso_fk_aip_unidade on aip_meta_peso (id_unidade);
 create index ix_aip_papel_fk_aip_ciclo on aip_papel (id_ciclo);
-create index ix_aip_papel_fk_aip_bu on aip_papel (id_bu);
+create index ix_aip_papel_fk_sites on aip_papel (id_site);
 create index ix_aip_goal_card_fk_aip_unidade on aip_goal_card (id_unidade);
 create index ix_aip_comentario_fk_aip_goal_card on aip_comentario (id_goal_card);
 create index ix_aip_comentario_fk_aip_comentario on aip_comentario (id_comentario_pai);
