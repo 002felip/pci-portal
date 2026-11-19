@@ -91,6 +91,13 @@ class Settings(BaseSettings):
     # so a stray value in a deployed app.yaml cannot impersonate anyone.
     dev_actor: str | None = None
 
+    # Portal PCI: roles (service principals) that get read/write on every table
+    # and sequence of the schema, granted at startup right after ensure_schema(),
+    # plus default privileges so tables created later are covered too. Only the
+    # tables' OWNER can grant, so set this on the app that owns the schema (the
+    # standalone app). Comma-separated client ids. Empty = nothing is granted.
+    schema_grant_to: str = ""
+
     # DELIBERATELY ABSENT: default_snapshot / default_year.
     # Periods are discovered from the data at runtime (see periods.py), so a new
     # quarter or a new year needs no config change and no redeploy. An operator
@@ -240,6 +247,36 @@ def ensure_schema() -> None:
                     {"key": _SCHEMA_LOCK_KEY})
         Base.metadata.create_all(bind=conn, checkfirst=True)
         _add_missing_columns(conn, Base.metadata)
+    _grant_schema_access(engine, get_settings().schema_grant_to)
+
+
+def _grant_schema_access(engine, roles_csv: str) -> None:  # noqa: ANN001
+    """
+    GRANT read/write on all tables and sequences of `public` to each role in
+    SCHEMA_GRANT_TO, and the same as default privileges for objects this role
+    creates later. Runs in its own transaction, after the schema sync, so a
+    failure here (e.g. not the owner) is logged and never undoes the migration.
+    """
+    import re
+
+    from sqlalchemy import text
+
+    roles = [r.strip() for r in (roles_csv or "").split(",") if r.strip()]
+    for role in roles:
+        if not re.fullmatch(r"[A-Za-z0-9_.@-]{1,128}", role):
+            log.warning("SCHEMA_GRANT_TO: ignored invalid role name %r.", role)
+            continue
+        q = '"' + role.replace('"', '""') + '"'
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"grant usage on schema public to {q}"))
+                conn.execute(text(f"grant select, insert, update, delete on all tables in schema public to {q}"))
+                conn.execute(text(f"grant usage, select, update on all sequences in schema public to {q}"))
+                conn.execute(text(f"alter default privileges in schema public grant select, insert, update, delete on tables to {q}"))
+                conn.execute(text(f"alter default privileges in schema public grant usage, select, update on sequences to {q}"))
+            log.info("Schema access granted to %s.", role)
+        except Exception as exc:                  # noqa: BLE001
+            log.error("Could not grant schema access to %s: %s", role, exc)
 
 
 def _add_missing_columns(conn, metadata) -> None:  # noqa: ANN001

@@ -49,3 +49,11 @@ env:
     value: "1800"
   - name: LAKEBASE_TOKEN_REFRESH_MARGIN_SECONDS
     value: "600"
+
+  # ---- Portal PCI ----
+  # This app owns the Cockpit tables, so only it can grant on them. At startup,
+  # after the schema sync, it grants read/write on every table and sequence
+  # (and on tables created later) to the roles below: the client id of the
+  # Portal PCI app's service principal. Comma-separated. Empty = no grants.
+  - name: SCHEMA_GRANT_TO
+    value: ""
