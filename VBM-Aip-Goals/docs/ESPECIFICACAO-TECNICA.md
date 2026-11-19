@@ -68,7 +68,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | RN-18 | Exclusão de BU, meta ou pessoa | Não existe; o registro é desativado e o histórico é preservado |
 | RN-19 | Usuário do grupo de consulta tenta editar, comentar ou decidir | A ação não aparece na interface; a API responde 403 e o log registra a tentativa |
 
-Limites (configuráveis no banco, nunca fixos no front-end): comentário de devolução ou negação com mínimo de 10 caracteres; anexo de até 25 MB por arquivo.
+Limites (definidos na aplicação, fora do banco e da tela de Administração): comentário de devolução ou negação com mínimo de 10 caracteres; anexo de até 25 MB por arquivo.
 
 ## 4. Estados e transições do Goal Card
 
@@ -169,12 +169,11 @@ O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitu
 
 | Item | Regra |
 | --- | --- |
-| Ciclo | Ano (editável, de 2020 a 2100, para corrigir um cadastro errado), nome, janelas (proposta, calibração e, nas fases 2 e 3, CR e evidências) e textos padrão de exceções. A aprovação é em nível único, pelo grupo de aprovação. |
-| Grupos | Contribuidores e consulta por BU; grupo de aprovação (P&CI/COO) único para todas as BUs. A pessoa entra no grupo pela matrícula. |
+| Ciclo | A tela se chama **Administração** (eyebrow "Configuração do ciclo"). O campo Ano é uma lista dos ciclos registrados ("AIP 2027 · Aberto", "AIP 2026 · Fechado"); escolher um ciclo mostra os dados dele. **Só um ciclo pode estar aberto.** Botões no cabeçalho da seção Ciclo: *Fechar ciclo* (ciclo aberto), *Reabrir ciclo* (ciclo fechado, só se não houver outro aberto) e *Abrir novo ciclo* (só sem ciclo aberto; cria o ano seguinte a partir do último, com BUs, grupos e metas). Ciclo fechado: janelas, nome e texto padrão ficam desativados, só para consulta. Nome, janelas (4 etapas) e texto padrão de exceções. A aprovação é em nível único, pelo grupo de aprovação. |
+| Grupos | Seções no padrão dos Aprovadores do Kaizen: Aprovação, Administradores e uma por BU (contribuidores e consulta), com contagem e cards de pessoa (iniciais, nome, e-mail, cargo). Botão *Novo usuário* abre popup que busca no **MDM** por nome ou e-mail (mín. 2 caracteres) e mostra nome completo, matrícula, e-mail, cargo, estado e cidade (somente leitura); o administrador escolhe grupo e, para contribuidor e consulta, a BU. O AIP guarda só a matrícula; os dados da pessoa são lidos do MDM. |
 | BU | Cadastro das BUs do ciclo aberto que está sendo configurado: criar (nome e país ou região), editar (renomear atualiza pesos, pessoas e Gerências Gerais ligadas), tirar do ciclo (a BU fica no cadastro, mas não recebe Goal Cards nem notificações e sai das somas) e excluir. Só se exclui BU sem Goal Card submetido; com card submetido, tira-se do ciclo. Nome único. |
-| Níveis do desdobramento | Os pontos descem em níveis: CEO → COO → BU → Gerência Geral (GG) → Gerência de Área (GA). Cada nível tem nome, total de pontos por unidade e pontos herdados do resultado do nível acima (o primeiro não herda); CEO, COO e BU são obrigatórios, GG e GA podem ficar fora, sem pular nível (GA exige GG). Unidades: CEO e COO, as BUs ativas, as GGs de cada BU e as GAs de cada GG. |
-| Metas | Por nível: número, título, tipo e polaridade, e o peso de cada unidade. A linha "Resultado do nível acima" leva os pontos herdados e não é editável. A soma de cada unidade (herdado + metas) fica sempre visível e o servidor só grava quando todas as unidades de todos os níveis ativos fecham o total (RN-16). Mudar níveis ou BUs revalida e regrava as metas junto. |
-| Novo ciclo | Pode ser criado clonando BUs, pessoas e metas do ciclo anterior. |
+| Níveis do desdobramento (Parâmetros) | Os pontos descem em níveis: CEO → COO → BU → Gerência Geral (GG) → Gerência de Área (GA). Cada nível tem nome, total de pontos por unidade, pontos herdados do resultado do nível acima (o primeiro não herda) e a escolha **Obrigatório / Opcional**; o opcional tem o interruptor Ativa. Nível obrigatório fica sempre ativo; sem pular nível (GA exige GG). Os limites das regras (mínimo de caracteres, tamanho de anexo) saíram da tela e ficam na aplicação. |
+| Metas e pesos | Seletor só com CEO › COO › BU (GG e GA saem desta aba). Por nível: número, título, tipo e polaridade, e o peso de cada unidade. A linha "Resultado do nível acima" mostra os pontos herdados e é **editável** (atualiza o nível). A soma de cada unidade (herdado + metas) fica sempre visível e o servidor só grava quando todas as unidades fecham o total (RN-16). |
 | Auditoria | Toda alteração de configuração gera evento no log com valor antes e depois. |
 
 ### 7.2 Versões (T06)
@@ -245,27 +244,30 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | LGPD | Nome, e-mail e matrícula visíveis só para usuários com papel no ciclo |
 | Governança | Branch → PR em `002felip/pci-portal` com evidência de testes e conferência visual → merge em `main`. `docs/projetos/aip-goals.md` atualizado no mesmo PR; `?v=AAAAMMDD` trocado nos scripts alterados; `scripts/conferir.py` sem candidato novo não justificado. |
 
-**Modelo de dados (proposta para validação com o time de dados)**
+**Modelo de dados (proposta para validação com o time de dados, versão de 19/11/2026)**
+
+DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Padrão IBP de nomes (ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_, QTDE_, VL_). 16 tabelas na fase 1:
 
 | Tabela | Conteúdo |
 | --- | --- |
-| AIP_CICLO | Ano, nome, janelas, textos padrão, status |
-| AIP_CICLO_BU | BU do ciclo, país, ativo |
-| AIP_PAPEL | Matrícula, ciclo, BU (nula para aprovadores e administrador), papel (contribuidor, aprovador, consulta, administrador), ativo |
-| AIP_NIVEL | Ciclo, nível (CEO, COO, BU, GG, GA), nome, total de pontos por unidade, pontos herdados do nível acima, ativo |
-| AIP_UNIDADE | Ciclo, nível, unidade (CEO, COO, BU, GG ou GA), nome, unidade-mãe |
-| AIP_META | Ciclo, nível, número, título, tipo, polaridade, ativo |
+| AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), texto padrão de exceções, ciclo de origem, quem e quando abriu e fechou |
+| AIP_CICLO_JANELA | As 4 etapas do ciclo (desdobramento, proposta, calibração, oficial), ordem, início (só a 1ª) e fim |
+| AIP_BU | Cadastro da BU: nome único, país ou região |
+| AIP_CICLO_BU | BU no ciclo, ativa ou fora do ciclo |
+| AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (só contribuidor e consulta), ativo, quem incluiu |
+| AIP_NIVEL | Ciclo, nível (CEO, COO, BU, GG, GA), ordem, nome, total por unidade, herdado do nível acima, obrigatório, ativo |
+| AIP_UNIDADE | Nível, nome, BU (no nível BU), unidade-mãe |
+| AIP_META | Nível, número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |
 | AIP_META_PESO | Meta, unidade, peso |
-| AIP_GOAL_CARD | Estado atual, versão oficial, rascunho corrente |
-| AIP_GOAL_CARD_VERSAO | Snapshot imutável dos campos, vN, motivo, autor, data |
-| AIP_DECISAO | Versão, decisão, comentário, decidido por, data |
+| AIP_GOAL_CARD | Código (GC-BU-meta), meta, unidade, estado, versão oficial, rascunho, última atualização |
+| AIP_GOAL_CARD_VERSAO | Versão imutável: número, motivo, foto dos campos, autor, data |
+| AIP_DECISAO | Uma por versão: aprovado, devolvido ou negado, comentário (obrigatório para devolver ou negar), quem e quando |
 | AIP_REVISAO_SECAO | Decisão, seção, marcação (OK ou Ajustar) |
-| AIP_COMENTARIO | Card, seção, texto, autor, data, resposta a |
-| AIP_EVENTO_LOG | Tipo, quem, papel, quando, BU, meta, seção, antes, depois |
-| AIP_NOTIFICACAO | Destinatário, evento, canal, enviado em, lido em |
-| AIP_CHANGE_REQUEST (F2) | Meta, seção, valor atual, proposto, justificativa, anexo, estado |
-| AIP_EVIDENCIA (F3) | Meta, arquivo, status de validação, comentário |
-| AIP_PARAMETRO | Limites configuráveis (caracteres mínimos, tamanho de anexo) |
+| AIP_COMENTARIO | Card, seção, texto, resposta a, autor, data |
+| AIP_EVENTO_LOG | Action Log imutável (gatilho bloqueia UPDATE e DELETE): tipo (inclui abrir, fechar e reabrir ciclo), quem, grupo, quando, card, seção, antes, depois |
+| AIP_NOTIFICACAO | Evento, destinatário, canal (e-mail ou app), enviado em, lido em |
+
+Saiu do modelo: `AIP_PARAMETRO` (limites ficam na aplicação). Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
 
 ## 10. Catálogo de telas
 
@@ -279,7 +281,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | T07 | Action Log | Todos | No submenu Administração: linha do tempo única e imutável do ciclo (submissões, recolhimentos, decisões, reaberturas, comentários, configuração e acessos negados), cada evento com quem, papel, quando, BU, meta, seção e antes/depois; filtros BU, Meta, Seção, Tipo e Período na URL; exportar Excel com os filtros aplicados (§7.3) | MVP |
 | T09 | Change Requests | Contribuidores, aprovadores | Abrir CR; decidir com atual × proposto lado a lado | F2 |
 | T10 | Evidências | Contribuidores, aprovadores | Upload por meta; aceitar ou devolver | F3 |
-| T11 | Configuração do ciclo | Admin | No submenu Administração, em abas: Ciclo (ano editável, nome, janelas e textos padrão), Business Units (criar, editar, tirar do ciclo e excluir BU sem Goal Card submetido), Grupos (contribuidores e consulta por BU e o grupo de aprovação único, inclusão por matrícula), Metas e pesos (por nível do desdobramento, do CEO à GA, com a soma por unidade e gravação só com o total fechado, RN-16) e Parâmetros (níveis do desdobramento e limites); criar ciclo novo clonando o anterior; toda alteração vai ao Action Log com antes e depois (§7.1) | MVP |
+| T11 | Administração (configuração do ciclo) | Admin | No submenu Administração, em abas: Ciclo (lista de ciclos, um aberto por vez, fechar, reabrir e abrir novo ciclo; nome, janelas e textos padrão), Business Units (criar, editar, tirar do ciclo e excluir BU sem Goal Card submetido), Grupos (seções por grupo e BU, popup de cadastro com busca no MDM), Metas e pesos (CEO, COO e BU, herdado editável, soma por unidade e gravação só com o total fechado, RN-16) e Parâmetros (níveis do desdobramento com Obrigatório/Opcional); toda alteração vai ao Action Log com antes e depois (§7.1) | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
 | T14 | Aprovações | Só o grupo de aprovação | Fila com todas as fichas Em aprovação (filtro País › BU, idade); abre a ficha com revisão OK/Ajustar por seção, comentários por seção e decisão Aprovar/Devolver/Negar (RN-06, RN-08, RN-09, RN-12) | MVP |
 
@@ -338,7 +340,7 @@ As oito telas do MVP estão prontas no protótipo (T00 Início, T02 Painel do ci
 | T12 Sem acesso | Parcial | Mesmo padrão da tela "Acesso não autorizado" do Portal PCI: cartão central em vidro sobre a foto dos minerais, cadeado em quadrado vermelho suave, título "Acesso não autorizado", mensagem única e neutra (não revela se o card existe) e botões Voltar e ação principal (Início ou Metas da BU), com foco no título; aparece no Desdobramento, na T02, na T03 e na T04 quando a API responde 401, 403 ou 404, e o resto da tela sai de cena | Evento "Acesso negado" no log e sem acesso ao ciclo pelo Início (AC-03) |
 | T06 Versões | Desenvolvida | Aberta pelos links "Versões" do Goal Card e do Action Log. Linha das versões (v1 → v2) com motivo, autor, data, decisão e selo da oficial; comparação de duas versões (de/para, inverter, endereço `#versoes?card=&de=&para=`), campo a campo nas 7 seções, alterados em destaque e iguais recolhidos ("Só o que mudou"), com a marca das seções em que o grupo pediu ajuste; versão única mostrada inteira; rascunho explica que a v1 nasce na primeira submissão; seletor das metas da BU | Versões gravadas (P-12) |
 | T07 Action Log | Desenvolvida | Todos os perfis com papel leem. Topo só com o título (sem o ano nem cartões de resumo); filtros Período (7 dias, 30 dias, ciclo), BU, Meta, Seção, Tipo e Goal Card, na URL; linha do tempo agrupada por dia, com hora, ponto colorido pelo tipo (decisão pela cor do resultado), frase traduzível, comentário citado, antes → depois e etiquetas que viram filtro; links para o Goal Card e as Versões; 40 eventos por página com "Mostrar mais"; exportação CSV (abre no Excel) com os filtros aplicados; registro imutável | Eventos reais (AIP_EVENTO_LOG, P-12) |
-| T11 Configuração do ciclo | Desenvolvida | Só o administrador (403 → T12). Topo só com o título e abas na URL: Ciclo (ano editável com validação, nome, texto padrão e as 4 janelas com datas, dias úteis e ordem validada), Business Units (nova BU, editar nome e país, chave "No ciclo AIP 2027" para o ciclo aberto, excluir só sem Goal Card submetido, com confirmação; números centralizados), Grupos (inclusão por matrícula ou nome, filtros, busca, remoção), Metas e pesos (seletor de nível CEO › COO › BU › GG › GA, unidade-mãe para GG e GA, linha herdada travada, nova meta e remoção, total por unidade com aviso da RN-16) e Parâmetros (níveis do desdobramento: nome, total por unidade, herdado do nível acima, pontos livres e GG/GA ligáveis; limites com faixa). Rodapé fixo com o que mudou e o que impede gravar; Salvar grava as abas alteradas (e as metas quando níveis ou BUs mudam) e o servidor repete as validações; novo ciclo a partir deste em diálogo; sem o histórico de últimas alterações (fica no Action Log) | Gravação real e evento no log (P-12) |
+| T11 Administração | Desenvolvida | Só o administrador (403 → T12). Título "Administração" e abas na URL. Ciclo: lista de ciclos no campo Ano, situação Aberto/Fechado, botões Fechar, Reabrir e Abrir novo ciclo no cabeçalho da seção (um ciclo aberto por vez), janelas desativadas em ciclo fechado, cards com a mesma altura. Business Units: nova BU, editar, tirar do ciclo, excluir só sem Goal Card submetido. Grupos: seções Aprovação, Administradores e por BU com cards de pessoa; popup Novo usuário com busca no diretório (MDM) por nome ou e-mail. Metas e pesos: CEO › COO › BU, linha herdada editável, nova meta e remoção, total por unidade (RN-16). Parâmetros: níveis com Obrigatório/Opcional e interruptor Ativa para os opcionais; sem limites das regras. Rodapé fixo com o que mudou e o que impede gravar | Gravação real, MDM real e evento no log (P-12) |
 | T14 Aprovações | Desenvolvida | No submenu Administração, só para o grupo de aprovação (AC-08; demais perfis: item fora do menu e API 403 → T12). Filtros País › BU e tempo na fila (qualquer, 3+ ou 5+ dias úteis) na URL; fila das fichas Em aprovação, das mais antigas para as mais novas, com idade em dias úteis, etiqueta de resubmissão e "Você editou" (RN-12); análise da ficha com links para Goal Card, Versões e histórico; nas resubmissões, seções alteradas destacadas com o antes da versão anterior (RN-10); revisão OK/Ajustar por seção com progresso; comentários por seção na própria linha (RN-13); decisão Aprovar/Devolver/Negar com comentário e confirmação no segundo clique (RN-08, RN-09), validada no cliente e no servidor; quem editou ou submeteu não vê a decisão (RN-12); depois da decisão, o card sai da fila e abre a próxima ficha ("3 restantes"), com a fila vazia, "Fila concluída" | Decisão, comentários e notificações gravados (P-12, P-03) |
 | T09, T10 | Não iniciadas | — | Fases 2 e 3 |
 

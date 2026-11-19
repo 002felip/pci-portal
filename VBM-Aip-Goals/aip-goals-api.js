@@ -146,7 +146,7 @@ const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'p
 // Edição: contribuidor da própria BU ou administrador, que edita as metas de todas as BUs (AC-05)
 const ehAdmin = (papeis) => papeis.some((p) => p.papel === 'admin');
 const podeEditar = (papeis, sigla) => ehAdmin(papeis) || contribuidorDe(papeis, sigla);
-const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (configurável no banco, AIP_PARAMETRO)
+const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (limite definido na aplicação)
 const MAX_COMENTARIO = 2000;  // tamanho máximo de um comentário de seção
 const SECOES_CARD = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
 const IDADES = ['todas', '3', '5']; // filtro de idade da T14: todas, há 3+ ou 5+ dias úteis na fila

@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DER do AIP Goals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: prancheta de engenharia — cabeçalho curto, o diagrama ocupa a largura, regras por tabela embaixo */
+:root {
+  --bg: #f3f5f2; --surface: #ffffff; --fg: #1d2622; --muted: #5e6c65; --line: #c8d0cb; --wire: #6d7b74;
+  --zebra: #f6f8f6; --pk: #9a5b0b; --fk: #2d6a8a;
+  --cic: #dfe8e2; --des: #efe6d6; --gc: #dde6ef; --aud: #e9e1ec;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --surface: #1a201d; --fg: #e3e9e5; --muted: #95a39c; --line: #34403a; --wire: #7f8f87;
+  --zebra: #1e2521; --pk: #e2a64c; --fk: #74b6d4;
+  --cic: #233229; --des: #352d1f; --gc: #1f2c38; --aud: #2e2533; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121614; --surface: #1a201d; --fg: #e3e9e5; --muted: #95a39c; --line: #34403a; --wire: #7f8f87;
+  --zebra: #1e2521; --pk: #e2a64c; --fk: #74b6d4;
+  --cic: #233229; --des: #352d1f; --gc: #1f2c38; --aud: #2e2533; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+.wrap { max-width: 1600px; margin: 0 auto; display: grid; gap: 22px; }
+header.top { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+h1 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--fg); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-size: 13px; color: var(--muted); }
+.legend .it { display: inline-flex; align-items: center; gap: 7px; }
+.legend svg { color: var(--wire); }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); display: inline-block; }
+.k { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+.kp { color: var(--pk); } .kf { color: var(--fk); }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#der { display: block; width: 100%; min-width: 1080px; height: auto; color: var(--wire); }
+figcaption { font-size: 13px; color: var(--muted); padding: 10px 2px 0; max-width: 90ch; }
+/* SVG */
+#der .box { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+#der .zebra { fill: var(--zebra); }
+#der .g-cic .head { fill: var(--cic); } #der .g-des .head { fill: var(--des); }
+#der .g-gc .head { fill: var(--gc); } #der .g-aud .head { fill: var(--aud); }
+#der .tname { fill: var(--fg); font: 600 13.5px var(--sans); letter-spacing: 0.02em; }
+#der .tgroup { fill: var(--muted); font: 500 10px var(--sans); letter-spacing: 0.12em; }
+#der .cname { fill: var(--fg); font: 500 11.5px var(--mono); }
+#der .cname.opt { fill: var(--muted); font-weight: 400; }
+#der .ctype { fill: var(--muted); font: 400 10.5px var(--mono); }
+#der .key { font: 600 9.5px var(--mono); }
+#der .kpk { fill: var(--pk); } #der .kfk { fill: var(--fk); }
+#der .wire { fill: none; stroke: currentColor; stroke-width: 1.4; }
+#der .card path { fill: none; stroke: currentColor; stroke-width: 1.4; }
+#der .card .hollow { fill: var(--surface); stroke: currentColor; stroke-width: 1.3; }
+#der .elabel { fill: var(--muted); font: italic 500 11px var(--sans); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+#der .tbl { cursor: pointer; outline: none; transition: opacity .15s; }
+#der .tbl:focus-visible .box, #der .tbl.on .box { stroke: var(--fk); stroke-width: 2; }
+#der .edge { transition: opacity .15s; }
+#der.focus .tbl:not(.near), #der.focus .edge:not(.near) { opacity: .18; }
+#der.focus .edge.near { color: var(--fk); }
+/* cartões */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 12px; min-width: 0; scroll-margin-top: 16px; }
+.tcard.on { border-color: var(--fk); box-shadow: 0 0 0 1px var(--fk); }
+.tcard header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tcard h3 { margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.chip { font-size: 10px; letter-spacing: 0.12em; padding: 2px 8px; border-radius: 99px; color: var(--fg); white-space: nowrap; }
+.g-cic .chip { background: var(--cic); } .g-des .chip { background: var(--des); } .g-gc .chip { background: var(--gc); } .g-aud .chip { background: var(--aud); }
+.purpose { margin: 8px 0 4px; }
+.meta { margin: 0 0 8px; font-size: 12.5px; color: var(--muted); font-family: var(--mono); overflow-wrap: anywhere; }
+.tcard ul { margin: 0; padding-left: 18px; font-size: 13.5px; display: grid; gap: 3px; }
+/* painel de detalhe */
+#detalhe.has { padding-top: 14px; max-width: none; color: var(--fg); }
+.dt header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.dt h3 { margin: 0; font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--fg); }
+.dmeta { font-size: 12.5px; color: var(--muted); }
+.dclose { margin-left: auto; font: inherit; font-size: 12.5px; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+.dclose:hover { border-color: var(--fk); }
+.dt .purpose { color: var(--fg); font-size: 14px; margin: 8px 0 10px; max-width: 100ch; }
+.dlink { margin: -4px 0 10px; font-size: 13px; } .dlink a { color: var(--fk); }
+.dgrid { display: grid; gap: 16px; }
+.dt aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 0 28px; }
+.dtab { color: var(--fg); }
+.dtab tbody th { font-family: var(--mono); font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.dtab td { white-space: nowrap; }
+.dtab td.ds { white-space: normal; min-width: 26ch; color: var(--fg); }
+.dtab td.ty { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.dtab td.long { white-space: normal; overflow-wrap: anywhere; min-width: 20ch; }
+.dtab thead th { white-space: normal; }
+.dtab tbody tr:nth-child(even) { background: var(--zebra); }
+.dt aside { font-size: 13px; color: var(--fg); }
+@media (max-width: 720px) {
+  .dtab thead { display: none; }
+  .dtab, .dtab tbody { display: block; }
+  .dtab tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+  .dtab th, .dtab td { border: 0; padding: 0; white-space: normal; }
+  .dtab td:nth-child(3) { display: none; }
+  .dtab td.ds, .dtab td.exv { grid-column: 1 / -1; min-width: 0; }
+  .dtab td.exv::before { content: attr(data-l) ": "; color: var(--muted); }
+}
+.dt aside h4 { margin: 0 0 4px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.dt aside ul { margin: 0 0 14px; padding-left: 18px; display: grid; gap: 4px; }
+.dt aside code { font-family: var(--mono); font-size: 12px; }
+/* exemplos */
+.explica, .ex { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.explica h2 { margin-top: 0; }
+.explica h3 { font-size: 0.98rem; margin: 18px 0 8px; }
+.explica p { margin: 6px 0; max-width: 95ch; }
+.ordem { margin: 6px 0 0; padding-left: 22px; display: grid; gap: 2px; }
+.tscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; color: var(--muted); font-weight: 600; }
+.passo tr.hl td { background: var(--gc); }
+.passo tfoot td { border-bottom: 0; font-weight: 500; }
+.exs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; align-items: start; }
+.ex { scroll-margin-top: 16px; }
+.ex.on { border-color: var(--fk); box-shadow: 0 0 0 1px var(--fk); }
+.ex header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ex h3 { margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600; }
+.ex tbody th { font-family: var(--mono); font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.ex td { white-space: nowrap; }
+.ex td.long { white-space: normal; overflow-wrap: anywhere; min-width: 24ch; }
+.ex thead th { min-width: 13ch; }
+.ex tbody tr:nth-child(even) { background: var(--zebra); }
+.nul { color: var(--muted); font-style: italic; }
+h2 { font-size: 1.1rem; margin: 6px 0 0; }
+.fn { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 10px 14px; margin: 0; padding: 0; list-style: none; font-size: 13.5px; }
+.fn li { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.fn code { font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
+.fn span { display: block; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { #der .tbl, #der .edge { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>DER do AIP Goals</h1>
+      <p class="sub">VBM AIP Goals · modelo proposto (fase 1) · PostgreSQL de teste, alvo Azure SQL · versão de 19/11/2026 · padrão IBP de nomes (ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_, QTDE_, VL_)</p>
+    </div>
+    <div class="stats"><span><b>16</b> tabelas</span><span><b>103</b> campos</span><span><b>24</b> ligações</span><span><b>36</b> regras</span></div>
+  </header>
+
+  <div class="legend" aria-label="Legenda">
+    <span class="it"><span class="k kp">PK</span> chave primária</span>
+    <span class="it"><span class="k kf">FK</span> chave estrangeira</span>
+    <span class="it"><span class="k">CAMPO?</span> opcional (aceita vazio)</span>
+    <span class="it"><span class="k">gerado · auto</span> preenchido pelo banco</span>
+    <span class="it"><svg width="44" height="14" viewBox="0 0 44 14" aria-hidden="true"><path d="M2,7 H42 M30,7 L42,1 M30,7 L42,7 M30,7 L42,13" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="24" cy="7" r="3.5" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"/></svg> zero ou muitos</span>
+    <span class="it"><svg width="44" height="14" viewBox="0 0 44 14" aria-hidden="true"><path d="M2,7 H42 M35,1 V13 M30,1 V13" fill="none" stroke="currentColor" stroke-width="1.4"/></svg> exatamente um</span>
+    <span class="it"><svg width="44" height="14" viewBox="0 0 44 14" aria-hidden="true"><path d="M2,7 H42 M35,1 V13" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="27" cy="7" r="3.5" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"/></svg> zero ou um</span>
+    <span class="it"><span class="sw" style="background:var(--cic)"></span>ciclo e pessoas <span class="sw" style="background:var(--des)"></span>desdobramento <span class="sw" style="background:var(--gc)"></span>goal card <span class="sw" style="background:var(--aud)"></span>log e avisos</span>
+  </div>
+
+  <figure>
+    <div class="scroll">
+<svg id="der" viewBox="0 0 1630 934" role="img" aria-label="Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.">
+<g class="edges">
+<g class="edge" data-rel="AIP_CICLO AIP_CICLO"><title>AIP_CICLO_ID_CICLO_ORIGEM_FKEY: AIP_CICLO.ID_CICLO_ORIGEM → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M350,164.5 L374,164.5 L374,69.5 L350,69.5"/>
+<g class="card"><path d="M362,164.5 L350,158.5 M362,164.5 L350,164.5 M362,164.5 L350,170.5"/><circle cx="368" cy="164.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5"/><circle cx="365" cy="69.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="374.0" y="117.0" transform="rotate(-90 374.0 117.0)" dy="-5" text-anchor="middle">criado a partir de</text>
+</g>
+<g class="edge" data-rel="AIP_CICLO_JANELA AIP_CICLO"><title>AIP_CICLO_JANELA_ID_CICLO_FKEY: AIP_CICLO_JANELA.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M350,333.5 L368,333.5 L368,69.5 L350,69.5"/>
+<g class="card"><path d="M362,333.5 L350,327.5 M362,333.5 L350,333.5 M362,333.5 L350,339.5"/><circle cx="368" cy="333.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="368.0" y="201.5" transform="rotate(-90 368.0 201.5)" dy="-5" text-anchor="middle">etapa de</text>
+</g>
+<g class="edge" data-rel="AIP_CICLO_BU AIP_CICLO"><title>AIP_CICLO_BU_ID_CICLO_FKEY: AIP_CICLO_BU.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M440,69.5 L350,69.5"/>
+<g class="card"><path d="M428,69.5 L440,63.5 M428,69.5 L440,69.5 M428,69.5 L440,75.5"/><circle cx="422" cy="69.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="395.0" y="69.5" dy="-6" text-anchor="middle">participa de</text>
+</g>
+<g class="edge" data-rel="AIP_CICLO_BU AIP_BU"><title>AIP_CICLO_BU_ID_BU_FKEY: AIP_CICLO_BU.ID_BU → AIP_BU.ID_BU</title>
+<path class="wire" d="M440,88.5 L395.0,88.5 L395.0,728.5 L350,728.5"/>
+<g class="card"><path d="M428,88.5 L440,82.5 M428,88.5 L440,88.5 M428,88.5 L440,94.5"/><circle cx="422" cy="88.5" r="3.5" class="hollow"/><path d="M357,722.5 L357,734.5 M362,722.5 L362,734.5"/></g>
+<text class="elabel" x="395.0" y="408.5" transform="rotate(-90 395.0 408.5)" dy="-5" text-anchor="middle">inclui</text>
+</g>
+<g class="edge" data-rel="AIP_NIVEL AIP_CICLO"><title>AIP_NIVEL_ID_CICLO_FKEY: AIP_NIVEL.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M440,219.5 L411.0,219.5 L411.0,69.5 L350,69.5"/>
+<g class="card"><path d="M428,219.5 L440,213.5 M428,219.5 L440,219.5 M428,219.5 L440,225.5"/><circle cx="422" cy="219.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="411.0" y="144.5" transform="rotate(-90 411.0 144.5)" dy="-5" text-anchor="middle">nível de</text>
+</g>
+<g class="edge" data-rel="AIP_UNIDADE AIP_NIVEL"><title>AIP_UNIDADE_ID_NIVEL_FKEY: AIP_UNIDADE.ID_NIVEL → AIP_NIVEL.ID_NIVEL</title>
+<path class="wire" d="M770,464.5 L788,464.5 L788,200.5 L770,200.5"/>
+<g class="card"><path d="M782,464.5 L770,458.5 M782,464.5 L770,464.5 M782,464.5 L770,470.5"/><circle cx="788" cy="464.5" r="3.5" class="hollow"/><path d="M777,194.5 L777,206.5 M782,194.5 L782,206.5"/></g>
+<text class="elabel" x="788.0" y="332.5" transform="rotate(-90 788.0 332.5)" dy="-5" text-anchor="middle">pertence ao</text>
+</g>
+<g class="edge" data-rel="AIP_UNIDADE AIP_BU"><title>AIP_UNIDADE_ID_BU_FKEY: AIP_UNIDADE.ID_BU → AIP_BU.ID_BU</title>
+<path class="wire" d="M440,502.5 L379.0,502.5 L379.0,728.5 L350,728.5"/>
+<g class="card"><path d="M428,502.5 L440,496.5 M428,502.5 L440,502.5 M428,502.5 L440,508.5"/><circle cx="422" cy="502.5" r="3.5" class="hollow"/><path d="M357,722.5 L357,734.5"/><circle cx="365" cy="728.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="379.0" y="615.5" transform="rotate(-90 379.0 615.5)" dy="-5" text-anchor="middle">representa</text>
+</g>
+<g class="edge" data-rel="AIP_UNIDADE AIP_UNIDADE"><title>AIP_UNIDADE_ID_UNIDADE_PAI_FKEY: AIP_UNIDADE.ID_UNIDADE_PAI → AIP_UNIDADE.ID_UNIDADE</title>
+<path class="wire" d="M770,521.5 L794,521.5 L794,445.5 L770,445.5"/>
+<g class="card"><path d="M782,521.5 L770,515.5 M782,521.5 L770,521.5 M782,521.5 L770,527.5"/><circle cx="788" cy="521.5" r="3.5" class="hollow"/><path d="M777,439.5 L777,451.5"/><circle cx="785" cy="445.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="794.0" y="483.5" transform="rotate(-90 794.0 483.5)" dy="-5" text-anchor="middle">abaixo de</text>
+</g>
+<g class="edge" data-rel="AIP_META AIP_NIVEL"><title>AIP_META_ID_NIVEL_FKEY: AIP_META.ID_NIVEL → AIP_NIVEL.ID_NIVEL</title>
+<path class="wire" d="M770,633.5 L800,633.5 L800,200.5 L770,200.5"/>
+<g class="card"><path d="M782,633.5 L770,627.5 M782,633.5 L770,633.5 M782,633.5 L770,639.5"/><circle cx="788" cy="633.5" r="3.5" class="hollow"/><path d="M777,194.5 L777,206.5 M782,194.5 L782,206.5"/></g>
+<text class="elabel" x="800.0" y="417.0" transform="rotate(-90 800.0 417.0)" dy="-5" text-anchor="middle">meta do</text>
+</g>
+<g class="edge" data-rel="AIP_META AIP_META"><title>AIP_META_ID_META_ORIGEM_FKEY: AIP_META.ID_META_ORIGEM → AIP_META.ID_META</title>
+<path class="wire" d="M770,728.5 L794,728.5 L794,614.5 L770,614.5"/>
+<g class="card"><path d="M782,728.5 L770,722.5 M782,728.5 L770,728.5 M782,728.5 L770,734.5"/><circle cx="788" cy="728.5" r="3.5" class="hollow"/><path d="M777,608.5 L777,620.5"/><circle cx="785" cy="614.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="794.0" y="671.5" transform="rotate(-90 794.0 671.5)" dy="-5" text-anchor="middle">desdobrada de</text>
+</g>
+<g class="edge" data-rel="AIP_META_PESO AIP_META"><title>AIP_META_PESO_ID_META_FKEY: AIP_META_PESO.ID_META → AIP_META.ID_META</title>
+<path class="wire" d="M770,840.5 L776,840.5 L776,614.5 L770,614.5"/>
+<g class="card"><path d="M782,840.5 L770,834.5 M782,840.5 L770,840.5 M782,840.5 L770,846.5"/><circle cx="788" cy="840.5" r="3.5" class="hollow"/><path d="M777,608.5 L777,620.5 M782,608.5 L782,620.5"/></g>
+<text class="elabel" x="776.0" y="727.5" transform="rotate(-90 776.0 727.5)" dy="-5" text-anchor="middle">peso da</text>
+</g>
+<g class="edge" data-rel="AIP_META_PESO AIP_UNIDADE"><title>AIP_META_PESO_ID_UNIDADE_FKEY: AIP_META_PESO.ID_UNIDADE → AIP_UNIDADE.ID_UNIDADE</title>
+<path class="wire" d="M770,859.5 L812,859.5 L812,445.5 L770,445.5"/>
+<g class="card"><path d="M782,859.5 L770,853.5 M782,859.5 L770,859.5 M782,859.5 L770,865.5"/><circle cx="788" cy="859.5" r="3.5" class="hollow"/><path d="M777,439.5 L777,451.5 M782,439.5 L782,451.5"/></g>
+<text class="elabel" x="812.0" y="652.5" transform="rotate(-90 812.0 652.5)" dy="-5" text-anchor="middle">na unidade</text>
+</g>
+<g class="edge" data-rel="AIP_PAPEL AIP_CICLO"><title>AIP_PAPEL_ID_CICLO_FKEY: AIP_PAPEL.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M350,521.5 L380,521.5 L380,69.5 L350,69.5"/>
+<g class="card"><path d="M362,521.5 L350,515.5 M362,521.5 L350,521.5 M362,521.5 L350,527.5"/><circle cx="368" cy="521.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="380.0" y="295.5" transform="rotate(-90 380.0 295.5)" dy="-5" text-anchor="middle">participa de</text>
+</g>
+<g class="edge" data-rel="AIP_PAPEL AIP_BU"><title>AIP_PAPEL_ID_BU_FKEY: AIP_PAPEL.ID_BU → AIP_BU.ID_BU</title>
+<path class="wire" d="M350,578.5 L356,578.5 L356,728.5 L350,728.5"/>
+<g class="card"><path d="M362,578.5 L350,572.5 M362,578.5 L350,578.5 M362,578.5 L350,584.5"/><circle cx="368" cy="578.5" r="3.5" class="hollow"/><path d="M357,722.5 L357,734.5"/><circle cx="365" cy="728.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="356.0" y="653.5" transform="rotate(-90 356.0 653.5)" dy="-5" text-anchor="middle">atua na</text>
+</g>
+<g class="edge" data-rel="AIP_GOAL_CARD AIP_META"><title>AIP_GOAL_CARD_ID_META_FKEY: AIP_GOAL_CARD.ID_META → AIP_META.ID_META</title>
+<path class="wire" d="M860,107.5 L815.0,107.5 L815.0,614.5 L770,614.5"/>
+<g class="card"><path d="M848,107.5 L860,101.5 M848,107.5 L860,107.5 M848,107.5 L860,113.5"/><circle cx="842" cy="107.5" r="3.5" class="hollow"/><path d="M777,608.5 L777,620.5 M782,608.5 L782,620.5"/></g>
+<text class="elabel" x="815.0" y="361.0" transform="rotate(-90 815.0 361.0)" dy="-5" text-anchor="middle">card da</text>
+</g>
+<g class="edge" data-rel="AIP_GOAL_CARD AIP_UNIDADE"><title>AIP_GOAL_CARD_ID_UNIDADE_FKEY: AIP_GOAL_CARD.ID_UNIDADE → AIP_UNIDADE.ID_UNIDADE</title>
+<path class="wire" d="M860,126.5 L831.0,126.5 L831.0,445.5 L770,445.5"/>
+<g class="card"><path d="M848,126.5 L860,120.5 M848,126.5 L860,126.5 M848,126.5 L860,132.5"/><circle cx="842" cy="126.5" r="3.5" class="hollow"/><path d="M777,439.5 L777,451.5 M782,439.5 L782,451.5"/></g>
+<text class="elabel" x="831.0" y="286.0" transform="rotate(-90 831.0 286.0)" dy="-5" text-anchor="middle">da unidade</text>
+</g>
+<g class="edge" data-rel="AIP_GOAL_CARD_VERSAO AIP_GOAL_CARD"><title>AIP_GOAL_CARD_VERSAO_ID_GOAL_CARD_FKEY: AIP_GOAL_CARD_VERSAO.ID_GOAL_CARD → AIP_GOAL_CARD.ID_GOAL_CARD</title>
+<path class="wire" d="M1190,333.5 L1208,333.5 L1208,69.5 L1190,69.5"/>
+<g class="card"><path d="M1202,333.5 L1190,327.5 M1202,333.5 L1190,333.5 M1202,333.5 L1190,339.5"/><circle cx="1208" cy="333.5" r="3.5" class="hollow"/><path d="M1197,63.5 L1197,75.5 M1202,63.5 L1202,75.5"/></g>
+<text class="elabel" x="1208.0" y="201.5" transform="rotate(-90 1208.0 201.5)" dy="-5" text-anchor="middle">versão de</text>
+</g>
+<g class="edge" data-rel="AIP_DECISAO AIP_GOAL_CARD_VERSAO"><title>AIP_DECISAO_ID_VERSAO_FKEY: AIP_DECISAO.ID_VERSAO → AIP_GOAL_CARD_VERSAO.ID_VERSAO</title>
+<path class="wire" d="M1190,540.5 L1220,540.5 L1220,314.5 L1190,314.5"/>
+<g class="card"><path d="M1202,540.5 L1190,534.5 M1202,540.5 L1190,540.5 M1202,540.5 L1190,546.5"/><circle cx="1208" cy="540.5" r="3.5" class="hollow"/><path d="M1197,308.5 L1197,320.5 M1202,308.5 L1202,320.5"/></g>
+<text class="elabel" x="1220.0" y="427.5" transform="rotate(-90 1220.0 427.5)" dy="-5" text-anchor="middle">decide</text>
+</g>
+<g class="edge" data-rel="AIP_REVISAO_SECAO AIP_DECISAO"><title>AIP_REVISAO_SECAO_ID_DECISAO_FKEY: AIP_REVISAO_SECAO.ID_DECISAO → AIP_DECISAO.ID_DECISAO</title>
+<path class="wire" d="M1190,709.5 L1196,709.5 L1196,521.5 L1190,521.5"/>
+<g class="card"><path d="M1202,709.5 L1190,703.5 M1202,709.5 L1190,709.5 M1202,709.5 L1190,715.5"/><circle cx="1208" cy="709.5" r="3.5" class="hollow"/><path d="M1197,515.5 L1197,527.5 M1202,515.5 L1202,527.5"/></g>
+<text class="elabel" x="1196.0" y="615.5" transform="rotate(-90 1196.0 615.5)" dy="-5" text-anchor="middle">detalha</text>
+</g>
+<g class="edge" data-rel="AIP_COMENTARIO AIP_GOAL_CARD"><title>AIP_COMENTARIO_ID_GOAL_CARD_FKEY: AIP_COMENTARIO.ID_GOAL_CARD → AIP_GOAL_CARD.ID_GOAL_CARD</title>
+<path class="wire" d="M1280,88.5 L1235.0,88.5 L1235.0,69.5 L1190,69.5"/>
+<g class="card"><path d="M1268,88.5 L1280,82.5 M1268,88.5 L1280,88.5 M1268,88.5 L1280,94.5"/><circle cx="1262" cy="88.5" r="3.5" class="hollow"/><path d="M1197,63.5 L1197,75.5 M1202,63.5 L1202,75.5"/></g>
+<text class="elabel" x="1257.5" y="88.5" dy="-6" text-anchor="middle">comenta</text>
+</g>
+<g class="edge" data-rel="AIP_COMENTARIO AIP_COMENTARIO"><title>AIP_COMENTARIO_ID_COMENTARIO_PAI_FKEY: AIP_COMENTARIO.ID_COMENTARIO_PAI → AIP_COMENTARIO.ID_COMENTARIO</title>
+<path class="wire" d="M1610,145.5 L1634,145.5 L1634,69.5 L1610,69.5"/>
+<g class="card"><path d="M1622,145.5 L1610,139.5 M1622,145.5 L1610,145.5 M1622,145.5 L1610,151.5"/><circle cx="1628" cy="145.5" r="3.5" class="hollow"/><path d="M1617,63.5 L1617,75.5"/><circle cx="1625" cy="69.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="1634.0" y="107.5" transform="rotate(-90 1634.0 107.5)" dy="-5" text-anchor="middle">responde a</text>
+</g>
+<g class="edge" data-rel="AIP_EVENTO_LOG AIP_CICLO"><title>AIP_EVENTO_LOG_ID_CICLO_FKEY: AIP_EVENTO_LOG.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M1280,295.5 L1251.0,295.5 L1251.0,910 L427.0,910 L427.0,69.5 L350,69.5"/>
+<g class="card"><path d="M1268,295.5 L1280,289.5 M1268,295.5 L1280,295.5 M1268,295.5 L1280,301.5"/><circle cx="1262" cy="295.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="427.0" y="489.75" transform="rotate(-90 427.0 489.75)" dy="-5" text-anchor="middle">registrado em</text>
+</g>
+<g class="edge" data-rel="AIP_EVENTO_LOG AIP_GOAL_CARD"><title>AIP_EVENTO_LOG_ID_GOAL_CARD_FKEY: AIP_EVENTO_LOG.ID_GOAL_CARD → AIP_GOAL_CARD.ID_GOAL_CARD</title>
+<path class="wire" d="M1280,390.5 L1219.0,390.5 L1219.0,69.5 L1190,69.5"/>
+<g class="card"><path d="M1268,390.5 L1280,384.5 M1268,390.5 L1280,390.5 M1268,390.5 L1280,396.5"/><circle cx="1262" cy="390.5" r="3.5" class="hollow"/><path d="M1197,63.5 L1197,75.5"/><circle cx="1205" cy="69.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="1219.0" y="230.0" transform="rotate(-90 1219.0 230.0)" dy="-5" text-anchor="middle">sobre</text>
+</g>
+<g class="edge" data-rel="AIP_NOTIFICACAO AIP_EVENTO_LOG"><title>AIP_NOTIFICACAO_ID_EVENTO_FKEY: AIP_NOTIFICACAO.ID_EVENTO → AIP_EVENTO_LOG.ID_EVENTO</title>
+<path class="wire" d="M1610,559.5 L1628,559.5 L1628,276.5 L1610,276.5"/>
+<g class="card"><path d="M1622,559.5 L1610,553.5 M1622,559.5 L1610,559.5 M1622,559.5 L1610,565.5"/><circle cx="1628" cy="559.5" r="3.5" class="hollow"/><path d="M1617,270.5 L1617,282.5 M1622,270.5 L1622,282.5"/></g>
+<text class="elabel" x="1628.0" y="418.0" transform="rotate(-90 1628.0 418.0)" dy="-5" text-anchor="middle">avisa sobre</text>
+</g>
+</g>
+<g class="tbl g-des" data-t="AIP_BU" tabindex="0" role="button" aria-label="Tabela AIP_BU">
+<rect class="box" x="20" y="679" width="330" height="116" rx="6"/>
+<path class="head" d="M20,719 V685 Q20,679 26,679 H344 Q350,679 350,685 V719 Z"/>
+<text class="tname" x="32" y="704">AIP_BU</text>
+<text class="tgroup" x="338" y="704" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="30" y="732.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="64" y="732.5">ID_BU</text>
+<text class="ctype" x="340" y="732.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="21" y="738" width="328" height="19"/>
+<text class="cname" x="64" y="751.5">NM_BU</text>
+<text class="ctype" x="340" y="751.5" text-anchor="end">text</text>
+<text class="cname" x="64" y="770.5">NM_PAIS</text>
+<text class="ctype" x="340" y="770.5" text-anchor="end">text</text>
+<rect class="zebra" x="21" y="776" width="328" height="19"/>
+<text class="cname" x="64" y="789.5">DT_CRIACAO</text>
+<text class="ctype" x="340" y="789.5" text-anchor="end">timestamptz</text>
+</g>
+<g class="tbl g-cic" data-t="AIP_CICLO" tabindex="0" role="button" aria-label="Tabela AIP_CICLO">
+<rect class="box" x="20" y="20" width="330" height="230" rx="6"/>
+<path class="head" d="M20,60 V26 Q20,20 26,20 H344 Q350,20 350,26 V60 Z"/>
+<text class="tname" x="32" y="45">AIP_CICLO</text>
+<text class="tgroup" x="338" y="45" text-anchor="end">CICLO E PESSOAS</text>
+<text class="key" x="30" y="73.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="64" y="73.5">ID_CICLO</text>
+<text class="ctype" x="340" y="73.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="21" y="79" width="328" height="19"/>
+<text class="cname" x="64" y="92.5">NO_ANO</text>
+<text class="ctype" x="340" y="92.5" text-anchor="end">smallint</text>
+<text class="cname" x="64" y="111.5">NM_CICLO</text>
+<text class="ctype" x="340" y="111.5" text-anchor="end">text</text>
+<rect class="zebra" x="21" y="117" width="328" height="19"/>
+<text class="cname" x="64" y="130.5">TP_STATUS</text>
+<text class="ctype" x="340" y="130.5" text-anchor="end">text</text>
+<text class="cname opt" x="64" y="149.5">DS_TEXTO_PADRAO_EXCECOES?</text>
+<text class="ctype" x="340" y="149.5" text-anchor="end">text</text>
+<rect class="zebra" x="21" y="155" width="328" height="19"/>
+<text class="key" x="30" y="168.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="64" y="168.5">ID_CICLO_ORIGEM?</text>
+<text class="ctype" x="340" y="168.5" text-anchor="end">bigint</text>
+<text class="cname" x="64" y="187.5">DT_CRIACAO</text>
+<text class="ctype" x="340" y="187.5" text-anchor="end">timestamptz</text>
+<rect class="zebra" x="21" y="193" width="328" height="19"/>
+<text class="cname" x="64" y="206.5">CD_MATRICULA_CRIACAO</text>
+<text class="ctype" x="340" y="206.5" text-anchor="end">text</text>
+<text class="cname opt" x="64" y="225.5">DT_FECHAMENTO?</text>
+<text class="ctype" x="340" y="225.5" text-anchor="end">timestamptz</text>
+<rect class="zebra" x="21" y="231" width="328" height="19"/>
+<text class="cname opt" x="64" y="244.5">CD_MATRICULA_FECHAMENTO?</text>
+<text class="ctype" x="340" y="244.5" text-anchor="end">text</text>
+</g>
+<g class="tbl g-des" data-t="AIP_CICLO_BU" tabindex="0" role="button" aria-label="Tabela AIP_CICLO_BU">
+<rect class="box" x="440" y="20" width="330" height="97" rx="6"/>
+<path class="head" d="M440,60 V26 Q440,20 446,20 H764 Q770,20 770,26 V60 Z"/>
+<text class="tname" x="452" y="45">AIP_CICLO_BU</text>
+<text class="tgroup" x="758" y="45" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="73.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="73.5">ID_CICLO</text>
+<text class="ctype" x="760" y="73.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="441" y="79" width="328" height="19"/>
+<text class="key" x="450" y="92.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="92.5">ID_BU</text>
+<text class="ctype" x="760" y="92.5" text-anchor="end">bigint</text>
+<text class="cname" x="484" y="111.5">SG_ATIVA</text>
+<text class="ctype" x="760" y="111.5" text-anchor="end">boolean</text>
+</g>
+<g class="tbl g-cic" data-t="AIP_CICLO_JANELA" tabindex="0" role="button" aria-label="Tabela AIP_CICLO_JANELA">
+<rect class="box" x="20" y="284" width="330" height="135" rx="6"/>
+<path class="head" d="M20,324 V290 Q20,284 26,284 H344 Q350,284 350,290 V324 Z"/>
+<text class="tname" x="32" y="309">AIP_CICLO_JANELA</text>
+<text class="tgroup" x="338" y="309" text-anchor="end">CICLO E PESSOAS</text>
+<text class="key" x="30" y="337.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="64" y="337.5">ID_CICLO</text>
+<text class="ctype" x="340" y="337.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="21" y="343" width="328" height="19"/>
+<text class="key" x="30" y="356.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="64" y="356.5">TP_ETAPA</text>
+<text class="ctype" x="340" y="356.5" text-anchor="end">text</text>
+<text class="cname" x="64" y="375.5">NO_ORDEM</text>
+<text class="ctype" x="340" y="375.5" text-anchor="end">smallint</text>
+<rect class="zebra" x="21" y="381" width="328" height="19"/>
+<text class="cname opt" x="64" y="394.5">DT_INICIO?</text>
+<text class="ctype" x="340" y="394.5" text-anchor="end">date</text>
+<text class="cname" x="64" y="413.5">DT_FIM</text>
+<text class="ctype" x="340" y="413.5" text-anchor="end">date</text>
+</g>
+<g class="tbl g-des" data-t="AIP_NIVEL" tabindex="0" role="button" aria-label="Tabela AIP_NIVEL">
+<rect class="box" x="440" y="151" width="330" height="211" rx="6"/>
+<path class="head" d="M440,191 V157 Q440,151 446,151 H764 Q770,151 770,157 V191 Z"/>
+<text class="tname" x="452" y="176">AIP_NIVEL</text>
+<text class="tgroup" x="758" y="176" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="204.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="484" y="204.5">ID_NIVEL</text>
+<text class="ctype" x="760" y="204.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="441" y="210" width="328" height="19"/>
+<text class="key" x="450" y="223.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="223.5">ID_CICLO</text>
+<text class="ctype" x="760" y="223.5" text-anchor="end">bigint</text>
+<text class="cname" x="484" y="242.5">CD_NIVEL</text>
+<text class="ctype" x="760" y="242.5" text-anchor="end">text</text>
+<rect class="zebra" x="441" y="248" width="328" height="19"/>
+<text class="cname" x="484" y="261.5">NO_ORDEM</text>
+<text class="ctype" x="760" y="261.5" text-anchor="end">smallint</text>
+<text class="cname" x="484" y="280.5">NM_NIVEL</text>
+<text class="ctype" x="760" y="280.5" text-anchor="end">text</text>
+<rect class="zebra" x="441" y="286" width="328" height="19"/>
+<text class="cname" x="484" y="299.5">QTDE_PONTOS_TOTAL</text>
+<text class="ctype" x="760" y="299.5" text-anchor="end">integer</text>
+<text class="cname" x="484" y="318.5">QTDE_PONTOS_HERDADOS</text>
+<text class="ctype" x="760" y="318.5" text-anchor="end">integer</text>
+<rect class="zebra" x="441" y="324" width="328" height="19"/>
+<text class="cname" x="484" y="337.5">SG_OBRIGATORIO</text>
+<text class="ctype" x="760" y="337.5" text-anchor="end">boolean</text>
+<text class="cname" x="484" y="356.5">SG_ATIVO</text>
+<text class="ctype" x="760" y="356.5" text-anchor="end">boolean</text>
+</g>
+<g class="tbl g-cic" data-t="AIP_PAPEL" tabindex="0" role="button" aria-label="Tabela AIP_PAPEL">
+<rect class="box" x="20" y="453" width="330" height="192" rx="6"/>
+<path class="head" d="M20,493 V459 Q20,453 26,453 H344 Q350,453 350,459 V493 Z"/>
+<text class="tname" x="32" y="478">AIP_PAPEL</text>
+<text class="tgroup" x="338" y="478" text-anchor="end">CICLO E PESSOAS</text>
+<text class="key" x="30" y="506.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="64" y="506.5">ID_PAPEL</text>
+<text class="ctype" x="340" y="506.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="21" y="512" width="328" height="19"/>
+<text class="key" x="30" y="525.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="64" y="525.5">ID_CICLO</text>
+<text class="ctype" x="340" y="525.5" text-anchor="end">bigint</text>
+<text class="cname" x="64" y="544.5">CD_MATRICULA</text>
+<text class="ctype" x="340" y="544.5" text-anchor="end">text</text>
+<rect class="zebra" x="21" y="550" width="328" height="19"/>
+<text class="cname" x="64" y="563.5">TP_GRUPO</text>
+<text class="ctype" x="340" y="563.5" text-anchor="end">text</text>
+<text class="key" x="30" y="582.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="64" y="582.5">ID_BU?</text>
+<text class="ctype" x="340" y="582.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="21" y="588" width="328" height="19"/>
+<text class="cname" x="64" y="601.5">SG_ATIVO</text>
+<text class="ctype" x="340" y="601.5" text-anchor="end">boolean</text>
+<text class="cname" x="64" y="620.5">DT_INCLUSAO</text>
+<text class="ctype" x="340" y="620.5" text-anchor="end">timestamptz</text>
+<rect class="zebra" x="21" y="626" width="328" height="19"/>
+<text class="cname" x="64" y="639.5">CD_MATRICULA_INCLUSAO</text>
+<text class="ctype" x="340" y="639.5" text-anchor="end">text</text>
+</g>
+<g class="tbl g-des" data-t="AIP_META" tabindex="0" role="button" aria-label="Tabela AIP_META">
+<rect class="box" x="440" y="565" width="330" height="192" rx="6"/>
+<path class="head" d="M440,605 V571 Q440,565 446,565 H764 Q770,565 770,571 V605 Z"/>
+<text class="tname" x="452" y="590">AIP_META</text>
+<text class="tgroup" x="758" y="590" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="618.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="484" y="618.5">ID_META</text>
+<text class="ctype" x="760" y="618.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="441" y="624" width="328" height="19"/>
+<text class="key" x="450" y="637.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="637.5">ID_NIVEL</text>
+<text class="ctype" x="760" y="637.5" text-anchor="end">bigint</text>
+<text class="cname" x="484" y="656.5">NO_META</text>
+<text class="ctype" x="760" y="656.5" text-anchor="end">smallint</text>
+<rect class="zebra" x="441" y="662" width="328" height="19"/>
+<text class="cname" x="484" y="675.5">NM_TITULO</text>
+<text class="ctype" x="760" y="675.5" text-anchor="end">text</text>
+<text class="cname" x="484" y="694.5">TP_META</text>
+<text class="ctype" x="760" y="694.5" text-anchor="end">text</text>
+<rect class="zebra" x="441" y="700" width="328" height="19"/>
+<text class="cname" x="484" y="713.5">TP_POLARIDADE</text>
+<text class="ctype" x="760" y="713.5" text-anchor="end">text</text>
+<text class="key" x="450" y="732.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="484" y="732.5">ID_META_ORIGEM?</text>
+<text class="ctype" x="760" y="732.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="441" y="738" width="328" height="19"/>
+<text class="cname" x="484" y="751.5">SG_ATIVA</text>
+<text class="ctype" x="760" y="751.5" text-anchor="end">boolean</text>
+</g>
+<g class="tbl g-des" data-t="AIP_UNIDADE" tabindex="0" role="button" aria-label="Tabela AIP_UNIDADE">
+<rect class="box" x="440" y="396" width="330" height="135" rx="6"/>
+<path class="head" d="M440,436 V402 Q440,396 446,396 H764 Q770,396 770,402 V436 Z"/>
+<text class="tname" x="452" y="421">AIP_UNIDADE</text>
+<text class="tgroup" x="758" y="421" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="449.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="484" y="449.5">ID_UNIDADE</text>
+<text class="ctype" x="760" y="449.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="441" y="455" width="328" height="19"/>
+<text class="key" x="450" y="468.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="468.5">ID_NIVEL</text>
+<text class="ctype" x="760" y="468.5" text-anchor="end">bigint</text>
+<text class="cname" x="484" y="487.5">NM_UNIDADE</text>
+<text class="ctype" x="760" y="487.5" text-anchor="end">text</text>
+<rect class="zebra" x="441" y="493" width="328" height="19"/>
+<text class="key" x="450" y="506.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="484" y="506.5">ID_BU?</text>
+<text class="ctype" x="760" y="506.5" text-anchor="end">bigint</text>
+<text class="key" x="450" y="525.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="484" y="525.5">ID_UNIDADE_PAI?</text>
+<text class="ctype" x="760" y="525.5" text-anchor="end">bigint</text>
+</g>
+<g class="tbl g-gc" data-t="AIP_GOAL_CARD" tabindex="0" role="button" aria-label="Tabela AIP_GOAL_CARD">
+<rect class="box" x="860" y="20" width="330" height="211" rx="6"/>
+<path class="head" d="M860,60 V26 Q860,20 866,20 H1184 Q1190,20 1190,26 V60 Z"/>
+<text class="tname" x="872" y="45">AIP_GOAL_CARD</text>
+<text class="tgroup" x="1178" y="45" text-anchor="end">GOAL CARD</text>
+<text class="key" x="870" y="73.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="904" y="73.5">ID_GOAL_CARD</text>
+<text class="ctype" x="1180" y="73.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="861" y="79" width="328" height="19"/>
+<text class="cname" x="904" y="92.5">CD_GOAL_CARD</text>
+<text class="ctype" x="1180" y="92.5" text-anchor="end">text</text>
+<text class="key" x="870" y="111.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="904" y="111.5">ID_META</text>
+<text class="ctype" x="1180" y="111.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="861" y="117" width="328" height="19"/>
+<text class="key" x="870" y="130.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="904" y="130.5">ID_UNIDADE</text>
+<text class="ctype" x="1180" y="130.5" text-anchor="end">bigint</text>
+<text class="cname" x="904" y="149.5">TP_ESTADO</text>
+<text class="ctype" x="1180" y="149.5" text-anchor="end">text</text>
+<rect class="zebra" x="861" y="155" width="328" height="19"/>
+<text class="cname opt" x="904" y="168.5">NO_VERSAO_OFICIAL?</text>
+<text class="ctype" x="1180" y="168.5" text-anchor="end">smallint</text>
+<text class="cname opt" x="904" y="187.5">DS_RASCUNHO?</text>
+<text class="ctype" x="1180" y="187.5" text-anchor="end">jsonb</text>
+<rect class="zebra" x="861" y="193" width="328" height="19"/>
+<text class="cname" x="904" y="206.5">DT_ATUALIZACAO</text>
+<text class="ctype" x="1180" y="206.5" text-anchor="end">timestamptz</text>
+<text class="cname" x="904" y="225.5">CD_MATRICULA_ATUALIZACAO</text>
+<text class="ctype" x="1180" y="225.5" text-anchor="end">text</text>
+</g>
+<g class="tbl g-des" data-t="AIP_META_PESO" tabindex="0" role="button" aria-label="Tabela AIP_META_PESO">
+<rect class="box" x="440" y="791" width="330" height="97" rx="6"/>
+<path class="head" d="M440,831 V797 Q440,791 446,791 H764 Q770,791 770,797 V831 Z"/>
+<text class="tname" x="452" y="816">AIP_META_PESO</text>
+<text class="tgroup" x="758" y="816" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="844.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="844.5">ID_META</text>
+<text class="ctype" x="760" y="844.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="441" y="850" width="328" height="19"/>
+<text class="key" x="450" y="863.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="863.5">ID_UNIDADE</text>
+<text class="ctype" x="760" y="863.5" text-anchor="end">bigint</text>
+<text class="cname" x="484" y="882.5">VL_PESO</text>
+<text class="ctype" x="760" y="882.5" text-anchor="end">numeric(6,2)</text>
+</g>
+<g class="tbl g-gc" data-t="AIP_COMENTARIO" tabindex="0" role="button" aria-label="Tabela AIP_COMENTARIO">
+<rect class="box" x="1280" y="20" width="330" height="173" rx="6"/>
+<path class="head" d="M1280,60 V26 Q1280,20 1286,20 H1604 Q1610,20 1610,26 V60 Z"/>
+<text class="tname" x="1292" y="45">AIP_COMENTARIO</text>
+<text class="tgroup" x="1598" y="45" text-anchor="end">GOAL CARD</text>
+<text class="key" x="1290" y="73.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="1324" y="73.5">ID_COMENTARIO</text>
+<text class="ctype" x="1600" y="73.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="1281" y="79" width="328" height="19"/>
+<text class="key" x="1290" y="92.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="1324" y="92.5">ID_GOAL_CARD</text>
+<text class="ctype" x="1600" y="92.5" text-anchor="end">bigint</text>
+<text class="cname" x="1324" y="111.5">CD_SECAO</text>
+<text class="ctype" x="1600" y="111.5" text-anchor="end">text</text>
+<rect class="zebra" x="1281" y="117" width="328" height="19"/>
+<text class="cname" x="1324" y="130.5">DS_TEXTO</text>
+<text class="ctype" x="1600" y="130.5" text-anchor="end">text</text>
+<text class="key" x="1290" y="149.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="1324" y="149.5">ID_COMENTARIO_PAI?</text>
+<text class="ctype" x="1600" y="149.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="1281" y="155" width="328" height="19"/>
+<text class="cname" x="1324" y="168.5">DT_COMENTARIO</text>
+<text class="ctype" x="1600" y="168.5" text-anchor="end">timestamptz</text>
+<text class="cname" x="1324" y="187.5">CD_MATRICULA_AUTOR</text>
+<text class="ctype" x="1600" y="187.5" text-anchor="end">text</text>
+</g>
+<g class="tbl g-aud" data-t="AIP_EVENTO_LOG" tabindex="0" role="button" aria-label="Tabela AIP_EVENTO_LOG">
+<rect class="box" x="1280" y="227" width="330" height="230" rx="6"/>
+<path class="head" d="M1280,267 V233 Q1280,227 1286,227 H1604 Q1610,227 1610,233 V267 Z"/>
+<text class="tname" x="1292" y="252">AIP_EVENTO_LOG</text>
+<text class="tgroup" x="1598" y="252" text-anchor="end">LOG E AVISOS</text>
+<text class="key" x="1290" y="280.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="1324" y="280.5">ID_EVENTO</text>
+<text class="ctype" x="1600" y="280.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="1281" y="286" width="328" height="19"/>
+<text class="key" x="1290" y="299.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="1324" y="299.5">ID_CICLO</text>
+<text class="ctype" x="1600" y="299.5" text-anchor="end">bigint</text>
+<text class="cname" x="1324" y="318.5">TP_EVENTO</text>
+<text class="ctype" x="1600" y="318.5" text-anchor="end">text</text>
+<rect class="zebra" x="1281" y="324" width="328" height="19"/>
+<text class="cname" x="1324" y="337.5">DT_EVENTO</text>
+<text class="ctype" x="1600" y="337.5" text-anchor="end">timestamptz</text>
+<text class="cname" x="1324" y="356.5">CD_MATRICULA</text>
+<text class="ctype" x="1600" y="356.5" text-anchor="end">text</text>
+<rect class="zebra" x="1281" y="362" width="328" height="19"/>
+<text class="cname opt" x="1324" y="375.5">TP_GRUPO?</text>
+<text class="ctype" x="1600" y="375.5" text-anchor="end">text</text>
+<text class="key" x="1290" y="394.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="1324" y="394.5">ID_GOAL_CARD?</text>
+<text class="ctype" x="1600" y="394.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="1281" y="400" width="328" height="19"/>
+<text class="cname opt" x="1324" y="413.5">CD_SECAO?</text>
+<text class="ctype" x="1600" y="413.5" text-anchor="end">text</text>
+<text class="cname opt" x="1324" y="432.5">DS_ANTES?</text>
+<text class="ctype" x="1600" y="432.5" text-anchor="end">jsonb</text>
+<rect class="zebra" x="1281" y="438" width="328" height="19"/>
+<text class="cname opt" x="1324" y="451.5">DS_DEPOIS?</text>
+<text class="ctype" x="1600" y="451.5" text-anchor="end">jsonb</text>
+</g>
+<g class="tbl g-gc" data-t="AIP_GOAL_CARD_VERSAO" tabindex="0" role="button" aria-label="Tabela AIP_GOAL_CARD_VERSAO">
+<rect class="box" x="860" y="265" width="330" height="173" rx="6"/>
+<path class="head" d="M860,305 V271 Q860,265 866,265 H1184 Q1190,265 1190,271 V305 Z"/>
+<text class="tname" x="872" y="290">AIP_GOAL_CARD_VERSAO</text>
+<text class="tgroup" x="1178" y="290" text-anchor="end">GOAL CARD</text>
+<text class="key" x="870" y="318.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="904" y="318.5">ID_VERSAO</text>
+<text class="ctype" x="1180" y="318.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="861" y="324" width="328" height="19"/>
+<text class="key" x="870" y="337.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="904" y="337.5">ID_GOAL_CARD</text>
+<text class="ctype" x="1180" y="337.5" text-anchor="end">bigint</text>
+<text class="cname" x="904" y="356.5">NO_VERSAO</text>
+<text class="ctype" x="1180" y="356.5" text-anchor="end">smallint</text>
+<rect class="zebra" x="861" y="362" width="328" height="19"/>
+<text class="cname" x="904" y="375.5">TP_MOTIVO</text>
+<text class="ctype" x="1180" y="375.5" text-anchor="end">text</text>
+<text class="cname" x="904" y="394.5">DS_CAMPOS</text>
+<text class="ctype" x="1180" y="394.5" text-anchor="end">jsonb</text>
+<rect class="zebra" x="861" y="400" width="328" height="19"/>
+<text class="cname" x="904" y="413.5">DT_VERSAO</text>
+<text class="ctype" x="1180" y="413.5" text-anchor="end">timestamptz</text>
+<text class="cname" x="904" y="432.5">CD_MATRICULA_AUTOR</text>
+<text class="ctype" x="1180" y="432.5" text-anchor="end">text</text>
+</g>
+<g class="tbl g-gc" data-t="AIP_DECISAO" tabindex="0" role="button" aria-label="Tabela AIP_DECISAO">
+<rect class="box" x="860" y="472" width="330" height="154" rx="6"/>
+<path class="head" d="M860,512 V478 Q860,472 866,472 H1184 Q1190,472 1190,478 V512 Z"/>
+<text class="tname" x="872" y="497">AIP_DECISAO</text>
+<text class="tgroup" x="1178" y="497" text-anchor="end">GOAL CARD</text>
+<text class="key" x="870" y="525.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="904" y="525.5">ID_DECISAO</text>
+<text class="ctype" x="1180" y="525.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="861" y="531" width="328" height="19"/>
+<text class="key" x="870" y="544.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="904" y="544.5">ID_VERSAO</text>
+<text class="ctype" x="1180" y="544.5" text-anchor="end">bigint</text>
+<text class="cname" x="904" y="563.5">TP_DECISAO</text>
+<text class="ctype" x="1180" y="563.5" text-anchor="end">text</text>
+<rect class="zebra" x="861" y="569" width="328" height="19"/>
+<text class="cname opt" x="904" y="582.5">DS_COMENTARIO?</text>
+<text class="ctype" x="1180" y="582.5" text-anchor="end">text</text>
+<text class="cname" x="904" y="601.5">DT_DECISAO</text>
+<text class="ctype" x="1180" y="601.5" text-anchor="end">timestamptz</text>
+<rect class="zebra" x="861" y="607" width="328" height="19"/>
+<text class="cname" x="904" y="620.5">CD_MATRICULA_DECISAO</text>
+<text class="ctype" x="1180" y="620.5" text-anchor="end">text</text>
+</g>
+<g class="tbl g-aud" data-t="AIP_NOTIFICACAO" tabindex="0" role="button" aria-label="Tabela AIP_NOTIFICACAO">
+<rect class="box" x="1280" y="491" width="330" height="154" rx="6"/>
+<path class="head" d="M1280,531 V497 Q1280,491 1286,491 H1604 Q1610,491 1610,497 V531 Z"/>
+<text class="tname" x="1292" y="516">AIP_NOTIFICACAO</text>
+<text class="tgroup" x="1598" y="516" text-anchor="end">LOG E AVISOS</text>
+<text class="key" x="1290" y="544.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="1324" y="544.5">ID_NOTIFICACAO</text>
+<text class="ctype" x="1600" y="544.5" text-anchor="end">bigint · auto</text>
+<rect class="zebra" x="1281" y="550" width="328" height="19"/>
+<text class="key" x="1290" y="563.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="1324" y="563.5">ID_EVENTO</text>
+<text class="ctype" x="1600" y="563.5" text-anchor="end">bigint</text>
+<text class="cname" x="1324" y="582.5">CD_MATRICULA_DESTINO</text>
+<text class="ctype" x="1600" y="582.5" text-anchor="end">text</text>
+<rect class="zebra" x="1281" y="588" width="328" height="19"/>
+<text class="cname" x="1324" y="601.5">TP_CANAL</text>
+<text class="ctype" x="1600" y="601.5" text-anchor="end">text</text>
+<text class="cname opt" x="1324" y="620.5">DT_ENVIO?</text>
+<text class="ctype" x="1600" y="620.5" text-anchor="end">timestamptz</text>
+<rect class="zebra" x="1281" y="626" width="328" height="19"/>
+<text class="cname opt" x="1324" y="639.5">DT_LEITURA?</text>
+<text class="ctype" x="1600" y="639.5" text-anchor="end">timestamptz</text>
+</g>
+<g class="tbl g-gc" data-t="AIP_REVISAO_SECAO" tabindex="0" role="button" aria-label="Tabela AIP_REVISAO_SECAO">
+<rect class="box" x="860" y="660" width="330" height="97" rx="6"/>
+<path class="head" d="M860,700 V666 Q860,660 866,660 H1184 Q1190,660 1190,666 V700 Z"/>
+<text class="tname" x="872" y="685">AIP_REVISAO_SECAO</text>
+<text class="tgroup" x="1178" y="685" text-anchor="end">GOAL CARD</text>
+<text class="key" x="870" y="713.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="904" y="713.5">ID_DECISAO</text>
+<text class="ctype" x="1180" y="713.5" text-anchor="end">bigint</text>
+<rect class="zebra" x="861" y="719" width="328" height="19"/>
+<text class="key" x="870" y="732.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="904" y="732.5">CD_SECAO</text>
+<text class="ctype" x="1180" y="732.5" text-anchor="end">text</text>
+<text class="cname" x="904" y="751.5">TP_MARCACAO</text>
+<text class="ctype" x="1180" y="751.5" text-anchor="end">text</text>
+</g>
+</svg>
+    </div>
+    <figcaption id="detalhe" aria-live="polite">O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. O <b>AIP_CICLO</b> organiza tudo: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b></figcaption>
+<template id="d-AIP_CICLO"><div class="dt g-cic">
+  <header><h3>AIP_CICLO</h3><span class="chip">CICLO E PESSOAS</span><span class="dmeta">10 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Um ciclo anual do AIP (ex.: AIP 2027). Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · AIP 2026, fechado</th><th>Exemplo: 2 · AIP 2027, aberto, criado do 2026</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_CICLO</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno do ciclo.</td><td class="exv" data-l="1 · AIP 2026, fechado">1</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">2</td></tr><tr><th scope="row">NO_ANO</th><td class="ty">smallint</td><td>sim</td><td class="ds">Ano do ciclo, de 2020 a 2100; não se repete.</td><td class="exv" data-l="1 · AIP 2026, fechado">2026</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">2027</td></tr><tr><th scope="row">NM_CICLO</th><td class="ty">text</td><td>sim</td><td class="ds">Nome mostrado nas telas (ex.: AIP 2027).</td><td class="exv" data-l="1 · AIP 2026, fechado">AIP 2026</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">AIP 2027</td></tr><tr><th scope="row">TP_STATUS</th><td class="ty">text</td><td>sim</td><td class="ds">ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.</td><td class="exv" data-l="1 · AIP 2026, fechado">FECHADO</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">ABERTO</td></tr><tr><th scope="row">DS_TEXTO_PADRAO_EXCECOES</th><td class="ty">text</td><td>não</td><td class="ds">Texto padrão da seção Exceptions and Considerations de todos os Goal Cards; a BU não edita.</td><td class="exv long" data-l="1 · AIP 2026, fechado">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td><td class="exv long" data-l="2 · AIP 2027, aberto, criado do 2026">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO_ORIGEM</th><td class="ty">bigint</td><td>não</td><td class="ds">Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.</td><td class="exv" data-l="1 · AIP 2026, fechado"><span class="nul">vazio</span></td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">1</td></tr><tr><th scope="row">DT_CRIACAO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando o ciclo foi aberto.</td><td class="exv" data-l="1 · AIP 2026, fechado">15/09/2025 09:00</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_CRIACAO</th><td class="ty">text</td><td>sim</td><td class="ds">Matrícula (MDM) de quem abriu o ciclo.</td><td class="exv" data-l="1 · AIP 2026, fechado">C410644</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">C410644</td></tr><tr><th scope="row">DT_FECHAMENTO</th><td class="ty">timestamptz</td><td>se FECHADO</td><td class="ds">Quando foi fechado. Preenchido só se FECHADO.</td><td class="exv" data-l="1 · AIP 2026, fechado">30/01/2026 18:00</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026"><span class="nul">vazio</span></td></tr><tr><th scope="row">CD_MATRICULA_FECHAMENTO</th><td class="ty">text</td><td>se FECHADO</td><td class="ds">Matrícula de quem fechou. Preenchida só se FECHADO.</td><td class="exv" data-l="1 · AIP 2026, fechado">C410644</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026"><span class="nul">vazio</span></td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO_ORIGEM</code> → AIP_CICLO <i>(criado a partir de)</i>: cada AIP_CICLO aponta para no máximo 1 AIP_CICLO.</li><li>AIP_CICLO_JANELA.<code>ID_CICLO</code> <i>(etapa de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_CICLO_JANELA.</li><li>AIP_CICLO_BU.<code>ID_CICLO</code> <i>(participa de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_CICLO_BU.</li><li>AIP_NIVEL.<code>ID_CICLO</code> <i>(nível de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_NIVEL.</li><li>AIP_PAPEL.<code>ID_CICLO</code> <i>(participa de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_PAPEL.</li><li>AIP_EVENTO_LOG.<code>ID_CICLO</code> <i>(registrado em)</i>: cada AIP_CICLO pode ter zero ou vários AIP_EVENTO_LOG.</li></ul></div><div><h4>Regras</h4><ul><li>Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).</li><li>Ano entre 2020 e 2100 e único.</li><li>TP_STATUS: ABERTO ou FECHADO.</li><li>Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_CICLO_JANELA"><div class="dt g-cic">
+  <header><h3>AIP_CICLO_JANELA</h3><span class="chip">CICLO E PESSOAS</span><span class="dmeta">5 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">As quatro etapas da jornada do ciclo (Desdobramento COO, Propostas BU&#x27;s, Calibração e Aprovação, Goal Card oficial) com suas datas.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: Calibração termina em 15/12</th><th>Exemplo: Desdobramento de 01/10 a 29/10</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> <span class="k kf">FK</span> ID_CICLO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Ciclo dono da janela.</td><td class="exv" data-l="Calibração termina em 15/12">2</td><td class="exv" data-l="Desdobramento de 01/10 a 29/10">2</td></tr><tr><th scope="row"><span class="k kp">PK</span> TP_ETAPA</th><td class="ty">text</td><td>sim</td><td class="ds">DESDOBRAMENTO, PROPOSTA, CALIBRACAO ou OFICIAL.</td><td class="exv" data-l="Calibração termina em 15/12">CALIBRACAO</td><td class="exv" data-l="Desdobramento de 01/10 a 29/10">DESDOBRAMENTO</td></tr><tr><th scope="row">NO_ORDEM</th><td class="ty">smallint</td><td>sim</td><td class="ds">Posição da etapa na jornada (1 a 4).</td><td class="exv" data-l="Calibração termina em 15/12">3</td><td class="exv" data-l="Desdobramento de 01/10 a 29/10">1</td></tr><tr><th scope="row">DT_INICIO</th><td class="ty">date</td><td>só na etapa 1</td><td class="ds">Início, só na primeira etapa; as demais começam quando a anterior termina.</td><td class="exv" data-l="Calibração termina em 15/12"><span class="nul">vazio</span></td><td class="exv" data-l="Desdobramento de 01/10 a 29/10">01/10/2026</td></tr><tr><th scope="row">DT_FIM</th><td class="ty">date</td><td>sim</td><td class="ds">Último dia da etapa.</td><td class="exv" data-l="Calibração termina em 15/12">15/12/2026</td><td class="exv" data-l="Desdobramento de 01/10 a 29/10">29/10/2026</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(etapa de)</i>: cada AIP_CICLO_JANELA aponta para exatamente 1 AIP_CICLO.</li></ul></div><div><h4>Regras</h4><ul><li>Uma janela por etapa em cada ciclo; ordem única.</li><li>TP_ETAPA: DESDOBRAMENTO, PROPOSTA, CALIBRACAO, OFICIAL.</li><li>Só a etapa 1 tem DT_INICIO; DT_FIM depois de DT_INICIO.</li><li>Editável só com o ciclo aberto (a tela desativa as janelas de ciclo fechado).</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_PAPEL"><div class="dt g-cic">
+  <header><h3>AIP_PAPEL</h3><span class="chip">CICLO E PESSOAS</span><span class="dmeta">8 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Quem participa do ciclo e em qual grupo: contribuidores e consulta por BU, grupo de aprovação e administradores. Os dados da pessoa vêm do MDM.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · Contribuidor de Ontario</th><th>Exemplo: 2 · Grupo de aprovação</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_PAPEL</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno da participação.</td><td class="exv" data-l="1 · Contribuidor de Ontario">1</td><td class="exv" data-l="2 · Grupo de aprovação">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Ciclo em que o papel vale.</td><td class="exv" data-l="1 · Contribuidor de Ontario">2</td><td class="exv" data-l="2 · Grupo de aprovação">2</td></tr><tr><th scope="row">CD_MATRICULA</th><td class="ty">text</td><td>sim</td><td class="ds">Matrícula da pessoa; nome, e-mail, cargo, estado e cidade são lidos do MDM.</td><td class="exv" data-l="1 · Contribuidor de Ontario">C410385</td><td class="exv" data-l="2 · Grupo de aprovação">C410459</td></tr><tr><th scope="row">TP_GRUPO</th><td class="ty">text</td><td>sim</td><td class="ds">CONTRIBUIDOR, APROVACAO, CONSULTA ou ADMIN.</td><td class="exv" data-l="1 · Contribuidor de Ontario">CONTRIBUIDOR</td><td class="exv" data-l="2 · Grupo de aprovação">APROVACAO</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_BU</th><td class="ty">bigint</td><td>se contribuidor ou consulta</td><td class="ds">BU do contribuidor ou da consulta. Vazio para aprovação e administração.</td><td class="exv" data-l="1 · Contribuidor de Ontario">2</td><td class="exv" data-l="2 · Grupo de aprovação"><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVO</th><td class="ty">boolean</td><td>sim</td><td class="ds">Desligado = a pessoa perde o acesso sem apagar o histórico.</td><td class="exv" data-l="1 · Contribuidor de Ontario">sim</td><td class="exv" data-l="2 · Grupo de aprovação">sim</td></tr><tr><th scope="row">DT_INCLUSAO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando foi incluída (popup Adicionar usuário).</td><td class="exv" data-l="1 · Contribuidor de Ontario">02/10/2026 08:40</td><td class="exv" data-l="2 · Grupo de aprovação">02/10/2026 08:45</td></tr><tr><th scope="row">CD_MATRICULA_INCLUSAO</th><td class="ty">text</td><td>sim</td><td class="ds">Quem incluiu.</td><td class="exv" data-l="1 · Contribuidor de Ontario">C410644</td><td class="exv" data-l="2 · Grupo de aprovação">C410644</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(participa de)</i>: cada AIP_PAPEL aponta para exatamente 1 AIP_CICLO.</li><li><code>ID_BU</code> → AIP_BU <i>(atua na)</i>: cada AIP_PAPEL aponta para no máximo 1 AIP_BU.</li></ul></div><div><h4>Regras</h4><ul><li>TP_GRUPO: CONTRIBUIDOR, APROVACAO, CONSULTA, ADMIN.</li><li>BU obrigatória para contribuidor e consulta; vazia para aprovação e administrador.</li><li>Uma pessoa não se repete no mesmo grupo e BU do ciclo.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_BU"><div class="dt g-des">
+  <header><h3>AIP_BU</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">4 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Cadastro das Business Units (nome e país ou região). A BU entra em cada ciclo pela AIP_CICLO_BU.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · Onça Puma, Brasil</th><th>Exemplo: 2 · Ontario, Canadá</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_BU</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno da BU.</td><td class="exv" data-l="1 · Onça Puma, Brasil">1</td><td class="exv" data-l="2 · Ontario, Canadá">2</td></tr><tr><th scope="row">NM_BU</th><td class="ty">text</td><td>sim</td><td class="ds">Nome da BU; não se repete. Renomear atualiza pesos, pessoas e unidades ligadas.</td><td class="exv" data-l="1 · Onça Puma, Brasil">Onça Puma</td><td class="exv" data-l="2 · Ontario, Canadá">Ontario</td></tr><tr><th scope="row">NM_PAIS</th><td class="ty">text</td><td>sim</td><td class="ds">País ou região que agrupa as BUs nas telas (Brasil, Canadá, International Refineries).</td><td class="exv" data-l="1 · Onça Puma, Brasil">Brasil</td><td class="exv" data-l="2 · Ontario, Canadá">Canadá</td></tr><tr><th scope="row">DT_CRIACAO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando a BU foi cadastrada.</td><td class="exv" data-l="1 · Onça Puma, Brasil">15/09/2025 09:10</td><td class="exv" data-l="2 · Ontario, Canadá">15/09/2025 09:12</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li>AIP_CICLO_BU.<code>ID_BU</code> <i>(inclui)</i>: cada AIP_BU pode ter zero ou vários AIP_CICLO_BU.</li><li>AIP_UNIDADE.<code>ID_BU</code> <i>(representa)</i>: cada AIP_BU pode ter zero ou vários AIP_UNIDADE.</li><li>AIP_PAPEL.<code>ID_BU</code> <i>(atua na)</i>: cada AIP_BU pode ter zero ou vários AIP_PAPEL.</li></ul></div><div><h4>Regras</h4><ul><li>Nome único.</li><li>Só se exclui BU sem Goal Card submetido; com card, tira-se do ciclo (AIP_CICLO_BU).</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_CICLO_BU"><div class="dt g-des">
+  <header><h3>AIP_CICLO_BU</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">3 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Quais BUs participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: Onça Puma no AIP 2026</th><th>Exemplo: Ontario no AIP 2026</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> <span class="k kf">FK</span> ID_CICLO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Ciclo.</td><td class="exv" data-l="Onça Puma no AIP 2026">1</td><td class="exv" data-l="Ontario no AIP 2026">1</td></tr><tr><th scope="row"><span class="k kp">PK</span> <span class="k kf">FK</span> ID_BU</th><td class="ty">bigint</td><td>sim</td><td class="ds">BU.</td><td class="exv" data-l="Onça Puma no AIP 2026">1</td><td class="exv" data-l="Ontario no AIP 2026">2</td></tr><tr><th scope="row">SG_ATIVA</th><td class="ty">boolean</td><td>sim</td><td class="ds">Ligado = a BU está no ciclo; desligado = fora do ciclo.</td><td class="exv" data-l="Onça Puma no AIP 2026">sim</td><td class="exv" data-l="Ontario no AIP 2026">sim</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(participa de)</i>: cada AIP_CICLO_BU aponta para exatamente 1 AIP_CICLO.</li><li><code>ID_BU</code> → AIP_BU <i>(inclui)</i>: cada AIP_CICLO_BU aponta para exatamente 1 AIP_BU.</li></ul></div><div><h4>Regras</h4><ul><li>Uma linha por BU em cada ciclo.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_NIVEL"><div class="dt g-des">
+  <header><h3>AIP_NIVEL</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">9 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU → GG → GA): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.</p><p class="dlink"><a href="#como-pontos">Ver como os pontos descem ↓</a></p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · CEO, 100 pts</th><th>Exemplo: 2 · COO, 75 herdados do CEO</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_NIVEL</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno do nível.</td><td class="exv" data-l="1 · CEO, 100 pts">1</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Ciclo do nível.</td><td class="exv" data-l="1 · CEO, 100 pts">2</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">2</td></tr><tr><th scope="row">CD_NIVEL</th><td class="ty">text</td><td>sim</td><td class="ds">CEO, COO, BU, GG ou GA.</td><td class="exv" data-l="1 · CEO, 100 pts">CEO</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">COO</td></tr><tr><th scope="row">NO_ORDEM</th><td class="ty">smallint</td><td>sim</td><td class="ds">Posição no desdobramento (1 = CEO).</td><td class="exv" data-l="1 · CEO, 100 pts">1</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">2</td></tr><tr><th scope="row">NM_NIVEL</th><td class="ty">text</td><td>sim</td><td class="ds">Nome mostrado nas telas; editável.</td><td class="exv" data-l="1 · CEO, 100 pts">CEO</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">COO</td></tr><tr><th scope="row">QTDE_PONTOS_TOTAL</th><td class="ty">integer</td><td>sim</td><td class="ds">Pontos que cada unidade do nível precisa fechar (ex.: 100).</td><td class="exv" data-l="1 · CEO, 100 pts">100</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">100</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS</th><td class="ty">integer</td><td>sim</td><td class="ds">Pontos que vêm do resultado do nível acima (linha &quot;Resultado do …&quot;, editável em Metas e pesos). O restante vai para as metas do nível.</td><td class="exv" data-l="1 · CEO, 100 pts">0</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">75</td></tr><tr><th scope="row">SG_OBRIGATORIO</th><td class="ty">boolean</td><td>sim</td><td class="ds">Escolhido em Parâmetros: Obrigatório (sempre no desdobramento) ou Opcional.</td><td class="exv" data-l="1 · CEO, 100 pts">sim</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">sim</td></tr><tr><th scope="row">SG_ATIVO</th><td class="ty">boolean</td><td>sim</td><td class="ds">Se o nível opcional está em uso. Obrigatório = sempre ativo.</td><td class="exv" data-l="1 · CEO, 100 pts">sim</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">sim</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(nível de)</i>: cada AIP_NIVEL aponta para exatamente 1 AIP_CICLO.</li><li>AIP_UNIDADE.<code>ID_NIVEL</code> <i>(pertence ao)</i>: cada AIP_NIVEL pode ter zero ou vários AIP_UNIDADE.</li><li>AIP_META.<code>ID_NIVEL</code> <i>(meta do)</i>: cada AIP_NIVEL pode ter zero ou vários AIP_META.</li></ul></div><div><h4>Regras</h4><ul><li>Um nível de cada tipo por ciclo.</li><li>Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.</li><li>Nível obrigatório fica sempre ativo.</li><li>GA só ativo com GG ativo (o desdobramento não pula nível; validado na API).</li><li>Metas e pesos mostra só CEO, COO e BU.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_UNIDADE"><div class="dt g-des">
+  <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">5 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">As unidades de cada nível: CEO VBM, COO VBM, cada BU ativa e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · CEO VBM</th><th>Exemplo: 2 · COO VBM, abaixo do CEO</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_UNIDADE</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno da unidade.</td><td class="exv" data-l="1 · CEO VBM">1</td><td class="exv" data-l="2 · COO VBM, abaixo do CEO">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_NIVEL</th><td class="ty">bigint</td><td>sim</td><td class="ds">Nível da unidade.</td><td class="exv" data-l="1 · CEO VBM">1</td><td class="exv" data-l="2 · COO VBM, abaixo do CEO">2</td></tr><tr><th scope="row">NM_UNIDADE</th><td class="ty">text</td><td>sim</td><td class="ds">Nome mostrado (ex.: Ontario).</td><td class="exv" data-l="1 · CEO VBM">CEO VBM</td><td class="exv" data-l="2 · COO VBM, abaixo do CEO">COO VBM</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_BU</th><td class="ty">bigint</td><td>se nível BU</td><td class="ds">BU correspondente, quando a unidade é do nível BU.</td><td class="exv" data-l="1 · CEO VBM"><span class="nul">vazio</span></td><td class="exv" data-l="2 · COO VBM, abaixo do CEO"><span class="nul">vazio</span></td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_UNIDADE_PAI</th><td class="ty">bigint</td><td>exceto o CEO</td><td class="ds">Unidade do nível acima (a BU aponta para o COO; a GG para a BU).</td><td class="exv" data-l="1 · CEO VBM"><span class="nul">vazio</span></td><td class="exv" data-l="2 · COO VBM, abaixo do CEO">1</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_NIVEL</code> → AIP_NIVEL <i>(pertence ao)</i>: cada AIP_UNIDADE aponta para exatamente 1 AIP_NIVEL.</li><li><code>ID_BU</code> → AIP_BU <i>(representa)</i>: cada AIP_UNIDADE aponta para no máximo 1 AIP_BU.</li><li><code>ID_UNIDADE_PAI</code> → AIP_UNIDADE <i>(abaixo de)</i>: cada AIP_UNIDADE aponta para no máximo 1 AIP_UNIDADE.</li><li>AIP_META_PESO.<code>ID_UNIDADE</code> <i>(na unidade)</i>: cada AIP_UNIDADE pode ter zero ou vários AIP_META_PESO.</li><li>AIP_GOAL_CARD.<code>ID_UNIDADE</code> <i>(da unidade)</i>: cada AIP_UNIDADE pode ter zero ou vários AIP_GOAL_CARD.</li></ul></div><div><h4>Regras</h4><ul><li>Nome único dentro do nível.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_META"><div class="dt g-des">
+  <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">8 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · Meta 02 do COO</th><th>Exemplo: 2 · Meta 04 das BUs</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_META</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno da meta.</td><td class="exv" data-l="1 · Meta 02 do COO">1</td><td class="exv" data-l="2 · Meta 04 das BUs">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_NIVEL</th><td class="ty">bigint</td><td>sim</td><td class="ds">Nível da meta (COO, BU…).</td><td class="exv" data-l="1 · Meta 02 do COO">2</td><td class="exv" data-l="2 · Meta 04 das BUs">3</td></tr><tr><th scope="row">NO_META</th><td class="ty">smallint</td><td>sim</td><td class="ds">Número mostrado nas telas (ex.: 04); único no nível.</td><td class="exv" data-l="1 · Meta 02 do COO">2</td><td class="exv" data-l="2 · Meta 04 das BUs">4</td></tr><tr><th scope="row">NM_TITULO</th><td class="ty">text</td><td>sim</td><td class="ds">Título da meta (Goal Title).</td><td class="exv long" data-l="1 · Meta 02 do COO">Strengthen a Culture of Chronic Unease</td><td class="exv long" data-l="2 · Meta 04 das BUs">BU Adherence to Production Budget</td></tr><tr><th scope="row">TP_META</th><td class="ty">text</td><td>sim</td><td class="ds">FORMULA (Por fórmula) ou MARCOS (Por marcos).</td><td class="exv" data-l="1 · Meta 02 do COO">FORMULA</td><td class="exv" data-l="2 · Meta 04 das BUs">FORMULA</td></tr><tr><th scope="row">TP_POLARIDADE</th><td class="ty">text</td><td>sim</td><td class="ds">MAIOR (maior é melhor) ou MENOR (menor é melhor).</td><td class="exv" data-l="1 · Meta 02 do COO">MAIOR</td><td class="exv" data-l="2 · Meta 04 das BUs">MAIOR</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_META_ORIGEM</th><td class="ty">bigint</td><td>não</td><td class="ds">Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.</td><td class="exv" data-l="1 · Meta 02 do COO"><span class="nul">vazio</span></td><td class="exv" data-l="2 · Meta 04 das BUs"><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVA</th><td class="ty">boolean</td><td>sim</td><td class="ds">Desligada = fora do ciclo, sem apagar o histórico.</td><td class="exv" data-l="1 · Meta 02 do COO">sim</td><td class="exv" data-l="2 · Meta 04 das BUs">sim</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_NIVEL</code> → AIP_NIVEL <i>(meta do)</i>: cada AIP_META aponta para exatamente 1 AIP_NIVEL.</li><li><code>ID_META_ORIGEM</code> → AIP_META <i>(desdobrada de)</i>: cada AIP_META aponta para no máximo 1 AIP_META.</li><li>AIP_META_PESO.<code>ID_META</code> <i>(peso da)</i>: cada AIP_META pode ter zero ou vários AIP_META_PESO.</li><li>AIP_GOAL_CARD.<code>ID_META</code> <i>(card da)</i>: cada AIP_META pode ter zero ou vários AIP_GOAL_CARD.</li></ul></div><div><h4>Regras</h4><ul><li>Número único dentro do nível.</li><li>TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_META_PESO"><div class="dt g-des">
+  <header><h3>AIP_META_PESO</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">3 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">O peso de cada meta em cada unidade. Somado aos pontos herdados, fecha o total da unidade (RN-16).</p><p class="dlink"><a href="#como-pontos">Ver como os pontos descem ↓</a></p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: Meta 02 vale 5 no COO VBM</th><th>Exemplo: Meta 04 vale 10 em Onça Puma</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> <span class="k kf">FK</span> ID_META</th><td class="ty">bigint</td><td>sim</td><td class="ds">Meta.</td><td class="exv" data-l="Meta 02 vale 5 no COO VBM">1</td><td class="exv" data-l="Meta 04 vale 10 em Onça Puma">2</td></tr><tr><th scope="row"><span class="k kp">PK</span> <span class="k kf">FK</span> ID_UNIDADE</th><td class="ty">bigint</td><td>sim</td><td class="ds">Unidade que recebe o peso.</td><td class="exv" data-l="Meta 02 vale 5 no COO VBM">2</td><td class="exv" data-l="Meta 04 vale 10 em Onça Puma">3</td></tr><tr><th scope="row">VL_PESO</th><td class="ty">numeric(6,2)</td><td>sim</td><td class="ds">Pontos da meta nesta unidade (aceita meio ponto, ex.: 7,5).</td><td class="exv" data-l="Meta 02 vale 5 no COO VBM">5.0</td><td class="exv" data-l="Meta 04 vale 10 em Onça Puma">10.0</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_META</code> → AIP_META <i>(peso da)</i>: cada AIP_META_PESO aponta para exatamente 1 AIP_META.</li><li><code>ID_UNIDADE</code> → AIP_UNIDADE <i>(na unidade)</i>: cada AIP_META_PESO aponta para exatamente 1 AIP_UNIDADE.</li></ul></div><div><h4>Regras</h4><ul><li>Um peso por meta e unidade; maior que zero.</li><li>Para cada unidade: herdado + soma dos pesos = total do nível (validado na API antes de gravar).</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_GOAL_CARD"><div class="dt g-gc">
+  <header><h3>AIP_GOAL_CARD</h3><span class="chip">GOAL CARD</span><span class="dmeta">9 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">O Goal Card de uma meta numa unidade (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · GC-ONT-04, devolvido para ajuste</th><th>Exemplo: 2 · GC-ONP-04, aprovado (v1 oficial)</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_GOAL_CARD</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno do card.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">1</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">2</td></tr><tr><th scope="row">CD_GOAL_CARD</th><td class="ty">text</td><td>sim</td><td class="ds">Código mostrado nas telas: GC-&lt;BU&gt;-&lt;meta&gt;.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">GC-ONT-04</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">GC-ONP-04</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_META</th><td class="ty">bigint</td><td>sim</td><td class="ds">Meta do card.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">2</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_UNIDADE</th><td class="ty">bigint</td><td>sim</td><td class="ds">Unidade (BU) dona do card.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">4</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">3</td></tr><tr><th scope="row">TP_ESTADO</th><td class="ty">text</td><td>sim</td><td class="ds">RASCUNHO, EM_APROVACAO, EM_REVISAO (devolvido para ajuste), APROVADO ou NEGADO.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">EM_REVISAO</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">APROVADO</td></tr><tr><th scope="row">NO_VERSAO_OFICIAL</th><td class="ty">smallint</td><td>se APROVADO</td><td class="ds">Versão aprovada que vale como oficial. Preenchida só se APROVADO.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste"><span class="nul">vazio</span></td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">1</td></tr><tr><th scope="row">DS_RASCUNHO</th><td class="ty">jsonb</td><td>não</td><td class="ds">Campos em edição ainda não submetidos (objetivo, fórmula, unidade, régua, área, evidência, exceções da BU).</td><td class="exv long" data-l="1 · GC-ONT-04, devolvido para ajuste">{&quot;unit&quot;: &quot;%&quot;, &quot;ruler&quot;: {&quot;exc&quot;: 105, &quot;min&quot;: 95, &quot;meta&quot;: 100}}</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)"><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_ATUALIZACAO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Última mudança no card (coluna &quot;Última atualização&quot;).</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">18/11/2026 15:20</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">10/11/2026 11:00</td></tr><tr><th scope="row">CD_MATRICULA_ATUALIZACAO</th><td class="ty">text</td><td>sim</td><td class="ds">Quem fez a última mudança.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">C410459</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">C410459</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_META</code> → AIP_META <i>(card da)</i>: cada AIP_GOAL_CARD aponta para exatamente 1 AIP_META.</li><li><code>ID_UNIDADE</code> → AIP_UNIDADE <i>(da unidade)</i>: cada AIP_GOAL_CARD aponta para exatamente 1 AIP_UNIDADE.</li><li>AIP_GOAL_CARD_VERSAO.<code>ID_GOAL_CARD</code> <i>(versão de)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_GOAL_CARD_VERSAO.</li><li>AIP_COMENTARIO.<code>ID_GOAL_CARD</code> <i>(comenta)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_COMENTARIO.</li><li>AIP_EVENTO_LOG.<code>ID_GOAL_CARD</code> <i>(sobre)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_EVENTO_LOG.</li></ul></div><div><h4>Regras</h4><ul><li>Código único; um card por meta e unidade.</li><li>TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO, NEGADO.</li><li>Versão oficial preenchida se, e só se, APROVADO.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_GOAL_CARD_VERSAO"><div class="dt g-gc">
+  <header><h3>AIP_GOAL_CARD_VERSAO</h3><span class="chip">GOAL CARD</span><span class="dmeta">7 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Cada submissão gera uma versão imutável (v1, v2…) com a foto de todos os campos. É o que a tela Versões compara.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · v1 do GC-ONT-04</th><th>Exemplo: 2 · v1 do GC-ONP-04</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_VERSAO</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno da versão.</td><td class="exv" data-l="1 · v1 do GC-ONT-04">1</td><td class="exv" data-l="2 · v1 do GC-ONP-04">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_GOAL_CARD</th><td class="ty">bigint</td><td>sim</td><td class="ds">Card da versão.</td><td class="exv" data-l="1 · v1 do GC-ONT-04">1</td><td class="exv" data-l="2 · v1 do GC-ONP-04">2</td></tr><tr><th scope="row">NO_VERSAO</th><td class="ty">smallint</td><td>sim</td><td class="ds">Número da versão no card (1, 2…).</td><td class="exv" data-l="1 · v1 do GC-ONT-04">1</td><td class="exv" data-l="2 · v1 do GC-ONP-04">1</td></tr><tr><th scope="row">TP_MOTIVO</th><td class="ty">text</td><td>sim</td><td class="ds">SUBMISSAO, RESUBMISSAO ou REABERTURA.</td><td class="exv" data-l="1 · v1 do GC-ONT-04">SUBMISSAO</td><td class="exv" data-l="2 · v1 do GC-ONP-04">SUBMISSAO</td></tr><tr><th scope="row">DS_CAMPOS</th><td class="ty">jsonb</td><td>sim</td><td class="ds">Foto dos campos do card no momento da submissão.</td><td class="exv long" data-l="1 · v1 do GC-ONT-04">{&quot;unit&quot;: &quot;t&quot;, &quot;ruler&quot;: {&quot;exc&quot;: 105, &quot;min&quot;: 95, &quot;meta&quot;: 100},</td><td class="exv long" data-l="2 · v1 do GC-ONP-04">{&quot;unit&quot;: &quot;%&quot;, &quot;ruler&quot;: {&quot;exc&quot;: 105, &quot;min&quot;: 95, &quot;meta&quot;: 100},</td></tr><tr><th scope="row">DT_VERSAO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando foi submetida.</td><td class="exv" data-l="1 · v1 do GC-ONT-04">13/11/2026 09:40</td><td class="exv" data-l="2 · v1 do GC-ONP-04">05/11/2026 16:10</td></tr><tr><th scope="row">CD_MATRICULA_AUTOR</th><td class="ty">text</td><td>sim</td><td class="ds">Quem submeteu.</td><td class="exv" data-l="1 · v1 do GC-ONT-04">C410385</td><td class="exv" data-l="2 · v1 do GC-ONP-04">C410200</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_GOAL_CARD</code> → AIP_GOAL_CARD <i>(versão de)</i>: cada AIP_GOAL_CARD_VERSAO aponta para exatamente 1 AIP_GOAL_CARD.</li><li>AIP_DECISAO.<code>ID_VERSAO</code> <i>(decide)</i>: cada AIP_GOAL_CARD_VERSAO pode ter zero ou vários AIP_DECISAO.</li></ul></div><div><h4>Regras</h4><ul><li>Número de versão único por card.</li><li>TP_MOTIVO: SUBMISSAO, RESUBMISSAO, REABERTURA.</li><li>Não se edita nem apaga uma versão (só a API grava, sempre inserindo).</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_DECISAO"><div class="dt g-gc">
+  <header><h3>AIP_DECISAO</h3><span class="chip">GOAL CARD</span><span class="dmeta">6 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">A decisão do grupo de aprovação sobre uma versão (nível único): aprovar, devolver para ajuste ou negar.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · v1 do GC-ONT-04 devolvida</th><th>Exemplo: 2 · v1 do GC-ONP-04 aprovada</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_DECISAO</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno da decisão.</td><td class="exv" data-l="1 · v1 do GC-ONT-04 devolvida">1</td><td class="exv" data-l="2 · v1 do GC-ONP-04 aprovada">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_VERSAO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Versão decidida.</td><td class="exv" data-l="1 · v1 do GC-ONT-04 devolvida">1</td><td class="exv" data-l="2 · v1 do GC-ONP-04 aprovada">2</td></tr><tr><th scope="row">TP_DECISAO</th><td class="ty">text</td><td>sim</td><td class="ds">APROVADO, DEVOLVIDO ou NEGADO.</td><td class="exv" data-l="1 · v1 do GC-ONT-04 devolvida">DEVOLVIDO</td><td class="exv" data-l="2 · v1 do GC-ONP-04 aprovada">APROVADO</td></tr><tr><th scope="row">DS_COMENTARIO</th><td class="ty">text</td><td>se devolvido ou negado</td><td class="ds">Justificativa; obrigatória para devolver ou negar (mínimo de caracteres controlado na aplicação).</td><td class="exv long" data-l="1 · v1 do GC-ONT-04 devolvida">Use the same unit as the COO scorecard (%).</td><td class="exv" data-l="2 · v1 do GC-ONP-04 aprovada"><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_DECISAO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando foi decidida.</td><td class="exv" data-l="1 · v1 do GC-ONT-04 devolvida">18/11/2026 15:20</td><td class="exv" data-l="2 · v1 do GC-ONP-04 aprovada">10/11/2026 11:00</td></tr><tr><th scope="row">CD_MATRICULA_DECISAO</th><td class="ty">text</td><td>sim</td><td class="ds">Membro do grupo que decidiu (não pode ser quem editou ou submeteu, RN-12).</td><td class="exv" data-l="1 · v1 do GC-ONT-04 devolvida">C410459</td><td class="exv" data-l="2 · v1 do GC-ONP-04 aprovada">C410459</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_VERSAO</code> → AIP_GOAL_CARD_VERSAO <i>(decide)</i>: cada AIP_DECISAO aponta para exatamente 1 AIP_GOAL_CARD_VERSAO.</li><li>AIP_REVISAO_SECAO.<code>ID_DECISAO</code> <i>(detalha)</i>: cada AIP_DECISAO pode ter zero ou vários AIP_REVISAO_SECAO.</li></ul></div><div><h4>Regras</h4><ul><li>Uma decisão por versão (decisão idempotente).</li><li>TP_DECISAO: APROVADO, DEVOLVIDO, NEGADO.</li><li>Comentário obrigatório se DEVOLVIDO ou NEGADO.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_REVISAO_SECAO"><div class="dt g-gc">
+  <header><h3>AIP_REVISAO_SECAO</h3><span class="chip">GOAL CARD</span><span class="dmeta">3 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">A marcação de cada seção do card na decisão: OK ou Ajustar. Devolver exige ao menos uma seção Ajustar.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: Objective OK</th><th>Exemplo: Ruler para ajustar</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> <span class="k kf">FK</span> ID_DECISAO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Decisão.</td><td class="exv" data-l="Objective OK">1</td><td class="exv" data-l="Ruler para ajustar">1</td></tr><tr><th scope="row"><span class="k kp">PK</span> CD_SECAO</th><td class="ty">text</td><td>sim</td><td class="ds">Seção do card (OBJECTIVE, FORMULA, UNIT, RULER, AREA, EVIDENCE, EXCEPTIONS).</td><td class="exv" data-l="Objective OK">OBJECTIVE</td><td class="exv" data-l="Ruler para ajustar">RULER</td></tr><tr><th scope="row">TP_MARCACAO</th><td class="ty">text</td><td>sim</td><td class="ds">OK ou AJUSTAR.</td><td class="exv" data-l="Objective OK">OK</td><td class="exv" data-l="Ruler para ajustar">AJUSTAR</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_DECISAO</code> → AIP_DECISAO <i>(detalha)</i>: cada AIP_REVISAO_SECAO aponta para exatamente 1 AIP_DECISAO.</li></ul></div><div><h4>Regras</h4><ul><li>Uma marcação por seção em cada decisão.</li><li>TP_MARCACAO: OK ou AJUSTAR.</li><li>Devolver exige ao menos uma seção AJUSTAR (validado na API).</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_COMENTARIO"><div class="dt g-gc">
+  <header><h3>AIP_COMENTARIO</h3><span class="chip">GOAL CARD</span><span class="dmeta">7 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Comentários por seção do Goal Card, com respostas. Aparecem no card e no Action Log.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · Aprovador pede % na unidade</th><th>Exemplo: 2 · Contribuidor responde</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_COMENTARIO</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno do comentário.</td><td class="exv" data-l="1 · Aprovador pede % na unidade">1</td><td class="exv" data-l="2 · Contribuidor responde">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_GOAL_CARD</th><td class="ty">bigint</td><td>sim</td><td class="ds">Card comentado.</td><td class="exv" data-l="1 · Aprovador pede % na unidade">1</td><td class="exv" data-l="2 · Contribuidor responde">1</td></tr><tr><th scope="row">CD_SECAO</th><td class="ty">text</td><td>sim</td><td class="ds">Seção comentada.</td><td class="exv" data-l="1 · Aprovador pede % na unidade">UNIT</td><td class="exv" data-l="2 · Contribuidor responde">UNIT</td></tr><tr><th scope="row">DS_TEXTO</th><td class="ty">text</td><td>sim</td><td class="ds">Texto do comentário.</td><td class="exv long" data-l="1 · Aprovador pede % na unidade">Use the same unit as the COO scorecard (%).</td><td class="exv long" data-l="2 · Contribuidor responde">Ajustado para %, conforme o scorecard do COO.</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_COMENTARIO_PAI</th><td class="ty">bigint</td><td>não</td><td class="ds">Comentário respondido. Vazio = comentário novo.</td><td class="exv" data-l="1 · Aprovador pede % na unidade"><span class="nul">vazio</span></td><td class="exv" data-l="2 · Contribuidor responde">1</td></tr><tr><th scope="row">DT_COMENTARIO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando foi publicado.</td><td class="exv" data-l="1 · Aprovador pede % na unidade">17/11/2026 11:27</td><td class="exv" data-l="2 · Contribuidor responde">19/11/2026 09:05</td></tr><tr><th scope="row">CD_MATRICULA_AUTOR</th><td class="ty">text</td><td>sim</td><td class="ds">Quem comentou (o grupo de consulta não comenta).</td><td class="exv" data-l="1 · Aprovador pede % na unidade">C410459</td><td class="exv" data-l="2 · Contribuidor responde">C410385</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_GOAL_CARD</code> → AIP_GOAL_CARD <i>(comenta)</i>: cada AIP_COMENTARIO aponta para exatamente 1 AIP_GOAL_CARD.</li><li><code>ID_COMENTARIO_PAI</code> → AIP_COMENTARIO <i>(responde a)</i>: cada AIP_COMENTARIO aponta para no máximo 1 AIP_COMENTARIO.</li></ul></div><div><h4>Regras</h4><ul><li>CD_SECAO numa das sete seções do card.</li><li>Não se edita nem apaga comentário publicado.</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_EVENTO_LOG"><div class="dt g-aud">
+  <header><h3>AIP_EVENTO_LOG</h3><span class="chip">LOG E AVISOS</span><span class="dmeta">10 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">A linha do tempo única e imutável do ciclo (Action Log): submissões, decisões, comentários, mudanças de configuração e abertura/fechamento de ciclo, com antes e depois.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · AIP 2026 fechado</th><th>Exemplo: 2 · v1 do GC-ONT-04 submetida</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_EVENTO</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno do evento.</td><td class="exv" data-l="1 · AIP 2026 fechado">1</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Ciclo do evento.</td><td class="exv" data-l="1 · AIP 2026 fechado">1</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">2</td></tr><tr><th scope="row">TP_EVENTO</th><td class="ty">text</td><td>sim</td><td class="ds">SUBMISSAO, RECOLHIMENTO, DECISAO, REABERTURA, COMENTARIO, CONFIGURACAO, CICLO_ABERTO, CICLO_FECHADO, CICLO_REABERTO ou ACESSO_NEGADO.</td><td class="exv" data-l="1 · AIP 2026 fechado">CICLO_FECHADO</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">SUBMISSAO</td></tr><tr><th scope="row">DT_EVENTO</th><td class="ty">timestamptz</td><td>sim</td><td class="ds">Quando aconteceu.</td><td class="exv" data-l="1 · AIP 2026 fechado">30/01/2026 18:00</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">13/11/2026 09:40</td></tr><tr><th scope="row">CD_MATRICULA</th><td class="ty">text</td><td>sim</td><td class="ds">Quem fez.</td><td class="exv" data-l="1 · AIP 2026 fechado">C410644</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">C410385</td></tr><tr><th scope="row">TP_GRUPO</th><td class="ty">text</td><td>não</td><td class="ds">Grupo da pessoa no momento (mostrado ao lado do nome).</td><td class="exv" data-l="1 · AIP 2026 fechado">ADMIN</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">CONTRIBUIDOR</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_GOAL_CARD</th><td class="ty">bigint</td><td>não</td><td class="ds">Card envolvido. Vazio em eventos de ciclo e configuração.</td><td class="exv" data-l="1 · AIP 2026 fechado"><span class="nul">vazio</span></td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida">1</td></tr><tr><th scope="row">CD_SECAO</th><td class="ty">text</td><td>não</td><td class="ds">Seção envolvida, quando houver.</td><td class="exv" data-l="1 · AIP 2026 fechado"><span class="nul">vazio</span></td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida"><span class="nul">vazio</span></td></tr><tr><th scope="row">DS_ANTES</th><td class="ty">jsonb</td><td>não</td><td class="ds">Valor antes da mudança.</td><td class="exv long" data-l="1 · AIP 2026 fechado">{&quot;status&quot;: &quot;ABERTO&quot;}</td><td class="exv" data-l="2 · v1 do GC-ONT-04 submetida"><span class="nul">vazio</span></td></tr><tr><th scope="row">DS_DEPOIS</th><td class="ty">jsonb</td><td>não</td><td class="ds">Valor depois da mudança.</td><td class="exv long" data-l="1 · AIP 2026 fechado">{&quot;status&quot;: &quot;FECHADO&quot;}</td><td class="exv long" data-l="2 · v1 do GC-ONT-04 submetida">{&quot;versao&quot;: 1}</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(registrado em)</i>: cada AIP_EVENTO_LOG aponta para exatamente 1 AIP_CICLO.</li><li><code>ID_GOAL_CARD</code> → AIP_GOAL_CARD <i>(sobre)</i>: cada AIP_EVENTO_LOG aponta para no máximo 1 AIP_GOAL_CARD.</li><li>AIP_NOTIFICACAO.<code>ID_EVENTO</code> <i>(avisa sobre)</i>: cada AIP_EVENTO_LOG pode ter zero ou vários AIP_NOTIFICACAO.</li></ul></div><div><h4>Regras</h4><ul><li>Registro imutável: um gatilho bloqueia UPDATE e DELETE.</li><li>TP_EVENTO numa lista fixa (inclui abrir, fechar e reabrir ciclo).</li></ul></div></aside>
+  </div>
+</div></template>
+<template id="d-AIP_NOTIFICACAO"><div class="dt g-aud">
+  <header><h3>AIP_NOTIFICACAO</h3><span class="chip">LOG E AVISOS</span><span class="dmeta">6 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Avisos gerados a partir dos eventos (ex.: card devolvido), por e-mail ou na aplicação, com envio e leitura.</p>
+  <div class="dgrid">
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · E-mail lido pelo contribuidor</th><th>Exemplo: 2 · Aviso na aplicação ainda não lido</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_NOTIFICACAO</th><td class="ty">bigint</td><td>auto</td><td class="ds">Número interno do aviso.</td><td class="exv" data-l="1 · E-mail lido pelo contribuidor">1</td><td class="exv" data-l="2 · Aviso na aplicação ainda não lido">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_EVENTO</th><td class="ty">bigint</td><td>sim</td><td class="ds">Evento que gerou o aviso.</td><td class="exv" data-l="1 · E-mail lido pelo contribuidor">3</td><td class="exv" data-l="2 · Aviso na aplicação ainda não lido">3</td></tr><tr><th scope="row">CD_MATRICULA_DESTINO</th><td class="ty">text</td><td>sim</td><td class="ds">Quem recebe (e-mail vem do MDM).</td><td class="exv" data-l="1 · E-mail lido pelo contribuidor">C410385</td><td class="exv" data-l="2 · Aviso na aplicação ainda não lido">C410385</td></tr><tr><th scope="row">TP_CANAL</th><td class="ty">text</td><td>sim</td><td class="ds">EMAIL ou APP.</td><td class="exv" data-l="1 · E-mail lido pelo contribuidor">EMAIL</td><td class="exv" data-l="2 · Aviso na aplicação ainda não lido">APP</td></tr><tr><th scope="row">DT_ENVIO</th><td class="ty">timestamptz</td><td>não</td><td class="ds">Quando foi enviado. Vazio = na fila.</td><td class="exv" data-l="1 · E-mail lido pelo contribuidor">18/11/2026 15:21</td><td class="exv" data-l="2 · Aviso na aplicação ainda não lido">18/11/2026 15:21</td></tr><tr><th scope="row">DT_LEITURA</th><td class="ty">timestamptz</td><td>não</td><td class="ds">Quando foi lido. Vazio = não lido.</td><td class="exv" data-l="1 · E-mail lido pelo contribuidor">18/11/2026 16:02</td><td class="exv" data-l="2 · Aviso na aplicação ainda não lido"><span class="nul">vazio</span></td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_EVENTO</code> → AIP_EVENTO_LOG <i>(avisa sobre)</i>: cada AIP_NOTIFICACAO aponta para exatamente 1 AIP_EVENTO_LOG.</li></ul></div><div><h4>Regras</h4><ul><li>TP_CANAL: EMAIL ou APP.</li><li>Só tem leitura depois de enviado.</li></ul></div></aside>
+  </div>
+</div></template>
+  </figure>
+
+  <h2>Regras de cada tabela</h2>
+  <div class="cards">
+<article class="tcard g-cic" id="t-AIP_CICLO" data-t="AIP_CICLO">
+  <header><h3>AIP_CICLO</h3><span class="chip">CICLO E PESSOAS</span></header>
+  <p class="purpose">Um ciclo anual do AIP (ex.: AIP 2027). Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.</p>
+  <p class="meta">10 campos · ligada a AIP_CICLO, AIP_CICLO_BU, AIP_CICLO_JANELA, AIP_EVENTO_LOG, AIP_NIVEL, AIP_PAPEL</p>
+  <ul><li>Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).</li><li>Ano entre 2020 e 2100 e único.</li><li>TP_STATUS: ABERTO ou FECHADO.</li><li>Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.</li></ul>
+</article>
+<article class="tcard g-cic" id="t-AIP_CICLO_JANELA" data-t="AIP_CICLO_JANELA">
+  <header><h3>AIP_CICLO_JANELA</h3><span class="chip">CICLO E PESSOAS</span></header>
+  <p class="purpose">As quatro etapas da jornada do ciclo (Desdobramento COO, Propostas BU&#x27;s, Calibração e Aprovação, Goal Card oficial) com suas datas.</p>
+  <p class="meta">5 campos · ligada a AIP_CICLO</p>
+  <ul><li>Uma janela por etapa em cada ciclo; ordem única.</li><li>TP_ETAPA: DESDOBRAMENTO, PROPOSTA, CALIBRACAO, OFICIAL.</li><li>Só a etapa 1 tem DT_INICIO; DT_FIM depois de DT_INICIO.</li><li>Editável só com o ciclo aberto (a tela desativa as janelas de ciclo fechado).</li></ul>
+</article>
+<article class="tcard g-cic" id="t-AIP_PAPEL" data-t="AIP_PAPEL">
+  <header><h3>AIP_PAPEL</h3><span class="chip">CICLO E PESSOAS</span></header>
+  <p class="purpose">Quem participa do ciclo e em qual grupo: contribuidores e consulta por BU, grupo de aprovação e administradores. Os dados da pessoa vêm do MDM.</p>
+  <p class="meta">8 campos · ligada a AIP_BU, AIP_CICLO</p>
+  <ul><li>TP_GRUPO: CONTRIBUIDOR, APROVACAO, CONSULTA, ADMIN.</li><li>BU obrigatória para contribuidor e consulta; vazia para aprovação e administrador.</li><li>Uma pessoa não se repete no mesmo grupo e BU do ciclo.</li></ul>
+</article>
+<article class="tcard g-des" id="t-AIP_BU" data-t="AIP_BU">
+  <header><h3>AIP_BU</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <p class="purpose">Cadastro das Business Units (nome e país ou região). A BU entra em cada ciclo pela AIP_CICLO_BU.</p>
+  <p class="meta">4 campos · ligada a AIP_CICLO_BU, AIP_PAPEL, AIP_UNIDADE</p>
+  <ul><li>Nome único.</li><li>Só se exclui BU sem Goal Card submetido; com card, tira-se do ciclo (AIP_CICLO_BU).</li></ul>
+</article>
+<article class="tcard g-des" id="t-AIP_CICLO_BU" data-t="AIP_CICLO_BU">
+  <header><h3>AIP_CICLO_BU</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <p class="purpose">Quais BUs participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.</p>
+  <p class="meta">3 campos · ligada a AIP_BU, AIP_CICLO</p>
+  <ul><li>Uma linha por BU em cada ciclo.</li></ul>
+</article>
+<article class="tcard g-des" id="t-AIP_NIVEL" data-t="AIP_NIVEL">
+  <header><h3>AIP_NIVEL</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <p class="purpose">Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU → GG → GA): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.</p>
+  <p class="meta">9 campos · ligada a AIP_CICLO, AIP_META, AIP_UNIDADE</p>
+  <ul><li>Um nível de cada tipo por ciclo.</li><li>Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.</li><li>Nível obrigatório fica sempre ativo.</li><li>GA só ativo com GG ativo (o desdobramento não pula nível; validado na API).</li><li>Metas e pesos mostra só CEO, COO e BU.</li></ul>
+</article>
+<article class="tcard g-des" id="t-AIP_UNIDADE" data-t="AIP_UNIDADE">
+  <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <p class="purpose">As unidades de cada nível: CEO VBM, COO VBM, cada BU ativa e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards.</p>
+  <p class="meta">5 campos · ligada a AIP_BU, AIP_GOAL_CARD, AIP_META_PESO, AIP_NIVEL, AIP_UNIDADE</p>
+  <ul><li>Nome único dentro do nível.</li></ul>
+</article>
+<article class="tcard g-des" id="t-AIP_META" data-t="AIP_META">
+  <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <p class="purpose">As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.</p>
+  <p class="meta">8 campos · ligada a AIP_GOAL_CARD, AIP_META, AIP_META_PESO, AIP_NIVEL</p>
+  <ul><li>Número único dentro do nível.</li><li>TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.</li></ul>
+</article>
+<article class="tcard g-des" id="t-AIP_META_PESO" data-t="AIP_META_PESO">
+  <header><h3>AIP_META_PESO</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <p class="purpose">O peso de cada meta em cada unidade. Somado aos pontos herdados, fecha o total da unidade (RN-16).</p>
+  <p class="meta">3 campos · ligada a AIP_META, AIP_UNIDADE</p>
+  <ul><li>Um peso por meta e unidade; maior que zero.</li><li>Para cada unidade: herdado + soma dos pesos = total do nível (validado na API antes de gravar).</li></ul>
+</article>
+<article class="tcard g-gc" id="t-AIP_GOAL_CARD" data-t="AIP_GOAL_CARD">
+  <header><h3>AIP_GOAL_CARD</h3><span class="chip">GOAL CARD</span></header>
+  <p class="purpose">O Goal Card de uma meta numa unidade (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.</p>
+  <p class="meta">9 campos · ligada a AIP_COMENTARIO, AIP_EVENTO_LOG, AIP_GOAL_CARD_VERSAO, AIP_META, AIP_UNIDADE</p>
+  <ul><li>Código único; um card por meta e unidade.</li><li>TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO, NEGADO.</li><li>Versão oficial preenchida se, e só se, APROVADO.</li></ul>
+</article>
+<article class="tcard g-gc" id="t-AIP_GOAL_CARD_VERSAO" data-t="AIP_GOAL_CARD_VERSAO">
+  <header><h3>AIP_GOAL_CARD_VERSAO</h3><span class="chip">GOAL CARD</span></header>
+  <p class="purpose">Cada submissão gera uma versão imutável (v1, v2…) com a foto de todos os campos. É o que a tela Versões compara.</p>
+  <p class="meta">7 campos · ligada a AIP_DECISAO, AIP_GOAL_CARD</p>
+  <ul><li>Número de versão único por card.</li><li>TP_MOTIVO: SUBMISSAO, RESUBMISSAO, REABERTURA.</li><li>Não se edita nem apaga uma versão (só a API grava, sempre inserindo).</li></ul>
+</article>
+<article class="tcard g-gc" id="t-AIP_DECISAO" data-t="AIP_DECISAO">
+  <header><h3>AIP_DECISAO</h3><span class="chip">GOAL CARD</span></header>
+  <p class="purpose">A decisão do grupo de aprovação sobre uma versão (nível único): aprovar, devolver para ajuste ou negar.</p>
+  <p class="meta">6 campos · ligada a AIP_GOAL_CARD_VERSAO, AIP_REVISAO_SECAO</p>
+  <ul><li>Uma decisão por versão (decisão idempotente).</li><li>TP_DECISAO: APROVADO, DEVOLVIDO, NEGADO.</li><li>Comentário obrigatório se DEVOLVIDO ou NEGADO.</li></ul>
+</article>
+<article class="tcard g-gc" id="t-AIP_REVISAO_SECAO" data-t="AIP_REVISAO_SECAO">
+  <header><h3>AIP_REVISAO_SECAO</h3><span class="chip">GOAL CARD</span></header>
+  <p class="purpose">A marcação de cada seção do card na decisão: OK ou Ajustar. Devolver exige ao menos uma seção Ajustar.</p>
+  <p class="meta">3 campos · ligada a AIP_DECISAO</p>
+  <ul><li>Uma marcação por seção em cada decisão.</li><li>TP_MARCACAO: OK ou AJUSTAR.</li><li>Devolver exige ao menos uma seção AJUSTAR (validado na API).</li></ul>
+</article>
+<article class="tcard g-gc" id="t-AIP_COMENTARIO" data-t="AIP_COMENTARIO">
+  <header><h3>AIP_COMENTARIO</h3><span class="chip">GOAL CARD</span></header>
+  <p class="purpose">Comentários por seção do Goal Card, com respostas. Aparecem no card e no Action Log.</p>
+  <p class="meta">7 campos · ligada a AIP_COMENTARIO, AIP_GOAL_CARD</p>
+  <ul><li>CD_SECAO numa das sete seções do card.</li><li>Não se edita nem apaga comentário publicado.</li></ul>
+</article>
+<article class="tcard g-aud" id="t-AIP_EVENTO_LOG" data-t="AIP_EVENTO_LOG">
+  <header><h3>AIP_EVENTO_LOG</h3><span class="chip">LOG E AVISOS</span></header>
+  <p class="purpose">A linha do tempo única e imutável do ciclo (Action Log): submissões, decisões, comentários, mudanças de configuração e abertura/fechamento de ciclo, com antes e depois.</p>
+  <p class="meta">10 campos · ligada a AIP_CICLO, AIP_GOAL_CARD, AIP_NOTIFICACAO</p>
+  <ul><li>Registro imutável: um gatilho bloqueia UPDATE e DELETE.</li><li>TP_EVENTO numa lista fixa (inclui abrir, fechar e reabrir ciclo).</li></ul>
+</article>
+<article class="tcard g-aud" id="t-AIP_NOTIFICACAO" data-t="AIP_NOTIFICACAO">
+  <header><h3>AIP_NOTIFICACAO</h3><span class="chip">LOG E AVISOS</span></header>
+  <p class="purpose">Avisos gerados a partir dos eventos (ex.: card devolvido), por e-mail ou na aplicação, com envio e leitura.</p>
+  <p class="meta">6 campos · ligada a AIP_EVENTO_LOG</p>
+  <ul><li>TP_CANAL: EMAIL ou APP.</li><li>Só tem leitura depois de enviado.</li></ul>
+</article>
+  </div>
+
+<section class="explica" id="como-pontos"><h2>Como os pontos descem do CEO até a BU</h2><p>Cada unidade de um nível precisa fechar o total de pontos do nível. Uma parte vem do resultado do nível acima (<code>QTDE_PONTOS_HERDADOS</code> da AIP_NIVEL) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p><ol class="ordem"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li><li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li><li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li><li>A API só grava quando herdado + soma dos pesos = total, em todas as unidades de todos os níveis ativos (RN-16).</li></ol><div class="tscroll"><table class="passo"><thead><tr><th>Unidade</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody><tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr><tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>
+
+  <h2>Exemplos de dados</h2>
+  <p class="hint">Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Os IDs batem entre as tabelas: o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.</p>
+  <div class="exs">
+<section class="ex g-cic" id="e-AIP_CICLO" data-t="AIP_CICLO">
+  <header><h3>AIP_CICLO</h3><span class="chip">CICLO E PESSOAS</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · AIP 2026, fechado</th><th scope="col">2 · AIP 2027, aberto, criado do 2026</th></tr></thead><tbody><tr><th scope="row">ID_CICLO</th><td>1</td><td>2</td></tr><tr><th scope="row">NO_ANO</th><td>2026</td><td>2027</td></tr><tr><th scope="row">NM_CICLO</th><td>AIP 2026</td><td>AIP 2027</td></tr><tr><th scope="row">TP_STATUS</th><td>FECHADO</td><td>ABERTO</td></tr><tr><th scope="row">DS_TEXTO_PADRAO_EXCECOES</th><td class="long">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td><td class="long">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td></tr><tr><th scope="row">ID_CICLO_ORIGEM</th><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">DT_CRIACAO</th><td>15/09/2025 09:00</td><td>20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_CRIACAO</th><td>C410644</td><td>C410644</td></tr><tr><th scope="row">DT_FECHAMENTO</th><td>30/01/2026 18:00</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">CD_MATRICULA_FECHAMENTO</th><td>C410644</td><td><span class="nul">vazio</span></td></tr></tbody></table></div>
+</section>
+<section class="ex g-cic" id="e-AIP_CICLO_JANELA" data-t="AIP_CICLO_JANELA">
+  <header><h3>AIP_CICLO_JANELA</h3><span class="chip">CICLO E PESSOAS</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">Calibração termina em 15/12</th><th scope="col">Desdobramento de 01/10 a 29/10</th><th scope="col">Goal Card oficial em 22/12</th></tr></thead><tbody><tr><th scope="row">ID_CICLO</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">TP_ETAPA</th><td>CALIBRACAO</td><td>DESDOBRAMENTO</td><td>OFICIAL</td></tr><tr><th scope="row">NO_ORDEM</th><td>3</td><td>1</td><td>4</td></tr><tr><th scope="row">DT_INICIO</th><td><span class="nul">vazio</span></td><td>01/10/2026</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_FIM</th><td>15/12/2026</td><td>29/10/2026</td><td>22/12/2026</td></tr></tbody></table></div>
+</section>
+<section class="ex g-cic" id="e-AIP_PAPEL" data-t="AIP_PAPEL">
+  <header><h3>AIP_PAPEL</h3><span class="chip">CICLO E PESSOAS</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · Contribuidor de Ontario</th><th scope="col">2 · Grupo de aprovação</th><th scope="col">3 · Administrador</th></tr></thead><tbody><tr><th scope="row">ID_PAPEL</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_CICLO</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">CD_MATRICULA</th><td>C410385</td><td>C410459</td><td>C410644</td></tr><tr><th scope="row">TP_GRUPO</th><td>CONTRIBUIDOR</td><td>APROVACAO</td><td>ADMIN</td></tr><tr><th scope="row">ID_BU</th><td>2</td><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVO</th><td>sim</td><td>sim</td><td>sim</td></tr><tr><th scope="row">DT_INCLUSAO</th><td>02/10/2026 08:40</td><td>02/10/2026 08:45</td><td>20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_INCLUSAO</th><td>C410644</td><td>C410644</td><td>C410644</td></tr></tbody></table></div>
+</section>
+<section class="ex g-des" id="e-AIP_BU" data-t="AIP_BU">
+  <header><h3>AIP_BU</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · Onça Puma, Brasil</th><th scope="col">2 · Ontario, Canadá</th></tr></thead><tbody><tr><th scope="row">ID_BU</th><td>1</td><td>2</td></tr><tr><th scope="row">NM_BU</th><td>Onça Puma</td><td>Ontario</td></tr><tr><th scope="row">NM_PAIS</th><td>Brasil</td><td>Canadá</td></tr><tr><th scope="row">DT_CRIACAO</th><td>15/09/2025 09:10</td><td>15/09/2025 09:12</td></tr></tbody></table></div>
+</section>
+<section class="ex g-des" id="e-AIP_CICLO_BU" data-t="AIP_CICLO_BU">
+  <header><h3>AIP_CICLO_BU</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">Onça Puma no AIP 2026</th><th scope="col">Ontario no AIP 2026</th><th scope="col">Onça Puma no AIP 2027</th></tr></thead><tbody><tr><th scope="row">ID_CICLO</th><td>1</td><td>1</td><td>2</td></tr><tr><th scope="row">ID_BU</th><td>1</td><td>2</td><td>1</td></tr><tr><th scope="row">SG_ATIVA</th><td>sim</td><td>sim</td><td>sim</td></tr></tbody></table></div>
+</section>
+<section class="ex g-des" id="e-AIP_NIVEL" data-t="AIP_NIVEL">
+  <header><h3>AIP_NIVEL</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · CEO, 100 pts</th><th scope="col">2 · COO, 75 herdados do CEO</th><th scope="col">3 · BU, 40 herdados do COO</th></tr></thead><tbody><tr><th scope="row">ID_NIVEL</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_CICLO</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">CD_NIVEL</th><td>CEO</td><td>COO</td><td>BU</td></tr><tr><th scope="row">NO_ORDEM</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">NM_NIVEL</th><td>CEO</td><td>COO</td><td>Business Unit</td></tr><tr><th scope="row">QTDE_PONTOS_TOTAL</th><td>100</td><td>100</td><td>100</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS</th><td>0</td><td>75</td><td>40</td></tr><tr><th scope="row">SG_OBRIGATORIO</th><td>sim</td><td>sim</td><td>sim</td></tr><tr><th scope="row">SG_ATIVO</th><td>sim</td><td>sim</td><td>sim</td></tr></tbody></table></div>
+</section>
+<section class="ex g-des" id="e-AIP_UNIDADE" data-t="AIP_UNIDADE">
+  <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · CEO VBM</th><th scope="col">2 · COO VBM, abaixo do CEO</th><th scope="col">3 · Onça Puma, abaixo do COO</th></tr></thead><tbody><tr><th scope="row">ID_UNIDADE</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_NIVEL</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">NM_UNIDADE</th><td>CEO VBM</td><td>COO VBM</td><td>Onça Puma</td></tr><tr><th scope="row">ID_BU</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">ID_UNIDADE_PAI</th><td><span class="nul">vazio</span></td><td>1</td><td>2</td></tr></tbody></table></div>
+</section>
+<section class="ex g-des" id="e-AIP_META" data-t="AIP_META">
+  <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · Meta 02 do COO</th><th scope="col">2 · Meta 04 das BUs</th><th scope="col">3 · Meta 05 da BU, desdobrada da 02 do COO</th></tr></thead><tbody><tr><th scope="row">ID_META</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_NIVEL</th><td>2</td><td>3</td><td>3</td></tr><tr><th scope="row">NO_META</th><td>2</td><td>4</td><td>5</td></tr><tr><th scope="row">NM_TITULO</th><td class="long">Strengthen a Culture of Chronic Unease</td><td class="long">BU Adherence to Production Budget</td><td>BU Chronic Unease</td></tr><tr><th scope="row">TP_META</th><td>FORMULA</td><td>FORMULA</td><td>FORMULA</td></tr><tr><th scope="row">TP_POLARIDADE</th><td>MAIOR</td><td>MAIOR</td><td>MAIOR</td></tr><tr><th scope="row">ID_META_ORIGEM</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">SG_ATIVA</th><td>sim</td><td>sim</td><td>sim</td></tr></tbody></table></div>
+</section>
+<section class="ex g-des" id="e-AIP_META_PESO" data-t="AIP_META_PESO">
+  <header><h3>AIP_META_PESO</h3><span class="chip">DESDOBRAMENTO</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">Meta 02 vale 5 no COO VBM</th><th scope="col">Meta 04 vale 10 em Onça Puma</th><th scope="col">Meta 04 vale 10 em Ontario</th></tr></thead><tbody><tr><th scope="row">ID_META</th><td>1</td><td>2</td><td>2</td></tr><tr><th scope="row">ID_UNIDADE</th><td>2</td><td>3</td><td>4</td></tr><tr><th scope="row">VL_PESO</th><td>5.0</td><td>10.0</td><td>10.0</td></tr></tbody></table></div>
+</section>
+<section class="ex g-gc" id="e-AIP_GOAL_CARD" data-t="AIP_GOAL_CARD">
+  <header><h3>AIP_GOAL_CARD</h3><span class="chip">GOAL CARD</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · GC-ONT-04, devolvido para ajuste</th><th scope="col">2 · GC-ONP-04, aprovado (v1 oficial)</th></tr></thead><tbody><tr><th scope="row">ID_GOAL_CARD</th><td>1</td><td>2</td></tr><tr><th scope="row">CD_GOAL_CARD</th><td>GC-ONT-04</td><td>GC-ONP-04</td></tr><tr><th scope="row">ID_META</th><td>2</td><td>2</td></tr><tr><th scope="row">ID_UNIDADE</th><td>4</td><td>3</td></tr><tr><th scope="row">TP_ESTADO</th><td>EM_REVISAO</td><td>APROVADO</td></tr><tr><th scope="row">NO_VERSAO_OFICIAL</th><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">DS_RASCUNHO</th><td class="long">{&quot;unit&quot;: &quot;%&quot;, &quot;ruler&quot;: {&quot;exc&quot;: 105, &quot;min&quot;: 95, &quot;meta&quot;: 100}}</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_ATUALIZACAO</th><td>18/11/2026 15:20</td><td>10/11/2026 11:00</td></tr><tr><th scope="row">CD_MATRICULA_ATUALIZACAO</th><td>C410459</td><td>C410459</td></tr></tbody></table></div>
+</section>
+<section class="ex g-gc" id="e-AIP_GOAL_CARD_VERSAO" data-t="AIP_GOAL_CARD_VERSAO">
+  <header><h3>AIP_GOAL_CARD_VERSAO</h3><span class="chip">GOAL CARD</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · v1 do GC-ONT-04</th><th scope="col">2 · v1 do GC-ONP-04</th></tr></thead><tbody><tr><th scope="row">ID_VERSAO</th><td>1</td><td>2</td></tr><tr><th scope="row">ID_GOAL_CARD</th><td>1</td><td>2</td></tr><tr><th scope="row">NO_VERSAO</th><td>1</td><td>1</td></tr><tr><th scope="row">TP_MOTIVO</th><td>SUBMISSAO</td><td>SUBMISSAO</td></tr><tr><th scope="row">DS_CAMPOS</th><td class="long">{&quot;unit&quot;: &quot;t&quot;, &quot;ruler&quot;: {&quot;exc&quot;: 105, &quot;min&quot;: 95, &quot;meta&quot;: 100},</td><td class="long">{&quot;unit&quot;: &quot;%&quot;, &quot;ruler&quot;: {&quot;exc&quot;: 105, &quot;min&quot;: 95, &quot;meta&quot;: 100},</td></tr><tr><th scope="row">DT_VERSAO</th><td>13/11/2026 09:40</td><td>05/11/2026 16:10</td></tr><tr><th scope="row">CD_MATRICULA_AUTOR</th><td>C410385</td><td>C410200</td></tr></tbody></table></div>
+</section>
+<section class="ex g-gc" id="e-AIP_DECISAO" data-t="AIP_DECISAO">
+  <header><h3>AIP_DECISAO</h3><span class="chip">GOAL CARD</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · v1 do GC-ONT-04 devolvida</th><th scope="col">2 · v1 do GC-ONP-04 aprovada</th></tr></thead><tbody><tr><th scope="row">ID_DECISAO</th><td>1</td><td>2</td></tr><tr><th scope="row">ID_VERSAO</th><td>1</td><td>2</td></tr><tr><th scope="row">TP_DECISAO</th><td>DEVOLVIDO</td><td>APROVADO</td></tr><tr><th scope="row">DS_COMENTARIO</th><td class="long">Use the same unit as the COO scorecard (%).</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_DECISAO</th><td>18/11/2026 15:20</td><td>10/11/2026 11:00</td></tr><tr><th scope="row">CD_MATRICULA_DECISAO</th><td>C410459</td><td>C410459</td></tr></tbody></table></div>
+</section>
+<section class="ex g-gc" id="e-AIP_REVISAO_SECAO" data-t="AIP_REVISAO_SECAO">
+  <header><h3>AIP_REVISAO_SECAO</h3><span class="chip">GOAL CARD</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">Objective OK</th><th scope="col">Ruler para ajustar</th><th scope="col">Unit para ajustar</th></tr></thead><tbody><tr><th scope="row">ID_DECISAO</th><td>1</td><td>1</td><td>1</td></tr><tr><th scope="row">CD_SECAO</th><td>OBJECTIVE</td><td>RULER</td><td>UNIT</td></tr><tr><th scope="row">TP_MARCACAO</th><td>OK</td><td>AJUSTAR</td><td>AJUSTAR</td></tr></tbody></table></div>
+</section>
+<section class="ex g-gc" id="e-AIP_COMENTARIO" data-t="AIP_COMENTARIO">
+  <header><h3>AIP_COMENTARIO</h3><span class="chip">GOAL CARD</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · Aprovador pede % na unidade</th><th scope="col">2 · Contribuidor responde</th></tr></thead><tbody><tr><th scope="row">ID_COMENTARIO</th><td>1</td><td>2</td></tr><tr><th scope="row">ID_GOAL_CARD</th><td>1</td><td>1</td></tr><tr><th scope="row">CD_SECAO</th><td>UNIT</td><td>UNIT</td></tr><tr><th scope="row">DS_TEXTO</th><td class="long">Use the same unit as the COO scorecard (%).</td><td class="long">Ajustado para %, conforme o scorecard do COO.</td></tr><tr><th scope="row">ID_COMENTARIO_PAI</th><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">DT_COMENTARIO</th><td>17/11/2026 11:27</td><td>19/11/2026 09:05</td></tr><tr><th scope="row">CD_MATRICULA_AUTOR</th><td>C410459</td><td>C410385</td></tr></tbody></table></div>
+</section>
+<section class="ex g-aud" id="e-AIP_EVENTO_LOG" data-t="AIP_EVENTO_LOG">
+  <header><h3>AIP_EVENTO_LOG</h3><span class="chip">LOG E AVISOS</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · AIP 2026 fechado</th><th scope="col">2 · v1 do GC-ONT-04 submetida</th><th scope="col">3 · Devolvido para ajuste</th></tr></thead><tbody><tr><th scope="row">ID_EVENTO</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_CICLO</th><td>1</td><td>2</td><td>2</td></tr><tr><th scope="row">TP_EVENTO</th><td>CICLO_FECHADO</td><td>SUBMISSAO</td><td>DECISAO</td></tr><tr><th scope="row">DT_EVENTO</th><td>30/01/2026 18:00</td><td>13/11/2026 09:40</td><td>18/11/2026 15:20</td></tr><tr><th scope="row">CD_MATRICULA</th><td>C410644</td><td>C410385</td><td>C410459</td></tr><tr><th scope="row">TP_GRUPO</th><td>ADMIN</td><td>CONTRIBUIDOR</td><td>APROVACAO</td></tr><tr><th scope="row">ID_GOAL_CARD</th><td><span class="nul">vazio</span></td><td>1</td><td>1</td></tr><tr><th scope="row">CD_SECAO</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>UNIT</td></tr><tr><th scope="row">DS_ANTES</th><td class="long">{&quot;status&quot;: &quot;ABERTO&quot;}</td><td><span class="nul">vazio</span></td><td class="long">{&quot;estado&quot;: &quot;EM_APROVACAO&quot;}</td></tr><tr><th scope="row">DS_DEPOIS</th><td class="long">{&quot;status&quot;: &quot;FECHADO&quot;}</td><td class="long">{&quot;versao&quot;: 1}</td><td class="long">{&quot;estado&quot;: &quot;EM_REVISAO&quot;}</td></tr></tbody></table></div>
+</section>
+<section class="ex g-aud" id="e-AIP_NOTIFICACAO" data-t="AIP_NOTIFICACAO">
+  <header><h3>AIP_NOTIFICACAO</h3><span class="chip">LOG E AVISOS</span></header>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · E-mail lido pelo contribuidor</th><th scope="col">2 · Aviso na aplicação ainda não lido</th></tr></thead><tbody><tr><th scope="row">ID_NOTIFICACAO</th><td>1</td><td>2</td></tr><tr><th scope="row">ID_EVENTO</th><td>3</td><td>3</td></tr><tr><th scope="row">CD_MATRICULA_DESTINO</th><td>C410385</td><td>C410385</td></tr><tr><th scope="row">TP_CANAL</th><td>EMAIL</td><td>APP</td></tr><tr><th scope="row">DT_ENVIO</th><td>18/11/2026 15:21</td><td>18/11/2026 15:21</td></tr><tr><th scope="row">DT_LEITURA</th><td>18/11/2026 16:02</td><td><span class="nul">vazio</span></td></tr></tbody></table></div>
+</section>
+  </div>
+
+  <h2>Funções do banco</h2>
+  <ul class="fn">
+    <li><code>aip_evento_imutavel</code><span>Gatilho da AIP_EVENTO_LOG: recusa qualquer UPDATE ou DELETE, mantendo o Action Log imutável.</span></li>
+  </ul>
+</div>
+
+<script>
+(function () {
+  var der = document.getElementById('der');
+  var edges = Array.prototype.slice.call(der.querySelectorAll('.edge'));
+  var tbls = Array.prototype.slice.call(der.querySelectorAll('.tbl'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.tcard, .ex'));
+  var cap = document.getElementById('detalhe'); var capPadrao = cap.innerHTML;
+  var current = null;
+  function select(name, scroll) {
+    if (current === name) name = null;
+    current = name;
+    der.classList.toggle('focus', !!name);
+    var near = {};
+    edges.forEach(function (e) {
+      var r = e.getAttribute('data-rel').split(' ');
+      var on = !!name && r.indexOf(name) >= 0;
+      e.classList.toggle('near', on);
+      if (on) { near[r[0]] = 1; near[r[1]] = 1; }
+    });
+    if (name) near[name] = 1;
+    tbls.forEach(function (t) { var n = t.getAttribute('data-t'); t.classList.toggle('near', !!near[n]); t.classList.toggle('on', n === name); });
+    cards.forEach(function (c) { c.classList.toggle('on', c.getAttribute('data-t') === name); });
+    var tp = name && document.getElementById('d-' + name);
+    cap.innerHTML = tp ? tp.innerHTML : capPadrao; cap.classList.toggle('has', !!tp);
+    var bt = cap.querySelector('.dclose'); if (bt) bt.addEventListener('click', function () { select(current, false); });
+    if (name && scroll) { var el = cap; if (el) el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' }); }
+  }
+  tbls.forEach(function (t) {
+    t.addEventListener('click', function () { select(t.getAttribute('data-t'), true); });
+    t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(t.getAttribute('data-t'), true); } });
+  });
+  cards.filter(function (c) { return c.classList.contains('tcard'); }).forEach(function (c) { c.addEventListener('click', function () { select(c.getAttribute('data-t'), false); der.scrollIntoView({ block: 'nearest' }); }); });
+})();
+</script>
+
+</body>
+</html>

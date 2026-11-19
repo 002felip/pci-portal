@@ -9,27 +9,29 @@ Nenhum script ainda: o **modelo de dados está em validação com o time de dado
 `AIPGOALS_FONTE=exemplo` (padrão) faz a API responder com `dados-exemplo.js`; com `AIPGOALS_FONTE=banco`, as rotas
 respondem 501 até os scripts abaixo existirem.
 
-## Modelo proposto (Especificação técnica §9)
+## Modelo proposto (versão de 19/11/2026)
 
-| Tabela | Conteúdo |
+DDL, exemplos e DER em `der/`:
+
+| Arquivo | Conteúdo |
 |---|---|
-| `AIP_CICLO` | ano, nome, janelas (desdobramento, proposta, calibração, oficial), textos padrão, status |
-| `AIP_CICLO_BU` | BU do ciclo, país, ativo |
-| `AIP_PAPEL` | matrícula, ciclo, BU (nula para aprovadores e administrador), papel (contribuidor, aprovador, consulta, administrador), ativo |
-| `AIP_NIVEL` | ciclo, nível (CEO, COO, BU, GG, GA), nome, total por unidade, herdado do nível acima, ativo |
-| `AIP_UNIDADE` | ciclo, nível, unidade, nome, unidade-mãe |
-| `AIP_META` | ciclo, nível, número, título, tipo, polaridade, ativo |
-| `AIP_META_PESO` | meta, unidade, peso |
-| `AIP_GOAL_CARD` | estado atual, versão oficial, rascunho corrente |
-| `AIP_GOAL_CARD_VERSAO` | snapshot imutável dos campos, vN, motivo, autor, data |
-| `AIP_DECISAO` | versão, decisão, comentário, decidido por, data (nível único, D-09) |
-| `AIP_REVISAO_SECAO` | decisão, seção, marcação (OK ou Ajustar) |
-| `AIP_COMENTARIO` | card, seção, texto, autor, data, resposta a |
-| `AIP_EVENTO_LOG` | tipo, quem, papel, quando, BU, meta, seção, antes, depois |
-| `AIP_NOTIFICACAO` | destinatário, evento, canal, enviado em, lido em |
-| `AIP_PARAMETRO` | limites configuráveis (caracteres mínimos, tamanho de anexo) |
+| `der/der.html` | DER navegável (abra no navegador): clique numa tabela para ver cada campo explicado, com exemplos, ligações e regras |
+| `der/modelo.sql` | DDL proposto, testado em PostgreSQL 16 (a versão T-SQL para o Azure SQL sai dele com o time de dados) |
+| `der/exemplos.sql` | Dados fictícios que passam por todas as regras |
+| `der/schema.json`, `der/config.json`, `der/exemplos.json`, `der/montar_config.py` | Entradas para gerar o DER de novo (skill-der-model) quando o modelo mudar |
 
-A antiga `AIP_ACAO` saiu do modelo com a descontinuação da T08 Ações (D-20).
+16 tabelas, padrão IBP de nomes (ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_, QTDE_, VL_):
+
+| Grupo | Tabelas |
+|---|---|
+| Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez), `AIP_CICLO_JANELA`, `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
+| Desdobramento | `AIP_BU`, `AIP_CICLO_BU`, `AIP_NIVEL` (obrigatório/opcional, herdado), `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO` |
+| Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_DECISAO`, `AIP_REVISAO_SECAO`, `AIP_COMENTARIO` |
+| Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho), `AIP_NOTIFICACAO` |
+
+Mudanças desta versão: ciclo com status e fechamento (um aberto, fechar, reabrir, abrir a partir de outro), janelas em
+tabela própria, cadastro de BU separado da participação no ciclo, nível com obrigatório/opcional, meta com origem
+(desdobrada de), papel por matrícula do MDM. Saiu `AIP_PARAMETRO` (limites ficam na aplicação) e, antes, `AIP_ACAO` (D-20).
 
 Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio) a definir com o time de dados.
 
