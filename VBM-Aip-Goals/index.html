@@ -1475,9 +1475,12 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
 .gc-f-modo { white-space: nowrap; }
 .gc-f-modo .ico { width: 0.8rem; height: 0.8rem; }
 /* Popup do Goal Card mostrando Versões ou Histórico: mesmo popup, botão Voltar ao card, sem trocar de meta */
-.m3-dlg-voltar { position: sticky; top: 1rem; float: left; z-index: 5; margin: 1rem 0 0 1rem; display: inline-flex; align-items: center; gap: 0.4rem; background: var(--card-bg); }
-.m3-dlg-voltar[hidden] { display: none; }
-body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
+.m3-dlg-abas { position: sticky; top: 0.75rem; z-index: 5; display: flex; width: max-content; margin: 0.75rem 0 0 1rem; background: var(--card-bg); }
+.m3-dlg-abas button { min-height: 30px; padding: 2px 14px; font-size: .78rem; }
+.m3-dlg #vistaGoalCard .p2-pills, .m3-dlg #vistaVersoes .gc-chips, .m3-dlg .lg-chip-card { display: none; }
+.m3-dlg #vistaVersoes .p2-trilha { margin-top: 0.5rem; }
+.m3-dlg .vs-filtros, .m3-dlg .lg-filtros { margin-bottom: 1rem; }
+.lg-meta-card { margin-top: 0.25rem; }
 .m3-dlg [data-tela-cheia] { display: none; }
 .m3-dlg #vistaVersoes .gc-filtro-meta, .m3-dlg #vistaLog .lg-filtros .filter:has(#lgBu), .m3-dlg #vistaLog .lg-filtros .filter:has(#lgMeta), .m3-dlg .lg-chip-card button { display: none; }
 
@@ -2003,8 +2006,8 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
   <!-- Popup grande com o Goal Card: a vista T04 é movida para cá ao abrir pela T03 e devolvida ao fechar -->
   <dialog class="m3-dlg" id="m3Dlg" aria-labelledby="titGc">
     <button type="button" class="dash-acao m3-dlg-fechar" id="m3DlgFechar" aria-label="Fechar" title="Fechar" data-i18n-aria="gc.fechar" data-i18n-title="gc.fechar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
-    <!-- Voltar ao Goal Card quando o popup mostra as Versões ou o Histórico (sem abrir outro popup) -->
-    <button type="button" class="btn btn-sec m3-dlg-voltar" id="m3DlgVoltar" hidden><svg class="ico gc-voltar-ico" aria-hidden="true"><use href="#i-arrow"/></svg><span id="m3DlgVoltarTxt">Goal Card</span></button>
+    <!-- Navegação do popup: Goal Card · Versões · Histórico trocam o conteúdo na mesma tela -->
+    <div class="seg m3-dlg-abas" id="m3DlgAbas" role="group" aria-label="Seções do Goal Card"><button type="button" data-aba="card" aria-pressed="true">Goal Card</button><button type="button" data-aba="versoes" aria-pressed="false" data-i18n="vs.titulo">Versões</button><button type="button" data-aba="log" aria-pressed="false" data-i18n="vs.historico">Histórico</button></div>
     <div class="m3-dlg-corpo" id="m3DlgCorpo"></div>
   </dialog>
 
@@ -2208,6 +2211,7 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
       <div class="p2-cab">
         <p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span><span data-i18n="cf.eyebrow">Administração</span></p>
         <h2 class="p2-titulo" id="titLog"><span class="ab-nome">Action Log</span></h2>
+        <p class="gc-meta-tit lg-meta-card" id="lgMetaCard" hidden></p>
       </div>
       <div class="topo-acoes">
         <button type="button" class="dash-acao" id="lgExportar" aria-label="Exportar para Excel" title="Exportar para Excel" data-i18n-aria="lg.exportar" data-i18n-title="lg.exportar"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg></button>
@@ -3197,7 +3201,7 @@ window.VBMSetup = (function () {
     if (!m3Vaga.parentNode) v.parentNode.insertBefore(m3Vaga, v);
     $('m3DlgCorpo').appendChild(v); v.hidden = false;
     gc.card = card; gc.secao = ''; gcCarregar();
-    $('m3DlgVoltar').hidden = true; $('m3Dlg').classList.remove('is-sub');
+    dlgAbasZerar();
     $('m3Dlg').showModal(); $('m3Dlg').scrollTop = 0;
   }
   $('m3Linhas').addEventListener('click', function (e) {
@@ -3213,13 +3217,13 @@ window.VBMSetup = (function () {
     if (!dlgVagas[id]) { dlgVagas[id] = document.createComment(id); v.parentNode.insertBefore(dlgVagas[id], v); }
     if (v.parentNode !== $('m3DlgCorpo')) $('m3DlgCorpo').appendChild(v);
   }
+  function dlgAbasZerar() { $('m3Dlg').classList.remove('is-sub'); document.querySelectorAll('#m3DlgAbas button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-aba') === 'card')); }); }
   function dlgVer(qual) {
     $('vistaGoalCard').hidden = qual !== 'card';
     ['vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).hidden = true; });
     if (qual === 'versoes') { dlgMover('vistaVersoes'); $('vistaVersoes').hidden = false; vs.card = gc.card; vs.a = null; vs.b = null; vs.so = true; vsCarregar(false); }
     if (qual === 'log') { dlgMover('vistaLog'); $('vistaLog').hidden = false; lg.f = { periodo: 'ciclo', bu: '', meta: '', secao: '', tipo: '', card: gc.card }; lgCarregar(false); }
-    $('m3DlgVoltar').hidden = qual === 'card';
-    $('m3DlgVoltarTxt').textContent = 'Goal Card ' + gc.card;
+    document.querySelectorAll('#m3DlgAbas button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-aba') === qual)); });
     $('m3Dlg').classList.toggle('is-sub', qual !== 'card');
     $('m3Dlg').scrollTop = 0;
     dlgAjustar();
@@ -3247,7 +3251,7 @@ window.VBMSetup = (function () {
   }
   var dlgTimer = null;
   window.addEventListener('resize', function () { clearTimeout(dlgTimer); dlgTimer = setTimeout(dlgAjustar, 120); });
-  $('m3DlgVoltar').addEventListener('click', function () { dlgVer('card'); $('gcVersoes').focus(); });
+  $('m3DlgAbas').addEventListener('click', function (e) { var b = e.target.closest('button[data-aba]'); if (b) dlgVer(b.getAttribute('data-aba')); });
   $('gcVersoes').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('versoes'); } });
   $('gcHistorico').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('log'); } });
   $('vsLog').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('log'); } });
@@ -3261,7 +3265,7 @@ window.VBMSetup = (function () {
     var v = $('vistaGoalCard'); v.hidden = true;
     if (m3Vaga.parentNode) m3Vaga.parentNode.insertBefore(v, m3Vaga);
     Object.keys(dlgVagas).forEach(function (id) { var x = $(id); x.hidden = true; dlgVagas[id].parentNode.insertBefore(x, dlgVagas[id]); });
-    $('m3DlgVoltar').hidden = true; $('m3Dlg').classList.remove('is-sub');
+    dlgAbasZerar();
     if (m3Origem === 'metas') m3Carregar(true); // a lista volta atualizada
     $('m3Dlg').classList.remove('is-fixo'); m3Origem = '';
   });
@@ -4304,6 +4308,9 @@ window.VBMSetup = (function () {
     var ativos = ['bu', 'meta', 'secao', 'tipo', 'card'].filter(function (k) { return lg.f[k]; });
     $('lgAtivos').innerHTML = (lg.f.card ? '<span class="lg-chip-card">Goal Card ' + esc(lg.f.card) + ' <button type="button" data-limpar="card" aria-label="' + esc(S.t('lg.tirarCard')) + '">' + ico('i-x') + '</button></span>' : '') +
       (ativos.length || lg.f.periodo !== 'ciclo' ? '<button type="button" class="cf-link" data-limpar="tudo">' + esc(S.t('lg.limpar')) + '</button>' : '');
+    var mc = lg.f.card && gc.dados && gc.dados.card === lg.f.card ? gc.dados.meta : null;
+    $('lgMetaCard').hidden = !mc;
+    if (mc) $('lgMetaCard').textContent = String(mc.numero).padStart(2, '0') + ' · ' + mc.titulo;
     $('lgCont').textContent = S.fmt(d.total, 0); $('lgCont').hidden = false;
     $('lgAtualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
     lgRenderLista();
