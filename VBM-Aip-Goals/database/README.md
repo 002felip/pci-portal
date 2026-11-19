@@ -37,19 +37,21 @@ Convenções tiradas do Schema IBP (`BDIBPBMSA_PRD`, levantamento de 21/10/2026)
 Todas as FKs têm índice de apoio e nome explícito (o relatório do IBP aponta 49 FKs sem índice na filha e nomes
 gerados automaticamente).
 
-13 tabelas do AIP + a `IBP.SITES` (existente; no DER aparece em cinza, só para mostrar as ligações):
+10 tabelas do AIP + a `IBP.SITES` (existente; no DER aparece em cinza, só para mostrar as ligações):
 
 | Grupo | Tabelas |
 |---|---|
 | Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez, com as datas das 4 etapas), `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
 | Desdobramento | `AIP_NIVEL` (obrigatório/opcional, herdado), `AIP_UNIDADE` (a unidade de nível BU é a BU no ciclo, com `SG_ATIVA`), `AIP_META`, `AIP_META_PESO` |
-| Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_DECISAO`, `AIP_REVISAO_SECAO`, `AIP_COMENTARIO` |
-| Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho), `AIP_NOTIFICACAO` |
+| Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO` (com a decisão e a marcação das seções) |
+| Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho; os comentários do Goal Card são eventos COMENTARIO), `AIP_NOTIFICACAO` |
 
 Mudanças desta versão: ciclo com status e fechamento (um aberto, fechar, reabrir, abrir a partir de outro), datas das 4
 etapas como colunas do `AIP_CICLO` (eram `AIP_CICLO_JANELA`), BU = site da `IBP.SITES` (`ID_SITE`), participação da BU no ciclo na
 `AIP_UNIDADE` de nível BU (era `AIP_CICLO_BU`), nível com obrigatório/opcional, meta com origem
-(desdobrada de), papel por matrícula do MDM. Saiu `AIP_PARAMETRO` (limites ficam na aplicação) e, antes, `AIP_ACAO` (D-20).
+(desdobrada de), papel por matrícula do MDM. Revisão enxuta (de 16 para 10 tabelas): decisão e revisão das seções
+viraram colunas da `AIP_GOAL_CARD_VERSAO` (eram `AIP_DECISAO` e `AIP_REVISAO_SECAO`), comentários viraram eventos do log
+(era `AIP_COMENTARIO`) e GG e GA ficaram fora no primeiro momento (a `AIP_UNIDADE` perdeu a unidade-mãe). Saiu `AIP_PARAMETRO` (limites ficam na aplicação) e, antes, `AIP_ACAO` (D-20).
 
 Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio) a definir com o time de dados.
 

@@ -13,7 +13,7 @@ c['legenda_figura'] = ('O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobra
     'O <b>AIP_CICLO</b> organiza tudo, com as datas da jornada: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). '
     'Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b>')
 c['texto_exemplos'] = ('Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Campos SG_ usam S/N, como no esquema IBP. Os IDs batem entre as tabelas: '
-    'o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. '
+    'o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua (o comentário e a resposta estão no log), e o GC-ONP-04 foi aprovado. '
     'As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.')
 c['grupos'] = {
     'cic': {'nome': 'CICLO', 'claro': '#dfe8e2', 'escuro': '#233229'},
@@ -29,10 +29,10 @@ c['formato'] = {'moeda': '', 'decimal': ',', 'fuso_horas': -3, 'prefixos_moeda':
 colunas = [
     ('cic', ['AIP_CICLO', 'AIP_PAPEL', 'SITES']),
     ('des', ['AIP_NIVEL', 'AIP_UNIDADE', 'AIP_META', 'AIP_META_PESO']),
-    ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_DECISAO', 'AIP_REVISAO_SECAO']),
-    ('aud', ['AIP_COMENTARIO', 'AIP_EVENTO_LOG', 'AIP_NOTIFICACAO']),
+    ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_NOTIFICACAO']),
+    ('aud', ['AIP_EVENTO_LOG']),
 ]
-grupo_de = {'SITES': 'ibp', 'AIP_COMENTARIO': 'gc'}
+grupo_de = {'SITES': 'ibp', 'AIP_NOTIFICACAO': 'aud'}
 ordem = []
 for i, (g, ts) in enumerate(colunas):
     y = 20
@@ -85,25 +85,25 @@ T = {
   'regras': ['Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.', 'Recriada aqui só para o teste do DER.'],
   'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
  'AIP_NIVEL': {
-  'proposito': 'Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU → GG → GA): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.',
+  'proposito': 'Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU; GG e GA ficam fora no primeiro momento): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.',
   'campos': {
    'ID_NIVEL': 'Número interno do nível.',
    'ID_CICLO': 'Ciclo do nível.',
-   'CD_NIVEL': 'CEO, COO, BU, GG ou GA.',
+   'CD_NIVEL': 'CEO, COO ou BU.',
    'NO_ORDEM': 'Posição no desdobramento (1 = CEO).',
    'NM_NIVEL': 'Nome mostrado nas telas; editável.',
    'QTDE_PONTOS_TOTAL': 'Pontos que cada unidade do nível precisa fechar (ex.: 100).',
    'QTDE_PONTOS_HERDADOS': 'Pontos que vêm do resultado do nível acima (linha "Resultado do …", editável em Metas e pesos). O restante vai para as metas do nível.',
    'SG_OBRIGATORIO': 'S = Obrigatório (sempre no desdobramento), N = Opcional; escolhido em Parâmetros.',
    'SG_ATIVO': 'S = nível em uso. Nível obrigatório fica sempre S.'},
-  'regras': ['Um nível de cada tipo por ciclo.', 'Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.', 'Nível obrigatório fica sempre ativo.', 'GA só ativo com GG ativo (o desdobramento não pula nível; validado na API).', 'Metas e pesos mostra só CEO, COO e BU.'],
+  'regras': ['Um nível de cada tipo por ciclo.', 'Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.', 'Nível obrigatório fica sempre ativo.', 'CD_NIVEL: CEO, COO ou BU (GG e GA entram depois, se necessário).'],
   'exemplos': ['1 · CEO, 100 pts', '2 · COO, 75 herdados do CEO', '3 · BU, 40 herdados do COO']},
  'AIP_UNIDADE': {
-  'proposito': 'As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP) e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.',
-  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'ID_UNIDADE_PAI': 'Unidade do nível acima (a BU aponta para o COO; a GG para a BU).', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.'},
-  'regras': ['Nome único dentro do nível.', 'Uma BU (ID_SITE) sempre fica abaixo de outra unidade (o COO).', 'SG_ATIVA: S ou N.'],
-  'condicional': {'ID_SITE': 'se nível BU', 'ID_UNIDADE_PAI': 'exceto o CEO'},
-  'exemplos': ['1 · CEO VBM', '2 · COO VBM, abaixo do CEO', '3 · Onça Puma, abaixo do COO']},
+  'proposito': 'As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.',
+  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.'},
+  'regras': ['Nome único dentro do nível.', 'ID_SITE preenchido só nas unidades de nível BU.', 'SG_ATIVA: S ou N.'],
+  'condicional': {'ID_SITE': 'se nível BU'},
+  'exemplos': ['1 · CEO VBM', '2 · COO VBM', '3 · Onça Puma (site 12)']},
  'AIP_META': {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
   'campos': {
@@ -138,36 +138,22 @@ T = {
   'condicional': {'NO_VERSAO_OFICIAL': 'se APROVADO'},
   'exemplos': ['1 · GC-ONT-04, devolvido para ajuste', '2 · GC-ONP-04, aprovado (v1 oficial)']},
  'AIP_GOAL_CARD_VERSAO': {
-  'proposito': 'Cada submissão gera uma versão imutável (v1, v2…) com a foto de todos os campos. É o que a tela Versões compara.',
-  'campos': {'ID_VERSAO': 'Número interno da versão.', 'ID_GOAL_CARD': 'Card da versão.', 'NO_VERSAO': 'Número da versão no card (1, 2…).', 'TP_MOTIVO': 'SUBMISSAO, RESUBMISSAO ou REABERTURA.', 'DS_CAMPOS': 'Foto dos campos do card no momento da submissão.', 'DT_VERSAO': 'Quando foi submetida.', 'CD_MATRICULA_AUTOR': 'Quem submeteu.'},
-  'regras': ['Número de versão único por card.', 'TP_MOTIVO: SUBMISSAO, RESUBMISSAO, REABERTURA.', 'Não se edita nem apaga uma versão (só a API grava, sempre inserindo).'],
-  'exemplos': ['1 · v1 do GC-ONT-04', '2 · v1 do GC-ONP-04']},
- 'AIP_DECISAO': {
-  'proposito': 'A decisão do grupo de aprovação sobre uma versão (nível único): aprovar, devolver para ajuste ou negar.',
-  'campos': {'ID_DECISAO': 'Número interno da decisão.', 'ID_VERSAO': 'Versão decidida.', 'TP_DECISAO': 'APROVADO, DEVOLVIDO ou NEGADO.', 'DS_COMENTARIO': 'Justificativa; obrigatória para devolver ou negar (mínimo de caracteres controlado na aplicação).', 'DT_DECISAO': 'Quando foi decidida.', 'CD_MATRICULA_DECISAO': 'Membro do grupo que decidiu (não pode ser quem editou ou submeteu, RN-12).'},
-  'regras': ['Uma decisão por versão (decisão idempotente).', 'TP_DECISAO: APROVADO, DEVOLVIDO, NEGADO.', 'Comentário obrigatório se DEVOLVIDO ou NEGADO.'],
-  'condicional': {'DS_COMENTARIO': 'se devolvido ou negado'},
-  'exemplos': ['1 · v1 do GC-ONT-04 devolvida', '2 · v1 do GC-ONP-04 aprovada']},
- 'AIP_REVISAO_SECAO': {
-  'proposito': 'A marcação de cada seção do card na decisão: OK ou Ajustar. Devolver exige ao menos uma seção Ajustar.',
-  'campos': {'ID_DECISAO': 'Decisão.', 'CD_SECAO': 'Seção do card (OBJECTIVE, FORMULA, UNIT, RULER, AREA, EVIDENCE, EXCEPTIONS).', 'TP_MARCACAO': 'OK ou AJUSTAR.'},
-  'regras': ['Uma marcação por seção em cada decisão.', 'TP_MARCACAO: OK ou AJUSTAR.', 'Devolver exige ao menos uma seção AJUSTAR (validado na API).'],
-  'exemplos': ['Objective OK', 'Ruler para ajustar', 'Unit para ajustar']},
- 'AIP_COMENTARIO': {
-  'proposito': 'Comentários por seção do Goal Card, com respostas. Aparecem no card e no Action Log.',
-  'campos': {'ID_COMENTARIO': 'Número interno do comentário.', 'ID_GOAL_CARD': 'Card comentado.', 'CD_SECAO': 'Seção comentada.', 'DS_COMENTARIO': 'Texto do comentário.', 'ID_COMENTARIO_PAI': 'Comentário respondido. Vazio = comentário novo.', 'DT_COMENTARIO': 'Quando foi publicado.', 'CD_MATRICULA_AUTOR': 'Quem comentou (o grupo de consulta não comenta).'},
-  'regras': ['CD_SECAO numa das sete seções do card.', 'Não se edita nem apaga comentário publicado.'],
-  'exemplos': ['1 · Aprovador pede % na unidade', '2 · Contribuidor responde']},
+  'proposito': 'Cada submissão gera uma versão (v1, v2…) com a foto de todos os campos, e recebe a decisão do grupo de aprovação (nível único) com a marcação de cada seção. É o que as telas Versões e Aprovações usam.',
+  'campos': {'ID_VERSAO': 'Número interno da versão.', 'ID_GOAL_CARD': 'Card da versão.', 'NO_VERSAO': 'Número da versão no card (1, 2…).', 'TP_MOTIVO': 'SUBMISSAO, RESUBMISSAO ou REABERTURA.', 'DS_CAMPOS': 'Foto dos campos do card no momento da submissão.', 'DT_VERSAO': 'Quando foi submetida.', 'CD_MATRICULA_AUTOR': 'Quem submeteu.', 'TP_DECISAO': 'APROVADO, DEVOLVIDO ou NEGADO. Vazio = aguardando decisão.', 'DS_COMENTARIO_DECISAO': 'Justificativa da decisão; obrigatória para devolver ou negar (mínimo de caracteres controlado na aplicação).', 'DS_REVISAO_SECOES': 'Marcação de cada seção na decisão: OK ou AJUSTAR (ex.: {"UNIT": "AJUSTAR"}). Devolver exige ao menos uma AJUSTAR.', 'DT_DECISAO': 'Quando foi decidida.', 'CD_MATRICULA_DECISAO': 'Membro do grupo que decidiu (não pode ser quem editou ou submeteu, RN-12).'},
+  'regras': ['Número de versão único por card.', 'TP_MOTIVO: SUBMISSAO, RESUBMISSAO, REABERTURA.', 'Os campos da versão não mudam depois da submissão; a decisão é gravada uma única vez (decisão idempotente).', 'TP_DECISAO: APROVADO, DEVOLVIDO, NEGADO; data, quem decidiu e revisão das seções vêm juntos.', 'Comentário obrigatório se DEVOLVIDO ou NEGADO.'],
+  'condicional': {'TP_DECISAO': 'depois da decisão', 'DS_COMENTARIO_DECISAO': 'se devolvido ou negado', 'DS_REVISAO_SECOES': 'depois da decisão', 'DT_DECISAO': 'depois da decisão', 'CD_MATRICULA_DECISAO': 'depois da decisão'},
+  'exemplos': ['1 · v1 do GC-ONT-04, devolvida', '2 · v1 do GC-ONP-04, aprovada']},
  'AIP_EVENTO_LOG': {
-  'proposito': 'A linha do tempo única e imutável do ciclo (Action Log): submissões, decisões, comentários, mudanças de configuração e abertura/fechamento de ciclo, com antes e depois.',
+  'proposito': 'A linha do tempo única e imutável do ciclo (Action Log): submissões, decisões, comentários do Goal Card (com respostas), mudanças de configuração e abertura/fechamento de ciclo, com antes e depois.',
   'campos': {
    'ID_EVENTO': 'Número interno do evento.', 'ID_CICLO': 'Ciclo do evento.',
    'TP_EVENTO': 'SUBMISSAO, RECOLHIMENTO, DECISAO, REABERTURA, COMENTARIO, CONFIGURACAO, CICLO_ABERTO, CICLO_FECHADO, CICLO_REABERTO ou ACESSO_NEGADO.',
    'DT_EVENTO': 'Quando aconteceu.', 'CD_MATRICULA': 'Quem fez.', 'TP_GRUPO': 'Grupo da pessoa no momento (mostrado ao lado do nome).',
-   'ID_GOAL_CARD': 'Card envolvido. Vazio em eventos de ciclo e configuração.', 'CD_SECAO': 'Seção envolvida, quando houver.',
+   'ID_GOAL_CARD': 'Card envolvido. Vazio em eventos de ciclo e configuração.', 'CD_SECAO': 'Seção envolvida, quando houver.', 'DS_COMENTARIO': 'Texto do comentário (eventos COMENTARIO) ou da justificativa da decisão.', 'ID_EVENTO_PAI': 'Comentário respondido. Vazio = comentário novo.',
    'DS_ANTES': 'Valor antes da mudança.', 'DS_DEPOIS': 'Valor depois da mudança.'},
-  'regras': ['Registro imutável: um gatilho bloqueia UPDATE e DELETE.', 'TP_EVENTO numa lista fixa (inclui abrir, fechar e reabrir ciclo).'],
-  'exemplos': ['1 · AIP 2026 fechado', '2 · v1 do GC-ONT-04 submetida', '3 · Devolvido para ajuste']},
+  'regras': ['Registro imutável: um gatilho bloqueia UPDATE e DELETE.', 'TP_EVENTO numa lista fixa (inclui abrir, fechar e reabrir ciclo).', 'Evento COMENTARIO exige texto, card e seção.'],
+  'condicional': {'DS_COMENTARIO': 'se comentário', 'ID_EVENTO_PAI': 'se resposta'},
+  'exemplos': ['1 · AIP 2026 fechado', '2 · v1 do GC-ONT-04 submetida', '3 · Aprovador comenta na Unit']},
  'AIP_NOTIFICACAO': {
   'proposito': 'Avisos gerados a partir dos eventos (ex.: card devolvido), por e-mail ou na aplicação, com envio e leitura.',
   'campos': {'ID_NOTIFICACAO': 'Número interno do aviso.', 'ID_EVENTO': 'Evento que gerou o aviso.', 'CD_MATRICULA_DESTINO': 'Quem recebe (e-mail vem do MDM).', 'TP_CANAL': 'EMAIL ou APP.', 'DT_ENVIO': 'Quando foi enviado. Vazio = na fila.', 'DT_LEITURA': 'Quando foi lido. Vazio = não lido.'},
@@ -185,12 +171,12 @@ rot = {
  ('AIP_CICLO', 'ID_CICLO_ORIGEM'): 'criado a partir de',
  ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_SITE'): 'atua na',
  ('AIP_NIVEL', 'ID_CICLO'): 'nível de', ('AIP_UNIDADE', 'ID_NIVEL'): 'pertence ao', ('AIP_UNIDADE', 'ID_SITE'): 'representa',
- ('AIP_UNIDADE', 'ID_UNIDADE_PAI'): 'abaixo de', ('AIP_META', 'ID_NIVEL'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
+ ('AIP_META', 'ID_NIVEL'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
  ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_UNIDADE'): 'na unidade',
  ('AIP_GOAL_CARD', 'ID_META'): 'card da', ('AIP_GOAL_CARD', 'ID_UNIDADE'): 'da unidade',
- ('AIP_GOAL_CARD_VERSAO', 'ID_GOAL_CARD'): 'versão de', ('AIP_DECISAO', 'ID_VERSAO'): 'decide',
- ('AIP_REVISAO_SECAO', 'ID_DECISAO'): 'detalha', ('AIP_COMENTARIO', 'ID_GOAL_CARD'): 'comenta',
- ('AIP_COMENTARIO', 'ID_COMENTARIO_PAI'): 'responde a', ('AIP_EVENTO_LOG', 'ID_CICLO'): 'registrado em',
+ ('AIP_GOAL_CARD_VERSAO', 'ID_GOAL_CARD'): 'versão de',
+
+ ('AIP_EVENTO_LOG', 'ID_EVENTO_PAI'): 'responde a', ('AIP_EVENTO_LOG', 'ID_CICLO'): 'registrado em',
  ('AIP_EVENTO_LOG', 'ID_GOAL_CARD'): 'sobre', ('AIP_NOTIFICACAO', 'ID_EVENTO'): 'avisa sobre',
 }
 for l in c['ligacoes']:
@@ -207,6 +193,17 @@ c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<div class="tscroll"><table class="passo"><thead><tr><th>Unidade</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody>'
  '<tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr>'
  '<tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>')}]
+c['secoes_extras'].append({'id': 'enxuto', 'html': (
+ '<section class="explica" id="enxuto"><h2>O que foi simplificado nesta revisão</h2>'
+ '<p>De 16 para 10 tabelas do AIP, sem perder nenhuma regra das telas:</p>'
+ '<ul class="fn">'
+ '<li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li>'
+ '<li><code>AIP_CICLO_BU</code><span>A BU no ciclo já é a unidade de nível BU da AIP_UNIDADE (com SG_ATIVA).</span></li>'
+ '<li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li>'
+ '<li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li>'
+ '<li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li>'
+ '<li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU, e a AIP_UNIDADE perdeu a unidade-mãe.</span></li>'
+ '</ul></section>')})
 c['tabelas']['AIP_NIVEL']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
 c['tabelas']['AIP_META_PESO']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
 c['funcoes'] = [{'nome': 'aip_evento_imutavel', 'descricao': 'Gatilho da AIP_EVENTO_LOG: recusa qualquer UPDATE ou DELETE, mantendo o Action Log imutável.'}]

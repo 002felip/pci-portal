@@ -246,26 +246,23 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 **Modelo de dados (proposta para validação com o time de dados, versão de 19/11/2026)**
 
-DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; a BU é o site da `IBP.SITES` (`ID_SITE`). 13 tabelas do AIP na fase 1, mais a `IBP.SITES` existente:
+DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; a BU é o site da `IBP.SITES` (`ID_SITE`). 10 tabelas do AIP na fase 1, mais a `IBP.SITES` existente:
 
 | Tabela | Conteúdo |
 | --- | --- |
 | AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), texto padrão de exceções, ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início do desdobramento e fim de cada etapa) |
 | IBP.SITES (existente) | A BU é o site do IBP: `ID_SITE` é o ID da BU em todo o modelo; nome e país vêm de NM_SITE e NM_PAIS |
 | AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, quem incluiu |
-| AIP_NIVEL | Ciclo, nível (CEO, COO, BU, GG, GA), ordem, nome, total por unidade, herdado do nível acima, obrigatório, ativo |
-| AIP_UNIDADE | Nível, nome, BU (ID_SITE, no nível BU), unidade-mãe, ativa (a unidade de nível BU é a participação da BU no ciclo) |
+| AIP_NIVEL | Ciclo, nível (CEO, COO, BU; GG e GA fora no primeiro momento), ordem, nome, total por unidade, herdado do nível acima, obrigatório, ativo |
+| AIP_UNIDADE | Nível, nome, BU (ID_SITE, no nível BU), ativa (a unidade de nível BU é a participação da BU no ciclo) |
 | AIP_META | Nível, número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |
 | AIP_META_PESO | Meta, unidade, peso |
 | AIP_GOAL_CARD | Código (GC-BU-meta), meta, unidade, estado, versão oficial, rascunho, última atualização |
-| AIP_GOAL_CARD_VERSAO | Versão imutável: número, motivo, foto dos campos, autor, data |
-| AIP_DECISAO | Uma por versão: aprovado, devolvido ou negado, comentário (obrigatório para devolver ou negar), quem e quando |
-| AIP_REVISAO_SECAO | Decisão, seção, marcação (OK ou Ajustar) |
-| AIP_COMENTARIO | Card, seção, texto, resposta a, autor, data |
-| AIP_EVENTO_LOG | Action Log imutável (gatilho bloqueia UPDATE e DELETE): tipo (inclui abrir, fechar e reabrir ciclo), quem, grupo, quando, card, seção, antes, depois |
+| AIP_GOAL_CARD_VERSAO | Versão: número, motivo, foto dos campos, autor, data e a decisão do grupo de aprovação (aprovado, devolvido ou negado, comentário obrigatório para devolver ou negar, marcação OK/Ajustar de cada seção, quem e quando), gravada uma única vez |
+| AIP_EVENTO_LOG | Action Log imutável (gatilho bloqueia UPDATE e DELETE): tipo (inclui abrir, fechar e reabrir ciclo e os comentários do Goal Card, com texto e resposta a), quem, grupo, quando, card, seção, antes, depois |
 | AIP_NOTIFICACAO | Evento, destinatário, canal (e-mail ou app), enviado em, lido em |
 
-Saiu do modelo: `AIP_PARAMETRO` (limites ficam na aplicação). Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
+Saíram do modelo: `AIP_PARAMETRO` (limites ficam na aplicação), `AIP_DECISAO`, `AIP_REVISAO_SECAO` e `AIP_COMENTARIO` (revisão enxuta) e os níveis GG e GA no primeiro momento. Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
 
 ## 10. Catálogo de telas
 
