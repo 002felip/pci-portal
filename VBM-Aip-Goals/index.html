@@ -1476,6 +1476,7 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
 .gc-f-modo .ico { width: 0.8rem; height: 0.8rem; }
 /* Popup do Goal Card mostrando Versões ou Histórico: mesmo popup, botão Voltar ao card, sem trocar de meta */
 .m3-dlg #vistaVersoes .gc-chips, .m3-dlg .lg-chip-card { display: none; }
+.m3-sub .topo-acoes .dash-acao:not(.m3-dlg-fechar), .m3-sub #lgExportar, .m3-sub #lgAtualizar, .m3-sub #vsAtualizar { display: none; }
 .m3-sub { width: min(84rem, calc(100vw - 6rem)); height: calc(100vh - 6rem); }
 .m3-dlg #vistaVersoes .p2-trilha { margin-top: 0.5rem; }
 .m3-dlg .vs-filtros, .m3-dlg .lg-filtros { margin-bottom: 1rem; }
@@ -3370,8 +3371,7 @@ window.VBMSetup = (function () {
     var maxPeso = Math.max.apply(null, linhas.reduce(function (a, l) { return a.concat(bus.map(function (b) { return l.celulas[b.sigla] ? l.celulas[b.sigla].peso : 0; })); }, [1]));
     var nCols = bus.length + 1;
     var linhaHtml = function (l) {
-      var tags = (l.nova ? '<span class="dd-tag">' + esc(S.t('dd.nova')) + '</span>' : '') +
-        (l.origem ? '<button type="button" class="dd-tag dd-tag-origem" data-id="' + esc(l.origem) + '" aria-pressed="' + (dd.sel === l.origem) + '" title="' + esc(S.t('dd.filtrar', { m: l.origem })) + '">COO ' + esc(l.origem) + '</button>' : '');
+      var tags = ''; // sem selos "Nova" nem código COO ao lado do título da meta
       var apagada = dd.sel && !(l.origem === dd.sel || (l.resultado && dd.sel === resId));
       return '<tr class="dd-linha' + (apagada ? ' is-apagada' : '') + (dd.sel && !apagada ? ' is-acesa' : '') + '">' +
         '<th scope="row" class="dd-meta-cel"><span class="dd-n">' + (l.resultado ? '—' : esc(l.numero)) + '</span><span class="dd-meta-nome">' + esc(l.titulo) + '</span>' + tags + '</th>' +
