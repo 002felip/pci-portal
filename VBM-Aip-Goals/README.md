@@ -23,7 +23,9 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | `#configuracao` | T11 Configuração do ciclo — ciclo, BUs, grupos, metas e pesos, parâmetros (só o administrador) | publicada |
 | `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, revisão OK/Ajustar e comentários por seção e decisão Aprovar/Devolver/Negar (só o grupo de aprovação) | pronta |
 
-Menu: Início · Desdobramento · Painel do ciclo · Metas da BU · Administração (Aprovações, Action Log, Configuração). T05 e T08 foram descontinuadas (D-20). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
+Painel do ciclo (T02): oculto, fora do menu e sem rota (`#painel` volta ao Início); a tela segue no código e reativa-se devolvendo o link e o item em `VISTAS`.
+
+Menu: Início · Desdobramento · Metas da BU · Administração (Aprovações, Action Log, Configuração). T05 e T08 foram descontinuadas (D-20). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
 
 Uso em **notebook e desktop** (1024 px a 4K); celular fora do escopo.
 

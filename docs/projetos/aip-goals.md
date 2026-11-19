@@ -31,7 +31,8 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 
 ## Navegação e layout (D-17, D-19 — 17 e 18/11/2026)
 
-- **Menu no topo:** Início, Desdobramento, Painel do ciclo, Metas da BU e **Administração**, um submenu com
+- **Menu no topo:** Início, Desdobramento, Metas da BU e **Administração** (o Painel do ciclo está oculto: fora do menu
+  e sem rota, mas mantido no código), um submenu com
   Aprovações (só o grupo de aprovação), Action Log e Configuração (só o administrador). Abre no clique,
   fecha ao escolher, ao clicar fora ou com Esc; fica destacado quando uma tela dele está aberta e some se o perfil
   não vê nenhuma das telas. No modo gaveta (até 1080 px), as telas aparecem recuadas sob o título.

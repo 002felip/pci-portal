@@ -157,7 +157,7 @@ O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitu
 
 | Situação | Comportamento |
 | --- | --- |
-| Menu no topo | Nesta ordem: Início (T00), Desdobramento, Painel do ciclo, Metas da BU, Change Requests (F2), Evidências (F3) e Administração, um submenu com Aprovações (T14, só o grupo de aprovação), Action Log (T07) e Configuração (T11) (no modo gaveta, as telas aparecem recuadas sob o título). Cada perfil vê apenas os itens que pode usar (Aprovações só para o grupo de aprovação; Configuração só para o administrador; Administração some se nenhuma tela dela estiver liberada). |
+| Menu no topo | Nesta ordem: Início (T00), Desdobramento, Metas da BU (o Painel do ciclo, T02, está oculto: fora do menu e sem rota, mantido no código), Change Requests (F2), Evidências (F3) e Administração, um submenu com Aprovações (T14, só o grupo de aprovação), Action Log (T07) e Configuração (T11) (no modo gaveta, as telas aparecem recuadas sob o título). Cada perfil vê apenas os itens que pode usar (Aprovações só para o grupo de aprovação; Configuração só para o administrador; Administração some se nenhuma tela dela estiver liberada). |
 | Filtros e seleção | Ficam na URL; o botão Voltar do navegador retorna à tela anterior com o mesmo filtro. |
 | Saída de T04 com alteração não salva | O app pede confirmação antes de sair. |
 | Link de e-mail | Abre a tela exata (card ou seção); sem acesso, abre T12. |
