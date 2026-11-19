@@ -1,20 +1,12 @@
 -- Dados de exemplo do DER (fictícios): uma história só, gravada num banco de TESTE para passar por todas as regras.
 -- AIP 2026 fechado; AIP 2027 aberto, criado a partir dele. Ontario recebeu a meta 04 de volta para ajuste; Onça Puma já tem a 04 aprovada.
-insert into aip_ciclo (no_ano, nm_ciclo, tp_status, ds_texto_padrao_excecoes, id_ciclo_origem, dt_criacao, cd_matricula_criacao, dt_fechamento, cd_matricula_fechamento) values
- (2026, 'AIP 2026', 'FECHADO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', null, '2025-09-15 09:00-03', 'C410644', '2026-01-30 18:00-03', 'C410644'),
- (2027, 'AIP 2027', 'ABERTO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', 1, '2026-09-20 10:30-03', 'C410644', null, null);
-
-insert into aip_ciclo_janela values
- (2, 'DESDOBRAMENTO', 1, '2026-10-01', '2026-10-29'),
- (2, 'PROPOSTA', 2, null, '2026-12-01'),
- (2, 'CALIBRACAO', 3, null, '2026-12-15'),
- (2, 'OFICIAL', 4, null, '2026-12-22');
+insert into aip_ciclo (no_ano, nm_ciclo, tp_status, ds_texto_padrao_excecoes, id_ciclo_origem, dt_criacao, cd_matricula_criacao, dt_fechamento, cd_matricula_fechamento, dt_ini_desdobramento, dt_fim_desdobramento, dt_fim_proposta, dt_fim_calibracao, dt_fim_oficial) values
+ (2026, 'AIP 2026', 'FECHADO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', null, '2025-09-15 09:00-03', 'C410644', '2026-01-30 18:00-03', 'C410644', '2025-10-01', '2025-10-30', '2025-12-02', '2025-12-16', '2025-12-23'),
+ (2027, 'AIP 2027', 'ABERTO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', 1, '2026-09-20 10:30-03', 'C410644', null, null, '2026-10-01', '2026-10-29', '2026-12-01', '2026-12-15', '2026-12-22');
 
 insert into sites (id_site, id_sistema, nm_site, nm_pais, sg_regiao) values
  (12, 1, 'Onça Puma', 'Brasil', null),
  (15, 1, 'Ontario', 'Canadá', null);
-
-insert into aip_ciclo_bu values (2, 12, 'S'), (2, 15, 'S'), (1, 12, 'S'), (1, 15, 'S');
 
 insert into aip_nivel (id_ciclo, cd_nivel, no_ordem, nm_nivel, qtde_pontos_total, qtde_pontos_herdados, sg_obrigatorio, sg_ativo) values
  (2, 'CEO', 1, 'CEO', 100, 0, 'S', 'S'),
@@ -22,11 +14,11 @@ insert into aip_nivel (id_ciclo, cd_nivel, no_ordem, nm_nivel, qtde_pontos_total
  (2, 'BU', 3, 'Business Unit', 100, 40, 'S', 'S'),
  (2, 'GG', 4, 'Gerência Geral (GG)', 100, 50, 'N', 'N');
 
-insert into aip_unidade (id_nivel, nm_unidade, id_site, id_unidade_pai) values
- (1, 'CEO VBM', null, null),
- (2, 'COO VBM', null, 1),
- (3, 'Onça Puma', 12, 2),
- (3, 'Ontario', 15, 2);
+insert into aip_unidade (id_nivel, nm_unidade, id_site, id_unidade_pai, sg_ativa) values
+ (1, 'CEO VBM', null, null, 'S'),
+ (2, 'COO VBM', null, 1, 'S'),
+ (3, 'Onça Puma', 12, 2, 'S'),
+ (3, 'Ontario', 15, 2, 'S');
 
 insert into aip_meta (id_nivel, no_meta, nm_titulo, tp_meta, tp_polaridade, id_meta_origem, sg_ativa) values
  (2, 2, 'Strengthen a Culture of Chronic Unease', 'FORMULA', 'MAIOR', null, 'S'),

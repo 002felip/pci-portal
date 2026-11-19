@@ -21,7 +21,14 @@ create table aip_ciclo (
   cd_matricula_criacao varchar(20) not null,
   dt_fechamento timestamp(0),
   cd_matricula_fechamento varchar(20),
+  -- Jornada do ciclo: 4 etapas fixas; cada etapa começa quando a anterior termina
+  dt_ini_desdobramento date not null,
+  dt_fim_desdobramento date not null,
+  dt_fim_proposta date not null,
+  dt_fim_calibracao date not null,
+  dt_fim_oficial date not null,
   constraint uq_aip_ciclo_ano unique (no_ano),
+  constraint ck_aip_ciclo_jornada check (dt_ini_desdobramento < dt_fim_desdobramento and dt_fim_desdobramento < dt_fim_proposta and dt_fim_proposta < dt_fim_calibracao and dt_fim_calibracao < dt_fim_oficial),
   constraint ck_aip_ciclo_ano check (no_ano between 2020 and 2100),
   constraint ck_aip_ciclo_status check (tp_status in ('ABERTO', 'FECHADO')),
   constraint ck_aip_ciclo_fechamento check ((tp_status = 'FECHADO') = (dt_fechamento is not null and cd_matricula_fechamento is not null))
@@ -29,18 +36,6 @@ create table aip_ciclo (
 -- Só um ciclo aberto por vez
 create unique index uq_aip_ciclo_um_aberto on aip_ciclo (tp_status) where tp_status = 'ABERTO';
 
-create table aip_ciclo_janela (
-  id_ciclo integer not null constraint fk_aip_ciclo_janela_aip_ciclo references aip_ciclo (id_ciclo),
-  tp_etapa varchar(20) not null,
-  no_ordem smallint not null,
-  dt_ini date,
-  dt_fim date not null,
-  constraint pk_aip_ciclo_janela primary key (id_ciclo, tp_etapa),
-  constraint ck_aip_janela_etapa check (tp_etapa in ('DESDOBRAMENTO', 'PROPOSTA', 'CALIBRACAO', 'OFICIAL')),
-  constraint ck_aip_janela_inicio check ((no_ordem = 1) = (dt_ini is not null)),
-  constraint ck_aip_janela_datas check (dt_ini is null or dt_fim > dt_ini),
-  constraint uq_aip_janela_ordem unique (id_ciclo, no_ordem)
-);
 
 -- ═══ DESDOBRAMENTO ═══
 -- BU = site do IBP: a tabela IBP.SITES já existe no banco (ID_SITE é o ID da BU). Aqui ela é recriada só para o
@@ -53,12 +48,6 @@ create table sites (
   sg_regiao varchar(1)
 );
 
-create table aip_ciclo_bu (
-  id_ciclo integer not null constraint fk_aip_ciclo_bu_aip_ciclo references aip_ciclo (id_ciclo),
-  id_site integer not null constraint fk_aip_ciclo_bu_sites references sites (id_site),
-  sg_ativa char(1) not null default 'S' constraint ck_aip_ciclo_bu_sg_ativa check (sg_ativa in ('S', 'N')),
-  constraint pk_aip_ciclo_bu primary key (id_ciclo, id_site)
-);
 
 create table aip_nivel (
   id_nivel integer generated always as identity constraint pk_aip_nivel primary key,
@@ -83,6 +72,8 @@ create table aip_unidade (
   nm_unidade varchar(100) not null,
   id_site integer constraint fk_aip_unidade_sites references sites (id_site),
   id_unidade_pai integer constraint fk_aip_unidade_aip_unidade references aip_unidade (id_unidade),
+  sg_ativa char(1) not null default 'S' constraint ck_aip_unidade_sg_ativa check (sg_ativa in ('S', 'N')),
+  constraint ck_aip_unidade_site check (id_site is null or id_unidade_pai is not null),
   constraint uq_aip_unidade unique (id_nivel, nm_unidade)
 );
 
@@ -217,7 +208,6 @@ create table aip_notificacao (
 
 -- Índices de apoio das FKs (FK sem índice na filha é um dos alertas do relatório do Schema IBP)
 create index ix_aip_ciclo_fk_aip_ciclo on aip_ciclo (id_ciclo_origem);
-create index ix_aip_ciclo_bu_fk_sites on aip_ciclo_bu (id_site);
 create index ix_aip_unidade_fk_sites on aip_unidade (id_site);
 create index ix_aip_unidade_fk_aip_unidade on aip_unidade (id_unidade_pai);
 create index ix_aip_meta_fk_aip_meta on aip_meta (id_meta_origem);

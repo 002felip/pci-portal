@@ -246,17 +246,15 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 **Modelo de dados (proposta para validação com o time de dados, versão de 19/11/2026)**
 
-DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; a BU é o site da `IBP.SITES` (`ID_SITE`). 15 tabelas do AIP na fase 1, mais a `IBP.SITES` existente:
+DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; a BU é o site da `IBP.SITES` (`ID_SITE`). 13 tabelas do AIP na fase 1, mais a `IBP.SITES` existente:
 
 | Tabela | Conteúdo |
 | --- | --- |
-| AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), texto padrão de exceções, ciclo de origem, quem e quando abriu e fechou |
-| AIP_CICLO_JANELA | As 4 etapas do ciclo (desdobramento, proposta, calibração, oficial), ordem, início (só a 1ª) e fim |
+| AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), texto padrão de exceções, ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início do desdobramento e fim de cada etapa) |
 | IBP.SITES (existente) | A BU é o site do IBP: `ID_SITE` é o ID da BU em todo o modelo; nome e país vêm de NM_SITE e NM_PAIS |
-| AIP_CICLO_BU | BU (ID_SITE) no ciclo, ativa ou fora do ciclo |
 | AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, quem incluiu |
 | AIP_NIVEL | Ciclo, nível (CEO, COO, BU, GG, GA), ordem, nome, total por unidade, herdado do nível acima, obrigatório, ativo |
-| AIP_UNIDADE | Nível, nome, BU (ID_SITE, no nível BU), unidade-mãe |
+| AIP_UNIDADE | Nível, nome, BU (ID_SITE, no nível BU), unidade-mãe, ativa (a unidade de nível BU é a participação da BU no ciclo) |
 | AIP_META | Nível, número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |
 | AIP_META_PESO | Meta, unidade, peso |
 | AIP_GOAL_CARD | Código (GC-BU-meta), meta, unidade, estado, versão oficial, rascunho, última atualização |
