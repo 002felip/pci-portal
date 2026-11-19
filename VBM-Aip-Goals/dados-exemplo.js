@@ -293,7 +293,11 @@ const DIRETORIO = [
   'Owen Davies', 'Rhys Morgan', 'Jessica Tremblay', 'Marc Gagnon', 'Usuário Demonstração',
 ];
 const semAcento = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '');
-const pessoaDe = (nome, i) => ({ nome, matricula: `C${String(410200 + i * 37).padStart(6, '0')}`, email: semAcento(nome).toLowerCase().replace(/\s+/g, '.') + '@vale.com' });
+// Diretório de pessoas (exemplo do MDM): nome, matrícula, e-mail, cargo, estado e cidade
+const CARGOS = ['ANL Excelência Operacional SR', 'Engenheiro Senior', 'Técnico Controle Processo II', 'ANL Gestão Desempenho', 'Especialista P&CI', 'Gerente de Área', 'ANL Operacional', 'Engenheiro Master'];
+const LOCAIS = [['PA', 'Canaã dos Carajás'], ['PA', 'Marabá'], ['PA', 'Ourilândia do Norte'], ['MG', 'Belo Horizonte'], ['RJ', 'Rio de Janeiro'], ['ON', 'Sudbury'], ['NL', "Voisey's Bay"]];
+const pessoaDe = (nome, i) => ({ nome, matricula: `C${String(410200 + i * 37).padStart(6, '0')}`, email: semAcento(nome).toLowerCase().replace(/\s+/g, '.') + '@vale.com',
+  cargo: CARGOS[i % CARGOS.length], estado: LOCAIS[i % LOCAIS.length][0], cidade: LOCAIS[i % LOCAIS.length][1] });
 function configuracaoExemplo(hoje = new Date()) {
   const ciclo = cicloExemplo(hoje);
   const pessoas = DIRETORIO.map(pessoaDe);
