@@ -101,9 +101,12 @@ Fora de `/api`, qualquer caminho devolve a SPA (`GET /{full_path:path}`).
   (`LAKEBASE_TOKEN_REFRESH_MARGIN_SECONDS`, 600). O pool é reciclado a cada
   `DB_POOL_RECYCLE_SECONDS` (1800).
 - **SQL Warehouse:** resource `sql-warehouse` (`DATABRICKS_WAREHOUSE_ID`).
-- **Schema:** `ensure_schema()` cria e altera tabelas na subida. Para isso, o service principal do
-  Portal precisa ser **dono** das tabelas. Sem isso, o log registra `Could not ensure schema` e o
-  Cockpit segue com o schema existente.
+- **Schema:** dentro do Portal, as tabelas ficam no schema `cockpit` (`DB_SCHEMA=cockpit`, no
+  `server.js`), de que o service principal do Portal é dono. Assim, `ensure_schema()` cria e altera as
+  tabelas a cada versão nova. As tabelas antigas de `public` são do service principal do antigo app
+  standalone: na primeira subida os dados delas são copiados para `cockpit`, e `public` fica como
+  backup. Preparação única: `CREATE SCHEMA cockpit` e `GRANT USAGE, CREATE` ao service principal do
+  Portal (ver `VBM-Cockpit/PORTAL.md`).
 
 ## Configuração no Portal (`app.yaml` da raiz)
 

@@ -168,6 +168,9 @@ try {
       return {
         ENVIRONMENT: "prod",
         DATA_BACKEND: "sql",
+        // Tabelas num schema próprio do Portal (ver VBM-Cockpit/PORTAL.md): as de `public` são do
+        // service principal do antigo app standalone, e o Portal não consegue alterá-las.
+        DB_SCHEMA: "cockpit",
         ...proprias,
         // Papel do Postgres no Lakebase = service principal do app (o que o app_entry.py fazia)
         ...((process.env.PGUSER || process.env.DATABRICKS_CLIENT_ID) ? { PGUSER: process.env.PGUSER || process.env.DATABRICKS_CLIENT_ID } : {}),

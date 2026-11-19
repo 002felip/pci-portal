@@ -98,6 +98,16 @@ class Settings(BaseSettings):
     # standalone app). Comma-separated client ids. Empty = nothing is granted.
     schema_grant_to: str = ""
 
+    # Portal PCI: Postgres schema for the Cockpit tables. Empty = `public`
+    # (standalone behaviour). Inside the Portal it is `cockpit`: the `public`
+    # tables belong to the old standalone app's service principal, so the
+    # Portal can neither ALTER them nor add the columns a new version needs.
+    # In its own schema the Portal owns every table and the startup self-heal
+    # (ensure_schema) works again. On first start, if this schema has no
+    # snapshots yet and `public` does, the data is copied over (public is
+    # left untouched, as a backup).
+    db_schema: str = ""
+
     # DELIBERATELY ABSENT: default_snapshot / default_year.
     # Periods are discovered from the data at runtime (see periods.py), so a new
     # quarter or a new year needs no config change and no redeploy. An operator
@@ -166,6 +176,18 @@ _tokens = _TokenProvider()
 _engine = None
 
 
+def _schema_name() -> str:
+    """DB_SCHEMA, validated (it goes into DDL as an identifier). '' = public."""
+    import re
+    name = (get_settings().db_schema or "").strip()
+    if not name or name == "public":
+        return ""
+    if not re.fullmatch(r"[a-z_][a-z0-9_]{0,62}", name):
+        raise RuntimeError(f"DB_SCHEMA {name!r} is not a valid schema name "
+                           "(lowercase letters, digits and _).")
+    return name
+
+
 def get_engine():
     """SQLAlchemy engine. Imported lazily so JSON mode needs no psycopg."""
     global _engine
@@ -196,6 +218,17 @@ def get_engine():
     _engine = create_engine(url, json_serializer=lambda obj: json.dumps(obj, default=_json_default), pool_pre_ping=True, pool_size=s.db_pool_size,
                             max_overflow=s.db_max_overflow,
                             pool_recycle=s.db_pool_recycle_seconds, future=True)
+
+    schema = _schema_name()
+    if schema:
+        # Every connection works inside the Cockpit schema: unqualified table
+        # names resolve there and create_all() creates there.
+        @event.listens_for(_engine, "connect")
+        def _set_search_path(dbapi_conn, conn_rec):   # noqa: ANN001
+            cur = dbapi_conn.cursor()
+            cur.execute(f'set search_path to "{schema}"')
+            cur.close()
+            dbapi_conn.commit()
 
     if s.uses_lakebase:
         @event.listens_for(_engine, "do_connect")
@@ -242,11 +275,23 @@ def ensure_schema() -> None:
     from .models import Base
 
     engine = get_engine()
+    schema = _schema_name()
     with engine.begin() as conn:
         conn.execute(text("select pg_advisory_xact_lock(:key)"),
                     {"key": _SCHEMA_LOCK_KEY})
+        if schema:
+            # Created only when missing: CREATE SCHEMA IF NOT EXISTS still
+            # requires CREATE on the database, which the app may not have
+            # when an administrator created the schema for it.
+            exists = conn.execute(text("select 1 from pg_namespace where nspname = :n"),
+                                  {"n": schema}).first()
+            if not exists:
+                conn.execute(text(f'create schema "{schema}"'))
+                log.info("Created schema %s.", schema)
         Base.metadata.create_all(bind=conn, checkfirst=True)
         _add_missing_columns(conn, Base.metadata)
+        if schema:
+            _copy_from_public(conn, Base.metadata, schema)
     _grant_schema_access(engine, get_settings().schema_grant_to)
 
 
@@ -277,6 +322,58 @@ def _grant_schema_access(engine, roles_csv: str) -> None:  # noqa: ANN001
             log.info("Schema access granted to %s.", role)
         except Exception as exc:                  # noqa: BLE001
             log.error("Could not grant schema access to %s: %s", role, exc)
+
+
+def _copy_from_public(conn, metadata, schema: str) -> None:  # noqa: ANN001
+    """
+    One-time move of the data from `public` into the Cockpit schema, inside
+    ensure_schema's transaction and lock. Runs only while the schema has no
+    snapshot and `public.snapshot` has rows, so it never overwrites anything.
+    Columns are matched by name (new columns stay NULL/default) and the serial
+    sequences are moved past the copied ids. `public` is only read.
+    """
+    from sqlalchemy import text
+
+    def has_table(sch: str, name: str) -> bool:
+        return conn.execute(text("select 1 from information_schema.tables "
+                                 "where table_schema = :s and table_name = :t"),
+                            {"s": sch, "t": name}).first() is not None
+
+    if not has_table("public", "snapshot"):
+        return
+    if conn.execute(text(f'select 1 from "{schema}".snapshot limit 1')).first():
+        return
+    if not conn.execute(text("select 1 from public.snapshot limit 1")).first():
+        return
+
+    def columns(sch: str, name: str) -> list[str]:
+        return [r[0] for r in conn.execute(
+            text("select column_name from information_schema.columns "
+                 "where table_schema = :s and table_name = :t order by ordinal_position"),
+            {"s": sch, "t": name})]
+
+    total = 0
+    for table in metadata.sorted_tables:          # parents before children (FKs)
+        if not has_table("public", table.name):
+            continue
+        old = set(columns("public", table.name))
+        cols = [c for c in columns(schema, table.name) if c in old]
+        if not cols:
+            continue
+        lista = ", ".join(f'"{c}"' for c in cols)
+        n = conn.execute(text(f'insert into "{schema}"."{table.name}" ({lista}) '
+                              f'select {lista} from public."{table.name}"')).rowcount
+        total += n or 0
+        for col in table.columns:                 # serial ids: continue after the copied rows
+            seq = conn.execute(text("select pg_get_serial_sequence(:t, :c)"),
+                               {"t": f'"{schema}"."{table.name}"', "c": col.name}).scalar()
+            if seq:
+                conn.execute(text(f'select setval(:seq, coalesce((select max("{col.name}") '
+                                  f'from "{schema}"."{table.name}"), 0) + 1, false)'),
+                             {"seq": seq})
+        log.info("Copied %s rows of public.%s into %s.", n, table.name, schema)
+    log.info("Data moved from public into schema %s (%s rows). public was left as is.",
+             schema, total)
 
 
 def _add_missing_columns(conn, metadata) -> None:  # noqa: ANN001
