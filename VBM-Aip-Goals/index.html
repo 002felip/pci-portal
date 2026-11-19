@@ -1475,9 +1475,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
 .gc-f-modo { white-space: nowrap; }
 .gc-f-modo .ico { width: 0.8rem; height: 0.8rem; }
 /* Popup do Goal Card mostrando Versões ou Histórico: mesmo popup, botão Voltar ao card, sem trocar de meta */
-.m3-dlg-abas { position: sticky; top: 0.75rem; z-index: 5; display: flex; width: max-content; margin: 0.75rem 0 0 1rem; background: var(--card-bg); }
-.m3-dlg-abas button { min-height: 30px; padding: 2px 14px; font-size: .78rem; }
-.m3-dlg #vistaGoalCard .p2-pills, .m3-dlg #vistaVersoes .gc-chips, .m3-dlg .lg-chip-card { display: none; }
+.m3-dlg #vistaVersoes .gc-chips, .m3-dlg .lg-chip-card { display: none; }
+.m3-sub { width: min(84rem, calc(100vw - 6rem)); height: calc(100vh - 6rem); }
 .m3-dlg #vistaVersoes .p2-trilha { margin-top: 0.5rem; }
 .m3-dlg .vs-filtros, .m3-dlg .lg-filtros { margin-bottom: 1rem; }
 .lg-meta-card { margin-top: 0.25rem; }
@@ -2006,9 +2005,12 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
   <!-- Popup grande com o Goal Card: a vista T04 é movida para cá ao abrir pela T03 e devolvida ao fechar -->
   <dialog class="m3-dlg" id="m3Dlg" aria-labelledby="titGc">
     <button type="button" class="dash-acao m3-dlg-fechar" id="m3DlgFechar" aria-label="Fechar" title="Fechar" data-i18n-aria="gc.fechar" data-i18n-title="gc.fechar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
-    <!-- Navegação do popup: Goal Card · Versões · Histórico trocam o conteúdo na mesma tela -->
-    <div class="seg m3-dlg-abas" id="m3DlgAbas" role="group" aria-label="Seções do Goal Card"><button type="button" data-aba="card" aria-pressed="true">Goal Card</button><button type="button" data-aba="versoes" aria-pressed="false" data-i18n="vs.titulo">Versões</button><button type="button" data-aba="log" aria-pressed="false" data-i18n="vs.historico">Histórico</button></div>
-    <div class="m3-dlg-corpo" id="m3DlgCorpo"></div>
+<div class="m3-dlg-corpo" id="m3DlgCorpo"></div>
+  </dialog>
+  <!-- Versões e Histórico: um popup para cada opção, aberto sobre o popup do Goal Card -->
+  <dialog class="m3-dlg m3-sub" id="m3Sub" aria-label="Versões e Histórico">
+    <button type="button" class="dash-acao m3-dlg-fechar" id="m3SubFechar" aria-label="Fechar" title="Fechar" data-i18n-aria="gc.fechar" data-i18n-title="gc.fechar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+    <div class="m3-dlg-corpo" id="m3SubCorpo"></div>
   </dialog>
 
   <!-- ═══ T13 · Desdobramento das metas (CEO → COO → BUs) ═══ -->
@@ -3201,7 +3203,6 @@ window.VBMSetup = (function () {
     if (!m3Vaga.parentNode) v.parentNode.insertBefore(m3Vaga, v);
     $('m3DlgCorpo').appendChild(v); v.hidden = false;
     gc.card = card; gc.secao = ''; gcCarregar();
-    dlgAbasZerar();
     $('m3Dlg').showModal(); $('m3Dlg').scrollTop = 0;
   }
   $('m3Linhas').addEventListener('click', function (e) {
@@ -3217,30 +3218,30 @@ window.VBMSetup = (function () {
     if (!dlgVagas[id]) { dlgVagas[id] = document.createComment(id); v.parentNode.insertBefore(dlgVagas[id], v); }
     if (v.parentNode !== $('m3DlgCorpo')) $('m3DlgCorpo').appendChild(v);
   }
-  function dlgAbasZerar() { $('m3Dlg').classList.remove('is-sub'); document.querySelectorAll('#m3DlgAbas button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-aba') === 'card')); }); }
+  var DLG_ZOOM_MIN = 0.85;
+  // Abre Versões ou Histórico em um popup próprio, sobre o popup do Goal Card
   function dlgVer(qual) {
-    $('vistaGoalCard').hidden = qual !== 'card';
-    ['vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).hidden = true; });
-    if (qual === 'versoes') { dlgMover('vistaVersoes'); $('vistaVersoes').hidden = false; vs.card = gc.card; vs.a = null; vs.b = null; vs.so = true; vsCarregar(false); }
-    if (qual === 'log') { dlgMover('vistaLog'); $('vistaLog').hidden = false; lg.f = { periodo: 'ciclo', bu: '', meta: '', secao: '', tipo: '', card: gc.card }; lgCarregar(false); }
-    document.querySelectorAll('#m3DlgAbas button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-aba') === qual)); });
-    $('m3Dlg').classList.toggle('is-sub', qual !== 'card');
-    $('m3Dlg').scrollTop = 0;
-    dlgAjustar();
+    var sub = $('m3Sub'), corpo = $('m3SubCorpo');
+    if (qual === 'card') { sub.close(); return; }
+    ['vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === corpo) $(id).hidden = true; });
+    var id = qual === 'versoes' ? 'vistaVersoes' : 'vistaLog';
+    if (!dlgVagas[id]) { dlgVagas[id] = document.createComment(id); $(id).parentNode.insertBefore(dlgVagas[id], $(id)); }
+    corpo.appendChild($(id)); $(id).hidden = false; $(id).style.zoom = '';
+    if (qual === 'versoes') { vs.card = gc.card; vs.a = null; vs.b = null; vs.so = true; vsCarregar(false); }
+    else { lg.f = { periodo: 'ciclo', bu: '', meta: '', secao: '', tipo: '', card: gc.card }; lgCarregar(false); }
+    if (!sub.open) sub.showModal();
+    sub.scrollTop = 0; dlgAjustar();
   }
   // Ajusta o conteúdo do popup à altura disponível: mede sem escala e aplica zoom, com mínimo de 85% (DLG_ZOOM_MIN).
-  // Abaixo disso o texto fica pequeno demais para ler (no notebook a 150% chegava a 50%): o popup rola na vertical.
   // O Histórico (lista longa, paginada) não é escalado: rola normalmente.
-  var DLG_ZOOM_MIN = 0.85;
-  function dlgAjustar() {
-    var dlg = $('m3Dlg'); if (!dlg.open) return;
-    ['vistaGoalCard', 'vistaVersoes', 'vistaLog'].forEach(function (id) { if ($(id).parentNode === $('m3DlgCorpo')) $(id).style.zoom = ''; });
-    var v = ['vistaGoalCard', 'vistaVersoes'].map($).filter(function (x) { return x.parentNode === $('m3DlgCorpo') && !x.hidden; })[0];
+  function dlgFit(dlg, corpo, ids) {
+    if (!dlg.open) return;
+    ids.forEach(function (id) { if ($(id).parentNode === corpo) $(id).style.zoom = ''; });
+    var v = ids.map($).filter(function (x) { return x.parentNode === corpo && !x.hidden; })[0];
     if (!v) return;
     var topo = v.getBoundingClientRect().top - dlg.getBoundingClientRect().top + dlg.scrollTop;
     var livre = dlg.clientHeight - topo - 16, alto = v.scrollHeight;
     var z = alto > livre ? Math.max(DLG_ZOOM_MIN, livre / alto) : 1;
-    // Repete até caber: com menos escala o texto quebra menos e a altura muda
     for (var i = 0; i < 4 && z > DLG_ZOOM_MIN; i++) {
       v.style.zoom = String(Math.floor(z * 1000) / 1000);
       var sobra = dlg.scrollHeight - dlg.clientHeight;
@@ -3249,9 +3250,14 @@ window.VBMSetup = (function () {
     }
     v.style.zoom = z < 1 ? String(Math.floor(z * 1000) / 1000) : '';
   }
+  function dlgAjustar() { dlgFit($('m3Dlg'), $('m3DlgCorpo'), ['vistaGoalCard']); dlgFit($('m3Sub'), $('m3SubCorpo'), ['vistaVersoes']); }
   var dlgTimer = null;
   window.addEventListener('resize', function () { clearTimeout(dlgTimer); dlgTimer = setTimeout(dlgAjustar, 120); });
-  $('m3DlgAbas').addEventListener('click', function (e) { var b = e.target.closest('button[data-aba]'); if (b) dlgVer(b.getAttribute('data-aba')); });
+  $('m3SubFechar').addEventListener('click', function () { $('m3Sub').close(); });
+  $('m3Sub').addEventListener('click', function (e) { if (e.target === this) this.close(); });
+  $('m3Sub').addEventListener('close', function () {
+    Object.keys(dlgVagas).forEach(function (id) { var x = $(id); x.hidden = true; x.style.zoom = ''; dlgVagas[id].parentNode.insertBefore(x, dlgVagas[id]); });
+  });
   $('gcVersoes').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('versoes'); } });
   $('gcHistorico').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('log'); } });
   $('vsLog').addEventListener('click', function (e) { if ($('m3Dlg').open) { e.preventDefault(); dlgVer('log'); } });
@@ -3264,8 +3270,7 @@ window.VBMSetup = (function () {
   $('m3Dlg').addEventListener('close', function () {
     var v = $('vistaGoalCard'); v.hidden = true;
     if (m3Vaga.parentNode) m3Vaga.parentNode.insertBefore(v, m3Vaga);
-    Object.keys(dlgVagas).forEach(function (id) { var x = $(id); x.hidden = true; dlgVagas[id].parentNode.insertBefore(x, dlgVagas[id]); });
-    dlgAbasZerar();
+    if ($('m3Sub').open) $('m3Sub').close();
     if (m3Origem === 'metas') m3Carregar(true); // a lista volta atualizada
     $('m3Dlg').classList.remove('is-fixo'); m3Origem = '';
   });
