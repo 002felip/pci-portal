@@ -220,7 +220,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 - **Ciclo:** tela renomeada para Administração; lista de ciclos no campo Ano, um ciclo aberto por vez, Fechar, Reabrir e
   Abrir novo ciclo; janelas desativadas em ciclo fechado.
 - **Grupos:** seções por grupo e BU com cards de pessoa e popup Novo usuário com busca no diretório (MDM).
-- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (13 tabelas do AIP; a BU é o site da IBP.SITES).
+- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (10 tabelas do AIP; a BU é o site da IBP.SITES).
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
 - Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` e `/configuracao/clonar` (`validarConfiguracao`), simuladas até a P-12.
 
