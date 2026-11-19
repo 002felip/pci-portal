@@ -3,7 +3,7 @@
  "subtitulo": "VBM AIP Goals · modelo proposto (fase 1) · Azure SQL, convenções do Schema IBP · 19/11/2026",
  "descricao_svg": "Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.",
  "lang": "pt-BR",
- "legenda_figura": "O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. O <b>AIP_CICLO</b> organiza tudo: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b>",
+ "legenda_figura": "O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. O <b>AIP_CICLO</b> organiza tudo, com as datas da jornada: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b>",
  "texto_exemplos": "Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Campos SG_ usam S/N, como no esquema IBP. Os IDs batem entre as tabelas: o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.",
  "grupos": {
   "cic": {
@@ -55,12 +55,14 @@
     0,
     20
    ],
-   "proposito": "Um ciclo anual do AIP (ex.: AIP 2027). Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.",
+   "proposito": "Um ciclo anual do AIP (ex.: AIP 2027), com as datas das 4 etapas da jornada. Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.",
    "regras": [
     "Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).",
     "Ano entre 2020 e 2100 e único.",
     "TP_STATUS: ABERTO ou FECHADO.",
-    "Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO."
+    "Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.",
+    "Datas da jornada em ordem: cada etapa termina depois da anterior.",
+    "Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado)."
    ],
    "campos": {
     "ID_CICLO": "Número interno do ciclo.",
@@ -72,7 +74,12 @@
     "DT_CRIACAO": "Quando o ciclo foi aberto.",
     "CD_MATRICULA_CRIACAO": "Matrícula (MDM) de quem abriu o ciclo.",
     "DT_FECHAMENTO": "Quando foi fechado. Preenchido só se FECHADO.",
-    "CD_MATRICULA_FECHAMENTO": "Matrícula de quem fechou. Preenchida só se FECHADO."
+    "CD_MATRICULA_FECHAMENTO": "Matrícula de quem fechou. Preenchida só se FECHADO.",
+    "DT_INI_DESDOBRAMENTO": "Início da etapa 1, Desdobramento COO (início da jornada).",
+    "DT_FIM_DESDOBRAMENTO": "Fim do Desdobramento COO; a etapa 2, Propostas BU's, começa aqui.",
+    "DT_FIM_PROPOSTA": "Fim das Propostas BU's; começa a Calibração e Aprovação.",
+    "DT_FIM_CALIBRACAO": "Fim da Calibração e Aprovação; começa o Goal Card oficial.",
+    "DT_FIM_OFICIAL": "Fim da jornada: Goal Cards oficiais publicados."
    },
    "exemplos": [
     "1 · AIP 2026, fechado",
@@ -87,7 +94,7 @@
    "grupo": "ibp",
    "pos": [
     0,
-    679
+    605
    ],
    "proposito": "Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.",
    "regras": [
@@ -106,61 +113,11 @@
     "15 · Ontario, Canadá"
    ]
   },
-  "AIP_CICLO_BU": {
-   "grupo": "des",
-   "pos": [
-    1,
-    20
-   ],
-   "proposito": "Quais BUs (sites do IBP) participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.",
-   "regras": [
-    "Uma linha por BU em cada ciclo."
-   ],
-   "campos": {
-    "ID_CICLO": "Ciclo.",
-    "ID_SITE": "BU (site do IBP).",
-    "SG_ATIVA": "S = a BU está no ciclo; N = fora do ciclo."
-   },
-   "exemplos": [
-    "Onça Puma no AIP 2026",
-    "Ontario no AIP 2026",
-    "Onça Puma no AIP 2027"
-   ]
-  },
-  "AIP_CICLO_JANELA": {
-   "grupo": "cic",
-   "pos": [
-    0,
-    284
-   ],
-   "proposito": "As quatro etapas da jornada do ciclo (Desdobramento COO, Propostas BU's, Calibração e Aprovação, Goal Card oficial) com suas datas.",
-   "regras": [
-    "Uma janela por etapa em cada ciclo; ordem única.",
-    "TP_ETAPA: DESDOBRAMENTO, PROPOSTA, CALIBRACAO, OFICIAL.",
-    "Só a etapa 1 tem DT_INI; DT_FIM depois de DT_INI.",
-    "Editável só com o ciclo aberto (a tela desativa as janelas de ciclo fechado)."
-   ],
-   "campos": {
-    "ID_CICLO": "Ciclo dono da janela.",
-    "TP_ETAPA": "DESDOBRAMENTO, PROPOSTA, CALIBRACAO ou OFICIAL.",
-    "NO_ORDEM": "Posição da etapa na jornada (1 a 4).",
-    "DT_INI": "Início, só na primeira etapa; as demais começam quando a anterior termina.",
-    "DT_FIM": "Último dia da etapa."
-   },
-   "exemplos": [
-    "Calibração termina em 15/12",
-    "Desdobramento de 01/10 a 29/10",
-    "Goal Card oficial em 22/12"
-   ],
-   "condicional": {
-    "DT_INI": "só na etapa 1"
-   }
-  },
   "AIP_NIVEL": {
    "grupo": "des",
    "pos": [
     1,
-    151
+    20
    ],
    "proposito": "Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU → GG → GA): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.",
    "regras": [
@@ -195,7 +152,7 @@
    "grupo": "cic",
    "pos": [
     0,
-    453
+    379
    ],
    "proposito": "Quem participa do ciclo e em qual grupo: contribuidores e consulta por BU, grupo de aprovação e administradores. Os dados da pessoa vêm do MDM.",
    "regras": [
@@ -226,7 +183,7 @@
    "grupo": "des",
    "pos": [
     1,
-    565
+    453
    ],
    "proposito": "As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.",
    "regras": [
@@ -253,18 +210,21 @@
    "grupo": "des",
    "pos": [
     1,
-    396
+    265
    ],
-   "proposito": "As unidades de cada nível: CEO VBM, COO VBM, cada BU ativa e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards.",
+   "proposito": "As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP) e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.",
    "regras": [
-    "Nome único dentro do nível."
+    "Nome único dentro do nível.",
+    "Uma BU (ID_SITE) sempre fica abaixo de outra unidade (o COO).",
+    "SG_ATIVA: S ou N."
    ],
    "campos": {
     "ID_UNIDADE": "Número interno da unidade.",
     "ID_NIVEL": "Nível da unidade.",
     "NM_UNIDADE": "Nome mostrado (ex.: Ontario).",
     "ID_SITE": "BU (site do IBP) correspondente, quando a unidade é do nível BU.",
-    "ID_UNIDADE_PAI": "Unidade do nível acima (a BU aponta para o COO; a GG para a BU)."
+    "ID_UNIDADE_PAI": "Unidade do nível acima (a BU aponta para o COO; a GG para a BU).",
+    "SG_ATIVA": "N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico."
    },
    "exemplos": [
     "1 · CEO VBM",
@@ -311,7 +271,7 @@
    "grupo": "des",
    "pos": [
     1,
-    791
+    679
    ],
    "proposito": "O peso de cada meta em cada unidade. Somado aos pontos herdados, fecha o total da unidade (RN-16).",
    "regras": [
@@ -498,41 +458,6 @@
    "rotulo": "criado a partir de"
   },
   {
-   "filho": "AIP_CICLO_JANELA",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "etapa de"
-  },
-  {
-   "filho": "AIP_CICLO_BU",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "participa de"
-  },
-  {
-   "filho": "AIP_CICLO_BU",
-   "campo": "ID_SITE",
-   "pai": "SITES",
-   "chave": "ID_SITE",
-   "rotulo": "inclui"
-  },
-  {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "registrado em"
-  },
-  {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_GOAL_CARD",
-   "pai": "AIP_GOAL_CARD",
-   "chave": "ID_GOAL_CARD",
-   "rotulo": "sobre"
-  },
-  {
    "filho": "AIP_NIVEL",
    "campo": "ID_CICLO",
    "pai": "AIP_CICLO",
@@ -559,6 +484,13 @@
    "pai": "AIP_UNIDADE",
    "chave": "ID_UNIDADE",
    "rotulo": "abaixo de"
+  },
+  {
+   "filho": "AIP_PAPEL",
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
+   "rotulo": "atua na"
   },
   {
    "filho": "AIP_META",
@@ -594,13 +526,6 @@
    "pai": "AIP_CICLO",
    "chave": "ID_CICLO",
    "rotulo": "participa de"
-  },
-  {
-   "filho": "AIP_PAPEL",
-   "campo": "ID_SITE",
-   "pai": "SITES",
-   "chave": "ID_SITE",
-   "rotulo": "atua na"
   },
   {
    "filho": "AIP_GOAL_CARD",
@@ -652,6 +577,20 @@
    "rotulo": "responde a"
   },
   {
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_CICLO",
+   "pai": "AIP_CICLO",
+   "chave": "ID_CICLO",
+   "rotulo": "registrado em"
+  },
+  {
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_GOAL_CARD",
+   "pai": "AIP_GOAL_CARD",
+   "chave": "ID_GOAL_CARD",
+   "rotulo": "sobre"
+  },
+  {
    "filho": "AIP_NOTIFICACAO",
    "campo": "ID_EVENTO",
    "pai": "AIP_EVENTO_LOG",
@@ -674,10 +613,8 @@
  "grupo_destaque": "gc",
  "ordem": [
   "AIP_CICLO",
-  "AIP_CICLO_JANELA",
   "AIP_PAPEL",
   "SITES",
-  "AIP_CICLO_BU",
   "AIP_NIVEL",
   "AIP_UNIDADE",
   "AIP_META",

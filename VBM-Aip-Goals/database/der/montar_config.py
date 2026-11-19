@@ -10,7 +10,7 @@ c['titulo'] = 'DER do AIP Goals'
 c['subtitulo'] = 'VBM AIP Goals · modelo proposto (fase 1) · Azure SQL, convenções do Schema IBP · 19/11/2026'
 c['descricao_svg'] = 'Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.'
 c['legenda_figura'] = ('O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. '
-    'O <b>AIP_CICLO</b> organiza tudo: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). '
+    'O <b>AIP_CICLO</b> organiza tudo, com as datas da jornada: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). '
     'Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b>')
 c['texto_exemplos'] = ('Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Campos SG_ usam S/N, como no esquema IBP. Os IDs batem entre as tabelas: '
     'o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. '
@@ -27,8 +27,8 @@ c['layout'] = {'largura_tabela': 330, 'colunas': [20, 440, 860, 1280]}
 c['formato'] = {'moeda': '', 'decimal': ',', 'fuso_horas': -3, 'prefixos_moeda': [], 'prefixos_percentual': []}
 
 colunas = [
-    ('cic', ['AIP_CICLO', 'AIP_CICLO_JANELA', 'AIP_PAPEL', 'SITES']),
-    ('des', ['AIP_CICLO_BU', 'AIP_NIVEL', 'AIP_UNIDADE', 'AIP_META', 'AIP_META_PESO']),
+    ('cic', ['AIP_CICLO', 'AIP_PAPEL', 'SITES']),
+    ('des', ['AIP_NIVEL', 'AIP_UNIDADE', 'AIP_META', 'AIP_META_PESO']),
     ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_DECISAO', 'AIP_REVISAO_SECAO']),
     ('aud', ['AIP_COMENTARIO', 'AIP_EVENTO_LOG', 'AIP_NOTIFICACAO']),
 ]
@@ -45,7 +45,7 @@ c['ordem'] = ordem
 
 T = {
  'AIP_CICLO': {
-  'proposito': 'Um ciclo anual do AIP (ex.: AIP 2027). Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.',
+  'proposito': 'Um ciclo anual do AIP (ex.: AIP 2027), com as datas das 4 etapas da jornada. Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.',
   'campos': {
    'ID_CICLO': 'Número interno do ciclo.',
    'NO_ANO': 'Ano do ciclo, de 2020 a 2100; não se repete.',
@@ -56,21 +56,15 @@ T = {
    'DT_CRIACAO': 'Quando o ciclo foi aberto.',
    'CD_MATRICULA_CRIACAO': 'Matrícula (MDM) de quem abriu o ciclo.',
    'DT_FECHAMENTO': 'Quando foi fechado. Preenchido só se FECHADO.',
-   'CD_MATRICULA_FECHAMENTO': 'Matrícula de quem fechou. Preenchida só se FECHADO.'},
-  'regras': ['Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).', 'Ano entre 2020 e 2100 e único.', 'TP_STATUS: ABERTO ou FECHADO.', 'Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.'],
+   'CD_MATRICULA_FECHAMENTO': 'Matrícula de quem fechou. Preenchida só se FECHADO.',
+   'DT_INI_DESDOBRAMENTO': 'Início da etapa 1, Desdobramento COO (início da jornada).',
+   'DT_FIM_DESDOBRAMENTO': 'Fim do Desdobramento COO; a etapa 2, Propostas BU\'s, começa aqui.',
+   'DT_FIM_PROPOSTA': 'Fim das Propostas BU\'s; começa a Calibração e Aprovação.',
+   'DT_FIM_CALIBRACAO': 'Fim da Calibração e Aprovação; começa o Goal Card oficial.',
+   'DT_FIM_OFICIAL': 'Fim da jornada: Goal Cards oficiais publicados.'},
+  'regras': ['Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).', 'Ano entre 2020 e 2100 e único.', 'TP_STATUS: ABERTO ou FECHADO.', 'Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.', 'Datas da jornada em ordem: cada etapa termina depois da anterior.', 'Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).'],
   'condicional': {'DT_FECHAMENTO': 'se FECHADO', 'CD_MATRICULA_FECHAMENTO': 'se FECHADO'},
   'exemplos': ['1 · AIP 2026, fechado', '2 · AIP 2027, aberto, criado do 2026']},
- 'AIP_CICLO_JANELA': {
-  'proposito': 'As quatro etapas da jornada do ciclo (Desdobramento COO, Propostas BU\'s, Calibração e Aprovação, Goal Card oficial) com suas datas.',
-  'campos': {
-   'ID_CICLO': 'Ciclo dono da janela.',
-   'TP_ETAPA': 'DESDOBRAMENTO, PROPOSTA, CALIBRACAO ou OFICIAL.',
-   'NO_ORDEM': 'Posição da etapa na jornada (1 a 4).',
-   'DT_INI': 'Início, só na primeira etapa; as demais começam quando a anterior termina.',
-   'DT_FIM': 'Último dia da etapa.'},
-  'regras': ['Uma janela por etapa em cada ciclo; ordem única.', 'TP_ETAPA: DESDOBRAMENTO, PROPOSTA, CALIBRACAO, OFICIAL.', 'Só a etapa 1 tem DT_INI; DT_FIM depois de DT_INI.', 'Editável só com o ciclo aberto (a tela desativa as janelas de ciclo fechado).'],
-  'condicional': {'DT_INI': 'só na etapa 1'},
-  'exemplos': ['Calibração termina em 15/12', 'Desdobramento de 01/10 a 29/10', 'Goal Card oficial em 22/12']},
  'AIP_PAPEL': {
   'proposito': 'Quem participa do ciclo e em qual grupo: contribuidores e consulta por BU, grupo de aprovação e administradores. Os dados da pessoa vêm do MDM.',
   'campos': {
@@ -90,11 +84,6 @@ T = {
   'campos': {'ID_SITE': 'Identificador do site, usado como ID da BU no AIP.', 'ID_SISTEMA': 'Sistema do IBP a que o site pertence.', 'NM_SITE': 'Nome do site, mostrado como nome da BU (ex.: Ontario).', 'NM_PAIS': 'País ou região que agrupa as BUs nas telas.', 'SG_REGIAO': 'Sigla de região do IBP.'},
   'regras': ['Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.', 'Recriada aqui só para o teste do DER.'],
   'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
- 'AIP_CICLO_BU': {
-  'proposito': 'Quais BUs (sites do IBP) participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.',
-  'campos': {'ID_CICLO': 'Ciclo.', 'ID_SITE': 'BU (site do IBP).', 'SG_ATIVA': 'S = a BU está no ciclo; N = fora do ciclo.'},
-  'regras': ['Uma linha por BU em cada ciclo.'],
-  'exemplos': ['Onça Puma no AIP 2026', 'Ontario no AIP 2026', 'Onça Puma no AIP 2027']},
  'AIP_NIVEL': {
   'proposito': 'Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU → GG → GA): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.',
   'campos': {
@@ -110,9 +99,9 @@ T = {
   'regras': ['Um nível de cada tipo por ciclo.', 'Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.', 'Nível obrigatório fica sempre ativo.', 'GA só ativo com GG ativo (o desdobramento não pula nível; validado na API).', 'Metas e pesos mostra só CEO, COO e BU.'],
   'exemplos': ['1 · CEO, 100 pts', '2 · COO, 75 herdados do CEO', '3 · BU, 40 herdados do COO']},
  'AIP_UNIDADE': {
-  'proposito': 'As unidades de cada nível: CEO VBM, COO VBM, cada BU ativa e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards.',
-  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'ID_UNIDADE_PAI': 'Unidade do nível acima (a BU aponta para o COO; a GG para a BU).'},
-  'regras': ['Nome único dentro do nível.'],
+  'proposito': 'As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP) e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.',
+  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'ID_UNIDADE_PAI': 'Unidade do nível acima (a BU aponta para o COO; a GG para a BU).', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.'},
+  'regras': ['Nome único dentro do nível.', 'Uma BU (ID_SITE) sempre fica abaixo de outra unidade (o COO).', 'SG_ATIVA: S ou N.'],
   'condicional': {'ID_SITE': 'se nível BU', 'ID_UNIDADE_PAI': 'exceto o CEO'},
   'exemplos': ['1 · CEO VBM', '2 · COO VBM, abaixo do CEO', '3 · Onça Puma, abaixo do COO']},
  'AIP_META': {
@@ -193,9 +182,8 @@ for t, v in T.items():
     tab.update(v)
 
 rot = {
- ('AIP_CICLO', 'ID_CICLO_ORIGEM'): 'criado a partir de', ('AIP_CICLO_JANELA', 'ID_CICLO'): 'etapa de',
+ ('AIP_CICLO', 'ID_CICLO_ORIGEM'): 'criado a partir de',
  ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_SITE'): 'atua na',
- ('AIP_CICLO_BU', 'ID_CICLO'): 'participa de', ('AIP_CICLO_BU', 'ID_SITE'): 'inclui',
  ('AIP_NIVEL', 'ID_CICLO'): 'nível de', ('AIP_UNIDADE', 'ID_NIVEL'): 'pertence ao', ('AIP_UNIDADE', 'ID_SITE'): 'representa',
  ('AIP_UNIDADE', 'ID_UNIDADE_PAI'): 'abaixo de', ('AIP_META', 'ID_NIVEL'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
  ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_UNIDADE'): 'na unidade',
