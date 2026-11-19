@@ -18,7 +18,7 @@ DDL, exemplos e DER em `der/`:
 | `der/der.html` | DER navegável (abra no navegador): clique numa tabela para ver cada campo explicado, com exemplos, ligações e regras |
 | `der/modelo.sql` | DDL proposto, testado em PostgreSQL 16 (a versão T-SQL para o Azure SQL sai dele com o time de dados) |
 | `der/exemplos.sql` | Dados fictícios que passam por todas as regras |
-| `der/schema.json`, `der/config.json`, `der/exemplos.json`, `der/montar_config.py` | Entradas para gerar o DER de novo (skill-der-model) quando o modelo mudar |
+| `der/schema.json`, `der/config.json`, `der/exemplos.json`, `der/montar_config.py`, `der/tipos_ibp.py` | Entradas para gerar o DER de novo (skill-der-model) quando o modelo mudar |
 
 Convenções tiradas do Schema IBP (`BDIBPBMSA_PRD`, levantamento de 21/10/2026):
 
@@ -32,22 +32,22 @@ Convenções tiradas do Schema IBP (`BDIBPBMSA_PRD`, levantamento de 21/10/2026)
 | Auditoria | `DT_ATUALIZACAO` + matrícula de quem fez | `DT_ATUALIZACAO` nos `LOG_*` |
 | Tipos | `int`, `varchar(n)`, `char(1)`, `date`, `datetime2(0)`, `decimal`, JSON em `nvarchar(max)` | `int`, `varchar`, `date`, `datetime2(0)` |
 | Restrições | `PK_<TABELA>`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_`, `IX_<TABELA>_FK_<PAI>` | `PK_VISAO`, `FK_CONTROLE_ACESSO_ASS_KPI`, `IX_DISPERSAO_FK_PEDRAVISAODIARIA` |
-| BU × site | `AIP_BU.ID_SITE` liga à `IBP.SITES` (ligação implícita) | `SITES (ID_SITE, NM_SITE, NM_PAIS, SG_REGIAO)` |
+| BU = site | A BU é o site da `IBP.SITES`: `ID_SITE` é o ID da BU em todo o modelo (sem tabela de BU própria) | `SITES (ID_SITE, ID_SISTEMA, NM_SITE, NM_PAIS, SG_REGIAO)` |
 
 Todas as FKs têm índice de apoio e nome explícito (o relatório do IBP aponta 49 FKs sem índice na filha e nomes
 gerados automaticamente).
 
-16 tabelas:
+15 tabelas do AIP + a `IBP.SITES` (existente; no DER aparece em cinza, só para mostrar as ligações):
 
 | Grupo | Tabelas |
 |---|---|
 | Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez), `AIP_CICLO_JANELA`, `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
-| Desdobramento | `AIP_BU`, `AIP_CICLO_BU`, `AIP_NIVEL` (obrigatório/opcional, herdado), `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO` |
+| Desdobramento | `AIP_CICLO_BU` (site no ciclo), `AIP_NIVEL` (obrigatório/opcional, herdado), `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO` |
 | Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_DECISAO`, `AIP_REVISAO_SECAO`, `AIP_COMENTARIO` |
 | Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho), `AIP_NOTIFICACAO` |
 
 Mudanças desta versão: ciclo com status e fechamento (um aberto, fechar, reabrir, abrir a partir de outro), janelas em
-tabela própria, cadastro de BU separado da participação no ciclo, nível com obrigatório/opcional, meta com origem
+tabela própria, BU = site da `IBP.SITES` (`ID_SITE`), participação no ciclo em `AIP_CICLO_BU`, nível com obrigatório/opcional, meta com origem
 (desdobrada de), papel por matrícula do MDM. Saiu `AIP_PARAMETRO` (limites ficam na aplicação) e, antes, `AIP_ACAO` (D-20).
 
 Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio) a definir com o time de dados.

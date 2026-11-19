@@ -10,11 +10,11 @@ insert into aip_ciclo_janela values
  (2, 'CALIBRACAO', 3, null, '2026-12-15'),
  (2, 'OFICIAL', 4, null, '2026-12-22');
 
-insert into aip_bu (nm_bu, nm_pais, id_site, dt_criacao) values
- ('Onça Puma', 'Brasil', 12, '2025-09-15 09:10-03'),
- ('Ontario', 'Canadá', null, '2025-09-15 09:12-03');
+insert into sites (id_site, id_sistema, nm_site, nm_pais, sg_regiao) values
+ (12, 1, 'Onça Puma', 'Brasil', null),
+ (15, 1, 'Ontario', 'Canadá', null);
 
-insert into aip_ciclo_bu values (2, 1, 'S'), (2, 2, 'S'), (1, 1, 'S'), (1, 2, 'S');
+insert into aip_ciclo_bu values (2, 12, 'S'), (2, 15, 'S'), (1, 12, 'S'), (1, 15, 'S');
 
 insert into aip_nivel (id_ciclo, cd_nivel, no_ordem, nm_nivel, qtde_pontos_total, qtde_pontos_herdados, sg_obrigatorio, sg_ativo) values
  (2, 'CEO', 1, 'CEO', 100, 0, 'S', 'S'),
@@ -22,11 +22,11 @@ insert into aip_nivel (id_ciclo, cd_nivel, no_ordem, nm_nivel, qtde_pontos_total
  (2, 'BU', 3, 'Business Unit', 100, 40, 'S', 'S'),
  (2, 'GG', 4, 'Gerência Geral (GG)', 100, 50, 'N', 'N');
 
-insert into aip_unidade (id_nivel, nm_unidade, id_bu, id_unidade_pai) values
+insert into aip_unidade (id_nivel, nm_unidade, id_site, id_unidade_pai) values
  (1, 'CEO VBM', null, null),
  (2, 'COO VBM', null, 1),
- (3, 'Onça Puma', 1, 2),
- (3, 'Ontario', 2, 2);
+ (3, 'Onça Puma', 12, 2),
+ (3, 'Ontario', 15, 2);
 
 insert into aip_meta (id_nivel, no_meta, nm_titulo, tp_meta, tp_polaridade, id_meta_origem, sg_ativa) values
  (2, 2, 'Strengthen a Culture of Chronic Unease', 'FORMULA', 'MAIOR', null, 'S'),
@@ -35,8 +35,8 @@ insert into aip_meta (id_nivel, no_meta, nm_titulo, tp_meta, tp_polaridade, id_m
 
 insert into aip_meta_peso values (1, 2, 5), (2, 3, 10), (2, 4, 10), (3, 3, 5);
 
-insert into aip_papel (id_ciclo, cd_matricula, tp_grupo, id_bu, sg_ativo, dt_inclusao, cd_matricula_inclusao) values
- (2, 'C410385', 'CONTRIBUIDOR', 2, 'S', '2026-10-02 08:40-03', 'C410644'),
+insert into aip_papel (id_ciclo, cd_matricula, tp_grupo, id_site, sg_ativo, dt_inclusao, cd_matricula_inclusao) values
+ (2, 'C410385', 'CONTRIBUIDOR', 15, 'S', '2026-10-02 08:40-03', 'C410644'),
  (2, 'C410459', 'APROVACAO', null, 'S', '2026-10-02 08:45-03', 'C410644'),
  (2, 'C410644', 'ADMIN', null, 'S', '2026-09-20 10:30-03', 'C410644');
 

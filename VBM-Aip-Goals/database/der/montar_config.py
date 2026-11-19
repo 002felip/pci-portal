@@ -7,7 +7,7 @@ c = json.load(open('config.json'))
 alt = {t['name']: 40 + 19 * len(t['cols']) for t in s['tables']}
 
 c['titulo'] = 'DER do AIP Goals'
-c['subtitulo'] = 'VBM AIP Goals · modelo proposto (fase 1) · alvo Azure SQL BDIBPBMSA, convenções do Schema IBP de 21/10/2026 · versão de 19/11/2026 · prefixos ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_ (S/N), QTDE_, VL_'
+c['subtitulo'] = 'VBM AIP Goals · modelo proposto (fase 1) · Azure SQL, convenções do Schema IBP · 19/11/2026'
 c['descricao_svg'] = 'Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.'
 c['legenda_figura'] = ('O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. '
     'O <b>AIP_CICLO</b> organiza tudo: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). '
@@ -16,22 +16,23 @@ c['texto_exemplos'] = ('Linhas fictícias, gravadas num banco de teste e aprovad
     'o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. '
     'As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.')
 c['grupos'] = {
-    'cic': {'nome': 'CICLO E PESSOAS', 'claro': '#dfe8e2', 'escuro': '#233229'},
+    'cic': {'nome': 'CICLO', 'claro': '#dfe8e2', 'escuro': '#233229'},
     'des': {'nome': 'DESDOBRAMENTO', 'claro': '#efe6d6', 'escuro': '#352d1f'},
     'gc': {'nome': 'GOAL CARD', 'claro': '#dde6ef', 'escuro': '#1f2c38'},
-    'aud': {'nome': 'LOG E AVISOS', 'claro': '#e9e1ec', 'escuro': '#2e2533'},
+    'aud': {'nome': 'LOG', 'claro': '#e9e1ec', 'escuro': '#2e2533'},
+    'ibp': {'nome': 'IBP', 'claro': '#e6e6e6', 'escuro': '#2b2b2b'},
 }
 c['grupo_destaque'] = 'gc'
 c['layout'] = {'largura_tabela': 330, 'colunas': [20, 440, 860, 1280]}
 c['formato'] = {'moeda': '', 'decimal': ',', 'fuso_horas': -3, 'prefixos_moeda': [], 'prefixos_percentual': []}
 
 colunas = [
-    ('cic', ['AIP_CICLO', 'AIP_CICLO_JANELA', 'AIP_PAPEL', 'AIP_BU']),
+    ('cic', ['AIP_CICLO', 'AIP_CICLO_JANELA', 'AIP_PAPEL', 'SITES']),
     ('des', ['AIP_CICLO_BU', 'AIP_NIVEL', 'AIP_UNIDADE', 'AIP_META', 'AIP_META_PESO']),
     ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_DECISAO', 'AIP_REVISAO_SECAO']),
     ('aud', ['AIP_COMENTARIO', 'AIP_EVENTO_LOG', 'AIP_NOTIFICACAO']),
 ]
-grupo_de = {'AIP_BU': 'des', 'AIP_COMENTARIO': 'gc'}
+grupo_de = {'SITES': 'ibp', 'AIP_COMENTARIO': 'gc'}
 ordem = []
 for i, (g, ts) in enumerate(colunas):
     y = 20
@@ -77,21 +78,21 @@ T = {
    'ID_CICLO': 'Ciclo em que o papel vale.',
    'CD_MATRICULA': 'Matrícula da pessoa; nome, e-mail, cargo, estado e cidade são lidos do MDM.',
    'TP_GRUPO': 'CONTRIBUIDOR, APROVACAO, CONSULTA ou ADMIN.',
-   'ID_BU': 'BU do contribuidor ou da consulta. Vazio para aprovação e administração.',
+   'ID_SITE': 'BU (site do IBP) do contribuidor ou da consulta. Vazio para aprovação e administração.',
    'SG_ATIVO': 'N = a pessoa perde o acesso sem apagar o histórico.',
    'DT_INCLUSAO': 'Quando foi incluída (popup Adicionar usuário).',
    'CD_MATRICULA_INCLUSAO': 'Quem incluiu.'},
   'regras': ['TP_GRUPO: CONTRIBUIDOR, APROVACAO, CONSULTA, ADMIN.', 'BU obrigatória para contribuidor e consulta; vazia para aprovação e administrador.', 'Uma pessoa não se repete no mesmo grupo e BU do ciclo.'],
-  'condicional': {'ID_BU': 'se contribuidor ou consulta'},
+  'condicional': {'ID_SITE': 'se contribuidor ou consulta'},
   'exemplos': ['1 · Contribuidor de Ontario', '2 · Grupo de aprovação', '3 · Administrador']},
- 'AIP_BU': {
-  'proposito': 'Cadastro das Business Units (nome e país ou região). A BU entra em cada ciclo pela AIP_CICLO_BU.',
-  'campos': {'ID_BU': 'Número interno da BU.', 'NM_BU': 'Nome da BU; não se repete. Renomear atualiza pesos, pessoas e unidades ligadas.', 'NM_PAIS': 'País ou região que agrupa as BUs nas telas (Brasil, Canadá, International Refineries), como NM_PAIS da IBP.SITES.', 'ID_SITE': 'Ligação com a IBP.SITES (ID_SITE) quando a BU existe lá. Vazio = BU só do AIP.', 'DT_CRIACAO': 'Quando a BU foi cadastrada.'},
-  'regras': ['Nome único.', 'ID_SITE é ligação implícita com IBP.SITES (outro esquema, sem FK física).', 'Só se exclui BU sem Goal Card submetido; com card, tira-se do ciclo (AIP_CICLO_BU).'],
-  'exemplos': ['1 · Onça Puma, Brasil', '2 · Ontario, Canadá']},
+ 'SITES': {
+  'proposito': 'Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.',
+  'campos': {'ID_SITE': 'Identificador do site, usado como ID da BU no AIP.', 'ID_SISTEMA': 'Sistema do IBP a que o site pertence.', 'NM_SITE': 'Nome do site, mostrado como nome da BU (ex.: Ontario).', 'NM_PAIS': 'País ou região que agrupa as BUs nas telas.', 'SG_REGIAO': 'Sigla de região do IBP.'},
+  'regras': ['Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.', 'Recriada aqui só para o teste do DER.'],
+  'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
  'AIP_CICLO_BU': {
-  'proposito': 'Quais BUs participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.',
-  'campos': {'ID_CICLO': 'Ciclo.', 'ID_BU': 'BU.', 'SG_ATIVA': 'S = a BU está no ciclo; N = fora do ciclo.'},
+  'proposito': 'Quais BUs (sites do IBP) participam de cada ciclo. Tirar do ciclo não apaga a BU: ela deixa de receber Goal Cards e notificações e sai das somas.',
+  'campos': {'ID_CICLO': 'Ciclo.', 'ID_SITE': 'BU (site do IBP).', 'SG_ATIVA': 'S = a BU está no ciclo; N = fora do ciclo.'},
   'regras': ['Uma linha por BU em cada ciclo.'],
   'exemplos': ['Onça Puma no AIP 2026', 'Ontario no AIP 2026', 'Onça Puma no AIP 2027']},
  'AIP_NIVEL': {
@@ -110,9 +111,9 @@ T = {
   'exemplos': ['1 · CEO, 100 pts', '2 · COO, 75 herdados do CEO', '3 · BU, 40 herdados do COO']},
  'AIP_UNIDADE': {
   'proposito': 'As unidades de cada nível: CEO VBM, COO VBM, cada BU ativa e, se usados, as GGs e GAs. É quem recebe pesos e Goal Cards.',
-  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_BU': 'BU correspondente, quando a unidade é do nível BU.', 'ID_UNIDADE_PAI': 'Unidade do nível acima (a BU aponta para o COO; a GG para a BU).'},
+  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'ID_UNIDADE_PAI': 'Unidade do nível acima (a BU aponta para o COO; a GG para a BU).'},
   'regras': ['Nome único dentro do nível.'],
-  'condicional': {'ID_BU': 'se nível BU', 'ID_UNIDADE_PAI': 'exceto o CEO'},
+  'condicional': {'ID_SITE': 'se nível BU', 'ID_UNIDADE_PAI': 'exceto o CEO'},
   'exemplos': ['1 · CEO VBM', '2 · COO VBM, abaixo do CEO', '3 · Onça Puma, abaixo do COO']},
  'AIP_META': {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
@@ -193,9 +194,9 @@ for t, v in T.items():
 
 rot = {
  ('AIP_CICLO', 'ID_CICLO_ORIGEM'): 'criado a partir de', ('AIP_CICLO_JANELA', 'ID_CICLO'): 'etapa de',
- ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_BU'): 'atua na',
- ('AIP_CICLO_BU', 'ID_CICLO'): 'participa de', ('AIP_CICLO_BU', 'ID_BU'): 'inclui',
- ('AIP_NIVEL', 'ID_CICLO'): 'nível de', ('AIP_UNIDADE', 'ID_NIVEL'): 'pertence ao', ('AIP_UNIDADE', 'ID_BU'): 'representa',
+ ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_SITE'): 'atua na',
+ ('AIP_CICLO_BU', 'ID_CICLO'): 'participa de', ('AIP_CICLO_BU', 'ID_SITE'): 'inclui',
+ ('AIP_NIVEL', 'ID_CICLO'): 'nível de', ('AIP_UNIDADE', 'ID_NIVEL'): 'pertence ao', ('AIP_UNIDADE', 'ID_SITE'): 'representa',
  ('AIP_UNIDADE', 'ID_UNIDADE_PAI'): 'abaixo de', ('AIP_META', 'ID_NIVEL'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
  ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_UNIDADE'): 'na unidade',
  ('AIP_GOAL_CARD', 'ID_META'): 'card da', ('AIP_GOAL_CARD', 'ID_UNIDADE'): 'da unidade',
