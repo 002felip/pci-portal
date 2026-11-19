@@ -26,10 +26,10 @@ insert into aip_meta (id_nivel, no_meta, nm_titulo, tp_meta, tp_polaridade, id_m
 
 insert into aip_meta_peso values (1, 2, 5), (2, 3, 10), (2, 4, 10), (3, 3, 5);
 
-insert into aip_papel (id_ciclo, cd_matricula, tp_grupo, id_site, sg_ativo, dt_inclusao, cd_matricula_inclusao) values
- (2, 'C410385', 'CONTRIBUIDOR', 15, 'S', '2026-10-02 08:40-03', 'C410644'),
- (2, 'C410459', 'APROVACAO', null, 'S', '2026-10-02 08:45-03', 'C410644'),
- (2, 'C410644', 'ADMIN', null, 'S', '2026-09-20 10:30-03', 'C410644');
+insert into aip_papel (id_ciclo, cd_matricula, tp_grupo, id_site, sg_ativo, dt_atualizacao) values
+ (2, 'C410385', 'CONTRIBUIDOR', 15, 'S', '2026-10-02 08:40-03'),
+ (2, 'C410459', 'APROVACAO', null, 'S', '2026-10-02 08:45-03'),
+ (2, 'C410644', 'ADMIN', null, 'S', '2026-09-20 10:30-03');
 
 insert into aip_goal_card (cd_goal_card, id_meta, id_unidade, tp_estado, no_versao_oficial, ds_rascunho, dt_atualizacao, cd_matricula_atualizacao) values
  ('GC-ONT-04', 2, 4, 'EM_REVISAO', null, '{"unit": "%", "ruler": {"min": 95, "meta": 100, "exc": 105}}', '2026-11-18 15:20-03', 'C410459'),

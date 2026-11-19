@@ -94,7 +94,7 @@
    "grupo": "ibp",
    "pos": [
     0,
-    605
+    586
    ],
    "proposito": "Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.",
    "regras": [
@@ -166,8 +166,7 @@
     "TP_GRUPO": "CONTRIBUIDOR, APROVACAO, CONSULTA ou ADMIN.",
     "ID_SITE": "BU (site do IBP) do contribuidor ou da consulta. Vazio para aprovação e administração.",
     "SG_ATIVO": "N = a pessoa perde o acesso sem apagar o histórico.",
-    "DT_INCLUSAO": "Quando foi incluída (popup Adicionar usuário).",
-    "CD_MATRICULA_INCLUSAO": "Quem incluiu."
+    "DT_ATUALIZACAO": "Última mudança nesta participação (inclusão pelo popup Adicionar usuário, troca de grupo ou desativação). Quem fez fica no Action Log."
    },
    "exemplos": [
     "1 · Contribuidor de Ontario",
