@@ -1659,7 +1659,7 @@ body.is-largo .m3-dlg.is-sub .p2-topo { padding-top: 4rem; }
   <nav class="topnav-menu" id="topMenu" aria-label="Telas do AIP Goals" data-i18n-aria="nav.menu">
     <a class="topnav-menu-link" href="#inicio" data-tela="inicio" data-perfis="todos"><span data-i18n="nav.inicio">Início</span></a>
     <a class="topnav-menu-link" href="#desdobramento" data-tela="desdobramento" data-perfis="todos"><span data-i18n="nav.desdobramento">Desdobramento</span></a>
-    <a class="topnav-menu-link" href="#painel" data-tela="painel" data-perfis="pci_coo admin" hidden><span data-i18n="nav.painel">Painel do ciclo</span></a>
+    <!-- Painel do ciclo (#painel) oculto: a tela segue no código, mas fora do menu e sem rota (VISTAS); para reativar, volte este link e o item em VISTAS -->
     <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">Metas da BU</span></a>
     <!-- Administração: telas de apoio agrupadas num submenu (abre no clique; no modo gaveta fica aberto, recuado) -->
     <div class="topnav-grupo" id="menuAdmin">
@@ -4888,7 +4888,7 @@ window.VBMSetup = (function () {
   document.addEventListener('click', function (e) { if ($('topMenu').classList.contains('is-aberto') && !e.target.closest('#topMenu, #topMenuBtn')) abrirMenu(false); });
 
   // ── Vistas pelo hash ──
-  var VISTAS = ['inicio', 'desdobramento', 'painel', 'metas', 'goal-card', 'versoes', 'aprovacoes', 'action-log', 'configuracao'];
+  var VISTAS = ['inicio', 'desdobramento', 'metas', 'goal-card', 'versoes', 'aprovacoes', 'action-log', 'configuracao'];
   function rota() {
     if ($('m3Dlg').open) $('m3Dlg').close(); // link de dentro do popup do Goal Card (ex.: Versões) leva para outra tela
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
