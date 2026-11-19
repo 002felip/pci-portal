@@ -355,6 +355,8 @@ function configuracaoExemplo(hoje = new Date()) {
   painelExemplo(hoje).cards.forEach((c) => { if (c.estado !== 'rascunho') submetidos[c.bu.sigla] = (submetidos[c.bu.sigla] || 0) + 1; });
   return {
     ciclo: { ...ciclo, status: 'aberto', textoPadraoExcecoes: TEXTO_PADRAO_EXCECOES },
+    // Ciclos registrados (exemplo): só um pode estar aberto
+    ciclos: [{ ano: ciclo.ano, nome: ciclo.nome, aberto: true }, { ano: ciclo.ano - 1, nome: `AIP ${ciclo.ano - 1}`, aberto: false }, { ano: ciclo.ano - 2, nome: `AIP ${ciclo.ano - 2}`, aberto: false }],
     bus: ciclo.bus.map((b) => ({ ...b, ativa: true, cardsSubmetidos: submetidos[b.sigla] || 0 })),
     membros,
     diretorio: pessoas,
