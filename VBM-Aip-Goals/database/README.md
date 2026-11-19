@@ -20,7 +20,24 @@ DDL, exemplos e DER em `der/`:
 | `der/exemplos.sql` | Dados fictícios que passam por todas as regras |
 | `der/schema.json`, `der/config.json`, `der/exemplos.json`, `der/montar_config.py` | Entradas para gerar o DER de novo (skill-der-model) quando o modelo mudar |
 
-16 tabelas, padrão IBP de nomes (ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_, QTDE_, VL_):
+Convenções tiradas do Schema IBP (`BDIBPBMSA_PRD`, levantamento de 21/10/2026):
+
+| Item | Padrão adotado | Como está no IBP |
+|---|---|---|
+| Tabelas | Prefixo da aplicação: `AIP_` | `PM_COMENTARIO`, `PM_CONFIGURACAO` |
+| Campos | `ID_`, `NM_`, `DS_`, `DT_`, `NO_`, `CD_`, `TP_`, `SG_`, `QTDE_`, `VL_` | `ID_KPI`, `NM_SITE`, `DS_COMENTARIO`, `TP_OPERACAO` |
+| Sim/não | `SG_` em `char(1)` com `'S'`/`'N'` | `CONTROLE_PROCESSOS.SG_ATIVO char(1)` |
+| Período | `DT_INI` / `DT_FIM` | `CONTROLE_PROCESSOS.DT_INI`, `DT_FIM` |
+| Pessoa | `CD_MATRICULA` (dados no MDM) | `USERS.CD_MATRICULA`, `DS_EMAIL` |
+| Auditoria | `DT_ATUALIZACAO` + matrícula de quem fez | `DT_ATUALIZACAO` nos `LOG_*` |
+| Tipos | `int`, `varchar(n)`, `char(1)`, `date`, `datetime2(0)`, `decimal`, JSON em `nvarchar(max)` | `int`, `varchar`, `date`, `datetime2(0)` |
+| Restrições | `PK_<TABELA>`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_`, `IX_<TABELA>_FK_<PAI>` | `PK_VISAO`, `FK_CONTROLE_ACESSO_ASS_KPI`, `IX_DISPERSAO_FK_PEDRAVISAODIARIA` |
+| BU × site | `AIP_BU.ID_SITE` liga à `IBP.SITES` (ligação implícita) | `SITES (ID_SITE, NM_SITE, NM_PAIS, SG_REGIAO)` |
+
+Todas as FKs têm índice de apoio e nome explícito (o relatório do IBP aponta 49 FKs sem índice na filha e nomes
+gerados automaticamente).
+
+16 tabelas:
 
 | Grupo | Tabelas |
 |---|---|

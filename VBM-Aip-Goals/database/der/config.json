@@ -1,10 +1,10 @@
 {
  "titulo": "DER do AIP Goals",
- "subtitulo": "VBM AIP Goals · modelo proposto (fase 1) · PostgreSQL de teste, alvo Azure SQL · versão de 19/11/2026 · padrão IBP de nomes (ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_, QTDE_, VL_)",
+ "subtitulo": "VBM AIP Goals · modelo proposto (fase 1) · alvo Azure SQL BDIBPBMSA, convenções do Schema IBP de 21/10/2026 · versão de 19/11/2026 · prefixos ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_ (S/N), QTDE_, VL_",
  "descricao_svg": "Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.",
  "lang": "pt-BR",
  "legenda_figura": "O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. O <b>AIP_CICLO</b> organiza tudo: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b>",
- "texto_exemplos": "Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Os IDs batem entre as tabelas: o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.",
+ "texto_exemplos": "Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Campos SG_ usam S/N, como no esquema IBP. Os IDs batem entre as tabelas: o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua, e o GC-ONP-04 foi aprovado. As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.",
  "grupos": {
   "cic": {
    "nome": "CICLO E PESSOAS",
@@ -53,12 +53,14 @@
    "proposito": "Cadastro das Business Units (nome e país ou região). A BU entra em cada ciclo pela AIP_CICLO_BU.",
    "regras": [
     "Nome único.",
+    "ID_SITE é ligação implícita com IBP.SITES (outro esquema, sem FK física).",
     "Só se exclui BU sem Goal Card submetido; com card, tira-se do ciclo (AIP_CICLO_BU)."
    ],
    "campos": {
     "ID_BU": "Número interno da BU.",
     "NM_BU": "Nome da BU; não se repete. Renomear atualiza pesos, pessoas e unidades ligadas.",
-    "NM_PAIS": "País ou região que agrupa as BUs nas telas (Brasil, Canadá, International Refineries).",
+    "NM_PAIS": "País ou região que agrupa as BUs nas telas (Brasil, Canadá, International Refineries), como NM_PAIS da IBP.SITES.",
+    "ID_SITE": "Ligação com a IBP.SITES (ID_SITE) quando a BU existe lá. Vazio = BU só do AIP.",
     "DT_CRIACAO": "Quando a BU foi cadastrada."
    },
    "exemplos": [
@@ -113,7 +115,7 @@
    "campos": {
     "ID_CICLO": "Ciclo.",
     "ID_BU": "BU.",
-    "SG_ATIVA": "Ligado = a BU está no ciclo; desligado = fora do ciclo."
+    "SG_ATIVA": "S = a BU está no ciclo; N = fora do ciclo."
    },
    "exemplos": [
     "Onça Puma no AIP 2026",
@@ -131,14 +133,14 @@
    "regras": [
     "Uma janela por etapa em cada ciclo; ordem única.",
     "TP_ETAPA: DESDOBRAMENTO, PROPOSTA, CALIBRACAO, OFICIAL.",
-    "Só a etapa 1 tem DT_INICIO; DT_FIM depois de DT_INICIO.",
+    "Só a etapa 1 tem DT_INI; DT_FIM depois de DT_INI.",
     "Editável só com o ciclo aberto (a tela desativa as janelas de ciclo fechado)."
    ],
    "campos": {
     "ID_CICLO": "Ciclo dono da janela.",
     "TP_ETAPA": "DESDOBRAMENTO, PROPOSTA, CALIBRACAO ou OFICIAL.",
     "NO_ORDEM": "Posição da etapa na jornada (1 a 4).",
-    "DT_INICIO": "Início, só na primeira etapa; as demais começam quando a anterior termina.",
+    "DT_INI": "Início, só na primeira etapa; as demais começam quando a anterior termina.",
     "DT_FIM": "Último dia da etapa."
    },
    "exemplos": [
@@ -147,7 +149,7 @@
     "Goal Card oficial em 22/12"
    ],
    "condicional": {
-    "DT_INICIO": "só na etapa 1"
+    "DT_INI": "só na etapa 1"
    }
   },
   "AIP_NIVEL": {
@@ -172,8 +174,8 @@
     "NM_NIVEL": "Nome mostrado nas telas; editável.",
     "QTDE_PONTOS_TOTAL": "Pontos que cada unidade do nível precisa fechar (ex.: 100).",
     "QTDE_PONTOS_HERDADOS": "Pontos que vêm do resultado do nível acima (linha \"Resultado do …\", editável em Metas e pesos). O restante vai para as metas do nível.",
-    "SG_OBRIGATORIO": "Escolhido em Parâmetros: Obrigatório (sempre no desdobramento) ou Opcional.",
-    "SG_ATIVO": "Se o nível opcional está em uso. Obrigatório = sempre ativo."
+    "SG_OBRIGATORIO": "S = Obrigatório (sempre no desdobramento), N = Opcional; escolhido em Parâmetros.",
+    "SG_ATIVO": "S = nível em uso. Nível obrigatório fica sempre S."
    },
    "exemplos": [
     "1 · CEO, 100 pts",
@@ -203,7 +205,7 @@
     "CD_MATRICULA": "Matrícula da pessoa; nome, e-mail, cargo, estado e cidade são lidos do MDM.",
     "TP_GRUPO": "CONTRIBUIDOR, APROVACAO, CONSULTA ou ADMIN.",
     "ID_BU": "BU do contribuidor ou da consulta. Vazio para aprovação e administração.",
-    "SG_ATIVO": "Desligado = a pessoa perde o acesso sem apagar o histórico.",
+    "SG_ATIVO": "N = a pessoa perde o acesso sem apagar o histórico.",
     "DT_INCLUSAO": "Quando foi incluída (popup Adicionar usuário).",
     "CD_MATRICULA_INCLUSAO": "Quem incluiu."
    },
@@ -235,7 +237,7 @@
     "TP_META": "FORMULA (Por fórmula) ou MARCOS (Por marcos).",
     "TP_POLARIDADE": "MAIOR (maior é melhor) ou MENOR (menor é melhor).",
     "ID_META_ORIGEM": "Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.",
-    "SG_ATIVA": "Desligada = fora do ciclo, sem apagar o histórico."
+    "SG_ATIVA": "N = fora do ciclo, sem apagar o histórico."
    },
    "exemplos": [
     "1 · Meta 02 do COO",
@@ -342,7 +344,7 @@
     "ID_COMENTARIO": "Número interno do comentário.",
     "ID_GOAL_CARD": "Card comentado.",
     "CD_SECAO": "Seção comentada.",
-    "DS_TEXTO": "Texto do comentário.",
+    "DS_COMENTARIO": "Texto do comentário.",
     "ID_COMENTARIO_PAI": "Comentário respondido. Vazio = comentário novo.",
     "DT_COMENTARIO": "Quando foi publicado.",
     "CD_MATRICULA_AUTOR": "Quem comentou (o grupo de consulta não comenta)."
@@ -513,6 +515,20 @@
    "rotulo": "inclui"
   },
   {
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_CICLO",
+   "pai": "AIP_CICLO",
+   "chave": "ID_CICLO",
+   "rotulo": "registrado em"
+  },
+  {
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_GOAL_CARD",
+   "pai": "AIP_GOAL_CARD",
+   "chave": "ID_GOAL_CARD",
+   "rotulo": "sobre"
+  },
+  {
    "filho": "AIP_NIVEL",
    "campo": "ID_CICLO",
    "pai": "AIP_CICLO",
@@ -630,20 +646,6 @@
    "pai": "AIP_COMENTARIO",
    "chave": "ID_COMENTARIO",
    "rotulo": "responde a"
-  },
-  {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "registrado em"
-  },
-  {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_GOAL_CARD",
-   "pai": "AIP_GOAL_CARD",
-   "chave": "ID_GOAL_CARD",
-   "rotulo": "sobre"
   },
   {
    "filho": "AIP_NOTIFICACAO",

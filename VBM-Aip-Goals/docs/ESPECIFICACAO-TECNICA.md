@@ -246,7 +246,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 **Modelo de dados (proposta para validação com o time de dados, versão de 19/11/2026)**
 
-DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Padrão IBP de nomes (ID_, NM_, DS_, DT_, NO_, CD_, TP_, SG_, QTDE_, VL_). 16 tabelas na fase 1:
+DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; `AIP_BU.ID_SITE` liga à `IBP.SITES`. 16 tabelas na fase 1:
 
 | Tabela | Conteúdo |
 | --- | --- |
