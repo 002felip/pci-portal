@@ -2183,8 +2183,9 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
     <section class="acesso-bloqueio" id="gcSemAcesso" role="alert" aria-labelledby="gcAcTit" hidden>
       <div class="acesso-card">
         <div class="acesso-icone" aria-hidden="true"><svg class="ico"><use href="#i-lock"/></svg></div>
-        <h2 id="gcAcTit" tabindex="-1" data-i18n="t12.tit">Acesso não autorizado</h2>
-        <p data-i18n="t12.txt">Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.</p>
+        <h2 id="gcAcTit" tabindex="-1">Acesso não autorizado</h2>
+        <p id="gcAcTxt">Seu usuário não está habilitado para acessar esta tela do AIP Goals. Entre em contato com o administrador do sistema.</p>
+        <p class="gc-dica" id="gcAcCod" hidden></p>
         <div class="acesso-acoes">
           <button type="button" class="acesso-btn" data-voltar data-i18n="t12.voltar">Voltar</button>
           <a class="acesso-btn primario" href="#metas" data-i18n="gc.irMetas">Ir para Metas da BU</a>
@@ -3455,7 +3456,7 @@ window.VBMSetup = (function () {
           var k = Math.max(0, Math.min(1, (x.peso - 5) / Math.max(1, maxPeso - 5)));
           var rot = S.t('dd.celula', { b: b.sigla, m: l.titulo, p: S.fmt(x.peso, 0), e: est }) + (x.card ? ' · ' + x.card : '');
           var conteudo = '<span class="dd-bolha' + (x.estado ? ' dd-st-' + esc(x.estado) : '') + '" style="--k:' + k.toFixed(3) + '">' + esc(S.fmt(x.peso, 0)) + '</span>';
-          return '<td class="dd-cel">' + (x.card ? '<a href="#goal-card?card=' + encodeURIComponent(x.card) + '" data-card="' + esc(x.card) + '" title=""' + esc(rot) + '" aria-label="' + esc(rot) + '">' + conteudo + '</a>' : '<span title="' + esc(rot) + '">' + conteudo + '</span>') + '</td>';
+          return '<td class="dd-cel">' + (x.card ? '<a href="#goal-card?card=' + encodeURIComponent(x.card) + '" data-card="' + esc(x.card) + '" title="' + esc(rot) + '" aria-label="' + esc(rot) + '">' + conteudo + '</a>' : '<span title="' + esc(rot) + '">' + conteudo + '</span>') + '</td>';
         }).join('') + '</tr>';
     };
     var res = linhas.filter(function (l) { return l.resultado; }), esp = linhas.filter(function (l) { return !l.resultado; });
@@ -3502,13 +3503,21 @@ window.VBMSetup = (function () {
     $('gcCorpo').hidden = qual !== 'ok'; $('gcErro').hidden = qual !== 'erro'; $('gcSemAcesso').hidden = qual !== 'acesso';
     $('gcLinha').parentNode.hidden = qual !== 'ok';
   }
+  // Falha de acesso ao Goal Card: 401/403 = sem acesso; 400/404 = card não encontrado. Mostra o código HTTP para facilitar o suporte.
+  function gcAcesso(http) {
+    var nf = http === 400 || http === 404;
+    $('gcAcTit').textContent = S.t(nf ? 'gc.naoEncontradoTit' : 't12.tit');
+    $('gcAcTxt').textContent = S.t(nf ? 'gc.naoEncontradoTxt' : 't12.txt');
+    $('gcAcCod').hidden = !http; $('gcAcCod').textContent = http ? 'HTTP ' + http + (gc.card ? ' · ' + gc.card : '') : '';
+    gcEstado('acesso');
+  }
   function gcCarregar() {
-    if (!gc.card) return gcEstado('acesso');
+    if (!gc.card) return gcAcesso(0);
     var ctl = ('AbortController' in window) ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
     return fetch('api/goal-card?card=' + encodeURIComponent(gc.card), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
       .then(function (r) {
-        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; throw e; }
+        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) { var e = new Error('acesso'); e.tipo = 'acesso'; e.http = r.status; throw e; }
         if (r.status === 429) { var l = new Error('limite'); l.tipo = 'limite'; throw l; }
         if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
         return r.json();
@@ -3522,7 +3531,7 @@ window.VBMSetup = (function () {
       .catch(function (err) {
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] goal-card:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
-        if (tipo === 'acesso') return gcEstado('acesso');
+        if (tipo === 'acesso') return gcAcesso(err.http || 0);
         $('gcErroTxt').textContent = S.t({ tempo: 'est.erroTempo', limite: 'est.erroLimite', rede: 'est.erroRede' }[tipo] || 'est.erroGeral');
         gcEstado('erro');
       })
