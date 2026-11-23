@@ -314,8 +314,7 @@ function configuracaoExemplo(hoje = new Date()) {
     { id: 'ceo', nome: 'CEO', total: 100, herdado: 0, ativo: true, fixo: true },
     { id: 'coo', nome: 'COO', total: 100, herdado: 75, ativo: true, fixo: true },
     { id: 'bu', nome: 'Business Unit', total: PESO_TOTAL, herdado: PESO_RESULTADO_COO, ativo: true, fixo: true },
-    { id: 'gg', nome: 'Gerência Geral (GG)', total: 100, herdado: 50, ativo: true, fixo: false },
-    { id: 'ga', nome: 'Gerência de Área (GA)', total: 100, herdado: 60, ativo: true, fixo: false },
+    // GG e GA fora no primeiro momento: o desdobramento vai até a BU
   ];
   // Unidades acima e abaixo das BUs (as BUs vêm da aba Business Units): GG por BU e GA por GG
   const unidades = [{ id: 'CEO', nivel: 'ceo', nome: 'CEO VBM', pai: null }, { id: 'COO', nivel: 'coo', nome: 'COO VBM', pai: 'CEO' }];

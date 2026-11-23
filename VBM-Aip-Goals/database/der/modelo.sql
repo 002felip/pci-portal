@@ -7,7 +7,8 @@
 -- Padrão de nomes IBP: ID_ identificador, NM_ nome, DS_ descrição, DT_ data, NO_ número, CD_ código,
 -- TP_ lista fixa, SG_ sim/não, QTDE_ quantidade, VL_ valor.
 -- Pessoas: nome, e-mail, cargo, estado e cidade são lidos do MDM pela matrícula (CD_MATRICULA, como em IBP.USERS); o AIP guarda só a matrícula.
--- Primeiro momento: desdobramento só em CEO, COO e BU (GG e GA fora do modelo).
+-- Desdobramento fixo em CEO → COO → BU (GG e GA fora no primeiro momento), 100 pts por unidade; os pontos herdados
+-- ficam no AIP_CICLO e o nível é um código (CD_NIVEL) na meta e na unidade.
 -- Limites das regras (mínimo de caracteres no comentário, tamanho de anexo) ficam na aplicação, fora do banco.
 
 -- ═══ CICLO ═══
@@ -28,8 +29,12 @@ create table aip_ciclo (
   dt_fim_proposta date not null,
   dt_fim_calibracao date not null,
   dt_fim_oficial date not null,
+  -- Desdobramento CEO → COO → BU: cada unidade fecha 100 pts; parte vem do resultado do nível acima
+  qtde_pontos_herdados_coo smallint not null,
+  qtde_pontos_herdados_bu smallint not null,
   constraint uq_aip_ciclo_ano unique (no_ano),
   constraint ck_aip_ciclo_jornada check (dt_ini_desdobramento < dt_fim_desdobramento and dt_fim_desdobramento < dt_fim_proposta and dt_fim_proposta < dt_fim_calibracao and dt_fim_calibracao < dt_fim_oficial),
+  constraint ck_aip_ciclo_herdados check (qtde_pontos_herdados_coo between 0 and 99 and qtde_pontos_herdados_bu between 0 and 99),
   constraint ck_aip_ciclo_ano check (no_ano between 2020 and 2100),
   constraint ck_aip_ciclo_status check (tp_status in ('ABERTO', 'FECHADO')),
   constraint ck_aip_ciclo_fechamento check ((tp_status = 'FECHADO') = (dt_fechamento is not null and cd_matricula_fechamento is not null))
@@ -50,42 +55,30 @@ create table sites (
 );
 
 
-create table aip_nivel (
-  id_nivel integer generated always as identity constraint pk_aip_nivel primary key,
-  id_ciclo integer not null constraint fk_aip_nivel_aip_ciclo references aip_ciclo (id_ciclo),
-  cd_nivel varchar(20) not null,
-  no_ordem smallint not null,
-  nm_nivel varchar(100) not null,
-  qtde_pontos_total integer not null,
-  qtde_pontos_herdados integer not null default 0,
-  sg_obrigatorio char(1) not null constraint ck_aip_nivel_sg_obrigatorio check (sg_obrigatorio in ('S', 'N')),
-  sg_ativo char(1) not null default 'S' constraint ck_aip_nivel_sg_ativo check (sg_ativo in ('S', 'N')),
-  constraint uq_aip_nivel unique (id_ciclo, cd_nivel),
-  constraint ck_aip_nivel_cd check (cd_nivel in ('CEO', 'COO', 'BU')),
-  constraint ck_aip_nivel_total check (qtde_pontos_total between 1 and 1000),
-  constraint ck_aip_nivel_herdado check (qtde_pontos_herdados >= 0 and qtde_pontos_herdados < qtde_pontos_total and (no_ordem > 1 or qtde_pontos_herdados = 0)),
-  constraint ck_aip_nivel_obrigatorio check (sg_obrigatorio = 'N' or sg_ativo = 'S')
-);
-
 create table aip_unidade (
   id_unidade integer generated always as identity constraint pk_aip_unidade primary key,
-  id_nivel integer not null constraint fk_aip_unidade_aip_nivel references aip_nivel (id_nivel),
+  id_ciclo integer not null constraint fk_aip_unidade_aip_ciclo references aip_ciclo (id_ciclo),
+  cd_nivel varchar(20) not null,
   nm_unidade varchar(100) not null,
   id_site integer constraint fk_aip_unidade_sites references sites (id_site),
   sg_ativa char(1) not null default 'S' constraint ck_aip_unidade_sg_ativa check (sg_ativa in ('S', 'N')),
-  constraint uq_aip_unidade unique (id_nivel, nm_unidade)
+  constraint uq_aip_unidade unique (id_ciclo, cd_nivel, nm_unidade),
+  constraint ck_aip_unidade_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
+  constraint ck_aip_unidade_site check ((cd_nivel = 'BU') = (id_site is not null))
 );
 
 create table aip_meta (
   id_meta integer generated always as identity constraint pk_aip_meta primary key,
-  id_nivel integer not null constraint fk_aip_meta_aip_nivel references aip_nivel (id_nivel),
+  id_ciclo integer not null constraint fk_aip_meta_aip_ciclo references aip_ciclo (id_ciclo),
+  cd_nivel varchar(20) not null,
   no_meta smallint not null,
   nm_titulo varchar(100) not null,
   tp_meta varchar(20) not null,
   tp_polaridade varchar(20) not null,
   id_meta_origem integer constraint fk_aip_meta_aip_meta references aip_meta (id_meta),
   sg_ativa char(1) not null default 'S' constraint ck_aip_meta_sg_ativa check (sg_ativa in ('S', 'N')),
-  constraint uq_aip_meta unique (id_nivel, no_meta),
+  constraint uq_aip_meta unique (id_ciclo, cd_nivel, no_meta),
+  constraint ck_aip_meta_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
   constraint ck_aip_meta_tipo check (tp_meta in ('FORMULA', 'MARCOS')),
   constraint ck_aip_meta_polaridade check (tp_polaridade in ('MAIOR', 'MENOR'))
 );
