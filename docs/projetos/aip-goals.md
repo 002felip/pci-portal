@@ -211,6 +211,9 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 - **Business Units:** Nova BU (nome e país ou região), editar (renomear atualiza pesos, pessoas e GGs), chave "No ciclo AIP 2027"
   (vale para o ciclo aberto que está sendo configurado) e excluir só BU sem Goal Card submetido, com confirmação; números
   centralizados (pessoas por grupo, metas, pontos e cards submetidos).
+- **Exceções:** aba da Administração com o texto padrão do ciclo e textos próprios aplicados a uma ou mais BUs.
+- **Goal Card:** BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU,
+  cadastrado em Business Units).
 - **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;
   o ciclo precisa de ao menos um aprovador e um administrador.
 - **Metas e pesos por nível:** seletor CEO › COO › BU (níveis fixos, 100 pts por unidade); matriz meta × unidade editável,
