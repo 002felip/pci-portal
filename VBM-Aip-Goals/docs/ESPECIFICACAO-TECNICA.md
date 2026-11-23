@@ -31,7 +31,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | --- | --- | --- | --- |
 | Qualquer usuário do Portal | Todas as telas de leitura (Início, COO AIP, AIP BU's, Goal Card, Versões, Action Log) | Nenhuma (somente leitura) | Nenhum: basta acesso ao Portal (`IBP.USERS`) |
 | Contribuidor | Início (menu), COO AIP e AIP BU's, com Goal Card, Versões e Histórico nos popups | Só os Goal Cards da sua BU (ex.: cadastrado em Salobo edita os cards de Salobo; os demais, só lê) | `AIP_PAPEL` com `TP_GRUPO = CONTRIBUIDOR` e `ID_SITE` (uma linha por BU) |
-| Aprovador | Todas, exceto as administrativas (Configuração do ciclo e Action Log geral); a fila de Aprovações continua disponível | Edita e aprova (devolve ou nega) os Goal Cards de todas as BUs | `AIP_PAPEL` com `TP_GRUPO = APROVACAO` |
+| Aprovador | Todas, exceto a Administração (configuração do ciclo): menu com Aprovações e Action Log | Edita e aprova (devolve ou nega) os Goal Cards de todas as BUs | `AIP_PAPEL` com `TP_GRUPO = APROVACAO` |
 | Administrador | Todas as telas | Tudo, inclusive configuração do ciclo | `AIP_PAPEL` com `TP_GRUPO = ADMIN` |
 
 | ID | Regra de acesso |

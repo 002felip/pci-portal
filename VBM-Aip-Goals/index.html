@@ -1728,14 +1728,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
     <!-- Painel do ciclo (#painel) oculto: a tela segue no código, mas fora do menu e sem rota (VISTAS); para reativar, volte este link e o item em VISTAS -->
     <a class="topnav-menu-link" href="#metas" data-tela="metas" data-perfis="todos"><span data-i18n="nav.metas">AIP BU's</span></a>
     <a class="topnav-menu-link" href="#aprovacoes" data-tela="aprovacoes" data-perfis="pci_coo admin aprovador" hidden><span data-i18n="nav.aprovacoes">Aprovações</span></a>
-    <!-- Administração: telas de apoio agrupadas num submenu (abre no clique; no modo gaveta fica aberto, recuado) -->
-    <div class="topnav-grupo" id="menuAdmin">
-      <button type="button" class="topnav-menu-link topnav-grupo-btn" id="menuAdminBtn" aria-expanded="false" aria-controls="menuAdminPop"><span data-i18n="nav.admin">Administração</span><svg class="ico topnav-grupo-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
-      <div class="topnav-sub" id="menuAdminPop">
-        <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="admin" hidden><span>Action Log</span></a>
-        <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.config">Configuração</span></a>
-      </div>
-    </div>
+    <a class="topnav-menu-link" href="#action-log" data-tela="action-log" data-perfis="pci_coo admin aprovador" hidden><span>Action Log</span></a>
+    <a class="topnav-menu-link" href="#configuracao" data-tela="configuracao" data-perfis="admin" hidden><span data-i18n="nav.admin">Administração</span></a>
   </nav>
   <div class="topnav-actions">
     <button class="topnav-menu-btn" id="topMenuBtn" type="button" aria-expanded="false" aria-controls="topMenu" aria-label="Abrir menu" title="Menu" data-i18n-aria="nav.abrir" data-i18n-title="nav.menuCurto">
@@ -2914,8 +2908,6 @@ window.VBMSetup = (function () {
       var pode = (a.getAttribute('data-perfis') || '').split(' ');
       a.hidden = !(pode.indexOf('todos') >= 0 || pode.some(function (p) { return papeis.indexOf(p) >= 0; }));
     });
-    // Administração só aparece se o perfil vê ao menos uma das telas dela
-    $('menuAdmin').hidden = !$('menuAdminPop').querySelector('.topnav-menu-link:not([hidden])');
   }
 
   document.querySelectorAll('[data-tela-cheia]').forEach(function (b) {
@@ -5030,12 +5022,6 @@ window.VBMSetup = (function () {
     $('topMenuBtn').setAttribute('aria-expanded', String(sim));
     if (sim) { var f = $('topMenu').querySelector('.topnav-menu-link:not([hidden])'); if (f) f.focus(); }
   }
-  // Submenu Administração
-  function abrirAdmin(sim) { $('menuAdmin').classList.toggle('is-aberto', sim); $('menuAdminBtn').setAttribute('aria-expanded', String(sim)); }
-  $('menuAdminBtn').addEventListener('click', function () { abrirAdmin(!$('menuAdmin').classList.contains('is-aberto')); });
-  $('menuAdminPop').addEventListener('click', function (e) { if (e.target.closest('a')) abrirAdmin(false); });
-  document.addEventListener('click', function (e) { if (!e.target.closest('#menuAdmin')) abrirAdmin(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('menuAdmin').classList.contains('is-aberto')) { abrirAdmin(false); $('menuAdminBtn').focus(); } });
   $('topMenuBtn').addEventListener('click', function () { abrirMenu(!$('topMenu').classList.contains('is-aberto')); });
   $('topMenu').addEventListener('click', function (e) { if (e.target.closest('a')) abrirMenu(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('topMenu').classList.contains('is-aberto')) { abrirMenu(false); $('topMenuBtn').focus(); } });
@@ -5074,7 +5060,6 @@ window.VBMSetup = (function () {
     document.title = 'AIP Goals' + (nome ? ' · ' + nome : '');
     document.querySelectorAll('.topnav-menu-link').forEach(function (a) {
       if (a.getAttribute('data-tela') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-      $('menuAdmin').classList.toggle('is-atual', !!$('menuAdminPop').querySelector('[aria-current="page"]'));
     });
     window.scrollTo(0, 0);
   }

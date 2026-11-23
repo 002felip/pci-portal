@@ -611,8 +611,8 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     try {
       if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
       const hoje = agora();
-      // Histórico de um card (popup): aberto a todos. Action Log geral: tela administrativa, só o administrador.
-      if (!req.query.card && !ehAdmin(papeisDe(email, hoje))) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      // Histórico de um card (popup): aberto a todos. Action Log geral: aprovador e administrador.
+      if (!req.query.card && !ehAprovador(papeisDe(email, hoje))) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
       const base = actionLogExemplo(hoje);
       const r = filtrarEventos(base.eventos, req.query, hoje, base.metas, base.bus);
       if (r.erros) return res.status(400).json({ error: 'Filtro inválido.', codigo: 'FILTRO', erros: r.erros });
