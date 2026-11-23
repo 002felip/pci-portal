@@ -1669,6 +1669,14 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
 .ap-cab-eyebrow { margin: 0; font: 600 0.7rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-strong); }
 .ap-cab-tit { margin: 0; font: 600 clamp(1.1rem, 0.9rem + 0.6vw, 1.5rem)/1.25 var(--font-display); color: var(--ink-strong); outline: none; }
 .ap-cab-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ap-cab-gc { display: block; padding: 1.25rem 1.25rem 1rem; }
+.ap-cab-gc .ab-eyebrow { margin: 0 0 0.6rem; font-size: 0.62rem; letter-spacing: .26em; }
+.ap-cab-gc .ap-tit { flex-direction: row; align-items: baseline; gap: 0.6rem; outline: none; }
+.ap-cab-gc .ap-tit .ab-nome { font-size: clamp(1.9rem, 1.3rem + 1.8vw, 2.9rem); }
+.ap-cab-gc .ap-tit .ab-ano { font-size: clamp(1.9rem, 1.3rem + 1.8vw, 2.9rem); }
+.ap-cab-gc .gc-meta-tit { margin: 0.45rem 0 0.9rem; }
+.gc-site-nome { color: var(--accent-strong); text-transform: uppercase; letter-spacing: .04em; }
+.gc-site-sep { margin: 0 0.5rem; color: var(--text-soft); font-weight: 300; }
 .ap-cab-links .btn { min-height: 2rem; padding-block: 0.25rem; font-size: 0.76rem; }
 .ap-aviso { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0; padding: 0.625rem 1.125rem; border-bottom: 1px solid var(--card-line); background: var(--panel); font-size: 0.78rem; color: var(--text); }
 .ap-aviso .ico { flex-shrink: 0; margin-top: 0.15rem; color: var(--accent-strong); }
@@ -3579,11 +3587,10 @@ window.VBMSetup = (function () {
     var d = gc.dados; if (!d) return;
     gcEstado('ok');
     var c = d.ciclo || {}, m = d.meta;
-    $('gcCiclo').textContent = (c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '') + ' · ' + d.bu.sigla;
+    $('gcCiclo').textContent = c.nome ? S.t('nav.ciclo') + ' ' + c.nome : '';
     $('gcNum').textContent = m.numero ? String(m.numero).padStart(2, '0') : 'COO';
-    $('gcTitulo').textContent = m.titulo;
-    // BU (site) em destaque no cabeçalho: deixa claro de qual BU é o card
-    $('gcSite').hidden = !d.bu; $('gcSite').innerHTML = d.bu ? '<span class="gc-site-rot">' + ico('i-target') + esc(S.t('gc.site')) + '</span><b>' + esc(d.bu.sigla) + '</b><span class="gc-site-pais">' + esc(d.bu.pais || '') + '</span>' : '';
+    $('gcTitulo').innerHTML = gcTituloSite(d.bu, m.titulo);
+    $('gcSite').hidden = true;
     $('gcChips').hidden = true;
     $('gcVoltar').href = '#metas?bu=' + encodeURIComponent(d.bu.sigla);
     $('gcVoltarTxt').textContent = S.t('gc.voltar', { b: d.bu.sigla });
@@ -3610,7 +3617,9 @@ window.VBMSetup = (function () {
   }
   // Ficha única do Goal Card (modelo VBM "CARD": rótulo à esquerda, valor à direita, ações e comentários por campo).
   // Campos com cadeado vêm do desdobramento ou do ciclo (somente leitura para a BU, RN-02); campos abertos são da BU.
-    function gcSelo(chave) { return '<span class="gc-selo">' + ico('i-lock') + esc(S.t('gc.selo.' + chave)) + '</span>'; }
+    // NOME DO SITE | Meta: a BU em destaque antes do título da meta (Goal Card e Aprovações)
+  function gcTituloSite(bu, titulo) { return (bu ? '<span class="gc-site-nome">' + esc(bu.sigla) + '</span><span class="gc-site-sep" aria-hidden="true">|</span>' : '') + esc(titulo); }
+  function gcSelo(chave) { return '<span class="gc-selo">' + ico('i-lock') + esc(S.t('gc.selo.' + chave)) + '</span>'; }
   function gcFicha(d, pre) {
     var m = d.meta;
     var pol = '<div class="gc-pol" role="group" aria-label="' + esc(S.t('gc.polaridade')) + '">' + ['menor', 'maior'].map(function (p) {
@@ -5024,17 +5033,13 @@ window.VBMSetup = (function () {
     var alt = (d.alteradasDesde && d.alteradasDesde.secoes) || [];
     var nomes = alt.map(function (id) { return GC_NOMES[id]; }).join(', ');
     var revs = GC_SECOES.map(function (id) { return ap.revisao[id]; }), nOk = revs.filter(function (v) { return v === 'ok'; }).length, nAj = revs.filter(function (v) { return v === 'ajustar'; }).length, t = GC_SECOES.length;
-    var cab = '<header class="ap-cab"><div class="ap-cab-txt"><p class="ap-cab-eyebrow">' + esc(d.bu.sigla + ' · ' + d.card) + '</p>' +
-      '<h3 class="ap-cab-tit" id="apTitCard" tabindex="-1">' + esc((m.numero ? String(m.numero).padStart(2, '0') : 'COO') + ' · ' + m.titulo) + '</h3>' +
-      '<div class="gc-chips"><span class="st st-' + esc(d.estado) + '">' + ico('i-st-' + d.estado) + esc(S.t('est.' + d.estado)) + '</span>' +
-      (d.versao ? '<span class="gc-chip">' + esc(S.t('versao', { n: S.fmt(d.versao, 0) })) + '</span>' : '') +
-      '<span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span><span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' +
-      '<span class="gc-chip">' + (m.polaridade === 'menor' ? '↓ ' : '↑ ') + esc(S.t('gc.pol.' + m.polaridade)) + '</span>' +
-      (d.submetidoPor ? '<span class="gc-chip">' + esc(S.t('ap.submetidoPor', { p: d.submetidoPor })) + '</span>' : '') +
-      (it.idade != null ? '<span class="gc-chip">' + ico('i-clock') + esc(S.t('ap.diasFull', { n: S.fmt(it.idade, 0) })) + '</span>' : '') + '</div></div>' +
+    var cab = '<header class="ap-cab ap-cab-gc"><div class="ap-cab-txt">' +
+      '<p class="ab-eyebrow">Vale Base Metals<span class="ab-ponto" aria-hidden="true"></span>' + esc(d.ciclo && d.ciclo.nome ? S.t('nav.ciclo') + ' ' + d.ciclo.nome : '') + '</p>' +
+      '<h3 class="p2-titulo ap-tit" id="apTitCard" tabindex="-1"><span class="ab-nome">Goal Card</span><span class="ab-ano">' + esc(m.numero ? String(m.numero).padStart(2, '0') : 'COO') + '</span></h3>' +
+      '<p class="gc-meta-tit">' + gcTituloSite(d.bu, m.titulo) + '</p>' +
       '<div class="ap-cab-links">' +
       (d.versao ? '<button type="button" class="btn btn-sec cf-mini gc-link" data-ap-vs>' + ico('i-history') + esc(S.t(d.versao === 1 ? 'vs.link1' : 'vs.link', { n: d.versao })) + '</button>' : '') +
-      '<button type="button" class="btn btn-sec cf-mini gc-link" data-ap-log>' + ico('i-tasks') + esc(S.t('vs.historico')) + '</button></div></header>';
+      '<button type="button" class="btn btn-sec cf-mini gc-link" data-ap-log>' + ico('i-tasks') + esc(S.t('vs.historico')) + '</button></div></div></header>';
     var aviso = (d.versao > 1 && alt.length ? '<p class="ap-aviso">' + ico('i-history') + '<span>' + esc(S.t('ap.alteradas', { v: S.fmt(d.alteradasDesde.versao, 0), l: nomes })) + '</span></p>' : '') +
       (!pode ? '<p class="ap-aviso is-rn12" role="note">' + ico('i-lock') + '<span>' + esc(S.t('gc.rn12')) + '</span></p>' : '');
     var nMarc = GC_SECOES.filter(function (id) { return ap.revisao[id] === 'ajustar'; }).length;
