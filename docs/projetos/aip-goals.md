@@ -211,6 +211,8 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 - **Business Units:** Nova BU (nome e país ou região), editar (renomear atualiza pesos, pessoas e GGs), chave "No ciclo AIP 2027"
   (vale para o ciclo aberto que está sendo configurado) e excluir só BU sem Goal Card submetido, com confirmação; números
   centralizados (pessoas por grupo, metas, pontos e cards submetidos).
+- **Aprovações:** ficha no formato do Goal Card, Versões e Histórico em popup, lápis de ajuste por item com comentário
+  obrigatório e balão quando há comentário. **Reabrir para edição** um card aprovado: só o administrador.
 - **Exceções:** aba da Administração com o texto padrão do ciclo e textos próprios aplicados a uma ou mais BUs.
 - **Goal Card:** BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU,
   cadastrado em Business Units).
