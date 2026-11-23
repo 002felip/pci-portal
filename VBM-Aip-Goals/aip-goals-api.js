@@ -179,12 +179,16 @@ function camposObrigatorios(secoes) {
 }
 
 // Decisão do grupo de aprovação (nível único, D-09): Devolver exige comentário e uma seção Ajustar (RN-08); Negar, justificativa (RN-09).
-function validarDecisao({ decisao, comentario, revisao } = {}) {
+function validarDecisao({ decisao, comentario, revisao, ajustes } = {}) {
   const erros = [];
+  const marcadas = Object.keys(revisao || {}).filter((k) => revisao[k] === 'ajustar');
   if (!['aprovar', 'devolver', 'negar'].includes(decisao)) erros.push('decisao');
   const txt = String(comentario || '').trim();
   if ((decisao === 'devolver' || decisao === 'negar') && txt.length < LIMITE_COMENTARIO) erros.push('comentario');
-  if (decisao === 'devolver' && !Object.values(revisao || {}).includes('ajustar')) erros.push('secaoAjustar');
+  if (decisao === 'devolver' && !marcadas.length) erros.push('secaoAjustar');
+  // Cada item marcado para ajuste exige o seu comentário; aprovar não combina com item marcado para ajuste
+  if (decisao === 'devolver' && marcadas.some((k) => !String((ajustes || {})[k] || '').trim())) erros.push('ajusteSemComentario');
+  if (decisao === 'aprovar' && marcadas.length) erros.push('aprovarComAjuste');
   return erros;
 }
 
@@ -485,7 +489,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       const card = lerCard(req, res, hoje); if (!card) return; // leitura aberta a qualquer usuário do Portal (AC-07)
       const modo = modoDoCard(card, papeis);
       res.json({ ...card, modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
-        permissoes: { editar: modo === 'edicao' },
+        permissoes: { editar: modo === 'edicao', reabrir: ehAdmin(papeis) && card.estado === 'aprovado' },
         parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
     } catch (err) {
       console.error(`${TAG} /goal-card:`, err.message);
@@ -510,6 +514,22 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     } catch (err) {
       console.error(`${TAG} /goal-card/submeter:`, err.message);
       res.status(500).json({ error: 'Não foi possível submeter.', codigo: 'ERRO' });
+    }
+  });
+
+  // Reabrir para edição um card já aprovado: só o administrador do sistema; o card volta para Rascunho
+  router.post('/goal-card/reabrir', express.json({ limit: '10kb' }), async (req, res) => {
+    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
+    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    try {
+      const hoje = agora(); const papeis = papeisDe(email, hoje);
+      const card = lerCard(req, res, hoje); if (!card) return;
+      if (!ehAdmin(papeis)) return res.status(403).json({ error: 'Só o administrador reabre um card aprovado.', codigo: 'SEM_ACESSO' });
+      if (card.estado !== 'aprovado') return res.status(409).json({ error: 'Só um card aprovado pode ser reaberto.', codigo: 'ESTADO' });
+      res.json({ ok: true, simulado: true, estado: 'rascunho' });
+    } catch (err) {
+      console.error(`${TAG} /goal-card/reabrir:`, err.message);
+      res.status(500).json({ error: 'Não foi possível reabrir o Goal Card.', codigo: 'ERRO' });
     }
   });
 

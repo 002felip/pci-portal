@@ -61,6 +61,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-21 | Configuração do ciclo: ano editável; cadastro completo de BU (criar, editar, tirar do ciclo e excluir só sem Goal Card submetido), sempre para o ciclo aberto que está sendo configurado; desdobramento de pontos em níveis CEO → COO → BU → GG → GA, com total e herdado por nível nos Parâmetros e metas e pesos por nível; sem o histórico de últimas alterações na tela | 18/11/2026 |
 | D-22 | Aba Parâmetros da Administração descontinuada: níveis fixos CEO → COO → BU com 100 pts por unidade; GG e GA fora no primeiro momento; pontos herdados editados em Metas e pesos; limites das regras na aplicação. No banco, sai a `AIP_NIVEL`. |
 | D-23 | Goal Card com a BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU, do cadastro da BU); aba Exceções na Administração para o texto padrão do ciclo e textos próprios aplicados a uma ou mais BUs. No banco, `CD_MATRICULA_DIRETOR` e `DS_EXCECOES` na `AIP_UNIDADE`. |
+| D-24 | Aprovações: ficha no formato do Goal Card, com Versões e Histórico em popup; lápis por item para marcar ajuste, com comentário obrigatório por item; balão quando o item tem comentário; regras de aprovar, devolver (com comentário) e negar mantidas. Reabertura de card aprovado só pelo administrador (responde à D-12). |
 
 ## 4. Suposições a confirmar
 
@@ -91,7 +92,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 
 | Pergunta | Destrava |
 | --- | --- |
-| Quem reabre o card Aprovado na janela inicial: o grupo de aprovação, o administrador ou ambos? | D-12 |
+| Quem reabre o card Aprovado? **Resolvido (D-24): só o administrador.** | D-12 |
 | O time de dados valida o modelo proposto ou indica ajustes? | P-12 |
 | Haverá aprovação local da CEO-2 antes do envio? | P-09 |
 | Quais BUs, pessoas e pesos entram no piloto, e quem é o dono do produto? | P-10 |

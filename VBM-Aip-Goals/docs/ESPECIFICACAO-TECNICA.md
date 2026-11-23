@@ -64,7 +64,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | RN-13 | Comentário publicado | Estado do card não muda; o comentário fica ancorado à seção e aparece no Goal Card e no Action Log |
 | RN-15 | Administrador reabre um card Negado | Card volta a Rascunho com justificativa registrada |
 | RN-16 | Soma dos pesos da BU sempre igual ao total do desdobramento | Regra sistêmica: o servidor recusa gravar metas e pesos (T11) com soma diferente do total e não abre o ciclo enquanto alguma BU não fechar o total; não existe estado com diferença a alertar |
-| RN-17 | Card Aprovado precisa mudar | Dentro da janela inicial do ciclo (até o fim da etapa de calibração e aprovação, antes da publicação dos Goal Cards oficiais), o grupo de aprovação ou o administrador reabre o card com justificativa: volta a Rascunho e a resubmissão gera vN+1. Fora dessa janela, só via Change Request (fase 2), que gera vN+1 com motivo CR-xxx |
+| RN-17 | Card Aprovado precisa mudar | Só o administrador do sistema reabre um card aprovado para edição (botão "Reabrir para edição" no Goal Card, com confirmação). O card volta para Rascunho; a versão aprovada continua no histórico e a reabertura vai ao Action Log. |
 | RN-18 | Exclusão de BU, meta ou pessoa | Não existe; o registro é desativado e o histórico é preservado |
 | RN-19 | Usuário do grupo de consulta tenta editar, comentar ou decidir | A ação não aparece na interface; a API responde 403 e o log registra a tentativa |
 
@@ -94,7 +94,7 @@ Limites (definidos na aplicação, fora do banco e da tela de Administração): 
 
 Não mudam o estado: comentário e alteração dos membros dos grupos (a pendência só muda de dono).
 
-**Revisão por seção (T14 Aprovações):** no painel de decisão, cada uma das 7 seções recebe OK, Ajustar ou fica sem análise. Na devolução, os contribuidores abrem o card direto nas seções Ajustar. Na resubmissão, as seções alteradas aparecem destacadas para o aprovador.
+**Revisão por item (T14 Aprovações):** a ficha mostra os dados como no Goal Card, com acesso direto às Versões e ao Histórico (popups). Cada item tem um lápis "Marcar para ajuste": marcado, abre o campo obrigatório "O que precisa ser ajustado". Se o item tem comentário, aparece o balão (sem texto), que abre os comentários. Itens sem o lápis contam como OK. Aprovar não aceita item marcado; Devolver exige ao menos um item marcado, o comentário de cada um e o comentário da decisão (mínimo de caracteres); Negar exige comentário. A decisão é final (nível único).
 
 ## 5. Tipos de meta e campos do Goal Card
 
