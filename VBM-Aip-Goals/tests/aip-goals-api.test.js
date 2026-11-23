@@ -114,15 +114,15 @@ test('GET /metas: soma dos pesos, peso por situação e alerta da RN-16', async 
   } finally { s.close(); }
 });
 
-test('GET /metas: recorte por papel (AC-04/AC-05) e BU fora do recorte responde 404', async () => {
+test('GET /metas: leitura aberta a todas as BUs; abre na BU do contribuidor; BU inexistente responde 404', async () => {
   const pontoFocal = () => [{ papel: 'ponto_focal', bu: 'Salobo' }];
   const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: pontoFocal }));
   try {
     const h = { 'X-Forwarded-Email': 'focal@vale.com' };
     const padrao = await pedir(s, '/api/metas', h);
     assert.strictEqual(padrao.corpo.bu.sigla, 'Salobo');
-    assert.deepStrictEqual(padrao.corpo.bus.map((b) => b.sigla), ['Salobo']);
-    assert.strictEqual((await pedir(s, '/api/metas?bu=VNL', h)).status, 404);
+    assert.strictEqual(padrao.corpo.bus.length, 7);
+    assert.strictEqual((await pedir(s, '/api/metas?bu=VNL', h)).status, 200);
     assert.strictEqual((await pedir(s, '/api/metas?bu=Inexistente', h)).status, 404);
     assert.strictEqual((await pedir(s, '/api/painel', h)).status, 403); // painel é só do P&CI/COO
   } finally { s.close(); }
@@ -152,16 +152,14 @@ test('GET /desdobramento: matriz CEO → COO → BUs, totais por BU e situação
   } finally { s.close(); }
 });
 
-test('GET /desdobramento: colunas só das BUs do recorte (AC-04/AC-05)', async () => {
+test('GET /desdobramento: leitura aberta, todas as BUs para qualquer usuário (AC-05)', async () => {
   const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'ponto_focal', bu: 'Salobo' }] }));
   try {
     const r = await pedir(s, '/api/desdobramento', { 'X-Forwarded-Email': 'focal@vale.com' });
-    assert.deepStrictEqual(r.corpo.bus.map((b) => b.sigla), ['Salobo']);
-    assert.ok(r.corpo.linhas.every((l) => Object.keys(l.celulas).join() === 'Salobo' && l.celulas.Salobo));
-    assert.ok(!r.corpo.linhas.some((l) => l.numero === 8)); // Bacaba é só de Sossego
+    assert.strictEqual(r.corpo.bus.length, 7);
   } finally { s.close(); }
   const s2 = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
-  try { assert.strictEqual((await pedir(s2, '/api/desdobramento', { 'X-Forwarded-Email': 'x@vale.com' })).status, 403); } finally { s2.close(); }
+  try { assert.strictEqual((await pedir(s2, '/api/desdobramento', { 'X-Forwarded-Email': 'x@vale.com' })).status, 200); } finally { s2.close(); }
 });
 
 // ── T04 Goal Card ──
@@ -194,11 +192,11 @@ test('GET /goal-card: ficha do contribuidor (edição) ou leitura, campos obriga
     assert.strictEqual((await pedir(s, '/api/goal-card?card=GC-XX', h)).status, 400);
     assert.strictEqual((await pedir(s, '/api/goal-card?card=GC-ZZZ-99', h)).status, 404);
   } finally { s.close(); }
-  const leitor = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'consulta', bu: null }] }));
+  const leitor = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
   try {
     const h = { 'X-Forwarded-Email': 'leitor@vale.com' };
     const r = await pedir(leitor, '/api/goal-card?card=GC-VNL-04', h);
-    assert.strictEqual(r.corpo.modo, 'leitura'); // consulta vê todas as BUs, sem editar nem decidir
+    assert.strictEqual(r.corpo.modo, 'leitura'); // sem papel: lê todas as BUs, sem editar nem decidir
     assert.strictEqual((await enviar(leitor, '/api/goal-card/decisao', { card: 'GC-VNL-04', decisao: 'aprovar' }, h)).status, 403);
     assert.strictEqual((await enviar(leitor, '/api/goal-card/submeter', { card: 'GC-SAL-09', secoes: {} }, h)).status, 403);
   } finally { leitor.close(); }
@@ -272,8 +270,8 @@ test('T11 Configuração: só o administrador; RN-16 por nível (CEO → GA); an
   } finally { admin.close(); contrib.close(); }
 });
 
-test('T07 Action Log: leitura para quem tem papel; filtros validados; paginação de 40; porTipo ignora o tipo', async () => {
-  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'consulta', bu: 'Salobo' }] }));
+test('T07 Action Log: geral só do administrador; histórico de um card aberto a todos; filtros validados; paginação de 40', async () => {
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'admin', bu: null }] }));
   const sem = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
   try {
     const h = { 'X-Forwarded-Email': 'c@vale.com' };
@@ -290,6 +288,7 @@ test('T07 Action Log: leitura para quem tem papel; filtros validados; paginaçã
     assert.strictEqual((await pedir(s, '/api/action-log?tipo=xx', h)).status, 400);
     assert.strictEqual((await pedir(s, '/api/action-log?bu=Marte', h)).status, 400);
     assert.strictEqual((await pedir(sem, '/api/action-log', h)).status, 403);
+    assert.strictEqual((await pedir(sem, '/api/action-log?card=GC-SAL-04', h)).status, 200);
   } finally { s.close(); sem.close(); }
 });
 
@@ -298,7 +297,7 @@ test('T06 Versões: rascunho sem versão; versões mais recentes primeiro; ofici
   const cards = painelExemplo(HOJE).cards;
   const aprovadoV2 = cards.find((c) => c.estado === 'aprovado' && c.versao > 1) || cards.find((c) => c.versao > 1);
   const rascunho = cards.find((c) => c.estado === 'rascunho');
-  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'consulta', bu: 'Salobo' }] }));
+  const s = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [] }));
   try {
     const h = { 'X-Forwarded-Email': 'c@vale.com' };
     const r = await pedir(s, '/api/versoes?card=' + aprovadoV2.card, h);
@@ -332,7 +331,7 @@ test('GET /aprovacoes (T14): só o grupo de aprovação; fila Em aprovação com
     assert.ok(velhos.corpo.itens.every((it) => it.idade >= 5));
     assert.strictEqual((await pedir(s, '/api/aprovacoes?idade=99', h)).corpo.filtro.idade, 'todas');
   } finally { s.close(); }
-  const outros = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'contribuidor', bu: 'Salobo' }, { papel: 'consulta', bu: null }] }));
+  const outros = await servidor(criarAipGoalsRouter({ agora: () => HOJE, papeisDe: () => [{ papel: 'contribuidor', bu: 'Salobo' }] }));
   try {
     const h = { 'X-Forwarded-Email': 'contrib@vale.com' };
     assert.strictEqual((await pedir(outros, '/api/aprovacoes', h)).status, 403); // AC-08, CA-19
