@@ -4,6 +4,7 @@
  * mesma página e a mesma API (aip-goals-api.js) sozinho.
  *
  *   NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js
+ *   AIPGOALS_PERFIL_LOCAL=leitor|contribuidor|aprovador|admin simula um perfil (só em desenvolvimento)
  *   → http://localhost:8020/
  *
  * Identidade: no Portal vem SOMENTE do X-Forwarded-Email do proxy. Aqui,

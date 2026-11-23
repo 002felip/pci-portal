@@ -60,12 +60,8 @@ function pendenciasExemplo(hoje = new Date()) {
     usuario: {
       // Papéis por BU e por ciclo (AC-02): a mesma pessoa pode ter papéis diferentes.
       papeis: [
-        { papel: 'ponto_focal', bu: 'Salobo' },
-        { papel: 'ponto_focal', bu: 'Sossego' },
-        { papel: 'diretor', bu: 'VNL' },
-        // Membro do grupo de aprovação final (vê todas as BUs e o Painel do ciclo, AC-07)
-        { papel: 'pci_coo', bu: null },
-        // Administrador: edita as metas de todas as BUs (AC-05)
+        // Regra de acesso: leitura aberta; contribuidor por BU; aprovador edita e aprova; admin tem todas as telas
+        { papel: 'contribuidor', bu: 'Salobo' },
         { papel: 'admin', bu: null },
       ],
     },
@@ -306,13 +302,11 @@ function configuracaoExemplo(hoje = new Date()) {
   // Grupo de aprovação (P&CI/COO, nível único) e administrador: sem BU
   ['Gabriela Lima', 'Henrique Prado', 'Isabela Nunes', 'João Ferreira', 'Usuário Demonstração'].forEach((n) => membros.push({ ...por(n), grupo: 'aprovacao', bu: null }));
   ['Usuário Demonstração', 'Karen Duarte'].forEach((n) => membros.push({ ...por(n), grupo: 'admin', bu: null }));
-  // Contribuidores (2 por BU) e consulta (1 por BU)
+  // Contribuidores (2 por BU)
   const contrib = { 'Onça Puma': ['Ana Ribeiro', 'Lucas Teixeira'], Salobo: ['Carla Mendes', 'Usuário Demonstração'], Sossego: ['Daniel Souza', 'Usuário Demonstração'],
     Ontario: ['Jessica Tremblay', 'Marc Gagnon'], VNL: ['William Grant', 'Emily Clarke'], Clydach: ['Owen Davies', 'Rhys Morgan'], Matsusaka: ['Hiroshi Tanaka', 'Yuki Sato'] };
-  const consulta = { 'Onça Puma': 'Mariana Rocha', Salobo: 'Nicolas Barros', Sossego: 'Olivia Campos', Ontario: 'Paulo Moreira', VNL: 'Rafaela Pires', Clydach: 'Sérgio Almeida', Matsusaka: 'Tatiana Lopes' };
   ciclo.bus.forEach((b) => {
     contrib[b.sigla].forEach((n) => membros.push({ ...por(n), grupo: 'contribuidor', bu: b.sigla }));
-    membros.push({ ...por(consulta[b.sigla]), grupo: 'consulta', bu: b.sigla });
   });
   // Desdobramento em níveis (CEO → COO → BU → GG → GA): cada unidade de um nível recebe os pontos herdados do
   // nível acima (linha "Resultado do nível acima") e distribui o restante entre as metas do seu nível (RN-16).
@@ -430,7 +424,7 @@ function actionLogExemplo(hoje = new Date()) {
   ];
   cfgEv.forEach((x, k) => add({ tipo: 'configuracao', quando: em(iso(hoje), 20 + k, x.d), quem: x.quem, papel: 'admin', bu: x.bu || null, meta: null, card: null, secao: x.secao, detalhe: x.detalhe, antes: x.antes, depois: x.depois }));
   // Acessos negados (AC-03, AC-04, RN-19)
-  add({ tipo: 'acesso_negado', quando: em(iso(hoje), 31, 1), quem: 'Nicolas Barros', papel: 'consulta', bu: 'Salobo', meta: null, card: null, detalhe: 'tentou editar um Goal Card de Salobo (grupo de consulta)' });
+  add({ tipo: 'acesso_negado', quando: em(iso(hoje), 31, 1), quem: 'Nicolas Barros', papel: 'leitor', bu: null, meta: null, card: null, detalhe: 'tentou editar um Goal Card de Salobo sem ser contribuidor da BU' });
   add({ tipo: 'acesso_negado', quando: em(iso(hoje), 32, 5), quem: 'Lucas Teixeira', papel: 'contribuidor', bu: null, meta: null, card: null, secao: null, detalhe: 'tentou abrir a Configuração do ciclo' });
   ev.sort((a, b) => (a.quando < b.quando ? 1 : a.quando > b.quando ? -1 : 0));
   return { ciclo: base.ciclo, eventos: ev, bus: base.ciclo.bus, metas: [META_RESULTADO_COO].concat(METAS_BU).map((m) => ({ numero: m.numero, titulo: m.titulo })) };

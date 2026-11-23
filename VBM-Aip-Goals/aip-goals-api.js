@@ -140,12 +140,13 @@ function agregarDesdobramento(base, cards, bus) {
 }
 
 // ── T04 Goal Card ──
-// Grupos (D-10): contribuidor (por BU), aprovador (grupo de aprovação), consulta. Papéis antigos dos dados de exemplo são mapeados.
+// Regra de acesso: qualquer usuário do Portal lê tudo; contribuidor edita os cards da sua BU; aprovador edita e aprova
+// todos os cards (sem telas administrativas); administrador tem todas as telas. Papéis antigos dos exemplos são mapeados.
 const ehAprovador = (papeis) => papeis.some((p) => ['aprovador', 'pci_coo', 'admin'].includes(p.papel));
 const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'ponto_focal'].includes(p.papel) && p.bu === sigla);
-// Edição: contribuidor da própria BU ou administrador, que edita as metas de todas as BUs (AC-05)
+// Edição (AC-05): contribuidor da BU do card, aprovador ou administrador
 const ehAdmin = (papeis) => papeis.some((p) => p.papel === 'admin');
-const podeEditar = (papeis, sigla) => ehAdmin(papeis) || contribuidorDe(papeis, sigla);
+const podeEditar = (papeis, sigla) => ehAprovador(papeis) || contribuidorDe(papeis, sigla);
 const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (limite definido na aplicação)
 const MAX_COMENTARIO = 2000;  // tamanho máximo de um comentário de seção
 const SECOES_CARD = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
@@ -211,7 +212,7 @@ function linhaDoCard(card) {
 
 // ── T11 Configuração do ciclo (só o administrador, §7.1) ──
 const ABAS_CONFIG = ['ciclo', 'bus', 'grupos', 'metas', 'parametros'];
-const GRUPOS = ['contribuidor', 'aprovacao', 'consulta', 'admin'];
+const GRUPOS = ['contribuidor', 'aprovacao', 'admin'];
 const dataValida = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(v));
 // Unidades ativas de cada nível: CEO e COO (unidades), BUs ativas, GG das BUs ativas e GA dessas GG
 function unidadesAtivas(nivel, unidades, bus) {
@@ -266,7 +267,7 @@ function validarConfiguracao(aba, dados, base) {
     (d.membros || []).forEach((m, i) => {
       if (!/^[A-Za-z0-9]{4,12}$/.test(String(m.matricula || ''))) erros.push({ campo: `membros.${i}.matricula`, codigo: 'MATRICULA' });
       if (!GRUPOS.includes(m.grupo)) erros.push({ campo: `membros.${i}.grupo`, codigo: 'GRUPO' });
-      const precisaBu = m.grupo === 'contribuidor' || m.grupo === 'consulta';
+      const precisaBu = m.grupo === 'contribuidor';
       if (precisaBu && !siglas.includes(m.bu)) erros.push({ campo: `membros.${i}.bu`, codigo: 'BU' });
     });
     if (!(d.membros || []).some((m) => m.grupo === 'aprovacao')) erros.push({ campo: 'membros', codigo: 'SEM_APROVADOR' });
@@ -337,7 +338,12 @@ function filtrarEventos(eventos, q, hoje, metas, bus) {
 }
 
 // Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
-const papeisExemplo = (email, hoje) => pendenciasExemplo(hoje).usuario.papeis || [];
+// Em desenvolvimento, AIPGOALS_PERFIL_LOCAL simula um perfil: leitor, contribuidor (Salobo), aprovador ou admin.
+const PERFIS_LOCAIS = { leitor: [], contribuidor: [{ papel: 'contribuidor', bu: 'Salobo' }], aprovador: [{ papel: 'aprovador', bu: null }], admin: [{ papel: 'admin', bu: null }] };
+const papeisExemplo = (email, hoje) => {
+  const p = process.env.NODE_ENV === 'development' && PERFIS_LOCAIS[process.env.AIPGOALS_PERFIL_LOCAL];
+  return p || pendenciasExemplo(hoje).usuario.papeis || [];
+};
 const veTodas = (papeis) => papeis.some((p) => p.papel === 'pci_coo' || p.papel === 'admin');
 
 function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Date(), papeisDe = papeisExemplo } = {}) {
@@ -410,13 +416,12 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       const hoje = agora();
       const papeis = papeisDe(email, hoje);
       const base = painelExemplo(hoje);
-      // Recorte (AC-04/AC-05): P&CI/COO e administrador veem todas as BUs; os demais, só as dos seus papéis
-      const minhas = new Set(papeis.filter((p) => p.bu).map((p) => p.bu));
-      const bus = base.ciclo.bus.filter((b) => veTodas(papeis) || minhas.has(b.sigla));
-      if (!bus.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
-      const sigla = String(req.query.bu || bus[0].sigla);
+      // Leitura aberta (AC-05): todas as BUs para qualquer usuário; sem ?bu=, abre na BU do contribuidor
+      const bus = base.ciclo.bus;
+      const minha = papeis.find((p) => p.bu && bus.some((b) => b.sigla === p.bu));
+      const sigla = String(req.query.bu || (minha ? minha.bu : bus[0].sigla));
       const bu = bus.find((b) => b.sigla === sigla);
-      // BU inexistente ou fora do recorte: 404, sem revelar se existe (AC-04)
+      // BU inexistente: 404
       if (!bu) return res.status(404).json({ error: 'Não encontrado.', codigo: 'NAO_ENCONTRADO' });
       const limite = Number(base.parametros.diasParado) || 3;
       const ag = agregarMetas(base.cards.filter((c) => c.bu.sigla === bu.sigla), Number(base.parametros.pesoTotal) || 100, limite, hoje);
@@ -437,9 +442,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       const papeis = papeisDe(email, hoje);
       const base = desdobramentoExemplo(hoje);
       // Recorte (AC-04/AC-05): o scorecard do COO é a origem comum; as colunas de BU seguem os papéis do usuário
-      const minhas = new Set(papeis.filter((p) => p.bu).map((p) => p.bu));
-      const bus = base.ciclo.bus.filter((b) => veTodas(papeis) || minhas.has(b.sigla));
-      if (!bus.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const bus = base.ciclo.bus; // leitura aberta: todas as BUs para qualquer usuário (AC-05)
       const cards = painelExemplo(hoje).cards.filter((c) => bus.some((b) => b.sigla === c.bu.sigla));
       res.json({ ciclo: base.ciclo, parametros: base.parametros, scorecardCoo: base.scorecardCoo, bus,
         ...agregarDesdobramento(base, cards, bus), atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
@@ -467,8 +470,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
       const hoje = agora();
       const papeis = papeisDe(email, hoje);
-      if (!papeis.length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
-      const card = lerCard(req, res, hoje); if (!card) return;
+      const card = lerCard(req, res, hoje); if (!card) return; // leitura aberta a qualquer usuário do Portal (AC-07)
       const modo = modoDoCard(card, papeis);
       res.json({ ...card, modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
         permissoes: { editar: modo === 'edicao' },
@@ -485,7 +487,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     try {
       const hoje = agora(); const papeis = papeisDe(email, hoje);
       const card = lerCard(req, res, hoje); if (!card) return;
-      // Escrita só para contribuidores da BU ou administrador (AC-04, AC-05); consulta e outras BUs: 403
+      // Escrita: contribuidor da BU, aprovador ou administrador (AC-04, AC-05); demais: 403
       if (!podeEditar(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
       const pend = camposObrigatorios(req.body.secoes).filter((x) => !x.ok).map((x) => x.id);
@@ -609,7 +611,8 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     try {
       if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
       const hoje = agora();
-      if (!papeisDe(email, hoje).length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      // Histórico de um card (popup): aberto a todos. Action Log geral: tela administrativa, só o administrador.
+      if (!req.query.card && !ehAdmin(papeisDe(email, hoje))) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
       const base = actionLogExemplo(hoje);
       const r = filtrarEventos(base.eventos, req.query, hoje, base.metas, base.bus);
       if (r.erros) return res.status(400).json({ error: 'Filtro inválido.', codigo: 'FILTRO', erros: r.erros });
@@ -632,8 +635,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     try {
       if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
       const hoje = agora();
-      if (!papeisDe(email, hoje).length) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
-      const codigo = String(req.query.card || '');
+      const codigo = String(req.query.card || ''); // Versões: leitura aberta (AC-07)
       if (!/^GC-[A-Z]{2,3}-\d{2}$/.test(codigo)) return res.status(400).json({ error: 'Goal Card inválido.', codigo: 'CARD' });
       const v = versoesExemplo(codigo, hoje);
       if (!v) return res.status(404).json({ error: 'Goal Card não encontrado.', codigo: 'NAO_ENCONTRADO' });
