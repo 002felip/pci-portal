@@ -62,6 +62,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-22 | Aba Parâmetros da Administração descontinuada: níveis fixos CEO → COO → BU com 100 pts por unidade; GG e GA fora no primeiro momento; pontos herdados editados em Metas e pesos; limites das regras na aplicação. No banco, sai a `AIP_NIVEL`. |
 | D-23 | Goal Card com a BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU, do cadastro da BU); aba Exceções na Administração para o texto padrão do ciclo e textos próprios aplicados a uma ou mais BUs. No banco, `CD_MATRICULA_DIRETOR` e `DS_EXCECOES` na `AIP_UNIDADE`. |
 | D-24 | Aprovações: ficha no formato do Goal Card, com Versões e Histórico em popup; lápis por item para marcar ajuste, com comentário obrigatório por item; balão quando o item tem comentário; regras de aprovar, devolver (com comentário) e negar mantidas. Reabertura de card aprovado só pelo administrador (responde à D-12). |
+| D-25 | A opção Negar não será usada: a decisão só aprova ou devolve para ajuste. Sai o estado Negado (telas, legendas, API e banco: `TP_ESTADO` e `TP_DECISAO`). |
 
 ## 4. Suposições a confirmar
 

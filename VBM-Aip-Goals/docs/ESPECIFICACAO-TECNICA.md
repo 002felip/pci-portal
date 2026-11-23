@@ -40,7 +40,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | AC-02 | O papel (contribuidor, aprovador ou administrador) é atribuído por ciclo em `AIP_PAPEL`; o contribuidor tem uma linha por BU. O antigo grupo Consulta deixa de existir: a leitura é aberta a qualquer usuário do Portal. |
 | AC-03 | Usuário sem papel no ciclo entra em somente leitura; só as telas administrativas e as ações de escrita respondem 403 (com evento "Acesso negado" no log). |
 | AC-04 | Escrita (editar, submeter, recolher ou comentar) em BU que não está no cadastro do usuário retorna 403 e gera evento no log. |
-| AC-05 | Todos veem todos os dados de todas as BUs. Editar um Goal Card: contribuidor da BU do card, aprovador ou administrador. Aprovar, devolver ou negar: aprovador ou administrador. |
+| AC-05 | Todos veem todos os dados de todas as BUs. Editar um Goal Card: contribuidor da BU do card, aprovador ou administrador. Aprovar ou devolver: aprovador ou administrador. |
 | AC-06 | Usuário inativo em `IBP.USERS` é tratado como sem acesso; suas pendências aparecem para o administrador reatribuir. |
 | AC-07 | As telas de leitura (Início, COO AIP, AIP BU's, Goal Card em leitura, Versões e Action Log do card) ficam abertas a qualquer usuário do Portal. As telas administrativas (submenu Administração) são só do administrador. |
 | AC-08 | A fila de Aprovações é do aprovador e do administrador; os demais não veem o item no menu e a API responde 403 (com evento no log). |
@@ -62,8 +62,8 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | RN-11 | Contribuidor recolhe a submissão antes da decisão | Card volta a Rascunho; vN fica no histórico como Recolhida |
 | RN-12 | Aprovador também é contribuidor da BU e editou ou submeteu a versão | Não pode decidir; a pendência fica com os demais membros do grupo de aprovação |
 | RN-13 | Comentário publicado | Estado do card não muda; o comentário fica ancorado à seção e aparece no Goal Card e no Action Log |
-| RN-15 | Administrador reabre um card Negado | Card volta a Rascunho com justificativa registrada |
 | RN-16 | Soma dos pesos da BU sempre igual ao total do desdobramento | Regra sistêmica: o servidor recusa gravar metas e pesos (T11) com soma diferente do total e não abre o ciclo enquanto alguma BU não fechar o total; não existe estado com diferença a alertar |
+| RN-15 | Sem negação | O grupo de aprovação só aprova ou devolve para ajuste; não existe Negar nem o estado Negado no modelo (D-25). |
 | RN-17 | Card Aprovado precisa mudar | Só o administrador do sistema reabre um card aprovado para edição (botão "Reabrir para edição" no Goal Card, com confirmação). O card volta para Rascunho; a versão aprovada continua no histórico e a reabertura vai ao Action Log. |
 | RN-18 | Exclusão de BU, meta ou pessoa | Não existe; o registro é desativado e o histórico é preservado |
 | RN-19 | Usuário do grupo de consulta tenta editar, comentar ou decidir | A ação não aparece na interface; a API responde 403 e o log registra a tentativa |
@@ -78,23 +78,20 @@ Limites (definidos na aplicação, fora do banco e da tela de Administração): 
 | Em aprovação / Pending approval | Submetido; aguarda a decisão do grupo de aprovação (nível único) | Ninguém |
 | Em revisão / In Review | Devolvido aos contribuidores com seções marcadas Ajustar | Contribuidores da BU |
 | Aprovado / Approved | Versão oficial; travado | Ninguém (reabertura na janela inicial do ciclo, RN-17; depois, só via CR) |
-| Negado / Denied | Meta não será usada no ciclo; final | Ninguém (só reabertura pelo administrador) |
 
 | De | Evento | Para | Quem |
 | --- | --- | --- | --- |
 | Rascunho | Submeter (campos obrigatórios preenchidos) | Em aprovação | Contribuidor |
 | Em aprovação | Aprovar | Aprovado | Membro do grupo de aprovação |
 | Em aprovação | Devolver | Em revisão | Membro do grupo de aprovação |
-| Em aprovação | Negar | Negado | Membro do grupo de aprovação |
 | Em aprovação, sem decisão | Recolher | Rascunho | Contribuidor |
 | Em revisão | Resubmeter | Em aprovação | Contribuidor |
-| Negado | Reabrir com justificativa | Rascunho | Administrador |
 | Aprovado, dentro da janela inicial do ciclo | Reabrir com justificativa (RN-17) | Rascunho | Grupo de aprovação ou administrador |
 | Aprovado, fora da janela inicial | CR aprovado (fase 2) | Aprovado (nova versão oficial) | Grupo de aprovação |
 
 Não mudam o estado: comentário e alteração dos membros dos grupos (a pendência só muda de dono).
 
-**Revisão por item (T14 Aprovações):** a ficha mostra os dados como no Goal Card, com acesso direto às Versões e ao Histórico (popups). Cada item tem um lápis "Marcar para ajuste": marcado, abre o campo obrigatório "O que precisa ser ajustado". Se o item tem comentário, aparece o balão (sem texto), que abre os comentários. Itens sem o lápis contam como OK. Aprovar não aceita item marcado; Devolver exige ao menos um item marcado, o comentário de cada um e o comentário da decisão (mínimo de caracteres); Negar exige comentário. A decisão é final (nível único).
+**Revisão por item (T14 Aprovações):** a ficha mostra os dados como no Goal Card, com acesso direto às Versões e ao Histórico (popups). Cada item tem um lápis "Marcar para ajuste": marcado, abre o campo obrigatório "O que precisa ser ajustado". Se o item tem comentário, aparece o balão (sem texto), que abre os comentários. Itens sem o lápis contam como OK. Aprovar não aceita item marcado; Devolver exige ao menos um item marcado, o comentário de cada um e o comentário da decisão (mínimo de caracteres). Não há Negar (D-25). A decisão é final (nível único).
 
 ## 5. Tipos de meta e campos do Goal Card
 
@@ -220,7 +217,7 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 | Tipografia e ícones | Poppins local, com as faces embutidas (`VBM-Aip-Goals/assets/css/poppins.css`, cópia da do Performance Hub); nada de Google Fonts. Ícones em SVG próprio (sprite inline na página) ou pelo Font Awesome já servido pelo app, em subconjunto local; nunca por CDN. |
 | Rede | Corporativa fechada: sem CDN, Google Fonts ou kit; fontes, ícones e scripts locais. |
 | Filtros | Padrão COO: rótulo em itálico em cima; `.seg` com `aria-pressed` para poucas opções (Estado, Tipo, Período); `.switch` com `role="switch"` para liga/desliga (ex.: só atrasadas); `.unit` para País › BU e para Ciclo (mais recente primeiro). Estado na URL. |
-| Status do Goal Card | Pílula com ícone + rótulo + cor do token de fluxo `--status-*` (mesmo do Kaizen): Rascunho `--status-draft` (cinza), Em aprovação `--status-pending` (âmbar), Em revisão `--status-review` (azul), Aprovado `--status-approved` (verde), Negado `--status-rejected` (vermelho). Nunca só por cor: nos gráficos compactos a situação vai também na legenda, no `title` e no `aria-label`. `--good` e `--bad` ficam para desempenho nos gráficos; ciclo e prazo usam o âmbar `--wait` (atrasada com `--late-bg`), nunca verde ou vermelho. Na tabela da T03 a pílula leva só o ponto e o rótulo, sem ícone, e o trecho da barra de peso usa a mesma cor `--status-*` do card. |
+| Status do Goal Card | Pílula com ícone + rótulo + cor do token de fluxo `--status-*` (mesmo do Kaizen): Rascunho `--status-draft` (cinza), Em aprovação `--status-pending` (âmbar), Em revisão `--status-review` (azul), Aprovado `--status-approved` (verde). Nunca só por cor: nos gráficos compactos a situação vai também na legenda, no `title` e no `aria-label`. `--good` e `--bad` ficam para desempenho nos gráficos; ciclo e prazo usam o âmbar `--wait` (atrasada com `--late-bg`), nunca verde ou vermelho. Na tabela da T03 a pílula leva só o ponto e o rótulo, sem ícone, e o trecho da barra de peso usa a mesma cor `--status-*` do card. |
 | Gráficos | SVG próprio, sem biblioteca: anéis de progresso da jornada do ciclo (T02 e T03, mesmo componente e tamanho), barras de composição (T02), barra de peso em cascata (T03), funil e tempo em aprovação em barras; sem pizza. Séries com `--serie-a` / `--serie-b` / `--serie-p`; situação com `--status-*`; deltas, se houver, com `--good` / `--bad` / `--flat`. `NULL` = "sem dado", nunca 0; `role="img"` + `aria-label` com o resumo; redesenho ao trocar filtro, idioma, formato, tema e tamanho; animação só de `transform` e `opacity`. |
 | Avisos e salvamento | `.toast` com `role="status" aria-live="polite"` ("Salvo às 14:32"; erro com `.is-err`), em linguagem de negócio. Botão salvar com `.is-pendente` enquanto houver alteração não salva. |
 | Perfis na interface | Cada grupo vê só o que pode fazer: ações que o perfil não tem não são desenhadas (não basta desabilitar). **Contribuidores e administrador (T04):** ficha com os campos da BU abertos, placeholder de orientação e obrigatórios marcados com \*; Salvar rascunho e Submeter no rodapé da ficha. **Aprovadores (T14):** fila das fichas em aprovação e painel de decisão com Aprovar (`.btn`), Devolver e Negar (`.btn-sec`), confirmação no segundo clique; os botões não usam `--good`/`--bad`, a cor de situação fica só na pílula. **Consulta e demais casos:** ficha em leitura com pílula neutra "Somente leitura" (`--flat`, ícone de cadeado) e o motivo; submenu Administração sem Aprovações e Configuração. |
@@ -258,7 +255,7 @@ DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `mode
 | AIP_META | Ciclo, nível (CEO, COO ou BU), número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |
 | AIP_META_PESO | Meta, unidade, peso |
 | AIP_GOAL_CARD | Código (GC-BU-meta), meta, unidade, estado, versão oficial, rascunho, última atualização |
-| AIP_GOAL_CARD_VERSAO | Versão: número, motivo, foto dos campos, autor, data e a decisão do grupo de aprovação (aprovado, devolvido ou negado, comentário obrigatório para devolver ou negar, marcação OK/Ajustar de cada seção, quem e quando), gravada uma única vez |
+| AIP_GOAL_CARD_VERSAO | Versão: número, motivo, foto dos campos, autor, data e a decisão do grupo de aprovação (aprovado ou devolvido, comentário obrigatório para devolver, marcação OK/Ajustar de cada seção, quem e quando), gravada uma única vez |
 | AIP_EVENTO_LOG | Action Log imutável (gatilho bloqueia UPDATE e DELETE): tipo (inclui abrir, fechar e reabrir ciclo e os comentários do Goal Card, com texto e resposta a), quem, grupo, quando, card, seção, antes, depois |
 | AIP_NOTIFICACAO | Evento, destinatário, canal (e-mail ou app), enviado em, lido em |
 

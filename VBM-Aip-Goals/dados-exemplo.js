@@ -172,7 +172,7 @@ function desdobramentoExemplo(hoje = new Date()) {
 }
 
 // Situação dos cards na etapa de proposta: muitos em rascunho, alguns já em aprovação ou devolvidos.
-const SITUACOES = ['rascunho', 'rascunho', 'rascunho', 'em_aprovacao', 'em_aprovacao', 'em_aprovacao', 'em_revisao', 'aprovado', 'aprovado', 'negado'];
+const SITUACOES = ['rascunho', 'rascunho', 'rascunho', 'em_aprovacao', 'em_aprovacao', 'em_aprovacao', 'em_revisao', 'aprovado', 'aprovado', 'em_revisao']; // sem Negado: o modelo só aprova ou devolve
 
 // Um Goal Card por meta desdobrada em cada BU (resultado do COO + específicas com peso).
 // Gerador determinístico (mesma semente → mesmos cards), para o exemplo não mudar a cada leitura.

@@ -70,7 +70,7 @@ test('GET /painel: contagens batem com a lista de cards (CA-15) e o funil não c
     assert.strictEqual(r.status, 200);
     const { cards, totais, porBu, funil, niveis } = r.corpo;
     assert.strictEqual(totais.total, cards.length);
-    for (const e of ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado']) {
+    for (const e of ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado']) {
       assert.strictEqual(totais[e], cards.filter((c) => c.estado === e).length, e);
       assert.strictEqual(porBu.reduce((a, b) => a + b[e], 0), totais[e], 'matriz ' + e);
     }
@@ -176,7 +176,7 @@ test('camposObrigatorios e validarDecisao: envio bloqueado sem os obrigatórios,
   assert.deepStrictEqual(falta.filter((x) => !x.ok).map((x) => x.id), ['ruler', 'area']);
   assert.deepStrictEqual(validarDecisao({ decisao: 'aprovar' }), []);
   assert.deepStrictEqual(validarDecisao({ decisao: 'devolver', comentario: 'curto', revisao: { ruler: 'ok' } }), ['comentario', 'secaoAjustar']);
-  assert.deepStrictEqual(validarDecisao({ decisao: 'negar', comentario: 'Meta fora do desdobramento' }), []);
+  assert.deepStrictEqual(validarDecisao({ decisao: 'negar', comentario: 'Meta fora do desdobramento' }), ['decisao']); // Negar não existe no modelo
 });
 
 test('GET /goal-card: ficha do contribuidor (edição) ou leitura, campos obrigatórios', async () => {

@@ -226,7 +226,7 @@
    "proposito": "O Goal Card de uma meta numa unidade (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.",
    "regras": [
     "Código único; um card por meta e unidade.",
-    "TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO, NEGADO.",
+    "TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO.",
     "Versão oficial preenchida se, e só se, APROVADO."
    ],
    "campos": {
@@ -234,7 +234,7 @@
     "CD_GOAL_CARD": "Código mostrado nas telas: GC-<BU>-<meta>.",
     "ID_META": "Meta do card.",
     "ID_UNIDADE": "Unidade (BU) dona do card.",
-    "TP_ESTADO": "RASCUNHO, EM_APROVACAO, EM_REVISAO (devolvido para ajuste), APROVADO ou NEGADO.",
+    "TP_ESTADO": "RASCUNHO, EM_APROVACAO, EM_REVISAO (devolvido para ajuste) ou APROVADO. Não existe Negado no modelo.",
     "NO_VERSAO_OFICIAL": "Versão aprovada que vale como oficial. Preenchida só se APROVADO.",
     "DS_RASCUNHO": "Campos em edição ainda não submetidos (objetivo, fórmula, unidade, régua, área, evidência, exceções da BU).",
     "DT_ATUALIZACAO": "Última mudança no card (coluna \"Última atualização\").",
@@ -321,8 +321,8 @@
     "Número de versão único por card.",
     "TP_MOTIVO: SUBMISSAO, RESUBMISSAO, REABERTURA.",
     "Os campos da versão não mudam depois da submissão; a decisão é gravada uma única vez (decisão idempotente).",
-    "TP_DECISAO: APROVADO, DEVOLVIDO, NEGADO; data, quem decidiu e revisão das seções vêm juntos.",
-    "Comentário obrigatório se DEVOLVIDO ou NEGADO."
+    "TP_DECISAO: APROVADO, DEVOLVIDO; data, quem decidiu e revisão das seções vêm juntos.",
+    "Comentário obrigatório se DEVOLVIDO."
    ],
    "campos": {
     "ID_VERSAO": "Número interno da versão.",
@@ -332,8 +332,8 @@
     "DS_CAMPOS": "Foto dos campos do card no momento da submissão.",
     "DT_VERSAO": "Quando foi submetida.",
     "CD_MATRICULA_AUTOR": "Quem submeteu.",
-    "TP_DECISAO": "APROVADO, DEVOLVIDO ou NEGADO. Vazio = aguardando decisão.",
-    "DS_COMENTARIO_DECISAO": "Justificativa da decisão; obrigatória para devolver ou negar (mínimo de caracteres controlado na aplicação).",
+    "TP_DECISAO": "APROVADO ou DEVOLVIDO. Vazio = aguardando decisão.",
+    "DS_COMENTARIO_DECISAO": "Justificativa da decisão; obrigatória para devolver (mínimo de caracteres controlado na aplicação).",
     "DS_REVISAO_SECOES": "Marcação de cada seção na decisão: OK ou AJUSTAR (ex.: {\"UNIT\": \"AJUSTAR\"}). Devolver exige ao menos uma AJUSTAR.",
     "DT_DECISAO": "Quando foi decidida.",
     "CD_MATRICULA_DECISAO": "Membro do grupo que decidiu (não pode ser quem editou ou submeteu, RN-12)."
@@ -344,7 +344,7 @@
    ],
    "condicional": {
     "TP_DECISAO": "depois da decisão",
-    "DS_COMENTARIO_DECISAO": "se devolvido ou negado",
+    "DS_COMENTARIO_DECISAO": "se devolvido",
     "DS_REVISAO_SECOES": "depois da decisão",
     "DT_DECISAO": "depois da decisão",
     "CD_MATRICULA_DECISAO": "depois da decisão"
@@ -392,10 +392,10 @@
   },
   {
    "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "registrado em"
+   "campo": "ID_EVENTO_PAI",
+   "pai": "AIP_EVENTO_LOG",
+   "chave": "ID_EVENTO",
+   "rotulo": "responde a"
   },
   {
    "filho": "AIP_CICLO",
@@ -433,13 +433,6 @@
    "rotulo": "na unidade"
   },
   {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_GOAL_CARD",
-   "pai": "AIP_GOAL_CARD",
-   "chave": "ID_GOAL_CARD",
-   "rotulo": "sobre"
-  },
-  {
    "filho": "AIP_PAPEL",
    "campo": "ID_CICLO",
    "pai": "AIP_CICLO",
@@ -468,6 +461,13 @@
    "rotulo": "da unidade"
   },
   {
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_CICLO",
+   "pai": "AIP_CICLO",
+   "chave": "ID_CICLO",
+   "rotulo": "registrado em"
+  },
+  {
    "filho": "AIP_GOAL_CARD_VERSAO",
    "campo": "ID_GOAL_CARD",
    "pai": "AIP_GOAL_CARD",
@@ -476,10 +476,10 @@
   },
   {
    "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_EVENTO_PAI",
-   "pai": "AIP_EVENTO_LOG",
-   "chave": "ID_EVENTO",
-   "rotulo": "responde a"
+   "campo": "ID_GOAL_CARD",
+   "pai": "AIP_GOAL_CARD",
+   "chave": "ID_GOAL_CARD",
+   "rotulo": "sobre"
   },
   {
    "filho": "AIP_NOTIFICACAO",
