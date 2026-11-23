@@ -231,22 +231,19 @@ test('Edição: contribuidor só na própria BU; administrador em todas as BUs (
   try { assert.strictEqual((await enviar(s, '/api/goal-card/submeter', { card: 'GC-VNL-04', secoes: {} }, { 'X-Forwarded-Email': 'c@vale.com' })).status, 403); } finally { s.close(); }
 });
 
-test('T11 Configuração: só o administrador; RN-16 por nível (CEO → GA); ano, janelas e BUs validados', async () => {
+test('T11 Configuração: só o administrador; RN-16 por nível (CEO → BU); ano, janelas e BUs validados', async () => {
   const { validarConfiguracao, somaPesosPorNivel } = require('../aip-goals-api');
   const { configuracaoExemplo } = require('../dados-exemplo');
   const base = configuracaoExemplo(HOJE);
   const somas = somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus);
   assert.ok(somas.length > 7 && somas.every((x) => x.soma === x.total)); // exemplo fecha 100 em todos os níveis
-  assert.deepStrictEqual([...new Set(somas.map((x) => x.nivel))], ['ceo', 'coo', 'bu', 'gg', 'ga']);
+  assert.deepStrictEqual([...new Set(somas.map((x) => x.nivel))], ['ceo', 'coo', 'bu']); // GG e GA fora no primeiro momento
   const metasNivel = JSON.parse(JSON.stringify(base.metasNivel)); metasNivel.bu[0].pesos.Salobo = 10;
   const e = validarConfiguracao('metas', { metasNivel }, base);
   assert.deepStrictEqual(e.filter((x) => x.codigo === 'RN16').map((x) => [x.nivel, x.unidade, x.soma]), [['bu', 'Salobo', 105]]);
   // Herdado da BU sobe para 50: todas as BUs passam do total
   const niveis = base.niveis.map((n) => (n.id === 'bu' ? { ...n, herdado: 50 } : n));
   assert.strictEqual(validarConfiguracao('metas', { metasNivel: base.metasNivel, niveis }, base).filter((x) => x.nivel === 'bu').length, 7);
-  // GG desligada: suas unidades saem da conta; GA ativa sem GG é recusada nos parâmetros
-  const semGg = base.niveis.map((n) => (n.id === 'gg' ? { ...n, ativo: false } : n));
-  assert.ok(validarConfiguracao('parametros', { parametros: base.parametros, niveis: semGg }, base).some((x) => x.codigo === 'SALTO'));
   assert.ok(validarConfiguracao('parametros', { parametros: base.parametros, niveis: base.niveis.map((n) => (n.id === 'bu' ? { ...n, ativo: false } : n)) }, base).some((x) => x.codigo === 'FIXO'));
   const etapas = base.ciclo.etapas.map((x) => ({ ...x })); etapas[2].fim = etapas[1].fim;
   assert.ok(validarConfiguracao('ciclo', { ano: 2027, nome: 'AIP', etapas }, base).some((x) => x.codigo === 'ORDEM'));

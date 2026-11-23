@@ -149,7 +149,7 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
       <h1>DER do AIP Goals</h1>
       <p class="sub">VBM AIP Goals · modelo proposto (fase 1) · Azure SQL, convenções do Schema IBP · 19/11/2026</p>
     </div>
-    <div class="stats"><span><b>11</b> tabelas</span><span><b>91</b> campos</span><span><b>17</b> ligações</span><span><b>36</b> regras</span></div>
+    <div class="stats"><span><b>10</b> tabelas</span><span><b>86</b> campos</span><span><b>16</b> ligações</span><span><b>33</b> regras</span></div>
   </header>
 
   <div class="legend" aria-label="Legenda">
@@ -165,82 +165,77 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 
   <figure>
     <div class="scroll">
-<svg id="der" viewBox="0 0 1630 803" role="img" aria-label="Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.">
+<svg id="der" viewBox="0 0 1630 805" role="img" aria-label="Diagrama do banco do AIP Goals: o ciclo e os grupos à esquerda, o desdobramento de metas e pesos no centro, o Goal Card com versões e decisões e, à direita, comentários, log e notificações.">
 <g class="edges">
+<g class="edge" data-rel="AIP_UNIDADE SITES"><title>FK_AIP_UNIDADE_SITES: AIP_UNIDADE.ID_SITE → SITES.ID_SITE</title>
+<path class="wire" d="M440,145.5 L395.0,145.5 L395.0,673.5 L350,673.5"/>
+<g class="card"><path d="M428,145.5 L440,139.5 M428,145.5 L440,145.5 M428,145.5 L440,151.5"/><circle cx="422" cy="145.5" r="3.5" class="hollow"/><path d="M357,667.5 L357,679.5"/><circle cx="365" cy="673.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="395.0" y="409.5" transform="rotate(-90 395.0 409.5)" dy="-5" text-anchor="middle">representa</text>
+</g>
+<g class="edge" data-rel="AIP_EVENTO_LOG AIP_CICLO"><title>FK_AIP_EVENTO_LOG_AIP_CICLO: AIP_EVENTO_LOG.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M1280,88.5 L1235.0,88.5 L1235.0,781 L411.0,781 L411.0,69.5 L350,69.5"/>
+<g class="card"><path d="M1268,88.5 L1280,82.5 M1268,88.5 L1280,88.5 M1268,88.5 L1280,94.5"/><circle cx="1262" cy="88.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="823.0" y="781.0" dy="-6" text-anchor="middle">registrado em</text>
+</g>
 <g class="edge" data-rel="AIP_CICLO AIP_CICLO"><title>FK_AIP_CICLO_AIP_CICLO: AIP_CICLO.ID_CICLO_ORIGEM → AIP_CICLO.ID_CICLO</title>
 <path class="wire" d="M350,164.5 L374,164.5 L374,69.5 L350,69.5"/>
 <g class="card"><path d="M362,164.5 L350,158.5 M362,164.5 L350,164.5 M362,164.5 L350,170.5"/><circle cx="368" cy="164.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5"/><circle cx="365" cy="69.5" r="3.5" class="hollow"/></g>
 <text class="elabel" x="374.0" y="117.0" transform="rotate(-90 374.0 117.0)" dy="-5" text-anchor="middle">criado a partir de</text>
 </g>
-<g class="edge" data-rel="AIP_NIVEL AIP_CICLO"><title>FK_AIP_NIVEL_AIP_CICLO: AIP_NIVEL.ID_CICLO → AIP_CICLO.ID_CICLO</title>
-<path class="wire" d="M440,88.5 L395.0,88.5 L395.0,69.5 L350,69.5"/>
+<g class="edge" data-rel="AIP_UNIDADE AIP_CICLO"><title>FK_AIP_UNIDADE_AIP_CICLO: AIP_UNIDADE.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M440,88.5 L379.0,88.5 L379.0,69.5 L350,69.5"/>
 <g class="card"><path d="M428,88.5 L440,82.5 M428,88.5 L440,88.5 M428,88.5 L440,94.5"/><circle cx="422" cy="88.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
-<text class="elabel" x="417.5" y="88.5" dy="-6" text-anchor="middle">nível de</text>
+<text class="elabel" x="409.5" y="88.5" dy="-6" text-anchor="middle">unidade do</text>
 </g>
-<g class="edge" data-rel="AIP_UNIDADE AIP_NIVEL"><title>FK_AIP_UNIDADE_AIP_NIVEL: AIP_UNIDADE.ID_NIVEL → AIP_NIVEL.ID_NIVEL</title>
-<path class="wire" d="M770,333.5 L788,333.5 L788,69.5 L770,69.5"/>
-<g class="card"><path d="M782,333.5 L770,327.5 M782,333.5 L770,333.5 M782,333.5 L770,339.5"/><circle cx="788" cy="333.5" r="3.5" class="hollow"/><path d="M777,63.5 L777,75.5 M782,63.5 L782,75.5"/></g>
-<text class="elabel" x="788.0" y="201.5" transform="rotate(-90 788.0 201.5)" dy="-5" text-anchor="middle">pertence ao</text>
-</g>
-<g class="edge" data-rel="AIP_UNIDADE SITES"><title>FK_AIP_UNIDADE_SITES: AIP_UNIDADE.ID_SITE → SITES.ID_SITE</title>
-<path class="wire" d="M440,371.5 L411.0,371.5 L411.0,635.5 L350,635.5"/>
-<g class="card"><path d="M428,371.5 L440,365.5 M428,371.5 L440,371.5 M428,371.5 L440,377.5"/><circle cx="422" cy="371.5" r="3.5" class="hollow"/><path d="M357,629.5 L357,641.5"/><circle cx="365" cy="635.5" r="3.5" class="hollow"/></g>
-<text class="elabel" x="411.0" y="503.5" transform="rotate(-90 411.0 503.5)" dy="-5" text-anchor="middle">representa</text>
-</g>
-<g class="edge" data-rel="AIP_META AIP_NIVEL"><title>FK_AIP_META_AIP_NIVEL: AIP_META.ID_NIVEL → AIP_NIVEL.ID_NIVEL</title>
-<path class="wire" d="M770,502.5 L800,502.5 L800,69.5 L770,69.5"/>
-<g class="card"><path d="M782,502.5 L770,496.5 M782,502.5 L770,502.5 M782,502.5 L770,508.5"/><circle cx="788" cy="502.5" r="3.5" class="hollow"/><path d="M777,63.5 L777,75.5 M782,63.5 L782,75.5"/></g>
-<text class="elabel" x="800.0" y="286.0" transform="rotate(-90 800.0 286.0)" dy="-5" text-anchor="middle">meta do</text>
+<g class="edge" data-rel="AIP_META AIP_CICLO"><title>FK_AIP_META_AIP_CICLO: AIP_META.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M440,276.5 L427.0,276.5 L427.0,69.5 L350,69.5"/>
+<g class="card"><path d="M428,276.5 L440,270.5 M428,276.5 L440,276.5 M428,276.5 L440,282.5"/><circle cx="422" cy="276.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="427.0" y="173.0" transform="rotate(-90 427.0 173.0)" dy="-5" text-anchor="middle">meta do</text>
 </g>
 <g class="edge" data-rel="AIP_META AIP_META"><title>FK_AIP_META_AIP_META: AIP_META.ID_META_ORIGEM → AIP_META.ID_META</title>
-<path class="wire" d="M770,597.5 L794,597.5 L794,483.5 L770,483.5"/>
-<g class="card"><path d="M782,597.5 L770,591.5 M782,597.5 L770,597.5 M782,597.5 L770,603.5"/><circle cx="788" cy="597.5" r="3.5" class="hollow"/><path d="M777,477.5 L777,489.5"/><circle cx="785" cy="483.5" r="3.5" class="hollow"/></g>
-<text class="elabel" x="794.0" y="540.5" transform="rotate(-90 794.0 540.5)" dy="-5" text-anchor="middle">desdobrada de</text>
-</g>
-<g class="edge" data-rel="AIP_GOAL_CARD_VERSAO AIP_GOAL_CARD"><title>FK_AIP_GOAL_CARD_VERSAO_AIP_GOAL_CARD: AIP_GOAL_CARD_VERSAO.ID_GOAL_CARD → AIP_GOAL_CARD.ID_GOAL_CARD</title>
-<path class="wire" d="M1190,333.5 L1208,333.5 L1208,69.5 L1190,69.5"/>
-<g class="card"><path d="M1202,333.5 L1190,327.5 M1202,333.5 L1190,333.5 M1202,333.5 L1190,339.5"/><circle cx="1208" cy="333.5" r="3.5" class="hollow"/><path d="M1197,63.5 L1197,75.5 M1202,63.5 L1202,75.5"/></g>
-<text class="elabel" x="1208.0" y="201.5" transform="rotate(-90 1208.0 201.5)" dy="-5" text-anchor="middle">versão de</text>
+<path class="wire" d="M770,390.5 L794,390.5 L794,257.5 L770,257.5"/>
+<g class="card"><path d="M782,390.5 L770,384.5 M782,390.5 L770,390.5 M782,390.5 L770,396.5"/><circle cx="788" cy="390.5" r="3.5" class="hollow"/><path d="M777,251.5 L777,263.5"/><circle cx="785" cy="257.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="794.0" y="324.0" transform="rotate(-90 794.0 324.0)" dy="-5" text-anchor="middle">desdobrada de</text>
 </g>
 <g class="edge" data-rel="AIP_META_PESO AIP_META"><title>FK_AIP_META_PESO_AIP_META: AIP_META_PESO.ID_META → AIP_META.ID_META</title>
-<path class="wire" d="M770,709.5 L776,709.5 L776,483.5 L770,483.5"/>
-<g class="card"><path d="M782,709.5 L770,703.5 M782,709.5 L770,709.5 M782,709.5 L770,715.5"/><circle cx="788" cy="709.5" r="3.5" class="hollow"/><path d="M777,477.5 L777,489.5 M782,477.5 L782,489.5"/></g>
-<text class="elabel" x="776.0" y="596.5" transform="rotate(-90 776.0 596.5)" dy="-5" text-anchor="middle">peso da</text>
+<path class="wire" d="M770,502.5 L788,502.5 L788,257.5 L770,257.5"/>
+<g class="card"><path d="M782,502.5 L770,496.5 M782,502.5 L770,502.5 M782,502.5 L770,508.5"/><circle cx="788" cy="502.5" r="3.5" class="hollow"/><path d="M777,251.5 L777,263.5 M782,251.5 L782,263.5"/></g>
+<text class="elabel" x="788.0" y="380.0" transform="rotate(-90 788.0 380.0)" dy="-5" text-anchor="middle">peso da</text>
 </g>
 <g class="edge" data-rel="AIP_META_PESO AIP_UNIDADE"><title>FK_AIP_META_PESO_AIP_UNIDADE: AIP_META_PESO.ID_UNIDADE → AIP_UNIDADE.ID_UNIDADE</title>
-<path class="wire" d="M770,728.5 L812,728.5 L812,314.5 L770,314.5"/>
-<g class="card"><path d="M782,728.5 L770,722.5 M782,728.5 L770,728.5 M782,728.5 L770,734.5"/><circle cx="788" cy="728.5" r="3.5" class="hollow"/><path d="M777,308.5 L777,320.5 M782,308.5 L782,320.5"/></g>
-<text class="elabel" x="812.0" y="521.5" transform="rotate(-90 812.0 521.5)" dy="-5" text-anchor="middle">na unidade</text>
-</g>
-<g class="edge" data-rel="AIP_PAPEL AIP_CICLO"><title>FK_AIP_PAPEL_AIP_CICLO: AIP_PAPEL.ID_CICLO → AIP_CICLO.ID_CICLO</title>
-<path class="wire" d="M350,447.5 L368,447.5 L368,69.5 L350,69.5"/>
-<g class="card"><path d="M362,447.5 L350,441.5 M362,447.5 L350,447.5 M362,447.5 L350,453.5"/><circle cx="368" cy="447.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
-<text class="elabel" x="368.0" y="258.5" transform="rotate(-90 368.0 258.5)" dy="-5" text-anchor="middle">participa de</text>
-</g>
-<g class="edge" data-rel="AIP_PAPEL SITES"><title>FK_AIP_PAPEL_SITES: AIP_PAPEL.ID_SITE → SITES.ID_SITE</title>
-<path class="wire" d="M350,504.5 L380,504.5 L380,635.5 L350,635.5"/>
-<g class="card"><path d="M362,504.5 L350,498.5 M362,504.5 L350,504.5 M362,504.5 L350,510.5"/><circle cx="368" cy="504.5" r="3.5" class="hollow"/><path d="M357,629.5 L357,641.5"/><circle cx="365" cy="635.5" r="3.5" class="hollow"/></g>
-<text class="elabel" x="380.0" y="570.0" transform="rotate(-90 380.0 570.0)" dy="-5" text-anchor="middle">atua na</text>
-</g>
-<g class="edge" data-rel="AIP_GOAL_CARD AIP_META"><title>FK_AIP_GOAL_CARD_AIP_META: AIP_GOAL_CARD.ID_META → AIP_META.ID_META</title>
-<path class="wire" d="M860,107.5 L815.0,107.5 L815.0,483.5 L770,483.5"/>
-<g class="card"><path d="M848,107.5 L860,101.5 M848,107.5 L860,107.5 M848,107.5 L860,113.5"/><circle cx="842" cy="107.5" r="3.5" class="hollow"/><path d="M777,477.5 L777,489.5 M782,477.5 L782,489.5"/></g>
-<text class="elabel" x="815.0" y="295.5" transform="rotate(-90 815.0 295.5)" dy="-5" text-anchor="middle">card da</text>
-</g>
-<g class="edge" data-rel="AIP_GOAL_CARD AIP_UNIDADE"><title>FK_AIP_GOAL_CARD_AIP_UNIDADE: AIP_GOAL_CARD.ID_UNIDADE → AIP_UNIDADE.ID_UNIDADE</title>
-<path class="wire" d="M860,126.5 L831.0,126.5 L831.0,314.5 L770,314.5"/>
-<g class="card"><path d="M848,126.5 L860,120.5 M848,126.5 L860,126.5 M848,126.5 L860,132.5"/><circle cx="842" cy="126.5" r="3.5" class="hollow"/><path d="M777,308.5 L777,320.5 M782,308.5 L782,320.5"/></g>
-<text class="elabel" x="831.0" y="220.5" transform="rotate(-90 831.0 220.5)" dy="-5" text-anchor="middle">da unidade</text>
-</g>
-<g class="edge" data-rel="AIP_EVENTO_LOG AIP_CICLO"><title>FK_AIP_EVENTO_LOG_AIP_CICLO: AIP_EVENTO_LOG.ID_CICLO → AIP_CICLO.ID_CICLO</title>
-<path class="wire" d="M1280,88.5 L1235.0,88.5 L1235.0,779 L379.0,779 L379.0,69.5 L350,69.5"/>
-<g class="card"><path d="M1268,88.5 L1280,82.5 M1268,88.5 L1280,88.5 M1268,88.5 L1280,94.5"/><circle cx="1262" cy="88.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
-<text class="elabel" x="807.0" y="779.0" dy="-6" text-anchor="middle">registrado em</text>
+<path class="wire" d="M770,521.5 L800,521.5 L800,69.5 L770,69.5"/>
+<g class="card"><path d="M782,521.5 L770,515.5 M782,521.5 L770,521.5 M782,521.5 L770,527.5"/><circle cx="788" cy="521.5" r="3.5" class="hollow"/><path d="M777,63.5 L777,75.5 M782,63.5 L782,75.5"/></g>
+<text class="elabel" x="800.0" y="295.5" transform="rotate(-90 800.0 295.5)" dy="-5" text-anchor="middle">na unidade</text>
 </g>
 <g class="edge" data-rel="AIP_EVENTO_LOG AIP_GOAL_CARD"><title>FK_AIP_EVENTO_LOG_AIP_GOAL_CARD: AIP_EVENTO_LOG.ID_GOAL_CARD → AIP_GOAL_CARD.ID_GOAL_CARD</title>
 <path class="wire" d="M1280,183.5 L1251.0,183.5 L1251.0,69.5 L1190,69.5"/>
 <g class="card"><path d="M1268,183.5 L1280,177.5 M1268,183.5 L1280,183.5 M1268,183.5 L1280,189.5"/><circle cx="1262" cy="183.5" r="3.5" class="hollow"/><path d="M1197,63.5 L1197,75.5"/><circle cx="1205" cy="69.5" r="3.5" class="hollow"/></g>
 <text class="elabel" x="1251.0" y="126.5" transform="rotate(-90 1251.0 126.5)" dy="-5" text-anchor="middle">sobre</text>
+</g>
+<g class="edge" data-rel="AIP_PAPEL AIP_CICLO"><title>FK_AIP_PAPEL_AIP_CICLO: AIP_PAPEL.ID_CICLO → AIP_CICLO.ID_CICLO</title>
+<path class="wire" d="M350,485.5 L368,485.5 L368,69.5 L350,69.5"/>
+<g class="card"><path d="M362,485.5 L350,479.5 M362,485.5 L350,485.5 M362,485.5 L350,491.5"/><circle cx="368" cy="485.5" r="3.5" class="hollow"/><path d="M357,63.5 L357,75.5 M362,63.5 L362,75.5"/></g>
+<text class="elabel" x="368.0" y="277.5" transform="rotate(-90 368.0 277.5)" dy="-5" text-anchor="middle">participa de</text>
+</g>
+<g class="edge" data-rel="AIP_PAPEL SITES"><title>FK_AIP_PAPEL_SITES: AIP_PAPEL.ID_SITE → SITES.ID_SITE</title>
+<path class="wire" d="M350,542.5 L380,542.5 L380,673.5 L350,673.5"/>
+<g class="card"><path d="M362,542.5 L350,536.5 M362,542.5 L350,542.5 M362,542.5 L350,548.5"/><circle cx="368" cy="542.5" r="3.5" class="hollow"/><path d="M357,667.5 L357,679.5"/><circle cx="365" cy="673.5" r="3.5" class="hollow"/></g>
+<text class="elabel" x="380.0" y="608.0" transform="rotate(-90 380.0 608.0)" dy="-5" text-anchor="middle">atua na</text>
+</g>
+<g class="edge" data-rel="AIP_GOAL_CARD AIP_META"><title>FK_AIP_GOAL_CARD_AIP_META: AIP_GOAL_CARD.ID_META → AIP_META.ID_META</title>
+<path class="wire" d="M860,107.5 L815.0,107.5 L815.0,257.5 L770,257.5"/>
+<g class="card"><path d="M848,107.5 L860,101.5 M848,107.5 L860,107.5 M848,107.5 L860,113.5"/><circle cx="842" cy="107.5" r="3.5" class="hollow"/><path d="M777,251.5 L777,263.5 M782,251.5 L782,263.5"/></g>
+<text class="elabel" x="815.0" y="182.5" transform="rotate(-90 815.0 182.5)" dy="-5" text-anchor="middle">card da</text>
+</g>
+<g class="edge" data-rel="AIP_GOAL_CARD AIP_UNIDADE"><title>FK_AIP_GOAL_CARD_AIP_UNIDADE: AIP_GOAL_CARD.ID_UNIDADE → AIP_UNIDADE.ID_UNIDADE</title>
+<path class="wire" d="M860,126.5 L831.0,126.5 L831.0,69.5 L770,69.5"/>
+<g class="card"><path d="M848,126.5 L860,120.5 M848,126.5 L860,126.5 M848,126.5 L860,132.5"/><circle cx="842" cy="126.5" r="3.5" class="hollow"/><path d="M777,63.5 L777,75.5 M782,63.5 L782,75.5"/></g>
+<text class="elabel" x="800.5" y="69.5" dy="-6" text-anchor="middle">da unidade</text>
+</g>
+<g class="edge" data-rel="AIP_GOAL_CARD_VERSAO AIP_GOAL_CARD"><title>FK_AIP_GOAL_CARD_VERSAO_AIP_GOAL_CARD: AIP_GOAL_CARD_VERSAO.ID_GOAL_CARD → AIP_GOAL_CARD.ID_GOAL_CARD</title>
+<path class="wire" d="M1190,333.5 L1208,333.5 L1208,69.5 L1190,69.5"/>
+<g class="card"><path d="M1202,333.5 L1190,327.5 M1202,333.5 L1190,333.5 M1202,333.5 L1190,339.5"/><circle cx="1208" cy="333.5" r="3.5" class="hollow"/><path d="M1197,63.5 L1197,75.5 M1202,63.5 L1202,75.5"/></g>
+<text class="elabel" x="1208.0" y="201.5" transform="rotate(-90 1208.0 201.5)" dy="-5" text-anchor="middle">versão de</text>
 </g>
 <g class="edge" data-rel="AIP_EVENTO_LOG AIP_EVENTO_LOG"><title>FK_AIP_EVENTO_LOG_AIP_EVENTO_LOG: AIP_EVENTO_LOG.ID_EVENTO_PAI → AIP_EVENTO_LOG.ID_EVENTO</title>
 <path class="wire" d="M1610,240.5 L1634,240.5 L1634,69.5 L1610,69.5"/>
@@ -254,7 +249,7 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 </g>
 </g>
 <g class="tbl g-cic" data-t="AIP_CICLO" tabindex="0" role="button" aria-label="Tabela AIP_CICLO">
-<rect class="box" x="20" y="20" width="330" height="325" rx="6"/>
+<rect class="box" x="20" y="20" width="330" height="363" rx="6"/>
 <path class="head" d="M20,60 V26 Q20,20 26,20 H344 Q350,20 350,26 V60 Z"/>
 <text class="tname" x="32" y="45">AIP_CICLO</text>
 <text class="tgroup" x="338" y="45" text-anchor="end">CICLO</text>
@@ -297,33 +292,95 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 <text class="ctype" x="340" y="320.5" text-anchor="end">date</text>
 <text class="cname" x="64" y="339.5">DT_FIM_OFICIAL</text>
 <text class="ctype" x="340" y="339.5" text-anchor="end">date</text>
+<rect class="zebra" x="21" y="345" width="328" height="19"/>
+<text class="cname" x="64" y="358.5">QTDE_PONTOS_HERDADOS_COO</text>
+<text class="ctype" x="340" y="358.5" text-anchor="end">smallint</text>
+<text class="cname" x="64" y="377.5">QTDE_PONTOS_HERDADOS_BU</text>
+<text class="ctype" x="340" y="377.5" text-anchor="end">smallint</text>
 </g>
 <g class="tbl g-ibp" data-t="SITES" tabindex="0" role="button" aria-label="Tabela SITES">
-<rect class="box" x="20" y="586" width="330" height="135" rx="6"/>
-<path class="head" d="M20,626 V592 Q20,586 26,586 H344 Q350,586 350,592 V626 Z"/>
-<text class="tname" x="32" y="611">SITES</text>
-<text class="tgroup" x="338" y="611" text-anchor="end">IBP</text>
-<text class="key" x="30" y="639.5"><tspan class="kpk">PK</tspan></text>
-<text class="cname" x="64" y="639.5">ID_SITE</text>
-<text class="ctype" x="340" y="639.5" text-anchor="end">int</text>
-<rect class="zebra" x="21" y="645" width="328" height="19"/>
-<text class="cname" x="64" y="658.5">ID_SISTEMA</text>
-<text class="ctype" x="340" y="658.5" text-anchor="end">int</text>
-<text class="cname opt" x="64" y="677.5">NM_SITE?</text>
-<text class="ctype" x="340" y="677.5" text-anchor="end">varchar(25)</text>
+<rect class="box" x="20" y="624" width="330" height="135" rx="6"/>
+<path class="head" d="M20,664 V630 Q20,624 26,624 H344 Q350,624 350,630 V664 Z"/>
+<text class="tname" x="32" y="649">SITES</text>
+<text class="tgroup" x="338" y="649" text-anchor="end">IBP</text>
+<text class="key" x="30" y="677.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="64" y="677.5">ID_SITE</text>
+<text class="ctype" x="340" y="677.5" text-anchor="end">int</text>
 <rect class="zebra" x="21" y="683" width="328" height="19"/>
-<text class="cname opt" x="64" y="696.5">NM_PAIS?</text>
-<text class="ctype" x="340" y="696.5" text-anchor="end">varchar(25)</text>
-<text class="cname opt" x="64" y="715.5">SG_REGIAO?</text>
-<text class="ctype" x="340" y="715.5" text-anchor="end">varchar(1)</text>
+<text class="cname" x="64" y="696.5">ID_SISTEMA</text>
+<text class="ctype" x="340" y="696.5" text-anchor="end">int</text>
+<text class="cname opt" x="64" y="715.5">NM_SITE?</text>
+<text class="ctype" x="340" y="715.5" text-anchor="end">varchar(25)</text>
+<rect class="zebra" x="21" y="721" width="328" height="19"/>
+<text class="cname opt" x="64" y="734.5">NM_PAIS?</text>
+<text class="ctype" x="340" y="734.5" text-anchor="end">varchar(25)</text>
+<text class="cname opt" x="64" y="753.5">SG_REGIAO?</text>
+<text class="ctype" x="340" y="753.5" text-anchor="end">varchar(1)</text>
 </g>
-<g class="tbl g-des" data-t="AIP_NIVEL" tabindex="0" role="button" aria-label="Tabela AIP_NIVEL">
-<rect class="box" x="440" y="20" width="330" height="211" rx="6"/>
+<g class="tbl g-des" data-t="AIP_META" tabindex="0" role="button" aria-label="Tabela AIP_META">
+<rect class="box" x="440" y="208" width="330" height="211" rx="6"/>
+<path class="head" d="M440,248 V214 Q440,208 446,208 H764 Q770,208 770,214 V248 Z"/>
+<text class="tname" x="452" y="233">AIP_META</text>
+<text class="tgroup" x="758" y="233" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="261.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="484" y="261.5">ID_META</text>
+<text class="ctype" x="760" y="261.5" text-anchor="end">int · auto</text>
+<rect class="zebra" x="441" y="267" width="328" height="19"/>
+<text class="key" x="450" y="280.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="280.5">ID_CICLO</text>
+<text class="ctype" x="760" y="280.5" text-anchor="end">int</text>
+<text class="cname" x="484" y="299.5">CD_NIVEL</text>
+<text class="ctype" x="760" y="299.5" text-anchor="end">varchar(20)</text>
+<rect class="zebra" x="441" y="305" width="328" height="19"/>
+<text class="cname" x="484" y="318.5">NO_META</text>
+<text class="ctype" x="760" y="318.5" text-anchor="end">smallint</text>
+<text class="cname" x="484" y="337.5">NM_TITULO</text>
+<text class="ctype" x="760" y="337.5" text-anchor="end">varchar(100)</text>
+<rect class="zebra" x="441" y="343" width="328" height="19"/>
+<text class="cname" x="484" y="356.5">TP_META</text>
+<text class="ctype" x="760" y="356.5" text-anchor="end">varchar(20)</text>
+<text class="cname" x="484" y="375.5">TP_POLARIDADE</text>
+<text class="ctype" x="760" y="375.5" text-anchor="end">varchar(20)</text>
+<rect class="zebra" x="441" y="381" width="328" height="19"/>
+<text class="key" x="450" y="394.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="484" y="394.5">ID_META_ORIGEM?</text>
+<text class="ctype" x="760" y="394.5" text-anchor="end">int</text>
+<text class="cname" x="484" y="413.5">SG_ATIVA</text>
+<text class="ctype" x="760" y="413.5" text-anchor="end">char(1)</text>
+</g>
+<g class="tbl g-cic" data-t="AIP_PAPEL" tabindex="0" role="button" aria-label="Tabela AIP_PAPEL">
+<rect class="box" x="20" y="417" width="330" height="173" rx="6"/>
+<path class="head" d="M20,457 V423 Q20,417 26,417 H344 Q350,417 350,423 V457 Z"/>
+<text class="tname" x="32" y="442">AIP_PAPEL</text>
+<text class="tgroup" x="338" y="442" text-anchor="end">CICLO</text>
+<text class="key" x="30" y="470.5"><tspan class="kpk">PK</tspan></text>
+<text class="cname" x="64" y="470.5">ID_PAPEL</text>
+<text class="ctype" x="340" y="470.5" text-anchor="end">int · auto</text>
+<rect class="zebra" x="21" y="476" width="328" height="19"/>
+<text class="key" x="30" y="489.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname" x="64" y="489.5">ID_CICLO</text>
+<text class="ctype" x="340" y="489.5" text-anchor="end">int</text>
+<text class="cname" x="64" y="508.5">CD_MATRICULA</text>
+<text class="ctype" x="340" y="508.5" text-anchor="end">varchar(20)</text>
+<rect class="zebra" x="21" y="514" width="328" height="19"/>
+<text class="cname" x="64" y="527.5">TP_GRUPO</text>
+<text class="ctype" x="340" y="527.5" text-anchor="end">varchar(20)</text>
+<text class="key" x="30" y="546.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="64" y="546.5">ID_SITE?</text>
+<text class="ctype" x="340" y="546.5" text-anchor="end">int</text>
+<rect class="zebra" x="21" y="552" width="328" height="19"/>
+<text class="cname" x="64" y="565.5">SG_ATIVO</text>
+<text class="ctype" x="340" y="565.5" text-anchor="end">char(1)</text>
+<text class="cname" x="64" y="584.5">DT_ATUALIZACAO</text>
+<text class="ctype" x="340" y="584.5" text-anchor="end">datetime2(0)</text>
+</g>
+<g class="tbl g-des" data-t="AIP_UNIDADE" tabindex="0" role="button" aria-label="Tabela AIP_UNIDADE">
+<rect class="box" x="440" y="20" width="330" height="154" rx="6"/>
 <path class="head" d="M440,60 V26 Q440,20 446,20 H764 Q770,20 770,26 V60 Z"/>
-<text class="tname" x="452" y="45">AIP_NIVEL</text>
+<text class="tname" x="452" y="45">AIP_UNIDADE</text>
 <text class="tgroup" x="758" y="45" text-anchor="end">DESDOBRAMENTO</text>
 <text class="key" x="450" y="73.5"><tspan class="kpk">PK</tspan></text>
-<text class="cname" x="484" y="73.5">ID_NIVEL</text>
+<text class="cname" x="484" y="73.5">ID_UNIDADE</text>
 <text class="ctype" x="760" y="73.5" text-anchor="end">int · auto</text>
 <rect class="zebra" x="441" y="79" width="328" height="19"/>
 <text class="key" x="450" y="92.5"><tspan class="kfk">FK</tspan></text>
@@ -332,96 +389,14 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 <text class="cname" x="484" y="111.5">CD_NIVEL</text>
 <text class="ctype" x="760" y="111.5" text-anchor="end">varchar(20)</text>
 <rect class="zebra" x="441" y="117" width="328" height="19"/>
-<text class="cname" x="484" y="130.5">NO_ORDEM</text>
-<text class="ctype" x="760" y="130.5" text-anchor="end">smallint</text>
-<text class="cname" x="484" y="149.5">NM_NIVEL</text>
-<text class="ctype" x="760" y="149.5" text-anchor="end">varchar(100)</text>
+<text class="cname" x="484" y="130.5">NM_UNIDADE</text>
+<text class="ctype" x="760" y="130.5" text-anchor="end">varchar(100)</text>
+<text class="key" x="450" y="149.5"><tspan class="kfk">FK</tspan></text>
+<text class="cname opt" x="484" y="149.5">ID_SITE?</text>
+<text class="ctype" x="760" y="149.5" text-anchor="end">int</text>
 <rect class="zebra" x="441" y="155" width="328" height="19"/>
-<text class="cname" x="484" y="168.5">QTDE_PONTOS_TOTAL</text>
-<text class="ctype" x="760" y="168.5" text-anchor="end">int</text>
-<text class="cname" x="484" y="187.5">QTDE_PONTOS_HERDADOS</text>
-<text class="ctype" x="760" y="187.5" text-anchor="end">int</text>
-<rect class="zebra" x="441" y="193" width="328" height="19"/>
-<text class="cname" x="484" y="206.5">SG_OBRIGATORIO</text>
-<text class="ctype" x="760" y="206.5" text-anchor="end">char(1)</text>
-<text class="cname" x="484" y="225.5">SG_ATIVO</text>
-<text class="ctype" x="760" y="225.5" text-anchor="end">char(1)</text>
-</g>
-<g class="tbl g-cic" data-t="AIP_PAPEL" tabindex="0" role="button" aria-label="Tabela AIP_PAPEL">
-<rect class="box" x="20" y="379" width="330" height="173" rx="6"/>
-<path class="head" d="M20,419 V385 Q20,379 26,379 H344 Q350,379 350,385 V419 Z"/>
-<text class="tname" x="32" y="404">AIP_PAPEL</text>
-<text class="tgroup" x="338" y="404" text-anchor="end">CICLO</text>
-<text class="key" x="30" y="432.5"><tspan class="kpk">PK</tspan></text>
-<text class="cname" x="64" y="432.5">ID_PAPEL</text>
-<text class="ctype" x="340" y="432.5" text-anchor="end">int · auto</text>
-<rect class="zebra" x="21" y="438" width="328" height="19"/>
-<text class="key" x="30" y="451.5"><tspan class="kfk">FK</tspan></text>
-<text class="cname" x="64" y="451.5">ID_CICLO</text>
-<text class="ctype" x="340" y="451.5" text-anchor="end">int</text>
-<text class="cname" x="64" y="470.5">CD_MATRICULA</text>
-<text class="ctype" x="340" y="470.5" text-anchor="end">varchar(20)</text>
-<rect class="zebra" x="21" y="476" width="328" height="19"/>
-<text class="cname" x="64" y="489.5">TP_GRUPO</text>
-<text class="ctype" x="340" y="489.5" text-anchor="end">varchar(20)</text>
-<text class="key" x="30" y="508.5"><tspan class="kfk">FK</tspan></text>
-<text class="cname opt" x="64" y="508.5">ID_SITE?</text>
-<text class="ctype" x="340" y="508.5" text-anchor="end">int</text>
-<rect class="zebra" x="21" y="514" width="328" height="19"/>
-<text class="cname" x="64" y="527.5">SG_ATIVO</text>
-<text class="ctype" x="340" y="527.5" text-anchor="end">char(1)</text>
-<text class="cname" x="64" y="546.5">DT_ATUALIZACAO</text>
-<text class="ctype" x="340" y="546.5" text-anchor="end">datetime2(0)</text>
-</g>
-<g class="tbl g-des" data-t="AIP_META" tabindex="0" role="button" aria-label="Tabela AIP_META">
-<rect class="box" x="440" y="434" width="330" height="192" rx="6"/>
-<path class="head" d="M440,474 V440 Q440,434 446,434 H764 Q770,434 770,440 V474 Z"/>
-<text class="tname" x="452" y="459">AIP_META</text>
-<text class="tgroup" x="758" y="459" text-anchor="end">DESDOBRAMENTO</text>
-<text class="key" x="450" y="487.5"><tspan class="kpk">PK</tspan></text>
-<text class="cname" x="484" y="487.5">ID_META</text>
-<text class="ctype" x="760" y="487.5" text-anchor="end">int · auto</text>
-<rect class="zebra" x="441" y="493" width="328" height="19"/>
-<text class="key" x="450" y="506.5"><tspan class="kfk">FK</tspan></text>
-<text class="cname" x="484" y="506.5">ID_NIVEL</text>
-<text class="ctype" x="760" y="506.5" text-anchor="end">int</text>
-<text class="cname" x="484" y="525.5">NO_META</text>
-<text class="ctype" x="760" y="525.5" text-anchor="end">smallint</text>
-<rect class="zebra" x="441" y="531" width="328" height="19"/>
-<text class="cname" x="484" y="544.5">NM_TITULO</text>
-<text class="ctype" x="760" y="544.5" text-anchor="end">varchar(100)</text>
-<text class="cname" x="484" y="563.5">TP_META</text>
-<text class="ctype" x="760" y="563.5" text-anchor="end">varchar(20)</text>
-<rect class="zebra" x="441" y="569" width="328" height="19"/>
-<text class="cname" x="484" y="582.5">TP_POLARIDADE</text>
-<text class="ctype" x="760" y="582.5" text-anchor="end">varchar(20)</text>
-<text class="key" x="450" y="601.5"><tspan class="kfk">FK</tspan></text>
-<text class="cname opt" x="484" y="601.5">ID_META_ORIGEM?</text>
-<text class="ctype" x="760" y="601.5" text-anchor="end">int</text>
-<rect class="zebra" x="441" y="607" width="328" height="19"/>
-<text class="cname" x="484" y="620.5">SG_ATIVA</text>
-<text class="ctype" x="760" y="620.5" text-anchor="end">char(1)</text>
-</g>
-<g class="tbl g-des" data-t="AIP_UNIDADE" tabindex="0" role="button" aria-label="Tabela AIP_UNIDADE">
-<rect class="box" x="440" y="265" width="330" height="135" rx="6"/>
-<path class="head" d="M440,305 V271 Q440,265 446,265 H764 Q770,265 770,271 V305 Z"/>
-<text class="tname" x="452" y="290">AIP_UNIDADE</text>
-<text class="tgroup" x="758" y="290" text-anchor="end">DESDOBRAMENTO</text>
-<text class="key" x="450" y="318.5"><tspan class="kpk">PK</tspan></text>
-<text class="cname" x="484" y="318.5">ID_UNIDADE</text>
-<text class="ctype" x="760" y="318.5" text-anchor="end">int · auto</text>
-<rect class="zebra" x="441" y="324" width="328" height="19"/>
-<text class="key" x="450" y="337.5"><tspan class="kfk">FK</tspan></text>
-<text class="cname" x="484" y="337.5">ID_NIVEL</text>
-<text class="ctype" x="760" y="337.5" text-anchor="end">int</text>
-<text class="cname" x="484" y="356.5">NM_UNIDADE</text>
-<text class="ctype" x="760" y="356.5" text-anchor="end">varchar(100)</text>
-<rect class="zebra" x="441" y="362" width="328" height="19"/>
-<text class="key" x="450" y="375.5"><tspan class="kfk">FK</tspan></text>
-<text class="cname opt" x="484" y="375.5">ID_SITE?</text>
-<text class="ctype" x="760" y="375.5" text-anchor="end">int</text>
-<text class="cname" x="484" y="394.5">SG_ATIVA</text>
-<text class="ctype" x="760" y="394.5" text-anchor="end">char(1)</text>
+<text class="cname" x="484" y="168.5">SG_ATIVA</text>
+<text class="ctype" x="760" y="168.5" text-anchor="end">char(1)</text>
 </g>
 <g class="tbl g-gc" data-t="AIP_GOAL_CARD" tabindex="0" role="button" aria-label="Tabela AIP_GOAL_CARD">
 <rect class="box" x="860" y="20" width="330" height="211" rx="6"/>
@@ -455,19 +430,19 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 <text class="ctype" x="1180" y="225.5" text-anchor="end">varchar(20)</text>
 </g>
 <g class="tbl g-des" data-t="AIP_META_PESO" tabindex="0" role="button" aria-label="Tabela AIP_META_PESO">
-<rect class="box" x="440" y="660" width="330" height="97" rx="6"/>
-<path class="head" d="M440,700 V666 Q440,660 446,660 H764 Q770,660 770,666 V700 Z"/>
-<text class="tname" x="452" y="685">AIP_META_PESO</text>
-<text class="tgroup" x="758" y="685" text-anchor="end">DESDOBRAMENTO</text>
-<text class="key" x="450" y="713.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
-<text class="cname" x="484" y="713.5">ID_META</text>
-<text class="ctype" x="760" y="713.5" text-anchor="end">int</text>
-<rect class="zebra" x="441" y="719" width="328" height="19"/>
-<text class="key" x="450" y="732.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
-<text class="cname" x="484" y="732.5">ID_UNIDADE</text>
-<text class="ctype" x="760" y="732.5" text-anchor="end">int</text>
-<text class="cname" x="484" y="751.5">VL_PESO</text>
-<text class="ctype" x="760" y="751.5" text-anchor="end">decimal(6,2)</text>
+<rect class="box" x="440" y="453" width="330" height="97" rx="6"/>
+<path class="head" d="M440,493 V459 Q440,453 446,453 H764 Q770,453 770,459 V493 Z"/>
+<text class="tname" x="452" y="478">AIP_META_PESO</text>
+<text class="tgroup" x="758" y="478" text-anchor="end">DESDOBRAMENTO</text>
+<text class="key" x="450" y="506.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="506.5">ID_META</text>
+<text class="ctype" x="760" y="506.5" text-anchor="end">int</text>
+<rect class="zebra" x="441" y="512" width="328" height="19"/>
+<text class="key" x="450" y="525.5"><tspan class="kpk">PK</tspan> <tspan class="kfk">FK</tspan></text>
+<text class="cname" x="484" y="525.5">ID_UNIDADE</text>
+<text class="ctype" x="760" y="525.5" text-anchor="end">int</text>
+<text class="cname" x="484" y="544.5">VL_PESO</text>
+<text class="ctype" x="760" y="544.5" text-anchor="end">decimal(6,2)</text>
 </g>
 <g class="tbl g-aud" data-t="AIP_EVENTO_LOG" tabindex="0" role="button" aria-label="Tabela AIP_EVENTO_LOG">
 <rect class="box" x="1280" y="20" width="330" height="268" rx="6"/>
@@ -574,11 +549,11 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
     </div>
     <figcaption id="detalhe" aria-live="polite">O <b>AIP_GOAL_CARD</b> é o centro: uma meta do desdobramento numa unidade (BU), com versões, decisão do grupo de aprovação e comentários. O <b>AIP_CICLO</b> organiza tudo, com as datas da jornada: só um ciclo fica aberto por vez. Pessoas vêm do MDM pela matrícula (CD_MATRICULA). Passe o mouse numa linha para ver o nome da regra. <b>Clique numa tabela para ver aqui o detalhe dela: cada campo explicado, com exemplo, ligações e regras.</b></figcaption>
 <template id="d-AIP_CICLO"><div class="dt g-cic">
-  <header><h3>AIP_CICLO</h3><span class="chip">CICLO</span><span class="dmeta">15 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
-  <p class="purpose">Um ciclo anual do AIP (ex.: AIP 2027), com as datas das 4 etapas da jornada. Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.</p>
+  <header><h3>AIP_CICLO</h3><span class="chip">CICLO</span><span class="dmeta">17 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <p class="purpose">Um ciclo anual do AIP (ex.: AIP 2027), com as datas das 4 etapas da jornada. Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.</p><p class="dlink"><a href="#como-pontos">Ver como os pontos descem ↓</a></p>
   <div class="dgrid">
-    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · AIP 2026, fechado</th><th>Exemplo: 2 · AIP 2027, aberto, criado do 2026</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_CICLO</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno do ciclo.</td><td class="exv" data-l="1 · AIP 2026, fechado">1</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">2</td></tr><tr><th scope="row">NO_ANO</th><td class="ty">smallint</td><td>sim</td><td class="ds">Ano do ciclo, de 2020 a 2100; não se repete.</td><td class="exv" data-l="1 · AIP 2026, fechado">2026</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">2027</td></tr><tr><th scope="row">NM_CICLO</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Nome mostrado nas telas (ex.: AIP 2027).</td><td class="exv" data-l="1 · AIP 2026, fechado">AIP 2026</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">AIP 2027</td></tr><tr><th scope="row">TP_STATUS</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.</td><td class="exv" data-l="1 · AIP 2026, fechado">FECHADO</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">ABERTO</td></tr><tr><th scope="row">DS_TEXTO_PADRAO_EXCECOES</th><td class="ty">varchar(4000)</td><td>não</td><td class="ds">Texto padrão da seção Exceptions and Considerations de todos os Goal Cards; a BU não edita.</td><td class="exv long" data-l="1 · AIP 2026, fechado">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td><td class="exv long" data-l="2 · AIP 2027, aberto, criado do 2026">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO_ORIGEM</th><td class="ty">int</td><td>não</td><td class="ds">Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.</td><td class="exv" data-l="1 · AIP 2026, fechado"><span class="nul">vazio</span></td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">1</td></tr><tr><th scope="row">DT_CRIACAO</th><td class="ty">datetime2(0)</td><td>sim</td><td class="ds">Quando o ciclo foi aberto.</td><td class="exv" data-l="1 · AIP 2026, fechado">15/09/2025 09:00</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_CRIACAO</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">Matrícula (MDM) de quem abriu o ciclo.</td><td class="exv" data-l="1 · AIP 2026, fechado">C410644</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">C410644</td></tr><tr><th scope="row">DT_FECHAMENTO</th><td class="ty">datetime2(0)</td><td>se FECHADO</td><td class="ds">Quando foi fechado. Preenchido só se FECHADO.</td><td class="exv" data-l="1 · AIP 2026, fechado">30/01/2026 18:00</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026"><span class="nul">vazio</span></td></tr><tr><th scope="row">CD_MATRICULA_FECHAMENTO</th><td class="ty">varchar(20)</td><td>se FECHADO</td><td class="ds">Matrícula de quem fechou. Preenchida só se FECHADO.</td><td class="exv" data-l="1 · AIP 2026, fechado">C410644</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026"><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_INI_DESDOBRAMENTO</th><td class="ty">date</td><td>sim</td><td class="ds">Início da etapa 1, Desdobramento COO (início da jornada).</td><td class="exv" data-l="1 · AIP 2026, fechado">01/10/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">01/10/2026</td></tr><tr><th scope="row">DT_FIM_DESDOBRAMENTO</th><td class="ty">date</td><td>sim</td><td class="ds">Fim do Desdobramento COO; a etapa 2, Propostas BU&#x27;s, começa aqui.</td><td class="exv" data-l="1 · AIP 2026, fechado">30/10/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">29/10/2026</td></tr><tr><th scope="row">DT_FIM_PROPOSTA</th><td class="ty">date</td><td>sim</td><td class="ds">Fim das Propostas BU&#x27;s; começa a Calibração e Aprovação.</td><td class="exv" data-l="1 · AIP 2026, fechado">02/12/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">01/12/2026</td></tr><tr><th scope="row">DT_FIM_CALIBRACAO</th><td class="ty">date</td><td>sim</td><td class="ds">Fim da Calibração e Aprovação; começa o Goal Card oficial.</td><td class="exv" data-l="1 · AIP 2026, fechado">16/12/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">15/12/2026</td></tr><tr><th scope="row">DT_FIM_OFICIAL</th><td class="ty">date</td><td>sim</td><td class="ds">Fim da jornada: Goal Cards oficiais publicados.</td><td class="exv" data-l="1 · AIP 2026, fechado">23/12/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">22/12/2026</td></tr></tbody></table></div>
-    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO_ORIGEM</code> → AIP_CICLO <i>(criado a partir de)</i>: cada AIP_CICLO aponta para no máximo 1 AIP_CICLO.</li><li>AIP_NIVEL.<code>ID_CICLO</code> <i>(nível de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_NIVEL.</li><li>AIP_PAPEL.<code>ID_CICLO</code> <i>(participa de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_PAPEL.</li><li>AIP_EVENTO_LOG.<code>ID_CICLO</code> <i>(registrado em)</i>: cada AIP_CICLO pode ter zero ou vários AIP_EVENTO_LOG.</li></ul></div><div><h4>Regras</h4><ul><li>Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).</li><li>Ano entre 2020 e 2100 e único.</li><li>TP_STATUS: ABERTO ou FECHADO.</li><li>Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.</li><li>Datas da jornada em ordem: cada etapa termina depois da anterior.</li><li>Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).</li></ul></div></aside>
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · AIP 2026, fechado</th><th>Exemplo: 2 · AIP 2027, aberto, criado do 2026</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_CICLO</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno do ciclo.</td><td class="exv" data-l="1 · AIP 2026, fechado">1</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">2</td></tr><tr><th scope="row">NO_ANO</th><td class="ty">smallint</td><td>sim</td><td class="ds">Ano do ciclo, de 2020 a 2100; não se repete.</td><td class="exv" data-l="1 · AIP 2026, fechado">2026</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">2027</td></tr><tr><th scope="row">NM_CICLO</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Nome mostrado nas telas (ex.: AIP 2027).</td><td class="exv" data-l="1 · AIP 2026, fechado">AIP 2026</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">AIP 2027</td></tr><tr><th scope="row">TP_STATUS</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.</td><td class="exv" data-l="1 · AIP 2026, fechado">FECHADO</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">ABERTO</td></tr><tr><th scope="row">DS_TEXTO_PADRAO_EXCECOES</th><td class="ty">varchar(4000)</td><td>não</td><td class="ds">Texto padrão da seção Exceptions and Considerations de todos os Goal Cards; a BU não edita.</td><td class="exv long" data-l="1 · AIP 2026, fechado">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td><td class="exv long" data-l="2 · AIP 2027, aberto, criado do 2026">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO_ORIGEM</th><td class="ty">int</td><td>não</td><td class="ds">Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.</td><td class="exv" data-l="1 · AIP 2026, fechado"><span class="nul">vazio</span></td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">1</td></tr><tr><th scope="row">DT_CRIACAO</th><td class="ty">datetime2(0)</td><td>sim</td><td class="ds">Quando o ciclo foi aberto.</td><td class="exv" data-l="1 · AIP 2026, fechado">15/09/2025 09:00</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_CRIACAO</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">Matrícula (MDM) de quem abriu o ciclo.</td><td class="exv" data-l="1 · AIP 2026, fechado">C410644</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">C410644</td></tr><tr><th scope="row">DT_FECHAMENTO</th><td class="ty">datetime2(0)</td><td>se FECHADO</td><td class="ds">Quando foi fechado. Preenchido só se FECHADO.</td><td class="exv" data-l="1 · AIP 2026, fechado">30/01/2026 18:00</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026"><span class="nul">vazio</span></td></tr><tr><th scope="row">CD_MATRICULA_FECHAMENTO</th><td class="ty">varchar(20)</td><td>se FECHADO</td><td class="ds">Matrícula de quem fechou. Preenchida só se FECHADO.</td><td class="exv" data-l="1 · AIP 2026, fechado">C410644</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026"><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_INI_DESDOBRAMENTO</th><td class="ty">date</td><td>sim</td><td class="ds">Início da etapa 1, Desdobramento COO (início da jornada).</td><td class="exv" data-l="1 · AIP 2026, fechado">01/10/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">01/10/2026</td></tr><tr><th scope="row">DT_FIM_DESDOBRAMENTO</th><td class="ty">date</td><td>sim</td><td class="ds">Fim do Desdobramento COO; a etapa 2, Propostas BU&#x27;s, começa aqui.</td><td class="exv" data-l="1 · AIP 2026, fechado">30/10/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">29/10/2026</td></tr><tr><th scope="row">DT_FIM_PROPOSTA</th><td class="ty">date</td><td>sim</td><td class="ds">Fim das Propostas BU&#x27;s; começa a Calibração e Aprovação.</td><td class="exv" data-l="1 · AIP 2026, fechado">02/12/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">01/12/2026</td></tr><tr><th scope="row">DT_FIM_CALIBRACAO</th><td class="ty">date</td><td>sim</td><td class="ds">Fim da Calibração e Aprovação; começa o Goal Card oficial.</td><td class="exv" data-l="1 · AIP 2026, fechado">16/12/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">15/12/2026</td></tr><tr><th scope="row">DT_FIM_OFICIAL</th><td class="ty">date</td><td>sim</td><td class="ds">Fim da jornada: Goal Cards oficiais publicados.</td><td class="exv" data-l="1 · AIP 2026, fechado">23/12/2025</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">22/12/2026</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS_COO</th><td class="ty">smallint</td><td>sim</td><td class="ds">Pontos que o COO VBM recebe do resultado do CEO (ex.: 75 de 100); o restante vai para as metas do COO. Editado em Metas e pesos.</td><td class="exv" data-l="1 · AIP 2026, fechado">75</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">75</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS_BU</th><td class="ty">smallint</td><td>sim</td><td class="ds">Pontos que cada BU recebe do resultado do COO (ex.: 40 de 100); o restante vai para as metas da BU. Editado em Metas e pesos.</td><td class="exv" data-l="1 · AIP 2026, fechado">40</td><td class="exv" data-l="2 · AIP 2027, aberto, criado do 2026">40</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO_ORIGEM</code> → AIP_CICLO <i>(criado a partir de)</i>: cada AIP_CICLO aponta para no máximo 1 AIP_CICLO.</li><li>AIP_EVENTO_LOG.<code>ID_CICLO</code> <i>(registrado em)</i>: cada AIP_CICLO pode ter zero ou vários AIP_EVENTO_LOG.</li><li>AIP_UNIDADE.<code>ID_CICLO</code> <i>(unidade do)</i>: cada AIP_CICLO pode ter zero ou vários AIP_UNIDADE.</li><li>AIP_META.<code>ID_CICLO</code> <i>(meta do)</i>: cada AIP_CICLO pode ter zero ou vários AIP_META.</li><li>AIP_PAPEL.<code>ID_CICLO</code> <i>(participa de)</i>: cada AIP_CICLO pode ter zero ou vários AIP_PAPEL.</li></ul></div><div><h4>Regras</h4><ul><li>Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).</li><li>Ano entre 2020 e 2100 e único.</li><li>TP_STATUS: ABERTO ou FECHADO.</li><li>Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.</li><li>Datas da jornada em ordem: cada etapa termina depois da anterior.</li><li>Pontos herdados de 0 a 99; cada unidade fecha 100 pts (herdado + metas).</li><li>Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).</li></ul></div></aside>
   </div>
 </div></template>
 <template id="d-AIP_PAPEL"><div class="dt g-cic">
@@ -597,28 +572,20 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
     <aside><div><h4>Ligações</h4><ul><li>AIP_UNIDADE.<code>ID_SITE</code> <i>(representa)</i>: cada SITES pode ter zero ou vários AIP_UNIDADE.</li><li>AIP_PAPEL.<code>ID_SITE</code> <i>(atua na)</i>: cada SITES pode ter zero ou vários AIP_PAPEL.</li></ul></div><div><h4>Regras</h4><ul><li>Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.</li><li>Recriada aqui só para o teste do DER.</li></ul></div></aside>
   </div>
 </div></template>
-<template id="d-AIP_NIVEL"><div class="dt g-des">
-  <header><h3>AIP_NIVEL</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">9 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
-  <p class="purpose">Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU; GG e GA ficam fora no primeiro momento): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.</p><p class="dlink"><a href="#como-pontos">Ver como os pontos descem ↓</a></p>
-  <div class="dgrid">
-    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · CEO, 100 pts</th><th>Exemplo: 2 · COO, 75 herdados do CEO</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_NIVEL</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno do nível.</td><td class="exv" data-l="1 · CEO, 100 pts">1</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO</th><td class="ty">int</td><td>sim</td><td class="ds">Ciclo do nível.</td><td class="exv" data-l="1 · CEO, 100 pts">2</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">2</td></tr><tr><th scope="row">CD_NIVEL</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">CEO, COO ou BU.</td><td class="exv" data-l="1 · CEO, 100 pts">CEO</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">COO</td></tr><tr><th scope="row">NO_ORDEM</th><td class="ty">smallint</td><td>sim</td><td class="ds">Posição no desdobramento (1 = CEO).</td><td class="exv" data-l="1 · CEO, 100 pts">1</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">2</td></tr><tr><th scope="row">NM_NIVEL</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Nome mostrado nas telas; editável.</td><td class="exv" data-l="1 · CEO, 100 pts">CEO</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">COO</td></tr><tr><th scope="row">QTDE_PONTOS_TOTAL</th><td class="ty">int</td><td>sim</td><td class="ds">Pontos que cada unidade do nível precisa fechar (ex.: 100).</td><td class="exv" data-l="1 · CEO, 100 pts">100</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">100</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS</th><td class="ty">int</td><td>sim</td><td class="ds">Pontos que vêm do resultado do nível acima (linha &quot;Resultado do …&quot;, editável em Metas e pesos). O restante vai para as metas do nível.</td><td class="exv" data-l="1 · CEO, 100 pts">0</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">75</td></tr><tr><th scope="row">SG_OBRIGATORIO</th><td class="ty">char(1)</td><td>sim</td><td class="ds">S = Obrigatório (sempre no desdobramento), N = Opcional; escolhido em Parâmetros.</td><td class="exv" data-l="1 · CEO, 100 pts">S</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">S</td></tr><tr><th scope="row">SG_ATIVO</th><td class="ty">char(1)</td><td>sim</td><td class="ds">S = nível em uso. Nível obrigatório fica sempre S.</td><td class="exv" data-l="1 · CEO, 100 pts">S</td><td class="exv" data-l="2 · COO, 75 herdados do CEO">S</td></tr></tbody></table></div>
-    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(nível de)</i>: cada AIP_NIVEL aponta para exatamente 1 AIP_CICLO.</li><li>AIP_UNIDADE.<code>ID_NIVEL</code> <i>(pertence ao)</i>: cada AIP_NIVEL pode ter zero ou vários AIP_UNIDADE.</li><li>AIP_META.<code>ID_NIVEL</code> <i>(meta do)</i>: cada AIP_NIVEL pode ter zero ou vários AIP_META.</li></ul></div><div><h4>Regras</h4><ul><li>Um nível de cada tipo por ciclo.</li><li>Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.</li><li>Nível obrigatório fica sempre ativo.</li><li>CD_NIVEL: CEO, COO ou BU (GG e GA entram depois, se necessário).</li></ul></div></aside>
-  </div>
-</div></template>
 <template id="d-AIP_UNIDADE"><div class="dt g-des">
-  <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">5 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">6 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
   <p class="purpose">As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.</p>
   <div class="dgrid">
-    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · CEO VBM</th><th>Exemplo: 2 · COO VBM</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_UNIDADE</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno da unidade.</td><td class="exv" data-l="1 · CEO VBM">1</td><td class="exv" data-l="2 · COO VBM">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_NIVEL</th><td class="ty">int</td><td>sim</td><td class="ds">Nível da unidade.</td><td class="exv" data-l="1 · CEO VBM">1</td><td class="exv" data-l="2 · COO VBM">2</td></tr><tr><th scope="row">NM_UNIDADE</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Nome mostrado (ex.: Ontario).</td><td class="exv" data-l="1 · CEO VBM">CEO VBM</td><td class="exv" data-l="2 · COO VBM">COO VBM</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_SITE</th><td class="ty">int</td><td>se nível BU</td><td class="ds">BU (site do IBP) correspondente, quando a unidade é do nível BU.</td><td class="exv" data-l="1 · CEO VBM"><span class="nul">vazio</span></td><td class="exv" data-l="2 · COO VBM"><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVA</th><td class="ty">char(1)</td><td>sim</td><td class="ds">N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.</td><td class="exv" data-l="1 · CEO VBM">S</td><td class="exv" data-l="2 · COO VBM">S</td></tr></tbody></table></div>
-    <aside><div><h4>Ligações</h4><ul><li><code>ID_NIVEL</code> → AIP_NIVEL <i>(pertence ao)</i>: cada AIP_UNIDADE aponta para exatamente 1 AIP_NIVEL.</li><li><code>ID_SITE</code> → SITES <i>(representa)</i>: cada AIP_UNIDADE aponta para no máximo 1 SITES.</li><li>AIP_META_PESO.<code>ID_UNIDADE</code> <i>(na unidade)</i>: cada AIP_UNIDADE pode ter zero ou vários AIP_META_PESO.</li><li>AIP_GOAL_CARD.<code>ID_UNIDADE</code> <i>(da unidade)</i>: cada AIP_UNIDADE pode ter zero ou vários AIP_GOAL_CARD.</li></ul></div><div><h4>Regras</h4><ul><li>Nome único dentro do nível.</li><li>ID_SITE preenchido só nas unidades de nível BU.</li><li>SG_ATIVA: S ou N.</li></ul></div></aside>
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · CEO VBM</th><th>Exemplo: 2 · COO VBM</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_UNIDADE</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno da unidade.</td><td class="exv" data-l="1 · CEO VBM">1</td><td class="exv" data-l="2 · COO VBM">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO</th><td class="ty">int</td><td>sim</td><td class="ds">Ciclo da unidade.</td><td class="exv" data-l="1 · CEO VBM">2</td><td class="exv" data-l="2 · COO VBM">2</td></tr><tr><th scope="row">CD_NIVEL</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">CEO, COO ou BU.</td><td class="exv" data-l="1 · CEO VBM">CEO</td><td class="exv" data-l="2 · COO VBM">COO</td></tr><tr><th scope="row">NM_UNIDADE</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Nome mostrado (ex.: Ontario).</td><td class="exv" data-l="1 · CEO VBM">CEO VBM</td><td class="exv" data-l="2 · COO VBM">COO VBM</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_SITE</th><td class="ty">int</td><td>se nível BU</td><td class="ds">BU (site do IBP) correspondente, quando a unidade é do nível BU.</td><td class="exv" data-l="1 · CEO VBM"><span class="nul">vazio</span></td><td class="exv" data-l="2 · COO VBM"><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVA</th><td class="ty">char(1)</td><td>sim</td><td class="ds">N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.</td><td class="exv" data-l="1 · CEO VBM">S</td><td class="exv" data-l="2 · COO VBM">S</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_SITE</code> → SITES <i>(representa)</i>: cada AIP_UNIDADE aponta para no máximo 1 SITES.</li><li><code>ID_CICLO</code> → AIP_CICLO <i>(unidade do)</i>: cada AIP_UNIDADE aponta para exatamente 1 AIP_CICLO.</li><li>AIP_META_PESO.<code>ID_UNIDADE</code> <i>(na unidade)</i>: cada AIP_UNIDADE pode ter zero ou vários AIP_META_PESO.</li><li>AIP_GOAL_CARD.<code>ID_UNIDADE</code> <i>(da unidade)</i>: cada AIP_UNIDADE pode ter zero ou vários AIP_GOAL_CARD.</li></ul></div><div><h4>Regras</h4><ul><li>Nome único por ciclo e nível.</li><li>ID_SITE preenchido se, e só se, o nível é BU.</li><li>SG_ATIVA: S ou N.</li></ul></div></aside>
   </div>
 </div></template>
 <template id="d-AIP_META"><div class="dt g-des">
-  <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">8 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
+  <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span><span class="dmeta">9 campos</span><button type="button" class="dclose" aria-label="Fechar detalhe">Fechar ✕</button></header>
   <p class="purpose">As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.</p>
   <div class="dgrid">
-    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · Meta 02 do COO</th><th>Exemplo: 2 · Meta 04 das BUs</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_META</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno da meta.</td><td class="exv" data-l="1 · Meta 02 do COO">1</td><td class="exv" data-l="2 · Meta 04 das BUs">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_NIVEL</th><td class="ty">int</td><td>sim</td><td class="ds">Nível da meta (COO, BU…).</td><td class="exv" data-l="1 · Meta 02 do COO">2</td><td class="exv" data-l="2 · Meta 04 das BUs">3</td></tr><tr><th scope="row">NO_META</th><td class="ty">smallint</td><td>sim</td><td class="ds">Número mostrado nas telas (ex.: 04); único no nível.</td><td class="exv" data-l="1 · Meta 02 do COO">2</td><td class="exv" data-l="2 · Meta 04 das BUs">4</td></tr><tr><th scope="row">NM_TITULO</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Título da meta (Goal Title).</td><td class="exv long" data-l="1 · Meta 02 do COO">Strengthen a Culture of Chronic Unease</td><td class="exv long" data-l="2 · Meta 04 das BUs">BU Adherence to Production Budget</td></tr><tr><th scope="row">TP_META</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">FORMULA (Por fórmula) ou MARCOS (Por marcos).</td><td class="exv" data-l="1 · Meta 02 do COO">FORMULA</td><td class="exv" data-l="2 · Meta 04 das BUs">FORMULA</td></tr><tr><th scope="row">TP_POLARIDADE</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">MAIOR (maior é melhor) ou MENOR (menor é melhor).</td><td class="exv" data-l="1 · Meta 02 do COO">MAIOR</td><td class="exv" data-l="2 · Meta 04 das BUs">MAIOR</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_META_ORIGEM</th><td class="ty">int</td><td>não</td><td class="ds">Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.</td><td class="exv" data-l="1 · Meta 02 do COO"><span class="nul">vazio</span></td><td class="exv" data-l="2 · Meta 04 das BUs"><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVA</th><td class="ty">char(1)</td><td>sim</td><td class="ds">N = fora do ciclo, sem apagar o histórico.</td><td class="exv" data-l="1 · Meta 02 do COO">S</td><td class="exv" data-l="2 · Meta 04 das BUs">S</td></tr></tbody></table></div>
-    <aside><div><h4>Ligações</h4><ul><li><code>ID_NIVEL</code> → AIP_NIVEL <i>(meta do)</i>: cada AIP_META aponta para exatamente 1 AIP_NIVEL.</li><li><code>ID_META_ORIGEM</code> → AIP_META <i>(desdobrada de)</i>: cada AIP_META aponta para no máximo 1 AIP_META.</li><li>AIP_META_PESO.<code>ID_META</code> <i>(peso da)</i>: cada AIP_META pode ter zero ou vários AIP_META_PESO.</li><li>AIP_GOAL_CARD.<code>ID_META</code> <i>(card da)</i>: cada AIP_META pode ter zero ou vários AIP_GOAL_CARD.</li></ul></div><div><h4>Regras</h4><ul><li>Número único dentro do nível.</li><li>TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.</li></ul></div></aside>
+    <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · Meta 02 do COO</th><th>Exemplo: 2 · Meta 04 das BUs</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_META</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno da meta.</td><td class="exv" data-l="1 · Meta 02 do COO">1</td><td class="exv" data-l="2 · Meta 04 das BUs">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_CICLO</th><td class="ty">int</td><td>sim</td><td class="ds">Ciclo da meta.</td><td class="exv" data-l="1 · Meta 02 do COO">2</td><td class="exv" data-l="2 · Meta 04 das BUs">2</td></tr><tr><th scope="row">CD_NIVEL</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">Nível da meta: CEO, COO ou BU.</td><td class="exv" data-l="1 · Meta 02 do COO">COO</td><td class="exv" data-l="2 · Meta 04 das BUs">BU</td></tr><tr><th scope="row">NO_META</th><td class="ty">smallint</td><td>sim</td><td class="ds">Número mostrado nas telas (ex.: 04); único no nível.</td><td class="exv" data-l="1 · Meta 02 do COO">2</td><td class="exv" data-l="2 · Meta 04 das BUs">4</td></tr><tr><th scope="row">NM_TITULO</th><td class="ty">varchar(100)</td><td>sim</td><td class="ds">Título da meta (Goal Title).</td><td class="exv long" data-l="1 · Meta 02 do COO">Strengthen a Culture of Chronic Unease</td><td class="exv long" data-l="2 · Meta 04 das BUs">BU Adherence to Production Budget</td></tr><tr><th scope="row">TP_META</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">FORMULA (Por fórmula) ou MARCOS (Por marcos).</td><td class="exv" data-l="1 · Meta 02 do COO">FORMULA</td><td class="exv" data-l="2 · Meta 04 das BUs">FORMULA</td></tr><tr><th scope="row">TP_POLARIDADE</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">MAIOR (maior é melhor) ou MENOR (menor é melhor).</td><td class="exv" data-l="1 · Meta 02 do COO">MAIOR</td><td class="exv" data-l="2 · Meta 04 das BUs">MAIOR</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_META_ORIGEM</th><td class="ty">int</td><td>não</td><td class="ds">Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.</td><td class="exv" data-l="1 · Meta 02 do COO"><span class="nul">vazio</span></td><td class="exv" data-l="2 · Meta 04 das BUs"><span class="nul">vazio</span></td></tr><tr><th scope="row">SG_ATIVA</th><td class="ty">char(1)</td><td>sim</td><td class="ds">N = fora do ciclo, sem apagar o histórico.</td><td class="exv" data-l="1 · Meta 02 do COO">S</td><td class="exv" data-l="2 · Meta 04 das BUs">S</td></tr></tbody></table></div>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_CICLO</code> → AIP_CICLO <i>(meta do)</i>: cada AIP_META aponta para exatamente 1 AIP_CICLO.</li><li><code>ID_META_ORIGEM</code> → AIP_META <i>(desdobrada de)</i>: cada AIP_META aponta para no máximo 1 AIP_META.</li><li>AIP_META_PESO.<code>ID_META</code> <i>(peso da)</i>: cada AIP_META pode ter zero ou vários AIP_META_PESO.</li><li>AIP_GOAL_CARD.<code>ID_META</code> <i>(card da)</i>: cada AIP_META pode ter zero ou vários AIP_GOAL_CARD.</li></ul></div><div><h4>Regras</h4><ul><li>Número único por ciclo e nível.</li><li>CD_NIVEL: CEO, COO ou BU.</li><li>TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.</li></ul></div></aside>
   </div>
 </div></template>
 <template id="d-AIP_META_PESO"><div class="dt g-des">
@@ -634,7 +601,7 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
   <p class="purpose">O Goal Card de uma meta numa unidade (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.</p>
   <div class="dgrid">
     <div class="tscroll"><table class="dtab"><thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Para que serve</th><th>Exemplo: 1 · GC-ONT-04, devolvido para ajuste</th><th>Exemplo: 2 · GC-ONP-04, aprovado (v1 oficial)</th></tr></thead><tbody><tr><th scope="row"><span class="k kp">PK</span> ID_GOAL_CARD</th><td class="ty">int</td><td>auto</td><td class="ds">Número interno do card.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">1</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">2</td></tr><tr><th scope="row">CD_GOAL_CARD</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">Código mostrado nas telas: GC-&lt;BU&gt;-&lt;meta&gt;.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">GC-ONT-04</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">GC-ONP-04</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_META</th><td class="ty">int</td><td>sim</td><td class="ds">Meta do card.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">2</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">2</td></tr><tr><th scope="row"><span class="k kf">FK</span> ID_UNIDADE</th><td class="ty">int</td><td>sim</td><td class="ds">Unidade (BU) dona do card.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">4</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">3</td></tr><tr><th scope="row">TP_ESTADO</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">RASCUNHO, EM_APROVACAO, EM_REVISAO (devolvido para ajuste), APROVADO ou NEGADO.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">EM_REVISAO</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">APROVADO</td></tr><tr><th scope="row">NO_VERSAO_OFICIAL</th><td class="ty">smallint</td><td>se APROVADO</td><td class="ds">Versão aprovada que vale como oficial. Preenchida só se APROVADO.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste"><span class="nul">vazio</span></td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">1</td></tr><tr><th scope="row">DS_RASCUNHO</th><td class="ty">nvarchar(max)</td><td>não</td><td class="ds">Campos em edição ainda não submetidos (objetivo, fórmula, unidade, régua, área, evidência, exceções da BU).</td><td class="exv long" data-l="1 · GC-ONT-04, devolvido para ajuste">{&quot;unit&quot;: &quot;%&quot;, &quot;ruler&quot;: {&quot;min&quot;: 95, &quot;meta&quot;: 100, &quot;exc&quot;: 105}}</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)"><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_ATUALIZACAO</th><td class="ty">datetime2(0)</td><td>sim</td><td class="ds">Última mudança no card (coluna &quot;Última atualização&quot;).</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">18/11/2026 15:20</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">10/11/2026 11:00</td></tr><tr><th scope="row">CD_MATRICULA_ATUALIZACAO</th><td class="ty">varchar(20)</td><td>sim</td><td class="ds">Quem fez a última mudança.</td><td class="exv" data-l="1 · GC-ONT-04, devolvido para ajuste">C410459</td><td class="exv" data-l="2 · GC-ONP-04, aprovado (v1 oficial)">C410459</td></tr></tbody></table></div>
-    <aside><div><h4>Ligações</h4><ul><li><code>ID_META</code> → AIP_META <i>(card da)</i>: cada AIP_GOAL_CARD aponta para exatamente 1 AIP_META.</li><li><code>ID_UNIDADE</code> → AIP_UNIDADE <i>(da unidade)</i>: cada AIP_GOAL_CARD aponta para exatamente 1 AIP_UNIDADE.</li><li>AIP_GOAL_CARD_VERSAO.<code>ID_GOAL_CARD</code> <i>(versão de)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_GOAL_CARD_VERSAO.</li><li>AIP_EVENTO_LOG.<code>ID_GOAL_CARD</code> <i>(sobre)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_EVENTO_LOG.</li></ul></div><div><h4>Regras</h4><ul><li>Código único; um card por meta e unidade.</li><li>TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO, NEGADO.</li><li>Versão oficial preenchida se, e só se, APROVADO.</li></ul></div></aside>
+    <aside><div><h4>Ligações</h4><ul><li><code>ID_META</code> → AIP_META <i>(card da)</i>: cada AIP_GOAL_CARD aponta para exatamente 1 AIP_META.</li><li><code>ID_UNIDADE</code> → AIP_UNIDADE <i>(da unidade)</i>: cada AIP_GOAL_CARD aponta para exatamente 1 AIP_UNIDADE.</li><li>AIP_EVENTO_LOG.<code>ID_GOAL_CARD</code> <i>(sobre)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_EVENTO_LOG.</li><li>AIP_GOAL_CARD_VERSAO.<code>ID_GOAL_CARD</code> <i>(versão de)</i>: cada AIP_GOAL_CARD pode ter zero ou vários AIP_GOAL_CARD_VERSAO.</li></ul></div><div><h4>Regras</h4><ul><li>Código único; um card por meta e unidade.</li><li>TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO, NEGADO.</li><li>Versão oficial preenchida se, e só se, APROVADO.</li></ul></div></aside>
   </div>
 </div></template>
 <template id="d-AIP_GOAL_CARD_VERSAO"><div class="dt g-gc">
@@ -668,8 +635,8 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 <article class="tcard g-cic" id="t-AIP_CICLO" data-t="AIP_CICLO">
   <header><h3>AIP_CICLO</h3><span class="chip">CICLO</span></header>
   <p class="purpose">Um ciclo anual do AIP (ex.: AIP 2027), com as datas das 4 etapas da jornada. Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.</p>
-  <p class="meta">15 campos · ligada a AIP_CICLO, AIP_EVENTO_LOG, AIP_NIVEL, AIP_PAPEL</p>
-  <ul><li>Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).</li><li>Ano entre 2020 e 2100 e único.</li><li>TP_STATUS: ABERTO ou FECHADO.</li><li>Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.</li><li>Datas da jornada em ordem: cada etapa termina depois da anterior.</li><li>Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).</li></ul>
+  <p class="meta">17 campos · ligada a AIP_CICLO, AIP_EVENTO_LOG, AIP_META, AIP_PAPEL, AIP_UNIDADE</p>
+  <ul><li>Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).</li><li>Ano entre 2020 e 2100 e único.</li><li>TP_STATUS: ABERTO ou FECHADO.</li><li>Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.</li><li>Datas da jornada em ordem: cada etapa termina depois da anterior.</li><li>Pontos herdados de 0 a 99; cada unidade fecha 100 pts (herdado + metas).</li><li>Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).</li></ul>
 </article>
 <article class="tcard g-cic" id="t-AIP_PAPEL" data-t="AIP_PAPEL">
   <header><h3>AIP_PAPEL</h3><span class="chip">CICLO</span></header>
@@ -683,23 +650,17 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
   <p class="meta">5 campos · ligada a AIP_PAPEL, AIP_UNIDADE</p>
   <ul><li>Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.</li><li>Recriada aqui só para o teste do DER.</li></ul>
 </article>
-<article class="tcard g-des" id="t-AIP_NIVEL" data-t="AIP_NIVEL">
-  <header><h3>AIP_NIVEL</h3><span class="chip">DESDOBRAMENTO</span></header>
-  <p class="purpose">Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU; GG e GA ficam fora no primeiro momento): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.</p>
-  <p class="meta">9 campos · ligada a AIP_CICLO, AIP_META, AIP_UNIDADE</p>
-  <ul><li>Um nível de cada tipo por ciclo.</li><li>Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.</li><li>Nível obrigatório fica sempre ativo.</li><li>CD_NIVEL: CEO, COO ou BU (GG e GA entram depois, se necessário).</li></ul>
-</article>
 <article class="tcard g-des" id="t-AIP_UNIDADE" data-t="AIP_UNIDADE">
   <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span></header>
   <p class="purpose">As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.</p>
-  <p class="meta">5 campos · ligada a AIP_GOAL_CARD, AIP_META_PESO, AIP_NIVEL, SITES</p>
-  <ul><li>Nome único dentro do nível.</li><li>ID_SITE preenchido só nas unidades de nível BU.</li><li>SG_ATIVA: S ou N.</li></ul>
+  <p class="meta">6 campos · ligada a AIP_CICLO, AIP_GOAL_CARD, AIP_META_PESO, SITES</p>
+  <ul><li>Nome único por ciclo e nível.</li><li>ID_SITE preenchido se, e só se, o nível é BU.</li><li>SG_ATIVA: S ou N.</li></ul>
 </article>
 <article class="tcard g-des" id="t-AIP_META" data-t="AIP_META">
   <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span></header>
   <p class="purpose">As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.</p>
-  <p class="meta">8 campos · ligada a AIP_GOAL_CARD, AIP_META, AIP_META_PESO, AIP_NIVEL</p>
-  <ul><li>Número único dentro do nível.</li><li>TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.</li></ul>
+  <p class="meta">9 campos · ligada a AIP_CICLO, AIP_GOAL_CARD, AIP_META, AIP_META_PESO</p>
+  <ul><li>Número único por ciclo e nível.</li><li>CD_NIVEL: CEO, COO ou BU.</li><li>TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.</li></ul>
 </article>
 <article class="tcard g-des" id="t-AIP_META_PESO" data-t="AIP_META_PESO">
   <header><h3>AIP_META_PESO</h3><span class="chip">DESDOBRAMENTO</span></header>
@@ -733,16 +694,16 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
 </article>
   </div>
 
-<section class="explica" id="como-pontos"><h2>Como os pontos descem do CEO até a BU</h2><p>Cada unidade de um nível precisa fechar o total de pontos do nível. Uma parte vem do resultado do nível acima (<code>QTDE_PONTOS_HERDADOS</code> da AIP_NIVEL) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p><ol class="ordem"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li><li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li><li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li><li>A API só grava quando herdado + soma dos pesos = total, em todas as unidades de todos os níveis ativos (RN-16).</li></ol><div class="tscroll"><table class="passo"><thead><tr><th>Unidade</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody><tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr><tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>
+<section class="explica" id="como-pontos"><h2>Como os pontos descem do CEO até a BU</h2><p>Cada unidade de um nível precisa fechar o total de pontos do nível. Uma parte vem do resultado do nível acima (<code>QTDE_PONTOS_HERDADOS_COO</code> e <code>_BU</code> do AIP_CICLO) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p><ol class="ordem"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li><li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li><li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li><li>A API só grava quando herdado + soma dos pesos = total, em todas as unidades de todos os níveis ativos (RN-16).</li></ol><div class="tscroll"><table class="passo"><thead><tr><th>Unidade</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody><tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr><tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>
 
-<section class="explica" id="enxuto"><h2>O que foi simplificado nesta revisão</h2><p>De 16 para 10 tabelas do AIP, sem perder nenhuma regra das telas:</p><ul class="fn"><li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li><li><code>AIP_CICLO_BU</code><span>A BU no ciclo já é a unidade de nível BU da AIP_UNIDADE (com SG_ATIVA).</span></li><li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li><li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li><li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li><li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU, e a AIP_UNIDADE perdeu a unidade-mãe.</span></li></ul></section>
+<section class="explica" id="enxuto"><h2>O que foi simplificado nesta revisão</h2><p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p><ul class="fn"><li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li><li><code>AIP_CICLO_BU</code><span>A BU no ciclo já é a unidade de nível BU da AIP_UNIDADE (com SG_ATIVA).</span></li><li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li><li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li><li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li><li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li><li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU, e a AIP_UNIDADE perdeu a unidade-mãe.</span></li></ul></section>
 
   <h2>Exemplos de dados</h2>
   <p class="hint">Linhas fictícias, gravadas num banco de teste e aprovadas por todas as regras (exemplos.sql). Campos SG_ usam S/N, como no esquema IBP. Os IDs batem entre as tabelas: o AIP 2027 (ciclo 2) foi criado a partir do AIP 2026; o Goal Card GC-ONT-04 teve a v1 devolvida para ajuste na unidade e na régua (o comentário e a resposta estão no log), e o GC-ONP-04 foi aprovado. As matrículas são fictícias. Clique numa tabela do diagrama para destacar o exemplo dela.</p>
   <div class="exs">
 <section class="ex g-cic" id="e-AIP_CICLO" data-t="AIP_CICLO">
   <header><h3>AIP_CICLO</h3><span class="chip">CICLO</span></header>
-  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · AIP 2026, fechado</th><th scope="col">2 · AIP 2027, aberto, criado do 2026</th></tr></thead><tbody><tr><th scope="row">ID_CICLO</th><td>1</td><td>2</td></tr><tr><th scope="row">NO_ANO</th><td>2026</td><td>2027</td></tr><tr><th scope="row">NM_CICLO</th><td>AIP 2026</td><td>AIP 2027</td></tr><tr><th scope="row">TP_STATUS</th><td>FECHADO</td><td>ABERTO</td></tr><tr><th scope="row">DS_TEXTO_PADRAO_EXCECOES</th><td class="long">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td><td class="long">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td></tr><tr><th scope="row">ID_CICLO_ORIGEM</th><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">DT_CRIACAO</th><td>15/09/2025 09:00</td><td>20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_CRIACAO</th><td>C410644</td><td>C410644</td></tr><tr><th scope="row">DT_FECHAMENTO</th><td>30/01/2026 18:00</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">CD_MATRICULA_FECHAMENTO</th><td>C410644</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_INI_DESDOBRAMENTO</th><td>01/10/2025</td><td>01/10/2026</td></tr><tr><th scope="row">DT_FIM_DESDOBRAMENTO</th><td>30/10/2025</td><td>29/10/2026</td></tr><tr><th scope="row">DT_FIM_PROPOSTA</th><td>02/12/2025</td><td>01/12/2026</td></tr><tr><th scope="row">DT_FIM_CALIBRACAO</th><td>16/12/2025</td><td>15/12/2026</td></tr><tr><th scope="row">DT_FIM_OFICIAL</th><td>23/12/2025</td><td>22/12/2026</td></tr></tbody></table></div>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · AIP 2026, fechado</th><th scope="col">2 · AIP 2027, aberto, criado do 2026</th></tr></thead><tbody><tr><th scope="row">ID_CICLO</th><td>1</td><td>2</td></tr><tr><th scope="row">NO_ANO</th><td>2026</td><td>2027</td></tr><tr><th scope="row">NM_CICLO</th><td>AIP 2026</td><td>AIP 2027</td></tr><tr><th scope="row">TP_STATUS</th><td>FECHADO</td><td>ABERTO</td></tr><tr><th scope="row">DS_TEXTO_PADRAO_EXCECOES</th><td class="long">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td><td class="long">Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.</td></tr><tr><th scope="row">ID_CICLO_ORIGEM</th><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">DT_CRIACAO</th><td>15/09/2025 09:00</td><td>20/09/2026 10:30</td></tr><tr><th scope="row">CD_MATRICULA_CRIACAO</th><td>C410644</td><td>C410644</td></tr><tr><th scope="row">DT_FECHAMENTO</th><td>30/01/2026 18:00</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">CD_MATRICULA_FECHAMENTO</th><td>C410644</td><td><span class="nul">vazio</span></td></tr><tr><th scope="row">DT_INI_DESDOBRAMENTO</th><td>01/10/2025</td><td>01/10/2026</td></tr><tr><th scope="row">DT_FIM_DESDOBRAMENTO</th><td>30/10/2025</td><td>29/10/2026</td></tr><tr><th scope="row">DT_FIM_PROPOSTA</th><td>02/12/2025</td><td>01/12/2026</td></tr><tr><th scope="row">DT_FIM_CALIBRACAO</th><td>16/12/2025</td><td>15/12/2026</td></tr><tr><th scope="row">DT_FIM_OFICIAL</th><td>23/12/2025</td><td>22/12/2026</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS_COO</th><td>75</td><td>75</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS_BU</th><td>40</td><td>40</td></tr></tbody></table></div>
 </section>
 <section class="ex g-cic" id="e-AIP_PAPEL" data-t="AIP_PAPEL">
   <header><h3>AIP_PAPEL</h3><span class="chip">CICLO</span></header>
@@ -752,17 +713,13 @@ h2 { font-size: 1.1rem; margin: 6px 0 0; }
   <header><h3>SITES</h3><span class="chip">IBP</span></header>
   <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">12 · Onça Puma, Brasil</th><th scope="col">15 · Ontario, Canadá</th></tr></thead><tbody><tr><th scope="row">ID_SITE</th><td>12</td><td>15</td></tr><tr><th scope="row">ID_SISTEMA</th><td>1</td><td>1</td></tr><tr><th scope="row">NM_SITE</th><td>Onça Puma</td><td>Ontario</td></tr><tr><th scope="row">NM_PAIS</th><td>Brasil</td><td>Canadá</td></tr><tr><th scope="row">SG_REGIAO</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td></tr></tbody></table></div>
 </section>
-<section class="ex g-des" id="e-AIP_NIVEL" data-t="AIP_NIVEL">
-  <header><h3>AIP_NIVEL</h3><span class="chip">DESDOBRAMENTO</span></header>
-  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · CEO, 100 pts</th><th scope="col">2 · COO, 75 herdados do CEO</th><th scope="col">3 · BU, 40 herdados do COO</th></tr></thead><tbody><tr><th scope="row">ID_NIVEL</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_CICLO</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">CD_NIVEL</th><td>CEO</td><td>COO</td><td>BU</td></tr><tr><th scope="row">NO_ORDEM</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">NM_NIVEL</th><td>CEO</td><td>COO</td><td>Business Unit</td></tr><tr><th scope="row">QTDE_PONTOS_TOTAL</th><td>100</td><td>100</td><td>100</td></tr><tr><th scope="row">QTDE_PONTOS_HERDADOS</th><td>0</td><td>75</td><td>40</td></tr><tr><th scope="row">SG_OBRIGATORIO</th><td>S</td><td>S</td><td>S</td></tr><tr><th scope="row">SG_ATIVO</th><td>S</td><td>S</td><td>S</td></tr></tbody></table></div>
-</section>
 <section class="ex g-des" id="e-AIP_UNIDADE" data-t="AIP_UNIDADE">
   <header><h3>AIP_UNIDADE</h3><span class="chip">DESDOBRAMENTO</span></header>
-  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · CEO VBM</th><th scope="col">2 · COO VBM</th><th scope="col">3 · Onça Puma (site 12)</th></tr></thead><tbody><tr><th scope="row">ID_UNIDADE</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_NIVEL</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">NM_UNIDADE</th><td>CEO VBM</td><td>COO VBM</td><td>Onça Puma</td></tr><tr><th scope="row">ID_SITE</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>12</td></tr><tr><th scope="row">SG_ATIVA</th><td>S</td><td>S</td><td>S</td></tr></tbody></table></div>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · CEO VBM</th><th scope="col">2 · COO VBM</th><th scope="col">3 · Onça Puma (site 12)</th></tr></thead><tbody><tr><th scope="row">ID_UNIDADE</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_CICLO</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">CD_NIVEL</th><td>CEO</td><td>COO</td><td>BU</td></tr><tr><th scope="row">NM_UNIDADE</th><td>CEO VBM</td><td>COO VBM</td><td>Onça Puma</td></tr><tr><th scope="row">ID_SITE</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>12</td></tr><tr><th scope="row">SG_ATIVA</th><td>S</td><td>S</td><td>S</td></tr></tbody></table></div>
 </section>
 <section class="ex g-des" id="e-AIP_META" data-t="AIP_META">
   <header><h3>AIP_META</h3><span class="chip">DESDOBRAMENTO</span></header>
-  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · Meta 02 do COO</th><th scope="col">2 · Meta 04 das BUs</th><th scope="col">3 · Meta 05 da BU, desdobrada da 02 do COO</th></tr></thead><tbody><tr><th scope="row">ID_META</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_NIVEL</th><td>2</td><td>3</td><td>3</td></tr><tr><th scope="row">NO_META</th><td>2</td><td>4</td><td>5</td></tr><tr><th scope="row">NM_TITULO</th><td class="long">Strengthen a Culture of Chronic Unease</td><td class="long">BU Adherence to Production Budget</td><td>BU Chronic Unease</td></tr><tr><th scope="row">TP_META</th><td>FORMULA</td><td>FORMULA</td><td>FORMULA</td></tr><tr><th scope="row">TP_POLARIDADE</th><td>MAIOR</td><td>MAIOR</td><td>MAIOR</td></tr><tr><th scope="row">ID_META_ORIGEM</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">SG_ATIVA</th><td>S</td><td>S</td><td>S</td></tr></tbody></table></div>
+  <div class="tscroll"><table><thead><tr><th scope="col">Campo</th><th scope="col">1 · Meta 02 do COO</th><th scope="col">2 · Meta 04 das BUs</th><th scope="col">3 · Meta 05 da BU, desdobrada da 02 do COO</th></tr></thead><tbody><tr><th scope="row">ID_META</th><td>1</td><td>2</td><td>3</td></tr><tr><th scope="row">ID_CICLO</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">CD_NIVEL</th><td>COO</td><td>BU</td><td>BU</td></tr><tr><th scope="row">NO_META</th><td>2</td><td>4</td><td>5</td></tr><tr><th scope="row">NM_TITULO</th><td class="long">Strengthen a Culture of Chronic Unease</td><td class="long">BU Adherence to Production Budget</td><td>BU Chronic Unease</td></tr><tr><th scope="row">TP_META</th><td>FORMULA</td><td>FORMULA</td><td>FORMULA</td></tr><tr><th scope="row">TP_POLARIDADE</th><td>MAIOR</td><td>MAIOR</td><td>MAIOR</td></tr><tr><th scope="row">ID_META_ORIGEM</th><td><span class="nul">vazio</span></td><td><span class="nul">vazio</span></td><td>1</td></tr><tr><th scope="row">SG_ATIVA</th><td>S</td><td>S</td><td>S</td></tr></tbody></table></div>
 </section>
 <section class="ex g-des" id="e-AIP_META_PESO" data-t="AIP_META_PESO">
   <header><h3>AIP_META_PESO</h3><span class="chip">DESDOBRAMENTO</span></header>

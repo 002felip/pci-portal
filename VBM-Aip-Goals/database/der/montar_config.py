@@ -28,7 +28,7 @@ c['formato'] = {'moeda': '', 'decimal': ',', 'fuso_horas': -3, 'prefixos_moeda':
 
 colunas = [
     ('cic', ['AIP_CICLO', 'AIP_PAPEL', 'SITES']),
-    ('des', ['AIP_NIVEL', 'AIP_UNIDADE', 'AIP_META', 'AIP_META_PESO']),
+    ('des', ['AIP_UNIDADE', 'AIP_META', 'AIP_META_PESO']),
     ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_NOTIFICACAO']),
     ('aud', ['AIP_EVENTO_LOG']),
 ]
@@ -61,8 +61,10 @@ T = {
    'DT_FIM_DESDOBRAMENTO': 'Fim do Desdobramento COO; a etapa 2, Propostas BU\'s, começa aqui.',
    'DT_FIM_PROPOSTA': 'Fim das Propostas BU\'s; começa a Calibração e Aprovação.',
    'DT_FIM_CALIBRACAO': 'Fim da Calibração e Aprovação; começa o Goal Card oficial.',
-   'DT_FIM_OFICIAL': 'Fim da jornada: Goal Cards oficiais publicados.'},
-  'regras': ['Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).', 'Ano entre 2020 e 2100 e único.', 'TP_STATUS: ABERTO ou FECHADO.', 'Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.', 'Datas da jornada em ordem: cada etapa termina depois da anterior.', 'Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).'],
+   'DT_FIM_OFICIAL': 'Fim da jornada: Goal Cards oficiais publicados.',
+   'QTDE_PONTOS_HERDADOS_COO': 'Pontos que o COO VBM recebe do resultado do CEO (ex.: 75 de 100); o restante vai para as metas do COO. Editado em Metas e pesos.',
+   'QTDE_PONTOS_HERDADOS_BU': 'Pontos que cada BU recebe do resultado do COO (ex.: 40 de 100); o restante vai para as metas da BU. Editado em Metas e pesos.'},
+  'regras': ['Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).', 'Ano entre 2020 e 2100 e único.', 'TP_STATUS: ABERTO ou FECHADO.', 'Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.', 'Datas da jornada em ordem: cada etapa termina depois da anterior.', 'Pontos herdados de 0 a 99; cada unidade fecha 100 pts (herdado + metas).', 'Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado).'],
   'condicional': {'DT_FECHAMENTO': 'se FECHADO', 'CD_MATRICULA_FECHAMENTO': 'se FECHADO'},
   'exemplos': ['1 · AIP 2026, fechado', '2 · AIP 2027, aberto, criado do 2026']},
  'AIP_PAPEL': {
@@ -83,38 +85,24 @@ T = {
   'campos': {'ID_SITE': 'Identificador do site, usado como ID da BU no AIP.', 'ID_SISTEMA': 'Sistema do IBP a que o site pertence.', 'NM_SITE': 'Nome do site, mostrado como nome da BU (ex.: Ontario).', 'NM_PAIS': 'País ou região que agrupa as BUs nas telas.', 'SG_REGIAO': 'Sigla de região do IBP.'},
   'regras': ['Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.', 'Recriada aqui só para o teste do DER.'],
   'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
- 'AIP_NIVEL': {
-  'proposito': 'Os níveis do desdobramento de pontos do ciclo (CEO → COO → BU; GG e GA ficam fora no primeiro momento): total de pontos por unidade, quanto vem do nível acima e se o nível é obrigatório.',
-  'campos': {
-   'ID_NIVEL': 'Número interno do nível.',
-   'ID_CICLO': 'Ciclo do nível.',
-   'CD_NIVEL': 'CEO, COO ou BU.',
-   'NO_ORDEM': 'Posição no desdobramento (1 = CEO).',
-   'NM_NIVEL': 'Nome mostrado nas telas; editável.',
-   'QTDE_PONTOS_TOTAL': 'Pontos que cada unidade do nível precisa fechar (ex.: 100).',
-   'QTDE_PONTOS_HERDADOS': 'Pontos que vêm do resultado do nível acima (linha "Resultado do …", editável em Metas e pesos). O restante vai para as metas do nível.',
-   'SG_OBRIGATORIO': 'S = Obrigatório (sempre no desdobramento), N = Opcional; escolhido em Parâmetros.',
-   'SG_ATIVO': 'S = nível em uso. Nível obrigatório fica sempre S.'},
-  'regras': ['Um nível de cada tipo por ciclo.', 'Total de 1 a 1000; herdado de 0 até total − 1; o primeiro nível não herda.', 'Nível obrigatório fica sempre ativo.', 'CD_NIVEL: CEO, COO ou BU (GG e GA entram depois, se necessário).'],
-  'exemplos': ['1 · CEO, 100 pts', '2 · COO, 75 herdados do CEO', '3 · BU, 40 herdados do COO']},
  'AIP_UNIDADE': {
   'proposito': 'As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.',
-  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_NIVEL': 'Nível da unidade.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.'},
-  'regras': ['Nome único dentro do nível.', 'ID_SITE preenchido só nas unidades de nível BU.', 'SG_ATIVA: S ou N.'],
+  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_CICLO': 'Ciclo da unidade.', 'CD_NIVEL': 'CEO, COO ou BU.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.'},
+  'regras': ['Nome único por ciclo e nível.', 'ID_SITE preenchido se, e só se, o nível é BU.', 'SG_ATIVA: S ou N.'],
   'condicional': {'ID_SITE': 'se nível BU'},
   'exemplos': ['1 · CEO VBM', '2 · COO VBM', '3 · Onça Puma (site 12)']},
  'AIP_META': {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
   'campos': {
    'ID_META': 'Número interno da meta.',
-   'ID_NIVEL': 'Nível da meta (COO, BU…).',
+   'ID_CICLO': 'Ciclo da meta.', 'CD_NIVEL': 'Nível da meta: CEO, COO ou BU.',
    'NO_META': 'Número mostrado nas telas (ex.: 04); único no nível.',
    'NM_TITULO': 'Título da meta (Goal Title).',
    'TP_META': 'FORMULA (Por fórmula) ou MARCOS (Por marcos).',
    'TP_POLARIDADE': 'MAIOR (maior é melhor) ou MENOR (menor é melhor).',
    'ID_META_ORIGEM': 'Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.',
    'SG_ATIVA': 'N = fora do ciclo, sem apagar o histórico.'},
-  'regras': ['Número único dentro do nível.', 'TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.'],
+  'regras': ['Número único por ciclo e nível.', 'CD_NIVEL: CEO, COO ou BU.', 'TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.'],
   'exemplos': ['1 · Meta 02 do COO', '2 · Meta 04 das BUs', '3 · Meta 05 da BU, desdobrada da 02 do COO']},
  'AIP_META_PESO': {
   'proposito': 'O peso de cada meta em cada unidade. Somado aos pontos herdados, fecha o total da unidade (RN-16).',
@@ -169,8 +157,8 @@ for t, v in T.items():
 rot = {
  ('AIP_CICLO', 'ID_CICLO_ORIGEM'): 'criado a partir de',
  ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_SITE'): 'atua na',
- ('AIP_NIVEL', 'ID_CICLO'): 'nível de', ('AIP_UNIDADE', 'ID_NIVEL'): 'pertence ao', ('AIP_UNIDADE', 'ID_SITE'): 'representa',
- ('AIP_META', 'ID_NIVEL'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
+ ('AIP_UNIDADE', 'ID_CICLO'): 'unidade do', ('AIP_UNIDADE', 'ID_SITE'): 'representa',
+ ('AIP_META', 'ID_CICLO'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
  ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_UNIDADE'): 'na unidade',
  ('AIP_GOAL_CARD', 'ID_META'): 'card da', ('AIP_GOAL_CARD', 'ID_UNIDADE'): 'da unidade',
  ('AIP_GOAL_CARD_VERSAO', 'ID_GOAL_CARD'): 'versão de',
@@ -184,7 +172,7 @@ for l in c['ligacoes']:
 c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<section class="explica" id="como-pontos"><h2>Como os pontos descem do CEO até a BU</h2>'
  '<p>Cada unidade de um nível precisa fechar o total de pontos do nível. Uma parte vem do resultado do nível acima '
- '(<code>QTDE_PONTOS_HERDADOS</code> da AIP_NIVEL) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p>'
+ '(<code>QTDE_PONTOS_HERDADOS_COO</code> e <code>_BU</code> do AIP_CICLO) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p>'
  '<ol class="ordem"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li>'
  '<li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li>'
  '<li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li>'
@@ -194,16 +182,17 @@ c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>')}]
 c['secoes_extras'].append({'id': 'enxuto', 'html': (
  '<section class="explica" id="enxuto"><h2>O que foi simplificado nesta revisão</h2>'
- '<p>De 16 para 10 tabelas do AIP, sem perder nenhuma regra das telas:</p>'
+ '<p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p>'
  '<ul class="fn">'
  '<li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li>'
  '<li><code>AIP_CICLO_BU</code><span>A BU no ciclo já é a unidade de nível BU da AIP_UNIDADE (com SG_ATIVA).</span></li>'
  '<li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li>'
  '<li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li>'
  '<li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li>'
+ '<li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li>'
  '<li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU, e a AIP_UNIDADE perdeu a unidade-mãe.</span></li>'
  '</ul></section>')})
-c['tabelas']['AIP_NIVEL']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
+c['tabelas']['AIP_CICLO']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
 c['tabelas']['AIP_META_PESO']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
 c['funcoes'] = [{'nome': 'aip_evento_imutavel', 'descricao': 'Gatilho da AIP_EVENTO_LOG: recusa qualquer UPDATE ou DELETE, mantendo o Action Log imutável.'}]
 json.dump(c, open('config.json', 'w'), ensure_ascii=False, indent=1)

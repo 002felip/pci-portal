@@ -59,6 +59,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-19 | Navegação: menu na ordem Início, Desdobramento, Painel do ciclo, Metas da BU e Administração; Administração é um submenu com Aprovações, Action Log e Configuração (Ações saiu com a D-20) | 18/11/2026 |
 | D-20 | Descontinuadas a T05 Visão do Goal Card (impressão e PDF) e a T08 Ações (tarefas com responsável e prazo a partir de comentários), por acrescentarem complexidade sem ganho para o processo. O Goal Card oficial é consultado na T04 em leitura e o histórico na T06; os comentários do grupo de aprovação orientam o ajuste no fluxo Devolver → Resubmeter e ficam no Action Log. Saem também a tabela AIP_ACAO, as notificações de ação e os critérios CA-12 e CA-14 | 18/11/2026 |
 | D-21 | Configuração do ciclo: ano editável; cadastro completo de BU (criar, editar, tirar do ciclo e excluir só sem Goal Card submetido), sempre para o ciclo aberto que está sendo configurado; desdobramento de pontos em níveis CEO → COO → BU → GG → GA, com total e herdado por nível nos Parâmetros e metas e pesos por nível; sem o histórico de últimas alterações na tela | 18/11/2026 |
+| D-22 | Aba Parâmetros da Administração descontinuada: níveis fixos CEO → COO → BU com 100 pts por unidade; GG e GA fora no primeiro momento; pontos herdados editados em Metas e pesos; limites das regras na aplicação. No banco, sai a `AIP_NIVEL`. |
 
 ## 4. Suposições a confirmar
 
