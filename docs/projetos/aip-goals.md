@@ -206,7 +206,8 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 `#configuracao?aba=ciclo|bus|grupos|metas|parametros`, só o administrador (403 → T12). §7.1.
 
 - **Topo** só com o título, sem o ano e sem cartões de resumo; a navegação é pelas abas.
-- **Ciclo:** ano editável (2020 a 2100), nome, texto padrão de exceções e as 4 janelas (datas, dias úteis, etapa atual, ordem validada).
+- **Ciclo:** lista de ciclos (um aberto por vez), nome, texto padrão de exceções e as 4 janelas com início e fim
+  (início padrão = fim da etapa anterior), dias úteis, etapa atual e ordem validada.
 - **Business Units:** Nova BU (nome e país ou região), editar (renomear atualiza pesos, pessoas e GGs), chave "No ciclo AIP 2027"
   (vale para o ciclo aberto que está sendo configurado) e excluir só BU sem Goal Card submetido, com confirmação; números
   centralizados (pessoas por grupo, metas, pontos e cards submetidos).
