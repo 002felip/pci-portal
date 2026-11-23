@@ -245,6 +245,12 @@ function conteudoMeta(numero, ano) {
 // Pessoas de exemplo (diretório): quem submeteu e quem comentou
 const PESSOAS = ['Ana Ribeiro', 'Bruno Costa', 'Carla Mendes', 'Daniel Souza', 'Elisa Martins', 'Felipe Araújo'];
 
+// Diretor de cada BU (exemplo; no banco, a matrícula fica na AIP_UNIDADE e o nome vem do MDM): responsável pela meta
+const DIRETORES = { 'Onça Puma': 'Ricardo Menezes', Salobo: 'Fernanda Lacerda', Sossego: 'Marcelo Antunes', Ontario: 'David Thompson', VNL: 'Sarah Mitchell', Clydach: 'Owen Hughes', Matsusaka: 'Kenji Nakamura' };
+const AREA_RESPONSAVEL = 'Diretoria Executiva';
+// Exceções e considerações por BU (o administrador aplica um texto a uma ou mais BUs; sem texto próprio, vale o padrão do ciclo)
+const EXCECOES_BU = { Clydach: 'Refinery feed variations caused by third-party concentrate supply are excluded from the result.', Matsusaka: 'Refinery feed variations caused by third-party concentrate supply are excluded from the result.' };
+const areaDaBu = (sigla) => ({ area: AREA_RESPONSAVEL, responsavel: DIRETORES[sigla] || '' });
 function goalCardExemplo(codigo, hoje = new Date()) {
   const base = painelExemplo(hoje);
   const c = base.cards.find((x) => x.card === codigo);
@@ -254,7 +260,10 @@ function goalCardExemplo(codigo, hoje = new Date()) {
   const sec = conteudo.secoes;
   const n = c.meta.numero, k = (n + c.bu.sigla.length) % PESSOAS.length;
   // Rascunho em andamento: faltam área e evidência (a pré-checagem mostra o que falta)
-  if (c.estado === 'rascunho') { sec.area = { area: '', responsavel: '' }; sec.evidence = ''; }
+  if (c.estado === 'rascunho') sec.evidence = '';
+  // Área responsável: não editável, vem do cadastro da BU (Diretoria Executiva e o diretor da BU)
+  sec.area = areaDaBu(c.bu.sigla);
+  if (EXCECOES_BU[c.bu.sigla]) sec.exceptions.padrao = EXCECOES_BU[c.bu.sigla];
   // Resubmissão: a exceção da BU entrou na v2 (a mesma das Versões, T06), para o "antes" da T14 bater
   if (c.versao > 1 && c.estado !== 'rascunho') sec.exceptions.bu = 'FX effect excluded from the result, as agreed with P&CI.';
   const comentarios = [];
@@ -354,9 +363,10 @@ function configuracaoExemplo(hoje = new Date()) {
     ciclo: { ...ciclo, status: 'aberto', textoPadraoExcecoes: TEXTO_PADRAO_EXCECOES },
     // Ciclos registrados (exemplo): só um pode estar aberto
     ciclos: [{ ano: ciclo.ano, nome: ciclo.nome, aberto: true }, { ano: ciclo.ano - 1, nome: `AIP ${ciclo.ano - 1}`, aberto: false }, { ano: ciclo.ano - 2, nome: `AIP ${ciclo.ano - 2}`, aberto: false }],
-    bus: ciclo.bus.map((b) => ({ ...b, ativa: true, cardsSubmetidos: submetidos[b.sigla] || 0 })),
+    bus: ciclo.bus.map((b) => ({ ...b, ativa: true, diretor: DIRETORES[b.sigla] || '', cardsSubmetidos: submetidos[b.sigla] || 0 })),
     membros,
     diretorio: pessoas,
+    excecoesBu: { ...EXCECOES_BU },
     niveis,
     unidades,
     metasNivel,
@@ -464,4 +474,4 @@ function versoesExemplo(codigo, hoje = new Date()) {
   return { ...base, versoes: versoes.reverse(), oficial };
 }
 
-module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, versoesExemplo, SECOES, cicloExemplo, somarDiasUteis, iso };
+module.exports = { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, versoesExemplo, SECOES, cicloExemplo, somarDiasUteis, iso, areaDaBu, DIRETORES };

@@ -211,7 +211,8 @@ function linhaDoCard(card) {
 }
 
 // ── T11 Configuração do ciclo (só o administrador, §7.1) ──
-const ABAS_CONFIG = ['ciclo', 'bus', 'grupos', 'metas', 'parametros'];
+const ABAS_CONFIG = ['ciclo', 'bus', 'grupos', 'metas', 'parametros', 'excecoes'];
+const MAX_EXCECAO = 2000; // tamanho máximo de um texto de exceções e considerações
 const GRUPOS = ['contribuidor', 'aprovacao', 'admin'];
 const dataValida = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(v));
 // Unidades ativas de cada nível: CEO e COO (unidades), BUs ativas, GG das BUs ativas e GA dessas GG
@@ -294,6 +295,14 @@ function validarConfiguracao(aba, dados, base) {
     // GA só fica ativo com a GG ativa (o desdobramento não pula nível)
     const nv = Object.fromEntries((d.niveis || []).map((n) => [n.id, n]));
     if (nv.ga && nv.ga.ativo && nv.gg && !nv.gg.ativo) erros.push({ campo: 'niveis.ga.ativo', codigo: 'SALTO' });
+  }
+  // Exceções e considerações: texto padrão do ciclo e textos próprios por BU (só BUs do cadastro)
+  if (aba === 'excecoes') {
+    if (String(d.padrao || '').length > MAX_EXCECAO) erros.push({ campo: 'padrao', codigo: 'TAMANHO' });
+    Object.entries(d.porBu || {}).forEach(([sigla, t]) => {
+      if (!base.bus.some((b) => b.sigla === sigla)) erros.push({ campo: `porBu.${sigla}`, codigo: 'BU' });
+      else if (String(t || '').length > MAX_EXCECAO) erros.push({ campo: `porBu.${sigla}`, codigo: 'TAMANHO' });
+    });
   }
   if (aba === 'bus') {
     const bus = d.bus || [];
@@ -493,7 +502,9 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       // Escrita: contribuidor da BU, aprovador ou administrador (AC-04, AC-05); demais: 403
       if (!podeEditar(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
-      const pend = camposObrigatorios(req.body.secoes).filter((x) => !x.ok).map((x) => x.id);
+      // Área responsável não é editável: vale sempre a do cadastro da BU (Diretoria Executiva e o diretor)
+      const secoes = { ...(req.body.secoes || {}), area: card.secoes.area };
+      const pend = camposObrigatorios(secoes).filter((x) => !x.ok).map((x) => x.id);
       if (pend.length) return res.status(400).json({ error: 'Campos obrigatórios sem preencher.', codigo: 'OBRIGATORIOS', pendentes: pend });
       res.json({ ok: true, simulado: true, estado: 'em_aprovacao', versao: (card.versao || 0) + 1 });
     } catch (err) {
