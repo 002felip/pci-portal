@@ -3912,20 +3912,35 @@ window.VBMSetup = (function () {
       .then(function () { clearTimeout(timer); });
   }
   function cfRender() {
-    if (!cf.base) return;
+    if (!cf.base || cf.renderizando) return; // evita redesenho aninhado (o campo em edição perde o foco ao ser trocado)
+    cf.renderizando = true;
+    try { cfRenderInterno(); } finally { cf.renderizando = false; }
+  }
+  function cfRenderInterno() {
     cfEstado('ok');
     var cv = cfCicloVer();
     var temAberto = cf.ciclos.some(function (c) { return c.aberto; });
-    $('cfAbas').innerHTML = CF_ABAS.map(function (a) {
+    var htmlAbas = CF_ABAS.map(function (a) {
       var alt = cfAlterada(a), err = alt && cfValidar(a).length;
       return '<button type="button" role="tab" id="cfTab-' + a + '" aria-selected="' + (a === cf.aba) + '" aria-pressed="' + (a === cf.aba) + '" data-aba="' + a + '">' +
         esc(S.t('cf.aba.' + a)) + (alt ? '<span class="cf-tab-marca' + (err ? ' is-err' : '') + '" title="' + esc(S.t(err ? 'cf.marcaErro' : 'cf.marcaAlt')) + '"></span>' : '') + '</button>';
     }).join('');
+    // Só troca os botões das abas se mudaram: trocá-los no meio de um clique (campo perdendo o foco) engolia o clique na aba
+    if ($('cfAbas').getAttribute('data-aba-atual') === cf.aba && $('cfAbas').children.length === CF_ABAS.length) cfMarcarAbas();
+    else { $('cfAbas').innerHTML = htmlAbas; $('cfAbas').setAttribute('data-aba-atual', cf.aba); }
     $('cfAbaTit').textContent = S.t('cf.aba.' + cf.aba);
     $('cfAbaSub').textContent = S.t('cf.sub.' + cf.aba);
-    var foco = document.activeElement && document.activeElement.id;
+    var foco = document.activeElement && document.activeElement.id, ae = document.activeElement, ini = null, fim = null;
+    try { if (ae && (ae.type === 'text' || ae.type === 'search')) { ini = ae.selectionStart; fim = ae.selectionEnd; } } catch (e0) {}
     $('cfConteudo').innerHTML = ({ ciclo: cfHtmlCiclo, bus: cfHtmlBus, grupos: cfHtmlGrupos, metas: cfHtmlMetas, parametros: cfHtmlParametros })[cf.aba]();
-    if (foco && $(foco) && $('cfConteudo').contains($(foco))) { var el = $(foco); el.focus(); if (el.setSelectionRange && el.type === 'text') { var n = el.value.length; el.setSelectionRange(n, n); } }
+    // Mantém foco e cursor do campo em edição: texto e busca voltam à mesma posição; número (que não aceita posição) vai ao fim, para digitar da esquerda para a direita
+    if (foco && $(foco) && $('cfConteudo').contains($(foco))) {
+      var el = $(foco); el.focus();
+      try {
+        if (el.type === 'text' || el.type === 'search') { var n = el.value.length; el.setSelectionRange(ini == null ? n : Math.min(ini, n), fim == null ? n : Math.min(fim, n)); }
+        else if (el.type === 'number') { var v = el.value; el.type = 'text'; el.setSelectionRange(v.length, v.length); el.type = 'number'; }
+      } catch (e1) {}
+    }
     cfRenderRodape();
   }
   function cfErroDe(campo) { var x = cf.erros.filter(function (e) { return e.campo === campo; })[0]; return x ? x.msg : ''; }
@@ -4163,6 +4178,7 @@ window.VBMSetup = (function () {
     var i = CF_ABAS.indexOf(cf.aba) + (e.key === 'ArrowRight' ? 1 : -1);
     cfIrAba(CF_ABAS[(i + CF_ABAS.length) % CF_ABAS.length]); e.preventDefault();
   });
+  $('cfConteudo').addEventListener('focusout', function (e) { if (cf.dataPendente && e.target.type === 'date') { cf.dataPendente = false; cfRender(); } });
   $('cfConteudo').addEventListener('input', function (e) {
     var t = e.target, d = cf.edit;
     if (t.matches('[data-cf="ano"]')) d.ciclo.ano = t.value === '' ? '' : Number(t.value);
@@ -4189,6 +4205,8 @@ window.VBMSetup = (function () {
     else if (t.id === 'cfBusca') { cf.busca = t.value; }
     else if (t.id === 'cfAddMat') { cf.novaMat = t.value; return; }
     else return;
+    // Data digitada: atualiza só o rodapé e as marcas; o redesenho (resumo, durações, datas padrão) vem ao sair do campo
+    if (t.type === 'date') { cf.dataPendente = true; cfRenderRodape(); cfMarcarAbas(); return; }
     // Texto livre não redesenha a aba a cada tecla (mantém o cursor); números e datas, sim
     if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-campo="titulo"], [data-cf-niv][data-campo="nome"]')) { cfRenderRodape(); cfMarcarAbas(); return; }
     cfRender();
