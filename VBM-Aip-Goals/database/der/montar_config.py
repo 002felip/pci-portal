@@ -51,7 +51,7 @@ T = {
    'NO_ANO': 'Ano do ciclo, de 2020 a 2100; não se repete.',
    'NM_CICLO': 'Nome mostrado nas telas (ex.: AIP 2027).',
    'TP_STATUS': 'ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.',
-   'DS_TEXTO_PADRAO_EXCECOES': 'Texto padrão da seção Exceptions and Considerations de todos os Goal Cards; a BU não edita.',
+   'DS_TEXTO_PADRAO_EXCECOES': 'Texto padrão de Exceptions and Considerations: vale para as BUs sem texto próprio (AIP_UNIDADE.DS_EXCECOES); a BU não edita.',
    'ID_CICLO_ORIGEM': 'Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.',
    'DT_CRIACAO': 'Quando o ciclo foi aberto.',
    'CD_MATRICULA_CRIACAO': 'Matrícula (MDM) de quem abriu o ciclo.',
@@ -90,9 +90,9 @@ T = {
   'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
  'AIP_UNIDADE': {
   'proposito': 'As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.',
-  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_CICLO': 'Ciclo da unidade.', 'CD_NIVEL': 'CEO, COO ou BU.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.'},
-  'regras': ['Nome único por ciclo e nível.', 'ID_SITE preenchido se, e só se, o nível é BU.', 'SG_ATIVA: S ou N.'],
-  'condicional': {'ID_SITE': 'se nível BU'},
+  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_CICLO': 'Ciclo da unidade.', 'CD_NIVEL': 'CEO, COO ou BU.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.', 'CD_MATRICULA_DIRETOR': 'Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards da BU, com a área Diretoria Executiva.', 'DS_EXCECOES': 'Texto próprio de Exceptions and Considerations da BU, aplicado na aba Exceções. Vazio = vale o texto padrão do ciclo.'},
+  'regras': ['Nome único por ciclo e nível.', 'ID_SITE preenchido se, e só se, o nível é BU.', 'Diretor e texto de exceções só nas unidades de nível BU.', 'SG_ATIVA: S ou N.'],
+  'condicional': {'ID_SITE': 'se nível BU', 'CD_MATRICULA_DIRETOR': 'só BU', 'DS_EXCECOES': 'só BU; vazio = padrão'},
   'exemplos': ['1 · CEO VBM', '2 · COO VBM', '3 · Onça Puma (site 12)']},
  'AIP_META': {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
