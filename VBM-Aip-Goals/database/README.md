@@ -41,7 +41,7 @@ gerados automaticamente).
 
 | Grupo | Tabelas |
 |---|---|
-| Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez, com as datas das 4 etapas e os pontos herdados pelo COO e pelas BUs), `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
+| Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez, com início e fim de cada uma das 4 etapas e os pontos herdados pelo COO e pelas BUs), `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
 | Desdobramento | `AIP_UNIDADE` (CEO VBM, COO VBM e cada BU, com `CD_NIVEL`) (a unidade de nível BU é a BU no ciclo, com `SG_ATIVA`), `AIP_META`, `AIP_META_PESO` |
 | Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO` (com a decisão e a marcação das seções) |
 | Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho; os comentários do Goal Card são eventos COMENTARIO), `AIP_NOTIFICACAO` |

@@ -61,7 +61,7 @@
     "Ano entre 2020 e 2100 e único.",
     "TP_STATUS: ABERTO ou FECHADO.",
     "Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.",
-    "Datas da jornada em ordem: cada etapa termina depois da anterior.",
+    "Cada etapa termina depois de começar, e os inícios seguem a ordem das etapas (a calibração no exemplo começa 2 dias depois do fim das propostas).",
     "Pontos herdados de 0 a 99; cada unidade fecha 100 pts (herdado + metas).",
     "Janelas editáveis só com o ciclo aberto (a tela desativa as de ciclo fechado)."
    ],
@@ -77,9 +77,12 @@
     "DT_FECHAMENTO": "Quando foi fechado. Preenchido só se FECHADO.",
     "CD_MATRICULA_FECHAMENTO": "Matrícula de quem fechou. Preenchida só se FECHADO.",
     "DT_INI_DESDOBRAMENTO": "Início da etapa 1, Desdobramento COO (início da jornada).",
-    "DT_FIM_DESDOBRAMENTO": "Fim do Desdobramento COO; a etapa 2, Propostas BU's, começa aqui.",
-    "DT_FIM_PROPOSTA": "Fim das Propostas BU's; começa a Calibração e Aprovação.",
-    "DT_FIM_CALIBRACAO": "Fim da Calibração e Aprovação; começa o Goal Card oficial.",
+    "DT_FIM_DESDOBRAMENTO": "Fim do Desdobramento COO.",
+    "DT_INI_PROPOSTA": "Início das Propostas BU's; vem preenchido com o fim do Desdobramento e pode ser alterado.",
+    "DT_FIM_PROPOSTA": "Fim das Propostas BU's.",
+    "DT_INI_CALIBRACAO": "Início da Calibração e Aprovação; padrão: fim das Propostas.",
+    "DT_FIM_CALIBRACAO": "Fim da Calibração e Aprovação.",
+    "DT_INI_OFICIAL": "Início do Goal Card oficial; padrão: fim da Calibração.",
     "DT_FIM_OFICIAL": "Fim da jornada: Goal Cards oficiais publicados.",
     "QTDE_PONTOS_HERDADOS_COO": "Pontos que o COO VBM recebe do resultado do CEO (ex.: 75 de 100); o restante vai para as metas do COO. Editado em Metas e pesos.",
     "QTDE_PONTOS_HERDADOS_BU": "Pontos que cada BU recebe do resultado do COO (ex.: 40 de 100); o restante vai para as metas da BU. Editado em Metas e pesos."
@@ -101,7 +104,7 @@
    "grupo": "ibp",
    "pos": [
     0,
-    624
+    681
    ],
    "proposito": "Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.",
    "regras": [
@@ -153,7 +156,7 @@
    "grupo": "cic",
    "pos": [
     0,
-    417
+    474
    ],
    "proposito": "Quem tem papel no ciclo: contribuidores (por BU), aprovadores e administradores. Quem não está aqui só lê (qualquer usuário do Portal). Os dados da pessoa vêm do MDM.",
    "regras": [
@@ -369,20 +372,6 @@
  },
  "ligacoes": [
   {
-   "filho": "AIP_UNIDADE",
-   "campo": "ID_SITE",
-   "pai": "SITES",
-   "chave": "ID_SITE",
-   "rotulo": "representa"
-  },
-  {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "registrado em"
-  },
-  {
    "filho": "AIP_CICLO",
    "campo": "ID_CICLO_ORIGEM",
    "pai": "AIP_CICLO",
@@ -395,6 +384,13 @@
    "pai": "AIP_CICLO",
    "chave": "ID_CICLO",
    "rotulo": "unidade do"
+  },
+  {
+   "filho": "AIP_UNIDADE",
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
+   "rotulo": "representa"
   },
   {
    "filho": "AIP_META",
@@ -425,13 +421,6 @@
    "rotulo": "na unidade"
   },
   {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_GOAL_CARD",
-   "pai": "AIP_GOAL_CARD",
-   "chave": "ID_GOAL_CARD",
-   "rotulo": "sobre"
-  },
-  {
    "filho": "AIP_PAPEL",
    "campo": "ID_CICLO",
    "pai": "AIP_CICLO",
@@ -460,11 +449,18 @@
    "rotulo": "da unidade"
   },
   {
-   "filho": "AIP_GOAL_CARD_VERSAO",
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_CICLO",
+   "pai": "AIP_CICLO",
+   "chave": "ID_CICLO",
+   "rotulo": "registrado em"
+  },
+  {
+   "filho": "AIP_EVENTO_LOG",
    "campo": "ID_GOAL_CARD",
    "pai": "AIP_GOAL_CARD",
    "chave": "ID_GOAL_CARD",
-   "rotulo": "versão de"
+   "rotulo": "sobre"
   },
   {
    "filho": "AIP_EVENTO_LOG",
@@ -472,6 +468,13 @@
    "pai": "AIP_EVENTO_LOG",
    "chave": "ID_EVENTO",
    "rotulo": "responde a"
+  },
+  {
+   "filho": "AIP_GOAL_CARD_VERSAO",
+   "campo": "ID_GOAL_CARD",
+   "pai": "AIP_GOAL_CARD",
+   "chave": "ID_GOAL_CARD",
+   "rotulo": "versão de"
   },
   {
    "filho": "AIP_NOTIFICACAO",

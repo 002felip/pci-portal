@@ -23,17 +23,21 @@ create table aip_ciclo (
   cd_matricula_criacao varchar(20) not null,
   dt_fechamento timestamp(0),
   cd_matricula_fechamento varchar(20),
-  -- Jornada do ciclo: 4 etapas fixas; cada etapa começa quando a anterior termina
+  -- Jornada do ciclo: 4 etapas fixas; o início de cada etapa vem preenchido com o fim da anterior e pode ser alterado
   dt_ini_desdobramento date not null,
   dt_fim_desdobramento date not null,
+  dt_ini_proposta date not null,
   dt_fim_proposta date not null,
+  dt_ini_calibracao date not null,
   dt_fim_calibracao date not null,
+  dt_ini_oficial date not null,
   dt_fim_oficial date not null,
   -- Desdobramento CEO → COO → BU: cada unidade fecha 100 pts; parte vem do resultado do nível acima
   qtde_pontos_herdados_coo smallint not null,
   qtde_pontos_herdados_bu smallint not null,
   constraint uq_aip_ciclo_ano unique (no_ano),
-  constraint ck_aip_ciclo_jornada check (dt_ini_desdobramento < dt_fim_desdobramento and dt_fim_desdobramento < dt_fim_proposta and dt_fim_proposta < dt_fim_calibracao and dt_fim_calibracao < dt_fim_oficial),
+  constraint ck_aip_ciclo_jornada check (dt_ini_desdobramento < dt_fim_desdobramento and dt_ini_proposta < dt_fim_proposta and dt_ini_calibracao < dt_fim_calibracao and dt_ini_oficial < dt_fim_oficial
+    and dt_ini_desdobramento <= dt_ini_proposta and dt_ini_proposta <= dt_ini_calibracao and dt_ini_calibracao <= dt_ini_oficial),
   constraint ck_aip_ciclo_herdados check (qtde_pontos_herdados_coo between 0 and 99 and qtde_pontos_herdados_bu between 0 and 99),
   constraint ck_aip_ciclo_ano check (no_ano between 2020 and 2100),
   constraint ck_aip_ciclo_status check (tp_status in ('ABERTO', 'FECHADO')),
