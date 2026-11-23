@@ -107,8 +107,8 @@ create table aip_papel (
   id_site integer constraint fk_aip_papel_sites references sites (id_site),
   sg_ativo char(1) not null default 'S' constraint ck_aip_papel_sg_ativo check (sg_ativo in ('S', 'N')),
   dt_atualizacao timestamp(0) not null default localtimestamp(0),
-  constraint ck_aip_papel_grupo check (tp_grupo in ('CONTRIBUIDOR', 'APROVACAO', 'CONSULTA', 'ADMIN')),
-  constraint ck_aip_papel_bu check ((tp_grupo in ('CONTRIBUIDOR', 'CONSULTA')) = (id_site is not null))
+  constraint ck_aip_papel_grupo check (tp_grupo in ('CONTRIBUIDOR', 'APROVACAO', 'ADMIN')),
+  constraint ck_aip_papel_bu check ((tp_grupo = 'CONTRIBUIDOR') = (id_site is not null))
 );
 create unique index uq_aip_papel_sem_bu on aip_papel (id_ciclo, cd_matricula, tp_grupo) where id_site is null;
 create unique index uq_aip_papel_bu on aip_papel (id_ciclo, cd_matricula, tp_grupo, id_site) where id_site is not null;

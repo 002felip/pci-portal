@@ -66,17 +66,17 @@ T = {
   'condicional': {'DT_FECHAMENTO': 'se FECHADO', 'CD_MATRICULA_FECHAMENTO': 'se FECHADO'},
   'exemplos': ['1 · AIP 2026, fechado', '2 · AIP 2027, aberto, criado do 2026']},
  'AIP_PAPEL': {
-  'proposito': 'Quem participa do ciclo e em qual grupo: contribuidores e consulta por BU, grupo de aprovação e administradores. Os dados da pessoa vêm do MDM.',
+  'proposito': 'Quem tem papel no ciclo: contribuidores (por BU), aprovadores e administradores. Quem não está aqui só lê (qualquer usuário do Portal). Os dados da pessoa vêm do MDM.',
   'campos': {
    'ID_PAPEL': 'Número interno da participação.',
    'ID_CICLO': 'Ciclo em que o papel vale.',
    'CD_MATRICULA': 'Matrícula da pessoa; nome, e-mail, cargo, estado e cidade são lidos do MDM.',
-   'TP_GRUPO': 'CONTRIBUIDOR, APROVACAO, CONSULTA ou ADMIN.',
-   'ID_SITE': 'BU (site do IBP) do contribuidor ou da consulta. Vazio para aprovação e administração.',
+   'TP_GRUPO': 'CONTRIBUIDOR (edita os cards da sua BU), APROVACAO (edita e aprova todos os cards, sem telas administrativas) ou ADMIN (todas as telas).',
+   'ID_SITE': 'BU (site do IBP) que o contribuidor pode editar; uma linha por BU. Vazio para aprovação e administração.',
    'SG_ATIVO': 'N = a pessoa perde o acesso sem apagar o histórico.',
    'DT_ATUALIZACAO': 'Última mudança nesta participação (inclusão pelo popup Adicionar usuário, troca de grupo ou desativação). Quem fez fica no Action Log.'},
-  'regras': ['TP_GRUPO: CONTRIBUIDOR, APROVACAO, CONSULTA, ADMIN.', 'BU obrigatória para contribuidor e consulta; vazia para aprovação e administrador.', 'Uma pessoa não se repete no mesmo grupo e BU do ciclo.'],
-  'condicional': {'ID_SITE': 'se contribuidor ou consulta'},
+  'regras': ['TP_GRUPO: CONTRIBUIDOR, APROVACAO, ADMIN.', 'Leitura não precisa de papel: qualquer usuário do Portal lê.', 'BU obrigatória para contribuidor; vazia para aprovação e administrador.', 'Uma pessoa não se repete no mesmo grupo e BU do ciclo.'],
+  'condicional': {'ID_SITE': 'se contribuidor'},
   'exemplos': ['1 · Contribuidor de Ontario', '2 · Grupo de aprovação', '3 · Administrador']},
  'SITES': {
   'proposito': 'Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.',
