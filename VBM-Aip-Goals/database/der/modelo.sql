@@ -127,7 +127,7 @@ create table aip_goal_card (
   cd_matricula_atualizacao varchar(20) not null,
   constraint uq_aip_goal_card_cd unique (cd_goal_card),
   constraint uq_aip_goal_card unique (id_meta, id_unidade),
-  constraint ck_aip_goal_card_estado check (tp_estado in ('RASCUNHO', 'EM_APROVACAO', 'EM_REVISAO', 'APROVADO', 'NEGADO')),
+  constraint ck_aip_goal_card_estado check (tp_estado in ('RASCUNHO', 'EM_APROVACAO', 'EM_REVISAO', 'APROVADO')),
   constraint ck_aip_goal_card_oficial check ((tp_estado = 'APROVADO') = (no_versao_oficial is not null))
 );
 
@@ -147,9 +147,9 @@ create table aip_goal_card_versao (
   cd_matricula_decisao varchar(20),
   constraint uq_aip_versao unique (id_goal_card, no_versao),
   constraint ck_aip_versao_motivo check (tp_motivo in ('SUBMISSAO', 'RESUBMISSAO', 'REABERTURA')),
-  constraint ck_aip_versao_decisao check (tp_decisao in ('APROVADO', 'DEVOLVIDO', 'NEGADO')),
+  constraint ck_aip_versao_decisao check (tp_decisao in ('APROVADO', 'DEVOLVIDO')),
   constraint ck_aip_versao_decidida check ((tp_decisao is null) = (dt_decisao is null) and (tp_decisao is null) = (cd_matricula_decisao is null)),
-  constraint ck_aip_versao_comentario check (tp_decisao is null or tp_decisao = 'APROVADO' or ds_comentario_decisao is not null),
+  constraint ck_aip_versao_comentario check (tp_decisao is null or tp_decisao = 'APROVADO' or ds_comentario_decisao is not null), -- devolver exige comentário
   constraint ck_aip_versao_revisao check ((tp_decisao is null) = (ds_revisao_secoes is null))
 );
 

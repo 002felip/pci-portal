@@ -47,7 +47,7 @@ const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo,
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
 const LIMITE_POR_MINUTO = 240;
-const ESTADOS = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado', 'negado'];
+const ESTADOS = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado']; // sem Negado: a decisão só aprova ou devolve
 
 // Dias úteis (seg–sex) entre duas datas AAAA-MM-DD, sem contar o dia inicial.
 function diasUteisEntre(inicioIso, fim) {
@@ -182,9 +182,9 @@ function camposObrigatorios(secoes) {
 function validarDecisao({ decisao, comentario, revisao, ajustes } = {}) {
   const erros = [];
   const marcadas = Object.keys(revisao || {}).filter((k) => revisao[k] === 'ajustar');
-  if (!['aprovar', 'devolver', 'negar'].includes(decisao)) erros.push('decisao');
+  if (!['aprovar', 'devolver'].includes(decisao)) erros.push('decisao');
   const txt = String(comentario || '').trim();
-  if ((decisao === 'devolver' || decisao === 'negar') && txt.length < LIMITE_COMENTARIO) erros.push('comentario');
+  if (decisao === 'devolver' && txt.length < LIMITE_COMENTARIO) erros.push('comentario');
   if (decisao === 'devolver' && !marcadas.length) erros.push('secaoAjustar');
   // Cada item marcado para ajuste exige o seu comentário; aprovar não combina com item marcado para ajuste
   if (decisao === 'devolver' && marcadas.some((k) => !String((ajustes || {})[k] || '').trim())) erros.push('ajusteSemComentario');
@@ -544,7 +544,7 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
       if (!podeDecidir(card, papeis, nomeDe(email))) return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
       const erros = validarDecisao(req.body);
       if (erros.length) return res.status(400).json({ error: 'Decisão incompleta.', codigo: 'VALIDACAO', erros });
-      const estado = { aprovar: 'aprovado', devolver: 'em_revisao', negar: 'negado' }[req.body.decisao];
+      const estado = { aprovar: 'aprovado', devolver: 'em_revisao' }[req.body.decisao];
       res.json({ ok: true, simulado: true, estado });
     } catch (err) {
       console.error(`${TAG} /goal-card/decisao:`, err.message);
