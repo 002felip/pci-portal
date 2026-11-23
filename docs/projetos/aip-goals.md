@@ -216,7 +216,8 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   linha "Resultado do nível acima" editável com os pontos herdados, nova meta e remoção; total por unidade e contador de pendências por nível. Salvar fica bloqueado enquanto alguma unidade não fecha
   o total (RN-16), e o servidor recusa com 400 (`somaPesosPorNivel`).
 - **Parâmetros:** aba descontinuada (D-22); os pontos herdados se editam em Metas e pesos.
-- **Ciclo:** tela renomeada para Administração; lista de ciclos no campo Ano, um ciclo aberto por vez, Fechar, Reabrir e
+- **Ciclo:** barra do ciclo no cartão Identificação (lista, situação, Fechar, Reabrir e Abrir novo ciclo), resumo da jornada
+  calculado das janelas, início editável em cada etapa (padrão: fim da anterior) e barra de salvar só com alterações; tela renomeada para Administração; lista de ciclos no campo Ano, um ciclo aberto por vez, Fechar, Reabrir e
   Abrir novo ciclo; janelas desativadas em ciclo fechado.
 - **Grupos:** seções por grupo e BU com cards de pessoa e popup Novo usuário com busca no diretório (MDM).
 - **Acesso:** leitura aberta a qualquer usuário do Portal; contribuidor edita só os cards da sua BU; aprovador edita e

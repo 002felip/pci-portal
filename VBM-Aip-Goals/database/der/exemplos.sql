@@ -1,8 +1,8 @@
 -- Dados de exemplo do DER (fictícios): uma história só, gravada num banco de TESTE para passar por todas as regras.
 -- AIP 2026 fechado; AIP 2027 aberto, criado a partir dele. Ontario recebeu a meta 04 de volta para ajuste; Onça Puma já tem a 04 aprovada.
-insert into aip_ciclo (no_ano, nm_ciclo, tp_status, ds_texto_padrao_excecoes, id_ciclo_origem, dt_criacao, cd_matricula_criacao, dt_fechamento, cd_matricula_fechamento, dt_ini_desdobramento, dt_fim_desdobramento, dt_fim_proposta, dt_fim_calibracao, dt_fim_oficial, qtde_pontos_herdados_coo, qtde_pontos_herdados_bu) values
- (2026, 'AIP 2026', 'FECHADO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', null, '2025-09-15 09:00-03', 'C410644', '2026-01-30 18:00-03', 'C410644', '2025-10-01', '2025-10-30', '2025-12-02', '2025-12-16', '2025-12-23', 75, 40),
- (2027, 'AIP 2027', 'ABERTO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', 1, '2026-09-20 10:30-03', 'C410644', null, null, '2026-10-01', '2026-10-29', '2026-12-01', '2026-12-15', '2026-12-22', 75, 40);
+insert into aip_ciclo (no_ano, nm_ciclo, tp_status, ds_texto_padrao_excecoes, id_ciclo_origem, dt_criacao, cd_matricula_criacao, dt_fechamento, cd_matricula_fechamento, dt_ini_desdobramento, dt_fim_desdobramento, dt_ini_proposta, dt_fim_proposta, dt_ini_calibracao, dt_fim_calibracao, dt_ini_oficial, dt_fim_oficial, qtde_pontos_herdados_coo, qtde_pontos_herdados_bu) values
+ (2026, 'AIP 2026', 'FECHADO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', null, '2025-09-15 09:00-03', 'C410644', '2026-01-30 18:00-03', 'C410644', '2025-10-01', '2025-10-30', '2025-10-30', '2025-12-02', '2025-12-02', '2025-12-16', '2025-12-16', '2025-12-23', 75, 40),
+ (2027, 'AIP 2027', 'ABERTO', 'Efeitos de força maior, mudanças regulatórias e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', 1, '2026-09-20 10:30-03', 'C410644', null, null, '2026-10-01', '2026-10-29', '2026-10-29', '2026-12-01', '2026-12-03', '2026-12-15', '2026-12-15', '2026-12-22', 75, 40);
 
 insert into sites (id_site, id_sistema, nm_site, nm_pais, sg_regiao) values
  (12, 1, 'Onça Puma', 'Brasil', null),

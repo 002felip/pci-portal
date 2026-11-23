@@ -245,12 +245,15 @@ function validarConfiguracao(aba, dados, base) {
     if (!String(d.nome || '').trim()) erros.push({ campo: 'nome', codigo: 'OBRIGATORIO' });
     const et = Array.isArray(d.etapas) ? d.etapas : [];
     if (et.length !== 4) erros.push({ campo: 'etapas', codigo: 'ETAPAS' });
-    let anterior = et[0] && et[0].inicio;
-    if (!dataValida(anterior)) erros.push({ campo: 'etapas.0.inicio', codigo: 'DATA' });
+    // Cada etapa tem início (padrão: fim da etapa anterior) e fim depois do início; os inícios seguem a ordem das etapas
+    let iniAnt = null;
     et.forEach((e, i) => {
+      const ini = e.inicio || (i > 0 ? et[i - 1].fim : null);
+      if (!dataValida(ini)) erros.push({ campo: `etapas.${i}.inicio`, codigo: 'DATA' });
+      else if (iniAnt && ini < iniAnt) erros.push({ campo: `etapas.${i}.inicio`, codigo: 'ORDEM' });
       if (!dataValida(e.fim)) erros.push({ campo: `etapas.${i}.fim`, codigo: 'DATA' });
-      else if (dataValida(anterior) && e.fim <= anterior) erros.push({ campo: `etapas.${i}.fim`, codigo: 'ORDEM' });
-      anterior = e.fim;
+      else if (dataValida(ini) && e.fim <= ini) erros.push({ campo: `etapas.${i}.fim`, codigo: 'ORDEM' });
+      if (dataValida(ini)) iniAnt = ini;
     });
   }
   if (aba === 'metas') {
