@@ -55,6 +55,13 @@ viraram colunas da `AIP_GOAL_CARD_VERSAO` (eram `AIP_DECISAO` e `AIP_REVISAO_SEC
 
 Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`. Esquema (`IBP` ou próprio) a definir com o time de dados.
 
+## Acesso (sem tabela nova)
+
+A regra de acesso cabe na `AIP_PAPEL` atual. Leitura: qualquer usuário do Portal, sem cadastro no AIP. Contribuidor:
+uma linha por BU (`ID_SITE`), edita só os cards dela. Aprovador: edita e aprova todos os cards, sem telas
+administrativas. Administrador: todas as telas. O grupo Consulta saiu (a leitura é aberta). Quais telas cada grupo vê
+fica no código da aplicação; uma tabela de permissões por tela só valeria se essa regra precisasse ser configurável.
+
 ## Telas × tabelas
 
 | Tela | Lê | Grava |

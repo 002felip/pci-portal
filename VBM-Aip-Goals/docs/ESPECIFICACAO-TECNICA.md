@@ -27,23 +27,23 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 
 ## 2. Perfis e acesso
 
-| Perfil | Permissões | Recorte | Tela inicial |
+| Perfil | Telas | Edição | Cadastro |
 | --- | --- | --- | --- |
-| Contribuidores (grupo por BU) | Preencher, salvar e submeter Goal Card; recolher submissão; responder e comentar; (F2) abrir CR; (F3) enviar evidência. Qualquer membro do grupo da BU edita o card; o log registra quem alterou | Vê todas as BUs; edita só a(s) BU(s) do seu cadastro | T03 Metas da BU |
-| Aprovadores (grupo de aprovação P&CI/COO) | Nível único de aprovação, na tela T14 Aprovações (exclusiva deste grupo): qualquer membro do grupo aprova, devolve ou nega; comenta; (F3) valida evidência | Todas as BUs | T02 Painel do ciclo |
-| Consulta (grupo de leitura) | Só leitura: vê metas, Goal Cards, versões e Action Log; não edita, não comenta e não decide | Vê todas as BUs | T00 Início |
-| Administrador do ciclo (P&CI) | Configurar ciclo, BUs, grupos (contribuidores, aprovadores e consulta), metas, pesos, prazos e textos padrão; reatribuir pendências; reabrir card Negado; editar os Goal Cards de todas as BUs, nas mesmas situações dos contribuidores (D-16) | Todas as BUs | T11 Configuração do ciclo |
+| Qualquer usuário do Portal | Todas as telas de leitura (Início, COO AIP, AIP BU's, Goal Card, Versões, Action Log) | Nenhuma (somente leitura) | Nenhum: basta acesso ao Portal (`IBP.USERS`) |
+| Contribuidor | Início (menu), COO AIP e AIP BU's, com Goal Card, Versões e Histórico nos popups | Só os Goal Cards da sua BU (ex.: cadastrado em Salobo edita os cards de Salobo; os demais, só lê) | `AIP_PAPEL` com `TP_GRUPO = CONTRIBUIDOR` e `ID_SITE` (uma linha por BU) |
+| Aprovador | Todas, exceto as administrativas (Configuração do ciclo e Action Log geral); a fila de Aprovações continua disponível | Edita e aprova (devolve ou nega) os Goal Cards de todas as BUs | `AIP_PAPEL` com `TP_GRUPO = APROVACAO` |
+| Administrador | Todas as telas | Tudo, inclusive configuração do ciclo | `AIP_PAPEL` com `TP_GRUPO = ADMIN` |
 
 | ID | Regra de acesso |
 | --- | --- |
 | AC-01 | Identidade pelo proxy (`X-Forwarded-Email`), vinculada a `IBP.USERS` (`CD_MATRICULA`). |
-| AC-02 | O papel (contribuidor, aprovador, consulta ou administrador) é atribuído por grupo, por BU e por ciclo; a mesma pessoa pode ter papéis diferentes em BUs diferentes. Aprovadores e administrador não têm BU (valem para todas). |
-| AC-03 | Usuário sem papel no ciclo ativo vê T12 "Sem acesso" e gera evento "Acesso negado" no log. |
+| AC-02 | O papel (contribuidor, aprovador ou administrador) é atribuído por ciclo em `AIP_PAPEL`; o contribuidor tem uma linha por BU. O antigo grupo Consulta deixa de existir: a leitura é aberta a qualquer usuário do Portal. |
+| AC-03 | Usuário sem papel no ciclo entra em somente leitura; só as telas administrativas e as ações de escrita respondem 403 (com evento "Acesso negado" no log). |
 | AC-04 | Escrita (editar, submeter, recolher ou comentar) em BU que não está no cadastro do usuário retorna 403 e gera evento no log. |
-| AC-05 | Todos os usuários com papel no ciclo visualizam todos os dados de todas as BUs. A edição cabe aos contribuidores da própria BU, conforme o cadastro no banco de dados (`AIP_PAPEL`), e ao administrador, que edita as metas de todas as BUs; a decisão, só ao grupo de aprovação. O grupo de consulta nunca edita, comenta nem decide: a interface não mostra essas ações e a API responde 403. |
+| AC-05 | Todos veem todos os dados de todas as BUs. Editar um Goal Card: contribuidor da BU do card, aprovador ou administrador. Aprovar, devolver ou negar: aprovador ou administrador. |
 | AC-06 | Usuário inativo em `IBP.USERS` é tratado como sem acesso; suas pendências aparecem para o administrador reatribuir. |
-| AC-07 | As telas de leitura (Início, Painel do ciclo, Metas da BU, Goal Card em leitura, Versões e Action Log) ficam abertas a todos os perfis, com todas as BUs. |
-| AC-08 | A T14 Aprovações é exclusiva do grupo de aprovação: os demais perfis não veem o item no menu e a API responde 403 (com evento no log). |
+| AC-07 | As telas de leitura (Início, COO AIP, AIP BU's, Goal Card em leitura, Versões e Action Log do card) ficam abertas a qualquer usuário do Portal. As telas administrativas (submenu Administração) são só do administrador. |
+| AC-08 | A fila de Aprovações é do aprovador e do administrador; os demais não veem o item no menu e a API responde 403 (com evento no log). |
 
 ## 3. Regras de negócio
 
