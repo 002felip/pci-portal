@@ -26,7 +26,7 @@ env:
     value: 'BDIBPBMSA_PRD'
   # VBM-Aip-Goals: tabelas no schema PM (VBM-Aip-Goals/database/001_pm_criar_tabelas.sql).
   # Começa no DEV; para produção, rode os scripts no PRD e troque para 'BDIBPBMSA_PRD'.
-  # Nome, e-mail e cargo das pessoas vêm da IBP.USERS do PRD (conexão do Performance Hub).
+  # Pessoas (login → matrícula, nome, cargo) vêm do MDM do Kaizen (CI.KZN_MDM_HIERARQUIA) no mesmo banco.
   - name: 'AIPGOALS_AZURE_SQL_DATABASE'        # VBM-Aip-Goals
     value: 'BDIBPBMSA_DEV'
   # VBM Health of the Business (VBM-Performance-Hub/VBM-Health-of-the-Business): IBP.DASHBOARD.ID_DASH

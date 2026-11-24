@@ -11,7 +11,7 @@
  * Identidade: no Portal vem SOMENTE do X-Forwarded-Email do proxy. Aqui,
  * AIPGOALS_EMAIL_LOCAL simula esse cabeçalho, e só com NODE_ENV=development
  * fora do Databricks (sem DATABRICKS_APP_PORT). O e-mail precisa estar na
- * IBP.USERS (com matrícula) do mesmo banco.
+ * MDM do Kaizen (CI.KZN_MDM_HIERARQUIA) do mesmo banco.
  */
 const path = require('path');
 const express = require('express');

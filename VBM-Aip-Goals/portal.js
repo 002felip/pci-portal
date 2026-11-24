@@ -11,9 +11,9 @@
  *   AIPGOALS_AZURE_SQL_DATABASE  base da aplicação (BDIBPBMSA_DEV / BDIBPBMSA_PRD).
  *                                Sem ela, cai no AZURE_SQL_DATABASE do Portal.
  *   AIPGOALS_SITES_TABELA        opcional; tabela dos sites (padrão IBP.SITES).
+ *   AIPGOALS_MDM_TABELA          opcional; pessoas (padrão CI.KZN_MDM_HIERARQUIA, a do Kaizen).
  * Tabelas: schema PM (database/001_pm_criar_tabelas.sql). Pessoas (nome, e-mail,
- * cargo) vêm da IBP.USERS pela conexão `runQueryUsuarios` que o Portal passa (a
- * do Performance Hub, BDIBPBMSA_PRD); sem ela, a do próprio AIP.
+ * cargo) vêm do MDM do Kaizen, no mesmo banco.
  * Servidor/porta/login: AZURE_SQL_SERVER / AZURE_SQL_PORT / AZURE_SQL_USER /
  * AZURE_SQL_PASSWORD (os do Portal).
  */
@@ -28,7 +28,7 @@ const BASE = '/' + PASTA;
 const TAG = '[' + PASTA.toLowerCase() + ']';
 const escaparRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-module.exports = function montarAipGoalsNoPortal(app, { runQueryUsuarios } = {}) {
+module.exports = function montarAipGoalsNoPortal(app) {
   const env = process.env;
   const DB = {
     server: env.AZURE_SQL_SERVER || '',
@@ -109,7 +109,7 @@ module.exports = function montarAipGoalsNoPortal(app, { runQueryUsuarios } = {})
     }
   });
 
-  app.use(BASE + '/api', semCache, criarAipGoalsRouter({ dados: criarFonteBanco({ runQuery, transacao, runQueryUsuarios }) }));
+  app.use(BASE + '/api', semCache, criarAipGoalsRouter({ dados: criarFonteBanco({ runQuery, transacao }) }));
 
   // Da pasta só a página (/, index.html) e os assets são públicos:
   // portal.js, aip-goals-api.js, aip-goals-banco.js, server.js, tests/, database/,

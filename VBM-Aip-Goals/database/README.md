@@ -8,12 +8,13 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 |---|---|---|
 | `001_pm_criar_tabelas.sql` | Cria o schema `PM`, as 9 tabelas, as restrições, os índices, o gatilho que torna o log imutável e as FKs para `IBP.SITES` | Uma vez por banco. Pode repetir: só cria o que falta |
 | `002_pm_carga_inicial.sql` | Cria o 1º ciclo aberto, a meta nº 0 da BU (resultado do COO) e o 1º administrador | Uma vez, depois do 001, com a sua matrícula preenchida |
-| `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra se a matrícula existe na `IBP.USERS`) | Depois do 002, no DEV |
+| `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra o nome e o e-mail da matrícula no MDM) | Depois do 002, no DEV |
 
 ## Ordem de ligação (passo a passo)
 
 ### 1. Banco (SSMS ou Azure Data Studio, no `BDIBPBMSA_DEV`)
 1. Rode `001_pm_criar_tabelas.sql` inteiro. No fim, a consulta de conferência lista as 9 tabelas.
+   - O MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`) precisa estar no mesmo banco: no DEV já está.
    - Se aparecer o aviso "IBP.SITES não existe neste banco", o DEV não tem a tabela de sites. A aplicação lista as BUs pela `IBP.SITES`: copie-a do PRD ou aponte `AIPGOALS_SITES_TABELA` para outra tabela com as colunas `ID_SITE`, `NM_SITE` e `NM_PAIS`.
    - Se quem rodou o script **não** for o login do app (`AZURE_SQL_USER`), descomente o `GRANT ... ON SCHEMA::PM` do fim do script.
 2. Rode `002_pm_carga_inicial.sql` (já com o administrador 81059384, felipe.santos.souza@vale.com, e o ciclo AIP 2027).
@@ -25,9 +26,9 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 ### 3. Telas, nesta ordem (cada uma depende da anterior)
 | # | Tela | Lê | Grava | O que conferir |
 |---|---|---|---|---|
-| 1 | **Início** | `AIP_CICLO`, `AIP_PAPEL`, `IBP.USERS` | — | Nome do ciclo e etapa atual vindos da carga inicial; o menu mostra Administração (você é admin) |
+| 1 | **Início** | `AIP_CICLO`, `AIP_PAPEL`, MDM (`CI.KZN_MDM_HIERARQUIA`) | — | Nome do ciclo e etapa atual vindos da carga inicial; o menu mostra Administração (você é admin) |
 | 2 | **Administração › Ciclo** | `AIP_CICLO` | `AIP_CICLO`, `AIP_EVENTO_LOG` | Mude uma data e salve; ao recarregar, a data continua (1º teste de gravação) |
-| 3 | **Administração › Grupos** | `AIP_PAPEL`, `IBP.USERS` (diretório) | `AIP_PAPEL` | Inclua o grupo de aprovação e os outros administradores; pode salvar sozinha |
+| 3 | **Administração › Grupos** | `AIP_PAPEL`, MDM (autopreenchimento do Novo usuário) | `AIP_PAPEL` | Inclua o grupo de aprovação e os outros administradores; pode salvar sozinha |
 | 4 | **Administração › Business Units** + **Metas e pesos** | `AIP_CICLO_SITE`, `IBP.SITES`, `AIP_META`, `AIP_META_PESO` | as mesmas + `AIP_GOAL_CARD` (criados ao salvar) | Ver abaixo: as duas abas se salvam juntas |
 | 5 | **Administração › Exceções** | `AIP_CICLO_SITE` | `AIP_CICLO_SITE` | Texto por site; aparece no Goal Card da BU |
 | 6 | **Administração › Grupos** (de novo) | `AIP_PAPEL` | `AIP_PAPEL` | Contribuidores por BU, já com as BUs cadastradas |
@@ -40,7 +41,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 **Por que BUs e Metas e pesos se salvam juntas:** a regra RN-16 exige que cada nível feche 100 pts: CEO = 100, COO =
 herdados + metas do COO, e cada BU = herdados + metas da BU. Num banco vazio nada fecha ainda, então o botão Salvar fica
 travado até você:
-- incluir as BUs (o nome precisa ser um site da `IBP.SITES`; a tela sugere a lista e preenche o país);
+- incluir as BUs (Nova BU lista os sites da `IBP.SITES` que ainda não estão no ciclo, por país; o país vem do cadastro);
 - cadastrar as metas do CEO (somando 100), as do COO (somando 100 − herdados) e as da BU, com o peso de cada BU somando 100 − herdados.
 
 Ao salvar, a aplicação cria os Goal Cards de cada BU: um por meta com peso, mais o "COO's Scorecard Result" quando há
@@ -53,7 +54,7 @@ pontos herdados. O código é `GC-<3 letras do site>-<nº da meta>`, como `GC-SA
 
 ## Como a aplicação usa o banco
 
-- **Quem é o usuário:** o e-mail do proxy (`X-Forwarded-Email`) vira matrícula pela `IBP.USERS`. No Portal, essa consulta usa a conexão do PRD, a mesma do controle de acesso. Os papéis são as linhas ativas da `PM.AIP_PAPEL` no ciclo atual. Nome, e-mail e cargo também vêm da `IBP.USERS`; sem nome cadastrado, a tela mostra a matrícula.
+- **Quem é o usuário:** o e-mail do proxy (`X-Forwarded-Email`) vira matrícula pelo MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`, coluna `CD_EMAIL`), no mesmo banco do AIP. Os papéis são as linhas ativas da `PM.AIP_PAPEL` no ciclo atual (matrícula comparada sem zeros à esquerda, como no Kaizen). Nome, e-mail, cargo, estado e cidade também vêm do MDM; sem `NM_USUARIO`, o nome sai do e-mail. O "Novo usuário" e o diretor da BU buscam no MDM enquanto se digita (nome, e-mail ou matrícula).
 - **Ciclo atual:** é o aberto ou, se não houver, o mais recente, para que a Administração possa reabrir ou abrir o próximo. "Novo ciclo" copia BUs, grupos, metas e pesos e passa as datas para o ano seguinte.
 - **Gravações** são transacionais: ou grava tudo, ou nada. Cada uma gera um evento no `AIP_EVENTO_LOG`. Os comentários e os ajustes pedidos na devolução são eventos `COMENTARIO`. Tentativas sem permissão geram `ACESSO_NEGADO`.
 - **SQL:** fica em `aip-goals-banco.js`, sempre parametrizado (`@nome`). Nada da requisição é concatenado.
