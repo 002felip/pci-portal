@@ -57,9 +57,9 @@
    ],
    "proposito": "Um ciclo anual do AIP (ex.: AIP 2027), com as datas das 4 etapas da jornada. Só um ciclo pode estar aberto; os fechados ficam para consulta e podem ser reabertos se não houver outro aberto.",
    "regras": [
-    "Só um ciclo com TP_STATUS = ABERTO por vez (índice único parcial).",
+    "Só um ciclo com SG_STATUS = S por vez (índice único parcial).",
     "Ano entre 2020 e 2100 e único.",
-    "TP_STATUS: ABERTO ou FECHADO.",
+    "SG_STATUS: S ou N.",
     "Data e matrícula de fechamento preenchidas se, e só se, o ciclo estiver FECHADO.",
     "Cada etapa termina depois de começar, e os inícios seguem a ordem das etapas (a calibração no exemplo começa 2 dias depois do fim das propostas).",
     "Pontos herdados de 0 a 99; cada unidade fecha 100 pts (herdado + metas).",
@@ -69,7 +69,7 @@
     "ID_CICLO": "Número interno do ciclo.",
     "NO_ANO": "Ano do ciclo, de 2020 a 2100; não se repete.",
     "NM_CICLO": "Nome mostrado nas telas (ex.: AIP 2027).",
-    "TP_STATUS": "ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.",
+    "SG_STATUS": "S = ciclo aberto; N = ciclo fechado. Fechar e reabrir é feito na Administração.",
     "ID_CICLO_ORIGEM": "Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.",
     "DT_CRIACAO": "Quando o ciclo foi aberto.",
     "CD_MATRICULA_CRIACAO": "Matrícula (MDM) de quem abriu o ciclo.",
@@ -91,8 +91,8 @@
     "2 · AIP 2027, aberto, criado do 2026"
    ],
    "condicional": {
-    "DT_FECHAMENTO": "se FECHADO",
-    "CD_MATRICULA_FECHAMENTO": "se FECHADO"
+    "DT_FECHAMENTO": "se fechado (N)",
+    "CD_MATRICULA_FECHAMENTO": "se fechado (N)"
    },
    "link_extra": {
     "href": "#como-pontos",
@@ -122,11 +122,35 @@
     "15 · Ontario, Canadá"
    ]
   },
+  "AIP_CICLO_SITE": {
+   "grupo": "des",
+   "pos": [
+    1,
+    20
+   ],
+   "proposito": "Um site (BU) dentro de um ciclo. Guarda o que é próprio do site naquele ciclo: se participa, quem é o diretor e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Business Units e Exceções da Administração.",
+   "regras": [
+    "Um registro por site em cada ciclo.",
+    "Só sites que existem na IBP.SITES."
+   ],
+   "campos": {
+    "ID_CICLO": "Ciclo.",
+    "ID_SITE": "Site do IBP (a BU).",
+    "SG_ATIVA": "S = o site participa do ciclo; N = tirado do ciclo (não recebe Goal Cards nem avisos e sai das somas), sem apagar o histórico.",
+    "CD_MATRICULA_DIRETOR": "Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards do site, com a área Diretoria Executiva.",
+    "DS_EXCECAO": "Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites.",
+    "SG_EXCECAO_VER": "S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado)."
+   },
+   "exemplos": [
+    "AIP 2027 · Onça Puma (site 12), diretor e texto do Brasil",
+    "AIP 2027 · Ontario (site 15), texto do Canadá oculto"
+   ]
+  },
   "AIP_META": {
    "grupo": "des",
    "pos": [
     1,
-    265
+    208
    ],
    "proposito": "As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.",
    "regras": [
@@ -143,6 +167,7 @@
     "TP_META": "FORMULA (Por fórmula) ou MARCOS (Por marcos).",
     "TP_POLARIDADE": "MAIOR (maior é melhor) ou MENOR (menor é melhor).",
     "ID_META_ORIGEM": "Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.",
+    "VL_PESO": "Peso das metas do CEO e do COO (um valor só, pois há um só COO e um só CEO). Vazio nas metas da BU, que têm um peso por site na AIP_META_PESO.",
     "SG_ATIVA": "N = fora do ciclo, sem apagar o histórico."
    },
    "exemplos": [
@@ -182,50 +207,15 @@
     "ID_SITE": "se contribuidor"
    }
   },
-  "AIP_UNIDADE": {
-   "grupo": "des",
-   "pos": [
-    1,
-    20
-   ],
-   "proposito": "As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.",
-   "regras": [
-    "Nome único por ciclo e nível.",
-    "ID_SITE preenchido se, e só se, o nível é BU.",
-    "Diretor e exceção só nas unidades de nível BU.",
-    "SG_ATIVA: S ou N."
-   ],
-   "campos": {
-    "ID_UNIDADE": "Número interno da unidade.",
-    "ID_CICLO": "Ciclo da unidade.",
-    "CD_NIVEL": "CEO, COO ou BU.",
-    "NM_UNIDADE": "Nome mostrado (ex.: Ontario).",
-    "ID_SITE": "BU (site do IBP) correspondente, quando a unidade é do nível BU.",
-    "SG_ATIVA": "N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.",
-    "CD_MATRICULA_DIRETOR": "Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards da BU, com a área Diretoria Executiva.",
-    "DS_EXCECAO": "Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites (Brasil, Canadá, International Refineries).",
-    "SG_EXCECAO_VER": "S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado)."
-   },
-   "exemplos": [
-    "1 · CEO VBM",
-    "2 · COO VBM",
-    "3 · Onça Puma (site 12)"
-   ],
-   "condicional": {
-    "ID_SITE": "se nível BU",
-    "CD_MATRICULA_DIRETOR": "só BU",
-    "DS_EXCECAO": "só BU"
-   }
-  },
   "AIP_GOAL_CARD": {
    "grupo": "gc",
    "pos": [
     2,
     20
    ],
-   "proposito": "O Goal Card de uma meta numa unidade (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.",
+   "proposito": "O Goal Card de uma meta da BU num site (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.",
    "regras": [
-    "Código único; um card por meta e unidade.",
+    "Código único; um card por meta e site.",
     "TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO.",
     "Versão oficial preenchida se, e só se, APROVADO."
    ],
@@ -233,7 +223,7 @@
     "ID_GOAL_CARD": "Número interno do card.",
     "CD_GOAL_CARD": "Código mostrado nas telas: GC-<BU>-<meta>.",
     "ID_META": "Meta do card.",
-    "ID_UNIDADE": "Unidade (BU) dona do card.",
+    "ID_SITE": "Site (BU) dono do card.",
     "TP_ESTADO": "RASCUNHO, EM_APROVACAO, EM_REVISAO (devolvido para ajuste) ou APROVADO. Não existe Negado no modelo.",
     "NO_VERSAO_OFICIAL": "Versão aprovada que vale como oficial. Preenchida só se APROVADO.",
     "DS_RASCUNHO": "Campos em edição ainda não submetidos (objetivo, fórmula, unidade, régua, área, evidência, exceções da BU).",
@@ -252,22 +242,22 @@
    "grupo": "des",
    "pos": [
     1,
-    510
+    472
    ],
-   "proposito": "O peso de cada meta em cada unidade. Somado aos pontos herdados, fecha o total da unidade (RN-16).",
+   "proposito": "O peso de cada meta da BU em cada site. Somado aos pontos herdados, fecha os 100 pontos do site (RN-16). As metas do CEO e do COO têm um peso só, na própria AIP_META.",
    "regras": [
-    "Um peso por meta e unidade; maior que zero.",
-    "Para cada unidade: herdado + soma dos pesos = total do nível (validado na API antes de gravar)."
+    "Um peso por meta e site; maior que zero.",
+    "Para cada site: pontos herdados + soma dos pesos = 100 (validado na API antes de gravar)."
    ],
    "campos": {
-    "ID_META": "Meta.",
-    "ID_UNIDADE": "Unidade que recebe o peso.",
+    "ID_META": "Meta da BU.",
+    "ID_SITE": "Site que recebe o peso.",
     "VL_PESO": "Pontos da meta nesta unidade (aceita meio ponto, ex.: 7,5)."
    },
    "exemplos": [
-    "Meta 02 vale 5 no COO VBM",
     "Meta 04 vale 10 em Onça Puma",
-    "Meta 04 vale 10 em Ontario"
+    "Meta 04 vale 10 em Ontario",
+    "Meta 05 vale 5 em Ontario"
    ],
    "link_extra": {
     "href": "#como-pontos",
@@ -377,13 +367,6 @@
  },
  "ligacoes": [
   {
-   "filho": "AIP_META_PESO",
-   "campo": "ID_UNIDADE",
-   "pai": "AIP_UNIDADE",
-   "chave": "ID_UNIDADE",
-   "rotulo": "na unidade"
-  },
-  {
    "filho": "AIP_CICLO",
    "campo": "ID_CICLO_ORIGEM",
    "pai": "AIP_CICLO",
@@ -391,25 +374,25 @@
    "rotulo": "criado a partir de"
   },
   {
-   "filho": "AIP_META_PESO",
-   "campo": "ID_META",
-   "pai": "AIP_META",
-   "chave": "ID_META",
-   "rotulo": "peso da"
-  },
-  {
-   "filho": "AIP_UNIDADE",
+   "filho": "AIP_CICLO_SITE",
    "campo": "ID_CICLO",
    "pai": "AIP_CICLO",
    "chave": "ID_CICLO",
-   "rotulo": "unidade do"
+   "rotulo": "participa de"
   },
   {
-   "filho": "AIP_UNIDADE",
+   "filho": "AIP_CICLO_SITE",
    "campo": "ID_SITE",
    "pai": "SITES",
    "chave": "ID_SITE",
-   "rotulo": "representa"
+   "rotulo": "é o site"
+  },
+  {
+   "filho": "AIP_PAPEL",
+   "campo": "ID_CICLO",
+   "pai": "AIP_CICLO",
+   "chave": "ID_CICLO",
+   "rotulo": "participa de"
   },
   {
    "filho": "AIP_META",
@@ -426,11 +409,18 @@
    "rotulo": "desdobrada de"
   },
   {
-   "filho": "AIP_PAPEL",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "participa de"
+   "filho": "AIP_META_PESO",
+   "campo": "ID_META",
+   "pai": "AIP_META",
+   "chave": "ID_META",
+   "rotulo": "peso da"
+  },
+  {
+   "filho": "AIP_META_PESO",
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
+   "rotulo": "no site"
   },
   {
    "filho": "AIP_PAPEL",
@@ -448,10 +438,10 @@
   },
   {
    "filho": "AIP_GOAL_CARD",
-   "campo": "ID_UNIDADE",
-   "pai": "AIP_UNIDADE",
-   "chave": "ID_UNIDADE",
-   "rotulo": "da unidade"
+   "campo": "ID_SITE",
+   "pai": "SITES",
+   "chave": "ID_SITE",
+   "rotulo": "do site"
   },
   {
    "filho": "AIP_GOAL_CARD_VERSAO",
@@ -492,11 +482,11 @@
  "secoes_extras": [
   {
    "id": "como-pontos",
-   "html": "<section class=\"explica\" id=\"como-pontos\"><h2>Como os pontos descem do CEO até a BU</h2><p>Cada unidade de um nível precisa fechar o total de pontos do nível. Uma parte vem do resultado do nível acima (<code>QTDE_PONTOS_HERDADOS_COO</code> e <code>_BU</code> do AIP_CICLO) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p><ol class=\"ordem\"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li><li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li><li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li><li>A API só grava quando herdado + soma dos pesos = total, em todas as unidades de todos os níveis ativos (RN-16).</li></ol><div class=\"tscroll\"><table class=\"passo\"><thead><tr><th>Unidade</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody><tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr><tr class=\"hl\"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>"
+   "html": "<section class=\"explica\" id=\"como-pontos\"><h2>Como os pontos descem do CEO até a BU</h2><p>Cada site (e o CEO e o COO) precisa fechar 100 pontos. Uma parte vem do resultado do nível acima (<code>QTDE_PONTOS_HERDADOS_COO</code> e <code>_BU</code> do AIP_CICLO) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p><ol class=\"ordem\"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li><li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li><li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li><li>A API só grava quando herdado + soma dos pesos = total, em todos os sites, no CEO e no COO (RN-16).</li></ol><div class=\"tscroll\"><table class=\"passo\"><thead><tr><th>Quem</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody><tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr><tr class=\"hl\"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>"
   },
   {
    "id": "enxuto",
-   "html": "<section class=\"explica\" id=\"enxuto\"><h2>O que foi simplificado nesta revisão</h2><p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p><ul class=\"fn\"><li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li><li><code>AIP_CICLO_BU</code><span>A BU no ciclo já é a unidade de nível BU da AIP_UNIDADE (com SG_ATIVA).</span></li><li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li><li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li><li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li><li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li><li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU, e a AIP_UNIDADE perdeu a unidade-mãe.</span></li></ul></section>"
+   "html": "<section class=\"explica\" id=\"enxuto\"><h2>O que foi simplificado nesta revisão</h2><p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p><ul class=\"fn\"><li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li><li><code>AIP_UNIDADE</code><span>Não existe: o desdobramento usa o próprio site. O que era da unidade ficou na AIP_CICLO_SITE (diretor, exceção, participa) e o peso do CEO e do COO na AIP_META.</span></li><li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li><li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li><li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li><li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li><li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU,.</span></li></ul></section>"
   }
  ],
  "funcoes": [
@@ -510,7 +500,7 @@
   "AIP_CICLO",
   "AIP_PAPEL",
   "SITES",
-  "AIP_UNIDADE",
+  "AIP_CICLO_SITE",
   "AIP_META",
   "AIP_META_PESO",
   "AIP_GOAL_CARD",

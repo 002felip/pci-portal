@@ -7,8 +7,8 @@
 -- Padrão de nomes IBP: ID_ identificador, NM_ nome, DS_ descrição, DT_ data, NO_ número, CD_ código,
 -- TP_ lista fixa, SG_ sim/não, QTDE_ quantidade, VL_ valor.
 -- Pessoas: nome, e-mail, cargo, estado e cidade são lidos do MDM pela matrícula (CD_MATRICULA, como em IBP.USERS); o AIP guarda só a matrícula.
--- Desdobramento fixo em CEO → COO → BU (GG e GA fora no primeiro momento), 100 pts por unidade; os pontos herdados
--- ficam no AIP_CICLO e o nível é um código (CD_NIVEL) na meta e na unidade.
+-- Desdobramento fixo em CEO → COO → BU (GG e GA fora no primeiro momento), 100 pts por site; os pontos herdados
+-- ficam no AIP_CICLO e o nível é um código (CD_NIVEL) na meta. O site (IBP.SITES) é a BU: não há tabela de unidade.
 -- Limites das regras (mínimo de caracteres no comentário, tamanho de anexo) ficam na aplicação, fora do banco.
 
 -- ═══ CICLO ═══
@@ -16,7 +16,7 @@ create table aip_ciclo (
   id_ciclo integer generated always as identity constraint pk_aip_ciclo primary key,
   no_ano smallint not null,
   nm_ciclo varchar(100) not null,
-  tp_status varchar(20) not null default 'ABERTO',
+  sg_status char(1) not null default 'S', -- S = ciclo aberto, N = fechado
   id_ciclo_origem integer constraint fk_aip_ciclo_aip_ciclo references aip_ciclo (id_ciclo),
   dt_criacao timestamp(0) not null default localtimestamp(0),
   cd_matricula_criacao varchar(20) not null,
@@ -31,7 +31,7 @@ create table aip_ciclo (
   dt_fim_calibracao date not null,
   dt_ini_oficial date not null,
   dt_fim_oficial date not null,
-  -- Desdobramento CEO → COO → BU: cada unidade fecha 100 pts; parte vem do resultado do nível acima
+  -- Desdobramento CEO → COO → BU: cada site (e o CEO e o COO) fecha 100 pts; parte vem do resultado do nível acima
   qtde_pontos_herdados_coo smallint not null,
   qtde_pontos_herdados_bu smallint not null,
   constraint uq_aip_ciclo_ano unique (no_ano),
@@ -39,11 +39,11 @@ create table aip_ciclo (
     and dt_ini_desdobramento <= dt_ini_proposta and dt_ini_proposta <= dt_ini_calibracao and dt_ini_calibracao <= dt_ini_oficial),
   constraint ck_aip_ciclo_herdados check (qtde_pontos_herdados_coo between 0 and 99 and qtde_pontos_herdados_bu between 0 and 99),
   constraint ck_aip_ciclo_ano check (no_ano between 2020 and 2100),
-  constraint ck_aip_ciclo_status check (tp_status in ('ABERTO', 'FECHADO')),
-  constraint ck_aip_ciclo_fechamento check ((tp_status = 'FECHADO') = (dt_fechamento is not null and cd_matricula_fechamento is not null))
+  constraint ck_aip_ciclo_status check (sg_status in ('S', 'N')),
+  constraint ck_aip_ciclo_fechamento check ((sg_status = 'N') = (dt_fechamento is not null and cd_matricula_fechamento is not null))
 );
 -- Só um ciclo aberto por vez
-create unique index uq_aip_ciclo_um_aberto on aip_ciclo (tp_status) where tp_status = 'ABERTO';
+create unique index uq_aip_ciclo_um_aberto on aip_ciclo (sg_status) where sg_status = 'S';
 
 
 -- ═══ DESDOBRAMENTO ═══
@@ -58,22 +58,18 @@ create table sites (
 );
 
 
-create table aip_unidade (
-  id_unidade integer generated always as identity constraint pk_aip_unidade primary key,
-  id_ciclo integer not null constraint fk_aip_unidade_aip_ciclo references aip_ciclo (id_ciclo),
-  cd_nivel varchar(20) not null,
-  nm_unidade varchar(100) not null,
-  id_site integer constraint fk_aip_unidade_sites references sites (id_site),
-  sg_ativa char(1) not null default 'S' constraint ck_aip_unidade_sg_ativa check (sg_ativa in ('S', 'N')),
-  -- Só nas BUs: diretor (responsável da Area Responsible, nome no MDM) e a exceção do site: texto escolhido pelo administrador
-  -- (não editável pela BU) e se aparece no Goal Card (olho). Vários sites podem ter o mesmo texto (ex.: todos do Brasil).
+-- Site (BU) dentro de um ciclo: quais sites participam, o diretor, a exceção e se ela aparece (telas Business Units e Exceções).
+-- Não há tabela de nível ou de agrupamento: o desdobramento usa o próprio site (CEO e COO têm um peso só por meta, na AIP_META).
+create table aip_ciclo_site (
+  id_ciclo integer not null constraint fk_aip_ciclo_site_aip_ciclo references aip_ciclo (id_ciclo),
+  id_site integer not null constraint fk_aip_ciclo_site_sites references sites (id_site),
+  sg_ativa char(1) not null default 'S' constraint ck_aip_ciclo_site_sg_ativa check (sg_ativa in ('S', 'N')),
+  -- Diretor (responsável da Area Responsible, nome no MDM) e exceção do site: texto escolhido pelo administrador (não editável
+  -- pela BU) e se aparece no Goal Card (olho). Vários sites podem ter o mesmo texto (ex.: todos do Brasil).
   cd_matricula_diretor varchar(20),
   ds_excecao varchar(4000),
-  sg_excecao_ver char(1) not null default 'S' constraint ck_aip_unidade_sg_excecao check (sg_excecao_ver in ('S', 'N')),
-  constraint ck_aip_unidade_bu check (cd_nivel = 'BU' or (cd_matricula_diretor is null and ds_excecao is null)),
-  constraint uq_aip_unidade unique (id_ciclo, cd_nivel, nm_unidade),
-  constraint ck_aip_unidade_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
-  constraint ck_aip_unidade_site check ((cd_nivel = 'BU') = (id_site is not null))
+  sg_excecao_ver char(1) not null default 'S' constraint ck_aip_ciclo_site_sg_excecao check (sg_excecao_ver in ('S', 'N')),
+  constraint pk_aip_ciclo_site primary key (id_ciclo, id_site)
 );
 
 create table aip_meta (
@@ -85,18 +81,20 @@ create table aip_meta (
   tp_meta varchar(20) not null,
   tp_polaridade varchar(20) not null,
   id_meta_origem integer constraint fk_aip_meta_aip_meta references aip_meta (id_meta),
+  vl_peso numeric(6,2), -- peso das metas do CEO e do COO (um valor só); as metas da BU têm um peso por site na AIP_META_PESO
   sg_ativa char(1) not null default 'S' constraint ck_aip_meta_sg_ativa check (sg_ativa in ('S', 'N')),
   constraint uq_aip_meta unique (id_ciclo, cd_nivel, no_meta),
   constraint ck_aip_meta_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
+  constraint ck_aip_meta_peso_unico check ((cd_nivel = 'BU') = (vl_peso is null)),
   constraint ck_aip_meta_tipo check (tp_meta in ('FORMULA', 'MARCOS')),
   constraint ck_aip_meta_polaridade check (tp_polaridade in ('MAIOR', 'MENOR'))
 );
 
 create table aip_meta_peso (
   id_meta integer not null constraint fk_aip_meta_peso_aip_meta references aip_meta (id_meta),
-  id_unidade integer not null constraint fk_aip_meta_peso_aip_unidade references aip_unidade (id_unidade),
+  id_site integer not null constraint fk_aip_meta_peso_sites references sites (id_site),
   vl_peso numeric(6,2) not null,
-  constraint pk_aip_meta_peso primary key (id_meta, id_unidade),
+  constraint pk_aip_meta_peso primary key (id_meta, id_site),
   constraint ck_aip_peso check (vl_peso > 0)
 );
 
@@ -120,14 +118,14 @@ create table aip_goal_card (
   id_goal_card integer generated always as identity constraint pk_aip_goal_card primary key,
   cd_goal_card varchar(20) not null,
   id_meta integer not null constraint fk_aip_goal_card_aip_meta references aip_meta (id_meta),
-  id_unidade integer not null constraint fk_aip_goal_card_aip_unidade references aip_unidade (id_unidade),
+  id_site integer not null constraint fk_aip_goal_card_sites references sites (id_site),
   tp_estado varchar(20) not null default 'RASCUNHO',
   no_versao_oficial smallint,
   ds_rascunho text,
   dt_atualizacao timestamp(0) not null default localtimestamp(0),
   cd_matricula_atualizacao varchar(20) not null,
   constraint uq_aip_goal_card_cd unique (cd_goal_card),
-  constraint uq_aip_goal_card unique (id_meta, id_unidade),
+  constraint uq_aip_goal_card unique (id_meta, id_site),
   constraint ck_aip_goal_card_estado check (tp_estado in ('RASCUNHO', 'EM_APROVACAO', 'EM_REVISAO', 'APROVADO')),
   constraint ck_aip_goal_card_oficial check ((tp_estado = 'APROVADO') = (no_versao_oficial is not null))
 );
@@ -190,12 +188,12 @@ create table aip_notificacao (
 
 -- Índices de apoio das FKs (FK sem índice na filha é um dos alertas do relatório do Schema IBP)
 create index ix_aip_ciclo_fk_aip_ciclo on aip_ciclo (id_ciclo_origem);
-create index ix_aip_unidade_fk_sites on aip_unidade (id_site);
+create index ix_aip_ciclo_site_fk_sites on aip_ciclo_site (id_site);
 create index ix_aip_meta_fk_aip_meta on aip_meta (id_meta_origem);
-create index ix_aip_meta_peso_fk_aip_unidade on aip_meta_peso (id_unidade);
+create index ix_aip_meta_peso_fk_sites on aip_meta_peso (id_site);
 create index ix_aip_papel_fk_aip_ciclo on aip_papel (id_ciclo);
 create index ix_aip_papel_fk_sites on aip_papel (id_site);
-create index ix_aip_goal_card_fk_aip_unidade on aip_goal_card (id_unidade);
+create index ix_aip_goal_card_fk_sites on aip_goal_card (id_site);
 create index ix_aip_evento_log_fk_aip_ciclo on aip_evento_log (id_ciclo);
 create index ix_aip_evento_log_fk_aip_goal_card on aip_evento_log (id_goal_card);
 create index ix_aip_evento_log_fk_aip_evento_log on aip_evento_log (id_evento_pai);

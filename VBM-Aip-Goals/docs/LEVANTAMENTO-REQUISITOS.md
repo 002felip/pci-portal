@@ -63,6 +63,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-23 | Goal Card com a BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU, do cadastro da BU); aba Exceções na Administração: o administrador escreve o texto, marca os sites e adiciona (um texto por site), com olho para mostrar ou ocultar; a BU não edita e as exceções próprias ficam com a BU, no Goal Card. No banco, `CD_MATRICULA_DIRETOR`, `DS_EXCECAO` e `SG_EXCECAO_VER` na `AIP_UNIDADE`. |
 | D-24 | Aprovações: ficha no formato do Goal Card, com Versões e Histórico em popup; lápis por item para marcar ajuste, com comentário obrigatório por item; balão quando o item tem comentário; regras de aprovar, devolver (com comentário) e negar mantidas. Reabertura de card aprovado só pelo administrador (responde à D-12). |
 | D-25 | A opção Negar não será usada: a decisão só aprova ou devolve para ajuste. Sai o estado Negado (telas, legendas, API e banco: `TP_ESTADO` e `TP_DECISAO`). |
+| D-26 | Modelo: sai a `AIP_UNIDADE` (o que importa é o site). Nasce a `AIP_CICLO_SITE` (site no ciclo: participa, diretor, exceção); `AIP_META_PESO` e `AIP_GOAL_CARD` passam a apontar para `ID_SITE`; as metas do CEO e do COO têm `VL_PESO` na própria `AIP_META`. `AIP_CICLO.TP_STATUS` vira `SG_STATUS` (S = aberto, N = fechado). |
 
 ## 4. Suposições a confirmar
 
