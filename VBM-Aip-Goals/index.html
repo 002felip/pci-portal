@@ -5091,23 +5091,23 @@ window.VBMSetup = (function () {
       '<div class="ap-cab-links">' +
       (d.versao ? '<button type="button" class="btn btn-sec cf-mini gc-link" data-ap-vs>' + ico('i-history') + esc(S.t(d.versao === 1 ? 'vs.link1' : 'vs.link', { n: d.versao })) + '</button>' : '') +
       '<button type="button" class="btn btn-sec cf-mini gc-link" data-ap-log>' + ico('i-tasks') + esc(S.t('vs.historico')) + '</button></div></div></header>';
-    var aviso = (d.versao > 1 && alt.length ? '<p class="ap-aviso">' + ico('i-history') + '<span>' + esc(S.t('ap.alteradas', { v: S.fmt(d.alteradasDesde.versao, 0), l: nomes })) + '</span></p>' : '') +
-      (!pode ? '<p class="ap-aviso is-rn12" role="note">' + ico('i-lock') + '<span>' + esc(S.t('gc.rn12')) + '</span></p>' : '');
+    // As versões e o que mudou aparecem só no botão Versões (popup); aqui fica só o aviso da RN-12
+    var aviso = (!pode ? '<p class="ap-aviso is-rn12" role="note">' + ico('i-lock') + '<span>' + esc(S.t('gc.rn12')) + '</span></p>' : '');
     var nMarc = GC_SECOES.filter(function (id) { return ap.revisao[id] === 'ajustar'; }).length;
     var prog = pode ? '<p class="ap-prog-txt">' + ico('i-pen') + esc(nMarc ? S.t('ap.nMarcadas', { n: S.fmt(nMarc, 0) }) : S.t('ap.marqueAjuste')) + '</p>' : '';
     var linhas = GC_SECOES.map(function (id) {
       var rv = ap.revisao[id] || '', mudou = alt.indexOf(id) >= 0;
       var coms = (d.comentarios || []).filter(function (k) { return k.secao === id; });
       var nCom = coms.reduce(function (s2, k) { return s2 + 1 + (k.respostas || []).length; }, 0);
-      var antes = mudou && ap.antes ? apTexto(ap.antes.secoes, id) : null;
-      var chips = (mudou ? '<span class="gc-chip gc-chip-info">' + esc(S.t('gc.alterada', { v: S.fmt(d.alteradasDesde.versao, 0) })) + '</span>' : '');
+      var antes = null;
+      var chips = '';
       // Ações do item: lápis = marcar para ajuste (exige comentário); balão = há comentário na seção (sem texto)
       var rev = '<div class="ap-rev">' + (pode ? '<button type="button" class="ap-aj-btn" data-ajustar="' + id + '" aria-haspopup="dialog" aria-pressed="' + (rv === 'ajustar') + '" title="' + esc(S.t('ap.ajustarItem')) + '" aria-label="' + esc(S.t('ap.ajustarItem') + ': ' + GC_NOMES[id]) + '">' + ico('i-pen') + '</button>' : '') +
         (nCom ? '<button type="button" class="gc-com-btn tem ap-com-ic" data-com-abrir="' + id + '" aria-haspopup="dialog" title="' + esc(S.t('gc.verComs', { n: S.fmt(nCom, 0), s: GC_NOMES[id] })) + '" aria-label="' + esc(S.t('gc.verComs', { n: S.fmt(nCom, 0), s: GC_NOMES[id] })) + '">' + ico('i-comment') + '</button>' : '') + '</div>';
       // Ajuste marcado: resumo curto sob o item (o texto completo abre no popup do lápis)
       var aj = rv === 'ajustar' ? '<p class="ap-aj-resumo">' + ico('i-pen') + '<span>' + esc((ap.ajustes[id] || '').trim() || S.t('ap.ajPendente')) + '</span></p>' : '';
       var lista = '';
-      return '<div class="gc-f-linha' + (rv === 'ok' ? ' is-rev-ok' : rv === 'ajustar' ? ' is-rev-ajustar' : '') + (mudou ? ' is-alterada' : '') + '" id="apSec-' + id + '" role="group" aria-labelledby="apSecTit-' + id + '">' +
+      return '<div class="gc-f-linha' + (rv === 'ok' ? ' is-rev-ok' : rv === 'ajustar' ? ' is-rev-ajustar' : '') + '" id="apSec-' + id + '" role="group" aria-labelledby="apSecTit-' + id + '">' +
         '<div class="gc-f-rot"><span class="gc-f-nome" id="apSecTit-' + id + '">' + esc(GC_NOMES[id]) + '</span>' + (id === 'exceptions' ? gcSelo('ciclo') : '') + '<span class="chips">' + chips + '</span></div>' +
         '<div class="gc-f-val">' + apValor(d, id) + (antes != null ? '<p class="ap-antes"><b>' + esc(S.t('ap.antes', { v: S.fmt(ap.antes.versao, 0) })) + '</b><del>' + esc(antes || S.t('gc.naoPreenchido')) + '</del></p>' : '') + '</div>' +
         '<div class="gc-f-acoes">' + rev + '</div>' + aj + lista + '</div>';
