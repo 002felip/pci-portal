@@ -116,20 +116,24 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const vistos = new Set();
     return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
   }
-  // Diretor do site: pessoas ativas do MDM no mesmo NM_SITE com cargo (NM_POSICAO) de diretor. Os termos do cargo
-  // vêm de AIPGOALS_DIRETOR_CARGO (padrão "Diretor|Director"); o cargo que começa com o termo vem primeiro.
-  const CARGOS_DIRETOR = String(env.AIPGOALS_DIRETOR_CARGO || 'Diretor|Director').split('|').map((x) => x.trim().replace(/[%_[\]]/g, '')).filter(Boolean);
+  // Diretor do site = hierarquia N4 do MDM (N3 COO · N4 Diretoria · N5 Head…, como no Kaizen): o N4 mais comum entre as
+  // pessoas ativas do site é o diretor; a pessoa vem do próprio MDM, pelo nome. Textos 'NULL', 'N.A', 'N/A' e vazio não contam.
   async function diretoresDoSite(site) {
     const s = String(site || '').trim();
-    if (!s || !CARGOS_DIRETOR.length) return [];
-    const params = { site: [sql.NVarChar(255), s] };
-    const contem = CARGOS_DIRETOR.map((c, k) => { params['c' + k] = [sql.NVarChar(255), '%' + c + '%']; return `NM_POSICAO LIKE @c${k}`; }).join(' OR ');
-    const inicio = CARGOS_DIRETOR.map((c, k) => { params['i' + k] = [sql.NVarChar(255), c + '%']; return `NM_POSICAO LIKE @i${k}`; }).join(' OR ');
-    const r = await runQuery(`SELECT TOP (5) ${SEL_PESSOA} FROM ${MDM}
-      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(NM_SITE)) = @site AND (${contem})
-      ORDER BY CASE WHEN ${inicio} THEN 0 ELSE 1 END, ID_TIPO_USUARIO, NM_USUARIO`, params);
-    const vistos = new Set();
-    return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
+    if (!s) return [];
+    const top = await runQuery(`SELECT TOP (3) LTRIM(RTRIM(NM_HIERARQUIA_N4)) AS NOME, COUNT(*) AS QT FROM ${MDM}
+      WHERE SG_ATIVO = 'A' AND LTRIM(RTRIM(NM_SITE)) = @site AND NM_HIERARQUIA_N4 IS NOT NULL
+        AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')
+      GROUP BY LTRIM(RTRIM(NM_HIERARQUIA_N4)) ORDER BY COUNT(*) DESC`, { site: [sql.NVarChar(255), s] });
+    const nomes = top.recordset.map((l) => String(l.NOME));
+    if (!nomes.length) return [];
+    const params = {};
+    nomes.forEach((n, k) => { params['n' + k] = [sql.NVarChar(255), n]; });
+    const r = await runQuery(`SELECT ${SEL_PESSOA} FROM ${MDM}
+      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND NM_USUARIO IN (${nomes.map((n, k) => '@n' + k).join(', ')})
+      ORDER BY ID_TIPO_USUARIO`, params);
+    const vistos = new Set(), pessoas = r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
+    return nomes.map((n) => pessoas.find((p) => p.nome.toLowerCase() === n.toLowerCase())).filter(Boolean);
   }
   async function pessoaPorNome(q, nome) {
     const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
