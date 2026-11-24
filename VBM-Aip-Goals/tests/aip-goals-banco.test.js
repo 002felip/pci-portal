@@ -24,6 +24,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     log.push({ sql, p });
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
+    if (/NM_SITE\)\) = @site/.test(sql)) return rs(p.site[1] === 'Salobo' ? [{ MATRICULA: 'C2', NOME: 'Bruno Costa', EMAIL: 'bruno@vale.com', CARGO: 'Diretor Salobo' }] : []);
     if (/NM_USUARIO = @nome/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
     if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
     if (/FROM PM\.AIP_CICLO ORDER BY CASE/.test(sql)) return rs([CICLO]);
@@ -79,6 +80,9 @@ test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do
   // Autopreenchimento: busca no MDM; sem NM_USUARIO, o nome sai do e-mail (nunca a matrícula)
   assert.deepStrictEqual((await fonte.buscarPessoas('Ana')).map((x) => x.nome), ['Ana Ribeiro']);
   assert.deepStrictEqual(await fonte.buscarPessoas('a'), []);
+  // Nova BU: o diretor do site vem do MDM (site + cargo de diretor); site sem diretor no MDM → lista vazia (digita-se à mão)
+  assert.deepStrictEqual((await fonte.diretoresDoSite('Salobo')).map((x) => x.nome), ['Bruno Costa']);
+  assert.deepStrictEqual(await fonte.diretoresDoSite('Outro'), []);
   const nomes = await fonte.configuracao(HOJE);
   assert.ok(nomes.membros.every((m) => m.nome && m.nome !== m.matricula));
   const c = await fonte.ciclo(HOJE);
