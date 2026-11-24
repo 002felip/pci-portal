@@ -645,6 +645,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       }
       if (['bus', 'metas', 'parametros'].includes(aba)) await sincronizarCards(q, idCiclo, ctx.quem);
       await evento(q, { ciclo: idCiclo, tipo: 'CONFIGURACAO', quem: ctx.quem, grupo: 'ADMIN', secao: aba, comentario: detalhe });
+      console.log(`${TAG} configuração gravada: aba ${aba}, ciclo ${idCiclo}, ${detalhe} (por ${ctx.quem})`);
       return { ok: true };
     });
   }
