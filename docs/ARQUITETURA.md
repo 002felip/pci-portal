@@ -251,8 +251,9 @@ Definição, aprovação e registro das metas de AIP das BUs de VBM (Goal Card v
 rastreável). Página única com vistas pelo hash; publicadas **Início** (`#inicio`), **T02 Painel do ciclo** (`#painel`), **T03 Metas da BU** (`#metas`) e **T04 Goal Card** (`#goal-card`).
 
 - **API (`/VBM-Aip-Goals/api`):** `inicio`, `painel`, `metas`, `desdobramento`, `goal-card`, `versoes`, `action-log`, `configuracao`, `health`, `ping`.
-- **Dados:** até a validação do modelo de dados (P-12), `AIPGOALS_FONTE=exemplo` (padrão) responde
-  com dados de exemplo marcados `exemplo: true`.
+- **Dados:** Azure SQL, schema `PM` (`AIPGOALS_AZURE_SQL_DATABASE`, hoje `BDIBPBMSA_DEV`), por
+  `aip-goals-banco.js`; pessoas pela `IBP.USERS` do PRD (conexão do Performance Hub). Scripts e ordem de
+  ligação em `VBM-Aip-Goals/database/`.
 - Mais: [`docs/projetos/aip-goals.md`](projetos/aip-goals.md).
 
 ### 6.4 VBM-Vdt — `/VBM-Vdt/`

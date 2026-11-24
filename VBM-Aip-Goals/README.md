@@ -38,12 +38,12 @@ VBM-Aip-Goals/
 │   ├── css/poppins.css         Poppins local
 │   └── images/                 fundos dos três minerais (claro e original)
 ├── portal.js           montagem no Portal: pool próprio, /api/health, router, bloqueio dos arquivos internos
-├── aip-goals-api.js    rotas de dados (o mesmo router no Portal e no standalone)
-├── dados-exemplo.js    dados de exemplo até a validação do modelo de dados (P-12)
+├── aip-goals-api.js    rotas e regras (o mesmo router no Portal e no standalone)
+├── aip-goals-banco.js  leitura e gravação no Azure SQL (schema PM)
 ├── server.js           app standalone para desenvolvimento (porta 8020)
-├── database/           scripts SQL do time de dados (ver database/README.md)
+├── database/           scripts do schema PM e ordem de ligação (ver database/README.md)
 ├── docs/               especificação técnica e levantamento de requisitos
-├── tests/              testes node --test
+├── tests/              testes node --test (os dados de exemplo ficam só aqui)
 └── package.json
 ```
 
@@ -59,8 +59,8 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 | `GET /desdobramento` | Desdobramento: scorecard do COO e matriz meta × BU |
 | `GET /versoes?card=` | T06: versões do Goal Card |
 | `GET /action-log` | T07: eventos filtrados e paginados |
-| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/clonar` | T11: só o administrador; RN-16 validada no servidor |
-| `GET /goal-card?card=` · `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04: Goal Card e escritas validadas (simulação até o P-12) |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` | T11: só o administrador; RN-16 validada no servidor; fechar, reabrir e abrir o próximo ciclo |
+| `GET /goal-card?card=` · `POST /goal-card/rascunho` · `POST /goal-card/submeter` · `POST /goal-card/reabrir` · `POST /goal-card/decisao` | T04: Goal Card; escritas validadas e gravadas |
 | `GET /aprovacoes` · `POST /goal-card/comentario` | T14: fila do grupo de aprovação e comentário por seção (só o grupo de aprovação) |
 | `GET /health` · `GET /ping` | saúde e diagnóstico |
 
@@ -68,16 +68,18 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 
 ```bash
 npm test
-NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js   # http://localhost:8020/
+NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com AIPGOALS_AZURE_SQL_DATABASE=BDIBPBMSA_DEV \
+  AZURE_SQL_SERVER=... AZURE_SQL_USER=... AZURE_SQL_PASSWORD=... node server.js   # http://localhost:8020/VBM-Aip-Goals/
 ```
 
-Variáveis: `AIPGOALS_FONTE` (`exemplo` até a P-12; `banco` depois), `AIPGOALS_AZURE_SQL_DATABASE` e as de conexão do
-Portal (`AZURE_SQL_*`). Detalhe em `docs/projetos/aip-goals.md`.
+Variáveis: `AIPGOALS_AZURE_SQL_DATABASE` (`BDIBPBMSA_DEV`, depois `BDIBPBMSA_PRD`), as de conexão do Portal (`AZURE_SQL_*`)
+e, opcionais, `AIPGOALS_SITES_TABELA` (padrão `IBP.SITES`) e `AIPGOALS_FUSO` (padrão `America/Sao_Paulo`). Detalhe em
+`docs/projetos/aip-goals.md`.
 
 ## Pendências
 
-- **P-12 — modelo de dados:** validar a proposta (`database/README.md`) com o time de dados; enquanto isso as telas
-  usam dados de exemplo.
+- **Banco:** tabelas no schema `PM` (`database/001_pm_criar_tabelas.sql`) e carga inicial (`002`); ordem de ligação
+  das telas em `database/README.md`. Começa no `BDIBPBMSA_DEV`.
 - **Aprovação em nível único (D-09)** pelo grupo de aprovação, com os grupos contribuidores, aprovadores e consulta (D-10). O protótipo ainda mostra dois níveis e os papéis antigos; o ajuste entra na próxima entrega.
 - **Leitura aberta e regras ajustadas (D-11, D-12, D-16):** todos veem todas as BUs; editam os contribuidores da BU e o administrador; sem alerta de pendência parada; soma dos pesos validada na gravação; card Aprovado reabre só na janela inicial do ciclo.
 - Card do AIP Goals na página inicial do Portal.
