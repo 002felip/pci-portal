@@ -696,6 +696,15 @@ body.is-inicio .page { max-width: none; padding: 0; }
     linear-gradient(90deg, color-mix(in srgb, var(--page) 95%, transparent), color-mix(in srgb, var(--page) 84%, transparent)),
     var(--ab-foto) center / cover no-repeat;
 }
+/* Aprovações, Action Log e Administração: a foto de fundo na mesma escala e posição do COO AIP (largura da tela, ancorada no topo),
+   mesmo com o cabeçalho mais baixo; o menu fica fixo por cima e a foto rola com a página */
+:is(#vistaAprov, #vistaLog, #vistaConfig) .p2-topo {
+  background:
+    linear-gradient(180deg, transparent 50%, var(--page)),
+    linear-gradient(90deg, color-mix(in srgb, var(--page) 95%, transparent), color-mix(in srgb, var(--page) 84%, transparent)),
+    var(--ab-foto) center top / 100vw auto no-repeat;
+  min-height: 15rem;
+}
 /* Título no modelo da abertura: "Ciclo AIP" e, embaixo, o ano em numerais vazados */
 .p2-titulo { margin: 0; display: flex; flex-direction: column; line-height: .9; }
 .p2-titulo .ab-ano { font-size: clamp(4.5rem, 2.5rem + 5vw, 9rem); }
