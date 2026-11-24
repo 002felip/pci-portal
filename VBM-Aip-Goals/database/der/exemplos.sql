@@ -12,21 +12,20 @@ insert into aip_ciclo_site (id_ciclo, id_site, sg_ativa, cd_matricula_diretor, d
  (2, 12, 'S', 'C410681', 'Força maior, mudanças regulatórias brasileiras (ANM, IBAMA) e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', 'S'),
  (2, 15, 'S', 'C410718', 'Força maior, mudanças regulatórias provinciais do Canadá e decisões de portfólio aprovadas pelo COO ficam fora do resultado.', 'N');
 
-insert into aip_meta (id_ciclo, cd_nivel, no_meta, nm_titulo, tp_meta, tp_polaridade, id_meta_origem, sg_ativa, vl_peso) values
+insert into aip_meta (id_ciclo, cd_nivel, no_meta, nm_titulo, tp_meta, tp_orientacao, id_meta_origem, sg_ativa, vl_peso) values
  (2, 'COO', 2, 'Strengthen a Culture of Chronic Unease', 'FORMULA', 'MAIOR', null, 'S', 5),
  (2, 'BU', 4, 'BU Adherence to Production Budget', 'FORMULA', 'MAIOR', null, 'S', null),
  (2, 'BU', 5, 'BU Chronic Unease', 'FORMULA', 'MAIOR', 1, 'S', null);
-
-insert into aip_meta_peso (id_meta, id_site, vl_peso) values (2, 12, 10), (2, 15, 10), (3, 15, 5);
 
 insert into aip_papel (id_ciclo, cd_matricula, tp_grupo, id_site, sg_ativo, dt_atualizacao) values
  (2, 'C410385', 'CONTRIBUIDOR', 15, 'S', '2026-10-02 08:40-03'),
  (2, 'C410459', 'APROVACAO', null, 'S', '2026-10-02 08:45-03'),
  (2, 'C410644', 'ADMIN', null, 'S', '2026-09-20 10:30-03');
 
-insert into aip_goal_card (cd_goal_card, id_meta, id_site, tp_estado, no_versao_oficial, ds_rascunho, dt_atualizacao, cd_matricula_atualizacao) values
- ('GC-ONT-04', 2, 15, 'EM_REVISAO', null, '{"unit": "%", "ruler": {"min": 95, "meta": 100, "exc": 105}}', '2026-11-18 15:20-03', 'C410459'),
- ('GC-ONP-04', 2, 12, 'APROVADO', 1, null, '2026-11-10 11:00-03', 'C410459');
+insert into aip_goal_card (cd_goal_card, id_meta, id_site, vl_peso, tp_estado, no_versao_oficial, ds_rascunho, cd_matricula, dt_atualizacao) values
+ ('GC-ONT-04', 2, 15, 10, 'EM_REVISAO', null, '{"unit": "%", "ruler": {"min": 95, "meta": 100, "exc": 105}}', 'C410459', '2026-11-18 15:20-03'),
+ ('GC-ONP-04', 2, 12, 10, 'APROVADO', 1, null, 'C410459', '2026-11-10 11:00-03'),
+ ('GC-ONT-05', 3, 15, 5, 'RASCUNHO', null, '{"objective": "Embed chronic unease as a leadership routine", "unit": "nº de marcos"}', 'C410385', '2026-11-19 10:12-03');
 
 insert into aip_goal_card_versao (id_goal_card, no_versao, tp_motivo, ds_campos, dt_versao, cd_matricula_autor, tp_decisao, ds_comentario_decisao, ds_revisao_secoes, dt_decisao, cd_matricula_decisao) values
  (1, 1, 'SUBMISSAO', '{"objective": "Deliver the production budget for the year", "unit": "t", "ruler": {"min": 95, "meta": 100, "exc": 105}}', '2026-11-13 09:40-03', 'C410385',

@@ -37,19 +37,19 @@ Convenções tiradas do Schema IBP (`BDIBPBMSA_PRD`, levantamento de 21/10/2026)
 Todas as FKs têm índice de apoio e nome explícito (o relatório do IBP aponta 49 FKs sem índice na filha e nomes
 gerados automaticamente).
 
-9 tabelas do AIP + a `IBP.SITES` (existente; no DER aparece em cinza, só para mostrar as ligações):
+8 tabelas do AIP + a `IBP.SITES` (existente; no DER aparece em cinza, só para mostrar as ligações):
 
 | Grupo | Tabelas |
 |---|---|
 | Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez, com início e fim de cada uma das 4 etapas e os pontos herdados pelo COO e pelas BUs), `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
-| Desdobramento | `AIP_CICLO_SITE` (site no ciclo: participa, diretor e exceção), `AIP_META` (peso do CEO e do COO), `AIP_META_PESO` (peso da BU por site) |
+| Desdobramento | `AIP_CICLO_SITE` (site no ciclo: participa, diretor e exceção), `AIP_META` (com o peso do CEO e do COO) |
 | Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO` (com a decisão e a marcação das seções) |
 | Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho; os comentários do Goal Card são eventos COMENTARIO), `AIP_NOTIFICACAO` |
 
 Mudanças desta versão: ciclo com status e fechamento (um aberto, fechar, reabrir, abrir a partir de outro), datas das 4
 etapas como colunas do `AIP_CICLO` (eram `AIP_CICLO_JANELA`), BU = site da `IBP.SITES` (`ID_SITE`), participação da BU no ciclo na
 `AIP_UNIDADE` de nível BU (era `AIP_CICLO_BU`), nível com obrigatório/opcional, meta com origem
-(desdobrada de), papel por matrícula do MDM. Revisão enxuta (de 16 para 9 tabelas; a `AIP_UNIDADE` saiu depois, D-26, trocada pela `AIP_CICLO_SITE`): decisão e revisão das seções
+(desdobrada de), papel por matrícula do MDM. Revisão enxuta (de 16 para 9 tabelas; a `AIP_UNIDADE` saiu depois, D-26, trocada pela `AIP_CICLO_SITE`; a `AIP_META_PESO` saiu em seguida, D-27, e o peso foi para o `AIP_GOAL_CARD`): decisão e revisão das seções
 viraram colunas da `AIP_GOAL_CARD_VERSAO` (eram `AIP_DECISAO` e `AIP_REVISAO_SECAO`), comentários viraram eventos do log
 (era `AIP_COMENTARIO`) e GG e GA ficaram fora no primeiro momento (a `AIP_UNIDADE` perdeu a unidade-mãe). Com a aba Parâmetros descontinuada (D-22), saiu a `AIP_NIVEL`: níveis fixos
 CEO, COO e BU com 100 pts, pontos herdados no `AIP_CICLO` e o nível como código (`CD_NIVEL`) na meta e na unidade. Saiu `AIP_PARAMETRO` (limites ficam na aplicação) e, antes, `AIP_ACAO` (D-20).
@@ -68,9 +68,9 @@ fica no código da aplicação; uma tabela de permissões por tela só valeria s
 | Tela | Lê | Grava |
 |---|---|---|
 | Início (T00) | `AIP_CICLO`, `AIP_PAPEL`, `IBP.SITES` | — |
-| COO AIP (T13) | `AIP_CICLO` (pontos herdados), `AIP_CICLO_SITE`, `AIP_META`, `AIP_META_PESO`, `AIP_GOAL_CARD`, `IBP.SITES` | — |
-| AIP BU's (T03) | `AIP_CICLO_SITE`, `AIP_META`, `AIP_META_PESO`, `AIP_GOAL_CARD`, `AIP_PAPEL`, `AIP_CICLO` | — |
-| Goal Card (T04) | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_META`, `AIP_META_PESO`, `AIP_CICLO` (texto padrão), `AIP_EVENTO_LOG` (comentários), `AIP_PAPEL` | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_EVENTO_LOG`, `AIP_NOTIFICACAO` |
+| COO AIP (T13) | `AIP_CICLO` (pontos herdados), `AIP_CICLO_SITE`, `AIP_META`, `AIP_GOAL_CARD` (peso), `IBP.SITES` | — |
+| AIP BU's (T03) | `AIP_CICLO_SITE`, `AIP_META`, `AIP_GOAL_CARD` (peso), `AIP_PAPEL`, `AIP_CICLO` | — |
+| Goal Card (T04) | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_META`, `AIP_CICLO` (texto padrão), `AIP_EVENTO_LOG` (comentários), `AIP_PAPEL` | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_EVENTO_LOG`, `AIP_NOTIFICACAO` |
 | Versões (T06) | `AIP_GOAL_CARD_VERSAO` | — |
 | Action Log (T07) | `AIP_EVENTO_LOG`, `AIP_GOAL_CARD`, `AIP_META` | — |
 | Aprovações (T14) | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_EVENTO_LOG`, `AIP_PAPEL` | `AIP_GOAL_CARD_VERSAO` (decisão), `AIP_GOAL_CARD`, `AIP_EVENTO_LOG`, `AIP_NOTIFICACAO` |
@@ -78,7 +78,7 @@ fica no código da aplicação; uma tabela de permissões por tela só valeria s
 | Administração · Business Units | `AIP_CICLO_SITE`, `IBP.SITES`, `AIP_GOAL_CARD`, MDM (diretor) | `AIP_CICLO_SITE` (`SG_ATIVA`, `CD_MATRICULA_DIRETOR`), `AIP_EVENTO_LOG` |
 | Administração · Exceções | `AIP_CICLO_SITE` | `AIP_CICLO_SITE` (`DS_EXCECAO`, `SG_EXCECAO_VER`), `AIP_EVENTO_LOG` |
 | Administração · Grupos | `AIP_PAPEL`, MDM | `AIP_PAPEL`, `AIP_EVENTO_LOG` |
-| Administração · Metas e pesos | `AIP_CICLO`, `AIP_CICLO_SITE`, `AIP_META`, `AIP_META_PESO` | `AIP_META`, `AIP_META_PESO`, `AIP_CICLO` (pontos herdados), `AIP_EVENTO_LOG` |
+| Administração · Metas e pesos | `AIP_CICLO`, `AIP_CICLO_SITE`, `AIP_META`, `AIP_GOAL_CARD` | `AIP_META`, `AIP_GOAL_CARD` (`VL_PESO`), `AIP_CICLO` (pontos herdados), `AIP_EVENTO_LOG` |
 | Acesso negado (T12) | — | `AIP_EVENTO_LOG` (`ACESSO_NEGADO`) |
 
 `AIP_EVENTO_LOG` e `AIP_GOAL_CARD_VERSAO` são as tabelas mais compartilhadas; `AIP_NOTIFICACAO` não tem tela de leitura.
