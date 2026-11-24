@@ -7,9 +7,9 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 
 - **Endereço:** `/VBM-Aip-Goals/`
 - **Código:** `VBM-Aip-Goals/`
-- **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
-- **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, COO AIP, T02, AIP BU's (T03), T04 Goal Card, T06 Versões, T07 Action Log e T11 Configuração do ciclo publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
+- **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo na `PM.AIP_PAPEL`
+- **Stack:** Node/Express (`aip-goals-api.js` + `aip-goals-banco.js`) + HTML/JS numa página única; Azure SQL, schema `PM`
+- **Situação:** Início, COO AIP, T02, AIP BU's (T03), T04 Goal Card, T06 Versões, T07 Action Log e T11 Configuração do ciclo publicados (a T01 Minhas pendências foi retirada, D-14), ligados ao banco (`BDIBPBMSA_DEV`, schema `PM`); demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -48,12 +48,12 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | `assets/images/Fundo_VBM_2400x1145.webp` | fundo dos três minerais (Início, T02, T03 e T04 no tema escuro) | sim |
 | `assets/images/Fundo_VBM_claro_2400x1145.webp` | versão clara do mesmo fundo (Início e T02 no tema claro) | sim |
 | `portal.js` | montagem no Portal (pool próprio, health, router, bloqueio dos arquivos internos) | não |
-| `aip-goals-api.js` | rotas de dados (mesmo router no Portal e no standalone) | não |
-| `dados-exemplo.js` | ciclo, papéis e Goal Cards de exemplo, com datas relativas a hoje | não |
+| `aip-goals-api.js` | rotas e regras (mesmo router no Portal e no standalone) | não |
+| `aip-goals-banco.js` | leitura e gravação no Azure SQL (schema `PM`), nos formatos das telas | não |
 | `server.js` | app standalone para desenvolvimento (porta 8020) | não |
-| `tests/` | testes `node --test` (API, regras de idade/prazo, bloqueio de arquivos) | não |
+| `tests/` | testes `node --test` (API com a fonte de exemplo, fonte do banco com banco simulado, bloqueio de arquivos); os dados de exemplo ficam só aqui | não |
 | `README.md` | documento da pasta (telas, estrutura, API, como rodar) | não |
-| `database/` | scripts SQL do time de dados; hoje só o `README.md` com o modelo proposto (P-12) | não |
+| `database/` | `001_pm_criar_tabelas.sql`, `002_pm_carga_inicial.sql`, DER e a ordem de ligação das telas (`README.md`) | não |
 | `docs/` | especificação técnica e levantamento de requisitos (cópia do documento de especificação) | não |
 
 ## Telas (vistas pelo hash)
@@ -149,7 +149,7 @@ rodapé). A decisão do grupo de aprovação não acontece aqui: fica na **T14 A
 - **Comentários:** o campo com comentário mostra o indicador com o número; o clique abre um pop-up (`<dialog>`)
   só de leitura com as mensagens; um link com `secao` abre o pop-up do campo.
 - **Escritas:** `POST /goal-card/submeter` valida no servidor (403 fora da BU, 409 fora da situação, 400 com os
-  campos que faltam) e responde `simulado: true` até o modelo de dados (P-12). `POST /goal-card/decisao` é usado
+  campos que faltam) e grava a nova versão (o card vai para Em aprovação). `POST /goal-card/decisao` é usado
   pela T14 (RN-06, RN-08, RN-09, RN-12).
 
 ### T06 Versões
@@ -186,7 +186,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   a mesma regra no cliente e no servidor. Quem editou ou submeteu o card não vê os
   botões, só o aviso da RN-12.
 - **Depois da decisão**, o card sai da fila (RN-06) e a próxima ficha abre ("21 restantes na fila"); com a fila
-  vazia, "Fila concluída". Escritas validadas e simuladas até o modelo de dados (P-12).
+  vazia, "Fila concluída". Escritas validadas no servidor e gravadas no banco.
 
 ### T07 Action Log
 
@@ -229,11 +229,11 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   Abrir novo ciclo; janelas desativadas em ciclo fechado.
 - **Grupos:** seções por grupo e BU com cards de pessoa e popup Novo usuário com busca no diretório (MDM).
 - **Acesso:** leitura aberta a qualquer usuário do Portal; contribuidor edita só os cards da sua BU; aprovador edita e
-  aprova todos (menus Aprovações e Action Log, sem Administração); administrador vê todas as telas. Em desenvolvimento,
-  `AIPGOALS_PERFIL_LOCAL` simula o perfil.
+  aprova todos (menus Aprovações e Action Log, sem Administração); administrador vê todas as telas. O perfil
+  vem da `PM.AIP_PAPEL` (Administração › Grupos).
 - **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP, com a `AIP_META_PESO`; a BU é o site da IBP.SITES).
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
-- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` e `/configuracao/clonar` (`validarConfiguracao`), simuladas até a P-12.
+- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista de sugestões; o país vem do cadastro). Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
 
 ### Desdobramento
 
@@ -263,17 +263,12 @@ foto dos minerais, cadeado num quadrado vermelho suave, título "Acesso não aut
 (Início ou AIP BU's). Aparece na COO AIP, na T02, na T03 e na T04 quando a API responde 401, 403 ou 404;
 o resto da vista sai de cena e o título recebe o foco (leitor de tela). Cores por token, nos dois temas.
 
-### Dados de exemplo
+### Dados
 
-O administrador edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU.
-O contribuidor de cada card é um nome de exemplo (o mesmo que aparece entre os editores do Goal Card).
-
-As BUs usam os nomes dos sites do COO Dashboard (D-15): Onça Puma, Salobo e Sossego (Brasil); Ontario e VNL (Canadá); Clydach e Matsusaka (International Refineries). O código do Goal Card usa 3 letras por site
-(ONP, SAL, SOS, ONT, VNL, CLY, MAT).
-
-Os Goal Cards de exemplo (T02 a T04) seguem a estrutura do material de referência do ciclo 2027: por BU, 40% de
-resultado do scorecard do COO e 60% de metas específicas (63 cards); os cards com situação inicial definida têm a
-mesma situação em todas as telas.
+Tudo vem do schema `PM` (ver `VBM-Aip-Goals/database/README.md`, com a ordem de ligação das telas). O administrador
+edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU. As BUs são sites da
+`IBP.SITES` (D-15) e o código do Goal Card usa 3 letras do site (ex.: `GC-SAL-01`). Nomes de pessoas vêm da
+`IBP.USERS` pela matrícula. Os dados de exemplo (estrutura do material de referência 2027) ficam só nos testes.
 
 ## Responsividade
 
@@ -305,20 +300,21 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /desdobramento` | Desdobramento: metas do scorecard do COO e matriz meta × BU com peso e situação do Goal Card |
 | `GET /versoes?card=` | T06: versões do card (mais recente primeiro), com snapshot, decisão e a oficial |
 | `GET /action-log?bu=&meta=&secao=&tipo=&periodo=&card=&pagina=&tudo=` | T07: eventos filtrados (40 por página; `tudo=1` para exportar), `porTipo` e opções dos filtros |
-| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/clonar` | T11: só o administrador; validação por aba e RN-16 no servidor; simulação até a P-12 |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (`/configuracao/clonar` = novo) |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
-| `POST /goal-card/submeter` · `POST /goal-card/decisao` | T04/T14: campos obrigatórios e decisão validados no servidor; simulação até o P-12 |
+| `POST /goal-card/rascunho` · `POST /goal-card/submeter` · `POST /goal-card/reabrir` · `POST /goal-card/decisao` | T04/T14: rascunho no banco; submeter cria a versão; decisão grava na versão e os ajustes viram comentários da seção; RN-12 pela matrícula |
 | `GET /aprovacoes?pais=&bu=&idade=` | T14: só o grupo de aprovação (403 para os demais). Fila Em aprovação (mais antigos primeiro) com `idade`, `resubmissao` e `podeDecidir` (RN-12), e `total` sem filtro |
-| `POST /goal-card/comentario` | T14: comentário ancorado a uma seção (só o grupo de aprovação; seção válida e texto de 1 a 2.000 caracteres); simulação até o P-12 |
-| `GET /health` | `{ status }` |
+| `POST /goal-card/comentario` | T14: comentário ancorado a uma seção (só o grupo de aprovação; seção válida e texto de 1 a 2.000 caracteres); evento `COMENTARIO` |
+| `GET /health` | `{ status }` (consulta a `PM.AIP_CICLO`; sem banco, 503) |
 | `GET /ping` | diagnóstico sem banco |
 
 ## Variáveis
 
 | Variável | Padrão | Uso |
 |---|---|---|
-| `AIPGOALS_FONTE` | `exemplo` | `exemplo` (dados de `dados-exemplo.js`) ou `banco` (responde 501 até a consulta do modelo validado entrar em `database/`) |
-| `AIPGOALS_AZURE_SQL_DATABASE` | `AZURE_SQL_DATABASE` | base da aplicação (`BDIBPBMSA_DEV` / `_PRD`) |
+| `AIPGOALS_AZURE_SQL_DATABASE` | `AZURE_SQL_DATABASE` | base da aplicação; no `app.yaml`, `BDIBPBMSA_DEV` (depois `BDIBPBMSA_PRD`) |
+| `AIPGOALS_SITES_TABELA` | `IBP.SITES` | tabela dos sites (BUs) |
+| `AIPGOALS_FUSO` | `America/Sao_Paulo` | fuso das datas e horas mostradas (o banco grava em UTC) |
 | `AIPGOALS_EMAIL_LOCAL` | — | só no `server.js` com `NODE_ENV=development` fora do Databricks: simula o `X-Forwarded-Email` |
 
 Servidor, porta e login do banco: `AZURE_SQL_SERVER`, `AZURE_SQL_PORT`, `AZURE_SQL_USER`, `AZURE_SQL_PASSWORD` (os do Portal).
@@ -327,13 +323,15 @@ Servidor, porta e login do banco: `AZURE_SQL_SERVER`, `AZURE_SQL_PORT`, `AZURE_S
 
 ```bash
 cd VBM-Aip-Goals && npm test
-NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com node server.js   # http://localhost:8020/
+NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com AIPGOALS_AZURE_SQL_DATABASE=BDIBPBMSA_DEV AZURE_SQL_SERVER=... AZURE_SQL_USER=... AZURE_SQL_PASSWORD=... node server.js
+# http://localhost:8020/VBM-Aip-Goals/
 ```
 
 ## Pontos de atenção
 
-- **P-12 (modelo de dados):** enquanto não for validado, as telas usam os dados de exemplo (sem pílula na tela). A
-  consulta real entra em `database/00N_*.sql`, parametrizada por e-mail e ciclo, e as rotas
-  passa a lê-la com `AIPGOALS_FONTE=banco`.
-- **Papéis:** hoje vêm dos dados de exemplo; no modelo validado saem de `AIP_PAPEL` (AC-02, AC-03).
+- **Banco:** schema `PM` no `BDIBPBMSA_DEV` (scripts `001` e `002` em `database/`). Para produção, rodar os scripts no
+  `BDIBPBMSA_PRD` e trocar `AIPGOALS_AZURE_SQL_DATABASE` no `app.yaml`.
+- **Papéis:** `PM.AIP_PAPEL` do ciclo atual, pela matrícula do usuário na `IBP.USERS` (AC-02, AC-03).
+- **Primeira configuração:** a RN-16 só deixa salvar BUs e Metas e pesos quando cada nível fecha 100 pts; Ciclo e
+  Grupos salvam sozinhas.
 - **Card na página inicial do Portal:** ainda não adicionado.

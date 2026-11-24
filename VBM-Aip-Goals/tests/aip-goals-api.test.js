@@ -4,7 +4,11 @@ const test = require('node:test');
 const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
-const { criarAipGoalsRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao, modoDoCard } = require('../aip-goals-api');
+const { criarFonteExemplo } = require('./fonte-exemplo');
+const { criarAipGoalsRouter: criarRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao, modoDoCard } = require('../aip-goals-api');
+
+// Router com a fonte de exemplo (papeisDe simula o perfil do usuário)
+const criarAipGoalsRouter = ({ papeisDe, ...o } = {}) => criarRouter({ ...o, dados: criarFonteExemplo(papeisDe ? { papeisDe } : {}) });
 
 // Segunda-feira, 16/11/2026
 const HOJE = new Date(2026, 10, 16, 10, 0, 0);
@@ -40,13 +44,10 @@ test('GET /inicio exige a identidade do proxy (X-Forwarded-Email) e devolve cicl
   } finally { s.close(); }
 });
 
-test('fonte "banco" sem modelo de dados responde 501 sem texto do banco', async () => {
-  const s = await servidor(criarAipGoalsRouter({ fonte: 'banco', runQuery: async () => ({ recordset: [] }) }));
-  try {
-    const r = await pedir(s, '/api/inicio', { 'X-Forwarded-Email': 'pessoa@vale.com' });
-    assert.strictEqual(r.status, 501);
-    assert.strictEqual(r.corpo.codigo, 'MODELO_PENDENTE');
-  } finally { s.close(); }
+test('router exige a fonte de dados e não traz dados de exemplo no app', () => {
+  assert.throws(() => criarRouter({}), /dados/);
+  const fs = require('fs');
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', 'dados-exemplo.js')), 'dados de exemplo ficam só em tests/');
 });
 
 test('portal.js: só index.html e assets/ são públicos; arquivos internos dão 404', async () => {
@@ -54,10 +55,11 @@ test('portal.js: só index.html e assets/ são públicos; arquivos internos dão
   const raiz = path.join(__dirname, '..');
   const s = await servidor(null, (app) => { montar(app); app.use('/VBM-Aip-Goals', express.static(raiz)); });
   try {
-    for (const interno of ['portal.js', 'aip-goals-api.js', 'dados-exemplo.js', 'server.js', 'package.json', 'tests/aip-goals-api.test.js', 'assets/../portal.js']) {
+    for (const interno of ['portal.js', 'aip-goals-api.js', 'aip-goals-banco.js', 'tests/dados-exemplo.js', 'server.js', 'package.json', 'tests/aip-goals-api.test.js', 'assets/../portal.js']) {
       assert.strictEqual((await pedir(s, '/VBM-Aip-Goals/' + interno)).status, 404, interno);
     }
-    assert.strictEqual((await pedir(s, '/VBM-Aip-Goals/api/health')).corpo.status, 'healthy');
+    const h = await pedir(s, '/VBM-Aip-Goals/api/health'); // sem banco configurado: unhealthy, sem o motivo
+    assert.strictEqual(h.status, 503); assert.deepStrictEqual(h.corpo, { status: 'unhealthy' });
     const pag = await fetch(`http://127.0.0.1:${s.address().port}/VBM-Aip-Goals/index.html`);
     assert.strictEqual(pag.status, 200);
   } finally { s.close(); }
@@ -233,7 +235,7 @@ test('Edição: contribuidor só na própria BU; administrador em todas as BUs (
 
 test('T11 Configuração: só o administrador; RN-16 por nível (CEO → BU); ano, janelas e BUs validados', async () => {
   const { validarConfiguracao, somaPesosPorNivel } = require('../aip-goals-api');
-  const { configuracaoExemplo } = require('../dados-exemplo');
+  const { configuracaoExemplo } = require('./dados-exemplo');
   const base = configuracaoExemplo(HOJE);
   const somas = somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus);
   assert.ok(somas.length > 7 && somas.every((x) => x.soma === x.total)); // exemplo fecha 100 em todos os níveis
@@ -290,7 +292,7 @@ test('T07 Action Log: geral só do administrador; histórico de um card aberto a
 });
 
 test('T06 Versões: rascunho sem versão; versões mais recentes primeiro; oficial = última aprovada; leitura para todos', async () => {
-  const { painelExemplo } = require('../dados-exemplo');
+  const { painelExemplo } = require('./dados-exemplo');
   const cards = painelExemplo(HOJE).cards;
   const aprovadoV2 = cards.find((c) => c.estado === 'aprovado' && c.versao > 1) || cards.find((c) => c.versao > 1);
   const rascunho = cards.find((c) => c.estado === 'rascunho');

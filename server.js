@@ -115,9 +115,10 @@ portal.use("/VBM-Stable-and-Capable", express.static(path.join(__dirname, "VBM-S
 
 // ── VBM-Aip-Goals ──
 // API (/VBM-Aip-Goals/api) + bloqueio dos arquivos internos da pasta
-// (portal.js, aip-goals-api.js, dados-exemplo.js, tests/). Uma falha ao montar não derruba o Portal.
+// (portal.js, aip-goals-api.js, aip-goals-banco.js, database/, tests/). Uma falha ao montar não derruba o Portal.
 try {
-  require("./VBM-Aip-Goals/portal")(portal);
+  // Pessoas (nome, e-mail, cargo) pela IBP.USERS do PRD, a mesma conexão do controle de acesso
+  require("./VBM-Aip-Goals/portal")(portal, { runQueryUsuarios: performanceHub.runQuery });
 } catch (err) {
   console.error("[portal] falha ao montar VBM-Aip-Goals:", err.message);
 }

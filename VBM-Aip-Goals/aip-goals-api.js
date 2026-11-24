@@ -8,11 +8,8 @@
  * `mssql`); `params` é `{ nome: [tipoMssql, valor] }` e cada entrada vira
  * `request.input` — nada da requisição é concatenado na SQL.
  *
- * FONTE DOS DADOS: o modelo de dados (Especificação técnica §9) ainda depende da
- * validação do time de dados (P-12). Até lá, as rotas respondem com os dados de
- * exemplo de dados-exemplo.js, marcados `exemplo: true` (a tela mostra a pílula
- * "Dados de exemplo"). Quando as tabelas existirem, a consulta entra em
- * database/00N_*.sql e `fonte: 'banco'` passa a lê-la por aqui.
+ * FONTE DOS DADOS: injetada em `dados`. No app (portal.js e server.js), aip-goals-banco.js lê e grava no schema PM
+ * do Azure SQL (database/001_pm_criar_tabelas.sql). Os dados de exemplo ficam só nos testes (tests/fonte-exemplo.js).
  *
  * Identidade: SOMENTE o X-Forwarded-Email do proxy do Databricks Apps.
  *
@@ -32,17 +29,18 @@
  *                      { card, bu, meta, estado, versao, secoes, obrigatorios[], comentarios[], linha[], modo, permissoes }
  *                      `modo` sai do grupo do usuário e da situação: edicao (contribuidor da BU, Rascunho/Em revisão)
  *                      ou leitura. A T04 não tem decisão: ela fica na fila de aprovação (T14).
+ *   POST /goal-card/rascunho  { card, secoes }   grava o rascunho (mesmas permissões da edição)
  *   POST /goal-card/submeter  { card, secoes }   campos obrigatórios no servidor (RN-03); só contribuidor da BU (AC-04)
+ *   POST /goal-card/reabrir   { card }           só o administrador; card aprovado volta a Rascunho
  *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12 (usada pela fila de aprovação, T14)
  *   POST /goal-card/comentario { card, secao, texto }   comentário ancorado a uma seção (§7.3, RN-13); só o grupo de aprovação, na T14
+ *   GET  /configuracao · POST /configuracao/salvar { aba, dados } · POST /configuracao/ciclo { acao, ano }   T11, só admin
  *   GET  /aprovacoes?pais=&bu=&idade=   T14 — fila do grupo de aprovação (AC-08: demais perfis, 403):
  *                      { ciclo, parametros, filtro, itens[], total }
  *                      `itens` = cards Em aprovação, os mais antigos primeiro, com a idade em dias úteis,
  *                      se é resubmissão e se o usuário pode decidir (RN-12).
- *                      Até o modelo de dados (P-12) as escritas são validadas e respondidas como simulação (`simulado: true`).
  */
 const express = require('express');
-const { pendenciasExemplo, painelExemplo, desdobramentoExemplo, goalCardExemplo, configuracaoExemplo, actionLogExemplo, versoesExemplo, cicloExemplo } = require('./dados-exemplo');
 
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
@@ -353,20 +351,21 @@ function filtrarEventos(eventos, q, hoje, metas, bus) {
   return { filtro: f, lista: f.tipo ? semTipo.filter((e) => e.tipo === f.tipo) : semTipo, porTipo, totalSemTipo: semTipo.length };
 }
 
-// Papéis do usuário no ciclo. Até o modelo de dados (P-12), vêm dos dados de exemplo; nos testes, são injetados.
-// Em desenvolvimento, AIPGOALS_PERFIL_LOCAL simula um perfil: leitor, contribuidor (Salobo), aprovador ou admin.
-const PERFIS_LOCAIS = { leitor: [], contribuidor: [{ papel: 'contribuidor', bu: 'Salobo' }], aprovador: [{ papel: 'aprovador', bu: null }], admin: [{ papel: 'admin', bu: null }] };
-const papeisExemplo = (email, hoje) => {
-  const p = process.env.NODE_ENV === 'development' && PERFIS_LOCAIS[process.env.AIPGOALS_PERFIL_LOCAL];
-  return p || pendenciasExemplo(hoje).usuario.papeis || [];
-};
 const veTodas = (papeis) => papeis.some((p) => p.papel === 'pci_coo' || p.papel === 'admin');
+const ACOES_CICLO = ['fechar', 'reabrir', 'novo'];
+// Campos internos da fonte (começam com _) não vão para o navegador
+const publico = (o) => Object.fromEntries(Object.entries(o || {}).filter(([k]) => !k.startsWith('_')));
 
-function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Date(), papeisDe = papeisExemplo } = {}) {
-  if (fonte === 'banco' && typeof runQuery !== 'function') {
-    throw new Error('criarAipGoalsRouter: `runQuery` é obrigatório com fonte "banco"');
-  }
+/**
+ * dados: fonte injetada — criarFonteBanco (aip-goals-banco.js, a do app) ou a de exemplo dos testes
+ * (tests/fonte-exemplo.js). Contrato: contexto(email) → { papeis, quem, nome }; painel, desdobramento, goalCard,
+ * versoes, actionLog, configuracao (leituras; null = não há ciclo); salvarRascunho, submeter, reabrir, decidir,
+ * comentar, salvarConfiguracao, acaoCiclo, registrarNegado (gravações).
+ */
+function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
+  if (!dados || typeof dados.contexto !== 'function') throw new Error('criarAipGoalsRouter: `dados` é obrigatório (fonte do banco ou de exemplo)');
   const router = express.Router();
+  const marca = () => ({ exemplo: !!dados.exemplo, desatualizado: false });
 
   // Limite de pedidos por usuário (X-Forwarded-Email do proxy; sem ele, o IP) por minuto
   const contagem = new Map();
@@ -380,304 +379,261 @@ function criarAipGoalsRouter({ runQuery, fonte = 'exemplo', agora = () => new Da
     next();
   });
 
-  router.get('/ping', (req, res) => res.json({ ok: true, fonte }));
+  router.get('/ping', (req, res) => res.json({ ok: true, fonte: dados.fonte || 'banco' }));
 
-  // T00 Início: ciclo ativo (etapa, janelas, BUs) e os papéis do usuário para o menu (AC-02)
-  router.get('/inicio', async (req, res) => {
+  // Identidade SOMENTE do proxy (AC-01); contexto = papéis do usuário no ciclo atual e a matrícula (RN-12)
+  async function contexto(req, res) {
     const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    // Sem identidade do proxy não há acesso (AC-01). Mensagem neutra (AC-04).
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
+    if (!email) { res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' }); return null; }
+    const hoje = agora();
+    const c = await dados.contexto(email, hoje);
+    return { email, hoje, papeis: c.papeis || [], quem: c.quem || null, nome: c.nome || email, idCiclo: c.idCiclo };
+  }
+  const semCiclo = (res) => res.status(409).json({ error: 'Nenhum ciclo cadastrado. Rode a carga inicial (database/002_pm_carga_inicial.sql).', codigo: 'SEM_CICLO' });
+  // Acesso negado vira evento do Action Log (T12); falha ao registrar não muda a resposta
+  const negar = (res, ctx, msg, detalhe, codigo = 'SEM_ACESSO') => {
+    if (dados.registrarNegado) Promise.resolve().then(() => dados.registrarNegado(ctx, detalhe)).catch((err) => console.error(`${TAG} acesso negado (log):`, err.message));
+    return res.status(403).json({ error: msg, codigo });
+  };
+  // Erro: conflito de estado (409) passa a mensagem; o resto fica só no log
+  const falha = (res, rota, err, msg) => {
+    if (err && err.status === 409) return res.status(409).json({ error: err.message, codigo: err.codigo || 'ESTADO' });
+    console.error(`${TAG} ${rota}:`, err && err.message);
+    return res.status(500).json({ error: msg, codigo: 'ERRO' });
+  };
+
+  // T00 Início: ciclo atual (etapa, janelas, BUs) e os papéis do usuário para o menu (AC-02)
+  router.get('/inicio', async (req, res) => {
     try {
-      // Modelo de dados pendente (P-12): a consulta real entra aqui, parametrizada por @email e @ciclo.
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
-      res.json({ ciclo: cicloExemplo(hoje), usuario: { papeis: papeisDe(email, hoje) }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      // O motivo fica no log; a resposta não leva texto do banco.
-      console.error(`${TAG} /inicio:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar o início.', codigo: 'ERRO' });
-    }
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const ciclo = await dados.ciclo(ctx.hoje);
+      res.json({ ciclo, usuario: { papeis: ctx.papeis, nome: ctx.nome }, atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/inicio', err, 'Não foi possível carregar o início.'); }
   });
 
   router.get('/painel', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
-      // Papéis do usuário no ciclo: o Painel é do grupo P&CI/COO e do administrador (AC-07); demais perfis, 403.
-      if (!veTodas(papeisDe(email, hoje))) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
-      const base = painelExemplo(hoje);
+      const ctx = await contexto(req, res); if (!ctx) return;
+      // O Painel é do grupo P&CI/COO e do administrador (AC-07); demais perfis, 403.
+      if (!veTodas(ctx.papeis)) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const base = await dados.painel(ctx.hoje); if (!base) return semCiclo(res);
       const limite = Number(base.parametros.diasParado) || 3;
-      // Filtro País › BU validado contra as BUs do ciclo (valor fora da lista → 400)
       const pais = String(req.query.pais || ''), bu = String(req.query.bu || '');
       const paises = [...new Set(base.ciclo.bus.map((b) => b.pais))];
       if (pais && !paises.includes(pais)) return res.status(400).json({ error: 'País inválido.', codigo: 'FILTRO' });
       if (bu && !base.ciclo.bus.some((b) => b.sigla === bu && (!pais || b.pais === pais))) return res.status(400).json({ error: 'BU inválida.', codigo: 'FILTRO' });
       const filtrados = base.cards.filter((c) => (!pais || c.bu.pais === pais) && (!bu || c.bu.sigla === bu));
       const ordem = base.ciclo.bus.filter((b) => (!pais || b.pais === pais) && (!bu || b.sigla === bu));
-      res.json({ ciclo: base.ciclo, parametros: { diasParado: limite }, filtro: { pais, bu }, ...agregarPainel(filtrados, ordem, limite, hoje),
-        atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /painel:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar o painel.', codigo: 'ERRO' });
-    }
+      res.json({ ciclo: base.ciclo, parametros: { diasParado: limite }, filtro: { pais, bu }, ...agregarPainel(filtrados, ordem, limite, ctx.hoje), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/painel', err, 'Não foi possível carregar o painel.'); }
   });
 
   router.get('/metas', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
-      const papeis = papeisDe(email, hoje);
-      const base = painelExemplo(hoje);
-      // Leitura aberta (AC-05): todas as BUs para qualquer usuário; sem ?bu=, abre na BU do contribuidor
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const base = await dados.painel(ctx.hoje); if (!base) return semCiclo(res);
+      // Leitura aberta (AC-05): todas as BUs; sem ?bu=, abre na BU do contribuidor
       const bus = base.ciclo.bus;
-      const minha = papeis.find((p) => p.bu && bus.some((b) => b.sigla === p.bu));
+      const limite = Number(base.parametros.diasParado) || 3, pesoTotal = Number(base.parametros.pesoTotal) || 100;
+      if (!bus.length) return res.json({ ciclo: base.ciclo, bu: null, bus, parametros: { diasParado: limite, pesoTotal }, ...agregarMetas([], pesoTotal, limite, ctx.hoje), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+      const minha = ctx.papeis.find((p) => p.bu && bus.some((b) => b.sigla === p.bu));
       const sigla = String(req.query.bu || (minha ? minha.bu : bus[0].sigla));
       const bu = bus.find((b) => b.sigla === sigla);
-      // BU inexistente: 404
       if (!bu) return res.status(404).json({ error: 'Não encontrado.', codigo: 'NAO_ENCONTRADO' });
-      const limite = Number(base.parametros.diasParado) || 3;
-      const ag = agregarMetas(base.cards.filter((c) => c.bu.sigla === bu.sigla), Number(base.parametros.pesoTotal) || 100, limite, hoje);
-      res.json({ ciclo: base.ciclo, bu, bus, parametros: { diasParado: limite, pesoTotal: ag.totais.pesoEsperado },
-        ...ag, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /metas:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar as metas.', codigo: 'ERRO' });
-    }
+      const ag = agregarMetas(base.cards.filter((c) => c.bu.sigla === bu.sigla), pesoTotal, limite, ctx.hoje);
+      res.json({ ciclo: base.ciclo, bu, bus, parametros: { diasParado: limite, pesoTotal: ag.totais.pesoEsperado }, ...ag, atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/metas', err, 'Não foi possível carregar as metas.'); }
   });
 
   router.get('/desdobramento', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
-      const papeis = papeisDe(email, hoje);
-      const base = desdobramentoExemplo(hoje);
-      // Recorte (AC-04/AC-05): o scorecard do COO é a origem comum; as colunas de BU seguem os papéis do usuário
-      const bus = base.ciclo.bus; // leitura aberta: todas as BUs para qualquer usuário (AC-05)
-      const cards = painelExemplo(hoje).cards.filter((c) => bus.some((b) => b.sigla === c.bu.sigla));
-      res.json({ ciclo: base.ciclo, parametros: base.parametros, scorecardCoo: base.scorecardCoo, bus,
-        ...agregarDesdobramento(base, cards, bus), atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /desdobramento:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar o desdobramento.', codigo: 'ERRO' });
-    }
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const base = await dados.desdobramento(ctx.hoje); if (!base) return semCiclo(res);
+      const bus = base.ciclo.bus; // leitura aberta: todas as BUs (AC-05)
+      const cards = (await dados.painel(ctx.hoje)).cards.filter((c) => bus.some((b) => b.sigla === c.bu.sigla));
+      res.json({ ciclo: base.ciclo, parametros: base.parametros, scorecardCoo: base.scorecardCoo, bus, ...agregarDesdobramento(base, cards, bus), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/desdobramento', err, 'Não foi possível carregar o desdobramento.'); }
   });
 
   // ── T04 Goal Card ──
-  const lerCard = (req, res, hoje) => {
+  async function lerCard(req, res, hoje) {
     const codigo = String((req.query && req.query.card) || (req.body && req.body.card) || '');
     if (!/^GC-[A-Z]{2,3}-\d{2}$/.test(codigo)) { res.status(400).json({ error: 'Card inválido.', codigo: 'PARAMETRO' }); return null; }
-    const card = goalCardExemplo(codigo, hoje);
+    const card = await dados.goalCard(codigo, hoje);
     if (!card) { res.status(404).json({ error: 'Não encontrado.', codigo: 'NAO_ENCONTRADO' }); return null; }
     return card;
-  };
-  // Nome do usuário (diretório); no exemplo, uma pessoa fora da lista de editores
-  const nomeDe = () => 'Usuário Demonstração';
+  }
 
   router.get('/goal-card', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
-      const papeis = papeisDe(email, hoje);
-      const card = lerCard(req, res, hoje); if (!card) return; // leitura aberta a qualquer usuário do Portal (AC-07)
-      const modo = modoDoCard(card, papeis);
-      res.json({ ...card, modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
-        permissoes: { editar: modo === 'edicao', reabrir: ehAdmin(papeis) && card.estado === 'aprovado' },
-        parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /goal-card:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar o Goal Card.', codigo: 'ERRO' });
-    }
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const card = await lerCard(req, res, ctx.hoje); if (!card) return; // leitura aberta (AC-07)
+      const modo = modoDoCard(card, ctx.papeis);
+      res.json({ ...publico(card), modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
+        permissoes: { editar: modo === 'edicao', reabrir: ehAdmin(ctx.papeis) && card.estado === 'aprovado' },
+        parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/goal-card', err, 'Não foi possível carregar o Goal Card.'); }
+  });
+
+  // Rascunho gravado no banco (Salvar rascunho): mesmas permissões da edição
+  router.post('/goal-card/rascunho', express.json({ limit: '100kb' }), async (req, res) => {
+    try {
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const card = await lerCard(req, res, ctx.hoje); if (!card) return;
+      if (!podeEditar(ctx.papeis, card.bu.sigla)) return negar(res, ctx, 'Sem permissão para editar esta BU.', `tentou salvar o rascunho de ${card.card} sem ser contribuidor da BU`);
+      if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
+      const secoes = { ...(req.body.secoes || {}), area: card.secoes.area };
+      await dados.salvarRascunho(card, secoes, ctx.quem);
+      res.json({ ok: true });
+    } catch (err) { falha(res, '/goal-card/rascunho', err, 'Não foi possível salvar o rascunho.'); }
   });
 
   router.post('/goal-card/submeter', express.json({ limit: '100kb' }), async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      const hoje = agora(); const papeis = papeisDe(email, hoje);
-      const card = lerCard(req, res, hoje); if (!card) return;
-      // Escrita: contribuidor da BU, aprovador ou administrador (AC-04, AC-05); demais: 403
-      if (!podeEditar(papeis, card.bu.sigla)) return res.status(403).json({ error: 'Sem permissão para editar esta BU.', codigo: 'SEM_ACESSO' });
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const card = await lerCard(req, res, ctx.hoje); if (!card) return;
+      // Escrita: contribuidor da BU, aprovador ou administrador (AC-04, AC-05)
+      if (!podeEditar(ctx.papeis, card.bu.sigla)) return negar(res, ctx, 'Sem permissão para editar esta BU.', `tentou submeter ${card.card} sem ser contribuidor da BU`);
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
-      // Área responsável não é editável: vale sempre a do cadastro da BU (Diretoria Executiva e o diretor)
+      // Área responsável não é editável: vale a do cadastro da BU
       const secoes = { ...(req.body.secoes || {}), area: card.secoes.area };
       const pend = camposObrigatorios(secoes).filter((x) => !x.ok).map((x) => x.id);
       if (pend.length) return res.status(400).json({ error: 'Campos obrigatórios sem preencher.', codigo: 'OBRIGATORIOS', pendentes: pend });
-      res.json({ ok: true, simulado: true, estado: 'em_aprovacao', versao: (card.versao || 0) + 1 });
-    } catch (err) {
-      console.error(`${TAG} /goal-card/submeter:`, err.message);
-      res.status(500).json({ error: 'Não foi possível submeter.', codigo: 'ERRO' });
-    }
+      const r = await dados.submeter(card, secoes, ctx);
+      res.json({ ok: true, ...r });
+    } catch (err) { falha(res, '/goal-card/submeter', err, 'Não foi possível submeter.'); }
   });
 
-  // Reabrir para edição um card já aprovado: só o administrador do sistema; o card volta para Rascunho
+  // Reabrir um card aprovado: só o administrador; o card volta para Rascunho
   router.post('/goal-card/reabrir', express.json({ limit: '10kb' }), async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      const hoje = agora(); const papeis = papeisDe(email, hoje);
-      const card = lerCard(req, res, hoje); if (!card) return;
-      if (!ehAdmin(papeis)) return res.status(403).json({ error: 'Só o administrador reabre um card aprovado.', codigo: 'SEM_ACESSO' });
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const card = await lerCard(req, res, ctx.hoje); if (!card) return;
+      if (!ehAdmin(ctx.papeis)) return negar(res, ctx, 'Só o administrador reabre um card aprovado.', `tentou reabrir ${card.card} sem ser administrador`);
       if (card.estado !== 'aprovado') return res.status(409).json({ error: 'Só um card aprovado pode ser reaberto.', codigo: 'ESTADO' });
-      res.json({ ok: true, simulado: true, estado: 'rascunho' });
-    } catch (err) {
-      console.error(`${TAG} /goal-card/reabrir:`, err.message);
-      res.status(500).json({ error: 'Não foi possível reabrir o Goal Card.', codigo: 'ERRO' });
-    }
+      const r = await dados.reabrir(card, ctx);
+      res.json({ ok: true, ...r });
+    } catch (err) { falha(res, '/goal-card/reabrir', err, 'Não foi possível reabrir o Goal Card.'); }
   });
 
   router.post('/goal-card/decisao', express.json({ limit: '100kb' }), async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      const hoje = agora(); const papeis = papeisDe(email, hoje);
-      const card = lerCard(req, res, hoje); if (!card) return;
-      if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Decisão restrita ao grupo de aprovação.', codigo: 'SEM_ACESSO' });
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const card = await lerCard(req, res, ctx.hoje); if (!card) return;
+      if (!ehAprovador(ctx.papeis)) return negar(res, ctx, 'Decisão restrita ao grupo de aprovação.', `tentou decidir ${card.card} sem ser do grupo de aprovação`);
       if (card.estado !== 'em_aprovacao') return res.status(409).json({ error: 'O card não está em aprovação.', codigo: 'ESTADO' });
-      if (!podeDecidir(card, papeis, nomeDe(email))) return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
+      if (!podeDecidir(card, ctx.papeis, ctx.quem)) return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
       const erros = validarDecisao(req.body);
       if (erros.length) return res.status(400).json({ error: 'Decisão incompleta.', codigo: 'VALIDACAO', erros });
-      const estado = { aprovar: 'aprovado', devolver: 'em_revisao' }[req.body.decisao];
-      res.json({ ok: true, simulado: true, estado });
-    } catch (err) {
-      console.error(`${TAG} /goal-card/decisao:`, err.message);
-      res.status(500).json({ error: 'Não foi possível registrar a decisão.', codigo: 'ERRO' });
-    }
+      const r = await dados.decidir(card, req.body, ctx);
+      res.json({ ok: true, ...r });
+    } catch (err) { falha(res, '/goal-card/decisao', err, 'Não foi possível registrar a decisão.'); }
   });
 
   // Comentário ancorado a uma seção (§7.3, RN-13): feito na T14 pelo grupo de aprovação; não muda o estado do card.
   router.post('/goal-card/comentario', express.json({ limit: '20kb' }), async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      const hoje = agora(); const papeis = papeisDe(email, hoje);
-      const card = lerCard(req, res, hoje); if (!card) return;
-      // Consulta nunca comenta (RN-19); na T14, só o grupo de aprovação (AC-08)
-      if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Comentário restrito ao grupo de aprovação.', codigo: 'SEM_ACESSO' });
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const card = await lerCard(req, res, ctx.hoje); if (!card) return;
+      if (!ehAprovador(ctx.papeis)) return negar(res, ctx, 'Comentário restrito ao grupo de aprovação.', `tentou comentar ${card.card} sem ser do grupo de aprovação`);
       const secao = String(req.body.secao || ''), texto = String(req.body.texto || '').trim();
       if (!SECOES_CARD.includes(secao)) return res.status(400).json({ error: 'Seção inválida.', codigo: 'VALIDACAO', erros: ['secao'] });
       if (!texto || texto.length > MAX_COMENTARIO) return res.status(400).json({ error: 'Comentário vazio ou longo demais.', codigo: 'VALIDACAO', erros: ['texto'] });
-      res.json({ ok: true, simulado: true, comentario: { id: `${card.card}-n${Date.now()}`, secao, autor: nomeDe(email), papel: 'aprovador', quando: hoje.toISOString().slice(0, 10), texto, respostas: [] } });
-    } catch (err) {
-      console.error(`${TAG} /goal-card/comentario:`, err.message);
-      res.status(500).json({ error: 'Não foi possível publicar o comentário.', codigo: 'ERRO' });
-    }
+      const comentario = await dados.comentar(card, secao, texto, ctx);
+      res.json({ ok: true, comentario, ...(dados.exemplo ? { simulado: true } : {}) });
+    } catch (err) { falha(res, '/goal-card/comentario', err, 'Não foi possível publicar o comentário.'); }
   });
 
   // T14 Aprovações: fila do grupo de aprovação (AC-08, CA-19). Demais perfis: 403 (a tela mostra a T12).
   router.get('/aprovacoes', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora(); const papeis = papeisDe(email, hoje);
-      if (!ehAprovador(papeis)) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
-      const base = painelExemplo(hoje);
+      const ctx = await contexto(req, res); if (!ctx) return;
+      if (!ehAprovador(ctx.papeis)) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const base = await dados.painel(ctx.hoje); if (!base) return semCiclo(res);
       const filtro = { pais: String(req.query.pais || ''), bu: String(req.query.bu || ''), idade: IDADES.includes(String(req.query.idade)) ? String(req.query.idade) : 'todas' };
       if (filtro.pais && !base.ciclo.bus.some((b) => b.pais === filtro.pais)) filtro.pais = '';
       if (filtro.bu && !base.ciclo.bus.some((b) => b.sigla === filtro.bu && (!filtro.pais || b.pais === filtro.pais))) filtro.bu = '';
-      const nome = nomeDe(email);
-      const decide = (c) => { const gc = goalCardExemplo(c.card, hoje); return !!gc && podeDecidir(gc, papeis, nome); };
+      // Na fila, RN-12 pelo autor da versão em aprovação (a decisão confere todos os editores do card)
+      const decide = (c) => podeDecidir({ ...c, editores: c.editores || [] }, ctx.papeis, ctx.quem);
       res.json({ ciclo: base.ciclo, parametros: { diasParado: base.parametros.diasParado, minComentario: LIMITE_COMENTARIO, maxComentario: MAX_COMENTARIO },
-        filtro, ...filaAprovacao(base.cards, filtro, hoje, decide), atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /aprovacoes:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar a fila de aprovação.', codigo: 'ERRO' });
-    }
+        filtro, ...filaAprovacao(base.cards, filtro, ctx.hoje, decide), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/aprovacoes', err, 'Não foi possível carregar a fila de aprovação.'); }
   });
 
-  // T11 Configuração do ciclo: leitura e gravação só do administrador (§7.1, T11); demais perfis, 403 (T12).
-  const exigirAdmin = (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) { res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' }); return null; }
-    if (fonte !== 'exemplo') { res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' }); return null; }
-    const hoje = agora();
-    if (!ehAdmin(papeisDe(email, hoje))) { res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' }); return null; }
-    return { email, hoje };
-  };
+  // T11 Configuração do ciclo: leitura e gravação só do administrador (§7.1); demais perfis, 403 (T12).
+  async function exigirAdmin(req, res, registrar) {
+    const ctx = await contexto(req, res); if (!ctx) return null;
+    if (!ehAdmin(ctx.papeis)) {
+      if (registrar) negar(res, ctx, 'Sem acesso a esta tela.', 'tentou alterar a Administração sem ser administrador');
+      else res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      return null;
+    }
+    return ctx;
+  }
   router.get('/configuracao', async (req, res) => {
     try {
-      const ctx = exigirAdmin(req, res); if (!ctx) return;
-      const base = configuracaoExemplo(ctx.hoje);
-      res.json({ ...base, somas: somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus), atualizadoEm: ctx.hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /configuracao:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar a configuração.', codigo: 'ERRO' });
-    }
+      const ctx = await exigirAdmin(req, res); if (!ctx) return;
+      const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
+      res.json({ ...publico(base), somas: somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/configuracao', err, 'Não foi possível carregar a configuração.'); }
   });
   router.post('/configuracao/salvar', express.json({ limit: '200kb' }), async (req, res) => {
     try {
-      const ctx = exigirAdmin(req, res); if (!ctx) return;
-      const base = configuracaoExemplo(ctx.hoje);
-      const { aba, dados } = req.body || {};
-      const erros = validarConfiguracao(aba, dados, base);
+      const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
+      const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
+      const { aba, dados: d } = req.body || {};
+      const erros = validarConfiguracao(aba, d, base);
       if (erros.length) return res.status(400).json({ error: 'Configuração com pendências.', codigo: erros.some((e) => e.codigo === 'RN16') ? 'RN16' : 'VALIDACAO', erros });
-      // Modelo de dados pendente (P-12): a gravação e o evento "Configuração" no Action Log (antes e depois) entram aqui.
-      res.json({ ok: true, simulado: true, aba, evento: { tipo: 'configuracao', quem: ctx.email, quando: ctx.hoje.toISOString() } });
-    } catch (err) {
-      console.error(`${TAG} /configuracao/salvar:`, err.message);
-      res.status(500).json({ error: 'Não foi possível salvar a configuração.', codigo: 'ERRO' });
-    }
+      const r = await dados.salvarConfiguracao(aba, d, ctx, base);
+      if (r && r.erros) return res.status(400).json({ error: 'Configuração com pendências.', codigo: 'VALIDACAO', erros: r.erros });
+      res.json({ ok: true, aba, ...(r && r.simulado ? { simulado: true } : {}), evento: { tipo: 'configuracao', quem: ctx.email, quando: ctx.hoje.toISOString() } });
+    } catch (err) { falha(res, '/configuracao/salvar', err, 'Não foi possível salvar a configuração.'); }
+  });
+  // Ciclo: fechar, reabrir ou abrir o próximo (só um aberto por vez)
+  router.post('/configuracao/ciclo', express.json({ limit: '10kb' }), async (req, res) => {
+    try {
+      const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
+      const acao = String((req.body || {}).acao || ''), ano = Number((req.body || {}).ano);
+      if (!ACOES_CICLO.includes(acao) || (acao !== 'novo' && !(Number.isInteger(ano) && ano >= 2020 && ano <= 2100))) return res.status(400).json({ error: 'Ação inválida.', codigo: 'VALIDACAO' });
+      const r = await dados.acaoCiclo(acao, ano, ctx);
+      res.json({ ok: true, ...r });
+    } catch (err) { falha(res, '/configuracao/ciclo', err, 'Não foi possível alterar o ciclo.'); }
   });
   router.post('/configuracao/clonar', express.json({ limit: '10kb' }), async (req, res) => {
     try {
-      const ctx = exigirAdmin(req, res); if (!ctx) return;
-      const base = configuracaoExemplo(ctx.hoje);
-      const ano = base.ciclo.ano + 1;
-      res.json({ ok: true, simulado: true, novoCiclo: { id: `AIP-${ano}`, nome: `AIP ${ano}`, bus: base.bus.length, membros: base.membros.length, metas: base.metas.length } });
-    } catch (err) {
-      console.error(`${TAG} /configuracao/clonar:`, err.message);
-      res.status(500).json({ error: 'Não foi possível criar o novo ciclo.', codigo: 'ERRO' });
-    }
+      const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
+      const r = await dados.acaoCiclo('novo', null, ctx);
+      res.json({ ok: true, ...r });
+    } catch (err) { falha(res, '/configuracao/clonar', err, 'Não foi possível criar o novo ciclo.'); }
   });
 
-  // T07 Action Log: todos os perfis com papel no ciclo leem (AC-07); paginado (40 por página) ou completo para exportar (tudo=1)
+  // T07 Action Log: paginado (40 por página) ou completo para exportar (tudo=1)
   router.get('/action-log', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
+      const ctx = await contexto(req, res); if (!ctx) return;
       // Histórico de um card (popup): aberto a todos. Action Log geral: aprovador e administrador.
-      if (!req.query.card && !ehAprovador(papeisDe(email, hoje))) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
-      const base = actionLogExemplo(hoje);
-      const r = filtrarEventos(base.eventos, req.query, hoje, base.metas, base.bus);
+      if (!req.query.card && !ehAprovador(ctx.papeis)) return res.status(403).json({ error: 'Sem acesso a esta tela.', codigo: 'SEM_ACESSO' });
+      const base = await dados.actionLog(ctx.hoje); if (!base) return semCiclo(res);
+      const r = filtrarEventos(base.eventos, req.query, ctx.hoje, base.metas, base.bus);
       if (r.erros) return res.status(400).json({ error: 'Filtro inválido.', codigo: 'FILTRO', erros: r.erros });
       const tamanho = 40, total = r.lista.length;
       const pagina = Math.max(1, Math.min(Math.ceil(total / tamanho) || 1, parseInt(req.query.pagina, 10) || 1));
       const eventos = req.query.tudo === '1' ? r.lista : r.lista.slice((pagina - 1) * tamanho, pagina * tamanho);
       res.json({ ciclo: base.ciclo, filtro: r.filtro, eventos, total, pagina, paginas: Math.ceil(total / tamanho) || 1, porTipo: r.porTipo, totalSemTipo: r.totalSemTipo,
-        opcoes: { bus: base.bus, metas: base.metas, secoes: SECOES_LOG, tipos: TIPOS_EVENTO },
-        atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /action-log:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar o Action Log.', codigo: 'ERRO' });
-    }
+        opcoes: { bus: base.bus, metas: base.metas, secoes: SECOES_LOG, tipos: TIPOS_EVENTO }, atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/action-log', err, 'Não foi possível carregar o Action Log.'); }
   });
 
-  // T06 Versões (§7.2): todos os perfis com papel leem; ninguém altera. Rascunho não tem versão (lista vazia).
+  // T06 Versões (§7.2): leitura aberta; ninguém altera. Rascunho não tem versão (lista vazia).
   router.get('/versoes', async (req, res) => {
-    const email = String(req.get('X-Forwarded-Email') || '').trim().toLowerCase();
-    if (!email) return res.status(401).json({ error: 'Usuário não identificado.', codigo: 'SEM_IDENTIDADE' });
     try {
-      if (fonte !== 'exemplo') return res.status(501).json({ error: 'Fonte de dados ainda não disponível.', codigo: 'MODELO_PENDENTE' });
-      const hoje = agora();
-      const codigo = String(req.query.card || ''); // Versões: leitura aberta (AC-07)
+      const ctx = await contexto(req, res); if (!ctx) return;
+      const codigo = String(req.query.card || '');
       if (!/^GC-[A-Z]{2,3}-\d{2}$/.test(codigo)) return res.status(400).json({ error: 'Goal Card inválido.', codigo: 'CARD' });
-      const v = versoesExemplo(codigo, hoje);
+      const v = await dados.versoes(codigo, ctx.hoje);
       if (!v) return res.status(404).json({ error: 'Goal Card não encontrado.', codigo: 'NAO_ENCONTRADO' });
-      res.json({ ...v, atualizadoEm: hoje.toISOString(), exemplo: true, desatualizado: false });
-    } catch (err) {
-      console.error(`${TAG} /versoes:`, err.message);
-      res.status(500).json({ error: 'Não foi possível carregar as versões.', codigo: 'ERRO' });
-    }
+      res.json({ ...publico(v), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+    } catch (err) { falha(res, '/versoes', err, 'Não foi possível carregar as versões.'); }
   });
 
   return router;
