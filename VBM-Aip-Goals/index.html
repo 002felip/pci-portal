@@ -1681,13 +1681,6 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
 /* Aprovações: margens laterais menores e fichas em duas colunas nas telas largas, para preencher melhor a tela */
 body.is-largo .page:has(#vistaAprov:not([hidden])) { padding-inline: clamp(0.75rem, 1vw, 1.25rem); }
 .ap-secoes { display: block; }
-@media (min-width: 1500px) {
-  .ap-secoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ap-secoes .gc-f-linha:nth-child(even) { border-left: 1px solid var(--card-line); }
-  .ap-secoes .gc-f-linha:first-child, .ap-secoes #apSec-evidence, .ap-secoes #apSec-exceptions { grid-column: 1 / -1; border-left: 0; }
-  .ap-secoes .gc-f-linha:nth-child(even) { border-left: 0; }
-  .ap-secoes #apSec-formula, .ap-secoes #apSec-ruler { border-right: 1px solid var(--card-line); }
-}
 .ap-corpo[hidden] { display: none; }
 .ap-fila { position: sticky; top: calc(var(--barra) + 1rem); max-height: calc(100vh - var(--barra) - 2rem); min-width: 0; }
 .ap-fila-sub { margin: -0.25rem 0 0; font-size: 0.72rem; color: var(--text-soft); }
@@ -5102,7 +5095,8 @@ window.VBMSetup = (function () {
       var antes = null;
       var chips = '';
       // Ações do item: lápis = marcar para ajuste (exige comentário); balão = há comentário na seção (sem texto)
-      var rev = '<div class="ap-rev">' + (pode ? '<button type="button" class="ap-aj-btn" data-ajustar="' + id + '" aria-haspopup="dialog" aria-pressed="' + (rv === 'ajustar') + '" title="' + esc(S.t('ap.ajustarItem')) + '" aria-label="' + esc(S.t('ap.ajustarItem') + ': ' + GC_NOMES[id]) + '">' + ico('i-pen') + '</button>' : '') +
+      var temExc = id !== 'exceptions' || !!(((d.secoes || d.campos || {}).exceptions || {}).bu || '').toString().trim();
+      var rev = '<div class="ap-rev">' + (pode && temExc ? '<button type="button" class="ap-aj-btn" data-ajustar="' + id + '" aria-haspopup="dialog" aria-pressed="' + (rv === 'ajustar') + '" title="' + esc(S.t('ap.ajustarItem')) + '" aria-label="' + esc(S.t('ap.ajustarItem') + ': ' + GC_NOMES[id]) + '">' + ico('i-pen') + '</button>' : '') +
         (nCom ? '<button type="button" class="gc-com-btn tem ap-com-ic" data-com-abrir="' + id + '" aria-haspopup="dialog" title="' + esc(S.t('gc.verComs', { n: S.fmt(nCom, 0), s: GC_NOMES[id] })) + '" aria-label="' + esc(S.t('gc.verComs', { n: S.fmt(nCom, 0), s: GC_NOMES[id] })) + '">' + ico('i-comment') + '</button>' : '') + '</div>';
       // Ajuste marcado: resumo curto sob o item (o texto completo abre no popup do lápis)
       var aj = rv === 'ajustar' ? '<p class="ap-aj-resumo">' + ico('i-pen') + '<span>' + esc((ap.ajustes[id] || '').trim() || S.t('ap.ajPendente')) + '</span></p>' : '';
