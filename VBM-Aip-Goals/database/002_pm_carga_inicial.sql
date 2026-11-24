@@ -4,22 +4,18 @@
    administrador fica na PM.AIP_PAPEL, ligado a um ciclo. O resto (BUs, grupos, metas e pesos, exceções) se cadastra
    pela própria tela Administração.
 
-   Preencha os 4 valores abaixo:
-   - @MATRICULA_ADMIN: a SUA matrícula, exatamente como está em IBP.USERS.CD_MATRICULA (é por ela que o app reconhece
-     o seu e-mail de login).
-   - @ANO / @NOME: ano e nome do ciclo.
-   - Datas das 4 etapas (podem ser trocadas depois em Administração › Ciclo).
+   Pronto para rodar: administrador 81059384 (felipe.santos.souza@vale.com), ciclo AIP 2027. O app reconhece o
+   e-mail de login pela matrícula na IBP.USERS. Datas e pontos herdados podem ser trocados depois em Administração.
    ===================================================================================================================== */
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
-DECLARE @MATRICULA_ADMIN VARCHAR(20)   = 'TROCAR';     -- ← sua matrícula (IBP.USERS.CD_MATRICULA)
+DECLARE @MATRICULA_ADMIN VARCHAR(20)   = '81059384';   -- felipe.santos.souza@vale.com
 DECLARE @ANO             SMALLINT      = 2027;
 DECLARE @NOME            NVARCHAR(100) = N'AIP 2027';
 DECLARE @HERDADOS_COO    SMALLINT      = 75;           -- pontos do COO vindos do resultado do CEO
 DECLARE @HERDADOS_BU     SMALLINT      = 40;           -- pontos de cada BU vindos do resultado do COO
 
-IF @MATRICULA_ADMIN = 'TROCAR' THROW 50000, N'Preencha @MATRICULA_ADMIN com a sua matrícula antes de rodar.', 1;
 IF EXISTS (SELECT 1 FROM PM.AIP_CICLO) THROW 50000, N'Já existe ciclo cadastrado: a carga inicial não é necessária.', 1;
 
 BEGIN TRANSACTION;

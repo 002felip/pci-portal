@@ -15,7 +15,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 1. Rode `001_pm_criar_tabelas.sql` inteiro. No fim, a consulta de conferência lista as 9 tabelas.
    - Se aparecer o aviso "IBP.SITES não existe neste banco", o DEV não tem a tabela de sites. A aplicação lista as BUs pela `IBP.SITES`: copie-a do PRD ou aponte `AIPGOALS_SITES_TABELA` para outra tabela com as colunas `ID_SITE`, `NM_SITE` e `NM_PAIS`.
    - Se quem rodou o script **não** for o login do app (`AZURE_SQL_USER`), descomente o `GRANT ... ON SCHEMA::PM` do fim do script.
-2. Em `002_pm_carga_inicial.sql`, troque `@MATRICULA_ADMIN` pela sua matrícula, exatamente como está em `IBP.USERS.CD_MATRICULA`. Confira o ano, o nome e as datas e rode.
+2. Rode `002_pm_carga_inicial.sql` (já com o administrador 81059384, felipe.santos.souza@vale.com, e o ciclo AIP 2027).
 
 ### 2. Aplicação
 3. O `app.yaml` da raiz já tem `AIPGOALS_AZURE_SQL_DATABASE = BDIBPBMSA_DEV`. Publique e reinicie o Portal.
