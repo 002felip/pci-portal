@@ -91,7 +91,7 @@ Limites (definidos na aplicação, fora do banco e da tela de Administração): 
 
 Não mudam o estado: comentário e alteração dos membros dos grupos (a pendência só muda de dono).
 
-**Revisão por item (T14 Aprovações):** a ficha mostra os dados como no Goal Card, com acesso direto às Versões e ao Histórico (popups). Cada item tem um lápis "Marcar para ajuste": marcado, abre o campo obrigatório "O que precisa ser ajustado". Se o item tem comentário, aparece o balão (sem texto), que abre os comentários. Itens sem o lápis contam como OK. Aprovar não aceita item marcado; Devolver exige ao menos um item marcado, o comentário de cada um e o comentário da decisão (mínimo de caracteres). Não há Negar (D-25). A decisão é final (nível único).
+**Revisão por item (T14 Aprovações):** a ficha mostra os dados como no Goal Card, com acesso direto às Versões e ao Histórico (popups). Cada item tem um lápis "Marcar para ajuste" que abre um popup com o campo obrigatório "O que precisa ser ajustado" (Salvar ajuste, Cancelar e, se já marcado, Remover marcação); o item marcado mostra um resumo do ajuste. Se o item tem comentário, aparece o balão (sem texto), que abre os comentários em popup, somente leitura. Itens sem o lápis contam como OK. Aprovar não aceita item marcado; Devolver exige ao menos um item marcado, o comentário de cada um e o comentário da decisão (mínimo de caracteres). Não há Negar (D-25). A decisão é final (nível único).
 
 ## 5. Tipos de meta e campos do Goal Card
 
