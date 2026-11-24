@@ -116,6 +116,21 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const vistos = new Set();
     return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
   }
+  // Diretor do site: pessoas ativas do MDM no mesmo NM_SITE com cargo (NM_POSICAO) de diretor. Os termos do cargo
+  // vêm de AIPGOALS_DIRETOR_CARGO (padrão "Diretor|Director"); o cargo que começa com o termo vem primeiro.
+  const CARGOS_DIRETOR = String(env.AIPGOALS_DIRETOR_CARGO || 'Diretor|Director').split('|').map((x) => x.trim().replace(/[%_[\]]/g, '')).filter(Boolean);
+  async function diretoresDoSite(site) {
+    const s = String(site || '').trim();
+    if (!s || !CARGOS_DIRETOR.length) return [];
+    const params = { site: [sql.NVarChar(255), s] };
+    const contem = CARGOS_DIRETOR.map((c, k) => { params['c' + k] = [sql.NVarChar(255), '%' + c + '%']; return `NM_POSICAO LIKE @c${k}`; }).join(' OR ');
+    const inicio = CARGOS_DIRETOR.map((c, k) => { params['i' + k] = [sql.NVarChar(255), c + '%']; return `NM_POSICAO LIKE @i${k}`; }).join(' OR ');
+    const r = await runQuery(`SELECT TOP (5) ${SEL_PESSOA} FROM ${MDM}
+      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(NM_SITE)) = @site AND (${contem})
+      ORDER BY CASE WHEN ${inicio} THEN 0 ELSE 1 END, ID_TIPO_USUARIO, NM_USUARIO`, params);
+    const vistos = new Set();
+    return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
+  }
   async function pessoaPorNome(q, nome) {
     const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
       WHERE NM_USUARIO = @nome AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
@@ -691,7 +706,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     fonte: 'banco', exemplo: false,
     contexto, ciclo: async (hoje) => { const cc = await cicloCompleto(hoje); return cc ? cc.ciclo : null; },
     painel, desdobramento, goalCard, versoes, actionLog, configuracao,
-    buscarPessoas, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
+    buscarPessoas, diretoresDoSite, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
     _sql: { SQL_CARDS }, // exposto para o teste de sintaxe
   };
 }

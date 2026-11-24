@@ -582,6 +582,8 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   router.get('/pessoas', async (req, res) => {
     try {
       const ctx = await exigirAdmin(req, res); if (!ctx) return;
+      // ?diretorSite=<site>: diretor(es) do site no MDM (Nova BU preenche sozinha; o administrador pode trocar)
+      if (req.query.diretorSite !== undefined) return res.json({ pessoas: dados.diretoresDoSite ? await dados.diretoresDoSite(String(req.query.diretorSite).slice(0, 80)) : [] });
       res.json({ pessoas: dados.buscarPessoas ? await dados.buscarPessoas(String(req.query.q || '').slice(0, 80)) : [] });
     } catch (err) { falha(res, '/pessoas', err, 'Não foi possível buscar as pessoas.'); }
   });
