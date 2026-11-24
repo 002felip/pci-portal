@@ -28,7 +28,7 @@ c['formato'] = {'moeda': '', 'decimal': ',', 'fuso_horas': -3, 'prefixos_moeda':
 
 colunas = [
     ('cic', ['AIP_CICLO', 'AIP_PAPEL', 'SITES']),
-    ('des', ['AIP_CICLO_SITE', 'AIP_META', 'AIP_META_PESO']),
+    ('des', ['AIP_CICLO_SITE', 'AIP_META']),
     ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_NOTIFICACAO']),
     ('aud', ['AIP_EVENTO_LOG']),
 ]
@@ -100,17 +100,12 @@ T = {
    'NO_META': 'Número mostrado nas telas (ex.: 04); único no nível.',
    'NM_TITULO': 'Título da meta (Goal Title).',
    'TP_META': 'FORMULA (Por fórmula) ou MARCOS (Por marcos).',
-   'TP_POLARIDADE': 'MAIOR (maior é melhor) ou MENOR (menor é melhor).',
+   'TP_ORIENTACAO': 'MAIOR (maior é melhor) ou MENOR (menor é melhor).',
    'ID_META_ORIGEM': 'Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.',
-   'VL_PESO': 'Peso das metas do CEO e do COO (um valor só, pois há um só COO e um só CEO). Vazio nas metas da BU, que têm um peso por site na AIP_META_PESO.',
+   'VL_PESO': 'Peso das metas do CEO e do COO (um valor só, pois há um só COO e um só CEO). Vazio nas metas da BU: o peso delas, por site, fica no Goal Card (AIP_GOAL_CARD.VL_PESO).',
    'SG_ATIVA': 'N = fora do ciclo, sem apagar o histórico.'},
-  'regras': ['Número único por ciclo e nível.', 'CD_NIVEL: CEO, COO ou BU.', 'TP_META: FORMULA ou MARCOS; TP_POLARIDADE: MAIOR ou MENOR.'],
+  'regras': ['Número único por ciclo e nível.', 'CD_NIVEL: CEO, COO ou BU.', 'TP_META: FORMULA ou MARCOS; TP_ORIENTACAO: MAIOR ou MENOR.'],
   'exemplos': ['1 · Meta 02 do COO', '2 · Meta 04 das BUs', '3 · Meta 05 da BU, desdobrada da 02 do COO']},
- 'AIP_META_PESO': {
-  'proposito': 'O peso de cada meta da BU em cada site. Somado aos pontos herdados, fecha os 100 pontos do site (RN-16). As metas do CEO e do COO têm um peso só, na própria AIP_META.',
-  'campos': {'ID_META': 'Meta da BU.', 'ID_SITE': 'Site que recebe o peso.', 'VL_PESO': 'Pontos da meta nesta unidade (aceita meio ponto, ex.: 7,5).'},
-  'regras': ['Um peso por meta e site; maior que zero.', 'Para cada site: pontos herdados + soma dos pesos = 100 (validado na API antes de gravar).'],
-  'exemplos': ['Meta 04 vale 10 em Onça Puma', 'Meta 04 vale 10 em Ontario', 'Meta 05 vale 5 em Ontario']},
  'AIP_GOAL_CARD': {
   'proposito': 'O Goal Card de uma meta da BU num site (ex.: GC-ONT-04): estado atual, versão oficial e o rascunho em edição.',
   'campos': {
@@ -118,14 +113,15 @@ T = {
    'CD_GOAL_CARD': 'Código mostrado nas telas: GC-<BU>-<meta>.',
    'ID_META': 'Meta do card.',
    'ID_SITE': 'Site (BU) dono do card.',
+   'VL_PESO': 'Pontos que a meta vale neste site (aceita meio ponto, ex.: 7,5). Soma com os pontos herdados do COO e fecha 100 (RN-16). É definido em Administração › Metas e pesos; sem peso, o site não tem card da meta.',
    'TP_ESTADO': 'RASCUNHO, EM_APROVACAO, EM_REVISAO (devolvido para ajuste) ou APROVADO. Não existe Negado no modelo.',
    'NO_VERSAO_OFICIAL': 'Versão aprovada que vale como oficial. Preenchida só se APROVADO.',
-   'DS_RASCUNHO': 'Campos em edição ainda não submetidos (objetivo, fórmula, unidade, régua, área, evidência, exceções da BU).',
-   'DT_ATUALIZACAO': 'Última mudança no card (coluna "Última atualização").',
-   'CD_MATRICULA_ATUALIZACAO': 'Quem fez a última mudança.'},
+   'DS_RASCUNHO': 'O que o contribuidor já digitou e salvou, mas ainda não submeteu: guarda os campos do card em JSON. Ex.: {"objective": "Cumprir o orçamento de produção", "unit": "%", "ruler": {"min": 95, "meta": 100, "exc": 105}} (faltam fórmula, evidência e exceções da BU). Ao submeter, o conteúdo vira a versão vN e o rascunho é limpo. Vazio = nada pendente (card aprovado ou recém-criado).',
+   'CD_MATRICULA': 'Matrícula de quem fez a última mudança no card.',
+   'DT_ATUALIZACAO': 'Quando foi a última mudança (coluna "Última atualização").'},
   'regras': ['Código único; um card por meta e site.', 'TP_ESTADO: RASCUNHO, EM_APROVACAO, EM_REVISAO, APROVADO.', 'Versão oficial preenchida se, e só se, APROVADO.'],
   'condicional': {'NO_VERSAO_OFICIAL': 'se APROVADO'},
-  'exemplos': ['1 · GC-ONT-04, devolvido para ajuste', '2 · GC-ONP-04, aprovado (v1 oficial)']},
+  'exemplos': ['1 · GC-ONT-04, devolvido para ajuste (10 pts)', '2 · GC-ONP-04, aprovado (v1 oficial, 10 pts)', '3 · GC-ONT-05, rascunho com 2 campos preenchidos (5 pts)']},
  'AIP_GOAL_CARD_VERSAO': {
   'proposito': 'Cada submissão gera uma versão (v1, v2…) com a foto de todos os campos, e recebe a decisão do grupo de aprovação (nível único) com a marcação de cada seção. É o que as telas Versões e Aprovações usam.',
   'campos': {'ID_VERSAO': 'Número interno da versão.', 'ID_GOAL_CARD': 'Card da versão.', 'NO_VERSAO': 'Número da versão no card (1, 2…).', 'TP_MOTIVO': 'SUBMISSAO, RESUBMISSAO ou REABERTURA.', 'DS_CAMPOS': 'Foto dos campos do card no momento da submissão.', 'DT_VERSAO': 'Quando foi submetida.', 'CD_MATRICULA_AUTOR': 'Quem submeteu.', 'TP_DECISAO': 'APROVADO ou DEVOLVIDO. Vazio = aguardando decisão.', 'DS_COMENTARIO_DECISAO': 'Justificativa da decisão; obrigatória para devolver (mínimo de caracteres controlado na aplicação).', 'DS_REVISAO_SECOES': 'Marcação de cada seção na decisão: OK ou AJUSTAR (ex.: {"UNIT": "AJUSTAR"}). Devolver exige ao menos uma AJUSTAR.', 'DT_DECISAO': 'Quando foi decidida.', 'CD_MATRICULA_DECISAO': 'Membro do grupo que decidiu (não pode ser quem editou ou submeteu, RN-12).'},
@@ -161,7 +157,7 @@ rot = {
  ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_SITE'): 'atua na',
  ('AIP_CICLO_SITE', 'ID_CICLO'): 'participa de', ('AIP_CICLO_SITE', 'ID_SITE'): 'é o site',
  ('AIP_META', 'ID_CICLO'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
- ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_SITE'): 'no site',
+ 
  ('AIP_GOAL_CARD', 'ID_META'): 'card da', ('AIP_GOAL_CARD', 'ID_SITE'): 'do site',
  ('AIP_GOAL_CARD_VERSAO', 'ID_GOAL_CARD'): 'versão de',
 
@@ -174,7 +170,7 @@ for l in c['ligacoes']:
 c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<section class="explica" id="como-pontos"><h2>Como os pontos descem do CEO até a BU</h2>'
  '<p>Cada site (e o CEO e o COO) precisa fechar 100 pontos. Uma parte vem do resultado do nível acima '
- '(<code>QTDE_PONTOS_HERDADOS_COO</code> e <code>_BU</code> do AIP_CICLO) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META_PESO).</p>'
+ '(<code>QTDE_PONTOS_HERDADOS_COO</code> e <code>_BU</code> do AIP_CICLO) e o restante é distribuído entre as metas do nível (<code>VL_PESO</code> da AIP_META, para CEO e COO, e do AIP_GOAL_CARD, para as BUs).</p>'
  '<ol class="ordem"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li>'
  '<li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li>'
  '<li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li>'
@@ -184,10 +180,11 @@ c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>')}]
 c['secoes_extras'].append({'id': 'enxuto', 'html': (
  '<section class="explica" id="enxuto"><h2>O que foi simplificado nesta revisão</h2>'
- '<p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p>'
+ '<p>De 16 para 8 tabelas do AIP, sem perder nenhuma regra das telas:</p>'
  '<ul class="fn">'
  '<li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li>'
  '<li><code>AIP_UNIDADE</code><span>Não existe: o desdobramento usa o próprio site. O que era da unidade ficou na AIP_CICLO_SITE (diretor, exceção, participa) e o peso do CEO e do COO na AIP_META.</span></li>'
+ '<li><code>AIP_META_PESO</code><span>O peso da meta num site é um dado do Goal Card daquele site: virou o campo VL_PESO do AIP_GOAL_CARD (um card por meta e site).</span></li>'
  '<li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li>'
  '<li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li>'
  '<li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li>'
@@ -195,7 +192,7 @@ c['secoes_extras'].append({'id': 'enxuto', 'html': (
  '<li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU,.</span></li>'
  '</ul></section>')})
 c['tabelas']['AIP_CICLO']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
-c['tabelas']['AIP_META_PESO']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
+c['tabelas']['AIP_GOAL_CARD']['link_extra'] = {'href': '#como-pontos', 'texto': 'Ver como os pontos descem ↓'}
 c['funcoes'] = [{'nome': 'aip_evento_imutavel', 'descricao': 'Gatilho da AIP_EVENTO_LOG: recusa qualquer UPDATE ou DELETE, mantendo o Action Log imutável.'}]
 json.dump(c, open('config.json', 'w'), ensure_ascii=False, indent=1)
 print('ok', len(c['ligacoes']), 'ligações')
