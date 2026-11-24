@@ -24,7 +24,8 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     log.push({ sql, p });
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
-    if (/NM_SITE\)\) = @site/.test(sql)) return rs(p.site[1] === 'Salobo' ? [{ MATRICULA: 'C2', NOME: 'Bruno Costa', EMAIL: 'bruno@vale.com', CARGO: 'Diretor Salobo' }] : []);
+    if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(p.site[1] === 'Salobo' ? [{ NOME: 'Bruno Costa', QT: 9 }] : []);
+    if (/NM_USUARIO IN \(@n0/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.n0[1]));
     if (/NM_USUARIO = @nome/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
     if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
     if (/FROM PM\.AIP_CICLO ORDER BY CASE/.test(sql)) return rs([CICLO]);

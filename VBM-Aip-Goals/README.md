@@ -73,7 +73,7 @@ NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com AIPGOALS_AZURE_SQL_DATAB
 ```
 
 Variáveis: `AIPGOALS_AZURE_SQL_DATABASE` (`BDIBPBMSA_DEV`, depois `BDIBPBMSA_PRD`), as de conexão do Portal (`AZURE_SQL_*`)
-e, opcionais, `AIPGOALS_DIRETOR_CARGO` (termos do cargo de diretor no MDM, padrão `Diretor|Director`), `AIPGOALS_SITES_TABELA` (padrão `IBP.SITES`) e `AIPGOALS_FUSO` (padrão `America/Sao_Paulo`). Detalhe em
+e, opcionais, `AIPGOALS_SITES_TABELA` (padrão `IBP.SITES`) e `AIPGOALS_FUSO` (padrão `America/Sao_Paulo`). Detalhe em
 `docs/projetos/aip-goals.md`.
 
 ## Pendências
