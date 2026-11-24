@@ -8,6 +8,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 |---|---|---|
 | `001_pm_criar_tabelas.sql` | Cria o schema `PM`, as 9 tabelas, as restrições, os índices, o gatilho que torna o log imutável e as FKs para `IBP.SITES` | Uma vez por banco. Pode repetir: só cria o que falta |
 | `002_pm_carga_inicial.sql` | Cria o 1º ciclo aberto, a meta nº 0 da BU (resultado do COO) e o 1º administrador | Uma vez, depois do 001, com a sua matrícula preenchida |
+| `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra se a matrícula existe na `IBP.USERS`) | Depois do 002, no DEV |
 
 ## Ordem de ligação (passo a passo)
 
