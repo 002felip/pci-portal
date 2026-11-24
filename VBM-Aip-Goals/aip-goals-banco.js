@@ -7,11 +7,10 @@
  * Dependências injetadas:
  *   runQuery(sql, params)      consulta no banco do AIP (AIPGOALS_AZURE_SQL_DATABASE)
  *   transacao(fn)              fn(q) com q(sql, params) dentro de uma transação; commit no fim, rollback no erro
- *   runQueryUsuarios           consulta onde está a IBP.USERS (no Portal: BDIBPBMSA_PRD); sem ela, usa runQuery
  * Parâmetros sempre como { nome: [tipoMssql, valor] }: nada da requisição é concatenado na SQL.
  *
- * Pessoas: o AIP guarda só a matrícula; nome, e-mail e cargo vêm da IBP.USERS (as colunas são descobertas pelo
- * INFORMATION_SCHEMA, como no controle de acesso do Portal).
+ * Pessoas: o AIP guarda só a matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM (CI.KZN_MDM_HIERARQUIA, a
+ * mesma tabela do Kaizen), no banco do AIP. É por ele também que o e-mail do login vira matrícula.
  */
 const sql = require('mssql');
 
@@ -42,10 +41,13 @@ const pad2 = (n) => String(n).padStart(2, '0');
 const isoData = (d) => (d instanceof Date ? `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}` : d ? String(d).slice(0, 10) : null);
 const semAcento = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
+// Matrícula: numérica sem zeros à esquerda ('01181222' = '1181222'); com letra, em maiúsculas (como no Kaizen)
+const chaveMat = (m) => { const t = String(m == null ? '' : m).trim(); return /^\d+$/.test(t) ? String(BigInt(t)) : t.toUpperCase(); };
+// Igualdade de matrícula no SQL sem erro de conversão (TRY_CAST) e ignorando zeros à esquerda
+const MAT_IGUAL = (a, b) => `(TRY_CAST(${a} AS BIGINT) = TRY_CAST(${b} AS BIGINT) OR CAST(${a} AS VARCHAR(30)) = CAST(${b} AS VARCHAR(30)))`;
 
-function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.env } = {}) {
+function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   if (typeof runQuery !== 'function' || typeof transacao !== 'function') throw new Error('criarFonteBanco: runQuery e transacao são obrigatórios');
-  const qUsuarios = typeof runQueryUsuarios === 'function' ? runQueryUsuarios : runQuery;
   // Tabela dos sites (BU = site). Padrão IBP.SITES; outra só para testes em bancos sem o schema IBP.
   const SITES = String(env.AIPGOALS_SITES_TABELA || 'IBP.SITES');
   if (!SITES.split('.').every((x) => IDENT.test(x)) || SITES.split('.').length !== 2) throw new Error(`AIPGOALS_SITES_TABELA inválida: ${SITES}`);
@@ -55,71 +57,69 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
   const isoHora = (d) => (d instanceof Date ? fmtHora.format(d).replace(' ', 'T') : d ? String(d) : null);
   const isoDia = (d) => (d instanceof Date ? isoHora(d).slice(0, 10) : isoData(d));
 
-  // ── Pessoas (IBP.USERS) ──
-  let cols = null;
-  async function colunasUsuarios() {
-    if (cols) return cols;
-    const { descobrirColunaEmail } = require('../portal-acesso');
-    const email = await descobrirColunaEmail(qUsuarios, env);
-    const r = await qUsuarios("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'IBP' AND TABLE_NAME = 'USERS'");
-    const lista = r.recordset.map((x) => String(x.COLUMN_NAME));
-    const achar = (nomes, re) => nomes.map((n) => lista.find((c) => c.toUpperCase() === n)).find(Boolean) || (re ? lista.find((c) => re.test(c)) : null) || null;
-    const c = {
-      email,
-      nome: achar(['NM_USUARIO', 'NM_USER', 'NM_NOME', 'NM_COLABORADOR', 'NM_EMPREGADO', 'NM_PESSOA', 'NM_COMPLETO', 'NOME', 'DS_NOME'], /^NM_(USU|NOM|COL|EMP|PES)/i),
-      cargo: achar(['NM_CARGO', 'DS_CARGO', 'CARGO', 'NM_FUNCAO', 'DS_FUNCAO'], /CARGO|FUNCAO/i),
-    };
-    Object.values(c).forEach((v) => { if (v && !IDENT.test(v)) throw new Error(`coluna inválida em IBP.USERS: ${v}`); });
-    console.log(`${TAG} pessoas pela IBP.USERS (e-mail ${c.email}, nome ${c.nome || '—'}, cargo ${c.cargo || '—'})`);
-    cols = c;
-    return c;
-  }
-  const selPessoa = (c) => `LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA, ${c.nome ? `[${c.nome}]` : 'NULL'} AS NOME, [${c.email}] AS EMAIL, ${c.cargo ? `[${c.cargo}]` : 'NULL'} AS CARGO`;
-  const pessoaDe = (l) => ({ matricula: l.MATRICULA, nome: (l.NOME && String(l.NOME).trim()) || l.MATRICULA, email: l.EMAIL ? String(l.EMAIL).trim().toLowerCase() : '', cargo: l.CARGO || '', estado: '', cidade: '' });
+  // ── Pessoas (MDM: CI.KZN_MDM_HIERARQUIA, a mesma tabela do Kaizen, no banco do AIP) ──
+  const MDM = String(env.AIPGOALS_MDM_TABELA || 'CI.KZN_MDM_HIERARQUIA');
+  if (MDM.split('.').length !== 2 || !MDM.split('.').every((x) => IDENT.test(x))) throw new Error(`AIPGOALS_MDM_TABELA inválida: ${MDM}`);
+  // Nome: NM_USUARIO; vazio, sai do e-mail (nome.sobrenome@vale.com → Nome Sobrenome), como no Kaizen
+  const SEL_PESSOA = `LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA, NM_USUARIO AS NOME, CD_EMAIL AS EMAIL, NM_POSICAO AS CARGO, NM_ESTADO AS ESTADO, NM_CIDADE AS CIDADE`;
+  const nomeDoEmail = (e) => String(e || '').split('@')[0].split(/[._]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  const pessoaDe = (l) => ({ matricula: l.MATRICULA, nome: (l.NOME && String(l.NOME).trim()) || nomeDoEmail(l.EMAIL) || l.MATRICULA,
+    email: l.EMAIL ? String(l.EMAIL).trim().toLowerCase() : '', cargo: l.CARGO ? String(l.CARGO).trim() : '', estado: l.ESTADO ? String(l.ESTADO).trim() : '', cidade: l.CIDADE ? String(l.CIDADE).trim() : '' });
   const cachePessoa = new Map(); // matrícula → { p, em }
   const cacheEmail = new Map();  // e-mail → { p, em }
 
   async function usuarioPorEmail(email) {
     const e = cacheEmail.get(email);
     if (e && Date.now() - e.em < TTL) return e.p;
-    const c = await colunasUsuarios();
-    const r = await qUsuarios(`SELECT TOP (1) ${selPessoa(c)} FROM IBP.USERS WHERE LTRIM(RTRIM([${c.email}])) = @email AND CD_MATRICULA IS NOT NULL`, { email: [sql.NVarChar(320), email] });
+    // Ativos primeiro; entre os tipos, o de menor ID (Vale antes de terceiro), como no Kaizen
+    const r = await runQuery(`SELECT TOP (1) ${SEL_PESSOA} FROM ${MDM} WHERE CD_EMAIL = @email AND CD_MATRICULA IS NOT NULL
+      ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { email: [sql.NVarChar(255), email] });
     const p = r.recordset[0] ? pessoaDe(r.recordset[0]) : null;
-    cacheEmail.set(email, { p, em: Date.now() });
-    if (p) cachePessoa.set(p.matricula, { p, em: Date.now() });
+    if (p) { cacheEmail.set(email, { p, em: Date.now() }); cachePessoa.set(chaveMat(p.matricula), { p, em: Date.now() }); }
     return p;
   }
   async function pessoas(matriculas) {
     const mapa = new Map();
-    const faltam = [...new Set(matriculas.filter(Boolean).map(String))].filter((m) => {
+    const faltam = [...new Set(matriculas.filter(Boolean).map(chaveMat))].filter((m) => {
       const x = cachePessoa.get(m);
       if (x && Date.now() - x.em < TTL) { mapa.set(m, x.p); return false; }
       return true;
     });
-    if (faltam.length) {
+    for (let i = 0; i < faltam.length; i += 400) {
+      const parte = faltam.slice(i, i + 400), params = {};
+      const num = parte.filter((m) => /^\d+$/.test(m)), txt = parte.filter((m) => !/^\d+$/.test(m));
+      num.forEach((m, k) => { params['n' + k] = [sql.BigInt, m]; });
+      txt.forEach((m, k) => { params['t' + k] = P.vc(m, 30); });
+      const cond = [num.length ? `TRY_CAST(CD_MATRICULA AS BIGINT) IN (${num.map((m, k) => '@n' + k).join(', ')})` : null,
+        txt.length ? `UPPER(LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(30))))) IN (${txt.map((m, k) => '@t' + k).join(', ')})` : null].filter(Boolean).join(' OR ');
       try {
-        const c = await colunasUsuarios();
-        for (let i = 0; i < faltam.length; i += 500) {
-          const parte = faltam.slice(i, i + 500), params = {};
-          parte.forEach((m, k) => { params['m' + k] = P.vc(m); });
-          const r = await qUsuarios(`SELECT ${selPessoa(c)} FROM IBP.USERS WHERE LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) IN (${parte.map((m, k) => '@m' + k).join(', ')})`, params);
-          r.recordset.forEach((l) => { const p = pessoaDe(l); mapa.set(p.matricula, p); cachePessoa.set(p.matricula, { p, em: Date.now() }); });
-        }
+        const r = await runQuery(`SELECT ${SEL_PESSOA} FROM ${MDM} WHERE ${cond}
+          ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 1 ELSE 0 END, ID_TIPO_USUARIO DESC`, params);
+        // Ordem crescente de preferência: a última linha de cada matrícula (ativa, menor tipo) é a que fica
+        r.recordset.forEach((l) => { const p = pessoaDe(l), k = chaveMat(p.matricula); mapa.set(k, p); cachePessoa.set(k, { p, em: Date.now() }); });
       } catch (err) {
-        console.error(`${TAG} nomes da IBP.USERS:`, err.message); // sem nome, mostra a matrícula
+        console.error(`${TAG} nomes do MDM (${MDM}):`, err.message);
       }
     }
     return mapa;
   }
-  const nomeDe = (mapa, m) => (m ? ((mapa.get(String(m)) || {}).nome || String(m)) : null);
-  let cacheDiretorio = null;
-  async function diretorio() {
-    if (cacheDiretorio && Date.now() - cacheDiretorio.em < TTL) return cacheDiretorio.lista;
-    const c = await colunasUsuarios();
-    const r = await qUsuarios(`SELECT TOP (20000) ${selPessoa(c)} FROM IBP.USERS WHERE CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) <> ''${c.nome ? ` ORDER BY [${c.nome}]` : ''}`);
-    const lista = r.recordset.map(pessoaDe);
-    cacheDiretorio = { lista, em: Date.now() };
-    return lista;
+  const nomeDe = (mapa, m) => (m ? ((mapa.get(chaveMat(m)) || {}).nome || String(m)) : null);
+  // Busca para o autopreenchimento (Novo usuário, diretor da BU): nome (começo de qualquer palavra), e-mail ou matrícula
+  async function buscarPessoas(termo) {
+    const t = String(termo || '').trim().replace(/[%_[\]]/g, '');
+    if (t.length < 2) return [];
+    const r = await runQuery(`SELECT TOP (20) ${SEL_PESSOA} FROM ${MDM}
+      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL
+        AND (NM_USUARIO LIKE @ini OR NM_USUARIO LIKE @palavra OR CD_EMAIL LIKE @ini OR CAST(CD_MATRICULA AS VARCHAR(20)) LIKE @ini)
+      ORDER BY CASE WHEN NM_USUARIO LIKE @ini THEN 0 ELSE 1 END, NM_USUARIO`,
+    { ini: [sql.NVarChar(255), t + '%'], palavra: [sql.NVarChar(255), '% ' + t + '%'] });
+    const vistos = new Set();
+    return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
+  }
+  async function pessoaPorNome(q, nome) {
+    const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
+      WHERE NM_USUARIO = @nome AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
+    return r.recordset[0] ? r.recordset[0].MATRICULA : null;
   }
 
   // ── Ciclo e sites ──
@@ -160,7 +160,7 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
     const c = await cicloAtualLinha();
     if (!c) return { papeis: [], quem: pessoa.matricula, nome: pessoa.nome };
     const r = await runQuery(`SELECT p.TP_GRUPO, s.NM_SITE FROM PM.AIP_PAPEL p LEFT JOIN ${SITES} s ON s.ID_SITE = p.ID_SITE
-      WHERE p.ID_CICLO = @ciclo AND p.CD_MATRICULA = @mat AND p.SG_ATIVO = 'S'`, { ciclo: P.int(c.ID_CICLO), mat: P.vc(pessoa.matricula) });
+      WHERE p.ID_CICLO = @ciclo AND ${MAT_IGUAL('p.CD_MATRICULA', '@mat')} AND p.SG_ATIVO = 'S'`, { ciclo: P.int(c.ID_CICLO), mat: P.vc(pessoa.matricula, 30) });
     const papeis = r.recordset.map((l) => ({ papel: PAPEL_DE[l.TP_GRUPO], bu: l.TP_GRUPO === 'CONTRIBUIDOR' ? String(l.NM_SITE || '').trim() : null, grupo: GRUPO_DE[l.TP_GRUPO] }));
     return { papeis, quem: pessoa.matricula, nome: pessoa.nome, idCiclo: c.ID_CICLO };
   }
@@ -190,7 +190,8 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
     return { card: l.CD_GOAL_CARD, id: l.ID_GOAL_CARD, bu: { sigla: String(l.NM_SITE).trim(), pais: String(l.NM_PAIS || '').trim() },
       meta: { numero: l.NO_META, titulo: l.NO_META === 0 ? TITULO_RESULTADO : l.NM_TITULO, tipo: String(l.TP_META).toLowerCase(), peso: Number(l.VL_PESO) || 0, ...(l.NO_META === 0 ? { resultado: true } : {}) },
       estado, nivel: estado === 'em_aprovacao' ? { atual: 1, total: 1, nome: 'P&CI/COO' } : null,
-      versao: l.NO_VERSAO || null, desde: desdeDe(l), contribuidor: nomeDe(nomes, l.CD_MATRICULA_AUTOR || null) };
+      versao: l.NO_VERSAO || null, desde: desdeDe(l), contribuidor: nomeDe(nomes, l.CD_MATRICULA_AUTOR || null),
+      editores: l.CD_MATRICULA_AUTOR ? [l.CD_MATRICULA_AUTOR] : [] }; // RN-12 na fila de aprovação
   }
   async function painel(hoje) {
     const cc = await cicloCompleto(hoje);
@@ -336,7 +337,7 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
     const cc = await cicloCompleto(hoje);
     if (!cc) return null;
     const c = cc.linha;
-    const [ciclosR, papeisR, subR, sitesR, mt, dir] = [
+    const [ciclosR, papeisR, subR, sitesR, mt] = [
       await runQuery('SELECT NO_ANO, NM_CICLO, SG_STATUS FROM PM.AIP_CICLO ORDER BY NO_ANO DESC'),
       await runQuery(`SELECT p.CD_MATRICULA, p.TP_GRUPO, s.NM_SITE FROM PM.AIP_PAPEL p LEFT JOIN ${SITES} s ON s.ID_SITE = p.ID_SITE
         WHERE p.ID_CICLO = @ciclo AND p.SG_ATIVO = 'S' ORDER BY p.TP_GRUPO, p.CD_MATRICULA`, { ciclo: P.int(c.ID_CICLO) }),
@@ -344,7 +345,6 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
         WHERE m.ID_CICLO = @ciclo AND EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD_VERSAO v WHERE v.ID_GOAL_CARD = gc.ID_GOAL_CARD) GROUP BY gc.ID_SITE`, { ciclo: P.int(c.ID_CICLO) }),
       await runQuery(`SELECT ID_SITE, NM_SITE, NM_PAIS FROM ${SITES} WHERE NM_SITE IS NOT NULL ORDER BY NM_PAIS, NM_SITE`),
       await metasDoCiclo(c.ID_CICLO),
-      await diretorio().catch((err) => { console.error(`${TAG} diretório (IBP.USERS):`, err.message); return []; }),
     ];
     const sub = new Map(subR.recordset.map((x) => [x.ID_SITE, x.N]));
     const nomes = await pessoas(papeisR.recordset.map((p) => p.CD_MATRICULA).concat(cc.sites.map((s) => s.diretor)));
@@ -359,14 +359,14 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
         pesos: Object.fromEntries(mt.pesos.filter((p) => p.ID_META === m.ID_META && sigla.has(p.ID_SITE)).map((p) => [sigla.get(p.ID_SITE), Number(p.VL_PESO)])) })),
     };
     const membros = papeisR.recordset.map((p) => {
-      const pe = nomes.get(String(p.CD_MATRICULA)) || { nome: p.CD_MATRICULA, email: '', cargo: '' };
-      return { nome: pe.nome, matricula: String(p.CD_MATRICULA), email: pe.email, cargo: pe.cargo, estado: '', cidade: '', grupo: GRUPO_DE[p.TP_GRUPO], bu: p.TP_GRUPO === 'CONTRIBUIDOR' ? String(p.NM_SITE || '').trim() : null };
+      const pe = nomes.get(chaveMat(p.CD_MATRICULA)) || { nome: String(p.CD_MATRICULA), email: '', cargo: '', estado: '', cidade: '' };
+      return { nome: pe.nome, matricula: String(p.CD_MATRICULA).trim(), email: pe.email, cargo: pe.cargo, estado: pe.estado, cidade: pe.cidade, grupo: GRUPO_DE[p.TP_GRUPO], bu: p.TP_GRUPO === 'CONTRIBUIDOR' ? String(p.NM_SITE || '').trim() : null };
     });
     return {
       ciclo: { ...cc.ciclo, status: c.SG_STATUS === 'S' ? 'aberto' : 'fechado', textoPadraoExcecoes: '' },
       ciclos: ciclosR.recordset.map((x) => ({ ano: x.NO_ANO, nome: x.NM_CICLO, aberto: x.SG_STATUS === 'S' })),
-      bus: cc.sites.map((s) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: nomeDe(nomes, s.diretor) || '', cardsSubmetidos: sub.get(s.id) || 0 })),
-      membros, diretorio: dir,
+      bus: cc.sites.map((s) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: nomeDe(nomes, s.diretor) || '', diretorMatricula: s.diretor || null, cardsSubmetidos: sub.get(s.id) || 0 })),
+      membros, diretorio: [], // a busca de pessoas é por GET /pessoas?q= (MDM)
       excecoes: { bus: Object.fromEntries(cc.sites.map((s) => [s.sigla, { texto: s.excecao, ver: s.ver }])) },
       niveis: [
         { id: 'ceo', nome: 'CEO', total: PESO_TOTAL, herdado: 0, ativo: true, fixo: true },
@@ -527,10 +527,15 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
         const ids = await siteIdsPorNome(q, d.bus.map((b) => b.sigla));
         const erros = d.bus.map((b, i) => (ids[i] ? null : { campo: `bus.${i}.sigla`, codigo: 'SITE', bu: b.sigla })).filter(Boolean);
         if (erros.length) return { erros };
-        const dir = await diretorio().catch(() => []);
-        const porNome = new Map(dir.map((p) => [p.nome.trim().toLowerCase(), p.matricula]));
+        const atuais0 = new Map(base.bus.map((b) => [b.sigla, b]));
         for (let i = 0; i < d.bus.length; i++) {
-          const b = d.bus[i], mat = b.diretor ? porNome.get(String(b.diretor).trim().toLowerCase()) || null : null;
+          const b = d.bus[i];
+          // Diretor: matrícula vinda da busca; senão, o nome no MDM; mesmo nome de antes, mantém a matrícula gravada
+          let mat = b.diretorMatricula ? String(b.diretorMatricula).trim() : null;
+          if (!mat && b.diretor) {
+            const antes = atuais0.get(b.sigla);
+            mat = antes && antes.diretor === b.diretor && antes.diretorMatricula ? antes.diretorMatricula : await pessoaPorNome(q, b.diretor);
+          }
           await q(`IF EXISTS (SELECT 1 FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo AND ID_SITE = @site)
               UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = @ativa, CD_MATRICULA_DIRETOR = @dir WHERE ID_CICLO = @ciclo AND ID_SITE = @site
             ELSE INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR) VALUES (@ciclo, @site, @ativa, @dir)`,
@@ -686,7 +691,7 @@ function criarFonteBanco({ runQuery, transacao, runQueryUsuarios, env = process.
     fonte: 'banco', exemplo: false,
     contexto, ciclo: async (hoje) => { const cc = await cicloCompleto(hoje); return cc ? cc.ciclo : null; },
     painel, desdobramento, goalCard, versoes, actionLog, configuracao,
-    salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
+    buscarPessoas, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
     _sql: { SQL_CARDS }, // exposto para o teste de sintaxe
   };
 }

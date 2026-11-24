@@ -1,7 +1,7 @@
 /* =====================================================================================================================
    AIP Goals — administrador 01181222 no ciclo aberto (rode no BDIBPBMSA_DEV, depois do 001 e do 002).
    Pode rodar mais de uma vez: não duplica; se já existir, apenas reativa. O app reconhece o e-mail de login pela
-   matrícula na IBP.USERS (a matrícula precisa existir lá).
+   matrícula no MDM (CI.KZN_MDM_HIERARQUIA, a mesma tabela do Kaizen): a matrícula precisa existir lá.
    ===================================================================================================================== */
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -24,6 +24,9 @@ VALUES (@CICLO, 'CONFIGURACAO', @MATRICULA, 'ADMIN', 'grupos', N'cadastrou o adm
 
 COMMIT;
 
-SELECT p.ID_PAPEL, p.ID_CICLO, p.CD_MATRICULA, p.TP_GRUPO, p.SG_ATIVO, u.CD_MATRICULA AS EXISTE_NA_IBP_USERS
-FROM PM.AIP_PAPEL p LEFT JOIN IBP.USERS u ON u.CD_MATRICULA = p.CD_MATRICULA
+SELECT p.ID_PAPEL, p.ID_CICLO, p.CD_MATRICULA, p.TP_GRUPO, p.SG_ATIVO, u.NM_USUARIO AS NOME_NO_MDM, u.CD_EMAIL AS EMAIL_NO_MDM
+FROM PM.AIP_PAPEL p
+OUTER APPLY (SELECT TOP (1) m.NM_USUARIO, m.CD_EMAIL FROM CI.KZN_MDM_HIERARQUIA m
+             WHERE TRY_CAST(m.CD_MATRICULA AS BIGINT) = TRY_CAST(p.CD_MATRICULA AS BIGINT) OR CAST(m.CD_MATRICULA AS VARCHAR(30)) = p.CD_MATRICULA
+             ORDER BY CASE WHEN m.SG_ATIVO = 'A' THEN 0 ELSE 1 END) u
 WHERE p.ID_CICLO = @CICLO AND p.CD_MATRICULA = @MATRICULA;

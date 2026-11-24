@@ -13,7 +13,7 @@ const CICLO = { ID_CICLO: 7, NO_ANO: 2027, NM_CICLO: 'AIP 2027', SG_STATUS: 'S',
   QTDE_PONTOS_HERDADOS_COO: 75, QTDE_PONTOS_HERDADOS_BU: 40 };
 const SITES = [{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil', SG_ATIVA: 'S', CD_MATRICULA_DIRETOR: 'D1', DS_EXCECAO: 'Força maior excluída.', SG_EXCECAO_VER: 'S' },
   { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá', SG_ATIVA: 'S', CD_MATRICULA_DIRETOR: null, DS_EXCECAO: null, SG_EXCECAO_VER: 'S' }];
-const PESSOAS = [{ MATRICULA: 'C1', NOME: 'Ana Ribeiro', EMAIL: 'ana@vale.com', CARGO: 'Analista' }, { MATRICULA: 'D1', NOME: 'Fernanda Lacerda', EMAIL: 'fer@vale.com', CARGO: 'Diretora' },
+const PESSOAS = [{ MATRICULA: 'C1', NOME: 'Ana Ribeiro', EMAIL: 'ana@vale.com', CARGO: 'Analista' }, { MATRICULA: 'C4', NOME: null, EMAIL: 'carla.mendes@vale.com', CARGO: null }, { MATRICULA: 'D1', NOME: 'Fernanda Lacerda', EMAIL: 'fer@vale.com', CARGO: 'Diretora' },
   { MATRICULA: 'C2', NOME: 'Bruno Costa', EMAIL: 'bruno@vale.com', CARGO: 'Engenheiro' }];
 const CAMPOS = { objective: 'Obj', formula: 'F', unit: '%', ruler: { min: 1, meta: 2, exc: 3 }, area: {}, evidence: 'Ev', exceptions: { bu: '' } };
 
@@ -22,13 +22,14 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
   const rs = (recordset, rowsAffected = [recordset.length || 1]) => ({ recordset, rowsAffected });
   const responder = (sql, p = {}) => {
     log.push({ sql, p });
-    if (/INFORMATION_SCHEMA\.COLUMNS/.test(sql)) return rs(['CD_MATRICULA', 'DS_EMAIL', 'NM_USUARIO', 'NM_CARGO'].map((c) => ({ COLUMN_NAME: c })));
-    if (/FROM IBP\.USERS WHERE LTRIM\(RTRIM\(\[DS_EMAIL\]\)\) = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
-    if (/FROM IBP\.USERS/.test(sql)) return rs(PESSOAS);
+    if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
+    if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
+    if (/NM_USUARIO = @nome/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
+    if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
     if (/FROM PM\.AIP_CICLO ORDER BY CASE/.test(sql)) return rs([CICLO]);
     if (/SELECT NO_ANO, NM_CICLO, SG_STATUS FROM PM\.AIP_CICLO/.test(sql)) return rs([{ NO_ANO: 2027, NM_CICLO: 'AIP 2027', SG_STATUS: 'S' }, { NO_ANO: 2026, NM_CICLO: 'AIP 2026', SG_STATUS: 'N' }]);
     if (/FROM PM\.AIP_CICLO_SITE cs JOIN/.test(sql)) return rs(SITES);
-    if (/FROM PM\.AIP_PAPEL p LEFT JOIN .* WHERE p\.ID_CICLO = @ciclo AND p\.CD_MATRICULA = @mat/s.test(sql)) return rs(papeis);
+    if (/TRY_CAST\(p\.CD_MATRICULA AS BIGINT\) = TRY_CAST\(@mat/.test(sql)) return rs(papeis);
     if (/FROM PM\.AIP_PAPEL p LEFT JOIN/.test(sql)) return rs([{ CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', NM_SITE: null }, { CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', NM_SITE: 'Salobo' }]);
     if (/OUTER APPLY/.test(sql)) return rs([
       { ID_GOAL_CARD: 1, CD_GOAL_CARD: 'GC-SAL-00', TP_ESTADO: 'RASCUNHO', CD_MATRICULA: 'C1', DT_ATUALIZACAO: new Date('2026-11-23T13:00:00Z'), ID_SITE: 11, NO_META: 0, NM_TITULO: "COO's Scorecard Result", TP_META: 'FORMULA', TP_ORIENTACAO: 'MAIOR', NM_SITE: 'Salobo', NM_PAIS: 'Brasil', VL_PESO: 40, NO_VERSAO: null },
@@ -69,12 +70,17 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
   return { log, fonte: criarFonteBanco({ runQuery, transacao, env: {} }) };
 }
 
-test('banco: contexto pela IBP.USERS, ciclo atual com etapa do dia e BUs ativas', async () => {
+test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do dia e BUs ativas', async () => {
   const { fonte } = bancoSimulado([{ TP_GRUPO: 'CONTRIBUIDOR', NM_SITE: 'Salobo' }, { TP_GRUPO: 'APROVACAO', NM_SITE: null }]);
   const ctx = await fonte.contexto('ana@vale.com', HOJE);
   assert.strictEqual(ctx.quem, 'C1');
   assert.deepStrictEqual(ctx.papeis.map((p) => [p.papel, p.bu]), [['contribuidor', 'Salobo'], ['aprovador', null]]);
   assert.deepStrictEqual((await fonte.contexto('ninguem@vale.com', HOJE)).papeis, []);
+  // Autopreenchimento: busca no MDM; sem NM_USUARIO, o nome sai do e-mail (nunca a matrícula)
+  assert.deepStrictEqual((await fonte.buscarPessoas('Ana')).map((x) => x.nome), ['Ana Ribeiro']);
+  assert.deepStrictEqual(await fonte.buscarPessoas('a'), []);
+  const nomes = await fonte.configuracao(HOJE);
+  assert.ok(nomes.membros.every((m) => m.nome && m.nome !== m.matricula));
   const c = await fonte.ciclo(HOJE);
   assert.strictEqual(c.etapaAtual, 'proposta');
   assert.deepStrictEqual(c.bus, [{ sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'VNL', pais: 'Canadá' }]);
@@ -117,7 +123,7 @@ test('banco: desdobramento, Action Log e configuração', async () => {
   const cf = await fonte.configuracao(HOJE);
   assert.deepStrictEqual(cf.niveis.map((n) => n.herdado), [0, 75, 40]);
   assert.deepStrictEqual(cf.membros.map((m) => [m.nome, m.grupo, m.bu]), [['Ana Ribeiro', 'admin', null], ['Bruno Costa', 'contribuidor', 'Salobo']]);
-  assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.diretor, b.cardsSubmetidos]), [['Salobo', 'Fernanda Lacerda', 1], ['VNL', '', 0]]);
+  assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.diretor, b.diretorMatricula, b.cardsSubmetidos]), [['Salobo', 'Fernanda Lacerda', 'D1', 1], ['VNL', '', null, 0]]);
   assert.strictEqual(cf.metasNivel.bu[0].origem, '2027_02');
   assert.strictEqual(cf.sites.length, 3);
   // A configuração do banco passa pela mesma validação do servidor (RN-16: BU = 40 herdados + 60)
@@ -145,6 +151,7 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   const cards = log.filter((x) => /INSERT PM\.AIP_GOAL_CARD \(/.test(x.sql)).map((x) => x.p.cd[1]);
   assert.deepStrictEqual(cards, ['GC-SOS-01', 'GC-SOS-00']); // código de 3 letras livre no ciclo
   assert.ok(log.some((x) => /DELETE FROM PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 12)); // VNL saiu
+  assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 13 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
   const r = await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Atlantis', pais: 'X', ativa: true }] }, ctx, base);
   assert.strictEqual(r.erros[0].codigo, 'SITE');
 });

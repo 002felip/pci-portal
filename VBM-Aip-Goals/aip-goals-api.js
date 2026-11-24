@@ -35,6 +35,7 @@
  *   POST /goal-card/decisao   { card, decisao, comentario, revisao }   RN-06, RN-08, RN-09, RN-12 (usada pela fila de aprovação, T14)
  *   POST /goal-card/comentario { card, secao, texto }   comentário ancorado a uma seção (§7.3, RN-13); só o grupo de aprovação, na T14
  *   GET  /configuracao · POST /configuracao/salvar { aba, dados } · POST /configuracao/ciclo { acao, ano }   T11, só admin
+ *   GET  /pessoas?q=   busca no MDM (CI.KZN_MDM_HIERARQUIA) para o autopreenchimento; só admin
  *   GET  /aprovacoes?pais=&bu=&idade=   T14 — fila do grupo de aprovação (AC-08: demais perfis, 403):
  *                      { ciclo, parametros, filtro, itens[], total }
  *                      `itens` = cards Em aprovação, os mais antigos primeiro, com a idade em dias úteis,
@@ -576,6 +577,13 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
       res.json({ ...publico(base), somas: somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
     } catch (err) { falha(res, '/configuracao', err, 'Não foi possível carregar a configuração.'); }
+  });
+  // Autopreenchimento de pessoas (Novo usuário, diretor da BU): MDM, só o administrador
+  router.get('/pessoas', async (req, res) => {
+    try {
+      const ctx = await exigirAdmin(req, res); if (!ctx) return;
+      res.json({ pessoas: dados.buscarPessoas ? await dados.buscarPessoas(String(req.query.q || '').slice(0, 80)) : [] });
+    } catch (err) { falha(res, '/pessoas', err, 'Não foi possível buscar as pessoas.'); }
   });
   router.post('/configuracao/salvar', express.json({ limit: '200kb' }), async (req, res) => {
     try {

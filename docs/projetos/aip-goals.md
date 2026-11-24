@@ -218,7 +218,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   cada site, olho (aparece/riscado), lápis e ×. A BU não edita; as exceções próprias ficam no Goal Card.
 - **Goal Card:** BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU,
   cadastrado em Business Units).
-- **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;
+- **Grupos:** inclusão pelo Novo usuário, com autopreenchimento do MDM (`CI.KZN_MDM_HIERARQUIA`, busca por nome, e-mail ou matrícula), filtros por grupo e BU, busca e remoção;
   o ciclo precisa de ao menos um aprovador e um administrador.
 - **Metas e pesos por nível:** seletor CEO › COO › BU (níveis fixos, 100 pts por unidade); matriz meta × unidade editável,
   linha "Resultado do nível acima" editável com os pontos herdados, nova meta e remoção; total por unidade e contador de pendências por nível. Salvar fica bloqueado enquanto alguma unidade não fecha
@@ -233,7 +233,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   vem da `PM.AIP_PAPEL` (Administração › Grupos).
 - **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP, com a `AIP_META_PESO`; a BU é o site da IBP.SITES).
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
-- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista de sugestões; o país vem do cadastro). Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
+- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista dos sites fora do ciclo, por país; o país vem do cadastro). Diretor da BU com autopreenchimento do MDM. Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
 
 ### Desdobramento
 
@@ -268,7 +268,7 @@ o resto da vista sai de cena e o título recebe o foco (leitor de tela). Cores p
 Tudo vem do schema `PM` (ver `VBM-Aip-Goals/database/README.md`, com a ordem de ligação das telas). O administrador
 edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU. As BUs são sites da
 `IBP.SITES` (D-15) e o código do Goal Card usa 3 letras do site (ex.: `GC-SAL-01`). Nomes de pessoas vêm da
-`IBP.USERS` pela matrícula. Os dados de exemplo (estrutura do material de referência 2027) ficam só nos testes.
+MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`) pela matrícula: as telas mostram sempre o nome (sem `NM_USUARIO`, o nome sai do e-mail). Os dados de exemplo (estrutura do material de referência 2027) ficam só nos testes.
 
 ## Responsividade
 
@@ -300,7 +300,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /desdobramento` | Desdobramento: metas do scorecard do COO e matriz meta × BU com peso e situação do Goal Card |
 | `GET /versoes?card=` | T06: versões do card (mais recente primeiro), com snapshot, decisão e a oficial |
 | `GET /action-log?bu=&meta=&secao=&tipo=&periodo=&card=&pagina=&tudo=` | T07: eventos filtrados (40 por página; `tudo=1` para exportar), `porTipo` e opções dos filtros |
-| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (`/configuracao/clonar` = novo) |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` · `GET /pessoas?q=` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (`/configuracao/clonar` = novo) |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
 | `POST /goal-card/rascunho` · `POST /goal-card/submeter` · `POST /goal-card/reabrir` · `POST /goal-card/decisao` | T04/T14: rascunho no banco; submeter cria a versão; decisão grava na versão e os ajustes viram comentários da seção; RN-12 pela matrícula |
 | `GET /aprovacoes?pais=&bu=&idade=` | T14: só o grupo de aprovação (403 para os demais). Fila Em aprovação (mais antigos primeiro) com `idade`, `resubmissao` e `podeDecidir` (RN-12), e `total` sem filtro |
@@ -314,6 +314,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 |---|---|---|
 | `AIPGOALS_AZURE_SQL_DATABASE` | `AZURE_SQL_DATABASE` | base da aplicação; no `app.yaml`, `BDIBPBMSA_DEV` (depois `BDIBPBMSA_PRD`) |
 | `AIPGOALS_SITES_TABELA` | `IBP.SITES` | tabela dos sites (BUs) |
+| `AIPGOALS_MDM_TABELA` | `CI.KZN_MDM_HIERARQUIA` | pessoas (login, nome, cargo); a mesma do Kaizen |
 | `AIPGOALS_FUSO` | `America/Sao_Paulo` | fuso das datas e horas mostradas (o banco grava em UTC) |
 | `AIPGOALS_EMAIL_LOCAL` | — | só no `server.js` com `NODE_ENV=development` fora do Databricks: simula o `X-Forwarded-Email` |
 
@@ -331,7 +332,7 @@ NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com AIPGOALS_AZURE_SQL_DATAB
 
 - **Banco:** schema `PM` no `BDIBPBMSA_DEV` (scripts `001` e `002` em `database/`). Para produção, rodar os scripts no
   `BDIBPBMSA_PRD` e trocar `AIPGOALS_AZURE_SQL_DATABASE` no `app.yaml`.
-- **Papéis:** `PM.AIP_PAPEL` do ciclo atual, pela matrícula do usuário na `IBP.USERS` (AC-02, AC-03).
+- **Papéis:** `PM.AIP_PAPEL` do ciclo atual, pela matrícula do usuário no MDM (`CD_EMAIL` → `CD_MATRICULA`, sem zeros à esquerda) (AC-02, AC-03).
 - **Primeira configuração:** a RN-16 só deixa salvar BUs e Metas e pesos quando cada nível fecha 100 pts; Ciclo e
   Grupos salvam sozinhas.
 - **Card na página inicial do Portal:** ainda não adicionado.

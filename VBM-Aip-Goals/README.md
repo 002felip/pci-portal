@@ -59,7 +59,7 @@ Da pasta, só `index.html` e `assets/` são públicos; o resto responde 404 (`po
 | `GET /desdobramento` | Desdobramento: scorecard do COO e matriz meta × BU |
 | `GET /versoes?card=` | T06: versões do Goal Card |
 | `GET /action-log` | T07: eventos filtrados e paginados |
-| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` | T11: só o administrador; RN-16 validada no servidor; fechar, reabrir e abrir o próximo ciclo |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` · `GET /pessoas?q=` | T11: só o administrador; RN-16 validada no servidor; fechar, reabrir e abrir o próximo ciclo |
 | `GET /goal-card?card=` · `POST /goal-card/rascunho` · `POST /goal-card/submeter` · `POST /goal-card/reabrir` · `POST /goal-card/decisao` | T04: Goal Card; escritas validadas e gravadas |
 | `GET /aprovacoes` · `POST /goal-card/comentario` | T14: fila do grupo de aprovação e comentário por seção (só o grupo de aprovação) |
 | `GET /health` · `GET /ping` | saúde e diagnóstico |

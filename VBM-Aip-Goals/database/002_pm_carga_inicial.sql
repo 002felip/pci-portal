@@ -5,7 +5,7 @@
    pela própria tela Administração.
 
    Pronto para rodar: administrador 81059384 (felipe.santos.souza@vale.com), ciclo AIP 2027. O app reconhece o
-   e-mail de login pela matrícula na IBP.USERS. Datas e pontos herdados podem ser trocados depois em Administração.
+   e-mail de login pela matrícula no MDM (CI.KZN_MDM_HIERARQUIA, a mesma tabela do Kaizen). Datas e pontos herdados podem ser trocados depois em Administração.
    ===================================================================================================================== */
 SET NOCOUNT ON;
 SET XACT_ABORT ON;

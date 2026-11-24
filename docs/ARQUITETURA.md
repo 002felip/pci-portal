@@ -252,7 +252,7 @@ rastreável). Página única com vistas pelo hash; publicadas **Início** (`#ini
 
 - **API (`/VBM-Aip-Goals/api`):** `inicio`, `painel`, `metas`, `desdobramento`, `goal-card`, `versoes`, `action-log`, `configuracao`, `health`, `ping`.
 - **Dados:** Azure SQL, schema `PM` (`AIPGOALS_AZURE_SQL_DATABASE`, hoje `BDIBPBMSA_DEV`), por
-  `aip-goals-banco.js`; pessoas pela `IBP.USERS` do PRD (conexão do Performance Hub). Scripts e ordem de
+  `aip-goals-banco.js`; pessoas pelo MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`), no mesmo banco. Scripts e ordem de
   ligação em `VBM-Aip-Goals/database/`.
 - Mais: [`docs/projetos/aip-goals.md`](projetos/aip-goals.md).
 
