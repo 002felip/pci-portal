@@ -1340,7 +1340,8 @@ textarea.cf-in { resize: vertical; line-height: 1.5; }
 .cf-gr-cab h4 { margin: 0; font: 600 0.78rem var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-strong); }
 .cf-gr-cab h4 small { font-weight: 400; letter-spacing: .04em; color: var(--text-soft); text-transform: none; }
 .cf-gr-cont { padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent-strong); font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
-.cf-gr-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.6rem; margin-top: 0.6rem; }
+.cf-gr-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 0.6rem; } /* 2 cards por linha em cada bloco */
+@media (max-width: 560px) { .cf-gr-cards { grid-template-columns: minmax(0, 1fr); } }
 .cf-usr { position: relative; display: flex; align-items: center; gap: 0.8rem; padding: 0.9rem 2.4rem 0.9rem 1rem; border-radius: 0.75rem; border: 1px solid var(--card-line); background: var(--card-bg); min-width: 0; }
 .cf-usr-ini { display: grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); color: #fff; font-size: 0.68rem; font-weight: 700; }
 .cf-usr-txt { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
