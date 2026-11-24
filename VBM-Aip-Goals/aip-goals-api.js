@@ -300,12 +300,12 @@ function validarConfiguracao(aba, dados, base) {
     const nv = Object.fromEntries((d.niveis || []).map((n) => [n.id, n]));
     if (nv.ga && nv.ga.ativo && nv.gg && !nv.gg.ativo) erros.push({ campo: 'niveis.ga.ativo', codigo: 'SALTO' });
   }
-  // Exceções e considerações: texto padrão do ciclo e textos próprios por BU (só BUs do cadastro)
+  // Exceções e considerações: texto padrão do ciclo (não editável pela BU) e as BUs em que ele aparece
   if (aba === 'excecoes') {
     if (String(d.padrao || '').length > MAX_EXCECAO) erros.push({ campo: 'padrao', codigo: 'TAMANHO' });
-    Object.entries(d.porBu || {}).forEach(([sigla, t]) => {
-      if (!base.bus.some((b) => b.sigla === sigla)) erros.push({ campo: `porBu.${sigla}`, codigo: 'BU' });
-      else if (String(t || '').length > MAX_EXCECAO) erros.push({ campo: `porBu.${sigla}`, codigo: 'TAMANHO' });
+    // BUs em que o texto padrão aparece: só BUs do cadastro, com sim/não
+    Object.entries(d.bus || {}).forEach(([sigla, v]) => {
+      if (!base.bus.some((b) => b.sigla === sigla) || typeof v !== 'boolean') erros.push({ campo: `bus.${sigla}`, codigo: 'BU' });
     });
   }
   if (aba === 'bus') {

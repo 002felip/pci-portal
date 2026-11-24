@@ -8,11 +8,11 @@ insert into sites (id_site, id_sistema, nm_site, nm_pais, sg_regiao) values
  (12, 1, 'Onça Puma', 'Brasil', null),
  (15, 1, 'Ontario', 'Canadá', null);
 
-insert into aip_unidade (id_ciclo, cd_nivel, nm_unidade, id_site, sg_ativa, cd_matricula_diretor, ds_excecoes) values
- (2, 'CEO', 'CEO VBM', null, 'S', null, null),
- (2, 'COO', 'COO VBM', null, 'S', null, null),
- (2, 'BU', 'Onça Puma', 12, 'S', 'C410681', null),
- (2, 'BU', 'Ontario', 15, 'S', 'C410718', 'Variações cambiais (CAD/USD) acima de 5% sobre o orçamento ficam fora do resultado.');
+insert into aip_unidade (id_ciclo, cd_nivel, nm_unidade, id_site, sg_ativa, cd_matricula_diretor, sg_excecao_padrao) values
+ (2, 'CEO', 'CEO VBM', null, 'S', null, 'S'),
+ (2, 'COO', 'COO VBM', null, 'S', null, 'S'),
+ (2, 'BU', 'Onça Puma', 12, 'S', 'C410681', 'S'),
+ (2, 'BU', 'Ontario', 15, 'S', 'C410718', 'N');
 
 insert into aip_meta (id_ciclo, cd_nivel, no_meta, nm_titulo, tp_meta, tp_polaridade, id_meta_origem, sg_ativa) values
  (2, 'COO', 2, 'Strengthen a Culture of Chronic Unease', 'FORMULA', 'MAIOR', null, 'S'),
