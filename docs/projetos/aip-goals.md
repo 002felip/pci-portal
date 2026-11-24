@@ -9,7 +9,7 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 - **Código:** `VBM-Aip-Goals/`
 - **Acesso:** regra do Portal (`IBP.USERS` com `CD_MATRICULA`); papéis por BU e por ciclo virão do modelo de dados
 - **Stack:** Node/Express (`aip-goals-api.js`) + HTML/JS numa página única, sem framework e sem biblioteca
-- **Situação:** Início, Desdobramento, T02, T03, T04 Goal Card, T06 Versões, T07 Action Log e T11 Configuração do ciclo publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
+- **Situação:** Início, COO AIP, T02, AIP BU's (T03), T04 Goal Card, T06 Versões, T07 Action Log e T11 Configuração do ciclo publicados (a T01 Minhas pendências foi retirada, D-14) com dados de exemplo; demais telas do catálogo em construção
 
 
 ## Modelo de acesso e aprovação (D-09, D-10 — 17/11/2026)
@@ -31,9 +31,8 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 
 ## Navegação e layout (D-17, D-19 — 17 e 18/11/2026)
 
-- **Menu no topo:** Início, Desdobramento, Metas da BU e **Administração** (o Painel do ciclo está oculto: fora do menu
-  e sem rota, mas mantido no código), um submenu com
-  Aprovações (só o grupo de aprovação), Action Log e Configuração (só o administrador). Abre no clique,
+- **Menu no topo:** Início, COO AIP, AIP BU's, Aprovações, Action Log e **Administração** (o Painel do ciclo está oculto: fora do menu
+  e sem rota, mas mantido no código). Aprovações e Action Log: grupo de aprovação e administrador; Administração (configuração): só o administrador (D-28). Abre no clique,
   fecha ao escolher, ao clicar fora ou com Esc; fica destacado quando uma tela dele está aberta e some se o perfil
   não vê nenhuma das telas. No modo gaveta (até 1080 px), as telas aparecem recuadas sob o título.
 - **Layout comum:** todas as telas, menos o Início, ocupam a largura da janela (`body.is-largo`) com margens
@@ -62,14 +61,14 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
 | Vista | Tela | Situação |
 |---|---|---|
 | `#inicio` (padrão) | T00 Início: abertura do ciclo | publicada |
-| `#desdobramento` | Desdobramento CEO → COO → BUs | publicada |
+| `#desdobramento` | COO AIP: desdobramento CEO → COO → BUs | publicada |
 | `#painel` | T02 Painel do ciclo (P&CI/COO e administrador) | publicada |
-| `#metas` | T03 Metas da BU (recorte do usuário) | publicada |
+| `#metas` | T03 AIP BU's (recorte do usuário) | publicada |
 | `#goal-card?card=` | T04 Goal Card (também em popup pela T03) | publicada |
 | `#versoes?card=&de=&para=` | T06 Versões (pelos links do Goal Card e do Action Log) | publicada |
-| `#action-log?bu=&meta=&secao=&tipo=&periodo=&card=` | T07 Action Log (submenu Administração) | publicada |
-| `#configuracao?aba=` | T11 Configuração do ciclo (submenu Administração, só o administrador) | publicada |
-| `#aprovacoes` | T14 Aprovações (submenu Administração, só o grupo de aprovação) | pronta |
+| `#action-log?bu=&meta=&secao=&tipo=&periodo=&card=` | T07 Action Log (item do menu) | publicada |
+| `#configuracao?aba=` | T11 Administração, a configuração do ciclo (só o administrador) | publicada |
+| `#aprovacoes` | T14 Aprovações (item do menu, grupo de aprovação e administrador) | pronta |
 
 T05 (visão imprimível) e T08 (Ações) foram descontinuadas (D-20): saíram do menu e do catálogo, e qualquer
 endereço fora da lista de vistas (como o antigo `#acoes`) volta ao Início.
@@ -118,7 +117,7 @@ lista de metas de cada BU (CA-15, coberto por teste).
 Metas de uma BU, no recorte do usuário (AC-04/AC-05): P&CI/COO e administrador escolhem qualquer BU; os demais,
 só as dos seus papéis. BU no endereço (`#metas?bu=`), com o Voltar do navegador; a matriz da T02 leva direto à BU.
 
-- **Topo** no modelo da T02: "Metas da BU" e, embaixo, o nome da BU em letras vazadas.
+- **Topo** no modelo da T02: "AIP BU's" e, embaixo, o nome da BU em letras vazadas.
 - **Jornada do ciclo** igual à da T02 (mesmo componente `jornadaHtml` e mesmo tamanho), na visão da BU: as quatro
   etapas com prazo, linha até hoje e, em cada anel, os Goal Cards da BU naquela etapa (ex.: "6 de 10").
 - **Alerta da RN-16:** pílula âmbar "Soma dos pesos: n de 100 pts" quando a soma difere do total do desdobramento
@@ -167,7 +166,7 @@ da T03) e do Action Log. Todos os perfis leem; ninguém altera (§7.2).
 
 ### T14 Aprovações
 
-`#aprovacoes?pais=&bu=&idade=&card=`, no submenu Administração. **Só o grupo de aprovação** (AC-08, CA-19): para os
+`#aprovacoes?pais=&bu=&idade=&card=`, item do menu. **Grupo de aprovação e administrador** (AC-08, CA-19): para os
 demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a T12).
 
 - **Topo** no padrão do Action Log (título "Aprovações", atualizar e tela cheia); **filtros** País › BU (`.unit`) e
@@ -182,16 +181,16 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   com o progresso ("2 de 7 seções analisadas · 1 para ajustar") e o atalho "Marcar as não analisadas como OK".
 - **Comentários por seção** (§7.3, RN-13): a thread da seção abre na própria linha, com o campo para publicar
   (`POST /goal-card/comentario`); o estado do card não muda.
-- **Decisão** no rodapé: comentário com contador, Aprovar (`.btn`), Devolver e Negar (`.btn-sec`), confirmação no
+- **Decisão** no rodapé: comentário com contador, Aprovar (`.btn`), Devolver (`.btn-sec`), confirmação no
   segundo clique em `role="alertdialog"`. Devolver exige uma seção Ajustar e comentário de 10+ caracteres (RN-08);
-  Negar, a justificativa (RN-09); mesma regra no cliente e no servidor. Quem editou ou submeteu o card não vê os
+  a mesma regra no cliente e no servidor. Quem editou ou submeteu o card não vê os
   botões, só o aviso da RN-12.
 - **Depois da decisão**, o card sai da fila (RN-06) e a próxima ficha abre ("21 restantes na fila"); com a fila
   vazia, "Fila concluída". Escritas validadas e simuladas até o modelo de dados (P-12).
 
 ### T07 Action Log
 
-`#action-log`, no submenu Administração. Linha do tempo única e imutável do ciclo (§7.3).
+`#action-log`, item do menu. Linha do tempo única e imutável do ciclo (§7.3).
 
 - **Topo** só com o título, sem o ano e sem cartões de resumo; o total de eventos aparece ao lado de "Linha do tempo".
 - **Filtros na URL:** Período (7 dias, 30 dias, ciclo), BU, Meta, Seção, Tipo e Goal Card (chip removível).
@@ -232,7 +231,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 - **Acesso:** leitura aberta a qualquer usuário do Portal; contribuidor edita só os cards da sua BU; aprovador edita e
   aprova todos (menus Aprovações e Action Log, sem Administração); administrador vê todas as telas. Em desenvolvimento,
   `AIPGOALS_PERFIL_LOCAL` simula o perfil.
-- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP; a BU é o site da IBP.SITES).
+- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP, com a `AIP_META_PESO`; a BU é o site da IBP.SITES).
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
 - Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` e `/configuracao/clonar` (`validarConfiguracao`), simuladas até a P-12.
 
@@ -261,7 +260,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 Mesmo padrão da tela "Acesso não autorizado" do Portal PCI (`index.html` da raiz): cartão central em vidro sobre a
 foto dos minerais, cadeado num quadrado vermelho suave, título "Acesso não autorizado", a mesma mensagem neutra em todas as telas
 (não revela se o card existe) e os botões Voltar e a ação principal
-(Início ou Metas da BU). Aparece no Desdobramento, na T02, na T03 e na T04 quando a API responde 401, 403 ou 404;
+(Início ou AIP BU's). Aparece na COO AIP, na T02, na T03 e na T04 quando a API responde 401, 403 ou 404;
 o resto da vista sai de cena e o título recebe o foco (leitor de tela). Cores por token, nos dois temas.
 
 ### Dados de exemplo
