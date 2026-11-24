@@ -59,6 +59,8 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/SELECT ID_SITE, NM_SITE FROM IBP\.SITES/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo' }, { ID_SITE: 12, NM_SITE: 'VNL' }, { ID_SITE: 13, NM_SITE: 'Sossego' }]);
     if (/ISNULL\(MAX\(NO_VERSAO\)/.test(sql)) return rs([{ N: 2 }]);
     if (/SELECT TOP \(1\) ID_VERSAO, NO_VERSAO/.test(sql)) return rs([{ ID_VERSAO: 2, NO_VERSAO: 2 }]);
+    if (/SELECT ID_CICLO FROM PM\.AIP_CICLO WHERE SG_STATUS = 'S'/.test(sql)) return rs([]);
+    if (/SELECT 1 AS X FROM PM\.AIP_CICLO WHERE NO_ANO = @ano/.test(sql)) return rs(p.ano[1] === 2027 ? [{ X: 1 }] : []);
     if (/SCOPE_IDENTITY/.test(sql)) return rs([{ ID: 999 }], [1, 1]);
     if (/SELECT ID_PAPEL/.test(sql)) return rs([{ ID_PAPEL: 1, CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', ID_SITE: null, SG_ATIVO: 'S' }, { ID_PAPEL: 2, CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', ID_SITE: 11, SG_ATIVO: 'S' }]);
     if (/SELECT ID_SITE FROM PM\.AIP_CICLO_SITE/.test(sql)) return rs([{ ID_SITE: 11 }, { ID_SITE: 12 }]);
@@ -159,6 +161,12 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 13 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
   const r = await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Atlantis', pais: 'X', ativa: true }] }, ctx, base);
   assert.strictEqual(r.erros[0].codigo, 'SITE');
+  // Novo ciclo no ano escolhido: datas deslocadas pela diferença de anos; ano que já tem ciclo é recusado
+  log.length = 0;
+  await fonte.acaoCiclo('novo', 2030, ctx);
+  const ins = log.find((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql));
+  assert.deepStrictEqual([ins.p.ano[1], ins.p.desloc[1], ins.p.nome[1]], [2030, 3, 'AIP 2030']);
+  await assert.rejects(fonte.acaoCiclo('novo', 2027, ctx), /Já existe o ciclo AIP 2027/);
 });
 
 test('router com a fonte do banco: sem identidade 401; sem ciclo 409; respostas sem exemplo', async () => {
