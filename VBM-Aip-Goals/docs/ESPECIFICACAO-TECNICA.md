@@ -248,18 +248,18 @@ DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `mode
 
 | Tabela | Conteúdo |
 | --- | --- |
-| AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início e fim de cada etapa; início padrão = fim da anterior), pontos herdados pelo COO e por cada BU (100 pts por unidade) |
+| AIP_CICLO | Ano (único), nome, `SG_STATUS` S/N (S = aberto, N = fechado; **só um S**, índice único parcial), ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início e fim de cada etapa; início padrão = fim da anterior), pontos herdados pelo COO e por cada BU (100 pts por unidade) |
 | IBP.SITES (existente) | A BU é o site do IBP: `ID_SITE` é o ID da BU em todo o modelo; nome e país vêm de NM_SITE e NM_PAIS |
 | AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, data da última atualização |
-| AIP_UNIDADE | Ciclo, nível (CEO, COO ou BU), nome, diretor e exceção do site: texto e se aparece (só BU), BU (ID_SITE, no nível BU), ativa (a unidade de nível BU é a participação da BU no ciclo) |
-| AIP_META | Ciclo, nível (CEO, COO ou BU), número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |
-| AIP_META_PESO | Meta, unidade, peso |
-| AIP_GOAL_CARD | Código (GC-BU-meta), meta, unidade, estado, versão oficial, rascunho, última atualização |
+| AIP_CICLO_SITE | Site (BU) no ciclo: participa ou não (`SG_ATIVA`), diretor (`CD_MATRICULA_DIRETOR`, nome no MDM) e exceção do site: texto (`DS_EXCECAO`) e se aparece (`SG_EXCECAO_VER`). Alimenta as telas Business Units e Exceções |
+| AIP_META | Ciclo, nível (CEO, COO ou BU), número, peso (`VL_PESO`, só CEO e COO), título, tipo, polaridade, meta de origem (desdobrada de), ativa |
+| AIP_META_PESO | Meta da BU, site, peso (um por site) |
+| AIP_GOAL_CARD | Código (GC-BU-meta), meta, site, estado, versão oficial, rascunho, última atualização |
 | AIP_GOAL_CARD_VERSAO | Versão: número, motivo, foto dos campos, autor, data e a decisão do grupo de aprovação (aprovado ou devolvido, comentário obrigatório para devolver, marcação OK/Ajustar de cada seção, quem e quando), gravada uma única vez |
 | AIP_EVENTO_LOG | Action Log imutável (gatilho bloqueia UPDATE e DELETE): tipo (inclui abrir, fechar e reabrir ciclo e os comentários do Goal Card, com texto e resposta a), quem, grupo, quando, card, seção, antes, depois |
 | AIP_NOTIFICACAO | Evento, destinatário, canal (e-mail ou app), enviado em, lido em |
 
-Saíram do modelo: `AIP_PARAMETRO` (limites ficam na aplicação), `AIP_DECISAO`, `AIP_REVISAO_SECAO` e `AIP_COMENTARIO` (revisão enxuta) `AIP_NIVEL` (níveis fixos; pontos herdados no `AIP_CICLO`, nível como código na meta e na unidade) e os níveis GG e GA no primeiro momento. Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
+Saiu a `AIP_UNIDADE` (D-26): o desdobramento usa o próprio site da `IBP.SITES`. Saíram do modelo também: `AIP_PARAMETRO` (limites ficam na aplicação), `AIP_DECISAO`, `AIP_REVISAO_SECAO` e `AIP_COMENTARIO` (revisão enxuta) `AIP_NIVEL` (níveis fixos; pontos herdados no `AIP_CICLO`, nível como código na meta e na unidade) e os níveis GG e GA no primeiro momento. Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
 
 ## 10. Catálogo de telas
 
