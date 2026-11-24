@@ -64,7 +64,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-24 | Aprovações: ficha no formato do Goal Card, com Versões e Histórico em popup; lápis por item para marcar ajuste, com comentário obrigatório por item; balão quando o item tem comentário; regras de aprovar, devolver (com comentário) e negar mantidas. Reabertura de card aprovado só pelo administrador (responde à D-12). |
 | D-25 | A opção Negar não será usada: a decisão só aprova ou devolve para ajuste. Sai o estado Negado (telas, legendas, API e banco: `TP_ESTADO` e `TP_DECISAO`). |
 | D-26 | Modelo: sai a `AIP_UNIDADE` (o que importa é o site). Nasce a `AIP_CICLO_SITE` (site no ciclo: participa, diretor, exceção); `AIP_META_PESO` e `AIP_GOAL_CARD` passam a apontar para `ID_SITE`; as metas do CEO e do COO têm `VL_PESO` na própria `AIP_META`. `AIP_CICLO.TP_STATUS` vira `SG_STATUS` (S = aberto, N = fechado). |
-| D-27 | Modelo: sai a `AIP_META_PESO` (o peso da meta num site é dado do Goal Card daquele site: campo `VL_PESO` do `AIP_GOAL_CARD`, um card por meta e site); `AIP_META.TP_POLARIDADE` vira `TP_ORIENTACAO`; no `AIP_GOAL_CARD`, `CD_MATRICULA_ATUALIZACAO` vira `CD_MATRICULA`, antes de `DT_ATUALIZACAO`; `DS_RASCUNHO` documentado com exemplos. |
+| D-27 | Modelo: a `AIP_META_PESO` continua separada (peso da meta da BU por site; foi avaliado levar o peso para o `AIP_GOAL_CARD` e revertido); `AIP_META.TP_POLARIDADE` vira `TP_ORIENTACAO`; no `AIP_GOAL_CARD`, `CD_MATRICULA_ATUALIZACAO` vira `CD_MATRICULA`, antes de `DT_ATUALIZACAO`; `DS_RASCUNHO` documentado com exemplos. |
 
 ## 4. Suposições a confirmar
 

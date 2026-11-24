@@ -81,13 +81,21 @@ create table aip_meta (
   tp_meta varchar(20) not null,
   tp_orientacao varchar(20) not null,
   id_meta_origem integer constraint fk_aip_meta_aip_meta references aip_meta (id_meta),
-  vl_peso numeric(6,2), -- peso das metas do CEO e do COO (um valor só); o peso das metas da BU, por site, fica no AIP_GOAL_CARD
+  vl_peso numeric(6,2), -- peso das metas do CEO e do COO (um valor só); as metas da BU têm um peso por site na AIP_META_PESO
   sg_ativa char(1) not null default 'S' constraint ck_aip_meta_sg_ativa check (sg_ativa in ('S', 'N')),
   constraint uq_aip_meta unique (id_ciclo, cd_nivel, no_meta),
   constraint ck_aip_meta_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
   constraint ck_aip_meta_peso_unico check ((cd_nivel = 'BU') = (vl_peso is null)),
   constraint ck_aip_meta_tipo check (tp_meta in ('FORMULA', 'MARCOS')),
   constraint ck_aip_meta_orientacao check (tp_orientacao in ('MAIOR', 'MENOR'))
+);
+
+create table aip_meta_peso (
+  id_meta integer not null constraint fk_aip_meta_peso_aip_meta references aip_meta (id_meta),
+  id_site integer not null constraint fk_aip_meta_peso_sites references sites (id_site),
+  vl_peso numeric(6,2) not null,
+  constraint pk_aip_meta_peso primary key (id_meta, id_site),
+  constraint ck_aip_peso check (vl_peso > 0)
 );
 
 -- ═══ PESSOAS ═══
@@ -111,7 +119,6 @@ create table aip_goal_card (
   cd_goal_card varchar(20) not null,
   id_meta integer not null constraint fk_aip_goal_card_aip_meta references aip_meta (id_meta),
   id_site integer not null constraint fk_aip_goal_card_sites references sites (id_site),
-  vl_peso numeric(6,2) not null, -- pontos da meta neste site (soma com os herdados = 100); sem peso não há card
   tp_estado varchar(20) not null default 'RASCUNHO',
   no_versao_oficial smallint,
   ds_rascunho text,
@@ -119,7 +126,6 @@ create table aip_goal_card (
   dt_atualizacao timestamp(0) not null default localtimestamp(0),
   constraint uq_aip_goal_card_cd unique (cd_goal_card),
   constraint uq_aip_goal_card unique (id_meta, id_site),
-  constraint ck_aip_goal_card_peso check (vl_peso > 0),
   constraint ck_aip_goal_card_estado check (tp_estado in ('RASCUNHO', 'EM_APROVACAO', 'EM_REVISAO', 'APROVADO')),
   constraint ck_aip_goal_card_oficial check ((tp_estado = 'APROVADO') = (no_versao_oficial is not null))
 );
@@ -184,6 +190,7 @@ create table aip_notificacao (
 create index ix_aip_ciclo_fk_aip_ciclo on aip_ciclo (id_ciclo_origem);
 create index ix_aip_ciclo_site_fk_sites on aip_ciclo_site (id_site);
 create index ix_aip_meta_fk_aip_meta on aip_meta (id_meta_origem);
+create index ix_aip_meta_peso_fk_sites on aip_meta_peso (id_site);
 create index ix_aip_papel_fk_aip_ciclo on aip_papel (id_ciclo);
 create index ix_aip_papel_fk_sites on aip_papel (id_site);
 create index ix_aip_goal_card_fk_sites on aip_goal_card (id_site);
