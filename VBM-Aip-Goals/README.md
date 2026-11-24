@@ -14,18 +14,18 @@ de requisitos: [`docs/ESPECIFICACAO-TECNICA.md`](docs/ESPECIFICACAO-TECNICA.md) 
 | Vista | Tela | Situação |
 |---|---|---|
 | `#inicio` (padrão) | T00 Início — abertura do ciclo AIP com a jornada do ciclo na vertical | publicada |
-| `#desdobramento` | Desdobramento — scorecard do COO e matriz meta × BU com peso e situação dos Goal Cards | publicada |
+| `#desdobramento` | COO AIP — scorecard do COO e matriz meta × BU com peso e situação dos Goal Cards | publicada |
 | `#painel` | T02 Painel do ciclo — jornada com anéis por etapa, matriz BU × situação, funil, tempo por nível e cards parados (P&CI/COO e administrador) | publicada |
-| `#metas` | T03 Metas da BU — jornada do ciclo da BU e tabela de metas (peso em cascata, Status, Contribuidor, Versão, Última atualização); Abrir mostra o Goal Card em popup | publicada |
+| `#metas` | T03 AIP BU's — jornada do ciclo da BU e tabela de metas (peso em cascata, Status, Contribuidor, Versão, Última atualização); Abrir mostra o Goal Card em popup | publicada |
 | `#goal-card?card=` | T04 Goal Card — ficha de cadastro da meta pelos contribuidores e pelo administrador (campos obrigatórios, Salvar rascunho e Submeter, comentários em pop-up); leitura para os demais | publicada |
 | `#versoes?card=` | T06 Versões — linha das versões e comparação campo a campo | publicada |
-| `#action-log` | T07 Action Log — linha do tempo do ciclo com filtros e exportação (submenu Administração) | publicada |
+| `#action-log` | T07 Action Log — linha do tempo do ciclo com filtros e exportação (item do menu) | publicada |
 | `#configuracao` | T11 Configuração do ciclo — ciclo, BUs, grupos, metas e pesos, parâmetros (só o administrador) | publicada |
-| `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, revisão OK/Ajustar e comentários por seção e decisão Aprovar/Devolver/Negar (só o grupo de aprovação) | pronta |
+| `#aprovacoes` | T14 Aprovações — fila das fichas em aprovação, revisão OK/Ajustar e comentários por seção e decisão Aprovar/Devolver (só o grupo de aprovação) | pronta |
 
 Painel do ciclo (T02): oculto, fora do menu e sem rota (`#painel` volta ao Início); a tela segue no código e reativa-se devolvendo o link e o item em `VISTAS`.
 
-Menu: Início · Desdobramento · Metas da BU · Administração (Aprovações, Action Log, Configuração). T05 e T08 foram descontinuadas (D-20). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
+Menu: Início · COO AIP · AIP BU's · Aprovações · Action Log · Administração. T05 e T08 foram descontinuadas (D-20). Todas as telas ocupam a largura da janela; em tela cheia, a barra com o menu continua visível.
 
 Uso em **notebook e desktop** (1024 px a 4K); celular fora do escopo.
 
