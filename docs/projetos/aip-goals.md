@@ -215,8 +215,8 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   Goal Card, sem trilha, setas e bloco da BU.
 - **Aprovações:** ficha no formato do Goal Card, Versões e Histórico em popup, lápis de ajuste por item com comentário
   obrigatório e balão quando há comentário; só Aprovar ou Devolver (sem Negar, D-25). **Reabrir para edição** um card aprovado: só o administrador.
-- **Exceções:** aba da Administração com o texto padrão (não editável pela BU) e as BUs em que ele aparece; as exceções
-  próprias de cada BU ficam no Goal Card.
+- **Exceções:** aba da Administração: escreve o texto, marca os sites (atalho por país) e adiciona; tabela com a exceção de
+  cada site, olho (aparece/riscado), lápis e ×. A BU não edita; as exceções próprias ficam no Goal Card.
 - **Goal Card:** BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU,
   cadastrado em Business Units).
 - **Grupos:** inclusão por matrícula ou nome do diretório (IBP.USERS), filtros por grupo e BU, busca e remoção;

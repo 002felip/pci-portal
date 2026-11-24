@@ -249,7 +249,17 @@ const PESSOAS = ['Ana Ribeiro', 'Bruno Costa', 'Carla Mendes', 'Daniel Souza', '
 const DIRETORES = { 'Onça Puma': 'Ricardo Menezes', Salobo: 'Fernanda Lacerda', Sossego: 'Marcelo Antunes', Ontario: 'David Thompson', VNL: 'Sarah Mitchell', Clydach: 'Owen Hughes', Matsusaka: 'Kenji Nakamura' };
 const AREA_RESPONSAVEL = 'Diretoria Executiva';
 // Exceções e considerações: o administrador escolhe em quais BUs o texto padrão do ciclo aparece (a BU não edita)
-const EXCECAO_SEM = ['Clydach', 'Matsusaka']; // exemplo: refinarias sem o texto padrão
+// Exceptions and Considerations por site (o administrador escreve o texto e escolhe os sites; a BU não edita; ver = aparece no card)
+const EXCECAO_TEXTO = {
+  br: 'Effects of force majeure, Brazilian regulatory changes (ANM, IBAMA) and portfolio decisions approved by the COO are excluded from the result.',
+  ca: 'Effects of force majeure, Canadian provincial regulatory changes and portfolio decisions approved by the COO are excluded from the result.',
+  ir: 'Refinery feed variations caused by third-party concentrate supply and portfolio decisions approved by the COO are excluded from the result.',
+};
+const EXCECOES_SITE = {
+  'Onça Puma': { texto: EXCECAO_TEXTO.br, ver: true }, Salobo: { texto: EXCECAO_TEXTO.br, ver: true }, Sossego: { texto: EXCECAO_TEXTO.br, ver: true },
+  Ontario: { texto: EXCECAO_TEXTO.ca, ver: true }, VNL: { texto: EXCECAO_TEXTO.ca, ver: true },
+  Clydach: { texto: EXCECAO_TEXTO.ir, ver: true }, Matsusaka: { texto: EXCECAO_TEXTO.ir, ver: false },
+};
 const areaDaBu = (sigla) => ({ area: AREA_RESPONSAVEL, responsavel: DIRETORES[sigla] || '' });
 function goalCardExemplo(codigo, hoje = new Date()) {
   const base = painelExemplo(hoje);
@@ -263,7 +273,7 @@ function goalCardExemplo(codigo, hoje = new Date()) {
   if (c.estado === 'rascunho') sec.evidence = '';
   // Área responsável: não editável, vem do cadastro da BU (Diretoria Executiva e o diretor da BU)
   sec.area = areaDaBu(c.bu.sigla);
-  if (EXCECAO_SEM.includes(c.bu.sigla)) sec.exceptions.padrao = '';
+  const exc = EXCECOES_SITE[c.bu.sigla]; sec.exceptions.padrao = exc && exc.ver ? exc.texto : '';
   // Resubmissão: a exceção da BU entrou na v2 (a mesma das Versões, T06), para o "antes" da T14 bater
   if (c.versao > 1 && c.estado !== 'rascunho') sec.exceptions.bu = 'FX effect excluded from the result, as agreed with P&CI.';
   const comentarios = [];
@@ -366,7 +376,7 @@ function configuracaoExemplo(hoje = new Date()) {
     bus: ciclo.bus.map((b) => ({ ...b, ativa: true, diretor: DIRETORES[b.sigla] || '', cardsSubmetidos: submetidos[b.sigla] || 0 })),
     membros,
     diretorio: pessoas,
-    excecoesBus: Object.fromEntries(ciclo.bus.map((b) => [b.sigla, !EXCECAO_SEM.includes(b.sigla)])),
+    excecoes: { bus: Object.fromEntries(Object.entries(EXCECOES_SITE).map(([k, v]) => [k, { ...v }])) },
     niveis,
     unidades,
     metasNivel,

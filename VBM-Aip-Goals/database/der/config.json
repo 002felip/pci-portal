@@ -70,7 +70,6 @@
     "NO_ANO": "Ano do ciclo, de 2020 a 2100; não se repete.",
     "NM_CICLO": "Nome mostrado nas telas (ex.: AIP 2027).",
     "TP_STATUS": "ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.",
-    "DS_TEXTO_PADRAO_EXCECOES": "Texto padrão de Exceptions and Considerations, não editável pela BU; aparece nas BUs marcadas (AIP_UNIDADE.SG_EXCECAO_PADRAO).",
     "ID_CICLO_ORIGEM": "Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.",
     "DT_CRIACAO": "Quando o ciclo foi aberto.",
     "CD_MATRICULA_CRIACAO": "Matrícula (MDM) de quem abriu o ciclo.",
@@ -104,7 +103,7 @@
    "grupo": "ibp",
    "pos": [
     0,
-    681
+    662
    ],
    "proposito": "Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.",
    "regras": [
@@ -127,7 +126,7 @@
    "grupo": "des",
    "pos": [
     1,
-    246
+    265
    ],
    "proposito": "As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.",
    "regras": [
@@ -156,7 +155,7 @@
    "grupo": "cic",
    "pos": [
     0,
-    474
+    455
    ],
    "proposito": "Quem tem papel no ciclo: contribuidores (por BU), aprovadores e administradores. Quem não está aqui só lê (qualquer usuário do Portal). Os dados da pessoa vêm do MDM.",
    "regras": [
@@ -193,7 +192,7 @@
    "regras": [
     "Nome único por ciclo e nível.",
     "ID_SITE preenchido se, e só se, o nível é BU.",
-    "Diretor só nas unidades de nível BU.",
+    "Diretor e exceção só nas unidades de nível BU.",
     "SG_ATIVA: S ou N."
    ],
    "campos": {
@@ -204,7 +203,8 @@
     "ID_SITE": "BU (site do IBP) correspondente, quando a unidade é do nível BU.",
     "SG_ATIVA": "N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.",
     "CD_MATRICULA_DIRETOR": "Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards da BU, com a área Diretoria Executiva.",
-    "SG_EXCECAO_PADRAO": "S = o texto padrão de Exceptions and Considerations do ciclo aparece nos Goal Cards da BU (escolha do administrador na aba Exceções). As exceções próprias da BU ficam no Goal Card."
+    "DS_EXCECAO": "Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites (Brasil, Canadá, International Refineries).",
+    "SG_EXCECAO_VER": "S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado)."
    },
    "exemplos": [
     "1 · CEO VBM",
@@ -213,7 +213,8 @@
    ],
    "condicional": {
     "ID_SITE": "se nível BU",
-    "CD_MATRICULA_DIRETOR": "só BU"
+    "CD_MATRICULA_DIRETOR": "só BU",
+    "DS_EXCECAO": "só BU"
    }
   },
   "AIP_GOAL_CARD": {
@@ -251,7 +252,7 @@
    "grupo": "des",
    "pos": [
     1,
-    491
+    510
    ],
    "proposito": "O peso de cada meta em cada unidade. Somado aos pontos herdados, fecha o total da unidade (RN-16).",
    "regras": [
@@ -376,6 +377,13 @@
  },
  "ligacoes": [
   {
+   "filho": "AIP_META_PESO",
+   "campo": "ID_UNIDADE",
+   "pai": "AIP_UNIDADE",
+   "chave": "ID_UNIDADE",
+   "rotulo": "na unidade"
+  },
+  {
    "filho": "AIP_CICLO",
    "campo": "ID_CICLO_ORIGEM",
    "pai": "AIP_CICLO",
@@ -388,13 +396,6 @@
    "pai": "AIP_META",
    "chave": "ID_META",
    "rotulo": "peso da"
-  },
-  {
-   "filho": "AIP_META_PESO",
-   "campo": "ID_UNIDADE",
-   "pai": "AIP_UNIDADE",
-   "chave": "ID_UNIDADE",
-   "rotulo": "na unidade"
   },
   {
    "filho": "AIP_UNIDADE",
@@ -453,18 +454,18 @@
    "rotulo": "da unidade"
   },
   {
-   "filho": "AIP_EVENTO_LOG",
-   "campo": "ID_CICLO",
-   "pai": "AIP_CICLO",
-   "chave": "ID_CICLO",
-   "rotulo": "registrado em"
-  },
-  {
    "filho": "AIP_GOAL_CARD_VERSAO",
    "campo": "ID_GOAL_CARD",
    "pai": "AIP_GOAL_CARD",
    "chave": "ID_GOAL_CARD",
    "rotulo": "versão de"
+  },
+  {
+   "filho": "AIP_EVENTO_LOG",
+   "campo": "ID_CICLO",
+   "pai": "AIP_CICLO",
+   "chave": "ID_CICLO",
+   "rotulo": "registrado em"
   },
   {
    "filho": "AIP_EVENTO_LOG",
