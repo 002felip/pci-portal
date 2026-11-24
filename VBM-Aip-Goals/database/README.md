@@ -42,7 +42,7 @@ gerados automaticamente).
 | Grupo | Tabelas |
 |---|---|
 | Ciclo e pessoas | `AIP_CICLO` (só um aberto por vez, com início e fim de cada uma das 4 etapas e os pontos herdados pelo COO e pelas BUs), `AIP_PAPEL` (matrícula; nome, e-mail, cargo, estado e cidade vêm do MDM) |
-| Desdobramento | `AIP_UNIDADE` (CEO VBM, COO VBM e cada BU, com `CD_NIVEL`; nas BUs, diretor e se recebem o texto padrão de exceções) (a unidade de nível BU é a BU no ciclo, com `SG_ATIVA`), `AIP_META`, `AIP_META_PESO` |
+| Desdobramento | `AIP_UNIDADE` (CEO VBM, COO VBM e cada BU, com `CD_NIVEL`; nas BUs, diretor e exceção do site (texto e olho)) (a unidade de nível BU é a BU no ciclo, com `SG_ATIVA`), `AIP_META`, `AIP_META_PESO` |
 | Goal Card | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO` (com a decisão e a marcação das seções) |
 | Log e avisos | `AIP_EVENTO_LOG` (imutável, por gatilho; os comentários do Goal Card são eventos COMENTARIO), `AIP_NOTIFICACAO` |
 
@@ -76,7 +76,7 @@ fica no código da aplicação; uma tabela de permissões por tela só valeria s
 | Aprovações (T14) | `AIP_GOAL_CARD`, `AIP_GOAL_CARD_VERSAO`, `AIP_EVENTO_LOG`, `AIP_PAPEL` | `AIP_GOAL_CARD_VERSAO` (decisão), `AIP_GOAL_CARD`, `AIP_EVENTO_LOG`, `AIP_NOTIFICACAO` |
 | Administração · Ciclo | `AIP_CICLO` | `AIP_CICLO`, `AIP_EVENTO_LOG` |
 | Administração · Business Units | `AIP_UNIDADE`, `IBP.SITES`, `AIP_GOAL_CARD`, MDM (diretor) | `AIP_UNIDADE` (`SG_ATIVA`, `CD_MATRICULA_DIRETOR`), `AIP_EVENTO_LOG` |
-| Administração · Exceções | `AIP_CICLO`, `AIP_UNIDADE` | `AIP_CICLO` (texto padrão), `AIP_UNIDADE` (`SG_EXCECAO_PADRAO`), `AIP_EVENTO_LOG` |
+| Administração · Exceções | `AIP_UNIDADE` | `AIP_UNIDADE` (`DS_EXCECAO`, `SG_EXCECAO_VER`), `AIP_EVENTO_LOG` |
 | Administração · Grupos | `AIP_PAPEL`, MDM | `AIP_PAPEL`, `AIP_EVENTO_LOG` |
 | Administração · Metas e pesos | `AIP_CICLO`, `AIP_UNIDADE`, `AIP_META`, `AIP_META_PESO` | `AIP_META`, `AIP_META_PESO`, `AIP_CICLO` (pontos herdados), `AIP_EVENTO_LOG` |
 | Acesso negado (T12) | — | `AIP_EVENTO_LOG` (`ACESSO_NEGADO`) |

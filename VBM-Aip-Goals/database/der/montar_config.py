@@ -51,7 +51,6 @@ T = {
    'NO_ANO': 'Ano do ciclo, de 2020 a 2100; não se repete.',
    'NM_CICLO': 'Nome mostrado nas telas (ex.: AIP 2027).',
    'TP_STATUS': 'ABERTO ou FECHADO. Fechar e reabrir é feito na Administração.',
-   'DS_TEXTO_PADRAO_EXCECOES': 'Texto padrão de Exceptions and Considerations, não editável pela BU; aparece nas BUs marcadas (AIP_UNIDADE.SG_EXCECAO_PADRAO).',
    'ID_CICLO_ORIGEM': 'Ciclo de onde este foi criado (BUs, grupos e metas copiados). Vazio = criado do zero.',
    'DT_CRIACAO': 'Quando o ciclo foi aberto.',
    'CD_MATRICULA_CRIACAO': 'Matrícula (MDM) de quem abriu o ciclo.',
@@ -90,9 +89,9 @@ T = {
   'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
  'AIP_UNIDADE': {
   'proposito': 'As unidades de cada nível do ciclo: CEO VBM, COO VBM, cada BU (site do IBP). É quem recebe pesos e Goal Cards; a unidade de nível BU é também a participação da BU no ciclo.',
-  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_CICLO': 'Ciclo da unidade.', 'CD_NIVEL': 'CEO, COO ou BU.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.', 'CD_MATRICULA_DIRETOR': 'Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards da BU, com a área Diretoria Executiva.', 'SG_EXCECAO_PADRAO': 'S = o texto padrão de Exceptions and Considerations do ciclo aparece nos Goal Cards da BU (escolha do administrador na aba Exceções). As exceções próprias da BU ficam no Goal Card.'},
-  'regras': ['Nome único por ciclo e nível.', 'ID_SITE preenchido se, e só se, o nível é BU.', 'Diretor só nas unidades de nível BU.', 'SG_ATIVA: S ou N.'],
-  'condicional': {'ID_SITE': 'se nível BU', 'CD_MATRICULA_DIRETOR': 'só BU'},
+  'campos': {'ID_UNIDADE': 'Número interno da unidade.', 'ID_CICLO': 'Ciclo da unidade.', 'CD_NIVEL': 'CEO, COO ou BU.', 'NM_UNIDADE': 'Nome mostrado (ex.: Ontario).', 'ID_SITE': 'BU (site do IBP) correspondente, quando a unidade é do nível BU.', 'SG_ATIVA': 'N = BU tirada do ciclo: não recebe Goal Cards nem notificações e sai das somas, sem apagar o histórico.', 'CD_MATRICULA_DIRETOR': 'Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards da BU, com a área Diretoria Executiva.', 'DS_EXCECAO': 'Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites (Brasil, Canadá, International Refineries).', 'SG_EXCECAO_VER': 'S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado).'},
+  'regras': ['Nome único por ciclo e nível.', 'ID_SITE preenchido se, e só se, o nível é BU.', 'Diretor e exceção só nas unidades de nível BU.', 'SG_ATIVA: S ou N.'],
+  'condicional': {'ID_SITE': 'se nível BU', 'CD_MATRICULA_DIRETOR': 'só BU', 'DS_EXCECAO': 'só BU'},
   'exemplos': ['1 · CEO VBM', '2 · COO VBM', '3 · Onça Puma (site 12)']},
  'AIP_META': {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
