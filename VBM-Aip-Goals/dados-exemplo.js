@@ -248,8 +248,8 @@ const PESSOAS = ['Ana Ribeiro', 'Bruno Costa', 'Carla Mendes', 'Daniel Souza', '
 // Diretor de cada BU (exemplo; no banco, a matrícula fica na AIP_UNIDADE e o nome vem do MDM): responsável pela meta
 const DIRETORES = { 'Onça Puma': 'Ricardo Menezes', Salobo: 'Fernanda Lacerda', Sossego: 'Marcelo Antunes', Ontario: 'David Thompson', VNL: 'Sarah Mitchell', Clydach: 'Owen Hughes', Matsusaka: 'Kenji Nakamura' };
 const AREA_RESPONSAVEL = 'Diretoria Executiva';
-// Exceções e considerações por BU (o administrador aplica um texto a uma ou mais BUs; sem texto próprio, vale o padrão do ciclo)
-const EXCECOES_BU = { Clydach: 'Refinery feed variations caused by third-party concentrate supply are excluded from the result.', Matsusaka: 'Refinery feed variations caused by third-party concentrate supply are excluded from the result.' };
+// Exceções e considerações: o administrador escolhe em quais BUs o texto padrão do ciclo aparece (a BU não edita)
+const EXCECAO_SEM = ['Clydach', 'Matsusaka']; // exemplo: refinarias sem o texto padrão
 const areaDaBu = (sigla) => ({ area: AREA_RESPONSAVEL, responsavel: DIRETORES[sigla] || '' });
 function goalCardExemplo(codigo, hoje = new Date()) {
   const base = painelExemplo(hoje);
@@ -263,7 +263,7 @@ function goalCardExemplo(codigo, hoje = new Date()) {
   if (c.estado === 'rascunho') sec.evidence = '';
   // Área responsável: não editável, vem do cadastro da BU (Diretoria Executiva e o diretor da BU)
   sec.area = areaDaBu(c.bu.sigla);
-  if (EXCECOES_BU[c.bu.sigla]) sec.exceptions.padrao = EXCECOES_BU[c.bu.sigla];
+  if (EXCECAO_SEM.includes(c.bu.sigla)) sec.exceptions.padrao = '';
   // Resubmissão: a exceção da BU entrou na v2 (a mesma das Versões, T06), para o "antes" da T14 bater
   if (c.versao > 1 && c.estado !== 'rascunho') sec.exceptions.bu = 'FX effect excluded from the result, as agreed with P&CI.';
   const comentarios = [];
@@ -366,7 +366,7 @@ function configuracaoExemplo(hoje = new Date()) {
     bus: ciclo.bus.map((b) => ({ ...b, ativa: true, diretor: DIRETORES[b.sigla] || '', cardsSubmetidos: submetidos[b.sigla] || 0 })),
     membros,
     diretorio: pessoas,
-    excecoesBu: { ...EXCECOES_BU },
+    excecoesBus: Object.fromEntries(ciclo.bus.map((b) => [b.sigla, !EXCECAO_SEM.includes(b.sigla)])),
     niveis,
     unidades,
     metasNivel,

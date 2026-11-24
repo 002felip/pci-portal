@@ -66,10 +66,10 @@ create table aip_unidade (
   nm_unidade varchar(100) not null,
   id_site integer constraint fk_aip_unidade_sites references sites (id_site),
   sg_ativa char(1) not null default 'S' constraint ck_aip_unidade_sg_ativa check (sg_ativa in ('S', 'N')),
-  -- Só nas BUs: diretor (responsável da Área Responsible, nome no MDM) e texto próprio de exceções (vazio = padrão do ciclo)
+  -- Só nas BUs: diretor (responsável da Area Responsible, nome no MDM) e se o texto padrão de exceções do ciclo aparece nos cards
   cd_matricula_diretor varchar(20),
-  ds_excecoes varchar(4000),
-  constraint ck_aip_unidade_bu check (cd_nivel = 'BU' or (cd_matricula_diretor is null and ds_excecoes is null)),
+  sg_excecao_padrao char(1) not null default 'S' constraint ck_aip_unidade_sg_excecao check (sg_excecao_padrao in ('S', 'N')),
+  constraint ck_aip_unidade_bu check (cd_nivel = 'BU' or cd_matricula_diretor is null),
   constraint uq_aip_unidade unique (id_ciclo, cd_nivel, nm_unidade),
   constraint ck_aip_unidade_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
   constraint ck_aip_unidade_site check ((cd_nivel = 'BU') = (id_site is not null))

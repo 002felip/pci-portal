@@ -112,7 +112,7 @@ Cada meta tem uma **polaridade** (direção) definida no desdobramento: "maior �
 | 4 | Ruler | Sim | Três valores: Mín., Meta e Exc. |
 | 5 | Area Responsible | Não editável | Preenchido do cadastro da BU: área Diretoria Executiva e o diretor da BU como responsável (Administração › Business Units) |
 | 6 | Evidence | Sim | Descrição da evidência que comprovará o resultado |
-| 7 | Exceptions and Considerations | Sim | Texto definido pelo administrador na aba Exceções (o próprio da BU ou, sem ele, o padrão do ciclo), não editável pela BU, mais campo livre para exceções da BU |
+| 7 | Exceptions and Considerations | Sim | Texto padrão do ciclo, não editável pela BU, quando o administrador marcou a BU na aba Exceções, mais o campo livre de exceções preenchido pela BU |
 
 **Campos obrigatórios:** os campos 1 a 6 (Objective, Calculation Formula, Unit of Measurement, os três valores do Ruler, Area Responsible com área e responsável, e Evidence) são obrigatórios e marcados com \*; as exceções da BU são opcionais. Submeter fica bloqueado enquanto algum obrigatório estiver vazio, e o servidor repete a mesma verificação.
 
@@ -171,7 +171,7 @@ O grupo de consulta acompanha o ciclo sem agir: vê metas, Goal Cards (só leitu
 | BU | Cadastro das BUs do ciclo aberto que está sendo configurado: criar (nome e país ou região), diretor da BU (responsável da Area Responsible nos Goal Cards), editar (renomear atualiza pesos, pessoas e Gerências Gerais ligadas), tirar do ciclo (a BU fica no cadastro, mas não recebe Goal Cards nem notificações e sai das somas) e excluir. Só se exclui BU sem Goal Card submetido; com card submetido, tira-se do ciclo. Nome único. |
 | Níveis do desdobramento | Fixos: CEO → COO → BU, com 100 pontos por unidade. GG e GA ficam fora no primeiro momento. A aba Parâmetros foi descontinuada (D-22): os pontos herdados se editam em Metas e pesos e os limites das regras (mínimo de caracteres, tamanho de anexo) ficam na aplicação. |
 | Metas e pesos | Seletor CEO › COO › BU. Por nível: número, título, tipo e polaridade, e o peso de cada unidade. A linha "Resultado do nível acima" mostra os pontos herdados e é **editável**: é onde se definem os pontos herdados do COO (do resultado do CEO) e de cada BU (do resultado do COO). A soma de cada unidade (herdado + metas) fica sempre visível e o servidor só grava quando todas as unidades fecham o total (RN-16). |
-| Exceções | Aba própria da Administração: texto padrão do ciclo (vale para as BUs sem texto próprio), área para escrever um texto, marcar uma ou mais BUs e aplicar, e a tabela com o texto em uso em cada BU (próprio ou padrão), com editar e voltar ao padrão. O texto padrão saiu da aba Ciclo. |
+| Exceções | Aba própria da Administração: o texto padrão de Exceptions and Considerations (não editável pela BU) e a lista das BUs em que ele aparece, com marcar/desmarcar todas. As exceções próprias de cada BU são preenchidas pela BU no Goal Card. A aba Ciclo não traz mais o texto. |
 | Auditoria | Toda alteração de configuração gera evento no log com valor antes e depois. |
 
 ### 7.2 Versões (T06)
@@ -251,7 +251,7 @@ DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `mode
 | AIP_CICLO | Ano (único), nome, status ABERTO/FECHADO (**só um aberto**, índice único parcial), texto padrão de exceções, ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início e fim de cada etapa; início padrão = fim da anterior), pontos herdados pelo COO e por cada BU (100 pts por unidade) |
 | IBP.SITES (existente) | A BU é o site do IBP: `ID_SITE` é o ID da BU em todo o modelo; nome e país vêm de NM_SITE e NM_PAIS |
 | AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, data da última atualização |
-| AIP_UNIDADE | Ciclo, nível (CEO, COO ou BU), nome, diretor e texto próprio de exceções (só BU), BU (ID_SITE, no nível BU), ativa (a unidade de nível BU é a participação da BU no ciclo) |
+| AIP_UNIDADE | Ciclo, nível (CEO, COO ou BU), nome, diretor e se recebe o texto padrão de exceções (só BU), BU (ID_SITE, no nível BU), ativa (a unidade de nível BU é a participação da BU no ciclo) |
 | AIP_META | Ciclo, nível (CEO, COO ou BU), número, título, tipo, polaridade, meta de origem (desdobrada de), ativa |
 | AIP_META_PESO | Meta, unidade, peso |
 | AIP_GOAL_CARD | Código (GC-BU-meta), meta, unidade, estado, versão oficial, rascunho, última atualização |
@@ -273,7 +273,7 @@ Saíram do modelo: `AIP_PARAMETRO` (limites ficam na aplicação), `AIP_DECISAO`
 | T07 | Action Log | Todos | No submenu Administração: linha do tempo única e imutável do ciclo (submissões, recolhimentos, decisões, reaberturas, comentários, configuração e acessos negados), cada evento com quem, papel, quando, BU, meta, seção e antes/depois; filtros BU, Meta, Seção, Tipo e Período na URL; exportar Excel com os filtros aplicados (§7.3) | MVP |
 | T09 | Change Requests | Contribuidores, aprovadores | Abrir CR; decidir com atual × proposto lado a lado | F2 |
 | T10 | Evidências | Contribuidores, aprovadores | Upload por meta; aceitar ou devolver | F3 |
-| T11 | Administração (configuração do ciclo) | Admin | No submenu Administração, em abas: Ciclo (lista de ciclos, um aberto por vez, fechar, reabrir e abrir novo ciclo; nome, janelas e textos padrão), Business Units (criar, editar, tirar do ciclo e excluir BU sem Goal Card submetido), Grupos (seções por grupo e BU, popup de cadastro com busca no MDM), Metas e pesos (CEO, COO e BU, herdado editável, soma por unidade e gravação só com o total fechado, RN-16) e Exceções (texto padrão e textos por BU); toda alteração vai ao Action Log com antes e depois (§7.1) | MVP |
+| T11 | Administração (configuração do ciclo) | Admin | No submenu Administração, em abas: Ciclo (lista de ciclos, um aberto por vez, fechar, reabrir e abrir novo ciclo; nome, janelas e textos padrão), Business Units (criar, editar, tirar do ciclo e excluir BU sem Goal Card submetido), Grupos (seções por grupo e BU, popup de cadastro com busca no MDM), Metas e pesos (CEO, COO e BU, herdado editável, soma por unidade e gravação só com o total fechado, RN-16) e Exceções (texto padrão e BUs em que aparece); toda alteração vai ao Action Log com antes e depois (§7.1) | MVP |
 | T12 | Sem acesso / não encontrado | — | Mensagem neutra, sem revelar dados | MVP |
 | T14 | Aprovações | Só o grupo de aprovação | Fila com todas as fichas Em aprovação (filtro País › BU, idade); abre a ficha com revisão OK/Ajustar por seção, comentários por seção e decisão Aprovar/Devolver/Negar (RN-06, RN-08, RN-09, RN-12) | MVP |
 
