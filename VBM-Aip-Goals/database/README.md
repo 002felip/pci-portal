@@ -78,7 +78,7 @@ fica no código da aplicação; uma tabela de permissões por tela só valeria s
 | Administração · Business Units | `AIP_CICLO_SITE`, `IBP.SITES`, `AIP_GOAL_CARD`, MDM (diretor) | `AIP_CICLO_SITE` (`SG_ATIVA`, `CD_MATRICULA_DIRETOR`), `AIP_EVENTO_LOG` |
 | Administração · Exceções | `AIP_CICLO_SITE` | `AIP_CICLO_SITE` (`DS_EXCECAO`, `SG_EXCECAO_VER`), `AIP_EVENTO_LOG` |
 | Administração · Grupos | `AIP_PAPEL`, MDM | `AIP_PAPEL`, `AIP_EVENTO_LOG` |
-| Administração · Metas e pesos | `AIP_CICLO`, `AIP_CICLO_SITE`, `AIP_META`, `AIP_META_PESO` | `AIP_META`, `AIP_CICLO` (pontos herdados), `AIP_EVENTO_LOG` |
+| Administração · Metas e pesos | `AIP_CICLO`, `AIP_CICLO_SITE`, `AIP_META`, `AIP_GOAL_CARD` | `AIP_META`, `AIP_GOAL_CARD` (`VL_PESO`), `AIP_CICLO` (pontos herdados), `AIP_EVENTO_LOG` |
 | Acesso negado (T12) | — | `AIP_EVENTO_LOG` (`ACESSO_NEGADO`) |
 
 `AIP_EVENTO_LOG` e `AIP_GOAL_CARD_VERSAO` são as tabelas mais compartilhadas; `AIP_NOTIFICACAO` não tem tela de leitura.
