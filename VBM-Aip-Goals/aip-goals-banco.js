@@ -649,7 +649,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     });
   }
 
-  // Fechar, reabrir ou abrir o próximo ciclo (cópia do atual: BUs, grupos, metas e pesos; datas um ano à frente)
+  // Fechar, reabrir ou abrir um novo ciclo no ano escolhido (cópia do atual: BUs, grupos, metas e pesos; datas no novo ano)
   async function acaoCiclo(acao, ano, ctx) {
     return transacao(async (q) => {
       const aberto = (await q("SELECT ID_CICLO FROM PM.AIP_CICLO WHERE SG_STATUS = 'S'")).recordset[0];
@@ -671,16 +671,19 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       // novo
       const atual = await cicloAtualLinha(q);
       if (!atual) throw conflito('Nenhum ciclo para copiar.');
-      const novoAno = atual.NO_ANO + 1;
+      // Ano escolhido pelo administrador (padrão: o seguinte ao mais recente); datas deslocadas pela diferença de anos
+      const novoAno = Number.isInteger(ano) ? ano : atual.NO_ANO + 1;
+      if ((await q('SELECT 1 AS X FROM PM.AIP_CICLO WHERE NO_ANO = @ano', { ano: P.sm(novoAno) })).recordset.length) throw conflito(`Já existe o ciclo AIP ${novoAno}.`);
+      const desloc = novoAno - atual.NO_ANO;
       const r = await q(`INSERT PM.AIP_CICLO (NO_ANO, NM_CICLO, SG_STATUS, ID_CICLO_ORIGEM, CD_MATRICULA_CRIACAO,
           DT_INI_DESDOBRAMENTO, DT_FIM_DESDOBRAMENTO, DT_INI_PROPOSTA, DT_FIM_PROPOSTA, DT_INI_CALIBRACAO, DT_FIM_CALIBRACAO, DT_INI_OFICIAL, DT_FIM_OFICIAL,
           QTDE_PONTOS_HERDADOS_COO, QTDE_PONTOS_HERDADOS_BU)
         SELECT @ano, @nome, 'S', ID_CICLO, @mat,
-          DATEADD(YEAR, 1, DT_INI_DESDOBRAMENTO), DATEADD(YEAR, 1, DT_FIM_DESDOBRAMENTO), DATEADD(YEAR, 1, DT_INI_PROPOSTA), DATEADD(YEAR, 1, DT_FIM_PROPOSTA),
-          DATEADD(YEAR, 1, DT_INI_CALIBRACAO), DATEADD(YEAR, 1, DT_FIM_CALIBRACAO), DATEADD(YEAR, 1, DT_INI_OFICIAL), DATEADD(YEAR, 1, DT_FIM_OFICIAL),
+          DATEADD(YEAR, @desloc, DT_INI_DESDOBRAMENTO), DATEADD(YEAR, @desloc, DT_FIM_DESDOBRAMENTO), DATEADD(YEAR, @desloc, DT_INI_PROPOSTA), DATEADD(YEAR, @desloc, DT_FIM_PROPOSTA),
+          DATEADD(YEAR, @desloc, DT_INI_CALIBRACAO), DATEADD(YEAR, @desloc, DT_FIM_CALIBRACAO), DATEADD(YEAR, @desloc, DT_INI_OFICIAL), DATEADD(YEAR, @desloc, DT_FIM_OFICIAL),
           QTDE_PONTOS_HERDADOS_COO, QTDE_PONTOS_HERDADOS_BU
         FROM PM.AIP_CICLO WHERE ID_CICLO = @origem; SELECT CAST(SCOPE_IDENTITY() AS INT) AS ID;`,
-      { ano: P.sm(novoAno), nome: P.nv(`AIP ${novoAno}`, 100), mat: P.vc(ctx.quem), origem: P.int(atual.ID_CICLO) });
+      { ano: P.sm(novoAno), desloc: P.int(desloc), nome: P.nv(`AIP ${novoAno}`, 100), mat: P.vc(ctx.quem), origem: P.int(atual.ID_CICLO) });
       const novo = r.recordset[0].ID, prm = { novo: P.int(novo), origem: P.int(atual.ID_CICLO) };
       await q(`INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR, DS_EXCECAO, SG_EXCECAO_VER)
         SELECT @novo, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR, DS_EXCECAO, SG_EXCECAO_VER FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @origem`, prm);
