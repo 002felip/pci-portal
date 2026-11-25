@@ -5455,35 +5455,44 @@ window.VBMSetup = (function () {
   window.addEventListener('hashchange', rota);
 
   // ── Dados sempre atuais (vários usuários ao mesmo tempo) ──
-  // 1) Depois de qualquer gravação (POST em api/) com sucesso: descarta os dados guardados e atualiza a tela aberta em segundo plano.
-  // 2) Ao voltar para a aba do navegador (no máximo a cada 30 s): atualiza a tela aberta em segundo plano.
+  // 1) Toda leitura da API vai direto ao servidor: sem cache do navegador nem do proxy (cache: 'no-store' + marca de tempo).
+  // 2) Depois de qualquer gravação (POST em api/) com sucesso: descarta tudo o que está guardado na página, recarrega o
+  //    Início (datas, etapa, BUs e menu) e a tela aberta, sem precisar do F5. Edição ainda não salva nunca é sobrescrita.
+  // 3) Ao voltar para a aba do navegador (no máximo a cada 30 s): atualiza a tela aberta em segundo plano.
   function invalidarDados() { p2.cache = {}; m3.cache = {}; dd.dados = null; }
-  function atualizarVisivel(comEdicao) {
+  function atualizarVisivel() {
     var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
-    if (h === 'inicio') carregar();
-    else if (h === 'painel') p2Carregar('sil');
+    if (h === 'painel') p2Carregar('sil');
     else if (h === 'metas') m3Carregar('sil');
     else if (h === 'desdobramento') ddCarregar('sil');
-    else if (h === 'configuracao' && comEdicao) cfCarregar('sil');
+    else if (h === 'configuracao') cfCarregar('sil'); // não sobrescreve aba com alteração sem salvar
     else if (h === 'action-log') lgCarregar('sil');
     else if (h === 'aprovacoes') apCarregar('sil');
-    // goal-card e versões: o formulário em edição não é substituído; as listas atrás dele são atualizadas pelas gravações do próprio card
+    else if (h === 'versoes') vsCarregar(false);
+    // goal-card: o formulário em edição não é substituído; ele mesmo atualiza o estado depois de submeter ou reabrir
   }
+  function atualizarTudo() { invalidarDados(); carregar(); atualizarVisivel(); }
   var fetchOrig = window.fetch.bind(window), atualizaTimer = null, ultimaVolta = 0;
   window.fetch = function (url, opcoes) {
-    var p = fetchOrig(url, opcoes);
-    if (opcoes && String(opcoes.method).toUpperCase() === 'POST' && String(url).indexOf('api/') === 0) {
+    var u = String(url), ehApi = u.indexOf('api/') === 0, post = !!(opcoes && String(opcoes.method).toUpperCase() === 'POST');
+    if (ehApi && !post) {
+      u += (u.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+      opcoes = Object.assign({}, opcoes || {}, { cache: 'no-store' });
+    }
+    var p = fetchOrig(ehApi && !post ? u : url, opcoes);
+    if (ehApi && post) {
       p.then(function (r) {
         if (!r.ok) return;
-        invalidarDados(); clearTimeout(atualizaTimer);
-        atualizaTimer = setTimeout(function () { atualizarVisivel(false); }, 600); // espera a própria tela terminar de se redesenhar
+        clearTimeout(atualizaTimer);
+        // Espera a gravação seguinte (a Administração grava uma aba por vez) e a própria tela se redesenhar
+        atualizaTimer = setTimeout(function () { if (cf.salvando) { atualizaTimer = setTimeout(atualizarTudo, 800); return; } atualizarTudo(); }, 600);
       }, function () {});
     }
     return p;
   };
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState !== 'visible' || Date.now() - ultimaVolta < 30000) return;
-    ultimaVolta = Date.now(); invalidarDados(); atualizarVisivel(true);
+    ultimaVolta = Date.now(); atualizarTudo();
   });
 
   // Idioma, formato e tema redesenham o que o JS monta
