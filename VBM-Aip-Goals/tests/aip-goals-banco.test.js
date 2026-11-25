@@ -23,9 +23,9 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
   const responder = (sql, p = {}) => {
     log.push({ sql, p });
     if (/FROM sys\.columns/.test(sql)) return rs([{ N: global.AIP_DATAS_OBRIGATORIAS || 0 }]);
+    if (/NM_HIERARQUIA_N4/.test(sql)) return rs({ Salobo: [{ NOME: 'Bruno Costa', QT: 9 }], VNL: [{ NOME: 'BRUNO COSTA', QT: 12 }] }[p.site[1]] || []);
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
-    if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(p.site[1] === 'Salobo' ? [{ NOME: 'Bruno Costa', QT: 9 }] : []);
     if (/NM_USUARIO IN \(@n0/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.n0[1]));
     if (/NM_USUARIO = @nome/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
     if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
@@ -131,7 +131,8 @@ test('banco: desdobramento, Action Log e configuração', async () => {
   const cf = await fonte.configuracao(HOJE);
   assert.deepStrictEqual(cf.niveis.map((n) => n.herdado), [0, 75, 40]);
   assert.deepStrictEqual(cf.membros.map((m) => [m.nome, m.grupo, m.bu]), [['Ana Ribeiro', 'admin', null], ['Bruno Costa', 'contribuidor', 'Salobo']]);
-  assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.diretor, b.diretorMatricula, b.cardsSubmetidos]), [['Salobo', 'Fernanda Lacerda', 'D1', 1], ['VNL', '', null, 0]]);
+  assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.diretor, b.diretorMatricula, b.cardsSubmetidos]), [['Salobo', 'Fernanda Lacerda', 'D1', 1], ['VNL', 'Bruno Costa', 'C2', 0]]);
+  assert.deepStrictEqual(cf.bus.map((b) => b.diretorOrigem), ['escolhido', 'mdm']); // VNL sem diretor escolhido: N4 do MDM (sem acento e maiúsculas)
   assert.strictEqual(cf.metasNivel.bu[0].origem, '2027_02');
   assert.strictEqual(cf.sites.length, 3);
   // A configuração do banco passa pela mesma validação do servidor (RN-16: BU = 40 herdados + 60)

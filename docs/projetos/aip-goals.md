@@ -237,7 +237,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   vem da `PM.AIP_PAPEL` (Administração › Grupos).
 - **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP, com a `AIP_META_PESO`; a BU é o site da IBP.SITES).
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
-- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista dos sites fora do ciclo, por país; o país vem do cadastro). Diretor da BU com autopreenchimento do MDM. Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
+- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista dos sites fora do ciclo, por país; o país vem do cadastro). Diretor da BU com autopreenchimento do MDM; sem diretor escolhido, vale o N4 do MDM do site (diretor efetivo, também no Goal Card), comparando site e nome sem acento e sem maiúsculas. Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
 
 ### Desdobramento
 
