@@ -3034,7 +3034,7 @@ window.VBMSetup = (function () {
   }
   function p2Carregar(fresco) {
     var chave = p2.filtro.pais + '|' + p2.filtro.bu;
-    if (!fresco && p2.cache[chave]) { p2.dados = p2.cache[chave]; return Promise.resolve(p2Render()); }
+    if (p2.cache[chave] && fresco !== true) { p2.dados = p2.cache[chave]; p2Render(); if (fresco !== 'sil') return Promise.resolve(); } // 'sil': mostra o que tem e atualiza por baixo
     var q = new URLSearchParams();
     if (p2.filtro.pais) q.set('pais', p2.filtro.pais);
     if (p2.filtro.bu) q.set('bu', p2.filtro.bu);
@@ -3050,8 +3050,9 @@ window.VBMSetup = (function () {
         if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
         return r.json();
       })
-      .then(function (j) { p2.cache[chave] = j; p2.dados = j; if (fresco) toast(S.t('t01.atualizada')); p2Render(); })
+      .then(function (j) { p2.cache[chave] = j; p2.dados = j; if (fresco === true) toast(S.t('t01.atualizada')); p2Render(); })
       .catch(function (err) {
+        if (fresco === 'sil' && p2.dados) return; // falha ao atualizar em segundo plano: mantém o que já está na tela
         // Erro de código (não de rede) vai para o console; a tela mostra a mensagem genérica
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] painel:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
@@ -3258,7 +3259,7 @@ window.VBMSetup = (function () {
   }
   function m3Carregar(fresco) {
     var chave = m3.bu || '*';
-    if (!fresco && m3.cache[chave]) { m3.dados = m3.cache[chave]; return Promise.resolve(m3Render()); }
+    if (m3.cache[chave] && fresco !== true) { m3.dados = m3.cache[chave]; m3Render(); if (fresco !== 'sil') return Promise.resolve(); }
     var q = new URLSearchParams();
     if (m3.bu) q.set('bu', m3.bu);
     if (fresco) q.set('fresco', '1');
@@ -3271,8 +3272,9 @@ window.VBMSetup = (function () {
         if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
         return r.json();
       })
-      .then(function (j) { if (!j.bu) { $('m3ErroTxt').textContent = S.t('m3.semBu'); return m3Estado('erro'); } m3.cache[chave] = j; m3.cache[j.bu.sigla] = j; m3.dados = j; if (fresco) toast(S.t('t01.atualizada')); m3Render(); })
+      .then(function (j) { if (!j.bu) { $('m3ErroTxt').textContent = S.t('m3.semBu'); return m3Estado('erro'); } m3.cache[chave] = j; m3.cache[j.bu.sigla] = j; m3.dados = j; if (fresco === true) toast(S.t('t01.atualizada')); m3Render(); })
       .catch(function (err) {
+        if (fresco === 'sil' && m3.dados) return;
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] metas:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return m3Estado('acesso');
@@ -3453,7 +3455,7 @@ window.VBMSetup = (function () {
     $('ddCoo').parentNode.hidden = qual !== 'ok';
   }
   function ddCarregar(fresco) {
-    if (!fresco && dd.dados) return Promise.resolve(ddRender());
+    if (dd.dados && fresco !== true) { ddRender(); if (fresco !== 'sil') return Promise.resolve(); }
     var ctl = ('AbortController' in window) ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
     return fetch('api/desdobramento' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
@@ -3463,8 +3465,9 @@ window.VBMSetup = (function () {
         if (!r.ok) { var g = new Error('http ' + r.status); g.tipo = 'geral'; throw g; }
         return r.json();
       })
-      .then(function (j) { dd.dados = j; if (fresco) toast(S.t('t01.atualizada')); ddRender(); })
+      .then(function (j) { dd.dados = j; if (fresco === true) toast(S.t('t01.atualizada')); ddRender(); })
       .catch(function (err) {
+        if (fresco === 'sil' && dd.dados) return;
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] desdobramento:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return ddEstado('acesso');
@@ -4014,7 +4017,11 @@ window.VBMSetup = (function () {
   }
   function cfNivelDe(lista, id) { return lista.filter(function (n) { return n.id === id; })[0]; }
   function cfCarregar(fresco, silencioso) {
-    if (!fresco && cf.base) return Promise.resolve(cfRender());
+    if (cf.base && fresco !== true) {
+      if (fresco !== 'sil') return Promise.resolve(cfRender());
+      if (CF_ABAS.concat(['parametros']).some(cfAlterada)) return Promise.resolve(); // há edição sem salvar: não sobrescreve
+      cfRender();
+    }
     var ctl = ('AbortController' in window) ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
     return fetch('api/configuracao' + (fresco ? '?fresco=1' : ''), { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
@@ -4027,10 +4034,11 @@ window.VBMSetup = (function () {
       .then(function (j) {
         cf.base = j; cf.orig = cfPartes(j); cf.edit = cfCopia(cf.orig); cf.erros = [];
         cf.ciclos = (j.ciclos || [{ ano: j.ciclo.ano, nome: j.ciclo.nome, aberto: true }, { ano: j.ciclo.ano - 1, nome: 'AIP ' + (j.ciclo.ano - 1), aberto: false }]).map(function (c) { return { ano: c.ano, nome: c.nome, aberto: !!c.aberto }; }); cf.ver = j.ciclo.ano;
-        if (fresco && !silencioso) toast(S.t('t01.atualizada'));
+        if (fresco === true && !silencioso) toast(S.t('t01.atualizada'));
         cfRender();
       })
       .catch(function (err) {
+        if (fresco === 'sil' && cf.base) return;
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] configuracao:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return cfEstado('acesso');
@@ -4739,8 +4747,9 @@ window.VBMSetup = (function () {
   function lgCarregar(fresco) {
     lg.carregando = true;
     return lgBuscar(fresco ? { fresco: '1' } : null)
-      .then(function (j) { lg.dados = j; lg.eventos = j.eventos; if (fresco) toast(S.t('t01.atualizada')); lgRender(); })
+      .then(function (j) { lg.dados = j; lg.eventos = j.eventos; if (fresco === true) toast(S.t('t01.atualizada')); lgRender(); })
       .catch(function (err) {
+        if (fresco === 'sil' && lg.dados) return;
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] action-log:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         // Filtro inválido na URL: volta ao ciclo inteiro, sem filtros
@@ -4888,7 +4897,7 @@ window.VBMSetup = (function () {
         var ns = j.versoes.map(function (v) { return v.versao; });
         if (ns.indexOf(vs.b) < 0) vs.b = ns[0] || null;
         if (ns.indexOf(vs.a) < 0 || vs.a === vs.b) vs.a = ns.filter(function (n) { return n !== vs.b; })[0] || null;
-        if (fresco) toast(S.t('t01.atualizada'));
+        if (fresco === true) toast(S.t('t01.atualizada'));
         vsGravar(); vsRender();
       })
       .catch(function (err) {
@@ -5072,8 +5081,9 @@ window.VBMSetup = (function () {
     var f = ap.filtro, q = new URLSearchParams();
     if (f.pais) q.set('pais', f.pais); if (f.bu) q.set('bu', f.bu); if (f.idade !== 'todas') q.set('idade', f.idade);
     return apBuscar('api/aprovacoes' + (q.toString() ? '?' + q.toString() : ''))
-      .then(function (j) { ap.dados = j; if (fresco) { ap.decididos = {}; toast(S.t('t01.atualizada')); } apRender(); })
+      .then(function (j) { ap.dados = j; if (fresco === true) { ap.decididos = {}; toast(S.t('t01.atualizada')); } apRender(); })
       .catch(function (err) {
+        if (fresco === 'sil' && ap.dados) return;
         if (!err.tipo && err.name !== 'AbortError' && !(err instanceof TypeError && /fetch/i.test(err.message))) console.error('[aip-goals] aprovacoes:', err);
         var tipo = err.tipo || (err.name === 'AbortError' ? 'tempo' : 'rede');
         if (tipo === 'acesso') return apEstado('acesso');
@@ -5435,11 +5445,13 @@ window.VBMSetup = (function () {
     $('vistaVersoes').hidden = h !== 'versoes';
     $('vistaAprov').hidden = h !== 'aprovacoes';
     $('vistaConstrucao').hidden = pronta;
-    if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar(false); }
-    if (h === 'metas') { m3LerFiltro(); m3Carregar(false); }
-    if (h === 'desdobramento') ddCarregar(false);
+    // Ferramenta colaborativa: a cada navegação mostra o que já tem e busca o dado atual em segundo plano ('sil'); lg, vs, ap e gc já buscam sempre
+    if (h === 'painel') { p2LerFiltro(); p2RenderUnidade(); p2Carregar('sil'); }
+    if (h === 'metas') { m3LerFiltro(); m3Carregar('sil'); }
+    if (h === 'desdobramento') ddCarregar('sil');
     if (h === 'goal-card') { gcLerParams(); gcCarregar(); }
-    if (h === 'configuracao') { cfLerAba(); cfCarregar(false); }
+    if (h === 'configuracao') { cfLerAba(); cfCarregar('sil'); }
+    if (h === 'inicio' && !rotaInicial) carregar();
     if (h === 'action-log') { lgLerFiltro(); lgCarregar(false); }
     if (h === 'versoes') { vsLerParams(); vsCarregar(false); }
     if (h === 'aprovacoes') { apLerFiltro(); apCarregar(false); }
@@ -5453,11 +5465,43 @@ window.VBMSetup = (function () {
   }
   window.addEventListener('hashchange', rota);
 
+  // ── Dados sempre atuais (vários usuários ao mesmo tempo) ──
+  // 1) Depois de qualquer gravação (POST em api/) com sucesso: descarta os dados guardados e atualiza a tela aberta em segundo plano.
+  // 2) Ao voltar para a aba do navegador (no máximo a cada 30 s): atualiza a tela aberta em segundo plano.
+  function invalidarDados() { p2.cache = {}; m3.cache = {}; dd.dados = null; }
+  function atualizarVisivel(comEdicao) {
+    var h = (location.hash || '#inicio').slice(1).split('?')[0] || 'inicio';
+    if (h === 'inicio') carregar();
+    else if (h === 'painel') p2Carregar('sil');
+    else if (h === 'metas') m3Carregar('sil');
+    else if (h === 'desdobramento') ddCarregar('sil');
+    else if (h === 'configuracao' && comEdicao) cfCarregar('sil');
+    else if (h === 'action-log') lgCarregar('sil');
+    else if (h === 'aprovacoes') apCarregar('sil');
+    // goal-card e versões: o formulário em edição não é substituído; as listas atrás dele são atualizadas pelas gravações do próprio card
+  }
+  var fetchOrig = window.fetch.bind(window), atualizaTimer = null, ultimaVolta = 0;
+  window.fetch = function (url, opcoes) {
+    var p = fetchOrig(url, opcoes);
+    if (opcoes && String(opcoes.method).toUpperCase() === 'POST' && String(url).indexOf('api/') === 0) {
+      p.then(function (r) {
+        if (!r.ok) return;
+        invalidarDados(); clearTimeout(atualizaTimer);
+        atualizaTimer = setTimeout(function () { atualizarVisivel(false); }, 600); // espera a própria tela terminar de se redesenhar
+      }, function () {});
+    }
+    return p;
+  };
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible' || Date.now() - ultimaVolta < 30000) return;
+    ultimaVolta = Date.now(); invalidarDados(); atualizarVisivel(true);
+  });
+
   // Idioma, formato e tema redesenham o que o JS monta
   S.on('idioma', function () { rota(); if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender(); if (ap.dados && !$('vistaAprov').hidden) apRender(); });
   S.on('numero', function () { if (dados) renderTudo(); if (p2.dados) p2Render(); if (m3.dados) m3Render(); if (dd.dados) ddRender(); if (gc.dados) gcRender(); if (cf.base) cfRender(); if (lg.dados) lgRender(); if (vs.dados) vsRender();  if (ap.dados && !$('vistaAprov').hidden) apRenderFicha(); });
 
-  rota();
+  var rotaInicial = true; rota(); rotaInicial = false;
   carregar();
 })();
 
