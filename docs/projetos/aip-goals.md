@@ -221,12 +221,14 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 - **Grupos:** inclusão pelo Novo usuário, com autopreenchimento do MDM (`CI.KZN_MDM_HIERARQUIA`, busca por nome, e-mail ou matrícula), filtros por grupo e BU, busca e remoção;
   o ciclo precisa de ao menos um aprovador e um administrador.
 - **Metas e pesos por nível:** seletor CEO › COO › BU (níveis fixos, 100 pts por unidade); matriz meta × unidade editável,
-  linha "Resultado do nível acima" editável com os pontos herdados, nova meta e remoção; total por unidade e contador de pendências por nível. Unidades fora do total aparecem como aviso, mas Salvar continua liberado (gravação parcial, D-31; `somaPesosPorNivel`).
+  linha "Resultado do nível acima" editável com os pontos herdados, nova meta e remoção; total por unidade e contador de pendências por nível. A soma de uma unidade nunca passa de 100 pts (o campo limita ao que cabe e o servidor recusa, D-33); abaixo do total aparece como aviso e Salvar continua liberado (gravação parcial, D-31; `somaPesosPorNivel`).
 - **Parâmetros:** aba descontinuada (D-22); os pontos herdados se editam em Metas e pesos.
 - **Ciclo:** barra do ciclo no cartão Identificação (lista, situação, Fechar, Reabrir e Abrir novo ciclo), resumo da jornada
   calculado das janelas, início editável em cada etapa (padrão: fim da anterior) e barra de salvar só com alterações; tela renomeada para Administração; lista de ciclos no campo Ano, um ciclo aberto por vez, Fechar, Reabrir e
-  Abrir novo ciclo; janelas desativadas em ciclo fechado.
+  Abrir novo ciclo; janelas desativadas em ciclo fechado. Abrir novo ciclo: pop-up só com o ano (maior que o atual e sem ciclo); o ciclo nasce com a estrutura do anterior e janelas em branco, escolhidas na aba, com datas só no ano atual ou no seguinte (calendário limitado e validação na tela e no servidor, D-35). O calendário abre com um clique (D-32).
 - **Grupos:** seções por grupo e BU com cards de pessoa e popup Novo usuário com busca no diretório (MDM).
+- **Business Units:** Nova BU escolhe o site da `IBP.SITES` e já preenche o diretor pela hierarquia N4 do MDM (`NM_HIERARQUIA_N4` mais comum entre as pessoas ativas do `NM_SITE`; `GET /pessoas?diretorSite=`); o campo continua editável com sugestões do MDM (D-30).
+- **Dados atuais (D-34):** ferramenta colaborativa: a cada navegação entre telas, depois de qualquer gravação com sucesso e ao voltar à aba (máx. a cada 30 s) a tela busca o dado novo em segundo plano, sem aviso nem piscar; a Administração não sobrescreve edição sem salvar; depois de Salvar, a configuração é recarregada do banco.
 - **Acesso:** leitura aberta a qualquer usuário do Portal; contribuidor edita só os cards da sua BU; aprovador edita e
   aprova todos (menus Aprovações e Action Log, sem Administração); administrador vê todas as telas. O perfil
   vem da `PM.AIP_PAPEL` (Administração › Grupos).
@@ -299,7 +301,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /desdobramento` | Desdobramento: metas do scorecard do COO e matriz meta × BU com peso e situação do Goal Card |
 | `GET /versoes?card=` | T06: versões do card (mais recente primeiro), com snapshot, decisão e a oficial |
 | `GET /action-log?bu=&meta=&secao=&tipo=&periodo=&card=&pagina=&tudo=` | T07: eventos filtrados (40 por página; `tudo=1` para exportar), `porTipo` e opções dos filtros |
-| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` · `GET /pessoas?q=` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (`/configuracao/clonar` = novo) |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` · `GET /pessoas?q=` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (novo: ano maior que o atual, janelas em branco; `/configuracao/clonar` = novo); `GET /pessoas?diretorSite=` = diretor do site pelo N4 do MDM |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
 | `POST /goal-card/rascunho` · `POST /goal-card/submeter` · `POST /goal-card/reabrir` · `POST /goal-card/decisao` | T04/T14: rascunho no banco; submeter cria a versão; decisão grava na versão e os ajustes viram comentários da seção; RN-12 pela matrícula |
 | `GET /aprovacoes?pais=&bu=&idade=` | T14: só o grupo de aprovação (403 para os demais). Fila Em aprovação (mais antigos primeiro) com `idade`, `resubmissao` e `podeDecidir` (RN-12), e `total` sem filtro |
@@ -329,8 +331,8 @@ NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com AIPGOALS_AZURE_SQL_DATAB
 
 ## Pontos de atenção
 
-- **Banco:** schema `PM` no `BDIBPBMSA_DEV` (scripts `001` e `002` em `database/`). Para produção, rodar os scripts no
+- **Banco:** schema `PM` no `BDIBPBMSA_DEV` (scripts `001`, `002` e `005` em `database/`; o `005` deixa as janelas do ciclo em branco e precisa rodar antes de abrir um novo ciclo). Para produção, rodar os scripts no
   `BDIBPBMSA_PRD` e trocar `AIPGOALS_AZURE_SQL_DATABASE` no `app.yaml`.
 - **Papéis:** `PM.AIP_PAPEL` do ciclo atual, pela matrícula do usuário no MDM (`CD_EMAIL` → `CD_MATRICULA`, sem zeros à esquerda) (AC-02, AC-03).
-- **Primeira configuração:** todas as abas salvam sozinhas; Metas e pesos aceita soma incompleta (aviso da RN-16, D-31).
+- **Primeira configuração:** todas as abas salvam sozinhas; Metas e pesos aceita soma incompleta (aviso da RN-16, D-31), nunca acima de 100 pts (D-33).
 - **Card na página inicial do Portal:** ainda não adicionado.

@@ -178,7 +178,7 @@ c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<ol class="ordem"><li>O CEO fecha 100 pontos só com metas próprias (não herda).</li>'
  '<li>O COO herda 75 pontos do resultado do CEO e distribui 25 entre as suas metas (ex.: meta 02 com 5 pontos).</li>'
  '<li>Cada BU herda 40 pontos do resultado do COO e distribui 60 entre as metas da BU (ex.: meta 04 com 10 pontos em Ontario).</li>'
- '<li>Meta: herdado + soma dos pesos = total em todos os sites, no CEO e no COO (RN-16). A tela avisa quem não fecha, mas deixa salvar parcial para terminar depois.</li></ol>'
+ '<li>Meta: herdado + soma dos pesos = total em todos os sites, no CEO e no COO (RN-16). Nunca acima do total (bloqueado); abaixo, a tela avisa e deixa salvar parcial para terminar depois.</li></ol>'
  '<div class="tscroll"><table class="passo"><thead><tr><th>Quem</th><th>Herdado</th><th>Metas</th><th>Total</th></tr></thead><tbody>'
  '<tr><td>CEO VBM</td><td>0</td><td>100</td><td>100</td></tr><tr><td>COO VBM</td><td>75</td><td>25</td><td>100</td></tr>'
  '<tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>')}]
