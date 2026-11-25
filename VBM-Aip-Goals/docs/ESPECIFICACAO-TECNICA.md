@@ -62,7 +62,7 @@ O AIP Goals é a aplicação do portal-pci que leva cada meta de AIP das BUs de 
 | RN-11 | Contribuidor recolhe a submissão antes da decisão | Card volta a Rascunho; vN fica no histórico como Recolhida |
 | RN-12 | Aprovador também é contribuidor da BU e editou ou submeteu a versão | Não pode decidir; a pendência fica com os demais membros do grupo de aprovação |
 | RN-13 | Comentário publicado | Estado do card não muda; o comentário fica ancorado à seção e aparece no Goal Card e no Action Log |
-| RN-16 | Soma dos pesos da unidade igual ao total do desdobramento (100 pts) | A soma (herdado + metas) fica sempre visível por unidade, com aviso das que não fecham; a gravação de Metas e pesos é permitida mesmo incompleta, para o administrador fazer uma parte agora e terminar depois (D-31). |
+| RN-16 | Soma dos pesos da unidade: no máximo o total do desdobramento (100 pts) | Acima do total é bloqueado (o campo limita o peso ao que ainda cabe e o servidor recusa); abaixo do total é só aviso por unidade e a gravação parcial é permitida, para terminar depois (D-31, D-33). |
 | RN-15 | Sem negação | O grupo de aprovação só aprova ou devolve para ajuste; não existe Negar nem o estado Negado no modelo (D-25). |
 | RN-17 | Card Aprovado precisa mudar | Só o administrador do sistema reabre um card aprovado para edição (botão "Reabrir para edição" no Goal Card, com confirmação). O card volta para Rascunho; a versão aprovada continua no histórico e a reabertura vai ao Action Log. |
 | RN-18 | Exclusão de BU, meta ou pessoa | Não existe; o registro é desativado e o histórico é preservado |
@@ -291,7 +291,7 @@ Saiu a `AIP_UNIDADE` (D-26): o desdobramento usa o próprio site da `IBP.SITES`.
 | CA-08 | Resubmeter gera vN+1, volta à fila do grupo de aprovação e mostra as diferenças ao aprovador | RN-10 |
 | CA-09 | Card Aprovado não aceita edição por nenhum perfil, nem pela API, exceto pela reabertura da RN-17 dentro da janela inicial do ciclo | RN-07, RN-17 |
 | CA-10 | Ninguém decide sobre um card que editou ou submeteu | RN-12 |
-| CA-11 | Metas e pesos com soma diferente do total gravam normalmente, e a tela mostra o aviso de cada unidade que não fecha (D-31) | RN-16 |
+| CA-11 | Metas e pesos com soma acima do total não grava nem aceita o valor digitado; com soma abaixo do total grava e a tela avisa a unidade que não fecha (D-31, D-33) | RN-16 |
 | CA-13 | Todo comentário, decisão, reabertura e mudança de configuração aparece no log, filtrável e exportável em Excel | §7.3 |
 | CA-20 | A T06 compara duas versões quaisquer do card campo a campo e marca a versão oficial; nenhuma versão pode ser alterada | §7.2 |
 | CA-19 | Só o grupo de aprovação acessa a T14: para os demais perfis o item não aparece no menu e a API responde 403 | AC-08 |

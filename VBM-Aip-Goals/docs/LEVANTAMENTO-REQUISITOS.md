@@ -70,6 +70,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-30 | Administração › Business Units: ao escolher o site na Nova BU, o diretor da BU é buscado sozinho no MDM pela hierarquia N4 (Diretoria): o N4 mais comum entre as pessoas ativas do site, localizado no próprio MDM pelo nome e preenchido; o administrador pode trocar em Editar. Sem diretor no MDM, o campo fica vazio para digitar. | 24/11/2026 |
 | D-31 | Administração: Metas e pesos salva mesmo sem fechar os 100 pts (a soma vira aviso, para fazer uma parte agora e terminar depois); Abrir novo ciclo (regra revista na D-32) deixa escolher o ano. | 24/11/2026 |
 | D-32 | Novo ciclo: o ano escolhido tem de ser maior que o ano atual (e sem ciclo); as 4 janelas nascem com as datas em branco e o administrador as escolhe no diálogo, todas no ano atual ou no seguinte e em ordem (início só da 1ª etapa; as demais começam no fim da anterior). Validado na tela e no servidor. Datas do ciclo editadas na aba Ciclo só valem ao clicar em Salvar alterações. | 25/11/2026 |
+| D-33 | Metas e pesos: a soma de uma unidade nunca pode passar de 100 pts (o campo de peso limita ao que ainda cabe e o servidor recusa); abaixo de 100 continua podendo salvar, com aviso (completa o D-31). | 25/11/2026 |
 
 ## 4. Suposições a confirmar
 

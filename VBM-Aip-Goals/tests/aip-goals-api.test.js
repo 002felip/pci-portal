@@ -263,7 +263,9 @@ test('T11 Configuração: só o administrador; RN-16 por nível (CEO → BU); an
     assert.strictEqual((await pedir(admin, '/api/configuracao', h)).status, 200);
     assert.strictEqual((await pedir(contrib, '/api/configuracao', h)).status, 403);
     const r = await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel } }, h);
-    assert.strictEqual(r.status, 200); // RN-16 é aviso: soma incompleta também grava (termina depois)
+    assert.strictEqual(r.status, 400); assert.strictEqual(r.corpo.codigo, 'RN16'); // soma acima do total (Salobo 105) bloqueia
+    const parcial = JSON.parse(JSON.stringify(metasNivel)); parcial.bu.forEach((m) => { Object.keys(m.pesos).forEach((k) => { m.pesos[k] = 1; }); });
+    assert.strictEqual((await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel: parcial } }, h)).status, 200); // abaixo do total é só aviso: grava parcial
     assert.strictEqual((await enviar(admin, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel: base.metasNivel } }, h)).corpo.simulado, true);
     assert.strictEqual((await enviar(contrib, '/api/configuracao/salvar', { aba: 'metas', dados: { metasNivel: base.metasNivel } }, h)).status, 403);
   } finally { admin.close(); contrib.close(); }
