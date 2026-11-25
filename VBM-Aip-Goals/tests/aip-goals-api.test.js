@@ -359,4 +359,5 @@ test('Novo ciclo: ano maior que o atual e datas das janelas no ano atual ou no s
   assert.ok(validarNovoCiclo(2029, [{ inicio: '2028-01-01', fim: '2028-02-01' }, ...ok.slice(1)], hoje).some((e) => e.codigo === 'PERIODO'));
   assert.ok(validarNovoCiclo(2029, [{ inicio: '2026-12-10', fim: '2026-12-01' }, ...ok.slice(1)], hoje).some((e) => e.codigo === 'ORDEM'));
   assert.ok(validarNovoCiclo(2029, ok.slice(0, 3), hoje).some((e) => e.codigo === 'ETAPAS'));
+  assert.deepStrictEqual(validarNovoCiclo(2029, undefined, hoje), []); // pop-up só com o ano: janelas em branco
 });
