@@ -238,6 +238,24 @@ function somaPesosPorNivel(metasNivel, niveis, unidades, bus) {
   });
   return r;
 }
+// Novo ciclo: ano maior que o ano atual; as 4 etapas com as datas preenchidas, no ano atual ou no seguinte e em ordem
+// (início só na 1ª etapa; as demais começam no fim da anterior). Devolve a lista de erros (vazia = pode criar).
+function validarNovoCiclo(ano, etapas, hoje) {
+  const erros = [], atual = hoje.getFullYear();
+  if (!Number.isInteger(ano) || ano <= atual || ano > 2100) erros.push({ campo: 'ano', codigo: 'ANO' });
+  const et = Array.isArray(etapas) ? etapas : [];
+  if (et.length !== 4) return erros.concat({ campo: 'etapas', codigo: 'ETAPAS' });
+  const noPeriodo = (v) => dataValida(v) && [atual, atual + 1].includes(Number(String(v).slice(0, 4)));
+  let ant = null;
+  et.forEach((e, i) => {
+    const ini = i === 0 ? e.inicio : ant;
+    if (!noPeriodo(ini)) erros.push({ campo: `etapas.${i}.inicio`, codigo: dataValida(ini) ? 'PERIODO' : 'DATA' });
+    if (!noPeriodo(e.fim)) erros.push({ campo: `etapas.${i}.fim`, codigo: dataValida(e.fim) ? 'PERIODO' : 'DATA' });
+    else if (dataValida(ini) && e.fim <= ini) erros.push({ campo: `etapas.${i}.fim`, codigo: 'ORDEM' });
+    ant = e.fim;
+  });
+  return erros;
+}
 // Valida uma aba da configuração; devolve a lista de erros ({ campo, codigo, ... }) — vazia = pode gravar.
 function validarConfiguracao(aba, dados, base) {
   const erros = [];
@@ -605,7 +623,12 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
       const acao = String((req.body || {}).acao || ''), ano = Number((req.body || {}).ano);
       if (!ACOES_CICLO.includes(acao) || ((acao !== 'novo' || (req.body || {}).ano != null) && !(Number.isInteger(ano) && ano >= 2020 && ano <= 2100))) return res.status(400).json({ error: 'Ação inválida.', codigo: 'VALIDACAO' });
-      const r = await dados.acaoCiclo(acao, ano, ctx);
+      const etapas = (req.body || {}).etapas;
+      if (acao === 'novo' && (req.body || {}).ano != null) {
+        const erros = validarNovoCiclo(ano, etapas, ctx.hoje);
+        if (erros.length) return res.status(400).json({ error: 'Novo ciclo com pendências.', codigo: 'VALIDACAO', erros });
+      }
+      const r = await dados.acaoCiclo(acao, ano, ctx, etapas);
       res.json({ ok: true, ...r });
     } catch (err) { falha(res, '/configuracao/ciclo', err, 'Não foi possível alterar o ciclo.'); }
   });
@@ -649,4 +672,4 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   return router;
 }
 
-module.exports = { filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
+module.exports = { validarNovoCiclo, filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };

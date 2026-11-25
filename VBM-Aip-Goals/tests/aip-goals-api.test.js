@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const express = require('express');
 const path = require('path');
 const { criarFonteExemplo } = require('./fonte-exemplo');
-const { criarAipGoalsRouter: criarRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao, modoDoCard } = require('../aip-goals-api');
+const { validarNovoCiclo, criarAipGoalsRouter: criarRouter, diasUteisEntre, agregarMetas, camposObrigatorios, validarDecisao, modoDoCard } = require('../aip-goals-api');
 
 // Router com a fonte de exemplo (papeisDe simula o perfil do usuário)
 const criarAipGoalsRouter = ({ papeisDe, ...o } = {}) => criarRouter({ ...o, dados: criarFonteExemplo(papeisDe ? { papeisDe } : {}) });
@@ -347,4 +347,14 @@ test('POST /goal-card/comentario: seção válida e texto obrigatório (simulaç
     assert.strictEqual((await enviar(s, '/api/goal-card/comentario', { card: 'GC-VNL-04', secao: 'xyz', texto: 'a' }, h)).status, 400);
     assert.strictEqual((await enviar(s, '/api/goal-card/comentario', { card: 'GC-VNL-04', secao: 'ruler', texto: '   ' }, h)).status, 400);
   } finally { s.close(); }
+});
+
+test('Novo ciclo: ano maior que o atual e datas das janelas no ano atual ou no seguinte, em ordem', () => {
+  const hoje = new Date(2026, 10, 25), ok = [{ inicio: '2026-12-01', fim: '2026-12-10' }, { inicio: null, fim: '2026-12-20' }, { inicio: null, fim: '2027-01-10' }, { inicio: null, fim: '2027-01-20' }];
+  assert.deepStrictEqual(validarNovoCiclo(2029, ok, hoje), []);
+  assert.ok(validarNovoCiclo(2026, ok, hoje).some((e) => e.codigo === 'ANO'));
+  assert.ok(validarNovoCiclo(2029, [{ inicio: '', fim: '' }, ...ok.slice(1)], hoje).some((e) => e.codigo === 'DATA'));
+  assert.ok(validarNovoCiclo(2029, [{ inicio: '2028-01-01', fim: '2028-02-01' }, ...ok.slice(1)], hoje).some((e) => e.codigo === 'PERIODO'));
+  assert.ok(validarNovoCiclo(2029, [{ inicio: '2026-12-10', fim: '2026-12-01' }, ...ok.slice(1)], hoje).some((e) => e.codigo === 'ORDEM'));
+  assert.ok(validarNovoCiclo(2029, ok.slice(0, 3), hoje).some((e) => e.codigo === 'ETAPAS'));
 });
