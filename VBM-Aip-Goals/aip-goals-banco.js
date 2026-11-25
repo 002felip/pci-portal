@@ -680,6 +680,15 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       const datas = dt
         ? ['@i0', '@f0', '@i1', '@f1', '@i2', '@f2', '@i3', '@f3']
         : Array(8).fill('NULL');
+      // Sem datas: o banco precisa aceitar janelas em branco (database/005_pm_janelas_em_branco.sql)
+      if (!dt) {
+        const nn = await q(`SELECT COUNT(*) AS N FROM sys.columns WHERE object_id = OBJECT_ID('PM.AIP_CICLO') AND is_nullable = 0
+          AND name IN ('DT_INI_DESDOBRAMENTO', 'DT_FIM_DESDOBRAMENTO', 'DT_INI_PROPOSTA', 'DT_FIM_PROPOSTA', 'DT_INI_CALIBRACAO', 'DT_FIM_CALIBRACAO', 'DT_INI_OFICIAL', 'DT_FIM_OFICIAL')`);
+        if (nn.recordset[0].N > 0) {
+          console.error(`${TAG} novo ciclo: as datas de PM.AIP_CICLO ainda não aceitam NULL; rode database/005_pm_janelas_em_branco.sql`);
+          throw conflito('O banco ainda não aceita ciclo com datas em branco. Rode o script database/005_pm_janelas_em_branco.sql no banco e tente de novo.');
+        }
+      }
       const r = await q(`INSERT PM.AIP_CICLO (NO_ANO, NM_CICLO, SG_STATUS, ID_CICLO_ORIGEM, CD_MATRICULA_CRIACAO,
           DT_INI_DESDOBRAMENTO, DT_FIM_DESDOBRAMENTO, DT_INI_PROPOSTA, DT_FIM_PROPOSTA, DT_INI_CALIBRACAO, DT_FIM_CALIBRACAO, DT_INI_OFICIAL, DT_FIM_OFICIAL,
           QTDE_PONTOS_HERDADOS_COO, QTDE_PONTOS_HERDADOS_BU)
