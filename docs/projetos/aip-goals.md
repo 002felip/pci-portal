@@ -39,6 +39,9 @@ aprovado, versionado e rastreável, no lugar do PPT e do e-mail. Especificação
   fluidas; o topo sobe por trás da barra de vidro, então a foto começa no alto da tela; atualizar e tela cheia
   ficam no canto superior direito (`.topo-acoes`); os blocos usam cinza suave com borda leve. Sem a pílula
   "Dados de exemplo". Em tela cheia, a barra com o menu continua visível.
+- **Dados sempre atuais:** toda leitura da API vai direto ao servidor (`cache: no-store` e marca de tempo na URL). Depois de
+  qualquer gravação com sucesso, a página descarta o que guardou e recarrega o Início e a tela aberta, sem F5; aba com
+  alteração ainda não salva não é sobrescrita. Ao voltar para a aba do navegador (no máximo a cada 30 s), também atualiza.
 ## Arquivos
 
 | Arquivo | O que é | Público? |
