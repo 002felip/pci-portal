@@ -285,7 +285,7 @@ function validarConfiguracao(aba, dados, base) {
       Object.values(m.pesos || {}).forEach((p) => { if (!(Number(p) >= 0 && Number(p) <= 1000)) erros.push({ campo: `metas.${nivel}.${i}.pesos`, codigo: 'PESO' }); });
     }));
     somaPesosPorNivel(d.metasNivel, niveis, unidades, bus).filter((x) => x.soma !== x.total)
-      .forEach((x) => erros.push({ campo: 'pesos', codigo: 'RN16', aviso: true, nivel: x.nivel, unidade: x.unidade, soma: x.soma, total: x.total })); // aviso: grava parcial (termina depois)
+      .forEach((x) => erros.push({ campo: 'pesos', codigo: 'RN16', aviso: x.soma < x.total, nivel: x.nivel, unidade: x.unidade, soma: x.soma, total: x.total })); // abaixo do total é aviso (grava parcial); acima do total bloqueia
   }
   if (aba === 'grupos') {
     const siglas = base.bus.map((b) => b.sigla).concat((d.bus || []).map((b) => b.sigla));
@@ -610,8 +610,8 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
       const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
       const { aba, dados: d } = req.body || {};
-      const erros = validarConfiguracao(aba, d, base).filter((e) => !e.aviso); // RN-16 é só aviso: pode salvar parcial
-      if (erros.length) return res.status(400).json({ error: 'Configuração com pendências.', codigo: 'VALIDACAO', erros });
+      const erros = validarConfiguracao(aba, d, base).filter((e) => !e.aviso); // RN-16: abaixo do total é aviso (salva parcial); acima do total bloqueia
+      if (erros.length) return res.status(400).json({ error: 'Configuração com pendências.', codigo: erros.some((e) => e.codigo === 'RN16') ? 'RN16' : 'VALIDACAO', erros });
       const r = await dados.salvarConfiguracao(aba, d, ctx, base);
       if (r && r.erros) return res.status(400).json({ error: 'Configuração com pendências.', codigo: 'VALIDACAO', erros: r.erros });
       res.json({ ok: true, aba, ...(r && r.simulado ? { simulado: true } : {}), evento: { tipo: 'configuracao', quem: ctx.email, quando: ctx.hoje.toISOString() } });
