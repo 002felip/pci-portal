@@ -238,11 +238,12 @@ function somaPesosPorNivel(metasNivel, niveis, unidades, bus) {
   });
   return r;
 }
-// Novo ciclo: ano maior que o ano atual; as 4 etapas com as datas preenchidas, no ano atual ou no seguinte e em ordem
-// (início só na 1ª etapa; as demais começam no fim da anterior). Devolve a lista de erros (vazia = pode criar).
+// Novo ciclo: ano maior que o ano atual. As janelas nascem em branco e são preenchidas na aba Ciclo; se vierem
+// etapas, valem as mesmas regras de lá (no ano atual ou no seguinte e em ordem). Devolve a lista de erros (vazia = pode criar).
 function validarNovoCiclo(ano, etapas, hoje) {
   const erros = [], atual = hoje.getFullYear();
   if (!Number.isInteger(ano) || ano <= atual || ano > 2100) erros.push({ campo: 'ano', codigo: 'ANO' });
+  if (etapas == null) return erros;
   const et = Array.isArray(etapas) ? etapas : [];
   if (et.length !== 4) return erros.concat({ campo: 'etapas', codigo: 'ETAPAS' });
   const noPeriodo = (v) => dataValida(v) && [atual, atual + 1].includes(Number(String(v).slice(0, 4)));
@@ -257,7 +258,7 @@ function validarNovoCiclo(ano, etapas, hoje) {
   return erros;
 }
 // Valida uma aba da configuração; devolve a lista de erros ({ campo, codigo, ... }) — vazia = pode gravar.
-function validarConfiguracao(aba, dados, base) {
+function validarConfiguracao(aba, dados, base, hoje = new Date()) {
   const erros = [];
   const d = dados || {};
   if (!ABAS_CONFIG.includes(aba)) return [{ campo: 'aba', codigo: 'ABA' }];
@@ -271,6 +272,10 @@ function validarConfiguracao(aba, dados, base) {
     let iniAnt = null;
     et.forEach((e, i) => {
       const ini = e.inicio || (i > 0 ? et[i - 1].fim : null);
+      // Datas das janelas: só no ano atual ou no seguinte (D-35)
+      const fora = (v) => dataValida(v) && ![hoje.getFullYear(), hoje.getFullYear() + 1].includes(Number(String(v).slice(0, 4)));
+      if (fora(ini)) erros.push({ campo: `etapas.${i}.inicio`, codigo: 'PERIODO' });
+      if (fora(e.fim)) erros.push({ campo: `etapas.${i}.fim`, codigo: 'PERIODO' });
       if (!dataValida(ini)) erros.push({ campo: `etapas.${i}.inicio`, codigo: 'DATA' });
       else if (iniAnt && ini < iniAnt) erros.push({ campo: `etapas.${i}.inicio`, codigo: 'ORDEM' });
       if (!dataValida(e.fim)) erros.push({ campo: `etapas.${i}.fim`, codigo: 'DATA' });
@@ -610,7 +615,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
       const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
       const { aba, dados: d } = req.body || {};
-      const erros = validarConfiguracao(aba, d, base).filter((e) => !e.aviso); // RN-16: abaixo do total é aviso (salva parcial); acima do total bloqueia
+      const erros = validarConfiguracao(aba, d, base, ctx.hoje).filter((e) => !e.aviso); // RN-16: abaixo do total é aviso (salva parcial); acima do total bloqueia
       if (erros.length) return res.status(400).json({ error: 'Configuração com pendências.', codigo: erros.some((e) => e.codigo === 'RN16') ? 'RN16' : 'VALIDACAO', erros });
       const r = await dados.salvarConfiguracao(aba, d, ctx, base);
       if (r && r.erros) return res.status(400).json({ error: 'Configuração com pendências.', codigo: 'VALIDACAO', erros: r.erros });

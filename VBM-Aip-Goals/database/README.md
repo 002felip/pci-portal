@@ -9,6 +9,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 | `001_pm_criar_tabelas.sql` | Cria o schema `PM`, as 9 tabelas, as restrições, os índices, o gatilho que torna o log imutável e as FKs para `IBP.SITES` | Uma vez por banco. Pode repetir: só cria o que falta |
 | `002_pm_carga_inicial.sql` | Cria o 1º ciclo aberto, a meta nº 0 da BU (resultado do COO) e o 1º administrador | Uma vez, depois do 001, com a sua matrícula preenchida |
 | `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra o nome e o e-mail da matrícula no MDM) | Depois do 002, no DEV |
+| `005_pm_janelas_em_branco.sql` | Deixa as datas das janelas do `PM.AIP_CICLO` aceitarem em branco (o novo ciclo nasce sem datas, D-35) | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
 
 ## Ordem de ligação (passo a passo)
 

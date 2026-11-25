@@ -167,6 +167,10 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   const ins = log.find((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql));
   assert.deepStrictEqual([ins.p.ano[1], ins.p.nome[1], /@i0, @f0/.test(ins.sql)], [2030, 'AIP 2030', true]);
   assert.deepStrictEqual([ins.p.i1[1], ins.p.f3[1]], ['2026-12-10', '2027-01-20']);
+  // Sem etapas (pop-up só com o ano): janelas em branco, escolhidas depois na aba Ciclo
+  log.length = 0;
+  await fonte.acaoCiclo('novo', 2031, ctx);
+  assert.ok(/NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL/.test(log.find((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql)).sql));
   await assert.rejects(fonte.acaoCiclo('novo', 2027, ctx), /Já existe o ciclo AIP 2027/);
 });
 

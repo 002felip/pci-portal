@@ -672,15 +672,14 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       // novo
       const atual = await cicloAtualLinha(q);
       if (!atual) throw conflito('Nenhum ciclo para copiar.');
-      // Ano escolhido pelo administrador (padrão: o seguinte ao mais recente); datas deslocadas pela diferença de anos
+      // Ano escolhido pelo administrador (maior que o atual, validado na API)
       const novoAno = Number.isInteger(ano) ? ano : atual.NO_ANO + 1;
       if ((await q('SELECT 1 AS X FROM PM.AIP_CICLO WHERE NO_ANO = @ano', { ano: P.sm(novoAno) })).recordset.length) throw conflito(`Já existe o ciclo AIP ${novoAno}.`);
-      // Datas: as escolhidas na tela (início da 1ª etapa e fim de cada uma; as outras começam no fim da anterior); sem elas, copia deslocando os anos
+      // Datas: em branco (o administrador escolhe na aba Ciclo, D-35); se vierem etapas, grava as escolhidas
       const dt = etapas && etapas.length === 4 ? Object.fromEntries(etapas.flatMap((e, i) => [['i' + i, P.dt(i === 0 ? e.inicio : etapas[i - 1].fim)], ['f' + i, P.dt(e.fim)]])) : null;
       const datas = dt
         ? ['@i0', '@f0', '@i1', '@f1', '@i2', '@f2', '@i3', '@f3']
-        : ['DT_INI_DESDOBRAMENTO', 'DT_FIM_DESDOBRAMENTO', 'DT_INI_PROPOSTA', 'DT_FIM_PROPOSTA', 'DT_INI_CALIBRACAO', 'DT_FIM_CALIBRACAO', 'DT_INI_OFICIAL', 'DT_FIM_OFICIAL'].map((c) => `DATEADD(YEAR, @desloc, ${c})`);
-      const desloc = novoAno - atual.NO_ANO;
+        : Array(8).fill('NULL');
       const r = await q(`INSERT PM.AIP_CICLO (NO_ANO, NM_CICLO, SG_STATUS, ID_CICLO_ORIGEM, CD_MATRICULA_CRIACAO,
           DT_INI_DESDOBRAMENTO, DT_FIM_DESDOBRAMENTO, DT_INI_PROPOSTA, DT_FIM_PROPOSTA, DT_INI_CALIBRACAO, DT_FIM_CALIBRACAO, DT_INI_OFICIAL, DT_FIM_OFICIAL,
           QTDE_PONTOS_HERDADOS_COO, QTDE_PONTOS_HERDADOS_BU)
@@ -688,7 +687,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
           ${datas.join(', ')},
           QTDE_PONTOS_HERDADOS_COO, QTDE_PONTOS_HERDADOS_BU
         FROM PM.AIP_CICLO WHERE ID_CICLO = @origem; SELECT CAST(SCOPE_IDENTITY() AS INT) AS ID;`,
-      { ano: P.sm(novoAno), ...(dt || { desloc: P.int(desloc) }), nome: P.nv(`AIP ${novoAno}`, 100), mat: P.vc(ctx.quem), origem: P.int(atual.ID_CICLO) });
+      { ano: P.sm(novoAno), ...(dt || {}), nome: P.nv(`AIP ${novoAno}`, 100), mat: P.vc(ctx.quem), origem: P.int(atual.ID_CICLO) });
       const novo = r.recordset[0].ID, prm = { novo: P.int(novo), origem: P.int(atual.ID_CICLO) };
       await q(`INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR, DS_EXCECAO, SG_EXCECAO_VER)
         SELECT @novo, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR, DS_EXCECAO, SG_EXCECAO_VER FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @origem`, prm);
