@@ -118,26 +118,45 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   }
   // Diretor do site = hierarquia N4 do MDM (N3 COO · N4 Diretoria · N5 Head…, como no Kaizen): o N4 mais comum entre as
   // pessoas ativas do site é o diretor; a pessoa vem do próprio MDM, pelo nome. Textos 'NULL', 'N.A', 'N/A' e vazio não contam.
+  // Site e nome comparados sem acento e sem diferença de maiúsculas (o MDM costuma ter 'ONCA PUMA'; a IBP.SITES, 'Onça Puma').
+  const AI = 'COLLATE Latin1_General_CI_AI';
+  const cacheDiretor = new Map(); // site → { l, em }
   async function diretoresDoSite(site) {
     const s = String(site || '').trim();
     if (!s) return [];
+    const c = cacheDiretor.get(s.toLowerCase());
+    if (c && Date.now() - c.em < TTL) return c.l;
     const top = await runQuery(`SELECT TOP (3) LTRIM(RTRIM(NM_HIERARQUIA_N4)) AS NOME, COUNT(*) AS QT FROM ${MDM}
-      WHERE SG_ATIVO = 'A' AND LTRIM(RTRIM(NM_SITE)) = @site AND NM_HIERARQUIA_N4 IS NOT NULL
-        AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')
+      WHERE SG_ATIVO = 'A' AND NM_HIERARQUIA_N4 IS NOT NULL
+        AND LTRIM(RTRIM(NM_SITE)) ${AI} = LTRIM(RTRIM(@site)) ${AI}
+        AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA', '-')
       GROUP BY LTRIM(RTRIM(NM_HIERARQUIA_N4)) ORDER BY COUNT(*) DESC`, { site: [sql.NVarChar(255), s] });
     const nomes = top.recordset.map((l) => String(l.NOME));
-    if (!nomes.length) return [];
-    const params = {};
-    nomes.forEach((n, k) => { params['n' + k] = [sql.NVarChar(255), n]; });
-    const r = await runQuery(`SELECT ${SEL_PESSOA} FROM ${MDM}
-      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND NM_USUARIO IN (${nomes.map((n, k) => '@n' + k).join(', ')})
-      ORDER BY ID_TIPO_USUARIO`, params);
-    const vistos = new Set(), pessoas = r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
-    return nomes.map((n) => pessoas.find((p) => p.nome.toLowerCase() === n.toLowerCase())).filter(Boolean);
+    let lista = [];
+    if (nomes.length) {
+      const params = {};
+      nomes.forEach((n, k) => { params['n' + k] = [sql.NVarChar(255), n]; });
+      const r = await runQuery(`SELECT ${SEL_PESSOA} FROM ${MDM}
+        WHERE CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(NM_USUARIO)) ${AI} IN (${nomes.map((n, k) => '@n' + k + ' ' + AI).join(', ')})
+        ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, params);
+      const vistos = new Set(), pessoas = r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
+      const igual = (a, b) => semAcento(a).trim().toLowerCase() === semAcento(b).trim().toLowerCase();
+      // N4 sem cadastro de pessoa no MDM: fica o nome (sem matrícula), para a tela não sair em branco
+      lista = nomes.map((n) => pessoas.find((p) => igual(p.nome, n)) || { matricula: null, nome: n, email: '', cargo: '', estado: '', cidade: '' });
+    }
+    if (!lista.length) console.warn(`${TAG} diretor (N4) não encontrado no MDM para o site "${s}" (NM_SITE do ${MDM} diferente do da IBP.SITES?)`);
+    cacheDiretor.set(s.toLowerCase(), { l: lista, em: Date.now() });
+    return lista;
+  }
+  // Diretor efetivo do site: o escolhido na Administração; sem escolha, o N4 do MDM
+  async function diretorDoSite(site, matricula, nomes) {
+    if (matricula) return { nome: nomeDe(nomes, matricula), matricula: String(matricula), origem: 'escolhido' };
+    const l = await diretoresDoSite(site).catch((err) => { console.error(`${TAG} diretor (N4) de ${site}:`, err.message); return []; });
+    return l.length ? { nome: l[0].nome, matricula: l[0].matricula, origem: 'mdm' } : { nome: '', matricula: null, origem: null };
   }
   async function pessoaPorNome(q, nome) {
     const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
-      WHERE NM_USUARIO = @nome AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
+      WHERE LTRIM(RTRIM(NM_USUARIO)) COLLATE Latin1_General_CI_AI = @nome COLLATE Latin1_General_CI_AI AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
     return r.recordset[0] ? r.recordset[0].MATRICULA : null;
   }
 
@@ -273,13 +292,14 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       WHERE ID_GOAL_CARD = @id AND TP_EVENTO = 'COMENTARIO' ORDER BY DT_EVENTO, ID_EVENTO`, { id: P.int(l.ID_GOAL_CARD) });
     const versoes = vr.recordset;
     const nomes = await pessoas([l.CD_MATRICULA, l.CD_MATRICULA_DIRETOR].concat(versoes.map((v) => v.CD_MATRICULA_AUTOR), versoes.map((v) => v.CD_MATRICULA_DECISAO), ev.recordset.map((e) => e.CD_MATRICULA)));
-    return { cc, l, versoes, eventos: ev.recordset, nomes };
+    const diretor = (await diretorDoSite(l.NM_SITE, l.CD_MATRICULA_DIRETOR, nomes)).nome;
+    return { cc, l, versoes, eventos: ev.recordset, nomes, diretor };
   }
   function montarCard(x) {
     const { cc, l, versoes, eventos, nomes } = x;
     const estado = ESTADO_DE[l.TP_ESTADO];
     const ultima = versoes[versoes.length - 1] || null;
-    const fixas = { area: { area: AREA_RESPONSAVEL, responsavel: nomeDe(nomes, l.CD_MATRICULA_DIRETOR) || '' }, padrao: l.SG_EXCECAO_VER === 'S' ? (l.DS_EXCECAO || '') : '' };
+    const fixas = { area: { area: AREA_RESPONSAVEL, responsavel: x.diretor || '' }, padrao: l.SG_EXCECAO_VER === 'S' ? (l.DS_EXCECAO || '') : '' };
     const fixar = (s) => ({ ...s, area: fixas.area, exceptions: { ...s.exceptions, padrao: fixas.padrao } });
     const base = secoesVazias();
     const secoes = fixar(mesclarSecoes(base, json(l.DS_RASCUNHO) || (ultima ? json(ultima.DS_CAMPOS) : null)));
@@ -367,6 +387,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     ];
     const sub = new Map(subR.recordset.map((x) => [x.ID_SITE, x.N]));
     const nomes = await pessoas(papeisR.recordset.map((p) => p.CD_MATRICULA).concat(cc.sites.map((s) => s.diretor)));
+    const dirs = [];
+    for (const st of cc.sites) dirs.push({ s: st, d: await diretorDoSite(st.sigla, st.diretor, nomes) });
     const sigla = new Map(cc.sites.map((s) => [s.id, s.sigla]));
     const ativas = mt.metas.filter((m) => m.SG_ATIVA === 'S');
     const pol = (m) => String(m.TP_ORIENTACAO).toLowerCase();
@@ -384,7 +406,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     return {
       ciclo: { ...cc.ciclo, status: c.SG_STATUS === 'S' ? 'aberto' : 'fechado', textoPadraoExcecoes: '' },
       ciclos: ciclosR.recordset.map((x) => ({ ano: x.NO_ANO, nome: x.NM_CICLO, aberto: x.SG_STATUS === 'S' })),
-      bus: cc.sites.map((s) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: nomeDe(nomes, s.diretor) || '', diretorMatricula: s.diretor || null, cardsSubmetidos: sub.get(s.id) || 0 })),
+      bus: dirs.map(({ s, d }) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: d.nome || '', diretorMatricula: d.matricula || null, diretorOrigem: d.origem, cardsSubmetidos: sub.get(s.id) || 0 })),
       membros, diretorio: [], // a busca de pessoas é por GET /pessoas?q= (MDM)
       excecoes: { bus: Object.fromEntries(cc.sites.map((s) => [s.sigla, { texto: s.excecao, ver: s.ver }])) },
       niveis: [
@@ -551,10 +573,10 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
           const b = d.bus[i];
           // Diretor: matrícula vinda da busca; senão, o nome no MDM; mesmo nome de antes, mantém a matrícula gravada
           let mat = b.diretorMatricula ? String(b.diretorMatricula).trim() : null;
-          if (!mat && b.diretor) {
-            const antes = atuais0.get(b.sigla);
-            mat = antes && antes.diretor === b.diretor && antes.diretorMatricula ? antes.diretorMatricula : await pessoaPorNome(q, b.diretor);
-          }
+          const antes = atuais0.get(b.sigla);
+          if (!mat && b.diretor) mat = antes && antes.diretor === b.diretor && antes.diretorMatricula ? antes.diretorMatricula : await pessoaPorNome(q, b.diretor);
+          // Diretor vindo do N4 do MDM e não trocado: continua em branco no banco, para seguir o MDM quando ele mudar
+          if (antes && antes.diretorOrigem === 'mdm' && antes.diretor === b.diretor) mat = null;
           await q(`IF EXISTS (SELECT 1 FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo AND ID_SITE = @site)
               UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = @ativa, CD_MATRICULA_DIRETOR = @dir WHERE ID_CICLO = @ciclo AND ID_SITE = @site
             ELSE INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR) VALUES (@ciclo, @site, @ativa, @dir)`,
