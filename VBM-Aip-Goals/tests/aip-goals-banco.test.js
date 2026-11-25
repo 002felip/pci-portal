@@ -22,6 +22,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
   const rs = (recordset, rowsAffected = [recordset.length || 1]) => ({ recordset, rowsAffected });
   const responder = (sql, p = {}) => {
     log.push({ sql, p });
+    if (/FROM sys\.columns/.test(sql)) return rs([{ N: global.AIP_DATAS_OBRIGATORIAS || 0 }]);
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
     if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(p.site[1] === 'Salobo' ? [{ NOME: 'Bruno Costa', QT: 9 }] : []);
@@ -172,6 +173,11 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   await fonte.acaoCiclo('novo', 2031, ctx);
   assert.ok(/NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL/.test(log.find((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql)).sql));
   await assert.rejects(fonte.acaoCiclo('novo', 2027, ctx), /Já existe o ciclo AIP 2027/);
+  // Banco sem o 005 (datas ainda obrigatórias): mensagem que diz o que rodar, sem tentar gravar
+  global.AIP_DATAS_OBRIGATORIAS = 8; log.length = 0;
+  await assert.rejects(fonte.acaoCiclo('novo', 2032, ctx), (e) => e.status === 409 && /005_pm_janelas_em_branco/.test(e.message));
+  assert.ok(!log.some((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql)));
+  global.AIP_DATAS_OBRIGATORIAS = 0;
 });
 
 test('router com a fonte do banco: sem identidade 401; sem ciclo 409; respostas sem exemplo', async () => {
