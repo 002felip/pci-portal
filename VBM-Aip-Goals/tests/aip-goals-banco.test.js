@@ -161,11 +161,12 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 13 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
   const r = await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Atlantis', pais: 'X', ativa: true }] }, ctx, base);
   assert.strictEqual(r.erros[0].codigo, 'SITE');
-  // Novo ciclo no ano escolhido: datas deslocadas pela diferença de anos; ano que já tem ciclo é recusado
+  // Novo ciclo: ano e datas escolhidos na tela (a 2ª etapa começa no fim da 1ª); ano que já tem ciclo é recusado
   log.length = 0;
-  await fonte.acaoCiclo('novo', 2030, ctx);
+  await fonte.acaoCiclo('novo', 2030, ctx, [{ inicio: '2026-12-01', fim: '2026-12-10' }, { inicio: null, fim: '2026-12-20' }, { inicio: null, fim: '2027-01-10' }, { inicio: null, fim: '2027-01-20' }]);
   const ins = log.find((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql));
-  assert.deepStrictEqual([ins.p.ano[1], ins.p.desloc[1], ins.p.nome[1]], [2030, 3, 'AIP 2030']);
+  assert.deepStrictEqual([ins.p.ano[1], ins.p.nome[1], /@i0, @f0/.test(ins.sql)], [2030, 'AIP 2030', true]);
+  assert.deepStrictEqual([ins.p.i1[1], ins.p.f3[1]], ['2026-12-10', '2027-01-20']);
   await assert.rejects(fonte.acaoCiclo('novo', 2027, ctx), /Já existe o ciclo AIP 2027/);
 });
 
