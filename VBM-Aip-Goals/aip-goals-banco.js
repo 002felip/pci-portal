@@ -123,13 +123,13 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   }
   // Diretor do site = hierarquia N4 do MDM (N3 COO · N4 Diretoria · N5 Head…, como no Kaizen). O site da IBP.SITES vira o
   // NM_SITE do MDM pelo DE PARA (SITE_MDM); o N4 mais comum entre as
-  // pessoas ativas do site é o diretor; a pessoa vem do próprio MDM, pelo nome. Textos 'NULL', 'N.A', 'N/A' e vazio não contam.
+  // linhas do site é o diretor; a pessoa vem do próprio MDM, pelo nome. Textos 'NULL', 'N.A', 'N/A' e vazio não contam.
   async function diretoresDoSite(site) {
     const s0 = String(site || '').trim();
     if (!s0) return [];
     const s = SITE_MDM[semAcento(s0).toLowerCase().replace(/\s+/g, ' ')] || s0;
     const top = await runQuery(`SELECT TOP (3) LTRIM(RTRIM(NM_HIERARQUIA_N4)) AS NOME, COUNT(*) AS QT FROM ${MDM}
-      WHERE SG_ATIVO = 'A' AND LTRIM(RTRIM(NM_SITE)) = @site AND NM_HIERARQUIA_N4 IS NOT NULL
+      WHERE LTRIM(RTRIM(NM_SITE)) COLLATE Latin1_General_CI_AI = @site COLLATE Latin1_General_CI_AI AND NM_HIERARQUIA_N4 IS NOT NULL
         AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')
       GROUP BY LTRIM(RTRIM(NM_HIERARQUIA_N4)) ORDER BY COUNT(*) DESC`, { site: [sql.NVarChar(255), s] });
     const nomes = top.recordset.map((l) => String(l.NOME));
@@ -140,7 +140,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND NM_USUARIO IN (${nomes.map((n, k) => '@n' + k).join(', ')})
       ORDER BY ID_TIPO_USUARIO`, params);
     const vistos = new Set(), pessoas = r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
-    return nomes.map((n) => pessoas.find((p) => p.nome.toLowerCase() === n.toLowerCase())).filter(Boolean);
+    // O nome do N4 vale mesmo sem a pessoa no MDM (aí sem matrícula; ao salvar, a API tenta achá-la pelo nome)
+    return nomes.map((n) => pessoas.find((p) => p.nome.toLowerCase() === n.toLowerCase()) || { matricula: null, nome: n, email: '', cargo: '', estado: '', cidade: '' });
   }
   async function pessoaPorNome(q, nome) {
     const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
