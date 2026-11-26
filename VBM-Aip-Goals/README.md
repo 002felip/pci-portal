@@ -73,7 +73,7 @@ NODE_ENV=development AIPGOALS_EMAIL_LOCAL=voce@vale.com AIPGOALS_AZURE_SQL_DATAB
 ```
 
 Variáveis: `AIPGOALS_AZURE_SQL_DATABASE` (`BDIBPBMSA_DEV`, depois `BDIBPBMSA_PRD`), as de conexão do Portal (`AZURE_SQL_*`)
-e, opcionais, `AIPGOALS_SITES_TABELA` (padrão `IBP.SITES`) e `AIPGOALS_FUSO` (padrão `America/Sao_Paulo`). Detalhe em
+e, opcionais, `AIPGOALS_SITES_TABELA` (padrão `IBP.SITES`), `AIPGOALS_SITES_IDS` (sites da Nova BU, padrão `1,2,3,14,16,26,32,33`) e `AIPGOALS_FUSO` (padrão `America/Sao_Paulo`). Detalhe em
 `docs/projetos/aip-goals.md`.
 
 ## Pendências
