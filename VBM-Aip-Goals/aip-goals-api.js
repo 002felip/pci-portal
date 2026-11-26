@@ -332,7 +332,7 @@ function validarConfiguracao(aba, dados, base, hoje = new Date()) {
   }
   if (aba === 'bus') {
     const bus = d.bus || [];
-    if (!bus.some((b) => b.ativa)) erros.push({ campo: 'bus', codigo: 'SEM_BU' });
+    if (!bus.some((b) => b.ativa)) erros.push({ campo: 'bus', codigo: 'SEM_BU', aviso: true }); // pode salvar sem BU (D-39)
     const vistos = new Set();
     bus.forEach((b, i) => {
       const nome = String(b.sigla || '').trim();
