@@ -56,7 +56,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/FROM PM\.AIP_EVENTO_LOG e/.test(sql)) return rs([{ ID_EVENTO: 9, TP_EVENTO: 'SUBMISSAO', DT_EVENTO: new Date('2026-11-18T12:00:00Z'), CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', CD_SECAO: null, DS_COMENTARIO: 'resubmeteu como v2', CD_GOAL_CARD: 'GC-SAL-01', NO_META: 1, NM_TITULO: 'BU Working Capital', NM_SITE: 'Salobo' },
       { ID_EVENTO: 1, TP_EVENTO: 'CICLO_ABERTO', DT_EVENTO: new Date('2026-11-02T12:00:00Z'), CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', CD_SECAO: 'ciclo', DS_COMENTARIO: 'abriu', DS_DEPOIS: 'Aberto' }]);
     if (/COUNT\(\*\) AS N/.test(sql)) return rs([{ ID_SITE: 11, N: 1 }]);
-    if (/SELECT ID_SITE, NM_SITE, NM_PAIS FROM IBP\.SITES/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil' }, { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá' }, { ID_SITE: 13, NM_SITE: 'Sossego', NM_PAIS: 'Brasil' }]);
+    if (/AS NM_SITE, s\.NM_PAIS FROM IBP\.SITES s/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil' }, { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá' }, { ID_SITE: 13, NM_SITE: 'Sossego', NM_PAIS: 'Brasil' }]);
     if (/SELECT ID_SITE, NM_SITE FROM IBP\.SITES/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo' }, { ID_SITE: 12, NM_SITE: 'VNL' }, { ID_SITE: 13, NM_SITE: 'Sossego' }]);
     if (/ISNULL\(MAX\(NO_VERSAO\)/.test(sql)) return rs([{ N: 2 }]);
     if (/SELECT TOP \(1\) ID_VERSAO, NO_VERSAO/.test(sql)) return rs([{ ID_VERSAO: 2, NO_VERSAO: 2 }]);
@@ -65,7 +65,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/SCOPE_IDENTITY/.test(sql)) return rs([{ ID: 999 }], [1, 1]);
     if (/SELECT ID_PAPEL/.test(sql)) return rs([{ ID_PAPEL: 1, CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', ID_SITE: null, SG_ATIVO: 'S' }, { ID_PAPEL: 2, CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', ID_SITE: 11, SG_ATIVO: 'S' }]);
     if (/SELECT ID_SITE FROM PM\.AIP_CICLO_SITE/.test(sql)) return rs([{ ID_SITE: 11 }, { ID_SITE: 12 }]);
-    if (/SELECT m\.ID_META, m\.NO_META, cs\.ID_SITE, s\.NM_SITE/.test(sql)) return rs([{ ID_META: 101, NO_META: 1, ID_SITE: 13, NM_SITE: 'Sossego' }, { ID_META: 100, NO_META: 0, ID_SITE: 13, NM_SITE: 'Sossego' }]);
+    if (/SELECT m\.ID_META, m\.NO_META, cs\.ID_SITE, CASE s\.ID_SITE/.test(sql)) return rs([{ ID_META: 101, NO_META: 1, ID_SITE: 13, NM_SITE: 'Sossego' }, { ID_META: 100, NO_META: 0, ID_SITE: 13, NM_SITE: 'Sossego' }]);
     if (/SELECT gc\.CD_GOAL_CARD, gc\.ID_SITE/.test(sql)) return rs([{ CD_GOAL_CARD: 'GC-SAL-01', ID_SITE: 11 }, { CD_GOAL_CARD: 'GC-SOL-01', ID_SITE: 99 }]);
     if (/^\s*(UPDATE|INSERT|DELETE|IF)/.test(sql)) return rs([], [1]);
     throw new Error('consulta sem resposta simulada: ' + sql.slice(0, 120));
@@ -87,8 +87,8 @@ test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do
   // Nova BU: o diretor do site vem do MDM (site + cargo de diretor); site sem diretor no MDM → lista vazia (digita-se à mão)
   assert.deepStrictEqual((await fonte.diretoresDoSite('Salobo')).map((x) => x.nome), ['Bruno Costa']);
   assert.deepStrictEqual(await fonte.diretoresDoSite('Outro'), []);
-  // DE PARA IBP.SITES → NM_SITE do MDM: Clydach | CNR e Matsusaka | Tonimet usam o N4 de VNL
-  assert.deepStrictEqual((await fonte.diretoresDoSite('Clydach | CNR')).map((x) => x.nome), ['Bruno Costa']);
+  // DE PARA por ID_SITE → NM_SITE do MDM: Clydach (16) e Matsusaka (26) usam o N4 de VNL
+  assert.deepStrictEqual((await fonte.diretoresDoSite('Clydach')).map((x) => x.nome), ['Bruno Costa']);
   // N4 sem a pessoa no MDM: devolve o nome mesmo assim (sem matrícula)
   assert.deepStrictEqual((await fonte.diretoresDoSite('Manitoba')).map((x) => [x.nome, x.matricula]), [['Fulano Sem Cadastro', null]]);
   const nomes = await fonte.configuracao(HOJE);
@@ -163,7 +163,7 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   const cards = log.filter((x) => /INSERT PM\.AIP_GOAL_CARD \(/.test(x.sql)).map((x) => x.p.cd[1]);
   assert.deepStrictEqual(cards, ['GC-SOS-01', 'GC-SOS-00']); // código de 3 letras livre no ciclo
   assert.ok(log.some((x) => /DELETE FROM PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 12)); // VNL saiu
-  assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 13 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
+  assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 2 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
   const r = await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Atlantis', pais: 'X', ativa: true }] }, ctx, base);
   assert.strictEqual(r.erros[0].codigo, 'SITE');
   // Novo ciclo: ano e datas escolhidos na tela (a 2ª etapa começa no fim da 1ª); ano que já tem ciclo é recusado
