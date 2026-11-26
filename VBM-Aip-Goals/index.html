@@ -4208,8 +4208,7 @@ window.VBMSetup = (function () {
         var nC = mem.filter(function (m) { return m.grupo === 'contribuidor' && m.bu === b.sigla; }).length;
         var nM = metasBu.filter(function (m) { return Number(m.pesos[b.sigla]) > 0; }).length;
         var eN = cfErroDe('bu-nome-' + i), eP = cfErroDe('bu-pais-' + i);
-        var nome = editando ? '<input class="cf-in cf-bu-in" id="cfBuNome' + i + '" data-cf-bu="' + i + '" data-campo="sigla" value="' + esc(b.sigla) + '" maxlength="40"' + (eN ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.buNome')) + '">' +
-            '<input class="cf-in cf-bu-in" id="cfBuPais' + i + '" data-cf-bu="' + i + '" data-campo="pais" list="cfPaises" value="' + esc(b.pais) + '" maxlength="40"' + (eP ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.buPais')) + '">'
+        var nome = editando ? '<input class="cf-in cf-bu-in" id="cfBuNome' + i + '" data-cf-bu="' + i + '" data-campo="sigla" value="' + esc(b.sigla) + '" maxlength="40"' + (eN ? ' aria-invalid="true"' : '') + ' aria-label="' + esc(S.t('cf.buNome')) + '">'
           : '<span class="cf-bu-nome">' + esc(b.sigla) + '</span>' + (!b.origem ? '<span class="cf-nova">' + esc(S.t('cf.nova')) + '</span>' : '') + (b.origem && b.origem !== b.sigla ? '<small class="cf-bu-antes">' + esc(S.t('cf.antes', { b: b.origem })) + '</small>' : '');
         var podeExcluir = !(b.cardsSubmetidos > 0);
         var acoes = editando

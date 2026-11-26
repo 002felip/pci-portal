@@ -137,7 +137,9 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       WHERE LTRIM(RTRIM(NM_SITE)) COLLATE Latin1_General_CI_AI = @site COLLATE Latin1_General_CI_AI AND NM_HIERARQUIA_N4 IS NOT NULL
         AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')
       GROUP BY LTRIM(RTRIM(NM_HIERARQUIA_N4)) ORDER BY COUNT(*) DESC`, { site: [sql.NVarChar(255), s] });
-    const nomes = top.recordset.map((l) => String(l.NOME));
+    // O N4 vem como "<diretoria> - <nome>" (ex.: "DIR, SOSSEGO OPS - VINICIUS MOREIRA ASSIS"): fica só o nome, depois do último " - "
+    const nomeDoN4 = (t) => String(t).split(' - ').pop().trim();
+    const nomes = [...new Set(top.recordset.map((l) => nomeDoN4(l.NOME)).filter(Boolean))];
     if (!nomes.length) return [];
     const params = {};
     nomes.forEach((n, k) => { params['n' + k] = [sql.NVarChar(255), n]; });
