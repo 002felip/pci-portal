@@ -76,6 +76,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-36 | Business Units: Nova BU em pop-up (site e diretor, campos do mesmo tamanho); na edição da BU só o nome do site (o país vem do cadastro do site). Sites por ID_SITE (1, 2, 3, 14, 16, 26, 32 e 33; `AIPGOALS_SITES_IDS`), com o nome mostrado na aplicação e o nome procurado no MDM (`NM_SITE` de `CI.KZN_MDM_HIERARQUIA`): 1 Salobo/SALOBO, 2 Sossego/SOSSEGO, 3 Onça Puma/ONÇA PUMA, 14 Manitoba/MANITOBA, 16 Clydach/VNL, 26 Matsusaka/VNL, 32 Ontario/ONTARIO, 33 VNL/VNL. O diretor é o nome que vem no `NM_HIERARQUIA_N4` mais comum do site no MDM (do texto "<diretoria> - <nome>" fica só o nome, que localiza a pessoa e a matrícula) (sem diferenciar maiúsculas e acentos; o nome preenche mesmo sem a pessoa no MDM). | 26/11/2026 |
 | D-37 | Business Units: "Cards submetidos" e a trava do Excluir contam só cards já submetidos de metas ativas com peso na BU. Card de meta removida, sem peso no site ou da meta nº 0 (resultado do COO) não impede excluir a BU. | 26/11/2026 |
 | D-38 | Diretor da BU: a pessoa é procurada no MDM pelo nome sem diferenciar maiúsculas, acentos e espaços; se não houver matrícula, o nome fica em `PM.AIP_CICLO_SITE.NM_DIRETOR` (script `006_pm_nome_diretor.sql`) e não some ao salvar. | 26/11/2026 |
+| D-39 | Business Units: é possível excluir todas as BUs e salvar; ciclo sem BU ativa vira aviso (não bloqueia), na tela e no servidor. | 26/11/2026 |
 
 ## 4. Suposições a confirmar
 
