@@ -50,6 +50,11 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   if (typeof runQuery !== 'function' || typeof transacao !== 'function') throw new Error('criarFonteBanco: runQuery e transacao são obrigatórios');
   // Tabela dos sites (BU = site). Padrão IBP.SITES; outra só para testes em bancos sem o schema IBP.
   const SITES = String(env.AIPGOALS_SITES_TABELA || 'IBP.SITES');
+  // Sites que podem virar BU (lista da Nova BU): IDs da IBP.SITES; AIPGOALS_SITES_IDS troca a lista sem mexer no código
+  const SITES_IDS = String(env.AIPGOALS_SITES_IDS || '1,2,3,14,16,26,32,33').split(',').map((x) => parseInt(x, 10)).filter(Number.isInteger);
+  // DE PARA: nome do site na IBP.SITES → NM_SITE no MDM (CI.KZN_MDM_HIERARQUIA); fora da lista, usa o próprio nome
+  const SITE_MDM = { 'salobo': 'SALOBO', 'sossego': 'SOSSEGO', 'onca puma': 'ONÇA PUMA', 'manitoba': 'MANITOBA', 'clydach | cnr': 'VNL',
+    'matsusaka | tonimet': 'VNL', 'ontario operations': 'ONTARIO', 'vnl operations': 'VNL' };
   if (!SITES.split('.').every((x) => IDENT.test(x)) || SITES.split('.').length !== 2) throw new Error(`AIPGOALS_SITES_TABELA inválida: ${SITES}`);
   const FUSO = env.AIPGOALS_FUSO || 'America/Sao_Paulo';
   const fmtHora = new Intl.DateTimeFormat('sv-SE', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -116,11 +121,13 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const vistos = new Set();
     return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
   }
-  // Diretor do site = hierarquia N4 do MDM (N3 COO · N4 Diretoria · N5 Head…, como no Kaizen): o N4 mais comum entre as
+  // Diretor do site = hierarquia N4 do MDM (N3 COO · N4 Diretoria · N5 Head…, como no Kaizen). O site da IBP.SITES vira o
+  // NM_SITE do MDM pelo DE PARA (SITE_MDM); o N4 mais comum entre as
   // pessoas ativas do site é o diretor; a pessoa vem do próprio MDM, pelo nome. Textos 'NULL', 'N.A', 'N/A' e vazio não contam.
   async function diretoresDoSite(site) {
-    const s = String(site || '').trim();
-    if (!s) return [];
+    const s0 = String(site || '').trim();
+    if (!s0) return [];
+    const s = SITE_MDM[semAcento(s0).toLowerCase().replace(/\s+/g, ' ')] || s0;
     const top = await runQuery(`SELECT TOP (3) LTRIM(RTRIM(NM_HIERARQUIA_N4)) AS NOME, COUNT(*) AS QT FROM ${MDM}
       WHERE SG_ATIVO = 'A' AND LTRIM(RTRIM(NM_SITE)) = @site AND NM_HIERARQUIA_N4 IS NOT NULL
         AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')
@@ -362,7 +369,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         WHERE p.ID_CICLO = @ciclo AND p.SG_ATIVO = 'S' ORDER BY p.TP_GRUPO, p.CD_MATRICULA`, { ciclo: P.int(c.ID_CICLO) }),
       await runQuery(`SELECT gc.ID_SITE, COUNT(*) AS N FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
         WHERE m.ID_CICLO = @ciclo AND EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD_VERSAO v WHERE v.ID_GOAL_CARD = gc.ID_GOAL_CARD) GROUP BY gc.ID_SITE`, { ciclo: P.int(c.ID_CICLO) }),
-      await runQuery(`SELECT ID_SITE, NM_SITE, NM_PAIS FROM ${SITES} WHERE NM_SITE IS NOT NULL ORDER BY NM_PAIS, NM_SITE`),
+      await runQuery(`SELECT ID_SITE, NM_SITE, NM_PAIS FROM ${SITES} WHERE NM_SITE IS NOT NULL${SITES_IDS.length ? ` AND ID_SITE IN (${SITES_IDS.join(', ')})` : ''} ORDER BY NM_PAIS, NM_SITE`),
       await metasDoCiclo(c.ID_CICLO),
     ];
     const sub = new Map(subR.recordset.map((x) => [x.ID_SITE, x.N]));

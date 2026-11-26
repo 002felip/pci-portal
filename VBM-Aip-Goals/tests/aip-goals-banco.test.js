@@ -25,7 +25,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/FROM sys\.columns/.test(sql)) return rs([{ N: global.AIP_DATAS_OBRIGATORIAS || 0 }]);
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
-    if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(p.site[1] === 'Salobo' ? [{ NOME: 'Bruno Costa', QT: 9 }] : []);
+    if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(['SALOBO', 'VNL'].includes(p.site[1]) ? [{ NOME: 'Bruno Costa', QT: 9 }] : []);
     if (/NM_USUARIO IN \(@n0/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.n0[1]));
     if (/NM_USUARIO = @nome/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
     if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
@@ -87,6 +87,8 @@ test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do
   // Nova BU: o diretor do site vem do MDM (site + cargo de diretor); site sem diretor no MDM → lista vazia (digita-se à mão)
   assert.deepStrictEqual((await fonte.diretoresDoSite('Salobo')).map((x) => x.nome), ['Bruno Costa']);
   assert.deepStrictEqual(await fonte.diretoresDoSite('Outro'), []);
+  // DE PARA IBP.SITES → NM_SITE do MDM: Clydach | CNR e Matsusaka | Tonimet usam o N4 de VNL
+  assert.deepStrictEqual((await fonte.diretoresDoSite('Clydach | CNR')).map((x) => x.nome), ['Bruno Costa']);
   const nomes = await fonte.configuracao(HOJE);
   assert.ok(nomes.membros.every((m) => m.nome && m.nome !== m.matricula));
   const c = await fonte.ciclo(HOJE);
