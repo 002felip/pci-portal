@@ -10,6 +10,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 | `002_pm_carga_inicial.sql` | Cria o 1º ciclo aberto, a meta nº 0 da BU (resultado do COO) e o 1º administrador | Uma vez, depois do 001, com a sua matrícula preenchida |
 | `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra o nome e o e-mail da matrícula no MDM) | Depois do 002, no DEV |
 | `005_pm_janelas_em_branco.sql` | Deixa as datas das janelas do `PM.AIP_CICLO` aceitarem em branco (o novo ciclo nasce sem datas, D-35); tira e recria a regra `CK_AIP_CICLO_JORNADA`, sem a qual o SQL Server não altera as colunas. Sem ele, "Abrir novo ciclo" avisa que falta rodá-lo | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
+| `006_pm_nome_diretor.sql` | Cria `NM_DIRETOR` em `PM.AIP_CICLO_SITE`: nome do diretor quando ele não tem matrícula no MDM (D-38) | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
 
 ## Ordem de ligação (passo a passo)
 

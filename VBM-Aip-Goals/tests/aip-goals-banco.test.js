@@ -27,7 +27,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
     if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(p.site[1] === 'SALOBO' ? [{ NOME: 'Bruno Costa', QT: 9 }] : p.site[1] === 'VNL' ? [{ NOME: 'DIR, VNL OPS - Bruno Costa', QT: 9 }] : p.site[1] === 'MANITOBA' ? [{ NOME: 'Fulano Sem Cadastro', QT: 3 }] : []);
     if (/NM_USUARIO IN \(@n0/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.n0[1]));
-    if (/NM_USUARIO = @nome/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
+    if (/= @nome COLLATE/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
     if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
     if (/FROM PM\.AIP_CICLO ORDER BY CASE/.test(sql)) return rs([CICLO]);
     if (/SELECT NO_ANO, NM_CICLO, SG_STATUS FROM PM\.AIP_CICLO/.test(sql)) return rs([{ NO_ANO: 2027, NM_CICLO: 'AIP 2027', SG_STATUS: 'S' }, { NO_ANO: 2026, NM_CICLO: 'AIP 2026', SG_STATUS: 'N' }]);
@@ -62,6 +62,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/SELECT TOP \(1\) ID_VERSAO, NO_VERSAO/.test(sql)) return rs([{ ID_VERSAO: 2, NO_VERSAO: 2 }]);
     if (/SELECT ID_CICLO FROM PM\.AIP_CICLO WHERE SG_STATUS = 'S'/.test(sql)) return rs([]);
     if (/SELECT 1 AS X FROM PM\.AIP_CICLO WHERE NO_ANO = @ano/.test(sql)) return rs(p.ano[1] === 2027 ? [{ X: 1 }] : []);
+    if (/COL_LENGTH\('PM\.AIP_CICLO_SITE', 'NM_DIRETOR'\)/.test(sql)) return rs([{ L: 300 }]);
     if (/SCOPE_IDENTITY/.test(sql)) return rs([{ ID: 999 }], [1, 1]);
     if (/SELECT ID_PAPEL/.test(sql)) return rs([{ ID_PAPEL: 1, CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', ID_SITE: null, SG_ATIVO: 'S' }, { ID_PAPEL: 2, CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', ID_SITE: 11, SG_ATIVO: 'S' }]);
     if (/SELECT ID_SITE FROM PM\.AIP_CICLO_SITE/.test(sql)) return rs([{ ID_SITE: 11 }, { ID_SITE: 12 }]);
@@ -164,6 +165,10 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   assert.deepStrictEqual(cards, ['GC-SOS-01', 'GC-SOS-00']); // código de 3 letras livre no ciclo
   assert.ok(log.some((x) => /DELETE FROM PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 12)); // VNL saiu
   assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 2 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
+  // Diretor sem matrícula no MDM (nome do N4 que não bate com ninguém): o nome fica em NM_DIRETOR e não some ao salvar
+  log.length = 0;
+  await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Salobo', pais: 'Brasil', ativa: true }, { sigla: 'Sossego', pais: 'Brasil', ativa: true, diretor: 'Fulano Fora do MDM' }] }, ctx, await fonte.configuracao(HOJE));
+  assert.ok(log.some((x) => /NM_DIRETOR = @nm/.test(x.sql) && x.p.site[1] === 2 && x.p.dir[1] === null && x.p.nm[1] === 'Fulano Fora do MDM'));
   const r = await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Atlantis', pais: 'X', ativa: true }] }, ctx, base);
   assert.strictEqual(r.erros[0].codigo, 'SITE');
   // Novo ciclo: ano e datas escolhidos na tela (a 2ª etapa começa no fim da 1ª); ano que já tem ciclo é recusado

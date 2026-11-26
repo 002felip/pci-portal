@@ -148,15 +148,16 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const params = {};
     nomes.forEach((n, k) => { params['n' + k] = [sql.NVarChar(255), n]; });
     const r = await runQuery(`SELECT ${SEL_PESSOA} FROM ${MDM}
-      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND NM_USUARIO IN (${nomes.map((n, k) => '@n' + k).join(', ')})
+      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(NM_USUARIO)) COLLATE Latin1_General_CI_AI IN (${nomes.map((n, k) => '@n' + k).join(', ')})
       ORDER BY ID_TIPO_USUARIO`, params);
     const vistos = new Set(), pessoas = r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
     // O nome do N4 vale mesmo sem a pessoa no MDM (aí sem matrícula; ao salvar, a API tenta achá-la pelo nome)
-    return nomes.map((n) => pessoas.find((p) => p.nome.toLowerCase() === n.toLowerCase()) || { matricula: null, nome: n, email: '', cargo: '', estado: '', cidade: '' });
+    const igual = (a, b) => semAcento(a).toLowerCase().trim() === semAcento(b).toLowerCase().trim();
+    return nomes.map((n) => pessoas.find((p) => igual(p.nome, n)) || { matricula: null, nome: n, email: '', cargo: '', estado: '', cidade: '' });
   }
   async function pessoaPorNome(q, nome) {
     const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
-      WHERE NM_USUARIO = @nome AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
+      WHERE LTRIM(RTRIM(NM_USUARIO)) COLLATE Latin1_General_CI_AI = @nome COLLATE Latin1_General_CI_AI AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
     return r.recordset[0] ? r.recordset[0].MATRICULA : null;
   }
 
@@ -166,12 +167,19 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const r = await q("SELECT TOP (1) * FROM PM.AIP_CICLO ORDER BY CASE WHEN SG_STATUS = 'S' THEN 0 ELSE 1 END, NO_ANO DESC");
     return r.recordset[0] || null;
   }
+  // Coluna PM.AIP_CICLO_SITE.NM_DIRETOR (script 006): nome do diretor quando ele não é achado no MDM. Sem a coluna, só matrícula.
+  let temNmDiretor = null;
+  async function colNmDiretor(q) {
+    if (temNmDiretor === null) temNmDiretor = q("SELECT COL_LENGTH('PM.AIP_CICLO_SITE', 'NM_DIRETOR') AS L").then((r) => !!(r.recordset[0] && r.recordset[0].L), () => false);
+    return temNmDiretor;
+  }
   async function sitesDoCiclo(idCiclo, q = runQuery) {
-    const r = await q(`SELECT cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.SG_ATIVA, cs.CD_MATRICULA_DIRETOR, cs.DS_EXCECAO, cs.SG_EXCECAO_VER
+    const nmDir = (await colNmDiretor(q)) ? 'cs.NM_DIRETOR' : 'NULL AS NM_DIRETOR';
+    const r = await q(`SELECT cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.SG_ATIVA, cs.CD_MATRICULA_DIRETOR, ${nmDir}, cs.DS_EXCECAO, cs.SG_EXCECAO_VER
       FROM PM.AIP_CICLO_SITE cs JOIN ${SITES} s ON s.ID_SITE = cs.ID_SITE
       WHERE cs.ID_CICLO = @ciclo ORDER BY s.NM_PAIS, s.NM_SITE`, { ciclo: P.int(idCiclo) });
     return r.recordset.map((l) => ({ id: l.ID_SITE, sigla: String(l.NM_SITE || l.ID_SITE).trim(), pais: String(l.NM_PAIS || '').trim(), ativa: l.SG_ATIVA === 'S',
-      diretor: l.CD_MATRICULA_DIRETOR, excecao: l.DS_EXCECAO || '', ver: l.SG_EXCECAO_VER === 'S' }));
+      diretor: l.CD_MATRICULA_DIRETOR, nmDiretor: l.NM_DIRETOR ? String(l.NM_DIRETOR).trim() : '', excecao: l.DS_EXCECAO || '', ver: l.SG_EXCECAO_VER === 'S' }));
   }
   function etapasDe(c) {
     return ETAPAS.map((id) => ({ id, inicio: isoData(c['DT_INI_' + COL_ETAPA[id]]), fim: isoData(c['DT_FIM_' + COL_ETAPA[id]]) }));
@@ -403,7 +411,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     return {
       ciclo: { ...cc.ciclo, status: c.SG_STATUS === 'S' ? 'aberto' : 'fechado', textoPadraoExcecoes: '' },
       ciclos: ciclosR.recordset.map((x) => ({ ano: x.NO_ANO, nome: x.NM_CICLO, aberto: x.SG_STATUS === 'S' })),
-      bus: cc.sites.map((s) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: nomeDe(nomes, s.diretor) || '', diretorMatricula: s.diretor || null, cardsSubmetidos: sub.get(s.id) || 0 })),
+      bus: cc.sites.map((s) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: (s.diretor ? nomeDe(nomes, s.diretor) : s.nmDiretor) || '', diretorMatricula: s.diretor || null, cardsSubmetidos: sub.get(s.id) || 0 })),
       membros, diretorio: [], // a busca de pessoas é por GET /pessoas?q= (MDM)
       excecoes: { bus: Object.fromEntries(cc.sites.map((s) => [s.sigla, { texto: s.excecao, ver: s.ver }])) },
       niveis: [
@@ -576,10 +584,13 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
             const antes = atuais0.get(b.sigla);
             mat = antes && antes.diretor === b.diretor && antes.diretorMatricula ? antes.diretorMatricula : await pessoaPorNome(q, b.diretor);
           }
+          // Sem matrícula no MDM, o nome digitado/vindo do N4 fica em NM_DIRETOR (se a coluna existir), para não sumir ao salvar
+          const nm = !mat && b.diretor && (await colNmDiretor(q)) ? String(b.diretor).trim().slice(0, 150) : null;
+          const colNm = (await colNmDiretor(q)) ? ', NM_DIRETOR = @nm' : '', insNm = colNm ? [', NM_DIRETOR', ', @nm'] : ['', ''];
           await q(`IF EXISTS (SELECT 1 FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo AND ID_SITE = @site)
-              UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = @ativa, CD_MATRICULA_DIRETOR = @dir WHERE ID_CICLO = @ciclo AND ID_SITE = @site
-            ELSE INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR) VALUES (@ciclo, @site, @ativa, @dir)`,
-          { ciclo: P.int(idCiclo), site: P.int(ids[i]), ativa: P.vc(b.ativa ? 'S' : 'N', 1), dir: P.vc(mat) });
+              UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = @ativa, CD_MATRICULA_DIRETOR = @dir${colNm} WHERE ID_CICLO = @ciclo AND ID_SITE = @site
+            ELSE INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR${insNm[0]}) VALUES (@ciclo, @site, @ativa, @dir${insNm[1]})`,
+          { ciclo: P.int(idCiclo), site: P.int(ids[i]), ativa: P.vc(b.ativa ? 'S' : 'N', 1), dir: P.vc(mat), ...(colNm ? { nm: P.nv(nm, 150) } : {}) });
         }
         // Sites que saíram: sem card submetido, sai do ciclo; com card, fica inativo
         const manter = ids.map(Number);
