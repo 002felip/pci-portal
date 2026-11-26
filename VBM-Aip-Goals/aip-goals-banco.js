@@ -50,6 +50,10 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   if (typeof runQuery !== 'function' || typeof transacao !== 'function') throw new Error('criarFonteBanco: runQuery e transacao são obrigatórios');
   // Tabela dos sites (BU = site). Padrão IBP.SITES; outra só para testes em bancos sem o schema IBP.
   const SITES = String(env.AIPGOALS_SITES_TABELA || 'IBP.SITES');
+  // Card que prende a BU no ciclo (contagem "Cards submetidos" e trava do Excluir): já submetido, de meta ativa e com peso
+  // nesta BU. Card de meta removida, sem peso no site ou da meta nº 0 (resultado do COO, pontos herdados) não prende.
+  const CARD_AMARRADO = `EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD_VERSAO v WHERE v.ID_GOAL_CARD = gc.ID_GOAL_CARD) AND m.SG_ATIVA = 'S'
+    AND EXISTS (SELECT 1 FROM PM.AIP_META_PESO mp WHERE mp.ID_META = gc.ID_META AND mp.ID_SITE = gc.ID_SITE AND mp.VL_PESO > 0)`;
   // Sites que podem virar BU (lista da Nova BU): IDs da IBP.SITES; AIPGOALS_SITES_IDS troca a lista sem mexer no código
   const SITES_IDS = String(env.AIPGOALS_SITES_IDS || '1,2,3,14,16,26,32,33').split(',').map((x) => parseInt(x, 10)).filter(Number.isInteger);
   // Sites por ID_SITE: nome mostrado na aplicação (NOMES_SITE) e nome procurado no MDM, CI.KZN_MDM_HIERARQUIA.NM_SITE (MDM_SITE).
@@ -376,7 +380,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       await runQuery(`SELECT p.CD_MATRICULA, p.TP_GRUPO, ${NOME_SITE('s')} AS NM_SITE FROM PM.AIP_PAPEL p LEFT JOIN ${SITES} s ON s.ID_SITE = p.ID_SITE
         WHERE p.ID_CICLO = @ciclo AND p.SG_ATIVO = 'S' ORDER BY p.TP_GRUPO, p.CD_MATRICULA`, { ciclo: P.int(c.ID_CICLO) }),
       await runQuery(`SELECT gc.ID_SITE, COUNT(*) AS N FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
-        WHERE m.ID_CICLO = @ciclo AND EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD_VERSAO v WHERE v.ID_GOAL_CARD = gc.ID_GOAL_CARD) GROUP BY gc.ID_SITE`, { ciclo: P.int(c.ID_CICLO) }),
+        WHERE m.ID_CICLO = @ciclo AND ${CARD_AMARRADO} GROUP BY gc.ID_SITE`, { ciclo: P.int(c.ID_CICLO) }),
       await runQuery(`SELECT s.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS FROM ${SITES} s WHERE s.NM_SITE IS NOT NULL${SITES_IDS.length ? ` AND s.ID_SITE IN (${SITES_IDS.join(', ')})` : ''} ORDER BY s.NM_PAIS, 2`),
       await metasDoCiclo(c.ID_CICLO),
     ];
@@ -581,8 +585,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         const manter = ids.map(Number);
         const atuais = await q('SELECT ID_SITE FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo', { ciclo: P.int(idCiclo) });
         for (const s of atuais.recordset.map((x) => x.ID_SITE).filter((x) => !manter.includes(Number(x)))) {
-          await q(`IF EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META JOIN PM.AIP_GOAL_CARD_VERSAO v ON v.ID_GOAL_CARD = gc.ID_GOAL_CARD
-                       WHERE m.ID_CICLO = @ciclo AND gc.ID_SITE = @site)
+          await q(`IF EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
+                       WHERE m.ID_CICLO = @ciclo AND gc.ID_SITE = @site AND ${CARD_AMARRADO})
               UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = 'N' WHERE ID_CICLO = @ciclo AND ID_SITE = @site
             ELSE DELETE FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo AND ID_SITE = @site`, { ciclo: P.int(idCiclo), site: P.int(s) });
         }
