@@ -210,20 +210,18 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
 - **Topo** só com o título, sem o ano e sem cartões de resumo; a navegação é pelas abas.
 - **Ciclo:** lista de ciclos (um aberto por vez), nome, texto padrão de exceções e as 4 janelas com início e fim
   (início padrão = fim da etapa anterior), dias úteis, etapa atual e ordem validada.
-- **Business Units:** Nova BU (nome e país ou região), editar (renomear atualiza pesos, pessoas e GGs), chave "No ciclo AIP 2027"
-  (vale para o ciclo aberto que está sendo configurado) e excluir só BU sem Goal Card submetido, com confirmação; números
-  centralizados (pessoas por grupo, metas, pontos e cards submetidos).
+- **Unidades organizacionais:** ver o item abaixo (D-40 a D-42); substitui a antiga aba Business Units.
 - **Cabeçalho do card:** "NOME DO SITE | Meta" no título (Goal Card e Aprovações); Aprovações usa o mesmo cabeçalho do
   Goal Card, sem trilha, setas e bloco da BU.
 - **Aprovações:** ficha no formato do Goal Card, Versões e Histórico em popup, lápis de ajuste por item com comentário
   obrigatório e balão quando há comentário; só Aprovar ou Devolver (sem Negar, D-25). **Reabrir para edição** um card aprovado: só o administrador.
 - **Exceções:** aba da Administração: escreve o texto, marca os sites e adiciona; tabela com a exceção de
   cada site, olho (aparece/riscado), lápis e ×. A BU não edita; as exceções próprias ficam no Goal Card.
-- **Goal Card:** BU (site) em destaque no cabeçalho; Area Responsible não editável (Diretoria Executiva e o diretor da BU,
-  cadastrado em Business Units).
+- **Goal Card:** BU (site) em destaque no cabeçalho; Area Responsible não editável (área e responsável da unidade no ciclo,
+  cadastrados em Unidades organizacionais).
 - **Grupos:** inclusão pelo Novo usuário, com autopreenchimento do MDM (`CI.KZN_MDM_HIERARQUIA`, busca por nome, e-mail ou matrícula), filtros por grupo e BU, busca e remoção;
   o ciclo precisa de ao menos um aprovador e um administrador.
-- **Metas e pesos por nível:** seletor CEO › COO › BU (níveis fixos, 100 pts por unidade); matriz meta × unidade editável,
+- **Metas e pesos por nível:** seletor CEO › COO › BU, com + e × para os níveis 5 a 9 da estrutura (D-43; 100 pts por unidade); matriz meta × unidade editável,
   linha "Resultado do nível acima" editável com os pontos herdados, nova meta e remoção; total por unidade e contador de pendências por nível. A soma de uma unidade nunca passa de 100 pts (o campo limita ao que cabe e o servidor recusa, D-33); abaixo do total aparece como aviso e Salvar continua liberado (gravação parcial, D-31; `somaPesosPorNivel`).
 - **Parâmetros:** aba descontinuada (D-22); os pontos herdados se editam em Metas e pesos.
 - **Ciclo:** barra do ciclo no cartão Identificação (lista, situação, Fechar, Reabrir e Abrir novo ciclo), resumo da jornada
@@ -305,7 +303,7 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | `GET /desdobramento` | Desdobramento: metas do scorecard do COO e matriz meta × BU com peso e situação do Goal Card |
 | `GET /versoes?card=` | T06: versões do card (mais recente primeiro), com snapshot, decisão e a oficial |
 | `GET /action-log?bu=&meta=&secao=&tipo=&periodo=&card=&pagina=&tudo=` | T07: eventos filtrados (40 por página; `tudo=1` para exportar), `porTipo` e opções dos filtros |
-| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` · `GET /pessoas?q=` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (novo: ano maior que o atual, janelas em branco; `/configuracao/clonar` = novo); `GET /pessoas?diretorSite=` = diretor do site pelo N4 do MDM |
+| `GET /configuracao` · `POST /configuracao/salvar` · `POST /configuracao/ciclo` · `GET /pessoas?q=` | T11: só o administrador; validação por aba e RN-16 no servidor; ciclo: `{ acao: fechar\|reabrir\|novo, ano }` (novo: ano maior que o atual, janelas em branco; `/configuracao/clonar` = novo); `GET /hierarquia?nivel=&q=` = área e responsável da hierarquia N do MDM (D-41) |
 | `GET /goal-card?card=` | T04: Goal Card com `modo`, `secoes`, `obrigatorios[]`, `comentarios[]`, `linha[]` e `permissoes` |
 | `POST /goal-card/rascunho` · `POST /goal-card/submeter` · `POST /goal-card/reabrir` · `POST /goal-card/decisao` | T04/T14: rascunho no banco; submeter cria a versão; decisão grava na versão e os ajustes viram comentários da seção; RN-12 pela matrícula |
 | `GET /aprovacoes?pais=&bu=&idade=` | T14: só o grupo de aprovação (403 para os demais). Fila Em aprovação (mais antigos primeiro) com `idade`, `resubmissao` e `podeDecidir` (RN-12), e `total` sem filtro |

@@ -54,7 +54,7 @@ pontos herdados. O código é `GC-<3 letras do site>-<nº da meta>`, como `GC-SA
 
 ## Como a aplicação usa o banco
 
-- **Quem é o usuário:** o e-mail do proxy (`X-Forwarded-Email`) vira matrícula pelo MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`, coluna `CD_EMAIL`), no mesmo banco do AIP. Os papéis são as linhas ativas da `PM.AIP_PAPEL` no ciclo atual (matrícula comparada sem zeros à esquerda, como no Kaizen). Nome, e-mail, cargo, estado e cidade também vêm do MDM; sem `NM_USUARIO`, o nome sai do e-mail. O "Novo usuário" e o diretor da BU buscam no MDM enquanto se digita (nome, e-mail ou matrícula).
+- **Quem é o usuário:** o e-mail do proxy (`X-Forwarded-Email`) vira matrícula pelo MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`, coluna `CD_EMAIL`), no mesmo banco do AIP. Os papéis são as linhas ativas da `PM.AIP_PAPEL` no ciclo atual (matrícula comparada sem zeros à esquerda, como no Kaizen). Nome, e-mail, cargo, estado e cidade também vêm do MDM; sem `NM_USUARIO`, o nome sai do e-mail. O "Novo usuário" busca no MDM enquanto se digita; o cadastro de unidade busca área e responsável na hierarquia N do MDM (D-41) (nome, e-mail ou matrícula).
 - **Ciclo atual:** é o aberto ou, se não houver, o mais recente, para que a Administração possa reabrir ou abrir o próximo. "Novo ciclo" copia BUs, grupos, metas e pesos e passa as datas para o ano seguinte.
 - **Gravações** são transacionais: ou grava tudo, ou nada. Cada uma gera um evento no `AIP_EVENTO_LOG`. Os comentários e os ajustes pedidos na devolução são eventos `COMENTARIO`. Tentativas sem permissão geram `ACESSO_NEGADO`.
 - **SQL:** fica em `aip-goals-banco.js`, sempre parametrizado (`@nome`). Nada da requisição é concatenado.

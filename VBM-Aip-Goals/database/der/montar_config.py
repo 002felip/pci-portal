@@ -91,7 +91,7 @@ T = {
   'regras': ['Nome único.', 'Nível 1 a 9; um só nível 1.', 'Pai obrigatório a partir do nível 2, no nível de cima (validado na API).', 'Excluir só sem unidades abaixo e sem Goal Card submetido ou comentado.'],
   'exemplos': ['1 · Presidente', '2 · CEO VBM', '3 · COO VBM']},
  'AIP_CICLO_SITE': {
-  'proposito': 'Uma BU (unidade de nível 4) dentro de um ciclo. Guarda o que é próprio dela naquele ciclo: se participa, a área e o responsável do ciclo e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Business Units e Exceções da Administração.',
+  'proposito': 'Uma BU (unidade de nível 4) dentro de um ciclo. Guarda o que é próprio dela naquele ciclo: se participa, a área e o responsável do ciclo e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Unidades organizacionais e Exceções da Administração.',
   'campos': {'ID_CICLO': 'Ciclo.', 'ID_SITE': 'BU (PM.UNIDADE_ORGANIZACIONAL, nível 4).', 'SG_ATIVA': 'S = o site participa do ciclo; N = tirado do ciclo (não recebe Goal Cards nem avisos e sai das somas), sem apagar o histórico.', 'NM_AREA': 'Área da BU neste ciclo (Area Responsible do Goal Card).', 'NM_RESPONSAVEL_AREA': 'Responsável neste ciclo (texto; muda de um ciclo para outro).', 'DS_EXCECAO': 'Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites.', 'SG_EXCECAO_VER': 'S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado).'},
   'regras': ['Um registro por BU em cada ciclo.', 'Só unidades de nível 4.'],
   'exemplos': ['AIP 2027 · Onça Puma (4), Kilma Cunha e texto do Brasil', 'AIP 2027 · Ontario (5), texto do Canadá oculto']},
@@ -99,7 +99,7 @@ T = {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
   'campos': {
    'ID_META': 'Número interno da meta.',
-   'ID_CICLO': 'Ciclo da meta.', 'CD_NIVEL': 'Nível da meta: CEO, COO ou BU.',
+   'ID_CICLO': 'Ciclo da meta.', 'CD_NIVEL': 'Nível da meta: CEO, COO, BU ou N5 a N9 (níveis abaixo da BU, D-43).',
    'NO_META': 'Número mostrado nas telas (ex.: 04); único no nível.',
    'NM_TITULO': 'Título da meta (Goal Title).',
    'TP_META': 'FORMULA (Por fórmula) ou MARCOS (Por marcos).',
@@ -187,7 +187,7 @@ c['secoes_extras'] = [{'id': 'como-pontos', 'html': (
  '<tr class="hl"><td>Ontario</td><td>40</td><td>60</td><td>100</td></tr></tbody></table></div></section>')}]
 c['secoes_extras'].append({'id': 'enxuto', 'html': (
  '<section class="explica" id="enxuto"><h2>O que foi simplificado nesta revisão</h2>'
- '<p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p>'
+ '<p>De 16 para 9 tabelas do AIP (mais a UNIDADE_ORGANIZACIONAL), sem perder nenhuma regra das telas:</p>'
  '<ul class="fn">'
  '<li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li>'
  '<li><code>AIP_UNIDADE</code><span>Não existe: o desdobramento usa o próprio site. O que era da unidade ficou na AIP_CICLO_SITE (diretor, exceção, participa) e o peso do CEO e do COO na AIP_META.</span></li>'
