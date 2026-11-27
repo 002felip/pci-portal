@@ -97,7 +97,7 @@ test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do
   assert.ok(nomes.membros.every((m) => m.nome && m.nome !== m.matricula));
   const c = await fonte.ciclo(HOJE);
   assert.strictEqual(c.etapaAtual, 'proposta');
-  assert.deepStrictEqual(c.bus, [{ sigla: 'Salobo', pais: 'Brasil' }, { sigla: 'VNL', pais: 'Canadá' }]);
+  assert.deepStrictEqual(c.bus, [{ sigla: 'Salobo', pais: 'Brasil', nivel: 4 }, { sigla: 'VNL', pais: 'Canadá', nivel: 4 }]);
   assert.strictEqual(c.etapas[3].fim, '2027-01-29');
 });
 
@@ -192,9 +192,9 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   await fonte.acaoCiclo('novo', 2031, ctx);
   assert.ok(/NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL/.test(log.find((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql)).sql));
   await assert.rejects(fonte.acaoCiclo('novo', 2027, ctx), /Já existe o ciclo AIP 2027/);
-  // Banco sem o 005 (datas ainda obrigatórias): mensagem que diz o que rodar, sem tentar gravar
+  // Banco antigo (datas ainda obrigatórias): mensagem que diz o que rodar, sem tentar gravar
   global.AIP_DATAS_OBRIGATORIAS = 8; log.length = 0;
-  await assert.rejects(fonte.acaoCiclo('novo', 2032, ctx), (e) => e.status === 409 && /005_pm_janelas_em_branco/.test(e.message));
+  await assert.rejects(fonte.acaoCiclo('novo', 2032, ctx), (e) => e.status === 409 && /000, 001 e 002/.test(e.message));
   assert.ok(!log.some((x) => /INSERT PM\.AIP_CICLO \(NO_ANO/.test(x.sql)));
   global.AIP_DATAS_OBRIGATORIAS = 0;
 });

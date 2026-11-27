@@ -3037,7 +3037,7 @@ window.VBMSetup = (function () {
     $('fEtapa').textContent = atual >= 0 ? S.t('et.' + c.etapaAtual) : '—';
     $('fEtapaPrazo').textContent = etAtual.fim ? S.t('ab.ate', { d: dataCurta(etAtual.fim) }) : '';
     $('fOficial').textContent = porId.oficial && porId.oficial.fim ? dataLonga(porId.oficial.fim) : '—';
-    var bus = c.bus || [];
+    var bus = (c.bus || []).filter(function (b) { return b.nivel == null || b.nivel === 4; }); // só as BUs (nível 4)
     $('fBus').textContent = bus.length ? S.fmt(bus.length, 0) : '—';
     $('fBusSub').textContent = c.ano ? S.t('ab.noCiclo', { a: c.ano }) : '';
     $('jornada').innerHTML = ETAPAS.map(function (id, i) {
