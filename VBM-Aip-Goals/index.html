@@ -4502,7 +4502,7 @@ window.VBMSetup = (function () {
     else if (t.id === 'cfAddBu') { cf.novaBu = t.value; }
     else if (t.id === 'cfPai') { cf.pai = t.value; cfRender(); }
     else if (t.hasAttribute('data-exc-sel')) { cf.excSel[t.getAttribute('data-exc-sel')] = t.checked; cfExcBotao(); }
-    else if (t.matches('[data-campo="titulo"], [data-cf="nome"], [data-cf="texto"], [data-cf="exc-padrao"], [data-cf-niv][data-campo="nome"]')) cfRender();
+    else if (t.matches('[data-campo="titulo"], [data-cf="nome"], [data-cf="texto"], [data-cf="exc-padrao"], [data-cf-niv][data-campo="nome"]')) setTimeout(cfRender, 0); // depois que o foco chega ao próximo campo (Tab segue a linha)
   });
   $('cfConteudo').addEventListener('click', function (e) {
     var t = e.target.closest('button'); if (!t) return;
