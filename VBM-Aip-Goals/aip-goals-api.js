@@ -351,8 +351,25 @@ function validarConfiguracao(aba, dados, base, hoje = new Date()) {
       if (!String(b.pais || '').trim()) erros.push({ campo: `bus.${i}.pais`, codigo: 'OBRIGATORIO' });
     });
     // Exclusão: só BU sem Goal Card submetido no ciclo (com card, tira-se do ciclo)
-    base.bus.filter((o) => o.cardsSubmetidos > 0 && !bus.some((b) => (b.origem || b.sigla) === o.sigla))
+    base.bus.filter((o) => o.cardsSubmetidos > 0 && !bus.some((b) => (b.id != null && b.id === o.id) || (b.origem || b.sigla) === o.sigla))
       .forEach((o) => erros.push({ campo: 'bus', codigo: 'BU_COM_CARDS', bu: o.sigla }));
+    // Unidades organizacionais (D-40): nível 1 a 9 (1 Presidente, 2 CEO, 3 COO, 4 BU), um só nível 1, pai no nível de cima, nomes únicos
+    if (d.org) {
+      const todas = d.org.concat(bus.map((b) => ({ ...b, nivel: b.nivel == null ? 4 : b.nivel, nome: b.nome || b.sigla })));
+      const chave = (u) => String(u.id != null ? u.id : u.chave);
+      const porChave = new Map(todas.map((u) => [chave(u), u]));
+      const nomes = new Set();
+      todas.forEach((u) => {
+        const n = Number(u.nivel), nome = String(u.nome || '').trim(), pai = u.pai == null || u.pai === '' ? null : porChave.get(String(u.pai));
+        if (!Number.isInteger(n) || n < 1 || n > 9) erros.push({ campo: `unidade.${chave(u)}.nivel`, codigo: 'NIVEL' });
+        else if (n === 1 ? u.pai != null && u.pai !== '' : !pai || Number(pai.nivel) !== n - 1) erros.push({ campo: `unidade.${chave(u)}.pai`, codigo: 'PAI' });
+        if (!nome) erros.push({ campo: `unidade.${chave(u)}.nome`, codigo: 'OBRIGATORIO' });
+        else if (nomes.has(nome.toLowerCase())) erros.push({ campo: `unidade.${chave(u)}.nome`, codigo: 'DUPLICADA' });
+        nomes.add(nome.toLowerCase());
+        if (!String(u.escopo || u.pais || '').trim()) erros.push({ campo: `unidade.${chave(u)}.escopo`, codigo: 'OBRIGATORIO' });
+      });
+      if (todas.filter((u) => Number(u.nivel) === 1).length > 1) erros.push({ campo: 'unidade', codigo: 'NIVEL1' });
+    }
   }
   return erros;
 }
@@ -618,8 +635,6 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   router.get('/pessoas', async (req, res) => {
     try {
       const ctx = await exigirAdmin(req, res); if (!ctx) return;
-      // ?diretorSite=<site>: diretor(es) do site no MDM (Nova BU preenche sozinha; o administrador pode trocar)
-      if (req.query.diretorSite !== undefined) return res.json({ pessoas: dados.diretoresDoSite ? await dados.diretoresDoSite(String(req.query.diretorSite).slice(0, 80)) : [] });
       res.json({ pessoas: dados.buscarPessoas ? await dados.buscarPessoas(String(req.query.q || '').slice(0, 80)) : [] });
     } catch (err) { falha(res, '/pessoas', err, 'Não foi possível buscar as pessoas.'); }
   });

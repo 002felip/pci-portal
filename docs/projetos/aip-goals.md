@@ -230,15 +230,15 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   calculado das janelas, início editável em cada etapa (padrão: fim da anterior) e barra de salvar só com alterações; tela renomeada para Administração; lista de ciclos no campo Ano, um ciclo aberto por vez, Fechar, Reabrir e
   Abrir novo ciclo; janelas desativadas em ciclo fechado. Abrir novo ciclo: pop-up só com o ano (maior que o atual e sem ciclo); o ciclo nasce com a estrutura do anterior e janelas em branco, escolhidas na aba, com datas só no ano atual ou no seguinte (calendário limitado e validação na tela e no servidor, D-35). O calendário abre com um clique (D-32).
 - **Grupos:** seções por grupo e BU com cards de pessoa e popup Novo usuário com busca no diretório (MDM).
-- **Business Units:** Nova BU em pop-up: escolhe o site (IDs 1, 2, 3, 14, 16, 26, 32 e 33, `AIPGOALS_SITES_IDS`) pelo nome da aplicação (Salobo, Sossego, Onça Puma, Manitoba, Clydach, Matsusaka, Ontario, VNL) e já preenche o diretor pelo `NM_HIERARQUIA_N4` do MDM, procurando o site pelo nome do MDM (SALOBO, SOSSEGO, ONÇA PUMA, MANITOBA, VNL para Clydach, Matsusaka e VNL, ONTARIO; `GET /pessoas?diretorSite=`); o campo continua editável (D-30, D-36). Diretor sem matrícula no MDM fica pelo nome em `NM_DIRETOR` (script `006`, D-38). O nome da aplicação vale em todas as telas.
+- **Unidades organizacionais (D-40):** a aba Business Units virou Unidades organizacionais: estrutura (Presidente › CEO › COO) e as BUs (nível 4) agrupadas pelo escopo de atuação, com área e responsável do ciclo, contribuidores, metas, pontos, cards e "No AIP". Pop-up de unidade: nome, nível, unidade pai (nível acima), escopo, área, responsável (texto) e, para BU, participa do ciclo. Tabela `PM.UNIDADE_ORGANIZACIONAL`; o AIP não usa mais a `IBP.SITES` nem o MDM para o diretor.
 - **Dados atuais (D-34):** ferramenta colaborativa: a cada navegação entre telas, depois de qualquer gravação com sucesso e ao voltar à aba (máx. a cada 30 s) a tela busca o dado novo em segundo plano, sem aviso nem piscar; a Administração não sobrescreve edição sem salvar; depois de Salvar, a configuração é recarregada do banco.
 - **Acesso:** leitura aberta a qualquer usuário do Portal; contribuidor edita só os cards da sua BU; aprovador edita e
   aprova todos (menus Aprovações e Action Log, sem Administração); administrador vê todas as telas. O perfil
   vem da `PM.AIP_PAPEL` (Administração › Grupos).
-- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP, com a `AIP_META_PESO`; a BU é o site da IBP.SITES).
+- **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP mais a `UNIDADE_ORGANIZACIONAL`; a BU é a unidade de nível 4, não mais o site da IBP.SITES).
 - **Pesos com decimais:** até 2 casas (ex.: 6,25), aceitos ao digitar (o campo só redesenha ao sair dele) e gravados em `VL_PESO decimal(6,2)`; somas arredondadas a 2 casas para fechar exatamente 100 (RN-16), na tela e no servidor.
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
-- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista dos sites fora do ciclo, por país; o país vem do cadastro). Diretor da BU com autopreenchimento do MDM. Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
+- Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova unidade em pop-up na `PM.UNIDADE_ORGANIZACIONAL` (D-40). Diretor da BU com autopreenchimento do MDM. Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
 
 ### Desdobramento
 
@@ -272,7 +272,7 @@ o resto da vista sai de cena e o título recebe o foco (leitor de tela). Cores p
 
 Tudo vem do schema `PM` (ver `VBM-Aip-Goals/database/README.md`, com a ordem de ligação das telas). O administrador
 edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da própria BU. As BUs são sites da
-`IBP.SITES` (D-15) e o código do Goal Card usa 3 letras do site (ex.: `GC-SAL-01`). Nomes de pessoas vêm da
+`PM.UNIDADE_ORGANIZACIONAL` (D-40; antes `IBP.SITES`, D-15) e o código do Goal Card usa 3 letras da BU (ex.: `GC-SAL-01`). Nomes de pessoas vêm da
 MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`) pela matrícula: as telas mostram sempre o nome (sem `NM_USUARIO`, o nome sai do e-mail). Os dados de exemplo (estrutura do material de referência 2027) ficam só nos testes.
 
 ## Responsividade
@@ -318,7 +318,6 @@ Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo
 | Variável | Padrão | Uso |
 |---|---|---|
 | `AIPGOALS_AZURE_SQL_DATABASE` | `AZURE_SQL_DATABASE` | base da aplicação; no `app.yaml`, `BDIBPBMSA_DEV` (depois `BDIBPBMSA_PRD`) |
-| `AIPGOALS_SITES_TABELA` | `IBP.SITES` | tabela dos sites (BUs) |
 | `AIPGOALS_MDM_TABELA` | `CI.KZN_MDM_HIERARQUIA` | pessoas (login, nome, cargo); a mesma do Kaizen |
 | `AIPGOALS_FUSO` | `America/Sao_Paulo` | fuso das datas e horas mostradas (o banco grava em UTC) |
 | `AIPGOALS_EMAIL_LOCAL` | — | só no `server.js` com `NODE_ENV=development` fora do Databricks: simula o `X-Forwarded-Email` |

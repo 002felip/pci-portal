@@ -23,7 +23,6 @@ const ESTADO_DE = { RASCUNHO: 'rascunho', EM_APROVACAO: 'em_aprovacao', EM_REVIS
 const GRUPO_DE = { CONTRIBUIDOR: 'contribuidor', APROVACAO: 'aprovacao', ADMIN: 'admin' };
 const GRUPO_PARA = { contribuidor: 'CONTRIBUIDOR', aprovacao: 'APROVACAO', admin: 'ADMIN' };
 const PAPEL_DE = { CONTRIBUIDOR: 'contribuidor', APROVACAO: 'aprovador', ADMIN: 'admin' };
-const AREA_RESPONSAVEL = 'Diretoria Executiva';
 const TITULO_RESULTADO = "COO's Scorecard Result";
 const TTL = 10 * 60 * 1000;
 
@@ -48,23 +47,17 @@ const MAT_IGUAL = (a, b) => `(TRY_CAST(${a} AS BIGINT) = TRY_CAST(${b} AS BIGINT
 
 function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   if (typeof runQuery !== 'function' || typeof transacao !== 'function') throw new Error('criarFonteBanco: runQuery e transacao são obrigatórios');
-  // Tabela dos sites (BU = site). Padrão IBP.SITES; outra só para testes em bancos sem o schema IBP.
-  const SITES = String(env.AIPGOALS_SITES_TABELA || 'IBP.SITES');
+  // Unidades organizacionais (D-40): PM.UNIDADE_ORGANIZACIONAL no lugar da IBP.SITES. A tabela derivada mantém os nomes que as
+  // consultas usam (ID_SITE, NM_SITE e NM_PAIS = escopo de atuação); BU = unidade de nível 4.
+  const NIVEL_BU = 4;
+  const SITES = `(SELECT ID_UNIDADE_ORGANIZACIONAL AS ID_SITE, NM_UNIDADE_ORGANIZACIONAL AS NM_SITE, NM_ESCOPO_ATUACAO AS NM_PAIS,
+    NO_NIVEL_HIERARQUIA, ID_UNIDADE_PAI, NM_AREA, NM_RESPONSAVEL_AREA FROM PM.UNIDADE_ORGANIZACIONAL)`;
   // Card que prende a BU no ciclo (contagem "Cards submetidos" e trava do Excluir): já submetido, de meta ativa e com peso
   // nesta BU. Card de meta removida, sem peso no site ou da meta nº 0 (resultado do COO, pontos herdados) não prende.
   const CARD_AMARRADO = `EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD_VERSAO v WHERE v.ID_GOAL_CARD = gc.ID_GOAL_CARD) AND m.SG_ATIVA = 'S'
     AND EXISTS (SELECT 1 FROM PM.AIP_META_PESO mp WHERE mp.ID_META = gc.ID_META AND mp.ID_SITE = gc.ID_SITE AND mp.VL_PESO > 0)`;
-  // Sites que podem virar BU (lista da Nova BU): IDs da IBP.SITES; AIPGOALS_SITES_IDS troca a lista sem mexer no código
-  const SITES_IDS = String(env.AIPGOALS_SITES_IDS || '1,2,3,14,16,26,32,33').split(',').map((x) => parseInt(x, 10)).filter(Number.isInteger);
-  // Sites por ID_SITE: nome mostrado na aplicação (NOMES_SITE) e nome procurado no MDM, CI.KZN_MDM_HIERARQUIA.NM_SITE (MDM_SITE).
-  // Fora da lista, vale o NM_SITE da IBP.SITES.
-  const NOMES_SITE = { 1: 'Salobo', 2: 'Sossego', 3: 'Onça Puma', 14: 'Manitoba', 16: 'Clydach', 26: 'Matsusaka', 32: 'Ontario', 33: 'VNL' };
-  const MDM_SITE = { 1: 'SALOBO', 2: 'SOSSEGO', 3: 'ONÇA PUMA', 14: 'MANITOBA', 16: 'VNL', 26: 'VNL', 32: 'ONTARIO', 33: 'VNL' };
   const chaveSite = (t) => semAcento(t).toLowerCase().replace(/\s+/g, ' ').trim();
-  const SITE_MDM = Object.fromEntries(Object.entries(NOMES_SITE).map(([id, n]) => [chaveSite(n), MDM_SITE[id]]));
-  // Expressão SQL do nome do site (alias da IBP.SITES): o nome da aplicação para os IDs da lista, senão o NM_SITE
-  const NOME_SITE = (a) => `CASE ${a}.ID_SITE ${Object.entries(NOMES_SITE).map(([id, n]) => `WHEN ${id} THEN N'${n.replace(/'/g, "''")}'`).join(' ')} ELSE ${a}.NM_SITE END`;
-  if (!SITES.split('.').every((x) => IDENT.test(x)) || SITES.split('.').length !== 2) throw new Error(`AIPGOALS_SITES_TABELA inválida: ${SITES}`);
+  const NOME_SITE = (a) => `${a}.NM_SITE`;
   const FUSO = env.AIPGOALS_FUSO || 'America/Sao_Paulo';
   const fmtHora = new Intl.DateTimeFormat('sv-SE', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   // DATETIME2 do Azure SQL é UTC (SYSDATETIME): mostra no fuso da operação
@@ -130,36 +123,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const vistos = new Set();
     return r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
   }
-  // Diretor do site = hierarquia N4 do MDM (N3 COO · N4 Diretoria · N5 Head…, como no Kaizen). O site da IBP.SITES vira o
-  // NM_SITE do MDM pelo DE PARA por ID_SITE (MDM_SITE); o N4 mais comum entre as
-  // linhas do site é o diretor; a pessoa vem do próprio MDM, pelo nome. Textos 'NULL', 'N.A', 'N/A' e vazio não contam.
-  async function diretoresDoSite(site) {
-    const s0 = String(site || '').trim();
-    if (!s0) return [];
-    const s = SITE_MDM[chaveSite(s0)] || s0;
-    const top = await runQuery(`SELECT TOP (3) LTRIM(RTRIM(NM_HIERARQUIA_N4)) AS NOME, COUNT(*) AS QT FROM ${MDM}
-      WHERE LTRIM(RTRIM(NM_SITE)) COLLATE Latin1_General_CI_AI = @site COLLATE Latin1_General_CI_AI AND NM_HIERARQUIA_N4 IS NOT NULL
-        AND UPPER(LTRIM(RTRIM(NM_HIERARQUIA_N4))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')
-      GROUP BY LTRIM(RTRIM(NM_HIERARQUIA_N4)) ORDER BY COUNT(*) DESC`, { site: [sql.NVarChar(255), s] });
-    // O N4 vem como "<diretoria> - <nome>" (ex.: "DIR, SOSSEGO OPS - VINICIUS MOREIRA ASSIS"): fica só o nome, depois do último " - "
-    const nomeDoN4 = (t) => String(t).split(' - ').pop().trim();
-    const nomes = [...new Set(top.recordset.map((l) => nomeDoN4(l.NOME)).filter(Boolean))];
-    if (!nomes.length) return [];
-    const params = {};
-    nomes.forEach((n, k) => { params['n' + k] = [sql.NVarChar(255), n]; });
-    const r = await runQuery(`SELECT ${SEL_PESSOA} FROM ${MDM}
-      WHERE SG_ATIVO = 'A' AND CD_MATRICULA IS NOT NULL AND LTRIM(RTRIM(NM_USUARIO)) COLLATE Latin1_General_CI_AI IN (${nomes.map((n, k) => '@n' + k).join(', ')})
-      ORDER BY ID_TIPO_USUARIO`, params);
-    const vistos = new Set(), pessoas = r.recordset.map(pessoaDe).filter((p) => !vistos.has(p.matricula) && vistos.add(p.matricula));
-    // O nome do N4 vale mesmo sem a pessoa no MDM (aí sem matrícula; ao salvar, a API tenta achá-la pelo nome)
-    const igual = (a, b) => semAcento(a).toLowerCase().trim() === semAcento(b).toLowerCase().trim();
-    return nomes.map((n) => pessoas.find((p) => igual(p.nome, n)) || { matricula: null, nome: n, email: '', cargo: '', estado: '', cidade: '' });
-  }
-  async function pessoaPorNome(q, nome) {
-    const r = await q(`SELECT TOP (1) LTRIM(RTRIM(CAST(CD_MATRICULA AS VARCHAR(20)))) AS MATRICULA FROM ${MDM}
-      WHERE LTRIM(RTRIM(NM_USUARIO)) COLLATE Latin1_General_CI_AI = @nome COLLATE Latin1_General_CI_AI AND CD_MATRICULA IS NOT NULL ORDER BY CASE WHEN SG_ATIVO = 'A' THEN 0 ELSE 1 END, ID_TIPO_USUARIO`, { nome: [sql.NVarChar(255), String(nome).trim()] });
-    return r.recordset[0] ? r.recordset[0].MATRICULA : null;
-  }
+
 
   // ── Ciclo e sites ──
   async function cicloAtualLinha(q = runQuery) {
@@ -167,19 +131,12 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const r = await q("SELECT TOP (1) * FROM PM.AIP_CICLO ORDER BY CASE WHEN SG_STATUS = 'S' THEN 0 ELSE 1 END, NO_ANO DESC");
     return r.recordset[0] || null;
   }
-  // Coluna PM.AIP_CICLO_SITE.NM_DIRETOR (script 006): nome do diretor quando ele não é achado no MDM. Sem a coluna, só matrícula.
-  let temNmDiretor = null;
-  async function colNmDiretor(q) {
-    if (temNmDiretor === null) temNmDiretor = q("SELECT COL_LENGTH('PM.AIP_CICLO_SITE', 'NM_DIRETOR') AS L").then((r) => !!(r.recordset[0] && r.recordset[0].L), () => false);
-    return temNmDiretor;
-  }
   async function sitesDoCiclo(idCiclo, q = runQuery) {
-    const nmDir = (await colNmDiretor(q)) ? 'cs.NM_DIRETOR' : 'NULL AS NM_DIRETOR';
-    const r = await q(`SELECT cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.SG_ATIVA, cs.CD_MATRICULA_DIRETOR, ${nmDir}, cs.DS_EXCECAO, cs.SG_EXCECAO_VER
+    const r = await q(`SELECT cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.SG_ATIVA, cs.NM_AREA, cs.NM_RESPONSAVEL_AREA, cs.DS_EXCECAO, cs.SG_EXCECAO_VER
       FROM PM.AIP_CICLO_SITE cs JOIN ${SITES} s ON s.ID_SITE = cs.ID_SITE
       WHERE cs.ID_CICLO = @ciclo ORDER BY s.NM_PAIS, s.NM_SITE`, { ciclo: P.int(idCiclo) });
     return r.recordset.map((l) => ({ id: l.ID_SITE, sigla: String(l.NM_SITE || l.ID_SITE).trim(), pais: String(l.NM_PAIS || '').trim(), ativa: l.SG_ATIVA === 'S',
-      diretor: l.CD_MATRICULA_DIRETOR, nmDiretor: l.NM_DIRETOR ? String(l.NM_DIRETOR).trim() : '', excecao: l.DS_EXCECAO || '', ver: l.SG_EXCECAO_VER === 'S' }));
+      area: l.NM_AREA || '', responsavel: l.NM_RESPONSAVEL_AREA || '', excecao: l.DS_EXCECAO || '', ver: l.SG_EXCECAO_VER === 'S' }));
   }
   function etapasDe(c) {
     return ETAPAS.map((id) => ({ id, inicio: isoData(c['DT_INI_' + COL_ETAPA[id]]), fim: isoData(c['DT_FIM_' + COL_ETAPA[id]]) }));
@@ -284,7 +241,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const cc = await cicloCompleto(hoje);
     if (!cc) return null;
     const r = await runQuery(`SELECT gc.ID_GOAL_CARD, gc.CD_GOAL_CARD, gc.TP_ESTADO, gc.DS_RASCUNHO, gc.CD_MATRICULA, gc.DT_ATUALIZACAO, gc.ID_SITE, gc.NO_VERSAO_OFICIAL,
-        m.ID_META, m.NO_META, m.NM_TITULO, m.TP_META, m.TP_ORIENTACAO, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.CD_MATRICULA_DIRETOR, cs.DS_EXCECAO, cs.SG_EXCECAO_VER,
+        m.ID_META, m.NO_META, m.NM_TITULO, m.TP_META, m.TP_ORIENTACAO, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.NM_AREA, cs.NM_RESPONSAVEL_AREA, cs.DS_EXCECAO, cs.SG_EXCECAO_VER,
         CASE WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END AS VL_PESO
       FROM PM.AIP_GOAL_CARD gc
       JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
@@ -299,14 +256,14 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const ev = await runQuery(`SELECT ID_EVENTO, DT_EVENTO, CD_MATRICULA, TP_GRUPO, CD_SECAO, DS_COMENTARIO, ID_EVENTO_PAI FROM PM.AIP_EVENTO_LOG
       WHERE ID_GOAL_CARD = @id AND TP_EVENTO = 'COMENTARIO' ORDER BY DT_EVENTO, ID_EVENTO`, { id: P.int(l.ID_GOAL_CARD) });
     const versoes = vr.recordset;
-    const nomes = await pessoas([l.CD_MATRICULA, l.CD_MATRICULA_DIRETOR].concat(versoes.map((v) => v.CD_MATRICULA_AUTOR), versoes.map((v) => v.CD_MATRICULA_DECISAO), ev.recordset.map((e) => e.CD_MATRICULA)));
+    const nomes = await pessoas([l.CD_MATRICULA].concat(versoes.map((v) => v.CD_MATRICULA_AUTOR), versoes.map((v) => v.CD_MATRICULA_DECISAO), ev.recordset.map((e) => e.CD_MATRICULA)));
     return { cc, l, versoes, eventos: ev.recordset, nomes };
   }
   function montarCard(x) {
     const { cc, l, versoes, eventos, nomes } = x;
     const estado = ESTADO_DE[l.TP_ESTADO];
     const ultima = versoes[versoes.length - 1] || null;
-    const fixas = { area: { area: AREA_RESPONSAVEL, responsavel: nomeDe(nomes, l.CD_MATRICULA_DIRETOR) || '' }, padrao: l.SG_EXCECAO_VER === 'S' ? (l.DS_EXCECAO || '') : '' };
+    const fixas = { area: { area: l.NM_AREA || '', responsavel: l.NM_RESPONSAVEL_AREA || '' }, padrao: l.SG_EXCECAO_VER === 'S' ? (l.DS_EXCECAO || '') : '' };
     const fixar = (s) => ({ ...s, area: fixas.area, exceptions: { ...s.exceptions, padrao: fixas.padrao } });
     const base = secoesVazias();
     const secoes = fixar(mesclarSecoes(base, json(l.DS_RASCUNHO) || (ultima ? json(ultima.DS_CAMPOS) : null)));
@@ -389,11 +346,14 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         WHERE p.ID_CICLO = @ciclo AND p.SG_ATIVO = 'S' ORDER BY p.TP_GRUPO, p.CD_MATRICULA`, { ciclo: P.int(c.ID_CICLO) }),
       await runQuery(`SELECT gc.ID_SITE, COUNT(*) AS N FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
         WHERE m.ID_CICLO = @ciclo AND ${CARD_AMARRADO} GROUP BY gc.ID_SITE`, { ciclo: P.int(c.ID_CICLO) }),
-      await runQuery(`SELECT s.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS FROM ${SITES} s WHERE s.NM_SITE IS NOT NULL${SITES_IDS.length ? ` AND s.ID_SITE IN (${SITES_IDS.join(', ')})` : ''} ORDER BY s.NM_PAIS, 2`),
+      await runQuery('SELECT * FROM PM.UNIDADE_ORGANIZACIONAL ORDER BY NO_NIVEL_HIERARQUIA, NM_ESCOPO_ATUACAO, NM_UNIDADE_ORGANIZACIONAL'),
       await metasDoCiclo(c.ID_CICLO),
     ];
     const sub = new Map(subR.recordset.map((x) => [x.ID_SITE, x.N]));
-    const nomes = await pessoas(papeisR.recordset.map((p) => p.CD_MATRICULA).concat(cc.sites.map((s) => s.diretor)));
+    const nomes = await pessoas(papeisR.recordset.map((p) => p.CD_MATRICULA));
+    const noCiclo = new Map(cc.sites.map((s) => [s.id, s]));
+    const un = (u) => ({ id: u.ID_UNIDADE_ORGANIZACIONAL, nome: String(u.NM_UNIDADE_ORGANIZACIONAL).trim(), nivel: u.NO_NIVEL_HIERARQUIA, pai: u.ID_UNIDADE_PAI,
+      escopo: String(u.NM_ESCOPO_ATUACAO || '').trim(), area: u.NM_AREA || '', responsavel: u.NM_RESPONSAVEL_AREA || '' });
     const sigla = new Map(cc.sites.map((s) => [s.id, s.sigla]));
     const ativas = mt.metas.filter((m) => m.SG_ATIVA === 'S');
     const pol = (m) => String(m.TP_ORIENTACAO).toLowerCase();
@@ -411,7 +371,11 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     return {
       ciclo: { ...cc.ciclo, status: c.SG_STATUS === 'S' ? 'aberto' : 'fechado', textoPadraoExcecoes: '' },
       ciclos: ciclosR.recordset.map((x) => ({ ano: x.NO_ANO, nome: x.NM_CICLO, aberto: x.SG_STATUS === 'S' })),
-      bus: cc.sites.map((s) => ({ sigla: s.sigla, pais: s.pais, ativa: s.ativa, diretor: (s.diretor ? nomeDe(nomes, s.diretor) : s.nmDiretor) || '', diretorMatricula: s.diretor || null, cardsSubmetidos: sub.get(s.id) || 0 })),
+      // BUs = unidades de nível 4, com a participação no ciclo (área e responsável do ciclo; fora dele, os padrões da unidade)
+      bus: sitesR.recordset.filter((u) => u.NO_NIVEL_HIERARQUIA === NIVEL_BU).map((u) => { const b = un(u), c2 = noCiclo.get(b.id);
+        return { ...b, sigla: b.nome, pais: b.escopo, ativa: !!(c2 && c2.ativa), area: c2 ? c2.area : b.area, responsavel: c2 ? c2.responsavel : b.responsavel, cardsSubmetidos: sub.get(b.id) || 0 }; }),
+      // Estrutura: as demais unidades (Presidente, CEO, COO…)
+      org: sitesR.recordset.filter((u) => u.NO_NIVEL_HIERARQUIA !== NIVEL_BU).map(un),
       membros, diretorio: [], // a busca de pessoas é por GET /pessoas?q= (MDM)
       excecoes: { bus: Object.fromEntries(cc.sites.map((s) => [s.sigla, { texto: s.excecao, ver: s.ver }])) },
       niveis: [
@@ -425,8 +389,6 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         { id: 'minComentario', valor: 10, unidade: 'caracteres', min: 1, max: 500 },
         { id: 'anexoMb', valor: 25, unidade: 'MB', min: 1, max: 100 },
       ],
-      // Sites da IBP.SITES que podem entrar como BU (lista de sugestões ao incluir uma BU)
-      sites: sitesR.recordset.map((s) => ({ sigla: String(s.NM_SITE).trim(), pais: String(s.NM_PAIS || '').trim() })),
       _idCiclo: c.ID_CICLO, _aberto: c.SG_STATUS === 'S',
     };
   }
@@ -542,10 +504,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   }
 
   async function siteIdsPorNome(q, nomes) {
-    const r = await q(`SELECT ID_SITE, NM_SITE FROM ${SITES} WHERE NM_SITE IS NOT NULL`);
+    const r = await q('SELECT ID_UNIDADE_ORGANIZACIONAL AS ID_SITE, NM_UNIDADE_ORGANIZACIONAL AS NM_SITE FROM PM.UNIDADE_ORGANIZACIONAL');
     const mapa = new Map();
-    // Nome da aplicação primeiro (ex.: Clydach → 16), depois o NM_SITE da IBP.SITES
-    Object.entries(NOMES_SITE).forEach(([id, n]) => mapa.set(chaveSite(n), Number(id)));
     r.recordset.forEach((s) => { const k = chaveSite(s.NM_SITE); if (!mapa.has(k)) mapa.set(k, s.ID_SITE); });
     return (nomes || []).map((n) => mapa.get(chaveSite(n)) || null);
   }
@@ -572,36 +532,50 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         detalhe = `pontos herdados: COO ${nv.coo} · BU ${nv.bu}`;
       }
       if (aba === 'bus') {
-        const ids = await siteIdsPorNome(q, d.bus.map((b) => b.sigla));
-        const erros = d.bus.map((b, i) => (ids[i] ? null : { campo: `bus.${i}.sigla`, codigo: 'SITE', bu: b.sigla })).filter(Boolean);
-        if (erros.length) return { erros };
-        const atuais0 = new Map(base.bus.map((b) => [b.sigla, b]));
-        for (let i = 0; i < d.bus.length; i++) {
-          const b = d.bus[i];
-          // Diretor: matrícula vinda da busca; senão, o nome no MDM; mesmo nome de antes, mantém a matrícula gravada
-          let mat = b.diretorMatricula ? String(b.diretorMatricula).trim() : null;
-          if (!mat && b.diretor) {
-            const antes = atuais0.get(b.sigla);
-            mat = antes && antes.diretor === b.diretor && antes.diretorMatricula ? antes.diretorMatricula : await pessoaPorNome(q, b.diretor);
+        // Unidades organizacionais (D-40): estrutura (org) + BUs (nível 4). id = existente; chave = nova (o pai pode ser uma chave)
+        const lista = (d.org || []).concat(d.bus || []);
+        const existentes = (await q('SELECT ID_UNIDADE_ORGANIZACIONAL AS ID FROM PM.UNIDADE_ORGANIZACIONAL')).recordset.map((x) => Number(x.ID));
+        const ficam = new Set(lista.filter((u) => u.id).map((u) => Number(u.id)));
+        const sair = existentes.filter((id) => !ficam.has(id));
+        // Excluir só unidade sem filhas que ficam e sem Goal Card submetido ou comentado; o resto (pesos, papéis, cards vazios) sai junto
+        for (const id of sair) {
+          const v = (await q(`SELECT
+              (SELECT COUNT(*) FROM PM.UNIDADE_ORGANIZACIONAL f WHERE f.ID_UNIDADE_PAI = @id) AS FILHAS,
+              (SELECT COUNT(*) FROM PM.AIP_GOAL_CARD gc WHERE gc.ID_SITE = @id AND (EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD_VERSAO v WHERE v.ID_GOAL_CARD = gc.ID_GOAL_CARD)
+                 OR EXISTS (SELECT 1 FROM PM.AIP_EVENTO_LOG e WHERE e.ID_GOAL_CARD = gc.ID_GOAL_CARD))) AS CARDS`, { id: P.int(id) })).recordset[0];
+          const filhasSaem = (await q('SELECT ID_UNIDADE_ORGANIZACIONAL AS ID FROM PM.UNIDADE_ORGANIZACIONAL WHERE ID_UNIDADE_PAI = @id', { id: P.int(id) })).recordset.every((x) => sair.includes(Number(x.ID)));
+          if (v.CARDS || (v.FILHAS && !filhasSaem)) return { erros: [{ campo: 'bus', codigo: 'VINCULO', id }] };
+        }
+        // Grava em ordem de nível (o pai antes da filha); chave nova → id
+        const idDe = new Map();
+        const resolver = (p) => (p == null || p === '' ? null : typeof p === 'number' || /^\d+$/.test(String(p)) ? Number(p) : idDe.get(String(p)) || null);
+        for (const u of lista.slice().sort((a, b) => Number(a.nivel) - Number(b.nivel))) {
+          const prm = { nome: P.nv(String(u.sigla || u.nome).trim(), 100), nivel: P.sm(Number(u.nivel)), pai: P.int(resolver(u.pai)), area: P.nv(String(u.area || '').trim() || null, 100),
+            resp: P.nv(String(u.responsavel || '').trim() || null, 150), escopo: P.nv(String(u.escopo || u.pais || '').trim(), 50), mat: P.vc(ctx.quem) };
+          if (u.id) {
+            await q(`UPDATE PM.UNIDADE_ORGANIZACIONAL SET NM_UNIDADE_ORGANIZACIONAL = @nome, NO_NIVEL_HIERARQUIA = @nivel, ID_UNIDADE_PAI = @pai, NM_AREA = @area,
+                NM_RESPONSAVEL_AREA = @resp, NM_ESCOPO_ATUACAO = @escopo, CD_MATRICULA = @mat, DT_ATUALIZACAO = SYSDATETIME() WHERE ID_UNIDADE_ORGANIZACIONAL = @id`, { ...prm, id: P.int(u.id) });
+            idDe.set(String(u.id), Number(u.id));
+          } else {
+            const r = await q(`INSERT PM.UNIDADE_ORGANIZACIONAL (NM_UNIDADE_ORGANIZACIONAL, NO_NIVEL_HIERARQUIA, ID_UNIDADE_PAI, NM_AREA, NM_RESPONSAVEL_AREA, NM_ESCOPO_ATUACAO, CD_MATRICULA)
+              VALUES (@nome, @nivel, @pai, @area, @resp, @escopo, @mat); SELECT CAST(SCOPE_IDENTITY() AS INT) AS ID;`, prm);
+            idDe.set(String(u.chave || u.nome), r.recordset[0].ID); u.id = r.recordset[0].ID;
           }
-          // Sem matrícula no MDM, o nome digitado/vindo do N4 fica em NM_DIRETOR (se a coluna existir), para não sumir ao salvar
-          const nm = !mat && b.diretor && (await colNmDiretor(q)) ? String(b.diretor).trim().slice(0, 150) : null;
-          const colNm = (await colNmDiretor(q)) ? ', NM_DIRETOR = @nm' : '', insNm = colNm ? [', NM_DIRETOR', ', @nm'] : ['', ''];
+        }
+        // Exclusões (filhas antes das mães): o que depende da unidade e não tem histórico sai junto
+        for (const id of sair.slice().reverse()) {
+          await q(`DELETE FROM PM.AIP_META_PESO WHERE ID_SITE = @id; DELETE FROM PM.AIP_PAPEL WHERE ID_SITE = @id;
+            DELETE FROM PM.AIP_GOAL_CARD WHERE ID_SITE = @id; DELETE FROM PM.AIP_CICLO_SITE WHERE ID_SITE = @id;
+            DELETE FROM PM.UNIDADE_ORGANIZACIONAL WHERE ID_UNIDADE_ORGANIZACIONAL = @id;`, { id: P.int(id) });
+        }
+        // Participação das BUs neste ciclo, com a área e o responsável do ciclo
+        for (const b of d.bus || []) {
+          const prm = { ciclo: P.int(idCiclo), site: P.int(b.id), ativa: P.vc(b.ativa ? 'S' : 'N', 1), area: P.nv(String(b.area || '').trim() || null, 100), resp: P.nv(String(b.responsavel || '').trim() || null, 150) };
           await q(`IF EXISTS (SELECT 1 FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo AND ID_SITE = @site)
-              UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = @ativa, CD_MATRICULA_DIRETOR = @dir${colNm} WHERE ID_CICLO = @ciclo AND ID_SITE = @site
-            ELSE INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR${insNm[0]}) VALUES (@ciclo, @site, @ativa, @dir${insNm[1]})`,
-          { ciclo: P.int(idCiclo), site: P.int(ids[i]), ativa: P.vc(b.ativa ? 'S' : 'N', 1), dir: P.vc(mat), ...(colNm ? { nm: P.nv(nm, 150) } : {}) });
+              UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = @ativa, NM_AREA = @area, NM_RESPONSAVEL_AREA = @resp WHERE ID_CICLO = @ciclo AND ID_SITE = @site
+            ELSE IF @ativa = 'S' INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, NM_AREA, NM_RESPONSAVEL_AREA) VALUES (@ciclo, @site, @ativa, @area, @resp)`, prm);
         }
-        // Sites que saíram: sem card submetido, sai do ciclo; com card, fica inativo
-        const manter = ids.map(Number);
-        const atuais = await q('SELECT ID_SITE FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo', { ciclo: P.int(idCiclo) });
-        for (const s of atuais.recordset.map((x) => x.ID_SITE).filter((x) => !manter.includes(Number(x)))) {
-          await q(`IF EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
-                       WHERE m.ID_CICLO = @ciclo AND gc.ID_SITE = @site AND ${CARD_AMARRADO})
-              UPDATE PM.AIP_CICLO_SITE SET SG_ATIVA = 'N' WHERE ID_CICLO = @ciclo AND ID_SITE = @site
-            ELSE DELETE FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @ciclo AND ID_SITE = @site`, { ciclo: P.int(idCiclo), site: P.int(s) });
-        }
-        detalhe = `${d.bus.filter((b) => b.ativa).length} BU(s) ativas no ciclo`;
+        detalhe = `${lista.length} unidade(s); ${(d.bus || []).filter((b) => b.ativa).length} BU(s) ativas no ciclo`;
       }
       if (aba === 'excecoes') {
         const siglas = Object.keys(d.bus || {}), ids = await siteIdsPorNome(q, siglas);
@@ -730,8 +704,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         FROM PM.AIP_CICLO WHERE ID_CICLO = @origem; SELECT CAST(SCOPE_IDENTITY() AS INT) AS ID;`,
       { ano: P.sm(novoAno), ...(dt || {}), nome: P.nv(`AIP ${novoAno}`, 100), mat: P.vc(ctx.quem), origem: P.int(atual.ID_CICLO) });
       const novo = r.recordset[0].ID, prm = { novo: P.int(novo), origem: P.int(atual.ID_CICLO) };
-      await q(`INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR, DS_EXCECAO, SG_EXCECAO_VER)
-        SELECT @novo, ID_SITE, SG_ATIVA, CD_MATRICULA_DIRETOR, DS_EXCECAO, SG_EXCECAO_VER FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @origem`, prm);
+      await q(`INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, NM_AREA, NM_RESPONSAVEL_AREA, DS_EXCECAO, SG_EXCECAO_VER)
+        SELECT @novo, ID_SITE, SG_ATIVA, NM_AREA, NM_RESPONSAVEL_AREA, DS_EXCECAO, SG_EXCECAO_VER FROM PM.AIP_CICLO_SITE WHERE ID_CICLO = @origem`, prm);
       await q(`INSERT PM.AIP_PAPEL (ID_CICLO, CD_MATRICULA, TP_GRUPO, ID_SITE)
         SELECT @novo, CD_MATRICULA, TP_GRUPO, ID_SITE FROM PM.AIP_PAPEL WHERE ID_CICLO = @origem AND SG_ATIVO = 'S'`, prm);
       await q(`INSERT PM.AIP_META (ID_CICLO, CD_NIVEL, NO_META, NM_TITULO, TP_META, TP_ORIENTACAO, VL_PESO)
@@ -758,7 +732,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     fonte: 'banco', exemplo: false,
     contexto, ciclo: async (hoje) => { const cc = await cicloCompleto(hoje); return cc ? cc.ciclo : null; },
     painel, desdobramento, goalCard, versoes, actionLog, configuracao,
-    buscarPessoas, diretoresDoSite, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
+    buscarPessoas, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
     _sql: { SQL_CARDS }, // exposto para o teste de sintaxe
   };
 }
