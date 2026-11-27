@@ -9,6 +9,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 | `000_pm_reset_dev.sql` | Apaga todas as tabelas do AIP no schema `PM` (com o gatilho do log). Só roda em banco `_DEV` | Para recomeçar do zero no DEV (usado na troca para `PM.UNIDADE_ORGANIZACIONAL`, D-40) |
 | `001_pm_criar_tabelas.sql` | Cria o schema `PM`, a `PM.UNIDADE_ORGANIZACIONAL`, as 9 tabelas do AIP, as restrições, os índices, o gatilho que torna o log imutável e as FKs de `ID_SITE` para as unidades | Uma vez por banco. Pode repetir: só cria o que falta |
 | `002_pm_carga_inicial.sql` | Cria Presidente › CEO › COO, o 1º ciclo aberto (janelas em branco), a meta nº 0 da BU (resultado do COO) e os administradores 81059384 e 01181222 | Uma vez, depois do 001 |
+| `007_pm_niveis_desdobramento.sql` | Deixa as metas aceitarem os níveis N5 a N9 (abaixo da BU) e o peso por unidade nesses níveis (D-43). Só troca duas regras, sem apagar dados | Uma vez nos bancos que já têm o 001 (DEV, depois PRD). Num banco novo, o 001 já vem assim |
 
 ## Ordem de ligação (passo a passo)
 

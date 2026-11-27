@@ -89,8 +89,8 @@ create table aip_meta (
   vl_peso numeric(6,2), -- peso das metas do CEO e do COO (um valor só); as metas da BU têm um peso por site na AIP_META_PESO
   sg_ativa char(1) not null default 'S' constraint ck_aip_meta_sg_ativa check (sg_ativa in ('S', 'N')),
   constraint uq_aip_meta unique (id_ciclo, cd_nivel, no_meta),
-  constraint ck_aip_meta_nivel check (cd_nivel in ('CEO', 'COO', 'BU')),
-  constraint ck_aip_meta_peso_unico check ((cd_nivel = 'BU') = (vl_peso is null)),
+  constraint ck_aip_meta_nivel check (cd_nivel in ('CEO', 'COO', 'BU', 'N5', 'N6', 'N7', 'N8', 'N9')),
+  constraint ck_aip_meta_peso_unico check ((cd_nivel in ('CEO', 'COO') and vl_peso is not null) or (cd_nivel = 'BU' and vl_peso is null) or (cd_nivel like 'N_' and (no_meta = 0 or vl_peso is null))),
   constraint ck_aip_meta_tipo check (tp_meta in ('FORMULA', 'MARCOS')),
   constraint ck_aip_meta_orientacao check (tp_orientacao in ('MAIOR', 'MENOR'))
 );

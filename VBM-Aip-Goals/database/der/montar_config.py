@@ -107,7 +107,7 @@ T = {
    'ID_META_ORIGEM': 'Meta do nível acima de onde esta foi desdobrada. Vazio = meta própria do nível.',
    'VL_PESO': 'Peso das metas do CEO e do COO (um valor só, pois há um só COO e um só CEO). Vazio nas metas da BU, que têm um peso por site na AIP_META_PESO.',
    'SG_ATIVA': 'N = fora do ciclo, sem apagar o histórico.'},
-  'regras': ['Número único por ciclo e nível.', 'CD_NIVEL: CEO, COO ou BU.', 'TP_META: FORMULA ou MARCOS; TP_ORIENTACAO: MAIOR ou MENOR.'],
+  'regras': ['Número único por ciclo e nível.', 'CD_NIVEL: CEO, COO, BU ou N5 a N9 (níveis abaixo da BU, D-43).', 'TP_META: FORMULA ou MARCOS; TP_ORIENTACAO: MAIOR ou MENOR.'],
   'exemplos': ['1 · Meta 02 do COO', '2 · Meta 04 das BUs', '3 · Meta 05 da BU, desdobrada da 02 do COO']},
  'AIP_META_PESO': {
   'proposito': 'O peso de cada meta da BU em cada site. Somado aos pontos herdados, fecha os 100 pontos do site (RN-16). As metas do CEO e do COO têm um peso só, na própria AIP_META.',

@@ -16,7 +16,7 @@ const SITES = [{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil', SG_ATIVA: 'S
 // Unidades organizacionais (D-40): Presidente › CEO › COO › BUs (nível 4)
 const U = (id, nome, nivel, pai, escopo) => ({ ID_UNIDADE_ORGANIZACIONAL: id, NM_UNIDADE_ORGANIZACIONAL: nome, NO_NIVEL_HIERARQUIA: nivel, ID_UNIDADE_PAI: pai, NM_ESCOPO_ATUACAO: escopo, NM_AREA: null, NM_RESPONSAVEL_AREA: null });
 const UNIDADES = [U(1, 'Presidente', 1, null, 'Corporativo'), U(2, 'CEO VBM', 2, 1, 'Corporativo'), U(3, 'COO VBM', 3, 2, 'Corporativo'),
-  U(11, 'Salobo', 4, 3, 'Brasil'), U(13, 'Sossego', 4, 3, 'Brasil'), U(12, 'VNL', 4, 3, 'Canadá')];
+  U(11, 'Salobo', 4, 3, 'Brasil'), U(13, 'Sossego', 4, 3, 'Brasil'), U(12, 'VNL', 4, 3, 'Canadá'), U(21, 'GG Mina', 5, 11, 'Brasil')];
 const PESSOAS = [{ MATRICULA: 'C1', NOME: 'Ana Ribeiro', EMAIL: 'ana@vale.com', CARGO: 'Analista' }, { MATRICULA: 'C4', NOME: null, EMAIL: 'carla.mendes@vale.com', CARGO: null }, { MATRICULA: 'D1', NOME: 'Fernanda Lacerda', EMAIL: 'fer@vale.com', CARGO: 'Diretora' },
   { MATRICULA: 'C2', NOME: 'Bruno Costa', EMAIL: 'bruno@vale.com', CARGO: 'Engenheiro' }];
 const CAMPOS = { objective: 'Obj', formula: 'F', unit: '%', ruler: { min: 1, meta: 2, exc: 3 }, area: {}, evidence: 'Ev', exceptions: { bu: '' } };
@@ -139,7 +139,7 @@ test('banco: desdobramento, Action Log e configuração', async () => {
   assert.deepStrictEqual(cf.membros.map((m) => [m.nome, m.grupo, m.bu]), [['Ana Ribeiro', 'admin', null], ['Bruno Costa', 'contribuidor', 'Salobo']]);
   // BUs = unidades de nível 4 com a participação no ciclo (área e responsável do ciclo); estrutura = os demais níveis
   assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.pais, b.ativa, b.responsavel, b.cardsSubmetidos]), [['Salobo', 'Brasil', true, 'Fernanda Lacerda', 1], ['Sossego', 'Brasil', false, '', 0], ['VNL', 'Canadá', true, '', 0]]);
-  assert.deepStrictEqual(cf.org.map((u) => [u.nome, u.nivel, u.pai]), [['Presidente', 1, null], ['CEO VBM', 2, 1], ['COO VBM', 3, 2]]);
+  assert.deepStrictEqual(cf.org.map((u) => [u.nome, u.nivel, u.pai]), [['Presidente', 1, null], ['CEO VBM', 2, 1], ['COO VBM', 3, 2], ['GG Mina', 5, 11]]);
   assert.strictEqual(cf.metasNivel.bu[0].origem, '2027_02');
   // A configuração do banco passa pela mesma validação do servidor (RN-16: BU = 40 herdados + 60)
   assert.deepStrictEqual(validarConfiguracao('metas', { metasNivel: cf.metasNivel }, cf).filter((e) => e.codigo === 'RN16' && e.nivel === 'bu'), []);
@@ -171,6 +171,13 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   assert.ok(log.some((x) => /DELETE FROM PM\.UNIDADE_ORGANIZACIONAL/.test(x.sql) && x.p.id[1] === 12)); // VNL excluída
   assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 13 && x.p.area[1] === 'Operações' && x.p.resp[1] === 'Ana Ribeiro'));
   assert.ok(log.some((x) => /INSERT PM\.UNIDADE_ORGANIZACIONAL/.test(x.sql) && x.p.nome[1] === 'Manitoba' && x.p.pai[1] === 3));
+  // Nível 5 no desdobramento (D-43): metas N5 com peso por unidade e a meta 0 com os pontos herdados
+  log.length = 0;
+  await fonte.salvarConfiguracao('metas', { metasNivel: { ...base.metasNivel, n5: [{ numero: 1, titulo: 'Meta GG', tipo: 'formula', polaridade: 'maior', pesos: { 'GG Mina': 30 } }] },
+    niveis: base.niveis.concat({ id: 'n5', nome: 'Nível 5', total: 100, herdado: 70, ativo: true, fixo: false }), bus: base.bus, org }, ctx, base);
+  assert.ok(log.some((x) => /INSERT PM\.AIP_META \(/.test(x.sql) && x.p.nivel && x.p.nivel[1] === 'N5' && x.p.peso[1] === null));
+  assert.ok(log.some((x) => /INSERT PM\.AIP_META_PESO/.test(x.sql) && x.p.site[1] === 21 && x.p.peso[1] === 30));
+  assert.ok(log.some((x) => /CD_NIVEL = @nivel AND NO_META = 0/.test(x.sql) && x.p.nivel[1] === 'N5' && x.p.peso[1] === 70));
   // Unidade com Goal Card submetido não pode ser excluída
   const r = await fonte.salvarConfiguracao('bus', { org, bus: [bu(13), bu(12)] }, ctx, base);
   assert.strictEqual(r.erros[0].codigo, 'VINCULO');
