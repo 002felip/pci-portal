@@ -932,15 +932,16 @@ body.is-largo .secao { background: color-mix(in srgb, var(--panel) 45%, var(--ca
 .dd-card-faixas { display: flex; flex-wrap: wrap; gap: 0.125rem 0.75rem; font-size: 0.7rem; color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .dd-card-faixas b { font-weight: 600; color: var(--ink-strong); }
 .dd-card-rod { margin: auto -1.125rem 0; padding: 0.625rem 1.125rem 0.75rem; border-top: 1px solid var(--card-line); }
+/* Barra do card: situação dos Goal Cards da meta nas BUs (um trecho por card, na cor do status) */
+.dd-card-status { gap: 2px; }
+.dd-card-status .dd-st { flex: 1 1 0; min-width: 2px; border-radius: 2px; }
+.dd-card-status .dd-st:not([class*="p2-seg-"]) { background: var(--ab-trilho); }
 /* Um ponto por Goal Card gerado nas BUs, na cor da situação */
-.dd-pontos { display: flex; flex-wrap: wrap; gap: 4px; }
 /* Pouca altura (notebook com escala de 125–150%): cards mais compactos */
 @media (max-height: 820px) and (min-width: 721px) {
   .dd-card { gap: 0.375rem; padding: 0.75rem 0.875rem; }
   .dd-card-tit { font-size: 0.84rem; }
 }
-.dd-ponto { width: 0.625rem; height: 0.625rem; border-radius: 50%; }
-.dd-ponto:not([class*="p2-seg-"]) { background: var(--ab-trilho); }
 /* Matriz meta × BU */
 .dd-tabela thead th { text-align: center; }
 .dd-cab-pais th:first-child { text-align: left; vertical-align: bottom; }
@@ -3542,17 +3543,20 @@ window.VBMSetup = (function () {
       var f = m.faixas || {};
       var faixas = m.resultado ? '<span class="dd-card-faixas">' + esc(S.t('dd.baseBus', { n: S.fmt(nBus, 0) })) + '</span>'
         : '<span class="dd-card-faixas"><span>' + esc(S.t('dd.min')) + ' <b>' + esc(f.min || '—') + '</b></span><span>' + esc(S.t('dd.alvo')) + ' <b>' + esc(f.alvo || '—') + '</b></span><span>' + esc(S.t('dd.exc')) + ' <b>' + esc(f.excepcional || '—') + '</b></span></span>';
-      var pontos = cels.map(function (c) {
+      // Barra do card = situação dos Goal Cards que a meta gerou nas BUs: um trecho por card, na cor do status
+      // (ordem: aprovado, em aprovação, em revisão, rascunho, sem card), no lugar das bolinhas
+      var ORD = ['aprovado', 'em_aprovacao', 'em_revisao', 'rascunho', ''];
+      var stSegs = cels.slice().sort(function (a2, b2) { return ORD.indexOf(a2.x.estado || '') - ORD.indexOf(b2.x.estado || ''); }).map(function (c) {
         var e = c.x.estado ? S.t('est.' + c.x.estado) : S.t('dd.semCard');
-        return '<span class="dd-ponto' + (c.x.estado ? ' p2-seg-' + esc(c.x.estado) : '') + '" title="' + esc(c.bu + (alvo.length > 1 ? ' #' + c.n : '') + ': ' + e) + '"></span>';
-      }).join('');
+        return '<span class="dd-st' + (c.x.estado ? ' p2-seg-' + esc(c.x.estado) : '') + '" title="' + esc(c.bu + (alvo.length > 1 ? ' #' + c.n : '') + ': ' + e) + '"></span>';
+      }).join('') || '<span class="dd-st"></span>';
       var rod = S.t('dd.aprovados', { a: S.fmt(aprov, 0), t: S.fmt(cels.length, 0) }), rod2 = emAprov ? S.t('dd.emAprov', { n: S.fmt(emAprov, 0) }) : '';
       return '<li class="dd-meta"><button type="button" class="dd-card' + (m.resultado ? ' is-resultado' : '') + '" data-id="' + esc(m.id) + '" aria-pressed="' + (dd.sel === m.id) + '"' +
         ' aria-label="' + esc(m.id + ' ' + m.titulo + ', ' + ddPct(m.peso) + '. ' + rod + (rod2 ? ', ' + rod2 : '') + '. ' + S.t('dd.filtrar', { m: m.id })) + '">' +
         '<span class="dd-card-tit">' + esc(m.titulo) + '</span>' +
         '<span class="dd-card-num"><b>' + esc(ddPct(m.peso)) + '</b><span>' + esc(S.t(m.resultado ? 'dd.doScorecardCeo' : 'dd.doScorecard')) + '</span></span>' +
-        '<span class="dd-card-barra" aria-hidden="true">' + segs(m.id) + '</span>' + faixas +
-        '<span class="dd-card-rod"><span class="dd-pontos" aria-hidden="true">' + pontos + '</span></span>' +
+        '<span class="dd-card-barra dd-card-status" aria-hidden="true">' + stSegs + '</span>' +
+        '<span class="dd-card-rod">' + faixas + '</span>' +
         '</button></li>';
     }).join('');
 
