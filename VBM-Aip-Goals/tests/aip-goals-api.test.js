@@ -370,3 +370,9 @@ test('pesos com decimais: 6,25 × 4 + 75 herdados fecham 100 (RN-16), sem erro d
   const terco = { coo: [8.33, 8.33, 8.34].map((p, i) => ({ numero: i + 1, pesos: { COO: p } })) };
   assert.strictEqual(somaPesosPorNivel(terco, niveis, [{ id: 'COO', nivel: 'coo', nome: 'COO VBM' }], [])[0].soma, 100);
 });
+
+test('Goal Card: objetivo até 500 caracteres; fórmula até 4.000 (texto longo nos marcos)', () => {
+  const { camposLongos } = require('../aip-goals-api');
+  assert.deepStrictEqual(camposLongos({ objective: 'a'.repeat(500), formula: 'm'.repeat(4000) }), []);
+  assert.deepStrictEqual(camposLongos({ objective: 'a'.repeat(501), formula: 'm'.repeat(4001) }), ['objective', 'formula']);
+});
