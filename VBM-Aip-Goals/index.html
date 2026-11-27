@@ -2761,6 +2761,9 @@ window.VBMSetup = (function () {
 (function () {
   'use strict';
   var S = window.VBMSetup;
+  // Pontos com decimais: até 2 casas, só quando houver (6 · 6,25 · 6,5)
+  function r2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
+  function fpts(v) { var x = r2(v); return S.fmt(x, x === Math.round(x) ? 0 : (Math.round(x * 10) === x * 10 ? 1 : 2)); }
   var $ = function (id) { return document.getElementById(id); };
   var TIMEOUT_MS = 75000;
 
@@ -3318,7 +3321,7 @@ window.VBMSetup = (function () {
     $('m3Atualizado').textContent = d.atualizadoEm ? S.t('t01.atualizado', { d: S.dataHora(new Date(d.atualizadoEm)) }) : '';
     // RN-16: soma dos pesos diferente do total do desdobramento
     $('m3AlertaPesos').hidden = !d.alertaPesos;
-    $('m3AlertaTxt').textContent = S.t('m3.alerta', { n: S.fmt(t.pesoTotal || 0, 0), t: S.fmt(esp, 0) });
+    $('m3AlertaTxt').textContent = S.t('m3.alerta', { n: fpts(t.pesoTotal || 0), t: fpts(esp) });
 
     // Jornada do ciclo na visão da BU (mesmo modelo do Painel): cards da BU por etapa
     var fr = function (v) { return esp ? v / esp : 0; }, qn = t.qtd || {};
@@ -3343,7 +3346,7 @@ window.VBMSetup = (function () {
       return '<tr>' +
         '<td class="num">' + esc(m.meta.numero) + '</td>' +
         '<td><a class="m3-meta-link" data-card="' + esc(m.card) + '" href="' + esc(link) + '"><span class="m3-meta-tit">' + esc(m.meta.titulo) + '</span><span class="m3-meta-tipo">' + esc(S.t('m3.tipo.' + m.meta.tipo)) + ' · ' + esc(m.card) + '</span></a></td>' +
-        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(S.fmt(m.meta.peso, 0)) + '</b>' + parcelas(k) + '</span></td>' +
+        '<td class="m3-centro"><span class="m3-peso"><b>' + esc(fpts(m.meta.peso)) + '</b>' + parcelas(k) + '</span></td>' +
         '<td class="m3-centro"><span class="st st-' + esc(m.estado) + '">' + esc(S.t('est.' + m.estado)) + '</span></td>' +
         '<td>' + esc(m.contribuidor || '—') + '</td>' +
         '<td class="m3-centro">' + (m.versao ? esc(S.t('versao', { n: S.fmt(m.versao, 0) })) : '—') + '</td>' +
@@ -3351,7 +3354,7 @@ window.VBMSetup = (function () {
         '<td class="m3-acao m3-centro"><a class="dash-acao" data-card="' + esc(m.card) + '" href="' + esc(link) + '" aria-label="' + esc(S.t('m3.abrir') + ': #' + m.meta.numero + ' ' + m.meta.titulo) + '" title="' + esc(S.t('m3.abrir')) + '">' + ico('i-eye') + '</a></td></tr>';
     }).join('');
     $('m3Rodape').innerHTML = '<tr><td></td><td>' + esc(S.t('m3.total')) + '</td><td class="m3-centro"><span class="m3-peso"><b' + (d.alertaPesos ? ' class="m3-alerta"' : '') + '>' +
-      esc(S.fmt(t.pesoTotal || 0, 0)) + '</b><span>/ ' + esc(S.fmt(esp, 0)) + '</span></span></td><td colspan="5"></td></tr>';
+      esc(fpts(t.pesoTotal || 0)) + '</b><span>/ ' + esc(fpts(esp)) + '</span></span></td><td colspan="5"></td></tr>';
     m3RenderUnidade();
   }
   // Seletor País › BU com as BUs do recorte do usuário (sempre uma BU escolhida)
@@ -3527,7 +3530,7 @@ window.VBMSetup = (function () {
       var aprov = cels.filter(function (c) { return c.x.estado === 'aprovado'; }).length;
       var emAprov = cels.filter(function (c) { return c.x.estado === 'em_aprovacao'; }).length;
       var nBus = cels.map(function (c) { return c.bu; }).filter(function (v, k, a) { return a.indexOf(v) === k; }).length;
-      var badge = m.resultado ? S.t('dd.badgeTodas', { p: S.fmt(par.pesoResultadoCoo || 0, 0) })
+      var badge = m.resultado ? S.t('dd.badgeTodas', { p: fpts(par.pesoResultadoCoo || 0) })
         : S.t((m.metasBu || []).length > 1 ? 'dd.paraBus' : 'dd.paraBu', { n: ddLista((m.metasBu || []).map(String)) });
       var sub = m.resultado ? S.t('dd.resultadoCeo') : S.t('dd.compartilhada', { l: (m.compartilhada || []).join(' · ') });
       var f = m.faixas || {};
@@ -3567,8 +3570,8 @@ window.VBMSetup = (function () {
           if (!x) return '<td class="dd-cel"><span class="dd-vazio" aria-hidden="true">–</span></td>';
           var est = x.estado ? S.t('est.' + x.estado) : S.t('dd.semCard');
           var k = Math.max(0, Math.min(1, (x.peso - 5) / Math.max(1, maxPeso - 5)));
-          var rot = S.t('dd.celula', { b: b.sigla, m: l.titulo, p: S.fmt(x.peso, 0), e: est }) + (x.card ? ' · ' + x.card : '');
-          var conteudo = '<span class="dd-bolha' + (x.estado ? ' dd-st-' + esc(x.estado) : '') + '" style="--k:' + k.toFixed(3) + '">' + esc(S.fmt(x.peso, 0)) + '</span>';
+          var rot = S.t('dd.celula', { b: b.sigla, m: l.titulo, p: fpts(x.peso), e: est }) + (x.card ? ' · ' + x.card : '');
+          var conteudo = '<span class="dd-bolha' + (x.estado ? ' dd-st-' + esc(x.estado) : '') + '" style="--k:' + k.toFixed(3) + '">' + esc(fpts(x.peso)) + '</span>';
           return '<td class="dd-cel">' + (x.card ? '<a href="#goal-card?card=' + encodeURIComponent(x.card) + '" data-card="' + esc(x.card) + '" title="' + esc(rot) + '" aria-label="' + esc(rot) + '">' + conteudo + '</a>' : '<span title="' + esc(rot) + '">' + conteudo + '</span>') + '</td>';
         }).join('') + '</tr>';
     };
@@ -3576,8 +3579,8 @@ window.VBMSetup = (function () {
     var somaEsp = function (sig) { return esp.reduce(function (t, l) { return t + (l.celulas[sig] ? l.celulas[sig].peso : 0); }, 0); };
     var grupo = function (rot, valores) { return '<tr class="p2-pais dd-grupo"><td>' + esc(rot) + '</td>' + valores.map(function (v) { return '<td class="dd-cel">' + esc(v) + '</td>'; }).join('') + '</tr>'; };
     $('ddLinhas').innerHTML =
-      grupo(S.t('dd.grupoResultado'), bus.map(function (b) { return S.fmt(par.pesoResultadoCoo || 0, 0) + '%'; })) + res.map(linhaHtml).join('') +
-      grupo(S.t('dd.grupoEspecificas'), bus.map(function (b) { return S.fmt(somaEsp(b.sigla), 0) + '%'; })) + esp.map(linhaHtml).join('');
+      grupo(S.t('dd.grupoResultado'), bus.map(function (b) { return fpts(par.pesoResultadoCoo || 0) + '%'; })) + res.map(linhaHtml).join('') +
+      grupo(S.t('dd.grupoEspecificas'), bus.map(function (b) { return fpts(somaEsp(b.sigla)) + '%'; })) + esp.map(linhaHtml).join('');
     var pt = par.pesoTotal || 100;
     $('ddRodape').innerHTML = '<tr><th scope="row">' + esc(S.t('dd.total')) + '</th>' + tot.map(function (t) {
       return '<td class="dd-cel"><span class="dd-total' + (t.alerta ? ' is-alerta' : '') + '">' + ico(t.alerta ? 'i-alert' : 'i-st-aprovado') + esc(S.fmt(t.total, 0)) + '</span></td>';
@@ -3703,7 +3706,7 @@ window.VBMSetup = (function () {
       return '<span class="gc-pol-op' + (m.polaridade === p ? ' is-on' : '') + '" aria-current="' + (m.polaridade === p) + '">' + (p === 'menor' ? '↓ ' : '↑ ') + esc(S.t('gc.pol.' + p)) + '</span>';
     }).join('') + '</div>';
     var cab = '<div class="gc-f-linha gc-f-meta"><div class="gc-f-rot"><span class="gc-f-nome">Goal Title</span></div>' +
-      '<div class="gc-f-val"><p class="gc-f-titulo">' + esc(m.titulo) + '</p><div class="gc-f-meta-info"><span class="gc-chip"><b>' + esc(S.fmt(m.peso, 0)) + '</b> pts</span>' +
+      '<div class="gc-f-val"><p class="gc-f-titulo">' + esc(m.titulo) + '</p><div class="gc-f-meta-info"><span class="gc-chip"><b>' + esc(fpts(m.peso)) + '</b> pts</span>' +
       '<span class="gc-chip">' + esc(S.t('m3.tipo.' + m.tipo)) + '</span>' + pol + '</div></div><div class="gc-f-acoes">' +
       // Modo da ficha (edição ou somente leitura) no canto da linha do título
       '<span class="pill-info gc-f-modo" id="gcModo">' + ico(d.modo === 'edicao' ? 'i-pen' : 'i-lock') + '<span>' + esc(S.t('gc.modo.' + d.modo)) + '</span></span></div></div>';
@@ -3978,7 +3981,7 @@ window.VBMSetup = (function () {
   function cfSomas(nivel) {
     var n = cfNivel(nivel), metas = cf.edit.metas.metasNivel[nivel] || [];
     return cfUnidades(nivel).map(function (u) {
-      return { id: u.id, nome: u.nome, pai: u.pai, total: Number(n.total), soma: Number(n.herdado || 0) + metas.reduce(function (t, m) { return t + (Number(m.pesos[u.id]) || 0); }, 0) };
+      return { id: u.id, nome: u.nome, pai: u.pai, total: Number(n.total), soma: r2(Number(n.herdado || 0) + metas.reduce(function (t, m) { return t + (Number(m.pesos[u.id]) || 0); }, 0)) };
     });
   }
   // Mesmas regras do servidor (validarConfiguracao), para mostrar o motivo antes de gravar
@@ -4008,7 +4011,7 @@ window.VBMSetup = (function () {
     if (aba === 'metas') {
       cfNiveisAtivos().forEach(function (n) {
         (d.metasNivel[n.id] || []).forEach(function (m, i) { if (!String(m.titulo || '').trim()) e.push({ campo: 'titulo-' + n.id + '-' + i, nivel: n.id, msg: S.t('cf.e.tituloN', { n: m.numero, l: n.nome }) }); });
-        cfSomas(n.id).forEach(function (x) { if (x.soma > x.total) e.push({ campo: 'soma-' + n.id + '-' + x.id, nivel: n.id, msg: S.t('cf.e.somaMax', { b: x.nome, s: S.fmt(x.soma, 0), t: S.fmt(x.total, 0) }) }); else if (x.soma !== x.total) e.push({ campo: 'soma-' + n.id + '-' + x.id, nivel: n.id, aviso: true, msg: S.t('cf.e.soma', { b: x.nome, s: S.fmt(x.soma, 0), t: S.fmt(x.total, 0) }) }); });
+        cfSomas(n.id).forEach(function (x) { if (x.soma > x.total) e.push({ campo: 'soma-' + n.id + '-' + x.id, nivel: n.id, msg: S.t('cf.e.somaMax', { b: x.nome, s: fpts(x.soma), t: S.fmt(x.total, 0) }) }); else if (x.soma !== x.total) e.push({ campo: 'soma-' + n.id + '-' + x.id, nivel: n.id, aviso: true, msg: S.t('cf.e.soma', { b: x.nome, s: fpts(x.soma), t: S.fmt(x.total, 0) }) }); });
       });
     }
     if (aba === 'grupos') {
@@ -4234,8 +4237,8 @@ window.VBMSetup = (function () {
       '<p class="cf-ajuda">' + esc(S.t('cf.busAjuda')) + '</p>' + (cf.erros.length ? '<p class="cf-erro">' + esc(cf.erros[0].msg) + '</p>' : '');
   }
   function cfPillSoma(s, total) {
-    return s === total ? '<span class="cf-soma is-ok">' + ico('i-st-aprovado') + esc(S.fmt(s, 0)) + '</span>'
-      : '<span class="cf-soma is-pend">' + esc(S.t('cf.somaDe', { s: S.fmt(s, 0), t: S.fmt(total, 0) })) + '</span>';
+    return s === total ? '<span class="cf-soma is-ok">' + ico('i-st-aprovado') + esc(fpts(s)) + '</span>'
+      : '<span class="cf-soma is-pend">' + esc(S.t('cf.somaDe', { s: fpts(s), t: S.fmt(total, 0) })) + '</span>';
   }
   function cfHtmlGrupos() {
     cf.erros = cfValidar('grupos');
@@ -4306,11 +4309,11 @@ window.VBMSetup = (function () {
         '<td><select class="cf-in cf-mini-sel" data-cf-meta="' + i + '" data-campo="polaridade" id="cfPol' + cf.nivel + i + '" aria-label="' + esc(S.t('gc.polaridade')) + '">' + ['maior', 'menor'].map(function (p) { return '<option value="' + p + '"' + (m.polaridade === p ? ' selected' : '') + '>' + (p === 'maior' ? '↑ ' : '↓ ') + esc(S.t('gc.pol.' + p)) + '</option>'; }).join('') + '</select></td>' +
         unids.map(function (u) {
           var v = m.pesos[u.id];
-          return '<td class="m3-centro"><input class="cf-in cf-peso" type="number" min="0" max="' + nv.total + '" step="0.5" inputmode="decimal" data-cf-meta="' + i + '" data-campo="peso" data-un="' + esc(u.id) + '" id="cfP' + cf.nivel + i + '-' + esc(u.id.replace(/\W/g, '')) + '" value="' + (v == null || v === 0 ? '' : esc(v)) + '" placeholder="0" aria-label="' + esc(S.t('cf.pesoAria', { n: m.numero, b: u.nome })) + '"></td>';
+          return '<td class="m3-centro"><input class="cf-in cf-peso" type="number" min="0" max="' + nv.total + '" step="0.01" inputmode="decimal" data-cf-meta="' + i + '" data-campo="peso" data-un="' + esc(u.id) + '" id="cfP' + cf.nivel + i + '-' + esc(u.id.replace(/\W/g, '')) + '" value="' + (v == null || v === 0 ? '' : esc(v)) + '" placeholder="0" aria-label="' + esc(S.t('cf.pesoAria', { n: m.numero, b: u.nome })) + '"></td>';
         }).join('') +
         '<td class="m3-acao"><button type="button" class="dash-acao cf-rem" data-cf-meta-rem="' + i + '" title="' + esc(S.t('cf.remMeta')) + '" aria-label="' + esc(S.t('cf.remMetaAria', { n: m.numero })) + '">' + ico('i-x') + '</button></td></tr>';
     }).join('');
-    var rod = '<tr class="cf-total"><td></td><th scope="row" colspan="3">' + esc(S.t('cf.totalUn', { t: S.fmt(Number(nv.total), 0) })) + '</th>' + unids.map(function (u) { return '<td class="m3-centro">' + cfPillSoma(somas[u.id] ? somas[u.id].soma : herdado, Number(nv.total)) + '</td>'; }).join('') + '<td></td></tr>';
+    var rod = '<tr class="cf-total"><td></td><th scope="row" colspan="3">' + esc(S.t('cf.totalUn', { t: S.fmt(Number(nv.total), 0) })) + '</th>' + unids.map(function (u) { return '<td class="m3-centro" data-tot-un="' + esc(u.id) + '">' + cfPillSoma(somas[u.id] ? somas[u.id].soma : herdado, Number(nv.total)) + '</td>'; }).join('') + '<td></td></tr>';
     var pend = cf.erros.filter(function (e) { return e.campo.indexOf('soma-') === 0; });
     return '<div class="cf-metas-topo">' + seg + selPai + '</div>' +
       '<p class="cf-ajuda cf-metas-ajuda">' + ico('i-target') + esc(herdado ? S.t('cf.metasAjudaN', { l: nv.nome, t: S.fmt(Number(nv.total), 0), h: S.fmt(herdado, 0), a: acima ? acima.nome : '' }) : S.t('cf.metasAjudaTopo', { l: nv.nome, t: S.fmt(Number(nv.total), 0) })) + '</p>' +
@@ -4371,6 +4374,13 @@ window.VBMSetup = (function () {
     cfIrAba(CF_ABAS[(i + CF_ABAS.length) % CF_ABAS.length]); e.preventDefault();
   });
   // Redesenha ao sair do campo de data; se o foco vai para outro campo de data (ex.: o ícone do calendário), espera: redesenhar ali perdia o 1º clique
+  $('cfConteudo').addEventListener('focusout', function (e) { if (cf.pesoPendente && e.target.matches && e.target.matches('[data-campo="peso"]')) { cf.pesoPendente = false; var rel = e.relatedTarget && e.relatedTarget.id; cfRender(); if (rel && $(rel)) $(rel).focus(); } });
+  // Total de cada coluna de peso, sem redesenhar a tabela (o campo em edição mantém o que foi digitado)
+  function cfAtualizarTotaisPeso() {
+    cfSomas(cf.nivel).forEach(function (x) {
+      document.querySelectorAll('#cfConteudo .cf-total td[data-tot-un]').forEach(function (td) { if (td.getAttribute('data-tot-un') === x.id) td.innerHTML = cfPillSoma(x.soma, x.total); });
+    });
+  }
   $('cfConteudo').addEventListener('focusout', function (e) { if (cf.dataPendente && e.target.type === 'date' && !(e.relatedTarget && e.relatedTarget.type === 'date')) { cf.dataPendente = false; cfRender(); } });
   $('cfConteudo').addEventListener('input', function (e) {
     var t = e.target, d = cf.edit;
@@ -4388,10 +4398,12 @@ window.VBMSetup = (function () {
     else if (t.matches('[data-cf-meta]')) {
       var m = d.metas.metasNivel[cf.nivel][Number(t.getAttribute('data-cf-meta'))], campo = t.getAttribute('data-campo');
       if (campo === 'peso') {
-        var v = t.value === '' ? 0 : Number(t.value), un = t.getAttribute('data-un');
+        // Digitando um decimal ("6," ou "6."): valor ainda incompleto, espera a próxima tecla
+        if (t.validity && t.validity.badInput) return;
+        var v = t.value === '' ? 0 : r2(t.value), un = t.getAttribute('data-un'); // até 2 casas decimais
         // Não deixa a soma da unidade passar do total (100 pts): limita ao que ainda cabe; abaixo de 100 continua valendo
         var sm = cfSomas(cf.nivel).filter(function (x) { return x.id === un; })[0];
-        if (sm) { var cabe = Math.max(0, sm.total - (sm.soma - (Number(m.pesos[un]) || 0))); if (v > cabe) { v = cabe; toast(S.t('cf.e.excesso', { t: S.fmt(sm.total, 0), c: S.fmt(cabe, 0) }), true); } }
+        if (sm) { var cabe = r2(Math.max(0, sm.total - (sm.soma - (Number(m.pesos[un]) || 0)))); if (v > cabe) { v = cabe; toast(S.t('cf.e.excesso', { t: S.fmt(sm.total, 0), c: fpts(cabe) }), true); } }
         if (v) m.pesos[t.getAttribute('data-un')] = v; else delete m.pesos[t.getAttribute('data-un')]; }
       else m[campo] = t.value;
     } else if (t.matches('[data-cf-niv]')) {
@@ -4407,6 +4419,8 @@ window.VBMSetup = (function () {
     else return;
     // Data digitada: atualiza só o rodapé e as marcas; o redesenho (resumo, durações, datas padrão) vem ao sair do campo
     if (t.type === 'date') { cf.dataPendente = true; cfRenderRodape(); cfMarcarAbas(); return; }
+    // Peso: não redesenha a cada tecla (perderia a vírgula decimal); atualiza o total da coluna e o rodapé, e redesenha ao sair do campo
+    if (t.matches('[data-campo="peso"]')) { cf.pesoPendente = true; cfAtualizarTotaisPeso(); cfRenderRodape(); cfMarcarAbas(); return; }
     // Texto livre não redesenha a aba a cada tecla (mantém o cursor); números e datas, sim
     if (t.matches('[data-cf="nome"], [data-cf="texto"], [data-cf="exc-padrao"], [data-campo="titulo"], [data-cf-niv][data-campo="nome"]')) { cfRenderRodape(); cfMarcarAbas(); return; }
     cfRender();

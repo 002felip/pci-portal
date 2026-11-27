@@ -46,6 +46,8 @@ const express = require('express');
 const TAG = '[aip-goals]';
 // Limite de pedidos por usuário por minuto (proteção contra abuso; a navegação normal fica muito abaixo)
 const LIMITE_POR_MINUTO = 240;
+// Pontos com até 2 casas decimais (6,25): somas arredondadas para fechar exatamente o total
+const r2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
 const ESTADOS = ['rascunho', 'em_aprovacao', 'em_revisao', 'aprovado']; // sem Negado: a decisão só aprova ou devolve
 
 // Dias úteis (seg–sex) entre duas datas AAAA-MM-DD, sem contar o dia inicial.
@@ -101,13 +103,13 @@ function agregarMetas(cards, pesoEsperado, limite, hoje = new Date()) {
       return { ...c, diasUteis, parada: c.estado === 'em_aprovacao' && diasUteis > limite };
     })
     .sort((a, b) => a.meta.numero - b.meta.numero);
-  const soma = (l) => l.reduce((t, c) => t + (Number(c.meta.peso) || 0), 0);
+  const soma = (l) => r2(l.reduce((t, c) => t + (Number(c.meta.peso) || 0), 0));
   const peso = Object.fromEntries(ESTADOS.map((e) => [e, soma(metas.filter((c) => c.estado === e))]));
   const qtd = Object.fromEntries(ESTADOS.map((e) => [e, metas.filter((c) => c.estado === e).length]));
   const pesoTotal = soma(metas);
   return {
     metas,
-    totais: { metas: metas.length, pesoTotal, pesoEsperado, pesoSubmetido: pesoTotal - peso.rascunho, peso, qtd },
+    totais: { metas: metas.length, pesoTotal, pesoEsperado, pesoSubmetido: r2(pesoTotal - peso.rascunho), peso, qtd },
     alertaPesos: pesoTotal !== pesoEsperado,
   };
 }
@@ -130,9 +132,9 @@ function agregarDesdobramento(base, cards, bus) {
         celulas: Object.fromEntries(bus.map((b) => [b.sigla, celula(b.sigla, m.numero, m.pesos[b.sigla])])) }))
       .filter((l) => Object.values(l.celulas).some(Boolean)));
   const totais = bus.map((b) => {
-    const especificas = linhas.filter((l) => !l.resultado).reduce((t, l) => t + (l.celulas[b.sigla] ? l.celulas[b.sigla].peso : 0), 0);
-    const aprovado = linhas.reduce((t, l) => t + (l.celulas[b.sigla] && l.celulas[b.sigla].estado === 'aprovado' ? l.celulas[b.sigla].peso : 0), 0);
-    const total = resultado + especificas;
+    const especificas = r2(linhas.filter((l) => !l.resultado).reduce((t, l) => t + (l.celulas[b.sigla] ? l.celulas[b.sigla].peso : 0), 0));
+    const aprovado = r2(linhas.reduce((t, l) => t + (l.celulas[b.sigla] && l.celulas[b.sigla].estado === 'aprovado' ? l.celulas[b.sigla].peso : 0), 0));
+    const total = r2(resultado + especificas);
     return { bu: b.sigla, resultado, especificas, total, aprovado, alerta: total !== pesoTotal };
   });
   return { linhas, totais };
@@ -232,7 +234,7 @@ function somaPesosPorNivel(metasNivel, niveis, unidades, bus) {
   const r = [];
   (niveis || []).filter((n) => n.ativo).forEach((n) => {
     unidadesAtivas(n.id, unidades, bus).forEach((u) => {
-      const soma = Number(n.herdado || 0) + ((metasNivel || {})[n.id] || []).reduce((t, m) => t + (Number((m.pesos || {})[u.id]) || 0), 0);
+      const soma = r2(Number(n.herdado || 0) + ((metasNivel || {})[n.id] || []).reduce((t, m) => t + (Number((m.pesos || {})[u.id]) || 0), 0));
       r.push({ nivel: n.id, unidade: u.id, nome: u.nome, soma, total: Number(n.total) });
     });
   });

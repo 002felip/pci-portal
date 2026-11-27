@@ -236,6 +236,7 @@ demais perfis o item não aparece no menu e a API responde 403 (a tela mostra a 
   aprova todos (menus Aprovações e Action Log, sem Administração); administrador vê todas as telas. O perfil
   vem da `PM.AIP_PAPEL` (Administração › Grupos).
 - **Modelo de dados:** DDL proposto, exemplos e DER em `VBM-Aip-Goals/database/der/` (9 tabelas do AIP, com a `AIP_META_PESO`; a BU é o site da IBP.SITES).
+- **Pesos com decimais:** até 2 casas (ex.: 6,25), aceitos ao digitar (o campo só redesenha ao sair dele) e gravados em `VL_PESO decimal(6,2)`; somas arredondadas a 2 casas para fechar exatamente 100 (RN-16), na tela e no servidor.
 - **Rodapé fixo:** o que mudou, o que impede gravar, Descartar e Salvar (grava só as abas alteradas). Sem histórico de últimas alterações na tela (fica no Action Log).
 - Dados de `GET /configuracao`; escritas em `POST /configuracao/salvar` (`validarConfiguracao`, uma transação por aba, BUs gravadas primeiro) e `POST /configuracao/ciclo` (fechar, reabrir, abrir o próximo copiando BUs, grupos, metas e pesos). Nova BU = site da `IBP.SITES` (lista dos sites fora do ciclo, por país; o país vem do cadastro). Diretor da BU com autopreenchimento do MDM. Ao salvar BUs, metas ou herdados, os Goal Cards que faltam são criados (`GC-<3 letras>-<nº>`).
 
