@@ -369,7 +369,10 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const un = (u) => ({ id: u.ID_UNIDADE_ORGANIZACIONAL, nome: String(u.NM_UNIDADE_ORGANIZACIONAL).trim(), nivel: u.NO_NIVEL_HIERARQUIA, pai: u.ID_UNIDADE_PAI,
       escopo: String(u.NM_ESCOPO_ATUACAO || '').trim(), area: u.NM_AREA || '', responsavel: u.NM_RESPONSAVEL_AREA || '' });
     const sigla = new Map(cc.sites.map((s) => [s.id, s.sigla]));
+    const nomeUn = new Map(sitesR.recordset.map((u) => [u.ID_UNIDADE_ORGANIZACIONAL, String(u.NM_UNIDADE_ORGANIZACIONAL).trim()]));
     const ativas = mt.metas.filter((m) => m.SG_ATIVA === 'S');
+    // Níveis abaixo da BU no desdobramento (D-43): os que têm metas ativas no ciclo; a meta 0 guarda os pontos herdados
+    const niveisN = [...new Set(ativas.filter((m) => /^N[5-9]$/.test(m.CD_NIVEL)).map((m) => m.CD_NIVEL))].sort();
     const pol = (m) => String(m.TP_ORIENTACAO).toLowerCase();
     const metasNivel = {
       ceo: ativas.filter((m) => m.CD_NIVEL === 'CEO').map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m), pesos: { CEO: Number(m.VL_PESO) || 0 } })),
@@ -378,6 +381,10 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         origem: m.NIVEL_ORIGEM === 'COO' ? codigoOrigem(c.NO_ANO, m.NO_ORIGEM) : null, nova: false,
         pesos: Object.fromEntries(mt.pesos.filter((p) => p.ID_META === m.ID_META && sigla.has(p.ID_SITE)).map((p) => [sigla.get(p.ID_SITE), Number(p.VL_PESO)])) })),
     };
+    niveisN.forEach((nv) => {
+      metasNivel[nv.toLowerCase()] = ativas.filter((m) => m.CD_NIVEL === nv && m.NO_META > 0).map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m), nova: false,
+        pesos: Object.fromEntries(mt.pesos.filter((p) => p.ID_META === m.ID_META && nomeUn.has(p.ID_SITE)).map((p) => [nomeUn.get(p.ID_SITE), Number(p.VL_PESO)])) }));
+    });
     const membros = papeisR.recordset.map((p) => {
       const pe = nomes.get(chaveMat(p.CD_MATRICULA)) || { nome: String(p.CD_MATRICULA), email: '', cargo: '', estado: '', cidade: '' };
       return { nome: pe.nome, matricula: String(p.CD_MATRICULA).trim(), email: pe.email, cargo: pe.cargo, estado: pe.estado, cidade: pe.cidade, grupo: GRUPO_DE[p.TP_GRUPO], bu: p.TP_GRUPO === 'CONTRIBUIDOR' ? String(p.NM_SITE || '').trim() : null };
@@ -396,7 +403,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         { id: 'ceo', nome: 'CEO', total: PESO_TOTAL, herdado: 0, ativo: true, fixo: true },
         { id: 'coo', nome: 'COO', total: PESO_TOTAL, herdado: c.QTDE_PONTOS_HERDADOS_COO, ativo: true, fixo: true },
         { id: 'bu', nome: 'Business Unit', total: PESO_TOTAL, herdado: c.QTDE_PONTOS_HERDADOS_BU, ativo: true, fixo: true },
-      ],
+      ].concat(niveisN.map((nv) => { const m0 = ativas.find((m) => m.CD_NIVEL === nv && m.NO_META === 0);
+        return { id: nv.toLowerCase(), nome: `Nível ${nv.slice(1)}`, total: PESO_TOTAL, herdado: m0 ? Number(m0.VL_PESO) || 0 : 0, ativo: true, fixo: false }; })),
       unidades: [{ id: 'CEO', nivel: 'ceo', nome: 'CEO VBM', pai: null }, { id: 'COO', nivel: 'coo', nome: 'COO VBM', pai: 'CEO' }],
       metasNivel,
       parametros: [
@@ -622,19 +630,22 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         detalhe = `grupos: ${inc} inclusão(ões), ${exc} remoção(ões)`;
       }
       if (aba === 'metas') {
-        const busMetas = (d.bus && d.bus.length ? d.bus : base.bus).map((b) => b.sigla);
+        // Unidades com peso por unidade: BUs e as dos níveis abaixo (N5+, D-43)
+        const busMetas = (d.bus && d.bus.length ? d.bus : base.bus).map((b) => b.sigla).concat((d.org || base.org || []).map((u) => u.nome));
         const ids = await siteIdsPorNome(q, busMetas);
         const siteDe = new Map(busMetas.map((b, i) => [b, ids[i]]));
         const { metas } = await metasDoCiclo(idCiclo, q);
         const cooPorCodigo = new Map(metas.filter((m) => m.CD_NIVEL === 'COO').map((m) => [codigoOrigem(base.ciclo.ano, m.NO_META), m.ID_META]));
-        for (const nivel of ['ceo', 'coo', 'bu']) {
+        const niveisN = Object.keys(d.metasNivel || {}).filter((k) => /^n[5-9]$/.test(k));
+        const porUnidade = (nv) => nv === 'bu' || /^n[5-9]$/.test(nv);
+        for (const nivel of ['ceo', 'coo', 'bu'].concat(niveisN)) {
           const NV = nivel.toUpperCase(), lista = (d.metasNivel || {})[nivel] || [];
           const vistos = new Set();
           for (const m of lista) {
             const numero = Number(m.numero);
             if (!Number.isInteger(numero) || numero < 1 || numero > 999 || vistos.has(numero)) continue;
             vistos.add(numero);
-            const peso = nivel === 'bu' ? null : Number((m.pesos || {})[NV]) || 0;
+            const peso = porUnidade(nivel) ? null : Number((m.pesos || {})[NV]) || 0;
             const atual = metas.find((x) => x.CD_NIVEL === NV && x.NO_META === numero);
             const origem = nivel === 'bu' ? (m.origem ? cooPorCodigo.get(m.origem) || null : atual ? atual.ID_META_ORIGEM : null) : null;
             const prm = { ciclo: P.int(idCiclo), nivel: P.vc(NV), no: P.sm(numero), tit: P.nv(String(m.titulo).trim().slice(0, 100), 100),
@@ -649,7 +660,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
                 VALUES (@ciclo, @nivel, @no, @tit, @tipo, @ori, @peso, @origem); SELECT CAST(SCOPE_IDENTITY() AS INT) AS ID;`, prm);
               idMeta = r.recordset[0].ID;
             }
-            if (nivel === 'bu') {
+            if (porUnidade(nivel)) {
               await q('DELETE FROM PM.AIP_META_PESO WHERE ID_META = @id', { id: P.int(idMeta) });
               for (const [sigla, v] of Object.entries(m.pesos || {})) {
                 if (Number(v) > 0 && siteDe.get(sigla)) await q('INSERT PM.AIP_META_PESO (ID_META, ID_SITE, VL_PESO) VALUES (@id, @site, @peso)', { id: P.int(idMeta), site: P.int(siteDe.get(sigla)), peso: P.dec(v) });
@@ -660,6 +671,18 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
           for (const x of metas.filter((x) => x.CD_NIVEL === NV && x.NO_META > 0 && x.SG_ATIVA === 'S' && !vistos.has(x.NO_META))) {
             await q("UPDATE PM.AIP_META SET SG_ATIVA = 'N' WHERE ID_META = @id", { id: P.int(x.ID_META) });
           }
+          // Nível N5+: a meta 0 ("Resultado do nível acima") guarda os pontos herdados
+          if (/^n[5-9]$/.test(nivel)) {
+            const herd = Number(((d.niveis || []).find((n) => n.id === nivel) || {}).herdado) || 0;
+            await q(`IF EXISTS (SELECT 1 FROM PM.AIP_META WHERE ID_CICLO = @ciclo AND CD_NIVEL = @nivel AND NO_META = 0)
+                UPDATE PM.AIP_META SET VL_PESO = @peso, SG_ATIVA = 'S' WHERE ID_CICLO = @ciclo AND CD_NIVEL = @nivel AND NO_META = 0
+              ELSE INSERT PM.AIP_META (ID_CICLO, CD_NIVEL, NO_META, NM_TITULO, TP_META, TP_ORIENTACAO, VL_PESO) VALUES (@ciclo, @nivel, 0, @tit, 'FORMULA', 'MAIOR', @peso)`,
+            { ciclo: P.int(idCiclo), nivel: P.vc(NV), peso: P.dec(herd), tit: P.nv(TITULO_RESULTADO, 100) });
+          }
+        }
+        // Nível retirado do desdobramento (×): todas as metas dele ficam inativas (o histórico continua no banco)
+        for (const nv of [...new Set(metas.filter((x) => /^N[5-9]$/.test(x.CD_NIVEL) && x.SG_ATIVA === 'S').map((x) => x.CD_NIVEL))].filter((nv) => !niveisN.includes(nv.toLowerCase()))) {
+          await q("UPDATE PM.AIP_META SET SG_ATIVA = 'N' WHERE ID_CICLO = @ciclo AND CD_NIVEL = @nivel", { ciclo: P.int(idCiclo), nivel: P.vc(nv) });
         }
         detalhe = 'alterou as metas e os pesos';
       }

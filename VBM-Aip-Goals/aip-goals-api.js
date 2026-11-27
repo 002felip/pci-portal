@@ -228,7 +228,9 @@ const MAX_EXCECAO = 2000; // tamanho máximo de um texto de exceções e conside
 const GRUPOS = ['contribuidor', 'aprovacao', 'admin'];
 const dataValida = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(v));
 // Unidades ativas de cada nível: CEO e COO (unidades), BUs ativas, GG das BUs ativas e GA dessas GG
-function unidadesAtivas(nivel, unidades, bus) {
+function unidadesAtivas(nivel, unidades, bus, org) {
+  // Níveis abaixo da BU (D-43): as unidades de nível 5 a 9 da estrutura (PM.UNIDADE_ORGANIZACIONAL)
+  if (/^n[5-9]$/.test(nivel)) return (org || []).filter((u) => Number(u.nivel) === Number(nivel.slice(1))).map((u) => ({ id: u.nome, nome: u.nome, nivel }));
   const busOn = (bus || []).filter((b) => b.ativa !== false).map((b) => b.sigla);
   if (nivel === 'bu') return busOn.map((b) => ({ id: b, nome: b, nivel: 'bu' }));
   const gg = (unidades || []).filter((u) => u.nivel === 'gg' && busOn.includes(u.pai));
@@ -237,10 +239,10 @@ function unidadesAtivas(nivel, unidades, bus) {
   return (unidades || []).filter((u) => u.nivel === nivel);
 }
 // Soma por unidade de cada nível ativo: pontos herdados do nível acima + pesos das metas do nível (RN-16: fecha o total)
-function somaPesosPorNivel(metasNivel, niveis, unidades, bus) {
+function somaPesosPorNivel(metasNivel, niveis, unidades, bus, org) {
   const r = [];
   (niveis || []).filter((n) => n.ativo).forEach((n) => {
-    unidadesAtivas(n.id, unidades, bus).forEach((u) => {
+    unidadesAtivas(n.id, unidades, bus, org).forEach((u) => {
       const soma = r2(Number(n.herdado || 0) + ((metasNivel || {})[n.id] || []).reduce((t, m) => t + (Number((m.pesos || {})[u.id]) || 0), 0));
       r.push({ nivel: n.id, unidade: u.id, nome: u.nome, soma, total: Number(n.total) });
     });
@@ -298,7 +300,7 @@ function validarConfiguracao(aba, dados, base, hoje = new Date()) {
       if (!String(m.titulo || '').trim()) erros.push({ campo: `metas.${nivel}.${i}.titulo`, codigo: 'OBRIGATORIO' });
       Object.values(m.pesos || {}).forEach((p) => { if (!(Number(p) >= 0 && Number(p) <= 1000)) erros.push({ campo: `metas.${nivel}.${i}.pesos`, codigo: 'PESO' }); });
     }));
-    somaPesosPorNivel(d.metasNivel, niveis, unidades, bus).filter((x) => x.soma !== x.total)
+    somaPesosPorNivel(d.metasNivel, niveis, unidades, bus, d.org || base.org).filter((x) => x.soma !== x.total)
       .forEach((x) => erros.push({ campo: 'pesos', codigo: 'RN16', aviso: x.soma < x.total, nivel: x.nivel, unidade: x.unidade, soma: x.soma, total: x.total })); // abaixo do total é aviso (grava parcial); acima do total bloqueia
   }
   if (aba === 'grupos') {
@@ -628,7 +630,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
     try {
       const ctx = await exigirAdmin(req, res); if (!ctx) return;
       const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
-      res.json({ ...publico(base), somas: somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+      res.json({ ...publico(base), somas: somaPesosPorNivel(base.metasNivel, base.niveis, base.unidades, base.bus, base.org), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
     } catch (err) { falha(res, '/configuracao', err, 'Não foi possível carregar a configuração.'); }
   });
   // Autopreenchimento de pessoas (Novo usuário, diretor da BU): MDM, só o administrador

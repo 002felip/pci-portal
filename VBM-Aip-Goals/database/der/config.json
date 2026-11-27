@@ -163,7 +163,7 @@
    "proposito": "As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.",
    "regras": [
     "Número único por ciclo e nível.",
-    "CD_NIVEL: CEO, COO ou BU.",
+    "CD_NIVEL: CEO, COO, BU ou N5 a N9 (níveis abaixo da BU, D-43).",
     "TP_META: FORMULA ou MARCOS; TP_ORIENTACAO: MAIOR ou MENOR."
    ],
    "campos": {
