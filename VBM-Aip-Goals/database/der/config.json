@@ -135,7 +135,7 @@
     1,
     20
    ],
-   "proposito": "Uma BU (unidade de nível 4) dentro de um ciclo. Guarda o que é próprio dela naquele ciclo: se participa, a área e o responsável do ciclo e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Business Units e Exceções da Administração.",
+   "proposito": "Uma BU (unidade de nível 4) dentro de um ciclo. Guarda o que é próprio dela naquele ciclo: se participa, a área e o responsável do ciclo e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Unidades organizacionais e Exceções da Administração.",
    "regras": [
     "Um registro por BU em cada ciclo.",
     "Só unidades de nível 4."
@@ -169,7 +169,7 @@
    "campos": {
     "ID_META": "Número interno da meta.",
     "ID_CICLO": "Ciclo da meta.",
-    "CD_NIVEL": "Nível da meta: CEO, COO ou BU.",
+    "CD_NIVEL": "Nível da meta: CEO, COO, BU ou N5 a N9 (níveis abaixo da BU, D-43).",
     "NO_META": "Número mostrado nas telas (ex.: 04); único no nível.",
     "NM_TITULO": "Título da meta (Goal Title).",
     "TP_META": "FORMULA (Por fórmula) ou MARCOS (Por marcos).",
@@ -502,7 +502,7 @@
   },
   {
    "id": "enxuto",
-   "html": "<section class=\"explica\" id=\"enxuto\"><h2>O que foi simplificado nesta revisão</h2><p>De 16 para 9 tabelas do AIP, sem perder nenhuma regra das telas:</p><ul class=\"fn\"><li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li><li><code>AIP_UNIDADE</code><span>Não existe: o desdobramento usa o próprio site. O que era da unidade ficou na AIP_CICLO_SITE (diretor, exceção, participa) e o peso do CEO e do COO na AIP_META.</span></li><li><code>AIP_BU</code><span>A BU é a unidade de nível 4 da UNIDADE_ORGANIZACIONAL (ID_SITE).</span></li><li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li><li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li><li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li><li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU,.</span></li></ul></section>"
+   "html": "<section class=\"explica\" id=\"enxuto\"><h2>O que foi simplificado nesta revisão</h2><p>De 16 para 9 tabelas do AIP (mais a UNIDADE_ORGANIZACIONAL), sem perder nenhuma regra das telas:</p><ul class=\"fn\"><li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li><li><code>AIP_UNIDADE</code><span>Não existe: o desdobramento usa o próprio site. O que era da unidade ficou na AIP_CICLO_SITE (diretor, exceção, participa) e o peso do CEO e do COO na AIP_META.</span></li><li><code>AIP_BU</code><span>A BU é a unidade de nível 4 da UNIDADE_ORGANIZACIONAL (ID_SITE).</span></li><li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li><li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li><li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li><li><code>GG e GA</code><span>Fora no primeiro momento: o desdobramento vai até a BU,.</span></li></ul></section>"
   }
  ],
  "funcoes": [
