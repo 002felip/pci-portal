@@ -83,6 +83,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-43 | Metas e pesos: + adiciona ao desdobramento o próximo nível da `PM.UNIDADE_ORGANIZACIONAL` abaixo do último (5 a 9), com as unidades daquele nível como colunas de peso; × retira o último nível adicionado (as metas dele ficam inativas). Nível N5+ tem a linha "Resultado do nível acima" (pontos herdados na meta nº 0) e soma de 100 pts por unidade. Banco: `CD_NIVEL` aceita N5 a N9 (script 007). | 27/11/2026 |
 | D-44 | Goal Card para todos os níveis do desdobramento: CEO e COO (uma unidade cada, peso da meta), BU e níveis abaixo da BU (peso por unidade); a meta nº 0 de cada nível abaixo do topo é o resultado do nível acima (COO: "CEO's Scorecard Result" com os pontos herdados do CEO). As unidades de CEO, COO e N5+ entram no ciclo quando o nível tem metas e aparecem na tela AIP BU's (nomes das telas mantidos), Aprovações e Action Log; COO AIP e o número de BUs do Início continuam só com as BUs. | 27/11/2026 |
 | D-45 | Grupos: é possível salvar sem ninguém no grupo de aprovação; vira aviso (não bloqueia), na tela e no servidor. Continua obrigatório ao menos um administrador. | 27/11/2026 |
+| D-46 | Administração: a tecla Tab segue a linha da esquerda para a direita (em Metas e pesos: título, tipo, direção e os pesos de cada unidade); ao sair de um campo de texto, a tela só se redesenha depois que o foco chega ao próximo campo. | 27/11/2026 |
 
 ## 4. Suposições a confirmar
 
