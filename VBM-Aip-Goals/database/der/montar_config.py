@@ -27,12 +27,12 @@ c['layout'] = {'largura_tabela': 330, 'colunas': [20, 440, 860, 1280]}
 c['formato'] = {'moeda': '', 'decimal': ',', 'fuso_horas': -3, 'prefixos_moeda': [], 'prefixos_percentual': []}
 
 colunas = [
-    ('cic', ['AIP_CICLO', 'AIP_PAPEL', 'SITES']),
+    ('cic', ['AIP_CICLO', 'AIP_PAPEL', 'UNIDADE_ORGANIZACIONAL']),
     ('des', ['AIP_CICLO_SITE', 'AIP_META', 'AIP_META_PESO']),
     ('gc', ['AIP_GOAL_CARD', 'AIP_GOAL_CARD_VERSAO', 'AIP_NOTIFICACAO']),
     ('aud', ['AIP_EVENTO_LOG']),
 ]
-grupo_de = {'SITES': 'ibp', 'AIP_NOTIFICACAO': 'aud'}
+grupo_de = {'UNIDADE_ORGANIZACIONAL': 'cic', 'AIP_NOTIFICACAO': 'aud'}
 ordem = []
 for i, (g, ts) in enumerate(colunas):
     y = 20
@@ -82,16 +82,19 @@ T = {
   'regras': ['TP_GRUPO: CONTRIBUIDOR, APROVACAO, ADMIN.', 'Leitura não precisa de papel: qualquer usuário do Portal lê.', 'BU obrigatória para contribuidor; vazia para aprovação e administrador.', 'Uma pessoa não se repete no mesmo grupo e BU do ciclo.'],
   'condicional': {'ID_SITE': 'se contribuidor'},
   'exemplos': ['1 · Contribuidor de Ontario', '2 · Grupo de aprovação', '3 · Administrador']},
- 'SITES': {
-  'proposito': 'Tabela já existente do IBP (IBP.SITES): cada site é uma BU do AIP. ID_SITE é o identificador da BU em todo o modelo; o AIP só lê esta tabela.',
-  'campos': {'ID_SITE': 'Identificador do site, usado como ID da BU no AIP.', 'ID_SISTEMA': 'Sistema do IBP a que o site pertence.', 'NM_SITE': 'Nome do site, mostrado como nome da BU (ex.: Ontario).', 'NM_PAIS': 'País ou região que agrupa as BUs nas telas.', 'SG_REGIAO': 'Sigla de região do IBP.'},
-  'regras': ['Tabela do esquema IBP, mantida fora do AIP; no Azure SQL as FKs apontam para IBP.SITES.', 'Recriada aqui só para o teste do DER.'],
-  'exemplos': ['12 · Onça Puma, Brasil', '15 · Ontario, Canadá']},
+ 'UNIDADE_ORGANIZACIONAL': {
+  'proposito': 'Estrutura das unidades do desdobramento (D-40): Presidente › CEO › COO › BUs. A BU é a unidade de nível 4; ID_UNIDADE_ORGANIZACIONAL é o ID_SITE das tabelas do AIP. Substitui a IBP.SITES no AIP. Cadastro na Administração › Unidades organizacionais.',
+  'campos': {'ID_UNIDADE_ORGANIZACIONAL': 'Identificador da unidade (é o ID_SITE nas tabelas do AIP).', 'NM_UNIDADE_ORGANIZACIONAL': 'Nome mostrado nas telas (ex.: Salobo, CEO VBM). Único.',
+    'NO_NIVEL_HIERARQUIA': '1 Presidente, 2 CEO, 3 COO, 4 BU (5 em diante livres).', 'ID_UNIDADE_PAI': 'Unidade do nível acima. Vazio só no nível 1.',
+    'NM_AREA': 'Área padrão da unidade; o ciclo guarda a sua em AIP_CICLO_SITE.', 'NM_RESPONSAVEL_AREA': 'Responsável padrão (texto, sem ligação com o MDM).',
+    'NM_ESCOPO_ATUACAO': 'Corporativo, Brasil, Canadá, Ásia, Reino Unido…: agrupa as BUs nas telas.', 'CD_MATRICULA': 'Quem fez a última alteração.', 'DT_ATUALIZACAO': 'Quando foi a última alteração.'},
+  'regras': ['Nome único.', 'Nível 1 a 9; um só nível 1.', 'Pai obrigatório a partir do nível 2, no nível de cima (validado na API).', 'Excluir só sem unidades abaixo e sem Goal Card submetido ou comentado.'],
+  'exemplos': ['1 · Presidente', '2 · CEO VBM', '3 · COO VBM']},
  'AIP_CICLO_SITE': {
-  'proposito': 'Um site (BU) dentro de um ciclo. Guarda o que é próprio do site naquele ciclo: se participa, quem é o diretor e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Business Units e Exceções da Administração.',
-  'campos': {'ID_CICLO': 'Ciclo.', 'ID_SITE': 'Site do IBP (a BU).', 'SG_ATIVA': 'S = o site participa do ciclo; N = tirado do ciclo (não recebe Goal Cards nem avisos e sai das somas), sem apagar o histórico.', 'CD_MATRICULA_DIRETOR': 'Diretor da BU (matrícula; nome no MDM). É o Responsável da Area Responsible em todos os Goal Cards do site, com a área Diretoria Executiva.', 'DS_EXCECAO': 'Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites.', 'SG_EXCECAO_VER': 'S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado).'},
-  'regras': ['Um registro por site em cada ciclo.', 'Só sites que existem na IBP.SITES.'],
-  'exemplos': ['AIP 2027 · Onça Puma (site 12), diretor e texto do Brasil', 'AIP 2027 · Ontario (site 15), texto do Canadá oculto']},
+  'proposito': 'Uma BU (unidade de nível 4) dentro de um ciclo. Guarda o que é próprio dela naquele ciclo: se participa, a área e o responsável do ciclo e a exceção (texto) mostrada nos Goal Cards. Alimenta as telas Business Units e Exceções da Administração.',
+  'campos': {'ID_CICLO': 'Ciclo.', 'ID_SITE': 'BU (PM.UNIDADE_ORGANIZACIONAL, nível 4).', 'SG_ATIVA': 'S = o site participa do ciclo; N = tirado do ciclo (não recebe Goal Cards nem avisos e sai das somas), sem apagar o histórico.', 'NM_AREA': 'Área da BU neste ciclo (Area Responsible do Goal Card).', 'NM_RESPONSAVEL_AREA': 'Responsável neste ciclo (texto; muda de um ciclo para outro).', 'DS_EXCECAO': 'Texto de Exceptions and Considerations do site, escolhido pelo administrador na aba Exceções (não editável pela BU). Pode ser o mesmo para vários sites.', 'SG_EXCECAO_VER': 'S = o texto aparece no Goal Card do site (olho aberto); N = oculto (olho riscado).'},
+  'regras': ['Um registro por BU em cada ciclo.', 'Só unidades de nível 4.'],
+  'exemplos': ['AIP 2027 · Onça Puma (4), Kilma Cunha e texto do Brasil', 'AIP 2027 · Ontario (5), texto do Canadá oculto']},
  'AIP_META': {
   'proposito': 'As metas de cada nível do desdobramento (número, título, tipo e direção). As metas da BU podem vir de uma meta do COO.',
   'campos': {
@@ -159,10 +162,10 @@ for t, v in T.items():
 rot = {
  ('AIP_CICLO', 'ID_CICLO_ORIGEM'): 'criado a partir de',
  ('AIP_PAPEL', 'ID_CICLO'): 'participa de', ('AIP_PAPEL', 'ID_SITE'): 'atua na',
- ('AIP_CICLO_SITE', 'ID_CICLO'): 'participa de', ('AIP_CICLO_SITE', 'ID_SITE'): 'é o site',
+ ('UNIDADE_ORGANIZACIONAL', 'ID_UNIDADE_PAI'): 'abaixo de', ('AIP_CICLO_SITE', 'ID_CICLO'): 'participa de', ('AIP_CICLO_SITE', 'ID_SITE'): 'é a BU',
  ('AIP_META', 'ID_CICLO'): 'meta do', ('AIP_META', 'ID_META_ORIGEM'): 'desdobrada de',
- ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_SITE'): 'no site',
- ('AIP_GOAL_CARD', 'ID_META'): 'card da', ('AIP_GOAL_CARD', 'ID_SITE'): 'do site',
+ ('AIP_META_PESO', 'ID_META'): 'peso da', ('AIP_META_PESO', 'ID_SITE'): 'na BU',
+ ('AIP_GOAL_CARD', 'ID_META'): 'card da', ('AIP_GOAL_CARD', 'ID_SITE'): 'da BU',
  ('AIP_GOAL_CARD_VERSAO', 'ID_GOAL_CARD'): 'versão de',
 
  ('AIP_EVENTO_LOG', 'ID_EVENTO_PAI'): 'responde a', ('AIP_EVENTO_LOG', 'ID_CICLO'): 'registrado em',
@@ -188,7 +191,7 @@ c['secoes_extras'].append({'id': 'enxuto', 'html': (
  '<ul class="fn">'
  '<li><code>AIP_CICLO_JANELA</code><span>As 4 etapas são fixas: viraram colunas de data do AIP_CICLO.</span></li>'
  '<li><code>AIP_UNIDADE</code><span>Não existe: o desdobramento usa o próprio site. O que era da unidade ficou na AIP_CICLO_SITE (diretor, exceção, participa) e o peso do CEO e do COO na AIP_META.</span></li>'
- '<li><code>AIP_BU</code><span>A BU é o site da IBP.SITES (ID_SITE).</span></li>'
+ '<li><code>AIP_BU</code><span>A BU é a unidade de nível 4 da UNIDADE_ORGANIZACIONAL (ID_SITE).</span></li>'
  '<li><code>AIP_DECISAO</code> e <code>AIP_REVISAO_SECAO</code><span>Uma decisão por versão: viraram colunas da AIP_GOAL_CARD_VERSAO, com a marcação das seções em DS_REVISAO_SECOES.</span></li>'
  '<li><code>AIP_COMENTARIO</code><span>Cada comentário já era um evento do Action Log: agora é só o evento COMENTARIO, com resposta em ID_EVENTO_PAI.</span></li>'
  '<li><code>AIP_NIVEL</code><span>Com CEO, COO e BU fixos (100 pts), os pontos herdados viraram colunas do AIP_CICLO e o nível virou o código CD_NIVEL na meta e na unidade. A aba Parâmetros foi descontinuada.</span></li>'

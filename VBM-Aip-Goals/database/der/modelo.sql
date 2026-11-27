@@ -8,7 +8,7 @@
 -- TP_ lista fixa, SG_ sim/não, QTDE_ quantidade, VL_ valor.
 -- Pessoas: nome, e-mail, cargo, estado e cidade são lidos do MDM pela matrícula (CD_MATRICULA, como em IBP.USERS); o AIP guarda só a matrícula.
 -- Desdobramento fixo em CEO → COO → BU (GG e GA fora no primeiro momento), 100 pts por site; os pontos herdados
--- ficam no AIP_CICLO e o nível é um código (CD_NIVEL) na meta. O site (IBP.SITES) é a BU: não há tabela de unidade.
+-- ficam no AIP_CICLO e o nível é um código (CD_NIVEL) na meta. Unidades (Presidente › CEO › COO › BU) na unidade_organizacional (D-40); BU = nível 4.
 -- Limites das regras (mínimo de caracteres no comentário, tamanho de anexo) ficam na aplicação, fora do banco.
 
 -- ═══ CICLO ═══
@@ -47,26 +47,31 @@ create unique index uq_aip_ciclo_um_aberto on aip_ciclo (sg_status) where sg_sta
 
 
 -- ═══ DESDOBRAMENTO ═══
--- BU = site do IBP: a tabela IBP.SITES já existe no banco (ID_SITE é o ID da BU). Aqui ela é recriada só para o
--- teste do DER, com a mesma estrutura; no Azure SQL as FKs apontam para IBP.SITES e o AIP não cria esta tabela.
-create table sites (
-  id_site integer constraint pk_sites primary key,
-  id_sistema integer not null,
-  nm_site varchar(25),
-  nm_pais varchar(25),
-  sg_regiao varchar(1)
+-- Unidades organizacionais (D-40): nível 1 Presidente, 2 CEO, 3 COO, 4 BU; o pai é a unidade do nível acima. O AIP não usa a IBP.SITES.
+create table unidade_organizacional (
+  id_unidade_organizacional integer generated always as identity constraint pk_unidade_organizacional primary key,
+  nm_unidade_organizacional varchar(100) not null constraint uq_unidade_organizacional_nome unique,
+  no_nivel_hierarquia smallint not null constraint ck_unidade_organizacional_nivel check (no_nivel_hierarquia between 1 and 9),
+  id_unidade_pai integer constraint fk_unidade_organizacional_pai references unidade_organizacional (id_unidade_organizacional),
+  nm_area varchar(100),
+  nm_responsavel_area varchar(150),
+  nm_escopo_atuacao varchar(50) not null,
+  cd_matricula varchar(20) not null,
+  dt_atualizacao timestamp(0) not null default localtimestamp(0),
+  constraint ck_unidade_organizacional_pai check ((no_nivel_hierarquia = 1) = (id_unidade_pai is null))
 );
 
 
--- Site (BU) dentro de um ciclo: quais sites participam, o diretor, a exceção e se ela aparece (telas Business Units e Exceções).
+-- BU (unidade de nível 4) dentro de um ciclo: participa, área e responsável do ciclo, exceção e se ela aparece (telas Unidades e Exceções).
 -- Não há tabela de nível ou de agrupamento: o desdobramento usa o próprio site (CEO e COO têm um peso só por meta, na AIP_META).
 create table aip_ciclo_site (
   id_ciclo integer not null constraint fk_aip_ciclo_site_aip_ciclo references aip_ciclo (id_ciclo),
-  id_site integer not null constraint fk_aip_ciclo_site_sites references sites (id_site),
+  id_site integer not null constraint fk_aip_ciclo_site_unidade references unidade_organizacional (id_unidade_organizacional),
   sg_ativa char(1) not null default 'S' constraint ck_aip_ciclo_site_sg_ativa check (sg_ativa in ('S', 'N')),
-  -- Diretor (responsável da Area Responsible, nome no MDM) e exceção do site: texto escolhido pelo administrador (não editável
-  -- pela BU) e se aparece no Goal Card (olho). Vários sites podem ter o mesmo texto (ex.: todos do Brasil).
-  cd_matricula_diretor varchar(20),
+  -- Área e responsável neste ciclo (Area Responsible do Goal Card; mudam de um ciclo para outro) e exceção da BU: texto
+  -- escolhido pelo administrador (não editável pela BU) e se aparece no Goal Card (olho).
+  nm_area varchar(100),
+  nm_responsavel_area varchar(150),
   ds_excecao varchar(4000),
   sg_excecao_ver char(1) not null default 'S' constraint ck_aip_ciclo_site_sg_excecao check (sg_excecao_ver in ('S', 'N')),
   constraint pk_aip_ciclo_site primary key (id_ciclo, id_site)
@@ -92,7 +97,7 @@ create table aip_meta (
 
 create table aip_meta_peso (
   id_meta integer not null constraint fk_aip_meta_peso_aip_meta references aip_meta (id_meta),
-  id_site integer not null constraint fk_aip_meta_peso_sites references sites (id_site),
+  id_site integer not null constraint fk_aip_meta_peso_unidade references unidade_organizacional (id_unidade_organizacional),
   vl_peso numeric(6,2) not null,
   constraint pk_aip_meta_peso primary key (id_meta, id_site),
   constraint ck_aip_peso check (vl_peso > 0)
@@ -104,7 +109,7 @@ create table aip_papel (
   id_ciclo integer not null constraint fk_aip_papel_aip_ciclo references aip_ciclo (id_ciclo),
   cd_matricula varchar(20) not null,
   tp_grupo varchar(20) not null,
-  id_site integer constraint fk_aip_papel_sites references sites (id_site),
+  id_site integer constraint fk_aip_papel_unidade references unidade_organizacional (id_unidade_organizacional),
   sg_ativo char(1) not null default 'S' constraint ck_aip_papel_sg_ativo check (sg_ativo in ('S', 'N')),
   dt_atualizacao timestamp(0) not null default localtimestamp(0),
   constraint ck_aip_papel_grupo check (tp_grupo in ('CONTRIBUIDOR', 'APROVACAO', 'ADMIN')),
@@ -118,7 +123,7 @@ create table aip_goal_card (
   id_goal_card integer generated always as identity constraint pk_aip_goal_card primary key,
   cd_goal_card varchar(20) not null,
   id_meta integer not null constraint fk_aip_goal_card_aip_meta references aip_meta (id_meta),
-  id_site integer not null constraint fk_aip_goal_card_sites references sites (id_site),
+  id_site integer not null constraint fk_aip_goal_card_unidade references unidade_organizacional (id_unidade_organizacional),
   tp_estado varchar(20) not null default 'RASCUNHO',
   no_versao_oficial smallint,
   ds_rascunho text,
@@ -198,3 +203,4 @@ create index ix_aip_evento_log_fk_aip_ciclo on aip_evento_log (id_ciclo);
 create index ix_aip_evento_log_fk_aip_goal_card on aip_evento_log (id_goal_card);
 create index ix_aip_evento_log_fk_aip_evento_log on aip_evento_log (id_evento_pai);
 create index ix_aip_notificacao_fk_aip_evento_log on aip_notificacao (id_evento);
+create index ix_unidade_organizacional_fk_pai on unidade_organizacional (id_unidade_pai);

@@ -244,14 +244,14 @@ Cada notificação chega por e-mail e no app. O e-mail vai no idioma do destinat
 
 **Modelo de dados (proposta para validação com o time de dados, versão de 19/11/2026)**
 
-DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; a BU é o site da `IBP.SITES` (`ID_SITE`). 9 tabelas do AIP na fase 1, mais a `IBP.SITES` existente:
+DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `modelo.sql`, `exemplos.sql`). Convenções do Schema IBP (levantamento de 21/10/2026): prefixo `AIP_`, campos ID_, NM_, DS_, DT_ (DT_INI/DT_FIM), NO_, CD_ (CD_MATRICULA), TP_, SG_ em `char(1)` S/N, QTDE_, VL_; restrições `PK_`, `FK_<FILHA>_<PAI>`, `UQ_`, `CK_` e `IX_<TABELA>_FK_<PAI>` em toda FK; a BU é a unidade de nível 4 da `PM.UNIDADE_ORGANIZACIONAL` (`ID_SITE`, D-40). 9 tabelas do AIP na fase 1, mais a `PM.UNIDADE_ORGANIZACIONAL`:
 
 | Tabela | Conteúdo |
 | --- | --- |
 | AIP_CICLO | Ano (único), nome, `SG_STATUS` S/N (S = aberto, N = fechado; **só um S**, índice único parcial), ciclo de origem, quem e quando abriu e fechou, datas das 4 etapas da jornada (início e fim de cada etapa; início padrão = fim da anterior), pontos herdados pelo COO e por cada BU (100 pts por unidade) |
-| IBP.SITES (existente) | A BU é o site do IBP: `ID_SITE` é o ID da BU em todo o modelo; nome e país vêm de NM_SITE e NM_PAIS |
+| PM.UNIDADE_ORGANIZACIONAL | Estrutura das unidades (D-40): Presidente (1) › CEO (2) › COO (3) › BU (4); nome, nível, pai, área e responsável padrão, escopo de atuação (agrupa as BUs), quem e quando alterou. `ID_SITE` das tabelas do AIP = ID da unidade de nível 4 |
 | AIP_PAPEL | Ciclo, matrícula (dados da pessoa no MDM), grupo (contribuidor, aprovação, consulta, admin), BU (ID_SITE, só contribuidor e consulta), ativo, data da última atualização |
-| AIP_CICLO_SITE | Site (BU) no ciclo: participa ou não (`SG_ATIVA`), diretor (`CD_MATRICULA_DIRETOR`, nome no MDM) e exceção do site: texto (`DS_EXCECAO`) e se aparece (`SG_EXCECAO_VER`). Alimenta as telas Business Units e Exceções |
+| AIP_CICLO_SITE | BU no ciclo: participa ou não (`SG_ATIVA`), área e responsável do ciclo (`NM_AREA`, `NM_RESPONSAVEL_AREA`, texto) e exceção do site: texto (`DS_EXCECAO`) e se aparece (`SG_EXCECAO_VER`). Alimenta as telas Business Units e Exceções |
 | AIP_META | Ciclo, nível (CEO, COO ou BU), número, peso (`VL_PESO`, só CEO e COO), título, tipo, orientação (`TP_ORIENTACAO`: maior ou menor é melhor), meta de origem (desdobrada de), ativa |
 | AIP_META_PESO | Meta da BU, site, peso (um por site) |
 | AIP_GOAL_CARD | Código (GC-BU-meta), meta, site, estado, versão oficial, rascunho (o que foi digitado e ainda não submetido, em JSON), quem e quando fez a última mudança |
@@ -259,7 +259,7 @@ DDL testado em PostgreSQL e DER navegável em `database/der/` (`der.html`, `mode
 | AIP_EVENTO_LOG | Action Log imutável (gatilho bloqueia UPDATE e DELETE): tipo (inclui abrir, fechar e reabrir ciclo e os comentários do Goal Card, com texto e resposta a), quem, grupo, quando, card, seção, antes, depois |
 | AIP_NOTIFICACAO | Evento, destinatário, canal (e-mail ou app), enviado em, lido em |
 
-Saiu a `AIP_UNIDADE` (D-26): o desdobramento usa o próprio site da `IBP.SITES`. Saíram do modelo também: `AIP_PARAMETRO` (limites ficam na aplicação), `AIP_DECISAO`, `AIP_REVISAO_SECAO` e `AIP_COMENTARIO` (revisão enxuta) `AIP_NIVEL` (níveis fixos; pontos herdados no `AIP_CICLO`, nível como código na meta e na unidade) e os níveis GG e GA no primeiro momento. Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
+Saiu a `AIP_UNIDADE` (D-26) e, depois, o uso da `IBP.SITES` (D-40): as BUs são as unidades de nível 4 da `PM.UNIDADE_ORGANIZACIONAL`. Saíram do modelo também: `AIP_PARAMETRO` (limites ficam na aplicação), `AIP_DECISAO`, `AIP_REVISAO_SECAO` e `AIP_COMENTARIO` (revisão enxuta) `AIP_NIVEL` (níveis fixos; pontos herdados no `AIP_CICLO`, nível como código na meta e na unidade) e os níveis GG e GA no primeiro momento. Fases 2 e 3: `AIP_CHANGE_REQUEST` e `AIP_EVIDENCIA`.
 
 ## 10. Catálogo de telas
 

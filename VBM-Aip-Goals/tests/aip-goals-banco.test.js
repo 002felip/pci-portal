@@ -11,8 +11,12 @@ const CICLO = { ID_CICLO: 7, NO_ANO: 2027, NM_CICLO: 'AIP 2027', SG_STATUS: 'S',
   DT_INI_DESDOBRAMENTO: D('2026-11-02'), DT_FIM_DESDOBRAMENTO: D('2026-11-20'), DT_INI_PROPOSTA: D('2026-11-20'), DT_FIM_PROPOSTA: D('2026-12-18'),
   DT_INI_CALIBRACAO: D('2026-12-18'), DT_FIM_CALIBRACAO: D('2027-01-15'), DT_INI_OFICIAL: D('2027-01-15'), DT_FIM_OFICIAL: D('2027-01-29'),
   QTDE_PONTOS_HERDADOS_COO: 75, QTDE_PONTOS_HERDADOS_BU: 40 };
-const SITES = [{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil', SG_ATIVA: 'S', CD_MATRICULA_DIRETOR: 'D1', DS_EXCECAO: 'Força maior excluída.', SG_EXCECAO_VER: 'S' },
-  { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá', SG_ATIVA: 'S', CD_MATRICULA_DIRETOR: null, DS_EXCECAO: null, SG_EXCECAO_VER: 'S' }];
+const SITES = [{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil', SG_ATIVA: 'S', NM_AREA: 'Diretoria Executiva', NM_RESPONSAVEL_AREA: 'Fernanda Lacerda', DS_EXCECAO: 'Força maior excluída.', SG_EXCECAO_VER: 'S' },
+  { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá', SG_ATIVA: 'S', NM_AREA: null, NM_RESPONSAVEL_AREA: null, DS_EXCECAO: null, SG_EXCECAO_VER: 'S' }];
+// Unidades organizacionais (D-40): Presidente › CEO › COO › BUs (nível 4)
+const U = (id, nome, nivel, pai, escopo) => ({ ID_UNIDADE_ORGANIZACIONAL: id, NM_UNIDADE_ORGANIZACIONAL: nome, NO_NIVEL_HIERARQUIA: nivel, ID_UNIDADE_PAI: pai, NM_ESCOPO_ATUACAO: escopo, NM_AREA: null, NM_RESPONSAVEL_AREA: null });
+const UNIDADES = [U(1, 'Presidente', 1, null, 'Corporativo'), U(2, 'CEO VBM', 2, 1, 'Corporativo'), U(3, 'COO VBM', 3, 2, 'Corporativo'),
+  U(11, 'Salobo', 4, 3, 'Brasil'), U(13, 'Sossego', 4, 3, 'Brasil'), U(12, 'VNL', 4, 3, 'Canadá')];
 const PESSOAS = [{ MATRICULA: 'C1', NOME: 'Ana Ribeiro', EMAIL: 'ana@vale.com', CARGO: 'Analista' }, { MATRICULA: 'C4', NOME: null, EMAIL: 'carla.mendes@vale.com', CARGO: null }, { MATRICULA: 'D1', NOME: 'Fernanda Lacerda', EMAIL: 'fer@vale.com', CARGO: 'Diretora' },
   { MATRICULA: 'C2', NOME: 'Bruno Costa', EMAIL: 'bruno@vale.com', CARGO: 'Engenheiro' }];
 const CAMPOS = { objective: 'Obj', formula: 'F', unit: '%', ruler: { min: 1, meta: 2, exc: 3 }, area: {}, evidence: 'Ev', exceptions: { bu: '' } };
@@ -22,11 +26,10 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
   const rs = (recordset, rowsAffected = [recordset.length || 1]) => ({ recordset, rowsAffected });
   const responder = (sql, p = {}) => {
     log.push({ sql, p });
+    if (/AS FILHAS/.test(sql)) return rs([{ FILHAS: UNIDADES.filter((u) => u.ID_UNIDADE_PAI === p.id[1]).length, CARDS: p.id[1] === 11 ? 1 : 0 }]);
     if (/FROM sys\.columns/.test(sql)) return rs([{ N: global.AIP_DATAS_OBRIGATORIAS || 0 }]);
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
     if (/NM_USUARIO LIKE @ini/.test(sql)) return rs(PESSOAS.filter((x) => (x.NOME || '').startsWith(p.ini[1].slice(0, -1))));
-    if (/GROUP BY LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs(p.site[1] === 'SALOBO' ? [{ NOME: 'Bruno Costa', QT: 9 }] : p.site[1] === 'VNL' ? [{ NOME: 'DIR, VNL OPS - Bruno Costa', QT: 9 }] : p.site[1] === 'MANITOBA' ? [{ NOME: 'Fulano Sem Cadastro', QT: 3 }] : []);
-    if (/NM_USUARIO IN \(@n0/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.n0[1]));
     if (/= @nome COLLATE/.test(sql)) return rs(PESSOAS.filter((x) => x.NOME === p.nome[1]));
     if (/FROM CI\.KZN_MDM_HIERARQUIA/.test(sql)) return rs(PESSOAS);
     if (/FROM PM\.AIP_CICLO ORDER BY CASE/.test(sql)) return rs([CICLO]);
@@ -46,7 +49,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     ]);
     if (/SELECT mp\.ID_META, mp\.ID_SITE, mp\.VL_PESO/.test(sql)) return rs([{ ID_META: 101, ID_SITE: 11, VL_PESO: 60 }, { ID_META: 101, ID_SITE: 12, VL_PESO: 60 }]);
     if (/gc\.CD_GOAL_CARD = @cd/.test(sql)) return rs(p.cd[1] === 'GC-SAL-01' ? [{ ID_GOAL_CARD: 2, CD_GOAL_CARD: 'GC-SAL-01', TP_ESTADO: 'EM_APROVACAO', DS_RASCUNHO: null, CD_MATRICULA: 'C2', DT_ATUALIZACAO: new Date('2026-11-20T13:00:00Z'), ID_SITE: 11,
-      ID_META: 101, NO_META: 1, NM_TITULO: 'BU Working Capital', TP_META: 'FORMULA', TP_ORIENTACAO: 'MENOR', NM_SITE: 'Salobo', NM_PAIS: 'Brasil', CD_MATRICULA_DIRETOR: 'D1', DS_EXCECAO: 'Força maior excluída.', SG_EXCECAO_VER: 'S', VL_PESO: 60 }] : []);
+      ID_META: 101, NO_META: 1, NM_TITULO: 'BU Working Capital', TP_META: 'FORMULA', TP_ORIENTACAO: 'MENOR', NM_SITE: 'Salobo', NM_PAIS: 'Brasil', NM_AREA: 'Diretoria Executiva', NM_RESPONSAVEL_AREA: 'Fernanda Lacerda', DS_EXCECAO: 'Força maior excluída.', SG_EXCECAO_VER: 'S', VL_PESO: 60 }] : []);
     if (/FROM PM\.AIP_GOAL_CARD_VERSAO WHERE ID_GOAL_CARD = @id ORDER BY NO_VERSAO$/.test(sql)) return rs([
       { ID_VERSAO: 1, NO_VERSAO: 1, TP_MOTIVO: 'SUBMISSAO', DS_CAMPOS: JSON.stringify({ ...CAMPOS, formula: 'F0' }), DT_VERSAO: new Date('2026-11-10T12:00:00Z'), CD_MATRICULA_AUTOR: 'C2',
         TP_DECISAO: 'DEVOLVIDO', DS_COMENTARIO_DECISAO: 'Ajustar a fórmula', DS_REVISAO_SECOES: JSON.stringify({ revisao: { formula: 'ajustar' }, ajustes: { formula: 'x' } }), DT_DECISAO: new Date('2026-11-12T12:00:00Z'), CD_MATRICULA_DECISAO: 'C1' },
@@ -56,17 +59,18 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/FROM PM\.AIP_EVENTO_LOG e/.test(sql)) return rs([{ ID_EVENTO: 9, TP_EVENTO: 'SUBMISSAO', DT_EVENTO: new Date('2026-11-18T12:00:00Z'), CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', CD_SECAO: null, DS_COMENTARIO: 'resubmeteu como v2', CD_GOAL_CARD: 'GC-SAL-01', NO_META: 1, NM_TITULO: 'BU Working Capital', NM_SITE: 'Salobo' },
       { ID_EVENTO: 1, TP_EVENTO: 'CICLO_ABERTO', DT_EVENTO: new Date('2026-11-02T12:00:00Z'), CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', CD_SECAO: 'ciclo', DS_COMENTARIO: 'abriu', DS_DEPOIS: 'Aberto' }]);
     if (/COUNT\(\*\) AS N/.test(sql)) return rs([{ ID_SITE: 11, N: 1 }]);
-    if (/AS NM_SITE, s\.NM_PAIS FROM IBP\.SITES s/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil' }, { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá' }, { ID_SITE: 13, NM_SITE: 'Sossego', NM_PAIS: 'Brasil' }]);
-    if (/SELECT ID_SITE, NM_SITE FROM IBP\.SITES/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo' }, { ID_SITE: 12, NM_SITE: 'VNL' }, { ID_SITE: 13, NM_SITE: 'Sossego' }]);
+    if (/^SELECT \* FROM PM\.UNIDADE_ORGANIZACIONAL/.test(sql)) return rs(UNIDADES);
+    if (/^SELECT ID_UNIDADE_ORGANIZACIONAL AS ID_SITE, NM_UNIDADE_ORGANIZACIONAL AS NM_SITE FROM PM\.UNIDADE_ORGANIZACIONAL$/.test(sql)) return rs(UNIDADES.map((u) => ({ ID_SITE: u.ID_UNIDADE_ORGANIZACIONAL, NM_SITE: u.NM_UNIDADE_ORGANIZACIONAL })));
+    if (/^SELECT ID_UNIDADE_ORGANIZACIONAL AS ID FROM PM\.UNIDADE_ORGANIZACIONAL$/.test(sql)) return rs(UNIDADES.map((u) => ({ ID: u.ID_UNIDADE_ORGANIZACIONAL })));
+    if (/WHERE ID_UNIDADE_PAI = @id$/.test(sql)) return rs(UNIDADES.filter((u) => u.ID_UNIDADE_PAI === p.id[1]).map((u) => ({ ID: u.ID_UNIDADE_ORGANIZACIONAL })));
     if (/ISNULL\(MAX\(NO_VERSAO\)/.test(sql)) return rs([{ N: 2 }]);
     if (/SELECT TOP \(1\) ID_VERSAO, NO_VERSAO/.test(sql)) return rs([{ ID_VERSAO: 2, NO_VERSAO: 2 }]);
     if (/SELECT ID_CICLO FROM PM\.AIP_CICLO WHERE SG_STATUS = 'S'/.test(sql)) return rs([]);
     if (/SELECT 1 AS X FROM PM\.AIP_CICLO WHERE NO_ANO = @ano/.test(sql)) return rs(p.ano[1] === 2027 ? [{ X: 1 }] : []);
-    if (/COL_LENGTH\('PM\.AIP_CICLO_SITE', 'NM_DIRETOR'\)/.test(sql)) return rs([{ L: 300 }]);
     if (/SCOPE_IDENTITY/.test(sql)) return rs([{ ID: 999 }], [1, 1]);
     if (/SELECT ID_PAPEL/.test(sql)) return rs([{ ID_PAPEL: 1, CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', ID_SITE: null, SG_ATIVO: 'S' }, { ID_PAPEL: 2, CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', ID_SITE: 11, SG_ATIVO: 'S' }]);
     if (/SELECT ID_SITE FROM PM\.AIP_CICLO_SITE/.test(sql)) return rs([{ ID_SITE: 11 }, { ID_SITE: 12 }]);
-    if (/SELECT m\.ID_META, m\.NO_META, cs\.ID_SITE, CASE s\.ID_SITE/.test(sql)) return rs([{ ID_META: 101, NO_META: 1, ID_SITE: 13, NM_SITE: 'Sossego' }, { ID_META: 100, NO_META: 0, ID_SITE: 13, NM_SITE: 'Sossego' }]);
+    if (/SELECT m\.ID_META, m\.NO_META, cs\.ID_SITE, s\.NM_SITE/.test(sql)) return rs([{ ID_META: 101, NO_META: 1, ID_SITE: 13, NM_SITE: 'Sossego' }, { ID_META: 100, NO_META: 0, ID_SITE: 13, NM_SITE: 'Sossego' }]);
     if (/SELECT gc\.CD_GOAL_CARD, gc\.ID_SITE/.test(sql)) return rs([{ CD_GOAL_CARD: 'GC-SAL-01', ID_SITE: 11 }, { CD_GOAL_CARD: 'GC-SOL-01', ID_SITE: 99 }]);
     if (/^\s*(UPDATE|INSERT|DELETE|IF)/.test(sql)) return rs([], [1]);
     throw new Error('consulta sem resposta simulada: ' + sql.slice(0, 120));
@@ -85,13 +89,6 @@ test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do
   // Autopreenchimento: busca no MDM; sem NM_USUARIO, o nome sai do e-mail (nunca a matrícula)
   assert.deepStrictEqual((await fonte.buscarPessoas('Ana')).map((x) => x.nome), ['Ana Ribeiro']);
   assert.deepStrictEqual(await fonte.buscarPessoas('a'), []);
-  // Nova BU: o diretor do site vem do MDM (site + cargo de diretor); site sem diretor no MDM → lista vazia (digita-se à mão)
-  assert.deepStrictEqual((await fonte.diretoresDoSite('Salobo')).map((x) => x.nome), ['Bruno Costa']);
-  assert.deepStrictEqual(await fonte.diretoresDoSite('Outro'), []);
-  // DE PARA por ID_SITE → NM_SITE do MDM: Clydach (16) e Matsusaka (26) usam o N4 de VNL; do N4 "<diretoria> - <nome>" fica só o nome
-  assert.deepStrictEqual((await fonte.diretoresDoSite('Clydach')).map((x) => x.nome), ['Bruno Costa']);
-  // N4 sem a pessoa no MDM: devolve o nome mesmo assim (sem matrícula)
-  assert.deepStrictEqual((await fonte.diretoresDoSite('Manitoba')).map((x) => [x.nome, x.matricula]), [['Fulano Sem Cadastro', null]]);
   const nomes = await fonte.configuracao(HOJE);
   assert.ok(nomes.membros.every((m) => m.nome && m.nome !== m.matricula));
   const c = await fonte.ciclo(HOJE);
@@ -136,9 +133,10 @@ test('banco: desdobramento, Action Log e configuração', async () => {
   const cf = await fonte.configuracao(HOJE);
   assert.deepStrictEqual(cf.niveis.map((n) => n.herdado), [0, 75, 40]);
   assert.deepStrictEqual(cf.membros.map((m) => [m.nome, m.grupo, m.bu]), [['Ana Ribeiro', 'admin', null], ['Bruno Costa', 'contribuidor', 'Salobo']]);
-  assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.diretor, b.diretorMatricula, b.cardsSubmetidos]), [['Salobo', 'Fernanda Lacerda', 'D1', 1], ['VNL', '', null, 0]]);
+  // BUs = unidades de nível 4 com a participação no ciclo (área e responsável do ciclo); estrutura = os demais níveis
+  assert.deepStrictEqual(cf.bus.map((b) => [b.sigla, b.pais, b.ativa, b.responsavel, b.cardsSubmetidos]), [['Salobo', 'Brasil', true, 'Fernanda Lacerda', 1], ['Sossego', 'Brasil', false, '', 0], ['VNL', 'Canadá', true, '', 0]]);
+  assert.deepStrictEqual(cf.org.map((u) => [u.nome, u.nivel, u.pai]), [['Presidente', 1, null], ['CEO VBM', 2, 1], ['COO VBM', 3, 2]]);
   assert.strictEqual(cf.metasNivel.bu[0].origem, '2027_02');
-  assert.strictEqual(cf.sites.length, 3);
   // A configuração do banco passa pela mesma validação do servidor (RN-16: BU = 40 herdados + 60)
   assert.deepStrictEqual(validarConfiguracao('metas', { metasNivel: cf.metasNivel }, cf).filter((e) => e.codigo === 'RN16' && e.nivel === 'bu'), []);
 });
@@ -160,17 +158,18 @@ test('banco: gravações — submeter, decidir (ajustes viram comentários), gru
   assert.ok(log.some((x) => /INSERT PM\.AIP_PAPEL/.test(x.sql) && x.p.mat[1] === 'C3' && x.p.grupo[1] === 'APROVACAO'));
   assert.ok(log.some((x) => /SG_ATIVO = 'N'/.test(x.sql) && x.p.id[1] === 2)); // C2 saiu do grupo
   log.length = 0;
-  await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Salobo', pais: 'Brasil', ativa: true }, { sigla: 'Sossego', pais: 'Brasil', ativa: true, diretor: 'Ana Ribeiro' }] }, ctx, base);
+  // Unidades (D-40): Sossego entra no ciclo com área e responsável, VNL é excluída (sem histórico), Manitoba é nova
+  const org = base.org, bu = (id) => base.bus.find((b) => b.id === id);
+  await fonte.salvarConfiguracao('bus', { org, bus: [{ ...bu(11) }, { ...bu(13), ativa: true, area: 'Operações', responsavel: 'Ana Ribeiro' },
+    { chave: 'n1', nome: 'Manitoba', sigla: 'Manitoba', nivel: 4, pai: 3, escopo: 'Canadá', ativa: true }] }, ctx, base);
   const cards = log.filter((x) => /INSERT PM\.AIP_GOAL_CARD \(/.test(x.sql)).map((x) => x.p.cd[1]);
   assert.deepStrictEqual(cards, ['GC-SOS-01', 'GC-SOS-00']); // código de 3 letras livre no ciclo
-  assert.ok(log.some((x) => /DELETE FROM PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 12)); // VNL saiu
-  assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 2 && x.p.dir[1] === 'C1')); // diretor pelo nome no MDM
-  // Diretor sem matrícula no MDM (nome do N4 que não bate com ninguém): o nome fica em NM_DIRETOR e não some ao salvar
-  log.length = 0;
-  await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Salobo', pais: 'Brasil', ativa: true }, { sigla: 'Sossego', pais: 'Brasil', ativa: true, diretor: 'Fulano Fora do MDM' }] }, ctx, await fonte.configuracao(HOJE));
-  assert.ok(log.some((x) => /NM_DIRETOR = @nm/.test(x.sql) && x.p.site[1] === 2 && x.p.dir[1] === null && x.p.nm[1] === 'Fulano Fora do MDM'));
-  const r = await fonte.salvarConfiguracao('bus', { bus: [{ sigla: 'Atlantis', pais: 'X', ativa: true }] }, ctx, base);
-  assert.strictEqual(r.erros[0].codigo, 'SITE');
+  assert.ok(log.some((x) => /DELETE FROM PM\.UNIDADE_ORGANIZACIONAL/.test(x.sql) && x.p.id[1] === 12)); // VNL excluída
+  assert.ok(log.some((x) => /INSERT PM\.AIP_CICLO_SITE/.test(x.sql) && x.p.site[1] === 13 && x.p.area[1] === 'Operações' && x.p.resp[1] === 'Ana Ribeiro'));
+  assert.ok(log.some((x) => /INSERT PM\.UNIDADE_ORGANIZACIONAL/.test(x.sql) && x.p.nome[1] === 'Manitoba' && x.p.pai[1] === 3));
+  // Unidade com Goal Card submetido não pode ser excluída
+  const r = await fonte.salvarConfiguracao('bus', { org, bus: [bu(13), bu(12)] }, ctx, base);
+  assert.strictEqual(r.erros[0].codigo, 'VINCULO');
   // Novo ciclo: ano e datas escolhidos na tela (a 2ª etapa começa no fim da 1ª); ano que já tem ciclo é recusado
   log.length = 0;
   await fonte.acaoCiclo('novo', 2030, ctx, [{ inicio: '2026-12-01', fim: '2026-12-10' }, { inicio: null, fim: '2026-12-20' }, { inicio: null, fim: '2027-01-10' }, { inicio: null, fim: '2027-01-20' }]);

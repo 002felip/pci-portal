@@ -6,20 +6,17 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 
 | Script | O que faz | Quando rodar |
 |---|---|---|
-| `001_pm_criar_tabelas.sql` | Cria o schema `PM`, as 9 tabelas, as restrições, os índices, o gatilho que torna o log imutável e as FKs para `IBP.SITES` | Uma vez por banco. Pode repetir: só cria o que falta |
-| `002_pm_carga_inicial.sql` | Cria o 1º ciclo aberto, a meta nº 0 da BU (resultado do COO) e o 1º administrador | Uma vez, depois do 001, com a sua matrícula preenchida |
-| `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra o nome e o e-mail da matrícula no MDM) | Depois do 002, no DEV |
-| `005_pm_janelas_em_branco.sql` | Deixa as datas das janelas do `PM.AIP_CICLO` aceitarem em branco (o novo ciclo nasce sem datas, D-35); tira e recria a regra `CK_AIP_CICLO_JORNADA`, sem a qual o SQL Server não altera as colunas. Sem ele, "Abrir novo ciclo" avisa que falta rodá-lo | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
-| `006_pm_nome_diretor.sql` | Cria `NM_DIRETOR` em `PM.AIP_CICLO_SITE`: nome do diretor quando ele não tem matrícula no MDM (D-38) | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
+| `000_pm_reset_dev.sql` | Apaga todas as tabelas do AIP no schema `PM` (com o gatilho do log). Só roda em banco `_DEV` | Para recomeçar do zero no DEV (usado na troca para `PM.UNIDADE_ORGANIZACIONAL`, D-40) |
+| `001_pm_criar_tabelas.sql` | Cria o schema `PM`, a `PM.UNIDADE_ORGANIZACIONAL`, as 9 tabelas do AIP, as restrições, os índices, o gatilho que torna o log imutável e as FKs de `ID_SITE` para as unidades | Uma vez por banco. Pode repetir: só cria o que falta |
+| `002_pm_carga_inicial.sql` | Cria Presidente › CEO › COO, o 1º ciclo aberto (janelas em branco), a meta nº 0 da BU (resultado do COO) e os administradores 81059384 e 01181222 | Uma vez, depois do 001 |
 
 ## Ordem de ligação (passo a passo)
 
 ### 1. Banco (SSMS ou Azure Data Studio, no `BDIBPBMSA_DEV`)
-1. Rode `001_pm_criar_tabelas.sql` inteiro. No fim, a consulta de conferência lista as 9 tabelas.
+1. No DEV, para recomeçar do zero, rode antes `000_pm_reset_dev.sql`. Depois rode `001_pm_criar_tabelas.sql` inteiro: no fim, a consulta de conferência lista 10 tabelas (9 do AIP + `UNIDADE_ORGANIZACIONAL`).
    - O MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`) precisa estar no mesmo banco: no DEV já está.
-   - Se aparecer o aviso "IBP.SITES não existe neste banco", o DEV não tem a tabela de sites. A aplicação lista as BUs pela `IBP.SITES`: copie-a do PRD ou aponte `AIPGOALS_SITES_TABELA` para outra tabela com as colunas `ID_SITE`, `NM_SITE` e `NM_PAIS`.
    - Se quem rodou o script **não** for o login do app (`AZURE_SQL_USER`), descomente o `GRANT ... ON SCHEMA::PM` do fim do script.
-2. Rode `002_pm_carga_inicial.sql` (já com o administrador 81059384, felipe.santos.souza@vale.com, e o ciclo AIP 2027).
+2. Rode `002_pm_carga_inicial.sql` (Presidente › CEO › COO, ciclo AIP 2027 e os administradores 81059384 e 01181222) e publique o app logo em seguida.
 
 ### 2. Aplicação
 3. O `app.yaml` da raiz já tem `AIPGOALS_AZURE_SQL_DATABASE = BDIBPBMSA_DEV`. Publique e reinicie o Portal.
@@ -31,7 +28,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 | 1 | **Início** | `AIP_CICLO`, `AIP_PAPEL`, MDM (`CI.KZN_MDM_HIERARQUIA`) | — | Nome do ciclo e etapa atual vindos da carga inicial; o menu mostra Administração (você é admin) |
 | 2 | **Administração › Ciclo** | `AIP_CICLO` | `AIP_CICLO`, `AIP_EVENTO_LOG` | Mude uma data e salve; ao recarregar, a data continua (1º teste de gravação) |
 | 3 | **Administração › Grupos** | `AIP_PAPEL`, MDM (autopreenchimento do Novo usuário) | `AIP_PAPEL` | Inclua o grupo de aprovação e os outros administradores; pode salvar sozinha |
-| 4 | **Administração › Business Units** + **Metas e pesos** | `AIP_CICLO_SITE`, `IBP.SITES`, `AIP_META`, `AIP_META_PESO` | as mesmas + `AIP_GOAL_CARD` (criados ao salvar) | Ver abaixo: as duas abas se salvam juntas |
+| 4 | **Administração › Unidades organizacionais** + **Metas e pesos** | `AIP_CICLO_SITE`, `UNIDADE_ORGANIZACIONAL`, `AIP_META`, `AIP_META_PESO` | as mesmas + `AIP_GOAL_CARD` (criados ao salvar) | Ver abaixo: as duas abas se salvam juntas |
 | 5 | **Administração › Exceções** | `AIP_CICLO_SITE` | `AIP_CICLO_SITE` | Texto por site; aparece no Goal Card da BU |
 | 6 | **Administração › Grupos** (de novo) | `AIP_PAPEL` | `AIP_PAPEL` | Contribuidores por BU, já com as BUs cadastradas |
 | 7 | **COO AIP** | `AIP_CICLO`, `AIP_META`, `AIP_META_PESO`, `AIP_GOAL_CARD` | — | Matriz CEO → COO → BUs com os pesos cadastrados |
@@ -43,7 +40,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 **Por que BUs e Metas e pesos se salvam juntas:** a regra RN-16 exige que cada nível feche 100 pts: CEO = 100, COO =
 herdados + metas do COO, e cada BU = herdados + metas da BU. Num banco vazio nada fecha ainda, então o botão Salvar fica
 travado até você:
-- incluir as BUs (Nova BU lista os sites da `IBP.SITES` que ainda não estão no ciclo, por país; o país vem do cadastro);
+- cadastrar as BUs (Nova unidade, nível 4, abaixo do COO, com escopo, área e responsável) e marcar quem participa do ciclo;
 - cadastrar as metas do CEO (somando 100), as do COO (somando 100 − herdados) e as da BU, com o peso de cada BU somando 100 − herdados.
 
 Ao salvar, a aplicação cria os Goal Cards de cada BU: um por meta com peso, mais o "COO's Scorecard Result" quando há
@@ -69,7 +66,7 @@ Diferenças em relação ao DER (`der/modelo.sql`, PostgreSQL):
 
 ## Modelo (versão de 19/11/2026)
 
-DER navegável em `der/der.html`; DDL de referência em `der/modelo.sql`. São 9 tabelas, mais a `IBP.SITES`, que já
+DER navegável em `der/der.html`; DDL de referência em `der/modelo.sql`. São 9 tabelas do AIP mais a `UNIDADE_ORGANIZACIONAL` (a `IBP.SITES` não é mais usada pelo AIP), que já
 existe e é a BU.
 
 | Grupo | Tabelas |
