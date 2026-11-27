@@ -167,6 +167,13 @@ function filaAprovacao(cards, filtro, hoje, podeDecidirCard) {
   return { itens, total: pend.length };
 }
 
+// Tamanho máximo de cada campo de texto do Goal Card (o mesmo da tela, GC_LIMITE)
+const LIMITES_CAMPO = { objective: 500, formula: 4000, evidence: 2000 };
+function camposLongos(secoes) {
+  const s = secoes || {}, l = Object.keys(LIMITES_CAMPO).filter((k) => String(s[k] == null ? '' : s[k]).length > LIMITES_CAMPO[k]);
+  if (String(((s.exceptions || {}).bu) || '').length > 2000) l.push('exceptions');
+  return l;
+}
 // Campos obrigatórios (§5): Submeter fica bloqueado enquanto algum estiver vazio (cliente e servidor).
 const OBRIGATORIOS = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence'];
 function camposObrigatorios(secoes) {
@@ -509,6 +516,8 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       if (!podeEditar(ctx.papeis, card.bu.sigla)) return negar(res, ctx, 'Sem permissão para editar esta BU.', `tentou salvar o rascunho de ${card.card} sem ser contribuidor da BU`);
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
       const secoes = { ...(req.body.secoes || {}), area: card.secoes.area };
+      const longos = camposLongos(secoes);
+      if (longos.length) return res.status(400).json({ error: 'Texto longo demais.', codigo: 'TAMANHO', campos: longos });
       await dados.salvarRascunho(card, secoes, ctx.quem);
       res.json({ ok: true });
     } catch (err) { falha(res, '/goal-card/rascunho', err, 'Não foi possível salvar o rascunho.'); }
@@ -523,6 +532,8 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       if (!['rascunho', 'em_revisao'].includes(card.estado)) return res.status(409).json({ error: 'O card não está em edição.', codigo: 'ESTADO' });
       // Área responsável não é editável: vale a do cadastro da BU
       const secoes = { ...(req.body.secoes || {}), area: card.secoes.area };
+      const longos = camposLongos(secoes);
+      if (longos.length) return res.status(400).json({ error: 'Texto longo demais.', codigo: 'TAMANHO', campos: longos });
       const pend = camposObrigatorios(secoes).filter((x) => !x.ok).map((x) => x.id);
       if (pend.length) return res.status(400).json({ error: 'Campos obrigatórios sem preencher.', codigo: 'OBRIGATORIOS', pendentes: pend });
       const r = await dados.submeter(card, secoes, ctx);
@@ -679,4 +690,4 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   return router;
 }
 
-module.exports = { validarNovoCiclo, filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
+module.exports = { LIMITES_CAMPO, camposLongos, validarNovoCiclo, filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
