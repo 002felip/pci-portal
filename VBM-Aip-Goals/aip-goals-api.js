@@ -348,7 +348,7 @@ function validarConfiguracao(aba, dados, base, hoje = new Date()) {
       if (!nome) erros.push({ campo: `bus.${i}.sigla`, codigo: 'OBRIGATORIO' });
       else if (vistos.has(nome.toLowerCase())) erros.push({ campo: `bus.${i}.sigla`, codigo: 'DUPLICADA' });
       vistos.add(nome.toLowerCase());
-      if (!String(b.pais || '').trim()) erros.push({ campo: `bus.${i}.pais`, codigo: 'OBRIGATORIO' });
+      if (!String(b.escopo || b.pais || '').trim()) erros.push({ campo: `bus.${i}.pais`, codigo: 'OBRIGATORIO' });
     });
     // Exclusão: só BU sem Goal Card submetido no ciclo (com card, tira-se do ciclo)
     base.bus.filter((o) => o.cardsSubmetidos > 0 && !bus.some((b) => (b.id != null && b.id === o.id) || (b.origem || b.sigla) === o.sigla))
