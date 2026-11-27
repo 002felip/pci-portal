@@ -632,6 +632,13 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
     } catch (err) { falha(res, '/configuracao', err, 'Não foi possível carregar a configuração.'); }
   });
   // Autopreenchimento de pessoas (Novo usuário, diretor da BU): MDM, só o administrador
+  // Cadastro de unidades: área e responsável da hierarquia do MDM (NM_HIERARQUIA_N<nivel>), só o administrador
+  router.get('/hierarquia', async (req, res) => {
+    try {
+      const ctx = await exigirAdmin(req, res); if (!ctx) return;
+      res.json({ itens: dados.hierarquiaMdm ? await dados.hierarquiaMdm(Number(req.query.nivel), String(req.query.q || '').slice(0, 80)) : [] });
+    } catch (err) { falha(res, '/hierarquia', err, 'Não foi possível buscar a hierarquia.'); }
+  });
   router.get('/pessoas', async (req, res) => {
     try {
       const ctx = await exigirAdmin(req, res); if (!ctx) return;

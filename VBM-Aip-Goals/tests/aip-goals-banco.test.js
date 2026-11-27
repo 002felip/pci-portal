@@ -26,6 +26,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
   const rs = (recordset, rowsAffected = [recordset.length || 1]) => ({ recordset, rowsAffected });
   const responder = (sql, p = {}) => {
     log.push({ sql, p });
+    if (/SELECT DISTINCT TOP \(60\) LTRIM\(RTRIM\(NM_HIERARQUIA_N4\)\)/.test(sql)) return rs([{ T: 'DIR, SOSSEGO OPS - VINICIUS MOREIRA ASSIS' }, { T: 'SEM SEPARADOR' }]);
     if (/AS FILHAS/.test(sql)) return rs([{ FILHAS: UNIDADES.filter((u) => u.ID_UNIDADE_PAI === p.id[1]).length, CARDS: p.id[1] === 11 ? 1 : 0 }]);
     if (/FROM sys\.columns/.test(sql)) return rs([{ N: global.AIP_DATAS_OBRIGATORIAS || 0 }]);
     if (/FROM CI\.KZN_MDM_HIERARQUIA WHERE CD_EMAIL = @email/.test(sql)) return rs(PESSOAS.filter((x) => x.EMAIL === p.email[1]));
@@ -89,6 +90,9 @@ test('banco: contexto pelo MDM (CI.KZN_MDM_HIERARQUIA), ciclo atual com etapa do
   // Autopreenchimento: busca no MDM; sem NM_USUARIO, o nome sai do e-mail (nunca a matrícula)
   assert.deepStrictEqual((await fonte.buscarPessoas('Ana')).map((x) => x.nome), ['Ana Ribeiro']);
   assert.deepStrictEqual(await fonte.buscarPessoas('a'), []);
+  // Cadastro de unidades: área e responsável da hierarquia N<nível> do MDM ("<área> - <nome>")
+  assert.deepStrictEqual(await fonte.hierarquiaMdm(4, 'sos'), [{ texto: 'DIR, SOSSEGO OPS - VINICIUS MOREIRA ASSIS', area: 'DIR, SOSSEGO OPS', responsavel: 'VINICIUS MOREIRA ASSIS' }, { texto: 'SEM SEPARADOR', area: '', responsavel: 'SEM SEPARADOR' }]);
+  assert.deepStrictEqual(await fonte.hierarquiaMdm(9), []);
   const nomes = await fonte.configuracao(HOJE);
   assert.ok(nomes.membros.every((m) => m.nome && m.nome !== m.matricula));
   const c = await fonte.ciclo(HOJE);

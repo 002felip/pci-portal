@@ -112,6 +112,20 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   }
   const nomeDe = (mapa, m) => (m ? ((mapa.get(chaveMat(m)) || {}).nome || String(m)) : null);
   // Busca para o autopreenchimento (Novo usuário, diretor da BU): nome (começo de qualquer palavra), e-mail ou matrícula
+  // Hierarquia do MDM para o cadastro de unidades (D-41): valores distintos de NM_HIERARQUIA_N<nível> (1 a 8), no formato
+  // "<área> - <nome>" (ex.: "DIR, SOSSEGO OPS - VINICIUS MOREIRA ASSIS"): a área é o que vem antes do último " - ", o nome depois
+  async function hierarquiaMdm(nivel, termo) {
+    const n = Number(nivel);
+    if (!Number.isInteger(n) || n < 1 || n > 8) return [];
+    const col = `NM_HIERARQUIA_N${n}`, t = String(termo || '').trim().replace(/[%_[\]]/g, '');
+    const r = await runQuery(`SELECT DISTINCT TOP (60) LTRIM(RTRIM(${col})) AS T FROM ${MDM}
+      WHERE ${col} IS NOT NULL AND UPPER(LTRIM(RTRIM(${col}))) NOT IN ('', 'NULL', 'N.A', 'N/A', 'NA')${t ? ` AND ${col} LIKE @q` : ''}
+      ORDER BY T`, t ? { q: [sql.NVarChar(255), '%' + t + '%'] } : {});
+    return r.recordset.map((l) => {
+      const texto = String(l.T), k = texto.lastIndexOf(' - ');
+      return { texto, area: k > 0 ? texto.slice(0, k).trim() : '', responsavel: k > 0 ? texto.slice(k + 3).trim() : texto };
+    });
+  }
   async function buscarPessoas(termo) {
     const t = String(termo || '').trim().replace(/[%_[\]]/g, '');
     if (t.length < 2) return [];
@@ -732,7 +746,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     fonte: 'banco', exemplo: false,
     contexto, ciclo: async (hoje) => { const cc = await cicloCompleto(hoje); return cc ? cc.ciclo : null; },
     painel, desdobramento, goalCard, versoes, actionLog, configuracao,
-    buscarPessoas, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
+    buscarPessoas, hierarquiaMdm, salvarRascunho, submeter, reabrir, decidir, comentar, registrarNegado, salvarConfiguracao, acaoCiclo,
     _sql: { SQL_CARDS }, // exposto para o teste de sintaxe
   };
 }
