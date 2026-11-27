@@ -84,6 +84,7 @@ Hoje as metas de AIP das BUs de VBM (Brasil, Canadá e International Refineries)
 | D-44 | Goal Card para todos os níveis do desdobramento: CEO e COO (uma unidade cada, peso da meta), BU e níveis abaixo da BU (peso por unidade); a meta nº 0 de cada nível abaixo do topo é o resultado do nível acima (COO: "CEO's Scorecard Result" com os pontos herdados do CEO). As unidades de CEO, COO e N5+ entram no ciclo quando o nível tem metas e aparecem na tela AIP BU's (nomes das telas mantidos), Aprovações e Action Log; COO AIP e o número de BUs do Início continuam só com as BUs. | 27/11/2026 |
 | D-45 | Grupos: é possível salvar sem ninguém no grupo de aprovação; vira aviso (não bloqueia), na tela e no servidor. Continua obrigatório ao menos um administrador. | 27/11/2026 |
 | D-46 | Administração: a tecla Tab segue a linha da esquerda para a direita (em Metas e pesos: título, tipo, direção e os pesos de cada unidade); ao sair de um campo de texto, a tela só se redesenha depois que o foco chega ao próximo campo. | 27/11/2026 |
+| D-47 | Idioma inglês: escopos/países (Brasil, Canadá, Ásia, Reino Unido, Corporativo) traduzidos em todos os filtros, cabeçalhos e grupos; unidades do Goal Card (nº de marcos, dias); no Action Log, os estados e as frases gravadas pelo servidor (configuração, ciclo, acesso negado) aparecem traduzidos, também na exportação. O banco continua guardando em português. | 27/11/2026 |
 
 ## 4. Suposições a confirmar
 
