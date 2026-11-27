@@ -146,10 +146,10 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     return r.recordset[0] || null;
   }
   async function sitesDoCiclo(idCiclo, q = runQuery) {
-    const r = await q(`SELECT cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.SG_ATIVA, cs.NM_AREA, cs.NM_RESPONSAVEL_AREA, cs.DS_EXCECAO, cs.SG_EXCECAO_VER
+    const r = await q(`SELECT cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, s.NO_NIVEL_HIERARQUIA, cs.SG_ATIVA, cs.NM_AREA, cs.NM_RESPONSAVEL_AREA, cs.DS_EXCECAO, cs.SG_EXCECAO_VER
       FROM PM.AIP_CICLO_SITE cs JOIN ${SITES} s ON s.ID_SITE = cs.ID_SITE
-      WHERE cs.ID_CICLO = @ciclo ORDER BY s.NM_PAIS, s.NM_SITE`, { ciclo: P.int(idCiclo) });
-    return r.recordset.map((l) => ({ id: l.ID_SITE, sigla: String(l.NM_SITE || l.ID_SITE).trim(), pais: String(l.NM_PAIS || '').trim(), ativa: l.SG_ATIVA === 'S',
+      WHERE cs.ID_CICLO = @ciclo ORDER BY s.NO_NIVEL_HIERARQUIA, s.NM_PAIS, s.NM_SITE`, { ciclo: P.int(idCiclo) });
+    return r.recordset.map((l) => ({ id: l.ID_SITE, sigla: String(l.NM_SITE || l.ID_SITE).trim(), pais: String(l.NM_PAIS || '').trim(), nivel: Number(l.NO_NIVEL_HIERARQUIA) || NIVEL_BU, ativa: l.SG_ATIVA === 'S',
       area: l.NM_AREA || '', responsavel: l.NM_RESPONSAVEL_AREA || '', excecao: l.DS_EXCECAO || '', ver: l.SG_EXCECAO_VER === 'S' }));
   }
   function etapasDe(c) {
@@ -160,7 +160,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const h = isoData(new Date(Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())));
     const atual = etapas.filter((e) => e.inicio && e.inicio <= h).pop();
     return { id: `AIP-${c.NO_ANO}`, idCiclo: c.ID_CICLO, nome: c.NM_CICLO, ano: c.NO_ANO, aberto: c.SG_STATUS === 'S',
-      bus: sites.filter((s) => s.ativa).map((s) => ({ sigla: s.sigla, pais: s.pais })),
+      // Unidades no ciclo com Goal Card (D-44): BUs e, quando no desdobramento, CEO, COO e níveis abaixo da BU
+      bus: sites.filter((s) => s.ativa).map((s) => ({ sigla: s.sigla, pais: s.pais, nivel: s.nivel })),
       etapaAtual: (atual || etapas[0]).id, etapas };
   }
   async function cicloCompleto(hoje) {
@@ -185,17 +186,17 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   // ── Goal Cards do ciclo (T02, T03, T13, T14) ──
   const SQL_CARDS = `SELECT gc.ID_GOAL_CARD, gc.CD_GOAL_CARD, gc.TP_ESTADO, gc.CD_MATRICULA, gc.DT_ATUALIZACAO, gc.ID_SITE,
       m.NO_META, m.NM_TITULO, m.TP_META, m.TP_ORIENTACAO, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS,
-      CASE WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END AS VL_PESO,
+      CASE WHEN m.CD_NIVEL IN ('CEO', 'COO') OR (m.NO_META = 0 AND m.CD_NIVEL <> 'BU') THEN m.VL_PESO WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END AS VL_PESO,
       v.NO_VERSAO, v.DT_VERSAO, v.CD_MATRICULA_AUTOR, v.DT_DECISAO
     FROM PM.AIP_GOAL_CARD gc
-    JOIN PM.AIP_META m ON m.ID_META = gc.ID_META AND m.SG_ATIVA = 'S' AND m.CD_NIVEL = 'BU'
+    JOIN PM.AIP_META m ON m.ID_META = gc.ID_META AND m.SG_ATIVA = 'S'
     JOIN PM.AIP_CICLO c ON c.ID_CICLO = m.ID_CICLO
     JOIN PM.AIP_CICLO_SITE cs ON cs.ID_CICLO = c.ID_CICLO AND cs.ID_SITE = gc.ID_SITE AND cs.SG_ATIVA = 'S'
     JOIN ${SITES} s ON s.ID_SITE = gc.ID_SITE
     LEFT JOIN PM.AIP_META_PESO mp ON mp.ID_META = m.ID_META AND mp.ID_SITE = gc.ID_SITE
     OUTER APPLY (SELECT TOP (1) x.NO_VERSAO, x.DT_VERSAO, x.CD_MATRICULA_AUTOR, x.DT_DECISAO FROM PM.AIP_GOAL_CARD_VERSAO x
                  WHERE x.ID_GOAL_CARD = gc.ID_GOAL_CARD ORDER BY x.NO_VERSAO DESC) v
-    WHERE c.ID_CICLO = @ciclo AND ((m.NO_META = 0 AND c.QTDE_PONTOS_HERDADOS_BU > 0) OR mp.VL_PESO IS NOT NULL)`;
+    WHERE c.ID_CICLO = @ciclo AND (CASE WHEN m.CD_NIVEL IN ('CEO', 'COO') OR (m.NO_META = 0 AND m.CD_NIVEL <> 'BU') THEN m.VL_PESO WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END) > 0`;
   function desdeDe(l) {
     const e = l.TP_ESTADO;
     if (e === 'EM_APROVACAO' && l.DT_VERSAO) return isoDia(l.DT_VERSAO);
@@ -205,7 +206,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   function cardDe(l, nomes) {
     const estado = ESTADO_DE[l.TP_ESTADO];
     return { card: l.CD_GOAL_CARD, id: l.ID_GOAL_CARD, bu: { sigla: String(l.NM_SITE).trim(), pais: String(l.NM_PAIS || '').trim() },
-      meta: { numero: l.NO_META, titulo: l.NO_META === 0 ? TITULO_RESULTADO : l.NM_TITULO, tipo: String(l.TP_META).toLowerCase(), peso: Number(l.VL_PESO) || 0, ...(l.NO_META === 0 ? { resultado: true } : {}) },
+      meta: { numero: l.NO_META, titulo: l.NO_META === 0 ? (l.NM_TITULO || TITULO_RESULTADO) : l.NM_TITULO, tipo: String(l.TP_META).toLowerCase(), peso: Number(l.VL_PESO) || 0, ...(l.NO_META === 0 ? { resultado: true } : {}) },
       estado, nivel: estado === 'em_aprovacao' ? { atual: 1, total: 1, nome: 'P&CI/COO' } : null,
       versao: l.NO_VERSAO || null, desde: desdeDe(l), contribuidor: nomeDe(nomes, l.CD_MATRICULA_AUTOR || null),
       editores: l.CD_MATRICULA_AUTOR ? [l.CD_MATRICULA_AUTOR] : [] }; // RN-12 na fila de aprovação
@@ -240,7 +241,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       origem: m.NIVEL_ORIGEM === 'COO' ? codigoOrigem(c.NO_ANO, m.NO_ORIGEM) : null,
       pesos: Object.fromEntries(pesos.filter((p) => p.ID_META === m.ID_META && sigla.has(p.ID_SITE)).map((p) => [sigla.get(p.ID_SITE), Number(p.VL_PESO)])) }));
     const scorecardCoo = [{ id: codigoOrigem(c.NO_ANO, 1), titulo: "CEO's Scorecard Result", peso: c.QTDE_PONTOS_HERDADOS_COO, resultado: true, compartilhada: [], metasBu: [] }]
-      .concat(ativas.filter((m) => m.CD_NIVEL === 'COO').map((m) => ({ id: codigoOrigem(c.NO_ANO, m.NO_META), titulo: m.NM_TITULO, peso: Number(m.VL_PESO) || 0, compartilhada: [],
+      .concat(ativas.filter((m) => m.CD_NIVEL === 'COO' && m.NO_META > 0).map((m) => ({ id: codigoOrigem(c.NO_ANO, m.NO_META), titulo: m.NM_TITULO, peso: Number(m.VL_PESO) || 0, compartilhada: [],
         metasBu: bu.filter((b) => b.ID_META_ORIGEM === m.ID_META).map((b) => b.NO_META) })));
     return { ciclo: cc.ciclo, parametros: { pesoTotal: PESO_TOTAL, pesoResultadoCoo: c.QTDE_PONTOS_HERDADOS_BU }, scorecardCoo, metasBu };
   }
@@ -256,7 +257,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     if (!cc) return null;
     const r = await runQuery(`SELECT gc.ID_GOAL_CARD, gc.CD_GOAL_CARD, gc.TP_ESTADO, gc.DS_RASCUNHO, gc.CD_MATRICULA, gc.DT_ATUALIZACAO, gc.ID_SITE, gc.NO_VERSAO_OFICIAL,
         m.ID_META, m.NO_META, m.NM_TITULO, m.TP_META, m.TP_ORIENTACAO, ${NOME_SITE('s')} AS NM_SITE, s.NM_PAIS, cs.NM_AREA, cs.NM_RESPONSAVEL_AREA, cs.DS_EXCECAO, cs.SG_EXCECAO_VER,
-        CASE WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END AS VL_PESO
+        CASE WHEN m.CD_NIVEL IN ('CEO', 'COO') OR (m.NO_META = 0 AND m.CD_NIVEL <> 'BU') THEN m.VL_PESO WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END AS VL_PESO
       FROM PM.AIP_GOAL_CARD gc
       JOIN PM.AIP_META m ON m.ID_META = gc.ID_META
       JOIN PM.AIP_CICLO c ON c.ID_CICLO = m.ID_CICLO
@@ -295,7 +296,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     return {
       ciclo: cc.ciclo, card: l.CD_GOAL_CARD, id: l.ID_GOAL_CARD, idCiclo: cc.linha.ID_CICLO, cicloAberto: cc.linha.SG_STATUS === 'S',
       bu: { sigla: String(l.NM_SITE).trim(), pais: String(l.NM_PAIS || '').trim() },
-      meta: { numero: l.NO_META, titulo: l.NO_META === 0 ? TITULO_RESULTADO : l.NM_TITULO, tipo: String(l.TP_META).toLowerCase(), peso: Number(l.VL_PESO) || 0, polaridade: String(l.TP_ORIENTACAO).toLowerCase() },
+      meta: { numero: l.NO_META, titulo: l.NO_META === 0 ? (l.NM_TITULO || TITULO_RESULTADO) : l.NM_TITULO, tipo: String(l.TP_META).toLowerCase(), peso: Number(l.VL_PESO) || 0, polaridade: String(l.TP_ORIENTACAO).toLowerCase() },
       estado, versao: ultima ? ultima.NO_VERSAO : null, desde,
       submetidoPor: estado === 'rascunho' || !ultima ? null : nomeDe(nomes, ultima.CD_MATRICULA_AUTOR),
       editores, secoes, ajustar, alteradasDesde, comentarios,
@@ -375,8 +376,8 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
     const niveisN = [...new Set(ativas.filter((m) => /^N[5-9]$/.test(m.CD_NIVEL)).map((m) => m.CD_NIVEL))].sort();
     const pol = (m) => String(m.TP_ORIENTACAO).toLowerCase();
     const metasNivel = {
-      ceo: ativas.filter((m) => m.CD_NIVEL === 'CEO').map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m), pesos: { CEO: Number(m.VL_PESO) || 0 } })),
-      coo: ativas.filter((m) => m.CD_NIVEL === 'COO').map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m), pesos: { COO: Number(m.VL_PESO) || 0 } })),
+      ceo: ativas.filter((m) => m.CD_NIVEL === 'CEO' && m.NO_META > 0).map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m), pesos: { CEO: Number(m.VL_PESO) || 0 } })),
+      coo: ativas.filter((m) => m.CD_NIVEL === 'COO' && m.NO_META > 0).map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m), pesos: { COO: Number(m.VL_PESO) || 0 } })),
       bu: ativas.filter((m) => m.CD_NIVEL === 'BU' && m.NO_META > 0).map((m) => ({ numero: m.NO_META, titulo: m.NM_TITULO, tipo: m.TP_META.toLowerCase(), polaridade: pol(m),
         origem: m.NIVEL_ORIGEM === 'COO' ? codigoOrigem(c.NO_ANO, m.NO_ORIGEM) : null, nova: false,
         pesos: Object.fromEntries(mt.pesos.filter((p) => p.ID_META === m.ID_META && sigla.has(p.ID_SITE)).map((p) => [sigla.get(p.ID_SITE), Number(p.VL_PESO)])) })),
@@ -498,15 +499,29 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
   }
   // Cria os Goal Cards que faltam: um por site ativo × meta da BU com peso (e a meta nº 0, se houver pontos herdados)
   async function sincronizarCards(q, idCiclo, quem) {
+    // Meta 0 ("resultado do nível acima") da BU e do COO; a do COO guarda em VL_PESO os pontos herdados do CEO (D-44)
     await q(`IF NOT EXISTS (SELECT 1 FROM PM.AIP_META WHERE ID_CICLO = @ciclo AND CD_NIVEL = 'BU' AND NO_META = 0)
-      INSERT PM.AIP_META (ID_CICLO, CD_NIVEL, NO_META, NM_TITULO, TP_META, TP_ORIENTACAO) VALUES (@ciclo, 'BU', 0, @tit, 'FORMULA', 'MAIOR')`, { ciclo: P.int(idCiclo), tit: P.nv(TITULO_RESULTADO, 100) });
+      INSERT PM.AIP_META (ID_CICLO, CD_NIVEL, NO_META, NM_TITULO, TP_META, TP_ORIENTACAO) VALUES (@ciclo, 'BU', 0, @tit, 'FORMULA', 'MAIOR');
+      IF EXISTS (SELECT 1 FROM PM.AIP_META WHERE ID_CICLO = @ciclo AND CD_NIVEL = 'COO' AND NO_META = 0)
+        UPDATE m SET VL_PESO = c.QTDE_PONTOS_HERDADOS_COO, SG_ATIVA = 'S' FROM PM.AIP_META m JOIN PM.AIP_CICLO c ON c.ID_CICLO = m.ID_CICLO WHERE m.ID_CICLO = @ciclo AND m.CD_NIVEL = 'COO' AND m.NO_META = 0
+      ELSE INSERT PM.AIP_META (ID_CICLO, CD_NIVEL, NO_META, NM_TITULO, TP_META, TP_ORIENTACAO, VL_PESO)
+        SELECT @ciclo, 'COO', 0, @titCoo, 'FORMULA', 'MAIOR', QTDE_PONTOS_HERDADOS_COO FROM PM.AIP_CICLO WHERE ID_CICLO = @ciclo`,
+    { ciclo: P.int(idCiclo), tit: P.nv(TITULO_RESULTADO, 100), titCoo: P.nv("CEO's Scorecard Result", 100) });
+    // Unidades fora das BUs (CEO, COO e níveis abaixo da BU com metas no ciclo) entram no ciclo para receber Goal Cards
+    await q(`INSERT PM.AIP_CICLO_SITE (ID_CICLO, ID_SITE, SG_ATIVA, NM_AREA, NM_RESPONSAVEL_AREA)
+      SELECT @ciclo, u.ID_UNIDADE_ORGANIZACIONAL, 'S', u.NM_AREA, u.NM_RESPONSAVEL_AREA FROM PM.UNIDADE_ORGANIZACIONAL u
+      WHERE u.NO_NIVEL_HIERARQUIA <> ${NIVEL_BU} AND u.NO_NIVEL_HIERARQUIA > 1
+        AND EXISTS (SELECT 1 FROM PM.AIP_META m WHERE m.ID_CICLO = @ciclo AND m.SG_ATIVA = 'S' AND m.CD_NIVEL = CASE u.NO_NIVEL_HIERARQUIA WHEN 2 THEN 'CEO' WHEN 3 THEN 'COO' ELSE 'N' + CAST(u.NO_NIVEL_HIERARQUIA AS VARCHAR(2)) END)
+        AND NOT EXISTS (SELECT 1 FROM PM.AIP_CICLO_SITE cs WHERE cs.ID_CICLO = @ciclo AND cs.ID_SITE = u.ID_UNIDADE_ORGANIZACIONAL)`, { ciclo: P.int(idCiclo) });
+    // Cards que faltam: meta × unidade do mesmo nível com peso (CEO/COO: peso da meta; BU e N5+: peso por unidade; meta 0: pontos herdados)
     const faltam = await q(`SELECT m.ID_META, m.NO_META, cs.ID_SITE, ${NOME_SITE('s')} AS NM_SITE
       FROM PM.AIP_META m
       JOIN PM.AIP_CICLO c ON c.ID_CICLO = m.ID_CICLO
       JOIN PM.AIP_CICLO_SITE cs ON cs.ID_CICLO = m.ID_CICLO AND cs.SG_ATIVA = 'S'
       JOIN ${SITES} s ON s.ID_SITE = cs.ID_SITE
-      WHERE m.ID_CICLO = @ciclo AND m.CD_NIVEL = 'BU' AND m.SG_ATIVA = 'S'
-        AND ((m.NO_META = 0 AND c.QTDE_PONTOS_HERDADOS_BU > 0) OR EXISTS (SELECT 1 FROM PM.AIP_META_PESO mp WHERE mp.ID_META = m.ID_META AND mp.ID_SITE = cs.ID_SITE))
+        AND s.NO_NIVEL_HIERARQUIA = CASE m.CD_NIVEL WHEN 'CEO' THEN 2 WHEN 'COO' THEN 3 WHEN 'BU' THEN ${NIVEL_BU} ELSE CAST(SUBSTRING(m.CD_NIVEL, 2, 1) AS INT) END
+      LEFT JOIN PM.AIP_META_PESO mp ON mp.ID_META = m.ID_META AND mp.ID_SITE = cs.ID_SITE
+      WHERE m.ID_CICLO = @ciclo AND m.SG_ATIVA = 'S' AND (CASE WHEN m.CD_NIVEL IN ('CEO', 'COO') OR (m.NO_META = 0 AND m.CD_NIVEL <> 'BU') THEN m.VL_PESO WHEN m.NO_META = 0 THEN c.QTDE_PONTOS_HERDADOS_BU ELSE mp.VL_PESO END) > 0
         AND NOT EXISTS (SELECT 1 FROM PM.AIP_GOAL_CARD gc WHERE gc.ID_META = m.ID_META AND gc.ID_SITE = cs.ID_SITE)`, { ciclo: P.int(idCiclo) });
     if (!faltam.recordset.length) return 0;
     const usados = await q(`SELECT gc.CD_GOAL_CARD, gc.ID_SITE FROM PM.AIP_GOAL_CARD gc JOIN PM.AIP_META m ON m.ID_META = gc.ID_META WHERE m.ID_CICLO = @ciclo`, { ciclo: P.int(idCiclo) });
@@ -635,7 +650,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
         const ids = await siteIdsPorNome(q, busMetas);
         const siteDe = new Map(busMetas.map((b, i) => [b, ids[i]]));
         const { metas } = await metasDoCiclo(idCiclo, q);
-        const cooPorCodigo = new Map(metas.filter((m) => m.CD_NIVEL === 'COO').map((m) => [codigoOrigem(base.ciclo.ano, m.NO_META), m.ID_META]));
+        const cooPorCodigo = new Map(metas.filter((m) => m.CD_NIVEL === 'COO' && m.NO_META > 0).map((m) => [codigoOrigem(base.ciclo.ano, m.NO_META), m.ID_META]));
         const niveisN = Object.keys(d.metasNivel || {}).filter((k) => /^n[5-9]$/.test(k));
         const porUnidade = (nv) => nv === 'bu' || /^n[5-9]$/.test(nv);
         for (const nivel of ['ceo', 'coo', 'bu'].concat(niveisN)) {
@@ -677,7 +692,7 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
             await q(`IF EXISTS (SELECT 1 FROM PM.AIP_META WHERE ID_CICLO = @ciclo AND CD_NIVEL = @nivel AND NO_META = 0)
                 UPDATE PM.AIP_META SET VL_PESO = @peso, SG_ATIVA = 'S' WHERE ID_CICLO = @ciclo AND CD_NIVEL = @nivel AND NO_META = 0
               ELSE INSERT PM.AIP_META (ID_CICLO, CD_NIVEL, NO_META, NM_TITULO, TP_META, TP_ORIENTACAO, VL_PESO) VALUES (@ciclo, @nivel, 0, @tit, 'FORMULA', 'MAIOR', @peso)`,
-            { ciclo: P.int(idCiclo), nivel: P.vc(NV), peso: P.dec(herd), tit: P.nv(TITULO_RESULTADO, 100) });
+            { ciclo: P.int(idCiclo), nivel: P.vc(NV), peso: P.dec(herd), tit: P.nv(NV === 'N5' ? 'BU Result' : `Level ${Number(NV.slice(1)) - 1} Result`, 100) });
           }
         }
         // Nível retirado do desdobramento (×): todas as metas dele ficam inativas (o histórico continua no banco)
@@ -723,13 +738,13 @@ function criarFonteBanco({ runQuery, transacao, env = process.env } = {}) {
       const datas = dt
         ? ['@i0', '@f0', '@i1', '@f1', '@i2', '@f2', '@i3', '@f3']
         : Array(8).fill('NULL');
-      // Sem datas: o banco precisa aceitar janelas em branco (database/005_pm_janelas_em_branco.sql)
+      // Sem datas: o banco precisa aceitar janelas em branco (database/001_pm_criar_tabelas.sql atual)
       if (!dt) {
         const nn = await q(`SELECT COUNT(*) AS N FROM sys.columns WHERE object_id = OBJECT_ID('PM.AIP_CICLO') AND is_nullable = 0
           AND name IN ('DT_INI_DESDOBRAMENTO', 'DT_FIM_DESDOBRAMENTO', 'DT_INI_PROPOSTA', 'DT_FIM_PROPOSTA', 'DT_INI_CALIBRACAO', 'DT_FIM_CALIBRACAO', 'DT_INI_OFICIAL', 'DT_FIM_OFICIAL')`);
         if (nn.recordset[0].N > 0) {
-          console.error(`${TAG} novo ciclo: as datas de PM.AIP_CICLO ainda não aceitam NULL; rode database/005_pm_janelas_em_branco.sql`);
-          throw conflito('O banco ainda não aceita ciclo com datas em branco. Rode o script database/005_pm_janelas_em_branco.sql no banco e tente de novo.');
+          console.error(`${TAG} novo ciclo: as datas de PM.AIP_CICLO ainda não aceitam NULL; recrie com database/000, 001 e 002`);
+          throw conflito('O banco ainda não aceita ciclo com datas em branco. Recrie as tabelas com os scripts 000, 001 e 002 e tente de novo.');
         }
       }
       const r = await q(`INSERT PM.AIP_CICLO (NO_ANO, NM_CICLO, SG_STATUS, ID_CICLO_ORIGEM, CD_MATRICULA_CRIACAO,

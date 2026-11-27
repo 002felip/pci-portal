@@ -501,7 +501,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
     try {
       const ctx = await contexto(req, res); if (!ctx) return;
       const base = await dados.desdobramento(ctx.hoje); if (!base) return semCiclo(res);
-      const bus = base.ciclo.bus; // leitura aberta: todas as BUs (AC-05)
+      const bus = base.ciclo.bus.filter((b) => b.nivel == null || b.nivel === 4); // COO AIP: só as BUs (nível 4); leitura aberta (AC-05)
       const cards = (await dados.painel(ctx.hoje)).cards.filter((c) => bus.some((b) => b.sigla === c.bu.sigla));
       res.json({ ciclo: base.ciclo, parametros: base.parametros, scorecardCoo: base.scorecardCoo, bus, ...agregarDesdobramento(base, cards, bus), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
     } catch (err) { falha(res, '/desdobramento', err, 'Não foi possível carregar o desdobramento.'); }
