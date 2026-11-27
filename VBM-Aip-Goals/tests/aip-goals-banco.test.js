@@ -56,7 +56,7 @@ function bancoSimulado(papeis = [{ TP_GRUPO: 'ADMIN', NM_SITE: null }]) {
     if (/FROM PM\.AIP_EVENTO_LOG e/.test(sql)) return rs([{ ID_EVENTO: 9, TP_EVENTO: 'SUBMISSAO', DT_EVENTO: new Date('2026-11-18T12:00:00Z'), CD_MATRICULA: 'C2', TP_GRUPO: 'CONTRIBUIDOR', CD_SECAO: null, DS_COMENTARIO: 'resubmeteu como v2', CD_GOAL_CARD: 'GC-SAL-01', NO_META: 1, NM_TITULO: 'BU Working Capital', NM_SITE: 'Salobo' },
       { ID_EVENTO: 1, TP_EVENTO: 'CICLO_ABERTO', DT_EVENTO: new Date('2026-11-02T12:00:00Z'), CD_MATRICULA: 'C1', TP_GRUPO: 'ADMIN', CD_SECAO: 'ciclo', DS_COMENTARIO: 'abriu', DS_DEPOIS: 'Aberto' }]);
     if (/COUNT\(\*\) AS N/.test(sql)) return rs([{ ID_SITE: 11, N: 1 }]);
-    if (/AS NM_SITE, s\.NM_PAIS FROM IBP\.SITES s/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil' }, { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá' }, { ID_SITE: 13, NM_SITE: 'Sossego', NM_PAIS: 'Brasil' }]);
+    if (/AS NM_PAIS FROM IBP\.SITES s/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo', NM_PAIS: 'Brasil' }, { ID_SITE: 12, NM_SITE: 'VNL', NM_PAIS: 'Canadá' }, { ID_SITE: 13, NM_SITE: 'Sossego', NM_PAIS: 'Brasil' }]);
     if (/SELECT ID_SITE, NM_SITE FROM IBP\.SITES/.test(sql)) return rs([{ ID_SITE: 11, NM_SITE: 'Salobo' }, { ID_SITE: 12, NM_SITE: 'VNL' }, { ID_SITE: 13, NM_SITE: 'Sossego' }]);
     if (/ISNULL\(MAX\(NO_VERSAO\)/.test(sql)) return rs([{ N: 2 }]);
     if (/SELECT TOP \(1\) ID_VERSAO, NO_VERSAO/.test(sql)) return rs([{ ID_VERSAO: 2, NO_VERSAO: 2 }]);
@@ -214,4 +214,15 @@ test('router com a fonte do banco: sem identidade 401; sem ciclo 409; respostas 
     assert.strictEqual(r.status, 409);
     assert.strictEqual((await r.json()).codigo, 'SEM_CICLO');
   } finally { s2.close(); }
+});
+
+test('banco: Corporate (ID_SITE 40) aparece como Corporate no nível Global; papéis de aprovador por BU', async () => {
+  const { fonte, log } = bancoSimulado([{ TP_GRUPO: 'APROVACAO', NM_SITE: 'Corporate' }, { TP_GRUPO: 'ADMIN', NM_SITE: null }]);
+  await fonte.painel(HOJE);
+  const cards = log.find((x) => /OUTER APPLY/.test(x.sql)).sql;
+  assert.ok(/WHEN 40 THEN N'Corporate'/.test(cards), 'DE/PARA Global → Corporate pelo ID');
+  assert.ok(/CASE WHEN s\.ID_SITE = 40 THEN N'Global' ELSE s\.NM_PAIS END/.test(cards), 'Corporate no nível Global, não sob um país');
+  const ctx = await fonte.contexto('ana@vale.com', HOJE);
+  assert.deepStrictEqual(ctx.papeis.map((p) => [p.papel, p.bu]), [['aprovador', 'Corporate'], ['admin', null]]);
+  assert.strictEqual(fonte.corporate.id, 40);
 });

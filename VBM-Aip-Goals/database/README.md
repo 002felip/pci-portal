@@ -11,6 +11,7 @@ passa para `BDIBPBMSA_PRD`. A aplicação não tem mais dados de exemplo: os de 
 | `004_pm_admin_01181222.sql` | Cadastra a matrícula 01181222 como administrador do ciclo aberto (não duplica; mostra o nome e o e-mail da matrícula no MDM) | Depois do 002, no DEV |
 | `005_pm_janelas_em_branco.sql` | Deixa as datas das janelas do `PM.AIP_CICLO` aceitarem em branco (o novo ciclo nasce sem datas, D-35); tira e recria a regra `CK_AIP_CICLO_JORNADA`, sem a qual o SQL Server não altera as colunas. Sem ele, "Abrir novo ciclo" avisa que falta rodá-lo | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
 | `006_pm_nome_diretor.sql` | Cria `NM_DIRETOR` em `PM.AIP_CICLO_SITE`: nome do diretor quando ele não tem matrícula no MDM (D-38) | Uma vez nos bancos que já têm o 001 (DEV, depois PRD) |
+| `007_pm_corporate.sql` | Papéis por BU: aprovador e administrador podem ser de todas as BUs ou de uma BU, como o time do Corporate (altera a regra `CK_AIP_PAPEL_BU`). Confere o Corporate (ID_SITE 40) na `IBP.SITES` e as áreas corporativas no MDM | Uma vez no DEV e no PRD, antes de cadastrar o time do Corporate |
 
 ## Ordem de ligação (passo a passo)
 

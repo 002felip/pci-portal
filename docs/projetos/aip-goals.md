@@ -275,6 +275,20 @@ edita os Goal Cards de todas as BUs (D-16, AC-05); os contribuidores, só os da 
 `IBP.SITES` (D-15) e o código do Goal Card usa 3 letras do site (ex.: `GC-SAL-01`). Nomes de pessoas vêm da
 MDM do Kaizen (`CI.KZN_MDM_HIERARQUIA`) pela matrícula: as telas mostram sempre o nome (sem `NM_USUARIO`, o nome sai do e-mail). Os dados de exemplo (estrutura do material de referência 2027) ficam só nos testes.
 
+### Corporate (ID_SITE 40)
+
+- **O que é:** o Corporate não é site operacional. É uma estrutura global, no mesmo nível das BUs: Global › BU 1 … BU N e Corporate.
+- **Nome na tela:** a `IBP.SITES` guarda "Global" para o ID 40. A aplicação mostra "Corporate" por um DE/PARA pelo ID (`NOMES_SITE`), sem alterar a origem. Nos filtros, o Corporate aparece no nível "Global", em vez de sob um país.
+- **Áreas corporativas:** vêm do MDM (`CI.KZN_MDM_HIERARQUIA`). São os N4 das pessoas do Corporate, como "DIR, CORPORATE AFFAIRS BRAZIL - JOSE LUIZ MARQUES" ou "HEAD OF PERFORMANCE & CI - JULIANA SOMMER". Nenhum nome fica fixo no código. A linha do Corporate na aba Business Units mostra as áreas, e o responsável é escolhido entre elas.
+  - O `NM_SITE` do Corporate no MDM é, por padrão, o nome original da `IBP.SITES`. `AIPGOALS_CORPORATE_MDM_SITE` troca esse valor.
+  - `AIPGOALS_CORPORATE_ID_SITE` troca o ID (padrão 40).
+- **Papéis:** o Corporate entra no ciclo como as BUs. Tem contribuidores, como toda BU, e pode ter aprovadores e administradores próprios.
+  - **Aprovador e administrador:** podem ser de todas as BUs (como antes) ou de uma BU, por exemplo do Corporate.
+  - **O de uma BU:** aprova, comenta, edita e reabre só os cards dela, e vê só a fila de aprovação dela. O administrador de uma BU entra na Administração só na aba Grupos e gerencia só as pessoas dela.
+  - **Ciclo:** fechar, abrir e as demais abas ficam com o administrador de todas as BUs. Sempre precisa haver ao menos um administrador de todas as BUs.
+  - **Banco:** o script `database/007_pm_corporate.sql` libera o papel por BU na regra `CK_AIP_PAPEL_BU`.
+- **Metas do CEO e do COO com participação do Corporate:** a meta da BU recebe peso no Corporate (Metas e pesos). Isso cria os Goal Cards do Corporate, que seguem o fluxo normal: contribuidores do Corporate preenchem, aprovadores do Corporate (ou de todas as BUs) decidem.
+
 ## Responsividade
 
 Aplicação de **notebook e desktop** (1024px a 4K). Celular fica fora do escopo.

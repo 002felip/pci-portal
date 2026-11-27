@@ -141,13 +141,19 @@ function agregarDesdobramento(base, cards, bus) {
 }
 
 // ── T04 Goal Card ──
-// Regra de acesso: qualquer usuário do Portal lê tudo; contribuidor edita os cards da sua BU; aprovador edita e aprova
-// todos os cards (sem telas administrativas); administrador tem todas as telas. Papéis antigos dos exemplos são mapeados.
+// Regra de acesso: qualquer usuário do Portal lê tudo; contribuidor edita os cards da sua BU. Aprovador e administrador
+// podem ser de TODAS as BUs (bu vazia) ou de UMA BU (ex.: o time do Corporate): aí aprovam, editam e gerenciam só ela.
 const ehAprovador = (papeis) => papeis.some((p) => ['aprovador', 'pci_coo', 'admin'].includes(p.papel));
 const contribuidorDe = (papeis, sigla) => papeis.some((p) => ['contribuidor', 'ponto_focal'].includes(p.papel) && p.bu === sigla);
-// Edição (AC-05): contribuidor da BU do card, aprovador ou administrador
+// Aprova (e edita) os cards da BU: aprovador ou administrador de todas as BUs, ou daquela BU
+const aprovaBu = (papeis, sigla) => papeis.some((p) => ['aprovador', 'pci_coo', 'admin'].includes(p.papel) && (!p.bu || p.bu === sigla));
+// Administração: qualquer administrador entra; o de uma BU só gerencia as pessoas dela (aba Grupos)
 const ehAdmin = (papeis) => papeis.some((p) => p.papel === 'admin');
-const podeEditar = (papeis, sigla) => ehAprovador(papeis) || contribuidorDe(papeis, sigla);
+const ehAdminGeral = (papeis) => papeis.some((p) => p.papel === 'admin' && !p.bu);
+const adminDe = (papeis, sigla) => papeis.some((p) => p.papel === 'admin' && (!p.bu || p.bu === sigla));
+const busDoAdmin = (papeis) => papeis.filter((p) => p.papel === 'admin' && p.bu).map((p) => p.bu);
+// Edição (AC-05): contribuidor da BU do card, aprovador ou administrador (de todas as BUs ou da BU do card)
+const podeEditar = (papeis, sigla) => aprovaBu(papeis, sigla) || contribuidorDe(papeis, sigla);
 const LIMITE_COMENTARIO = 10; // RN-08/RN-09 (limite definido na aplicação)
 const MAX_COMENTARIO = 2000;  // tamanho máximo de um comentário de seção
 const SECOES_CARD = ['objective', 'formula', 'unit', 'ruler', 'area', 'evidence', 'exceptions'];
@@ -208,7 +214,7 @@ function modoDoCard(card, papeis) {
 // Quem pode decidir (fila de aprovação): grupo de aprovação, card Em aprovação, sem ter editado ou submetido o card (RN-12)
 function podeDecidir(card, papeis, nomeUsuario) {
   const editou = podeEditar(papeis, card.bu.sigla) && (card.editores || []).includes(nomeUsuario);
-  return ehAprovador(papeis) && card.estado === 'em_aprovacao' && !editou;
+  return aprovaBu(papeis, card.bu.sigla) && card.estado === 'em_aprovacao' && !editou;
 }
 
 // Linha do tempo do card: rascunho → submissão (vN) → decisão
@@ -306,11 +312,12 @@ function validarConfiguracao(aba, dados, base, hoje = new Date()) {
     (d.membros || []).forEach((m, i) => {
       if (!/^[A-Za-z0-9]{4,12}$/.test(String(m.matricula || ''))) erros.push({ campo: `membros.${i}.matricula`, codigo: 'MATRICULA' });
       if (!GRUPOS.includes(m.grupo)) erros.push({ campo: `membros.${i}.grupo`, codigo: 'GRUPO' });
-      const precisaBu = m.grupo === 'contribuidor';
-      if (precisaBu && !siglas.includes(m.bu)) erros.push({ campo: `membros.${i}.bu`, codigo: 'BU' });
+      // Contribuidor sempre de uma BU; aprovador e administrador: todas as BUs (sem BU) ou uma BU do ciclo (ex.: Corporate)
+      if ((m.grupo === 'contribuidor' || m.bu) && !siglas.includes(m.bu)) erros.push({ campo: `membros.${i}.bu`, codigo: 'BU' });
     });
     if (!(d.membros || []).some((m) => m.grupo === 'aprovacao')) erros.push({ campo: 'membros', codigo: 'SEM_APROVADOR' });
-    if (!(d.membros || []).some((m) => m.grupo === 'admin')) erros.push({ campo: 'membros', codigo: 'SEM_ADMIN' });
+    // Sempre há um administrador de todas as BUs (senão ninguém mais altera o ciclo)
+    if (!(d.membros || []).some((m) => m.grupo === 'admin' && !m.bu)) erros.push({ campo: 'membros', codigo: 'SEM_ADMIN' });
   }
   if (aba === 'parametros') {
     (d.parametros || []).forEach((p, i) => {
@@ -384,7 +391,7 @@ function filtrarEventos(eventos, q, hoje, metas, bus) {
   return { filtro: f, lista: f.tipo ? semTipo.filter((e) => e.tipo === f.tipo) : semTipo, porTipo, totalSemTipo: semTipo.length };
 }
 
-const veTodas = (papeis) => papeis.some((p) => p.papel === 'pci_coo' || p.papel === 'admin');
+const veTodas = (papeis) => papeis.some((p) => p.papel === 'pci_coo' || (p.papel === 'admin' && !p.bu));
 const ACOES_CICLO = ['fechar', 'reabrir', 'novo'];
 // Campos internos da fonte (começam com _) não vão para o navegador
 const publico = (o) => Object.fromEntries(Object.entries(o || {}).filter(([k]) => !k.startsWith('_')));
@@ -395,6 +402,14 @@ const publico = (o) => Object.fromEntries(Object.entries(o || {}).filter(([k]) =
  * versoes, actionLog, configuracao (leituras; null = não há ciclo); salvarRascunho, submeter, reabrir, decidir,
  * comentar, salvarConfiguracao, acaoCiclo, registrarNegado (gravações).
  */
+// Grupos gravados por um administrador de BU: inclusões e remoções só de pessoas com papel nas BUs dele
+function foraDoEscopo(antes, depois, bus) {
+  const chave = (m) => `${String(m.matricula).trim()}|${m.grupo}|${m.bu || ''}`;
+  const a = new Set((antes || []).map(chave)), b = new Set((depois || []).map(chave));
+  const mudou = [...(depois || []).filter((m) => !a.has(chave(m))), ...(antes || []).filter((m) => !b.has(chave(m)))];
+  return mudou.filter((m) => !m.bu || !bus.includes(m.bu));
+}
+
 function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   if (!dados || typeof dados.contexto !== 'function') throw new Error('criarAipGoalsRouter: `dados` é obrigatório (fonte do banco ou de exemplo)');
   const router = express.Router();
@@ -503,7 +518,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const card = await lerCard(req, res, ctx.hoje); if (!card) return; // leitura aberta (AC-07)
       const modo = modoDoCard(card, ctx.papeis);
       res.json({ ...publico(card), modo, obrigatorios: camposObrigatorios(card.secoes), linha: linhaDoCard(card),
-        permissoes: { editar: modo === 'edicao', reabrir: ehAdmin(ctx.papeis) && card.estado === 'aprovado' },
+        permissoes: { editar: modo === 'edicao', reabrir: adminDe(ctx.papeis, card.bu.sigla) && card.estado === 'aprovado' },
         parametros: { minComentario: LIMITE_COMENTARIO }, atualizadoEm: ctx.hoje.toISOString(), ...marca() });
     } catch (err) { falha(res, '/goal-card', err, 'Não foi possível carregar o Goal Card.'); }
   });
@@ -546,7 +561,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
     try {
       const ctx = await contexto(req, res); if (!ctx) return;
       const card = await lerCard(req, res, ctx.hoje); if (!card) return;
-      if (!ehAdmin(ctx.papeis)) return negar(res, ctx, 'Só o administrador reabre um card aprovado.', `tentou reabrir ${card.card} sem ser administrador`);
+      if (!adminDe(ctx.papeis, card.bu.sigla)) return negar(res, ctx, 'Só o administrador reabre um card aprovado.', `tentou reabrir ${card.card} sem ser administrador`);
       if (card.estado !== 'aprovado') return res.status(409).json({ error: 'Só um card aprovado pode ser reaberto.', codigo: 'ESTADO' });
       const r = await dados.reabrir(card, ctx);
       res.json({ ok: true, ...r });
@@ -557,7 +572,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
     try {
       const ctx = await contexto(req, res); if (!ctx) return;
       const card = await lerCard(req, res, ctx.hoje); if (!card) return;
-      if (!ehAprovador(ctx.papeis)) return negar(res, ctx, 'Decisão restrita ao grupo de aprovação.', `tentou decidir ${card.card} sem ser do grupo de aprovação`);
+      if (!aprovaBu(ctx.papeis, card.bu.sigla)) return negar(res, ctx, 'Decisão restrita ao grupo de aprovação desta BU.', `tentou decidir ${card.card} sem ser do grupo de aprovação`);
       if (card.estado !== 'em_aprovacao') return res.status(409).json({ error: 'O card não está em aprovação.', codigo: 'ESTADO' });
       if (!podeDecidir(card, ctx.papeis, ctx.quem)) return res.status(403).json({ error: 'Quem editou ou submeteu o card não decide (RN-12).', codigo: 'RN12' });
       const erros = validarDecisao(req.body);
@@ -572,7 +587,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
     try {
       const ctx = await contexto(req, res); if (!ctx) return;
       const card = await lerCard(req, res, ctx.hoje); if (!card) return;
-      if (!ehAprovador(ctx.papeis)) return negar(res, ctx, 'Comentário restrito ao grupo de aprovação.', `tentou comentar ${card.card} sem ser do grupo de aprovação`);
+      if (!aprovaBu(ctx.papeis, card.bu.sigla)) return negar(res, ctx, 'Comentário restrito ao grupo de aprovação desta BU.', `tentou comentar ${card.card} sem ser do grupo de aprovação`);
       const secao = String(req.body.secao || ''), texto = String(req.body.texto || '').trim();
       if (!SECOES_CARD.includes(secao)) return res.status(400).json({ error: 'Seção inválida.', codigo: 'VALIDACAO', erros: ['secao'] });
       if (!texto || texto.length > MAX_COMENTARIO) return res.status(400).json({ error: 'Comentário vazio ou longo demais.', codigo: 'VALIDACAO', erros: ['texto'] });
@@ -590,10 +605,11 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const filtro = { pais: String(req.query.pais || ''), bu: String(req.query.bu || ''), idade: IDADES.includes(String(req.query.idade)) ? String(req.query.idade) : 'todas' };
       if (filtro.pais && !base.ciclo.bus.some((b) => b.pais === filtro.pais)) filtro.pais = '';
       if (filtro.bu && !base.ciclo.bus.some((b) => b.sigla === filtro.bu && (!filtro.pais || b.pais === filtro.pais))) filtro.bu = '';
+      // Aprovador de uma BU (ex.: Corporate) vê só a fila dela
       // Na fila, RN-12 pelo autor da versão em aprovação (a decisão confere todos os editores do card)
       const decide = (c) => podeDecidir({ ...c, editores: c.editores || [] }, ctx.papeis, ctx.quem);
       res.json({ ciclo: base.ciclo, parametros: { diasParado: base.parametros.diasParado, minComentario: LIMITE_COMENTARIO, maxComentario: MAX_COMENTARIO },
-        filtro, ...filaAprovacao(base.cards, filtro, ctx.hoje, decide), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
+        filtro, ...filaAprovacao(base.cards.filter((c) => aprovaBu(ctx.papeis, c.bu.sigla)), filtro, ctx.hoje, decide), atualizadoEm: ctx.hoje.toISOString(), ...marca() });
     } catch (err) { falha(res, '/aprovacoes', err, 'Não foi possível carregar a fila de aprovação.'); }
   });
 
@@ -628,6 +644,10 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
       const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
       const base = await dados.configuracao(ctx.hoje); if (!base) return semCiclo(res);
       const { aba, dados: d } = req.body || {};
+      if (!ehAdminGeral(ctx.papeis)) {
+        const fora = aba !== 'grupos' ? ['aba'] : foraDoEscopo(base.membros, (d || {}).membros, busDoAdmin(ctx.papeis));
+        if (fora.length) return negar(res, ctx, 'O administrador de uma BU só altera as pessoas da BU dele.', `tentou alterar ${aba === 'grupos' ? 'pessoas de outra BU' : 'a aba ' + aba} sendo administrador de ${busDoAdmin(ctx.papeis).join(', ')}`);
+      }
       const erros = validarConfiguracao(aba, d, base, ctx.hoje).filter((e) => !e.aviso); // RN-16: abaixo do total é aviso (salva parcial); acima do total bloqueia
       if (erros.length) return res.status(400).json({ error: 'Configuração com pendências.', codigo: erros.some((e) => e.codigo === 'RN16') ? 'RN16' : 'VALIDACAO', erros });
       const r = await dados.salvarConfiguracao(aba, d, ctx, base);
@@ -639,6 +659,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   router.post('/configuracao/ciclo', express.json({ limit: '10kb' }), async (req, res) => {
     try {
       const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
+      if (!ehAdminGeral(ctx.papeis)) return negar(res, ctx, 'Só o administrador de todas as BUs altera o ciclo.', 'tentou alterar o ciclo sendo administrador de uma BU');
       const acao = String((req.body || {}).acao || ''), ano = Number((req.body || {}).ano);
       if (!ACOES_CICLO.includes(acao) || ((acao !== 'novo' || (req.body || {}).ano != null) && !(Number.isInteger(ano) && ano >= 2020 && ano <= 2100))) return res.status(400).json({ error: 'Ação inválida.', codigo: 'VALIDACAO' });
       const etapas = (req.body || {}).etapas;
@@ -653,6 +674,7 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   router.post('/configuracao/clonar', express.json({ limit: '10kb' }), async (req, res) => {
     try {
       const ctx = await exigirAdmin(req, res, true); if (!ctx) return;
+      if (!ehAdminGeral(ctx.papeis)) return negar(res, ctx, 'Só o administrador de todas as BUs altera o ciclo.', 'tentou abrir um ciclo sendo administrador de uma BU');
       const r = await dados.acaoCiclo('novo', null, ctx);
       res.json({ ok: true, ...r });
     } catch (err) { falha(res, '/configuracao/clonar', err, 'Não foi possível criar o novo ciclo.'); }
@@ -690,4 +712,4 @@ function criarAipGoalsRouter({ dados, agora = () => new Date() } = {}) {
   return router;
 }
 
-module.exports = { LIMITES_CAMPO, camposLongos, validarNovoCiclo, filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };
+module.exports = { aprovaBu, ehAdminGeral, adminDe, foraDoEscopo, LIMITES_CAMPO, camposLongos, validarNovoCiclo, filaAprovacao, IDADES, MAX_COMENTARIO, criarAipGoalsRouter, camposObrigatorios, validarDecisao, modoDoCard, podeDecidir, linhaDoCard, ehAprovador, contribuidorDe, ehAdmin, podeEditar, OBRIGATORIOS, LIMITE_COMENTARIO, agregarPainel, agregarMetas, agregarDesdobramento, diasUteisEntre, ESTADOS, validarConfiguracao, somaPesosPorNivel, unidadesAtivas, ABAS_CONFIG, GRUPOS, dataValida, filtrarEventos, TIPOS_EVENTO, SECOES_LOG, PERIODOS };

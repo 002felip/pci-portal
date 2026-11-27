@@ -376,3 +376,26 @@ test('Goal Card: objetivo até 500 caracteres; fórmula até 4.000 (texto longo 
   assert.deepStrictEqual(camposLongos({ objective: 'a'.repeat(500), formula: 'm'.repeat(4000) }), []);
   assert.deepStrictEqual(camposLongos({ objective: 'a'.repeat(501), formula: 'm'.repeat(4001) }), ['objective', 'formula']);
 });
+
+test('Corporate: aprovador e administrador de uma BU agem só nela; os de todas as BUs, em todas', () => {
+  const { aprovaBu, podeEditar, podeDecidir, adminDe, ehAdminGeral, foraDoEscopo, validarConfiguracao } = require('../aip-goals-api');
+  const corp = [{ papel: 'aprovador', bu: 'Corporate' }, { papel: 'admin', bu: 'Corporate' }];
+  const geral = [{ papel: 'aprovador', bu: null }];
+  assert.ok(aprovaBu(corp, 'Corporate') && !aprovaBu(corp, 'Salobo'));
+  assert.ok(aprovaBu(geral, 'Corporate') && aprovaBu(geral, 'Salobo'));
+  assert.ok(podeEditar(corp, 'Corporate') && !podeEditar(corp, 'Salobo'));
+  const card = { bu: { sigla: 'Corporate' }, estado: 'em_aprovacao', editores: [] };
+  assert.ok(podeDecidir(card, corp, 'X') && !podeDecidir({ ...card, bu: { sigla: 'VNL' } }, corp, 'X'));
+  assert.ok(adminDe(corp, 'Corporate') && !adminDe(corp, 'VNL') && !ehAdminGeral(corp));
+  // Admin do Corporate: incluir no Corporate pode; incluir em Salobo ou como aprovador de todas as BUs, não
+  const antes = [{ matricula: 'A1', grupo: 'admin', bu: null }];
+  assert.deepStrictEqual(foraDoEscopo(antes, antes.concat([{ matricula: 'C9', grupo: 'contribuidor', bu: 'Corporate' }]), ['Corporate']), []);
+  assert.strictEqual(foraDoEscopo(antes, antes.concat([{ matricula: 'C9', grupo: 'aprovacao', bu: null }]), ['Corporate']).length, 1);
+  assert.strictEqual(foraDoEscopo(antes, [], ['Corporate']).length, 1); // remover o admin geral: fora do escopo
+  // Validação: aprovador de uma BU precisa ser de BU do ciclo; sempre há um admin de todas as BUs
+  const base = { bus: [{ sigla: 'Corporate' }, { sigla: 'Salobo' }] };
+  const ok = validarConfiguracao('grupos', { membros: [{ matricula: 'A123', grupo: 'admin', bu: null }, { matricula: 'B123', grupo: 'aprovacao', bu: 'Corporate' }] }, base);
+  assert.deepStrictEqual(ok, []);
+  const sem = validarConfiguracao('grupos', { membros: [{ matricula: 'A123', grupo: 'admin', bu: 'Corporate' }, { matricula: 'B123', grupo: 'aprovacao', bu: 'Atlantis' }] }, base);
+  assert.deepStrictEqual(sem.map((e) => e.codigo).sort(), ['BU', 'SEM_ADMIN']);
+});
