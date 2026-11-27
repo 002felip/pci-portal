@@ -311,7 +311,7 @@ function validarConfiguracao(aba, dados, base, hoje = new Date()) {
       const precisaBu = m.grupo === 'contribuidor';
       if (precisaBu && !siglas.includes(m.bu)) erros.push({ campo: `membros.${i}.bu`, codigo: 'BU' });
     });
-    if (!(d.membros || []).some((m) => m.grupo === 'aprovacao')) erros.push({ campo: 'membros', codigo: 'SEM_APROVADOR' });
+    if (!(d.membros || []).some((m) => m.grupo === 'aprovacao')) erros.push({ campo: 'membros', codigo: 'SEM_APROVADOR', aviso: true }); // pode salvar sem aprovadores (D-45)
     if (!(d.membros || []).some((m) => m.grupo === 'admin')) erros.push({ campo: 'membros', codigo: 'SEM_ADMIN' });
   }
   if (aba === 'parametros') {
