@@ -361,3 +361,12 @@ test('Novo ciclo: ano maior que o atual e datas das janelas no ano atual ou no s
   assert.ok(validarNovoCiclo(2029, ok.slice(0, 3), hoje).some((e) => e.codigo === 'ETAPAS'));
   assert.deepStrictEqual(validarNovoCiclo(2029, undefined, hoje), []); // pop-up só com o ano: janelas em branco
 });
+
+test('pesos com decimais: 6,25 × 4 + 75 herdados fecham 100 (RN-16), sem erro de arredondamento', () => {
+  const { somaPesosPorNivel } = require('../aip-goals-api');
+  const niveis = [{ id: 'coo', total: 100, herdado: 75, ativo: true }];
+  const metas = { coo: [6.25, 6.25, 6.25, 6.25].map((p, i) => ({ numero: i + 1, pesos: { COO: p } })) };
+  assert.deepStrictEqual(somaPesosPorNivel(metas, niveis, [{ id: 'COO', nivel: 'coo', nome: 'COO VBM' }], []).map((x) => x.soma), [100]);
+  const terco = { coo: [8.33, 8.33, 8.34].map((p, i) => ({ numero: i + 1, pesos: { COO: p } })) };
+  assert.strictEqual(somaPesosPorNivel(terco, niveis, [{ id: 'COO', nivel: 'coo', nome: 'COO VBM' }], [])[0].soma, 100);
+});
